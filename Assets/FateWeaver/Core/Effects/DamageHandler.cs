@@ -14,7 +14,7 @@ namespace FateWeaver.Core.Effects
         {
             if (ctx.Card.Def.Side == Side.Player)
             {
-                var target = ctx.State.Enemies[0];
+                var target = SelectEnemy(ctx.State, ctx.Card.TargetId);
                 var damage = FoldIncoming(ctx, target.Statuses, ctx.Amount);
                 target.Hp -= damage;
                 ctx.DamageDealt = damage;
@@ -27,6 +27,23 @@ namespace FateWeaver.Core.Effects
                 ctx.DamageDealt = damage;
                 ctx.TargetId = "player";
             }
+        }
+
+        /// <summary>Picks the card's intended target enemy by id; falls back to the first enemy.</summary>
+        private static Combat.Enemy SelectEnemy(Combat.CombatState state, string targetId)
+        {
+            if (!string.IsNullOrEmpty(targetId))
+            {
+                foreach (var enemy in state.Enemies)
+                {
+                    if (enemy.Id == targetId)
+                    {
+                        return enemy;
+                    }
+                }
+            }
+
+            return state.Enemies[0];
         }
 
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)

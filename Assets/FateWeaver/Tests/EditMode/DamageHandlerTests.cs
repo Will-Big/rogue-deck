@@ -29,6 +29,23 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Player_damage_honors_card_target_id()
+        {
+            var state = new CombatState { PlayerHp = 30 };
+            state.Enemies.Add(new Enemy("a", 10));
+            state.Enemies.Add(new Enemy("b", 10));
+            var card = Card(Side.Player, 4);
+            card.TargetId = "b";
+            var ctx = new EffectContext { Card = card, State = state, Amount = 4 };
+
+            new DamageHandler().Apply(ctx);
+
+            Assert.AreEqual(10, state.Enemies[0].Hp); // "a" untouched
+            Assert.AreEqual(6, state.Enemies[1].Hp);  // "b" hit
+            Assert.AreEqual("b", ctx.TargetId);
+        }
+
+        [Test]
         public void Enemy_damage_hits_player()
         {
             var state = new CombatState { PlayerHp = 30 };
