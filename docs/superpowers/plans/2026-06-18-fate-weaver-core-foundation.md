@@ -908,3 +908,12 @@ The project is currently **not** a git repository. Either initialize one before 
 - **M4 — Status system:** `IStatusHolder`/`IStatusBehavior`, ApplyDamage pipeline (block/vulnerable), disruption (spec §5).
 - **M5 — Harness:** `FateWeaver.Simulation` asmdef, ScenarioRunner + Compare, report mode, doc ch.11 cards + ch.8 scenarios (spec §7, §9).
 - **M6 — Extension-seam docs** (spec §11).
+
+## Carry-over from M0–M1 final review (deferred, non-blocking)
+
+The M0–M1 implementation was approved. These forward-looking items surfaced in review — fold them into the milestone that introduces the relevant dependency:
+
+- **M3 (target resolution):** `DamageHandler` currently hardcodes `ctx.State.Enemies[0]` and has no empty-list guard. M3 introduces per-placement `target` (spec §7.2); replace `[0]` with real target resolution then.
+- **M2+ (event granularity):** `TurnResolver` emits one `CardResolved` per card, summing damage and keeping the last non-null `TargetId`. Once cards carry multiple effects hitting different targets, this collapses information — revisit per-effect event granularity.
+- **Test gaps to close when the logic firms up:** `Outcome.Lose` branch (player HP ≤ 0) is unexercised; no mutual-KO/tie test (current rule: `Lose` precedes `Win` in `ComputeOutcome` — intentional, worth a comment); no empty-zone test (resolver should still emit `TurnStarted`+`TurnEnded`/`Ongoing`). These are cheap; add alongside M2.
+- **Optional:** `Resolution_is_deterministic` compares `record.ToString()`; `CollectionAssert.AreEqual(a, b)` on the events directly (record value-equality) would be format-independent.
