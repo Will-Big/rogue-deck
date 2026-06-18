@@ -12,6 +12,9 @@ namespace FateWeaver.Core.Combat
 
         public void Add(ActionCardInstance card) => _cards.Add(card);
 
+        /// <summary>Empties the zone (used when rebuilding it for a new turn).</summary>
+        public void Clear() => _cards.Clear();
+
         /// <summary>Ascending initiative, stable on ties (LINQ OrderBy is a stable sort).</summary>
         public IReadOnlyList<ActionCardInstance> ResolutionOrder()
             => _cards.OrderBy(c => c.Initiative).ToList();
