@@ -60,6 +60,33 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Reports_lose_when_player_dead()
+        {
+            var state = new CombatState { PlayerHp = 3 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+            state.Zone.Add(Card("jab", Side.Enemy, 1, 5)); // 5 >= 3 player HP
+
+            var events = new TurnResolver(Registry()).Resolve(state, turnIndex: 0);
+
+            Assert.LessOrEqual(state.PlayerHp, 0);
+            Assert.AreEqual(Outcome.Lose, ((TurnEnded)events[^1]).Outcome);
+        }
+
+        [Test]
+        public void Empty_zone_still_brackets_turn()
+        {
+            var state = new CombatState { PlayerHp = 30 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+
+            var events = new TurnResolver(Registry()).Resolve(state, turnIndex: 0);
+
+            Assert.AreEqual(2, events.Count); // only TurnStarted + TurnEnded
+            Assert.IsInstanceOf<TurnStarted>(events[0]);
+            Assert.IsInstanceOf<TurnEnded>(events[1]);
+            Assert.AreEqual(Outcome.Ongoing, ((TurnEnded)events[1]).Outcome);
+        }
+
+        [Test]
         public void Resolution_is_deterministic()
         {
             CombatState Build()
