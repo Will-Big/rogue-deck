@@ -1,0 +1,42 @@
+# Normalize line endings automatically
+* text=auto
+
+# ============================================
+# Unity text assets (YAML / source) — keep as text so diffs/merges work
+# ============================================
+*.cs        text diff=csharp
+*.meta      text
+*.unity     text
+*.asset     text
+*.prefab    text
+*.mat       text
+*.anim      text
+*.controller text
+*.asmdef    text
+*.asmref    text
+*.json      text
+*.shader    text
+*.uss       text
+*.uxml      text
+*.md        text
+*.txt       text
+
+# ============================================
+# Unity binary assets — never try to diff/merge these
+# ============================================
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.psd       binary
+*.tga       binary
+*.fbx       binary
+*.obj       binary
+*.wav       binary
+*.mp3       binary
+*.ogg       binary
+*.dll       binary
+*.so        binary
+*.a         binary
+*.aseprite  binary
+*.ase       binary
