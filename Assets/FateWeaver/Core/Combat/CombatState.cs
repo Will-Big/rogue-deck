@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
@@ -6,6 +7,7 @@ namespace FateWeaver.Core.Combat
     public sealed class CombatState
     {
         public int PlayerHp { get; set; }
+        public StatusBag PlayerStatuses { get; } = new();
         public List<Enemy> Enemies { get; } = new();
         public FutureZone Zone { get; } = new();
         public int FateEnergy { get; set; }

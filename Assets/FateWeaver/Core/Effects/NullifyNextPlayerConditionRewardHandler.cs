@@ -1,4 +1,5 @@
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
@@ -15,7 +16,7 @@ namespace FateWeaver.Core.Effects
                 var card = ctx.ResolutionContext.Order[i];
                 if (card.Def.Side == Side.Player)
                 {
-                    card.ConditionRewardNullified = true;
+                    card.Statuses.Add(StatusKeys.RewardNullified);
                     ctx.TargetId = card.Def.Id;
                     return;
                 }

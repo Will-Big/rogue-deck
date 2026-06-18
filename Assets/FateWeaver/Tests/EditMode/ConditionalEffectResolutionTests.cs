@@ -4,6 +4,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
@@ -80,7 +81,7 @@ namespace FateWeaver.Tests
 
             new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.IsTrue(player.ConditionRewardNullified);
+            Assert.IsTrue(player.Statuses.Has(StatusKeys.RewardNullified));
         }
 
         [Test]
