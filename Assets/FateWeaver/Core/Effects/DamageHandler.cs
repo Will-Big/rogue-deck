@@ -1,11 +1,12 @@
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Player cards hit the first enemy, enemy cards hit the player. Incoming damage is
-    /// folded through the target's entity-scoped statuses (e.g. Vulnerable) when a StatusRegistry
-    /// is present; with no registry it applies raw (preserves pre-status behavior).</summary>
+    /// <summary>Player cards hit their target enemy (by id, else the first enemy); enemy cards hit the
+    /// player. Incoming damage is folded through the target's entity-scoped statuses (e.g. Vulnerable)
+    /// when a StatusRegistry is present; with no registry it applies raw.</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
@@ -46,6 +47,8 @@ namespace FateWeaver.Core.Effects
             return state.Enemies[0];
         }
 
+        /// <summary>Folds the target's entity-scoped statuses into incoming damage. An UntilConsumed
+        /// status that actually changed the damage spends a charge (auto-consume).</summary>
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
         {
             if (ctx.StatusRegistry == null || bag == null)
@@ -53,11 +56,19 @@ namespace FateWeaver.Core.Effects
                 return damage;
             }
 
-            foreach (var status in bag.All)
+            // Snapshot: consuming may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
             {
                 if (ctx.StatusRegistry.TryResolve(status.Key, out var behavior))
                 {
-                    damage = behavior.ModifyIncomingDamage(damage, new StatusContext { Instance = status });
+                    var after = behavior.ModifyIncomingDamage(damage, new StatusContext { Instance = status });
+                    if (after != damage)
+                    {
+                        bag.Consume(status);
+                    }
+
+                    damage = after;
                 }
             }
 

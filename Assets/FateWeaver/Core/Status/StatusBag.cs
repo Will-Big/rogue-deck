@@ -2,25 +2,24 @@ using System.Collections.Generic;
 
 namespace FateWeaver.Core.Status
 {
-    /// <summary>Holds the statuses attached to one holder (entity or card instance).</summary>
+    /// <summary>Holds the statuses attached to one holder (entity or card instance).
+    /// One instance per key; re-applying refreshes its lifetime.</summary>
     public sealed class StatusBag
     {
         private readonly List<StatusInstance> _statuses = new();
 
         public IReadOnlyList<StatusInstance> All => _statuses;
 
-        /// <summary>Adds stacks, merging into an existing instance of the same key.</summary>
-        public void Add(StatusKey key, int stacks = 1)
+        /// <summary>Applies a status with the given lifetime (replaces any existing instance of the key).</summary>
+        public void Add(StatusKey key, StatusLifetime lifetime)
         {
             var existing = Get(key);
             if (existing != null)
             {
-                existing.Stacks += stacks;
+                _statuses.Remove(existing);
             }
-            else
-            {
-                _statuses.Add(new StatusInstance(key, stacks));
-            }
+
+            _statuses.Add(new StatusInstance(key, lifetime));
         }
 
         public StatusInstance Get(StatusKey key)
@@ -50,6 +49,43 @@ namespace FateWeaver.Core.Status
             }
 
             return false;
+        }
+
+        /// <summary>Spends one charge of an UntilConsumed status (call after its hook actually fired);
+        /// removes it at zero. No-op for other lifetime kinds.</summary>
+        public void Consume(StatusInstance status)
+        {
+            if (status == null || status.Kind != StatusLifetimeKind.UntilConsumed)
+            {
+                return;
+            }
+
+            status.Count--;
+            if (status.Count <= 0)
+            {
+                _statuses.Remove(status);
+            }
+        }
+
+        /// <summary>End-of-turn maintenance: drop ThisTurn statuses; tick down Turns statuses (remove at 0).</summary>
+        public void EndOfTurn()
+        {
+            for (int i = _statuses.Count - 1; i >= 0; i--)
+            {
+                var status = _statuses[i];
+                if (status.Kind == StatusLifetimeKind.ThisTurn)
+                {
+                    _statuses.RemoveAt(i);
+                }
+                else if (status.Kind == StatusLifetimeKind.Turns)
+                {
+                    status.Count--;
+                    if (status.Count <= 0)
+                    {
+                        _statuses.RemoveAt(i);
+                    }
+                }
+            }
         }
     }
 

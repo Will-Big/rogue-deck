@@ -61,6 +61,7 @@ namespace FateWeaver.Core.Combat
                 events.Add(new CardResolved(card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier));
             }
 
+            EndOfTurnMaintenance(state);
             events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
             return events;
         }
@@ -72,17 +73,29 @@ namespace FateWeaver.Core.Combat
                 return false;
             }
 
-            foreach (var status in card.Statuses.All)
+            // Snapshot: consuming may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(card.Statuses.All);
+            foreach (var status in snapshot)
             {
                 if (_statuses.TryResolve(status.Key, out var behavior)
                     && behavior.Scope == StatusScope.CardInstance
                     && behavior.InterceptCardResolve(new StatusContext { Instance = status }))
                 {
+                    card.Statuses.Consume(status);
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static void EndOfTurnMaintenance(CombatState state)
+        {
+            state.PlayerStatuses.EndOfTurn();
+            foreach (var enemy in state.Enemies)
+            {
+                enemy.Statuses.EndOfTurn();
+            }
         }
 
         private static ConditionTier ResolveTier(
@@ -96,9 +109,18 @@ namespace FateWeaver.Core.Combat
             }
 
             var tier = ConditionEvaluator.Evaluate(effect.Condition, card, resolutionContext);
-            return tier == ConditionTier.Success && card.Statuses.Has(StatusKeys.RewardNullified)
-                ? ConditionTier.Basic
-                : tier;
+            if (tier == ConditionTier.Success)
+            {
+                // reward-nullified disruption forces a success down to basic, spending its charge.
+                var nullified = card.Statuses.Get(StatusKeys.RewardNullified);
+                if (nullified != null)
+                {
+                    card.Statuses.Consume(nullified);
+                    return ConditionTier.Basic;
+                }
+            }
+
+            return tier;
         }
 
         private static int ResolveAmount(Cards.EffectData effect, ConditionTier tier)

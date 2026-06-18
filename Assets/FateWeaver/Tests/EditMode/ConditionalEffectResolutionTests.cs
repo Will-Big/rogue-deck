@@ -68,7 +68,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Enemy_disruption_marks_next_player_card_reward_nullified()
+        public void Enemy_disruption_reward_nullified_is_consumed_after_downgrading_player()
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
@@ -81,7 +81,8 @@ namespace FateWeaver.Tests
 
             new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.IsTrue(player.Statuses.Has(StatusKeys.RewardNullified));
+            // one-shot: the disruption is consumed when it downgrades the player card's reward
+            Assert.IsFalse(player.Statuses.Has(StatusKeys.RewardNullified));
         }
 
         [Test]
