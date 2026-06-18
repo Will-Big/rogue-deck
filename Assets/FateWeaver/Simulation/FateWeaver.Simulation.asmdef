@@ -1,0 +1,16 @@
+{
+    "name": "FateWeaver.Simulation",
+    "rootNamespace": "FateWeaver.Simulation",
+    "references": [
+        "FateWeaver.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

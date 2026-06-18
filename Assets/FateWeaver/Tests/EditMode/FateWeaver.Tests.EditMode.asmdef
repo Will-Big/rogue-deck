@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "FateWeaver.Core"
+        "FateWeaver.Core",
+        "FateWeaver.Simulation"
     ],
     "includePlatforms": [
         "Editor"

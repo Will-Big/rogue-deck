@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
 
@@ -15,31 +16,61 @@ namespace FateWeaver.Core.Combat
         public List<ResolutionEvent> Resolve(CombatState state, int turnIndex)
         {
             var events = new List<ResolutionEvent> { new TurnStarted(turnIndex) };
+            var resolutionContext = ResolutionContext.From(state);
 
-            foreach (var card in state.Zone.ResolutionOrder())
+            foreach (var card in resolutionContext.Order)
             {
                 int totalDamage = 0;
                 string targetId = null;
+                var strongestTier = ConditionTier.Basic;
 
                 foreach (var effect in card.Def.Effects)
                 {
+                    var tier = ResolveTier(effect, card, resolutionContext);
+                    if (tier > strongestTier)
+                    {
+                        strongestTier = tier;
+                    }
+
                     var ctx = new EffectContext
                     {
                         Card = card,
                         State = state,
-                        Amount = effect.Amount
+                        ResolutionContext = resolutionContext,
+                        Amount = ResolveAmount(effect, tier)
                     };
                     _effects.Resolve(effect.Key).Apply(ctx);
                     totalDamage += ctx.DamageDealt;
                     if (ctx.TargetId != null) targetId = ctx.TargetId;
                 }
 
-                events.Add(new CardResolved(card.Def.Id, card.Def.Side, totalDamage, targetId));
+                events.Add(new CardResolved(card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier));
             }
 
             events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
             return events;
         }
+
+        private static ConditionTier ResolveTier(
+            Cards.EffectData effect,
+            ActionCardInstance card,
+            ResolutionContext resolutionContext)
+        {
+            if (effect.Condition == null)
+            {
+                return ConditionTier.Basic;
+            }
+
+            var tier = ConditionEvaluator.Evaluate(effect.Condition, card, resolutionContext);
+            return tier == ConditionTier.Success && card.ConditionRewardNullified
+                ? ConditionTier.Basic
+                : tier;
+        }
+
+        private static int ResolveAmount(Cards.EffectData effect, ConditionTier tier)
+            => tier == ConditionTier.Success && effect.SuccessAmount.HasValue
+                ? effect.SuccessAmount.Value
+                : effect.Amount;
 
         private static Outcome ComputeOutcome(CombatState state)
         {

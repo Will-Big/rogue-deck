@@ -1,4 +1,5 @@
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Conditions;
 
 namespace FateWeaver.Core.Events
 {
@@ -13,7 +14,8 @@ namespace FateWeaver.Core.Events
         string CardId,
         Side Side,
         int DamageDealt,
-        string TargetId) : ResolutionEvent;
+        string TargetId,
+        ConditionTier ConditionTier = ConditionTier.Basic) : ResolutionEvent;
 
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }

@@ -7,6 +7,9 @@ namespace FateWeaver.Core.Combat
     {
         public CardDefinition Def { get; }
         public int Initiative { get; set; }
+        public string TargetId { get; set; }
+        public bool IsLocked { get; set; }
+        public bool ConditionRewardNullified { get; set; }
 
         public ActionCardInstance(CardDefinition def)
         {

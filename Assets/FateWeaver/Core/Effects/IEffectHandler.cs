@@ -1,4 +1,5 @@
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
 
 namespace FateWeaver.Core.Effects
 {
@@ -7,6 +8,7 @@ namespace FateWeaver.Core.Effects
     {
         public ActionCardInstance Card;
         public CombatState State;
+        public ResolutionContext ResolutionContext;
         public int Amount;
 
         // outputs (read by TurnResolver)

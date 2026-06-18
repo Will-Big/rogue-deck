@@ -1,0 +1,243 @@
+using NUnit.Framework;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
+using FateWeaver.Core.Effects;
+using FateWeaver.Core.Events;
+using FateWeaver.Core.Fate;
+
+namespace FateWeaver.Tests
+{
+    public class FateActionTests
+    {
+        private static EffectRegistry EffectRegistry()
+        {
+            var r = new EffectRegistry();
+            r.Register(new DamageHandler());
+            return r;
+        }
+
+        private static ActionCardInstance Card(
+            string id,
+            Side side,
+            int initiative,
+            EffectData effect)
+        {
+            var def = new CardDefinition(id, id, side, CardType.Attack, initiative, new[] { effect });
+            return new ActionCardInstance(def);
+        }
+
+        [Test]
+        public void ChangeInitiative_spends_cost_and_changes_target_initiative()
+        {
+            var state = new CombatState { FateEnergy = 3 };
+            var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
+            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+
+            new ChangeInitiativeHandler().Apply(ctx);
+
+            Assert.AreEqual(2, card.Initiative);
+            Assert.AreEqual(2, state.FateEnergy);
+            Assert.AreEqual(1, ctx.FateEnergySpent);
+        }
+
+        [Test]
+        public void ChangeInitiative_rejects_when_fate_energy_is_insufficient()
+        {
+            var state = new CombatState { FateEnergy = 0 };
+            var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
+            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+
+            Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
+            new ChangeInitiativeHandler().Apply(ctx);
+
+            Assert.AreEqual(4, card.Initiative);
+            Assert.AreEqual(0, state.FateEnergy);
+            Assert.AreEqual(0, ctx.FateEnergySpent);
+        }
+
+        [Test]
+        public void ChangeInitiative_can_turn_basic_condition_into_success_before_resolution()
+        {
+            var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+            var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
+            var player = Card(
+                "quick_cut",
+                Side.Player,
+                2,
+                EffectData.Conditional(
+                    EffectKeys.Damage,
+                    amount: 2,
+                    condition: new FirstToTrigger(),
+                    successAmount: 10));
+            state.Zone.Add(enemy);
+            state.Zone.Add(player);
+
+            var beforeEvents = new TurnResolver(EffectRegistry()).Resolve(CloneStateForResolution(state), 0);
+            var before = (CardResolved)beforeEvents[2];
+            Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
+            Assert.AreEqual(2, before.DamageDealt);
+
+            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var fate = new FateActionRegistry();
+            fate.Register(new ChangeInitiativeHandler());
+            fate.Resolve(FateActionKeys.ChangeInitiative)
+                .Apply(new FatePlayContext { State = state, Target = player, Action = action });
+
+            var afterEvents = new TurnResolver(EffectRegistry()).Resolve(state, 0);
+            var after = (CardResolved)afterEvents[1];
+
+            Assert.AreEqual(0, player.Initiative);
+            Assert.AreEqual(ConditionTier.Success, after.ConditionTier);
+            Assert.AreEqual(10, after.DamageDealt);
+            Assert.AreEqual(2, state.FateEnergy);
+        }
+
+        [Test]
+        public void SwapInitiative_spends_cost_and_swaps_two_target_initiatives()
+        {
+            var state = new CombatState { FateEnergy = 3 };
+            var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
+            var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
+            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var ctx = new FatePlayContext
+            {
+                State = state,
+                Target = first,
+                SecondaryTarget = second,
+                Action = action
+            };
+
+            new SwapInitiativeHandler().Apply(ctx);
+
+            Assert.AreEqual(5, first.Initiative);
+            Assert.AreEqual(1, second.Initiative);
+            Assert.AreEqual(2, state.FateEnergy);
+            Assert.AreEqual(1, ctx.FateEnergySpent);
+        }
+
+        [Test]
+        public void SwapInitiative_can_turn_basic_condition_into_success_before_resolution()
+        {
+            var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+            var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
+            var player = Card(
+                "quick_cut",
+                Side.Player,
+                2,
+                EffectData.Conditional(
+                    EffectKeys.Damage,
+                    amount: 2,
+                    condition: new FirstToTrigger(),
+                    successAmount: 10));
+            state.Zone.Add(enemy);
+            state.Zone.Add(player);
+
+            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
+            new SwapInitiativeHandler().Apply(new FatePlayContext
+            {
+                State = state,
+                Target = enemy,
+                SecondaryTarget = player,
+                Action = action
+            });
+
+            var events = new TurnResolver(EffectRegistry()).Resolve(state, 0);
+            var resolved = (CardResolved)events[1];
+
+            Assert.AreEqual(2, enemy.Initiative);
+            Assert.AreEqual(1, player.Initiative);
+            Assert.AreEqual(ConditionTier.Success, resolved.ConditionTier);
+            Assert.AreEqual(10, resolved.DamageDealt);
+            Assert.AreEqual(2, state.FateEnergy);
+        }
+
+        [Test]
+        public void Lock_spends_cost_and_locks_target_card()
+        {
+            var state = new CombatState { FateEnergy = 3 };
+            var card = Card("quick_cut", Side.Player, 2, new EffectData(EffectKeys.Damage, 2));
+            var action = new FateActionData(FateActionKeys.Lock, cost: 1, amount: 0);
+            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+
+            new LockHandler().Apply(ctx);
+
+            Assert.IsTrue(card.IsLocked);
+            Assert.AreEqual(2, state.FateEnergy);
+            Assert.AreEqual(1, ctx.FateEnergySpent);
+        }
+
+        [Test]
+        public void ChangeInitiative_rejects_locked_target()
+        {
+            var state = new CombatState { FateEnergy = 3 };
+            var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
+            card.IsLocked = true;
+            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+
+            Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
+            new ChangeInitiativeHandler().Apply(ctx);
+
+            Assert.AreEqual(4, card.Initiative);
+            Assert.AreEqual(3, state.FateEnergy);
+            Assert.AreEqual(0, ctx.FateEnergySpent);
+        }
+
+        [Test]
+        public void SwapInitiative_rejects_when_either_target_is_locked()
+        {
+            var state = new CombatState { FateEnergy = 3 };
+            var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
+            var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
+            second.IsLocked = true;
+            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var ctx = new FatePlayContext
+            {
+                State = state,
+                Target = first,
+                SecondaryTarget = second,
+                Action = action
+            };
+
+            Assert.IsFalse(new SwapInitiativeHandler().CanApply(ctx));
+            new SwapInitiativeHandler().Apply(ctx);
+
+            Assert.AreEqual(1, first.Initiative);
+            Assert.AreEqual(5, second.Initiative);
+            Assert.AreEqual(3, state.FateEnergy);
+            Assert.AreEqual(0, ctx.FateEnergySpent);
+        }
+
+        private static CombatState CloneStateForResolution(CombatState source)
+        {
+            var clone = new CombatState
+            {
+                PlayerHp = source.PlayerHp,
+                FateEnergy = source.FateEnergy,
+                FateEnergyPerTurn = source.FateEnergyPerTurn,
+                RngSeed = source.RngSeed
+            };
+
+            foreach (var enemy in source.Enemies)
+            {
+                clone.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));
+            }
+
+            foreach (var card in source.Zone.Cards)
+            {
+                clone.Zone.Add(new ActionCardInstance(card.Def)
+                {
+                    Initiative = card.Initiative,
+                    TargetId = card.TargetId
+                });
+            }
+
+            return clone;
+        }
+    }
+}

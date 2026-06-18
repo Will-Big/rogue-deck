@@ -29,6 +29,8 @@
   <ItemGroup>
     <!-- Pure-C# core (no UnityEngine references) -->
     <Compile Include="../../Assets/FateWeaver/Core/**/*.cs" />
+    <!-- Pure-C# simulation layer -->
+    <Compile Include="../../Assets/FateWeaver/Simulation/**/*.cs" />
     <!-- Shared EditMode test sources (must use only NUnit, no UnityEngine.TestTools) -->
     <Compile Include="../../Assets/FateWeaver/Tests/EditMode/**/*.cs" />
   </ItemGroup>

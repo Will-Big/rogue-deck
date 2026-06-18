@@ -1,0 +1,110 @@
+using NUnit.Framework;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
+using FateWeaver.Core.Effects;
+
+namespace FateWeaver.Tests
+{
+    public class ConditionEvaluatorTests
+    {
+        private static ActionCardInstance Card(
+            string id,
+            Side side,
+            CardType type,
+            int initiative,
+            string targetId = null)
+        {
+            var def = new CardDefinition(id, id, side, type, initiative,
+                new[] { new EffectData(EffectKeys.Damage, 1) });
+            return new ActionCardInstance(def) { TargetId = targetId };
+        }
+
+        [Test]
+        public void FirstToTrigger_succeeds_only_for_first_resolving_card()
+        {
+            var state = new CombatState();
+            var early = Card("early", Side.Player, CardType.Attack, 1);
+            var late = Card("late", Side.Player, CardType.Attack, 2);
+            state.Zone.Add(late);
+            state.Zone.Add(early);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new FirstToTrigger(), early, ctx));
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new FirstToTrigger(), late, ctx));
+        }
+
+        [Test]
+        public void WithinNth_succeeds_for_cards_before_the_nth_slot()
+        {
+            var state = new CombatState();
+            var first = Card("first", Side.Player, CardType.Attack, 1);
+            var second = Card("second", Side.Player, CardType.Attack, 2);
+            var third = Card("third", Side.Player, CardType.Attack, 3);
+            state.Zone.Add(third);
+            state.Zone.Add(first);
+            state.Zone.Add(second);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new WithinNth(2), first, ctx));
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new WithinNth(2), second, ctx));
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new WithinNth(2), third, ctx));
+        }
+
+        [Test]
+        public void AdjacentCardIs_matches_direction_side_and_type()
+        {
+            var state = new CombatState();
+            var setup = Card("setup", Side.Player, CardType.Skill, 1);
+            var strike = Card("strike", Side.Player, CardType.Attack, 2);
+            var enemy = Card("jab", Side.Enemy, CardType.Attack, 3);
+            state.Zone.Add(strike);
+            state.Zone.Add(enemy);
+            state.Zone.Add(setup);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(
+                ConditionTier.Success,
+                ConditionEvaluator.Evaluate(
+                    new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Skill),
+                    strike,
+                    ctx));
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                ConditionEvaluator.Evaluate(
+                    new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Skill),
+                    strike,
+                    ctx));
+        }
+
+        [Test]
+        public void BeforeNextEnemyAttack_returns_basic_when_an_enemy_attack_already_resolved()
+        {
+            var state = new CombatState();
+            var enemy = Card("jab", Side.Enemy, CardType.Attack, 1);
+            var player = Card("counter", Side.Player, CardType.Attack, 2);
+            state.Zone.Add(player);
+            state.Zone.Add(enemy);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new BeforeNextEnemyAttack(), player, ctx));
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new BeforeNextEnemyAttack(), enemy, ctx));
+        }
+
+        [Test]
+        public void SameTarget_succeeds_when_previous_player_card_targets_same_entity()
+        {
+            var state = new CombatState();
+            var mark = Card("mark", Side.Player, CardType.Skill, 1, targetId: "goblin");
+            var strike = Card("strike", Side.Player, CardType.Attack, 2, targetId: "goblin");
+            var other = Card("other", Side.Player, CardType.Attack, 3, targetId: "slime");
+            state.Zone.Add(other);
+            state.Zone.Add(strike);
+            state.Zone.Add(mark);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new SameTarget(), strike, ctx));
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new SameTarget(), other, ctx));
+        }
+    }
+}

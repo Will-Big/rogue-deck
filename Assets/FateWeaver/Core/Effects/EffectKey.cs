@@ -22,5 +22,7 @@ namespace FateWeaver.Core.Effects
     public static class EffectKeys
     {
         public static readonly EffectKey Damage = new EffectKey("damage");
+        public static readonly EffectKey NullifyNextPlayerConditionReward =
+            new EffectKey("nullify_next_player_condition_reward");
     }
 }
