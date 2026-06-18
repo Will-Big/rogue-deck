@@ -1,0 +1,57 @@
+using NUnit.Framework;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
+using FateWeaver.Core.Effects;
+
+namespace FateWeaver.Tests
+{
+    public class DamageHandlerTests
+    {
+        private static ActionCardInstance Card(Side side, int amount)
+        {
+            var def = new CardDefinition("c", "c", side, CardType.Attack, 1,
+                new[] { new EffectData(EffectKeys.Damage, amount) });
+            return new ActionCardInstance(def);
+        }
+
+        [Test]
+        public void Player_damage_hits_first_enemy()
+        {
+            var state = new CombatState { PlayerHp = 30 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+            var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, Amount = 5 };
+
+            new DamageHandler().Apply(ctx);
+
+            Assert.AreEqual(7, state.Enemies[0].Hp);
+            Assert.AreEqual(5, ctx.DamageDealt);
+            Assert.AreEqual("goblin", ctx.TargetId);
+        }
+
+        [Test]
+        public void Enemy_damage_hits_player()
+        {
+            var state = new CombatState { PlayerHp = 30 };
+            state.Enemies.Add(new Enemy("goblin", 12));
+            var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, Amount = 4 };
+
+            new DamageHandler().Apply(ctx);
+
+            Assert.AreEqual(26, state.PlayerHp);
+            Assert.AreEqual(4, ctx.DamageDealt);
+            Assert.AreEqual("player", ctx.TargetId);
+        }
+
+        [Test]
+        public void Registry_resolves_handler_by_key_and_throws_on_unknown()
+        {
+            var registry = new EffectRegistry();
+            var handler = new DamageHandler();
+            registry.Register(handler);
+
+            Assert.AreSame(handler, registry.Resolve(EffectKeys.Damage));
+            Assert.Throws<System.Collections.Generic.KeyNotFoundException>(
+                () => registry.Resolve(new EffectKey("nope")));
+        }
+    }
+}
