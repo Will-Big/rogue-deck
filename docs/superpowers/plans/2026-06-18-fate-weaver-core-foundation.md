@@ -14,22 +14,27 @@
 
 ## Running Tests
 
-EditMode tests run through Unity Test Framework. Two ways:
+The pure-C# Core is verified headlessly via a parallel **.NET test project** at
+`Tests/Headless/FateWeaver.Tests.Headless.csproj`. It compiles the same Core + EditMode
+test sources at **LangVersion 9** (matching Unity 6's compiler), so any C# 10+ feature
+(`record struct`, file-scoped namespaces, …) or `UnityEngine` reference fails here too —
+a faithful proxy for Unity's constraints. This runs while the Unity editor stays open.
 
-- **Inner loop (fast):** Unity Editor → `Window ▸ General ▸ Test Runner` → `EditMode` tab → `Run All`. Or in Rider/VS, run the `FateWeaver.Tests.EditMode` assembly's tests.
-- **Canonical CLI (reproducible):** close the Editor first, then:
+- **Primary (headless, fast — use this throughout):**
 
 ```bash
-"C:/Program Files/Unity/Hub/Editor/6000.2.13f1/Editor/Unity.exe" \
-  -batchmode -projectPath "C:/UnityProjects/Rogue-deck" \
-  -runTests -testPlatform EditMode \
-  -testResults "C:/UnityProjects/Rogue-deck/test-results.xml" \
-  -logFile - -quit
+dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo
 ```
 
-(Adjust the editor path if your install differs. Exit code 0 = all passed; results in `test-results.xml`.)
+Exit code 0 = all passed; runs in ~1s, no Unity needed.
 
-Throughout this plan, **"Run the EditMode tests"** means one of the above.
+- **Secondary (in Unity):** Unity Editor → `Window ▸ General ▸ Test Runner` → `EditMode` tab → `Run All`. Use to confirm the Unity asmdefs are wired correctly.
+
+Throughout this plan, **"Run the EditMode tests"** means the `dotnet test` command above.
+
+**Constraints (because the same sources compile under Unity 6 / C# 9):**
+- EditMode tests MUST use only NUnit (`[Test]`, `Assert`, `CollectionAssert`) — no `UnityEngine.TestTools` / `[UnityTest]`.
+- Core must stay within C# 9: use `record` (class) and plain `readonly struct`, NOT `record struct`. Records require the `IsExternalInit` shim added in Task M0.1.
 
 ---
 
@@ -67,6 +72,8 @@ Assets/FateWeaver/
 
 All Core types live in **one assembly**, so sub-namespace cross-references (e.g., `Effects` ↔ `Combat`) are fine.
 
+The headless test harness already exists (created during setup): `Tests/Headless/FateWeaver.Tests.Headless.csproj`. It `<Compile Include>`s `Assets/FateWeaver/Core/**/*.cs` and `Assets/FateWeaver/Tests/EditMode/**/*.cs`, so new Core/test files are picked up automatically — no edits to the csproj are needed during these tasks.
+
 ---
 
 ## Task M0.1: Core assembly + folders + base enums
@@ -75,6 +82,7 @@ All Core types live in **one assembly**, so sub-namespace cross-references (e.g.
 - Create: `Assets/FateWeaver/Core/FateWeaver.Core.asmdef`
 - Create: `Assets/FateWeaver/Core/Cards/Side.cs`
 - Create: `Assets/FateWeaver/Core/Cards/CardType.cs`
+- Create: `Assets/FateWeaver/Core/Compat/IsExternalInit.cs` (lets C# 9 `record`/`init` compile under Unity 6 / netstandard2.1)
 
 - [ ] **Step 1: Create the Core asmdef**
 
@@ -126,9 +134,21 @@ namespace FateWeaver.Core.Cards
 }
 ```
 
-- [ ] **Step 3: Let Unity compile**
+`Assets/FateWeaver/Core/Compat/IsExternalInit.cs` (required for C# 9 records under Unity's netstandard2.1; excluded automatically on net6.0 where the BCL already provides it):
 
-In the Unity Editor, let the domain reload finish. Expected: no compile errors in the Console; a `FateWeaver.Core` assembly appears.
+```csharp
+#if !NET5_0_OR_GREATER
+namespace System.Runtime.CompilerServices
+{
+    /// <summary>Polyfill so C# 9 records / init-only setters compile on netstandard2.1 (Unity 6).</summary>
+    internal static class IsExternalInit { }
+}
+#endif
+```
+
+- [ ] **Step 3: Build headless to confirm it compiles**
+
+Run the EditMode tests (the `dotnet test` command from "Running Tests"). Expected: build succeeds; 0 tests (no test sources yet) — that is fine. This proves the Core sources compile at LangVersion 9.
 
 - [ ] **Step 4: Commit** (skip if the project is not yet a git repo — see "Note on git" at the end)
 
@@ -223,9 +243,9 @@ Add this line at the top of `Assets/FateWeaver/Core/Cards/Side.cs`:
 using UnityEngine; // TEMP - must fail to compile
 ```
 
-- [ ] **Step 2: Let Unity recompile and confirm it FAILS**
+- [ ] **Step 2: Build headless and confirm it FAILS**
 
-Expected: Console shows a compile error like `The type or namespace name 'UnityEngine' could not be found` for `FateWeaver.Core`. This is the desired result — Core cannot see UnityEngine.
+Run the EditMode tests (`dotnet test ...`). Expected: BUILD FAILS with `The type or namespace name 'UnityEngine' could not be found`. The headless project has no UnityEngine reference (and the Core asmdef has `noEngineReferences:true`), so this proves Core cannot depend on UnityEngine — the same guard Unity enforces.
 
 - [ ] **Step 3: Remove the temporary line**
 
@@ -252,17 +272,30 @@ Plain data/record types with no behavior. Verified by a construction smoke test.
 `Assets/FateWeaver/Core/Effects/EffectKey.cs`:
 
 ```csharp
+using System;
+
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Typed wrapper over a string id (open set, type-safe). See spec §4.5.</summary>
-    public readonly record struct EffectKey(string Id)
+    /// <summary>Typed wrapper over a string id (open set, type-safe). See spec §4.5.
+    /// Plain readonly struct (NOT record struct) to stay within Unity 6's C# 9.</summary>
+    public readonly struct EffectKey : IEquatable<EffectKey>
     {
+        public string Id { get; }
+
+        public EffectKey(string id) => Id = id;
+
+        public bool Equals(EffectKey other) => Id == other.Id;
+        public override bool Equals(object obj) => obj is EffectKey other && Equals(other);
+        public override int GetHashCode() => Id == null ? 0 : Id.GetHashCode();
         public override string ToString() => Id;
+
+        public static bool operator ==(EffectKey a, EffectKey b) => a.Equals(b);
+        public static bool operator !=(EffectKey a, EffectKey b) => !a.Equals(b);
     }
 
     public static class EffectKeys
     {
-        public static readonly EffectKey Damage = new("damage");
+        public static readonly EffectKey Damage = new EffectKey("damage");
     }
 }
 ```

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Headless test harness for the pure-C# FateWeaver.Core.
+    Compiles the SAME Core + EditMode test sources that Unity compiles, but runs via
+    `dotnet test` (no Unity needed, editor can stay open).
+
+    LangVersion 9 deliberately matches Unity 6's compiler, so any C# 10+ feature
+    (e.g. record struct, file-scoped namespaces) or UnityEngine reference fails HERE
+    too — making this a faithful proxy for Unity's compile constraints.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- Sources live outside this folder; disable the default ./**/*.cs glob. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pure-C# core (no UnityEngine references) -->
+    <Compile Include="../../Assets/FateWeaver/Core/**/*.cs" />
+    <!-- Shared EditMode test sources (must use only NUnit, no UnityEngine.TestTools) -->
+    <Compile Include="../../Assets/FateWeaver/Tests/EditMode/**/*.cs" />
+  </ItemGroup>
+
+</Project>

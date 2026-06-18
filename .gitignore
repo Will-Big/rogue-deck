@@ -71,3 +71,12 @@ crashlytics-build.properties
 # Test results (from the EditMode test runner)
 # ============================================
 /test-results.xml
+
+# ============================================
+# Headless .NET test project (FateWeaver.Tests.Headless)
+# Ignore build output, but KEEP the hand-written .csproj
+# (the broad *.csproj rule above targets Unity-generated files)
+# ============================================
+Tests/Headless/bin/
+Tests/Headless/obj/
+!Tests/Headless/FateWeaver.Tests.Headless.csproj
