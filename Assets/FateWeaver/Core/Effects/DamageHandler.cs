@@ -13,17 +13,18 @@ namespace FateWeaver.Core.Effects
 
         public void Apply(EffectContext ctx)
         {
+            var amount = ctx.Amount + ctx.Card.ConsumePendingDamageBonus();
             if (ctx.Card.Def.Side == Side.Player)
             {
                 var target = SelectEnemy(ctx.State, ctx.Card.TargetId);
-                var damage = FoldIncoming(ctx, target.Statuses, ctx.Amount);
+                var damage = FoldIncoming(ctx, target.Statuses, amount);
                 target.Hp -= damage;
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
             }
             else
             {
-                var damage = FoldIncoming(ctx, ctx.State.PlayerStatuses, ctx.Amount);
+                var damage = FoldIncoming(ctx, ctx.State.PlayerStatuses, amount);
                 ctx.State.PlayerHp -= damage;
                 ctx.DamageDealt = damage;
                 ctx.TargetId = "player";

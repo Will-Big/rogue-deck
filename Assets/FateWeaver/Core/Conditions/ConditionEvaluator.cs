@@ -62,6 +62,21 @@ namespace FateWeaver.Core.Conditions
                         : ConditionTier.Basic;
             }
 
+            if (condition is AllOf allOf)
+            {
+                var tier = ConditionTier.Success;
+                foreach (var child in allOf.Conditions)
+                {
+                    var childTier = Evaluate(child, card, ctx);
+                    if (childTier < tier)
+                    {
+                        tier = childTier;
+                    }
+                }
+
+                return tier;
+            }
+
             throw new NotSupportedException($"Unsupported condition type '{condition.GetType().Name}'.");
         }
 

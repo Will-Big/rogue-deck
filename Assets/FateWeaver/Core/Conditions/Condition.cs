@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Conditions
@@ -22,4 +23,6 @@ namespace FateWeaver.Core.Conditions
         CardType Type) : Condition;
 
     public sealed record SameTarget : Condition;
+
+    public sealed record AllOf(IReadOnlyList<Condition> Conditions) : Condition;
 }
