@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
-using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
-using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
@@ -30,8 +28,8 @@ namespace FateWeaver.Simulation
                 state.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));
             }
 
-            var resolver = new TurnResolver(DefaultEffects(), DefaultStatuses());
-            var fateActions = DefaultFateActions();
+            var resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
+            var fateActions = CombatRegistries.FateActions();
 
             var turns = new List<TurnOutcome>();
             var outcome = Outcome.Ongoing;
@@ -134,35 +132,6 @@ namespace FateWeaver.Simulation
             }
 
             return Outcome.Ongoing;
-        }
-
-        private static EffectRegistry DefaultEffects()
-        {
-            var effects = new EffectRegistry();
-            effects.Register(new DamageHandler());
-            effects.Register(new NullifyNextPlayerConditionRewardHandler());
-            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
-            effects.Register(new ApplyStatusHandler());
-            return effects;
-        }
-
-        private static StatusRegistry DefaultStatuses()
-        {
-            var statuses = new StatusRegistry();
-            statuses.Register(new StunBehavior());
-            statuses.Register(new VulnerableBehavior());
-            statuses.Register(new RewardNullifiedBehavior());
-            statuses.Register(new BlockBehavior());
-            return statuses;
-        }
-
-        private static FateActionRegistry DefaultFateActions()
-        {
-            var actions = new FateActionRegistry();
-            actions.Register(new ChangeInitiativeHandler());
-            actions.Register(new SwapInitiativeHandler());
-            actions.Register(new LockHandler());
-            return actions;
         }
     }
 }

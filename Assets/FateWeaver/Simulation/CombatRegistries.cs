@@ -1,0 +1,40 @@
+using FateWeaver.Core.Effects;
+using FateWeaver.Core.Fate;
+using FateWeaver.Core.Status;
+
+namespace FateWeaver.Simulation
+{
+    /// <summary>Single source of truth for the default effect / status / fate-action registries used by
+    /// the runners and the playtest session — so a new handler is registered everywhere at once.</summary>
+    internal static class CombatRegistries
+    {
+        public static EffectRegistry Effects()
+        {
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new NullifyNextPlayerConditionRewardHandler());
+            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
+            effects.Register(new ApplyStatusHandler());
+            return effects;
+        }
+
+        public static StatusRegistry Statuses()
+        {
+            var statuses = new StatusRegistry();
+            statuses.Register(new StunBehavior());
+            statuses.Register(new VulnerableBehavior());
+            statuses.Register(new RewardNullifiedBehavior());
+            statuses.Register(new BlockBehavior());
+            return statuses;
+        }
+
+        public static FateActionRegistry FateActions()
+        {
+            var actions = new FateActionRegistry();
+            actions.Register(new ChangeInitiativeHandler());
+            actions.Register(new SwapInitiativeHandler());
+            actions.Register(new LockHandler());
+            return actions;
+        }
+    }
+}

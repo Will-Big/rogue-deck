@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
-using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
-using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
@@ -26,8 +24,8 @@ namespace FateWeaver.Simulation
         {
             Scenario = scenario;
             State = BuildState(scenario);
-            _fateResolver = new FatePlayResolver(DefaultFateActions());
-            _turnResolver = new TurnResolver(DefaultEffects(), DefaultStatuses());
+            _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
+            _turnResolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
         }
 
         public FatePlayResult ApplyFateAction(
@@ -90,33 +88,6 @@ namespace FateWeaver.Simulation
             }
 
             return state;
-        }
-
-        private static EffectRegistry DefaultEffects()
-        {
-            var effects = new EffectRegistry();
-            effects.Register(new DamageHandler());
-            effects.Register(new NullifyNextPlayerConditionRewardHandler());
-            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
-            return effects;
-        }
-
-        private static StatusRegistry DefaultStatuses()
-        {
-            var statuses = new StatusRegistry();
-            statuses.Register(new StunBehavior());
-            statuses.Register(new VulnerableBehavior());
-            statuses.Register(new RewardNullifiedBehavior());
-            return statuses;
-        }
-
-        private static FateActionRegistry DefaultFateActions()
-        {
-            var actions = new FateActionRegistry();
-            actions.Register(new ChangeInitiativeHandler());
-            actions.Register(new SwapInitiativeHandler());
-            actions.Register(new LockHandler());
-            return actions;
         }
     }
 }

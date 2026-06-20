@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
-using FateWeaver.Core.Effects;
-using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
 
 namespace FateWeaver.Simulation
@@ -22,7 +20,8 @@ namespace FateWeaver.Simulation
             var initialOrder = SummarizeOrder(state.Zone.ResolutionOrder());
             var fateResult = ApplyFatePlays(state, scenario.FatePlays, cardsById);
             var manipulatedOrder = SummarizeOrder(state.Zone.ResolutionOrder());
-            var timeline = new TurnResolver(DefaultEffects()).Resolve(state, turnIndex: 0);
+            var timeline = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses())
+                .Resolve(state, turnIndex: 0);
 
             return new ScenarioResult(
                 scenario,
@@ -91,7 +90,7 @@ namespace FateWeaver.Simulation
                 plays.Add(new FatePlay(spec.Action, target, secondary));
             }
 
-            return new FatePlayResolver(DefaultFateActions()).Resolve(state, plays);
+            return new FatePlayResolver(CombatRegistries.FateActions()).Resolve(state, plays);
         }
 
         private static IReadOnlyList<OrderCardSummary> SummarizeOrder(IReadOnlyList<ActionCardInstance> cards)
@@ -106,24 +105,6 @@ namespace FateWeaver.Simulation
             }
 
             return summaries;
-        }
-
-        private static EffectRegistry DefaultEffects()
-        {
-            var effects = new EffectRegistry();
-            effects.Register(new DamageHandler());
-            effects.Register(new NullifyNextPlayerConditionRewardHandler());
-            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
-            return effects;
-        }
-
-        private static FateActionRegistry DefaultFateActions()
-        {
-            var actions = new FateActionRegistry();
-            actions.Register(new ChangeInitiativeHandler());
-            actions.Register(new SwapInitiativeHandler());
-            actions.Register(new LockHandler());
-            return actions;
         }
     }
 }
