@@ -2,6 +2,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Fate;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
@@ -14,7 +15,10 @@ namespace FateWeaver.Simulation
                 Chapter8ThreeTurnOpening),
             new SampleMultiTurnScenarioEntry(
                 "mark-combo",
-                MarkCombo)
+                MarkCombo),
+            new SampleMultiTurnScenarioEntry(
+                "counter-stance",
+                CounterStance)
         };
 
         public static MultiTurnScenario Find(string id)
@@ -107,6 +111,52 @@ namespace FateWeaver.Simulation
                         })
                 });
         }
+
+        /// <summary>반격 자세 (doc §11.4 후보 A / §2.3 후행 보상): gain 2 block, and if an enemy attack
+        /// resolved immediately before this card, counter that enemy for 7 (+2 if within the 3rd slot).
+        /// Targets the first enemy (precise "그 적" multi-enemy targeting awaits attacker→entity mapping).</summary>
+        public static MultiTurnScenario CounterStance()
+        {
+            return new MultiTurnScenario(
+                "counter-stance",
+                "Counter Stance",
+                playerHp: 30,
+                enemies: new[] { new EnemySpec("goblin", 100) },
+                turns: new[]
+                {
+                    new TurnScript(
+                        fateEnergy: 3,
+                        zoneCards: new[]
+                        {
+                            EnemyAttack("goblin_jab", initiative: 1, damage: 3),
+                            CounterCard("counter", initiative: 2)
+                        },
+                        fatePlays: new FatePlaySpec[0])
+                });
+        }
+
+        private static ZoneCardSpec CounterCard(string id, int initiative)
+            => new ZoneCardSpec(
+                id, "Counter Stance", Side.Player, CardType.Defense, initiative,
+                new[]
+                {
+                    EffectData.ApplyStatus(
+                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
+                    EffectData.Conditional(
+                        EffectKeys.Damage,
+                        amount: 0,
+                        condition: new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack),
+                        successAmount: 7),
+                    EffectData.Conditional(
+                        EffectKeys.Damage,
+                        amount: 0,
+                        condition: new AllOf(new Condition[]
+                        {
+                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack),
+                            new WithinNth(3)
+                        }),
+                        successAmount: 2)
+                });
 
         private static TurnScript OpeningTurn(string suffix, string enemyId, int enemyDamage)
         {
