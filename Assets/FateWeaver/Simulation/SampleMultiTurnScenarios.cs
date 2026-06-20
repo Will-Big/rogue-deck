@@ -11,7 +11,10 @@ namespace FateWeaver.Simulation
         {
             new SampleMultiTurnScenarioEntry(
                 "chapter-8-three-turn-opening",
-                Chapter8ThreeTurnOpening)
+                Chapter8ThreeTurnOpening),
+            new SampleMultiTurnScenarioEntry(
+                "mark-combo",
+                MarkCombo)
         };
 
         public static MultiTurnScenario Find(string id)
@@ -57,6 +60,51 @@ namespace FateWeaver.Simulation
                     OpeningTurn("t1", "preemptive_thrust", enemyDamage: 3),
                     WristCutTurn(),
                     OpeningTurn("t3", "preemptive_thrust", enemyDamage: 4)
+                });
+        }
+
+        /// <summary>표식 새기기 combo (doc §3.1 + §11.2): the +6 bonus on the next attack lands only when
+        /// BOTH conditions hold (next card is a player attack AND no enemy attack has resolved first).
+        /// Unmanipulated the enemy goes first, so the combo stays at the basic tier (no auto-complete);
+        /// one fate play (delay the enemy) completes it.</summary>
+        public static MultiTurnScenario MarkCombo()
+        {
+            return new MultiTurnScenario(
+                "mark-combo",
+                "Mark Combo",
+                playerHp: 30,
+                enemies: new[] { new EnemySpec("goblin", 30) },
+                turns: new[]
+                {
+                    new TurnScript(
+                        fateEnergy: 3,
+                        zoneCards: new[]
+                        {
+                            EnemyAttack("goblin_jab", initiative: 1, damage: 1),
+                            new ZoneCardSpec(
+                                "mark", "Mark", Side.Player, CardType.Skill, initiative: 2,
+                                effects: new[]
+                                {
+                                    EffectData.Conditional(
+                                        EffectKeys.GrantNextPlayerAttackDamageBonus,
+                                        amount: 0,
+                                        condition: new AllOf(new Condition[]
+                                        {
+                                            new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Attack),
+                                            new BeforeNextEnemyAttack()
+                                        }),
+                                        successAmount: 6)
+                                }),
+                            new ZoneCardSpec(
+                                "slash", "Slash", Side.Player, CardType.Attack, initiative: 3,
+                                effects: new[] { new EffectData(EffectKeys.Damage, 2) })
+                        },
+                        fatePlays: new[]
+                        {
+                            new FatePlaySpec(
+                                new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: 3),
+                                "goblin_jab")
+                        })
                 });
         }
 
