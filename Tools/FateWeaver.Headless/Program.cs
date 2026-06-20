@@ -8,8 +8,7 @@ namespace FateWeaver.Headless
         public static void Main(string[] args)
         {
             var id = args.Length > 0 ? args[0] : "quick-cut-swap";
-            var comparison = new ScenarioRunner().Compare(SampleScenarios.Find(id));
-            Console.Write(ScenarioComparisonReport.ToMarkdown(comparison));
+            Console.Write(ScenarioCliReport.Build(id));
         }
     }
 }

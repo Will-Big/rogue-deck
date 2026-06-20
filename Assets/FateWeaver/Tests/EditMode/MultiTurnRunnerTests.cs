@@ -75,5 +75,82 @@ namespace FateWeaver.Tests
             Assert.AreEqual(1, result.Turns.Count);  // stopped after turn 0
             Assert.AreEqual(Outcome.Lose, result.Outcome);
         }
+
+        [Test]
+        public void Chapter_8_three_turn_compare_keeps_baseline_basic_and_manipulated_successful()
+        {
+            var scenario = SampleMultiTurnScenarios.Chapter8ThreeTurnOpening();
+
+            var comparison = new MultiTurnRunner().Compare(scenario);
+
+            Assert.AreEqual(3, comparison.Baseline.Turns.Count);
+            Assert.AreEqual(3, comparison.Manipulated.Turns.Count);
+
+            var baselineQuickCuts = comparison.Baseline.Turns
+                .SelectMany(turn => turn.Timeline)
+                .OfType<CardResolved>()
+                .Where(card => card.CardId.StartsWith("quick_cut"))
+                .ToArray();
+            var manipulatedQuickCuts = comparison.Manipulated.Turns
+                .SelectMany(turn => turn.Timeline)
+                .OfType<CardResolved>()
+                .Where(card => card.CardId.StartsWith("quick_cut"))
+                .ToArray();
+
+            Assert.AreEqual(3, baselineQuickCuts.Length);
+            Assert.AreEqual(3, manipulatedQuickCuts.Length);
+            Assert.IsTrue(baselineQuickCuts.All(card => card.ConditionTier == Core.Conditions.ConditionTier.Basic));
+            Assert.IsTrue(manipulatedQuickCuts.All(card => card.ConditionTier == Core.Conditions.ConditionTier.Success));
+            Assert.LessOrEqual(comparison.EnemyHpDelta("goblin"), -24);
+        }
+
+        [Test]
+        public void Multi_turn_comparison_report_includes_each_turn_and_final_delta()
+        {
+            var comparison = new MultiTurnRunner().Compare(
+                SampleMultiTurnScenarios.Chapter8ThreeTurnOpening());
+
+            var markdown = MultiTurnComparisonReport.ToMarkdown(comparison);
+
+            StringAssert.Contains("# Multi-Turn Scenario Compare: Chapter 8 Three-Turn Opening", markdown);
+            StringAssert.Contains("## Baseline", markdown);
+            StringAssert.Contains("## Manipulated", markdown);
+            StringAssert.Contains("### Turn 1", markdown);
+            StringAssert.Contains("### Turn 2", markdown);
+            StringAssert.Contains("### Turn 3", markdown);
+            StringAssert.Contains("- goblin HP delta: -24", markdown);
+        }
+
+        [Test]
+        public void Multi_turn_sample_registry_finds_chapter_8_scenario_by_id()
+        {
+            var scenario = SampleMultiTurnScenarios.Find("chapter-8-three-turn-opening");
+
+            Assert.AreEqual("Chapter 8 Three-Turn Opening", scenario.Name);
+            Assert.AreEqual(3, scenario.Turns.Count);
+            Assert.IsTrue(SampleMultiTurnScenarios.TryFind(
+                "chapter-8-three-turn-opening", out var found));
+            Assert.AreEqual(scenario.Id, found.Id);
+            Assert.IsFalse(SampleMultiTurnScenarios.TryFind("unknown", out _));
+        }
+
+        [Test]
+        public void Cli_report_routes_multi_turn_id_to_multi_turn_comparison()
+        {
+            var markdown = ScenarioCliReport.Build("chapter-8-three-turn-opening");
+
+            StringAssert.StartsWith(
+                "# Multi-Turn Scenario Compare: Chapter 8 Three-Turn Opening",
+                markdown);
+            StringAssert.Contains("### Turn 3", markdown);
+        }
+
+        [Test]
+        public void Cli_report_keeps_existing_single_turn_route()
+        {
+            var markdown = ScenarioCliReport.Build("quick-cut-swap");
+
+            StringAssert.StartsWith("# Scenario Compare: Quick Cut Swap", markdown);
+        }
     }
 }

@@ -106,5 +106,30 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new SameTarget(), strike, ctx));
             Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new SameTarget(), other, ctx));
         }
+
+        [Test]
+        public void AllOf_uses_the_lowest_tier_from_its_child_conditions()
+        {
+            var state = new CombatState();
+            var mark = Card("mark", Side.Player, CardType.Skill, 1);
+            var chain = Card("chain", Side.Player, CardType.Attack, 2);
+            state.Zone.Add(mark);
+            state.Zone.Add(chain);
+            var ctx = ResolutionContext.From(state);
+
+            var success = new AllOf(new Condition[]
+            {
+                new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Skill),
+                new WithinNth(3)
+            });
+            var basic = new AllOf(new Condition[]
+            {
+                new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Skill),
+                new WithinNth(3)
+            });
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(success, chain, ctx));
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(basic, chain, ctx));
+        }
     }
 }

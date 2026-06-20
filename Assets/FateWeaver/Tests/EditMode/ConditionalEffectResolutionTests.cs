@@ -102,5 +102,41 @@ namespace FateWeaver.Tests
             Assert.AreEqual(2, resolved.DamageDealt);
             Assert.AreEqual(ConditionTier.Basic, resolved.ConditionTier);
         }
+
+        [Test]
+        public void Mark_success_adds_one_time_damage_bonus_to_the_next_player_attack()
+        {
+            var state = new CombatState { PlayerHp = 30 };
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var mark = new ActionCardInstance(new CardDefinition(
+                "mark_target",
+                "Mark Target",
+                Side.Player,
+                CardType.Skill,
+                1,
+                new[]
+                {
+                    EffectData.Conditional(
+                        EffectKeys.GrantNextPlayerAttackDamageBonus,
+                        amount: 0,
+                        condition: new AdjacentCardIs(
+                            AdjacentDirection.Next,
+                            Side.Player,
+                            CardType.Attack),
+                        successAmount: 6)
+                }));
+            var chain = Card("chain_slash", Side.Player, 2,
+                new EffectData(EffectKeys.Damage, 1));
+            state.Zone.Add(mark);
+            state.Zone.Add(chain);
+            var registry = Registry();
+            registry.Register(new GrantNextPlayerAttackDamageBonusHandler());
+
+            var events = new TurnResolver(registry).Resolve(state, 0);
+
+            Assert.AreEqual(ConditionTier.Success, ((CardResolved)events[1]).ConditionTier);
+            Assert.AreEqual(7, ((CardResolved)events[2]).DamageDealt);
+            Assert.AreEqual(13, state.Enemies[0].Hp);
+        }
     }
 }
