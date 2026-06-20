@@ -13,6 +13,15 @@ namespace FateWeaver.Simulation
     /// win/lose. Wires the StatusRegistry so statuses and their lifetimes are active across turns.</summary>
     public sealed class MultiTurnRunner
     {
+        public MultiTurnComparisonResult Compare(MultiTurnScenario scenario)
+        {
+            var baselineScenario = WithoutFatePlays(scenario);
+            return new MultiTurnComparisonResult(
+                scenario,
+                Run(baselineScenario),
+                Run(scenario));
+        }
+
         public MultiTurnResult Run(MultiTurnScenario scenario)
         {
             var state = new CombatState { PlayerHp = scenario.PlayerHp };
@@ -49,6 +58,25 @@ namespace FateWeaver.Simulation
             }
 
             return new MultiTurnResult(scenario, state, turns, outcome);
+        }
+
+        private static MultiTurnScenario WithoutFatePlays(MultiTurnScenario scenario)
+        {
+            var turns = new List<TurnScript>();
+            foreach (var turn in scenario.Turns)
+            {
+                turns.Add(new TurnScript(
+                    turn.FateEnergy,
+                    turn.ZoneCards,
+                    new FatePlaySpec[0]));
+            }
+
+            return new MultiTurnScenario(
+                scenario.Id,
+                scenario.Name,
+                scenario.PlayerHp,
+                scenario.Enemies,
+                turns);
         }
 
         private static Dictionary<string, ActionCardInstance> LoadZone(
@@ -113,6 +141,7 @@ namespace FateWeaver.Simulation
             var effects = new EffectRegistry();
             effects.Register(new DamageHandler());
             effects.Register(new NullifyNextPlayerConditionRewardHandler());
+            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
             return effects;
         }
 

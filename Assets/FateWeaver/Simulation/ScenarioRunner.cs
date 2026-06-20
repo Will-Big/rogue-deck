@@ -113,6 +113,7 @@ namespace FateWeaver.Simulation
             var effects = new EffectRegistry();
             effects.Register(new DamageHandler());
             effects.Register(new NullifyNextPlayerConditionRewardHandler());
+            effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
             return effects;
         }
 
