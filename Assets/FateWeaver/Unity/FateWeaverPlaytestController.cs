@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
+using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Unity
 {
     public sealed class FateWeaverPlaytestController : MonoBehaviour
     {
-        private PlaytestSession _session;
+        private MultiTurnPlaytestSession _session;
+        private MultiTurnScenario _currentScenario;
         private string _primaryCardId;
         private string _secondaryCardId;
         private string _message;
@@ -19,7 +20,7 @@ namespace FateWeaver.Unity
 
         private void Awake()
         {
-            LoadScenario(SampleScenarios.All[0].Build());
+            LoadScenario(SampleMultiTurnScenarios.All[0].Build());
         }
 
         private void OnGUI()
@@ -31,8 +32,8 @@ namespace FateWeaver.Unity
             GUILayout.BeginArea(new Rect(20, 20, Screen.width - 40, Screen.height - 40));
             _scroll = GUILayout.BeginScrollView(_scroll);
 
-            GUILayout.Label("FATE WEAVER - CORE PLAYTEST", HeaderStyle());
-            GUILayout.Label("Select cards, manipulate the future, then resolve the turn.");
+            GUILayout.Label("FATE WEAVER - MULTI-TURN PLAYTEST", HeaderStyle());
+            GUILayout.Label("Select cards, manipulate the future, resolve, then advance the turn.");
             GUILayout.Space(8);
 
             DrawScenarioSelection();
@@ -53,7 +54,7 @@ namespace FateWeaver.Unity
         {
             GUILayout.Label("SCENARIO", SectionStyle());
             GUILayout.BeginHorizontal();
-            foreach (var entry in SampleScenarios.All)
+            foreach (var entry in SampleMultiTurnScenarios.All)
             {
                 if (GUILayout.Button(entry.Id, GUILayout.Height(30)))
                 {
@@ -62,17 +63,24 @@ namespace FateWeaver.Unity
             }
 
             GUILayout.EndHorizontal();
-            GUILayout.Label("Current: " + _session.Scenario.Name);
+            GUILayout.Label("Current: " + _session.Name
+                + "    Turn " + (_session.TurnIndex + 1) + " / " + _session.TurnCount);
         }
 
         private void DrawState()
         {
             GUILayout.Label("COMBAT STATE", SectionStyle());
             GUILayout.Label("Player HP: " + _session.State.PlayerHp
-                + "    Fate Energy: " + _session.State.FateEnergy);
+                + "    Fate Energy: " + _session.State.FateEnergy
+                + "    " + StatusText(_session.State.PlayerStatuses));
             foreach (var enemy in _session.State.Enemies)
             {
-                GUILayout.Label(enemy.Id + " HP: " + enemy.Hp);
+                GUILayout.Label(enemy.Id + " HP: " + enemy.Hp + "    " + StatusText(enemy.Statuses));
+            }
+
+            if (_session.IsComplete)
+            {
+                GUILayout.Label("RESULT: " + _session.Outcome, MessageStyle());
             }
         }
 
@@ -112,7 +120,7 @@ namespace FateWeaver.Unity
         private void DrawActions()
         {
             GUILayout.Label("FATE ACTIONS (cost 1)", SectionStyle());
-            GUI.enabled = !_session.IsResolved;
+            GUI.enabled = !_session.CurrentTurnResolved;
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Initiative -2", GUILayout.Height(32)))
             {
@@ -137,16 +145,27 @@ namespace FateWeaver.Unity
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            GUI.enabled = !_session.CurrentTurnResolved;
             if (GUILayout.Button("RESOLVE TURN", GUILayout.Height(42)))
             {
-                _timeline = _session.Resolve();
+                _timeline = _session.ResolveTurn();
                 _message = "Turn resolved.";
+            }
+
+            GUI.enabled = _session.CurrentTurnResolved && !_session.IsComplete;
+            if (GUILayout.Button("NEXT TURN", GUILayout.Height(42)))
+            {
+                _session.AdvanceTurn();
+                _primaryCardId = null;
+                _secondaryCardId = null;
+                _timeline = null;
+                _message = "Turn " + (_session.TurnIndex + 1) + " ready.";
             }
 
             GUI.enabled = true;
             if (GUILayout.Button("RESET SCENARIO", GUILayout.Height(42)))
             {
-                LoadScenario(SampleScenarios.Find(_session.Scenario.Id));
+                LoadScenario(_currentScenario);
             }
 
             GUILayout.EndHorizontal();
@@ -164,7 +183,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            GUILayout.Label("RESOLUTION", SectionStyle());
+            GUILayout.Label("RESOLUTION (Turn " + (_session.TurnIndex + 1) + ")", SectionStyle());
             foreach (var evt in _timeline)
             {
                 if (evt is CardResolved card)
@@ -225,13 +244,26 @@ namespace FateWeaver.Unity
             }
         }
 
-        private void LoadScenario(ScenarioDefinition scenario)
+        private void LoadScenario(MultiTurnScenario scenario)
         {
-            _session = new PlaytestSession(scenario);
+            _currentScenario = scenario;
+            _session = new MultiTurnPlaytestSession(scenario);
             _primaryCardId = null;
             _secondaryCardId = null;
             _timeline = null;
             _message = "Scenario loaded.";
+        }
+
+        private static string StatusText(StatusBag bag)
+        {
+            var parts = new List<string>();
+            foreach (var status in bag.All)
+            {
+                var amount = status.Magnitude > 0 ? status.Magnitude : status.Count;
+                parts.Add(amount > 0 ? status.Key + "(" + amount + ")" : status.Key.ToString());
+            }
+
+            return parts.Count == 0 ? string.Empty : "[" + string.Join(", ", parts) + "]";
         }
 
         private static GUIStyle HeaderStyle()
