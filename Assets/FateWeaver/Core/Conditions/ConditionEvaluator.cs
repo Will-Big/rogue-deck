@@ -33,7 +33,7 @@ namespace FateWeaver.Core.Conditions
                 var neighbor = ctx.CardAt(index + offset);
                 return neighbor != null
                     && neighbor.Def.Side == adjacent.Side
-                    && neighbor.Def.Type == adjacent.Type
+                    && (!adjacent.Type.HasValue || neighbor.Def.Type == adjacent.Type.Value)
                         ? ConditionTier.Success
                         : ConditionTier.Basic;
             }

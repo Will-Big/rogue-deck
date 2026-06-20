@@ -18,7 +18,10 @@ namespace FateWeaver.Simulation
                 MarkCombo),
             new SampleMultiTurnScenarioEntry(
                 "counter-stance",
-                CounterStance)
+                CounterStance),
+            new SampleMultiTurnScenarioEntry(
+                "chain-slash",
+                ChainSlash)
         };
 
         public static MultiTurnScenario Find(string id)
@@ -156,6 +159,47 @@ namespace FateWeaver.Simulation
                             new WithinNth(3)
                         }),
                         successAmount: 2)
+                });
+
+        /// <summary>연쇄 베기 (doc §11.3): deal 1, and if the immediately-previous card is a player action
+        /// card AND this resolves within the 3rd slot, "activate once more" — modelled as a second hit of
+        /// 5 (1 + 4). Two conditions (AllOf) gate the re-trigger so it does not auto-complete.</summary>
+        public static MultiTurnScenario ChainSlash()
+        {
+            return new MultiTurnScenario(
+                "chain-slash",
+                "Chain Slash",
+                playerHp: 30,
+                enemies: new[] { new EnemySpec("goblin", 100) },
+                turns: new[]
+                {
+                    new TurnScript(
+                        fateEnergy: 3,
+                        zoneCards: new[]
+                        {
+                            new ZoneCardSpec("prep", "Prep", Side.Player, CardType.Skill, 1,
+                                new[] { new EffectData(EffectKeys.Damage, 1) }),
+                            ChainSlashCard("chain", initiative: 2)
+                        },
+                        fatePlays: new FatePlaySpec[0])
+                });
+        }
+
+        private static ZoneCardSpec ChainSlashCard(string id, int initiative)
+            => new ZoneCardSpec(
+                id, "Chain Slash", Side.Player, CardType.Attack, initiative,
+                new[]
+                {
+                    new EffectData(EffectKeys.Damage, 1),
+                    EffectData.Conditional(
+                        EffectKeys.Damage,
+                        amount: 0,
+                        condition: new AllOf(new Condition[]
+                        {
+                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Player), // any player action card
+                            new WithinNth(3)
+                        }),
+                        successAmount: 5)
                 });
 
         private static TurnScript OpeningTurn(string suffix, string enemyId, int enemyDamage)
