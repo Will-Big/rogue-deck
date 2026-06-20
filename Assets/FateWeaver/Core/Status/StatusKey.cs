@@ -24,5 +24,6 @@ namespace FateWeaver.Core.Status
         public static readonly StatusKey Stun = new StatusKey("stun");
         public static readonly StatusKey Vulnerable = new StatusKey("vulnerable");
         public static readonly StatusKey RewardNullified = new StatusKey("reward_nullified");
+        public static readonly StatusKey Block = new StatusKey("block");
     }
 }

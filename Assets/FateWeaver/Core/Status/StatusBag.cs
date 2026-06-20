@@ -11,7 +11,7 @@ namespace FateWeaver.Core.Status
         public IReadOnlyList<StatusInstance> All => _statuses;
 
         /// <summary>Applies a status with the given lifetime (replaces any existing instance of the key).</summary>
-        public void Add(StatusKey key, StatusLifetime lifetime)
+        public void Add(StatusKey key, StatusLifetime lifetime, int magnitude = 0)
         {
             var existing = Get(key);
             if (existing != null)
@@ -19,7 +19,7 @@ namespace FateWeaver.Core.Status
                 _statuses.Remove(existing);
             }
 
-            _statuses.Add(new StatusInstance(key, lifetime));
+            _statuses.Add(new StatusInstance(key, lifetime, magnitude));
         }
 
         public StatusInstance Get(StatusKey key)

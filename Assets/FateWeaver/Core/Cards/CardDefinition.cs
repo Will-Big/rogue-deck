@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Cards
 {
@@ -9,6 +10,11 @@ namespace FateWeaver.Core.Cards
     {
         public Condition Condition { get; init; }
         public int? SuccessAmount { get; init; }
+
+        // Status application (read by the ApplyStatus effect handler). Magnitude rides on Amount.
+        public StatusKey? StatusKey { get; init; }
+        public StatusLifetime? StatusLifetime { get; init; }
+        public StatusApplyTarget StatusTarget { get; init; }
 
         public static EffectData Conditional(
             EffectKey key,
@@ -19,6 +25,18 @@ namespace FateWeaver.Core.Cards
             {
                 Condition = condition,
                 SuccessAmount = successAmount
+            };
+
+        public static EffectData ApplyStatus(
+            StatusKey statusKey,
+            StatusLifetime lifetime,
+            StatusApplyTarget target,
+            int magnitude = 0)
+            => new EffectData(EffectKeys.ApplyStatus, magnitude)
+            {
+                StatusKey = statusKey,
+                StatusLifetime = lifetime,
+                StatusTarget = target
             };
     }
 

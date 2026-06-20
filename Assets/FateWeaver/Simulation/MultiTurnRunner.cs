@@ -142,6 +142,7 @@ namespace FateWeaver.Simulation
             effects.Register(new DamageHandler());
             effects.Register(new NullifyNextPlayerConditionRewardHandler());
             effects.Register(new GrantNextPlayerAttackDamageBonusHandler());
+            effects.Register(new ApplyStatusHandler());
             return effects;
         }
 
@@ -151,6 +152,7 @@ namespace FateWeaver.Simulation
             statuses.Register(new StunBehavior());
             statuses.Register(new VulnerableBehavior());
             statuses.Register(new RewardNullifiedBehavior());
+            statuses.Register(new BlockBehavior());
             return statuses;
         }
 

@@ -26,5 +26,6 @@ namespace FateWeaver.Core.Effects
             new EffectKey("nullify_next_player_condition_reward");
         public static readonly EffectKey GrantNextPlayerAttackDamageBonus =
             new EffectKey("grant_next_player_attack_damage_bonus");
+        public static readonly EffectKey ApplyStatus = new EffectKey("apply_status");
     }
 }

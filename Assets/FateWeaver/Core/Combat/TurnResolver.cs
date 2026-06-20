@@ -51,6 +51,7 @@ namespace FateWeaver.Core.Combat
                         State = state,
                         ResolutionContext = resolutionContext,
                         StatusRegistry = _statuses,
+                        Effect = effect,
                         Amount = ResolveAmount(effect, tier)
                     };
                     _effects.Resolve(effect.Key).Apply(ctx);
