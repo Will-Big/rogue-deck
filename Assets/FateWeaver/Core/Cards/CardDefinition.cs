@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Fate;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Cards
@@ -47,5 +48,15 @@ namespace FateWeaver.Core.Cards
         Side Side,
         CardType Type,
         int BaseInitiative,
-        IReadOnlyList<EffectData> Effects);
+        IReadOnlyList<EffectData> Effects)
+    {
+        /// <summary>Fate-energy cost to play this card.</summary>
+        public int Cost { get; init; }
+
+        /// <summary>Action (effects on the zone) or Fate (zone control).</summary>
+        public CardCategory Category { get; init; }
+
+        /// <summary>For fate cards: the action resolved when played (null for action cards).</summary>
+        public FateActionData FateAction { get; init; }
+    }
 }
