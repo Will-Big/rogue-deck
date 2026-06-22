@@ -1,39 +1,27 @@
-# Fate Weaver Unity Playtest
+# Fate Weaver Unity Playtest (uGUI)
+
+## 최초 1회 세팅
+
+1. `Window ▸ TextMeshPro ▸ Import TMP Essential Resources`.
+2. `Fate Weaver ▸ Create Korean TMP Font` — `Resources/Fonts/KoreanTMP.asset` 생성.
+   - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 `C:/Windows/Fonts/malgun.ttf`를
+     Source로, Atlas Population Mode = **Dynamic**으로 생성해 `Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
+3. `Fate Weaver ▸ Build Playtest Scene (uGUI)` — Canvas/CardView 프리팹/컨트롤러를 생성·연결.
+
+> `Resources/Fonts/`는 gitignore 대상(생성물 + 시스템 폰트). 머신마다 2~3번을 다시 실행한다.
 
 ## 실행
 
-1. Unity에서 `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 연다.
-2. Play 버튼을 누른다.
-3. 상단에서 멀티턴 시나리오를 선택한다.
-4. 미래 영역의 카드를 눌러 Primary/Secondary를 선택한다.
-5. 운명 액션(주도력 ±2 / 선택 교환 / 잠금)을 적용한다.
-6. `RESOLVE TURN`으로 이번 턴을 해석한다.
-7. `NEXT TURN`으로 다음 턴으로 진행한다(HP·상태가 이월된다). 승패가 나거나 마지막 턴이면 종료.
+1. `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
+2. 상단 버튼으로 시나리오 선택.
+3. 미래 영역의 카드(이미지 + 이름/주도력 + 하단 설명)를 눌러 주/보조 대상 선택.
+4. 운명 액션(주도력 ±2 / 교환 / 고정) 적용.
+5. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나거나 마지막 턴이면 종료.
 
-## 빠른 확인
+## 범위 / 검증
 
-### mark-combo (1턴)
-
-- 조작 없이 `RESOLVE TURN` → `mark | Basic`, `slash | damage 2` (적이 먼저라 콤보 미완성).
-- `goblin_jab`을 Primary로 선택 → `Initiative +2` → `RESOLVE TURN` → `mark | Success`, `slash | damage 8`.
-
-### chapter-8-three-turn-opening (3턴)
-
-- 매 턴 `quick_cut_*`을 Primary로 선택 → `Initiative -2`로 적보다 앞당김 → `RESOLVE TURN` → `Success`.
-- `NEXT TURN`으로 3턴까지 진행하며 적 HP가 누적 감소하는지 확인.
-
-### counter-stance / chain-slash (1턴)
-
-- 조작 없이 `RESOLVE TURN` 후 반격/연쇄가 조건에 따라 발동하는지 확인.
-
-## 현재 범위
-
-- 멀티턴 시나리오, 턴 간 HP·상태 이월, 승패 정지
-- 주도력 ±2, 카드 주도력 교환, 잠금
-- 조건 tier, 피해, HP, 상태(방어/취약 등), 승패 출력
-- 임시 IMGUI 화면이며 연출·드래그앤드롭·덱 구성은 포함하지 않는다.
-
-## 검증 메모
-
-- 멀티턴 진행 로직은 `MultiTurnPlaytestSession`(순수 C#)에 있고 헤드리스 테스트로 검증된다.
-- 이 컨트롤러(MonoBehaviour)는 Unity Play에서만 동작/컴파일을 확인할 수 있다.
+- 카드 위젯은 `CardView`(프리팹) + `CardPresentation`(뷰모델) + `PlaytestCardArt`/`PlaytestKoreanText`(룩업).
+- 멀티턴 진행 로직은 `MultiTurnPlaytestSession`(순수 C#)이며 헤드리스 테스트로 검증된다.
+- 컨트롤러/프리팹/에디터 빌더는 헤드리스 컴파일 대상이 아니므로 Unity Play에서만 검증된다.
+- `PlaytestCardArt.ResolveArtName` / `PlaytestKoreanText.CardDescription`는 `FateWeaver.Tests.UnityEditMode`
+  EditMode 테스트로 가드된다(Unity Test Runner에서 실행).
