@@ -39,6 +39,28 @@ namespace FateWeaver.Unity
             }
         }
 
+        public static string CardDescription(string id)
+        {
+            if (id.StartsWith("quick_cut", StringComparison.Ordinal))
+                return "피해 2. 이번 턴에 가장 먼저 발동하면 대신 피해 10.";
+            if (id.StartsWith("wrist_cut", StringComparison.Ordinal))
+                return "피해 3. 다음 플레이어 조건 보상을 무효화.";
+            if (id.StartsWith("preemptive_thrust", StringComparison.Ordinal))
+                return "선제 일격.";
+            if (id.StartsWith("goblin_jab", StringComparison.Ordinal))
+                return "고블린의 빠른 찌르기.";
+
+            switch (id)
+            {
+                case "slash": return "피해 2.";
+                case "mark": return "다음 카드가 플레이어 공격이고 적 공격보다 먼저면, 다음 플레이어 공격 피해 +6.";
+                case "counter": return "방어 2. 바로 앞에서 적이 공격했다면 피해 7 (3번째 안이면 +2).";
+                case "chain": return "피해 1. 바로 앞이 플레이어 행동 카드이고 3번째 안이면 추가 피해 5.";
+                case "prep": return "피해 1.";
+                default: return string.Empty;
+            }
+        }
+
         public static string SideName(Side side)
             => side == Side.Player ? "플레이어" : "적";
 
