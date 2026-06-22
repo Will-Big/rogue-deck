@@ -3,7 +3,9 @@
     "rootNamespace": "FateWeaver.Unity",
     "references": [
         "FateWeaver.Core",
-        "FateWeaver.Simulation"
+        "FateWeaver.Simulation",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
