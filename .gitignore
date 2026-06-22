@@ -80,3 +80,10 @@ crashlytics-build.properties
 Tests/Headless/bin/
 Tests/Headless/obj/
 !Tests/Headless/FateWeaver.Tests.Headless.csproj
+
+# ============================================
+# Art reference images (third-party — kept local, not versioned).
+# Keep our own prompt doc tracked.
+# ============================================
+/Sample/*
+!/Sample/CardArtPrompts.md
