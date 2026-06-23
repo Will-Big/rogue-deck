@@ -2,7 +2,9 @@
     "name": "FateWeaver.Unity.Editor",
     "rootNamespace": "FateWeaver.Unity.Editor",
     "references": [
+        "FateWeaver.Core",
         "FateWeaver.Unity",
+        "FateWeaver.Simulation",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "Unity.InputSystem"
