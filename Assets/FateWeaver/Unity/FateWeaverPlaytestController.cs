@@ -248,7 +248,7 @@ namespace FateWeaver.Unity
               .Append("    ").Append(StatusText(_session.State.PlayerStatuses));
             foreach (var enemy in _session.State.Enemies)
             {
-                var enemyName = enemy.Id == "goblin" ? "고블린" : enemy.Id;
+                var enemyName = PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id);
                 sb.Append('\n').Append(enemyName).Append(" HP: ").Append(enemy.Hp)
                   .Append("    ").Append(StatusText(enemy.Statuses));
             }

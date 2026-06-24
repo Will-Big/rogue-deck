@@ -16,6 +16,7 @@ namespace FateWeaver.Unity
         [SerializeField] private Image _artFallback;
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _initiativeText;
+        [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private Image _selectionOutline;
         [SerializeField] private GameObject _lockBadge;
@@ -31,6 +32,11 @@ namespace FateWeaver.Unity
         {
             _nameText.text = data.DisplayName;
             _initiativeText.text = data.Initiative.ToString();
+            if (_costText != null)
+            {
+                _costText.text = data.Cost.ToString();
+            }
+
             _descriptionText.text = data.Description;
 
             if (data.Art != null)

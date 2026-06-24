@@ -4,6 +4,7 @@ using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation;
 
 namespace FateWeaver.Unity
 {
@@ -29,9 +30,12 @@ namespace FateWeaver.Unity
 
             switch (id)
             {
-                case "goblin_jab": return "고블린 찌르기";
+                case "goblin_jab": return "찌르기";
+                case "crude_guard": return "조잡한 방어";
+                case "sly_jab": return "약삭빠른 찌르기";
                 case "mark": return "표식 새기기";
                 case "slash": return "베기";
+                case "counter_stance": return "반격";
                 case "counter": return "반격 자세";
                 case "prep": return "준비";
                 case "chain": return "연쇄 베기";
@@ -42,22 +46,38 @@ namespace FateWeaver.Unity
         public static string CardDescription(string id)
         {
             if (id.StartsWith("quick_cut", StringComparison.Ordinal))
-                return "피해 2. 이번 턴에 가장 먼저 발동하면 대신 피해 10.";
+                return "피해 2. 첫 발동이면 피해 8.";
             if (id.StartsWith("wrist_cut", StringComparison.Ordinal))
                 return "피해 3. 다음 플레이어 조건 보상을 무효화.";
             if (id.StartsWith("preemptive_thrust", StringComparison.Ordinal))
                 return "선제 일격.";
             if (id.StartsWith("goblin_jab", StringComparison.Ordinal))
-                return "고블린의 빠른 찌르기.";
+                return "피해 4.";
 
             switch (id)
             {
-                case "slash": return "피해 2.";
+                case "slash": return "피해 4.";
+                case "guard": return "방어 4.";
+                case "counter_stance": return "피해 4. 바로 앞이 적 공격이면 +5.";
+                case "cover": return "방어 2. 바로 뒤가 적 공격이면 +5.";
+                case "pull_forward": return "한 카드의 주도력 -2 (앞으로 당김).";
+                case "swap_positions": return "두 카드의 주도력을 교환.";
+                case "crude_guard": return "방어 3.";
+                case "sly_jab": return "피해 3. 앞에 플레이어 카드가 없으면 +3.";
                 case "mark": return "다음 카드가 플레이어 공격이고 적 공격보다 먼저면, 다음 플레이어 공격 피해 +6.";
                 case "counter": return "방어 2. 바로 앞에서 적이 공격했다면 피해 7 (3번째 안이면 +2).";
                 case "chain": return "피해 1. 바로 앞이 플레이어 행동 카드이고 3번째 안이면 추가 피해 5.";
                 case "prep": return "피해 1.";
                 default: return string.Empty;
+            }
+        }
+
+        public static string EnemyName(string id, string fallback)
+        {
+            switch (id)
+            {
+                case GoblinDeck.EnemyId: return "고블린";
+                default: return fallback;
             }
         }
 

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using FateWeaver.Core.Cards;
+using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +15,7 @@ namespace FateWeaver.Unity.Editor
     public static class CardCodeGenerator
     {
         private const string CardFolder = "Assets/FateWeaver/Unity/Cards";
+        public const string EnemyCardFolder = CardFolder + "/Enemies";
         private const string DeckAssetPath = CardFolder + "/StarterDeck.asset";
         private const string GeneratedPath = "Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs";
 
@@ -38,6 +41,38 @@ namespace FateWeaver.Unity.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Seeded starter CardAssets + DeckAsset under " + CardFolder);
+        }
+
+        /// <summary>Seeds one CardAsset per enemy card (art/display source only — rules stay in GoblinDeck).
+        /// Idempotent: re-running refreshes id/name/etc. but preserves any Art you assigned in the Inspector.</summary>
+        [MenuItem("Fate Weaver/Seed Enemy Card Assets")]
+        public static void SeedEnemy()
+        {
+            Directory.CreateDirectory(EnemyCardFolder);
+            foreach (var def in GoblinDeck.AllCards())
+            {
+                var path = EnemyCardFolder + "/" + def.Id + ".asset";
+                var card = AssetDatabase.LoadAssetAtPath<CardAsset>(path);
+                bool isNew = card == null;
+                if (isNew)
+                {
+                    card = ScriptableObject.CreateInstance<CardAsset>();
+                }
+
+                ApplyDefinition(card, def);
+                if (isNew)
+                {
+                    AssetDatabase.CreateAsset(card, path);
+                }
+                else
+                {
+                    EditorUtility.SetDirty(card);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Seeded enemy CardAssets under " + EnemyCardFolder + " — assign each card's Art in the Inspector, then rebuild the scene.");
         }
 
         [MenuItem("Fate Weaver/Generate Cards from SO")]
@@ -68,6 +103,20 @@ namespace FateWeaver.Unity.Editor
             card.Effects = spec.Effects ?? System.Array.Empty<EffectSpec>();
             card.Fate = spec.Fate;
             card.FateAmount = spec.FateAmount;
+        }
+
+        // Enemy CardAssets mirror the pure GoblinDeck definition for id/display, but carry no rules
+        // (GoblinDeck owns those). Effects stay empty so nobody mistakes this for the rules source.
+        private static void ApplyDefinition(CardAsset card, CardDefinition def)
+        {
+            card.Id = def.Id;
+            card.DisplayName = def.Name;
+            card.Side = def.Side;
+            card.Type = def.Type;
+            card.Category = def.Category;
+            card.Cost = def.Cost;
+            card.BaseInitiative = def.BaseInitiative;
+            card.Effects = System.Array.Empty<EffectSpec>();
         }
 
         private static IEnumerable<CardSpec> DistinctById(IReadOnlyList<CardSpec> specs, out Dictionary<string, int> counts)

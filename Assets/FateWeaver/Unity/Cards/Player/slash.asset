@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8d4f6e05806b3d46ac625bc1dacfdaa, type: 3}
+  m_Name: slash
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardAsset
+  Id: slash
+  DisplayName: "\uBCA0\uAE30"
+  Side: 0
+  Type: 0
+  Category: 0
+  Cost: 1
+  BaseInitiative: 4
+  Art: {fileID: -6939695964637348897, guid: 6685e65eda0482e4f84ec2f5927a6b1a, type: 3}
+  Description: 
+  Effects:
+  - Kind: 0
+    Amount: 4
+    Condition: 0
+    ConditionN: 0
+    SuccessAmount: 0
+    Status: 0
+    Lifetime: 0
+    LifetimeCount: 0
+    Target: 0
+  Fate: 0
+  FateAmount: 0
