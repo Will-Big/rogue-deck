@@ -14,15 +14,16 @@ namespace FateWeaver.Unity.Editor
     /// authored cards. The generated file lives under Simulation (compiled by Unity AND headless).</summary>
     public static class CardCodeGenerator
     {
-        private const string CardFolder = "Assets/FateWeaver/Unity/Cards";
+        private const string CardFolder = "Assets/FateWeaver/Unity/CardSO";
+        private const string PlayerCardFolder = CardFolder + "/Player";
         public const string EnemyCardFolder = CardFolder + "/Enemies";
-        private const string DeckAssetPath = CardFolder + "/StarterDeck.asset";
+        private const string DeckAssetPath = PlayerCardFolder + "/StarterDeck.asset";
         private const string GeneratedPath = "Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs";
 
         [MenuItem("Fate Weaver/Seed Starter Card Assets")]
         public static void SeedStarter()
         {
-            Directory.CreateDirectory(CardFolder);
+            Directory.CreateDirectory(PlayerCardFolder);
             var deck = ScriptableObject.CreateInstance<DeckAsset>();
             deck.Id = "starter";
             var entries = new List<DeckAsset.Entry>();
@@ -31,7 +32,7 @@ namespace FateWeaver.Unity.Editor
             {
                 var card = ScriptableObject.CreateInstance<CardAsset>();
                 Apply(card, spec);
-                var path = CardFolder + "/" + spec.Id + ".asset";
+                var path = PlayerCardFolder + "/" + spec.Id + ".asset";
                 AssetDatabase.CreateAsset(card, path);
                 entries.Add(new DeckAsset.Entry { Card = card, Count = counts[spec.Id] });
             }

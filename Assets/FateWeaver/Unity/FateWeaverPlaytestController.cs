@@ -47,18 +47,6 @@ namespace FateWeaver.Unity
         private string _secondaryCardId;
         private readonly List<CardView> _cardViews = new List<CardView>();
 
-        private void Awake()
-        {
-            if (_cardPrefab == null)
-            {
-                var go = Resources.Load<GameObject>("CardView");
-                if (go != null)
-                {
-                    _cardPrefab = go.GetComponent<CardView>();
-                }
-            }
-        }
-
         private void Start()
         {
             BuildScenarioButtons();

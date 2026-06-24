@@ -53,15 +53,6 @@ namespace FateWeaver.Unity
         // id -> authored sprite (GUID-backed via CardAsset.Art) so moving the art file never breaks the link.
         private readonly Dictionary<string, Sprite> _artById = new Dictionary<string, Sprite>();
 
-        private void Awake()
-        {
-            if (_cardPrefab == null)
-            {
-                var go = Resources.Load<GameObject>("CardView");
-                if (go != null) _cardPrefab = go.GetComponent<CardView>();
-            }
-        }
-
         private void Start()
         {
             _resolveButton.onClick.AddListener(ResolveTurn);

@@ -668,7 +668,7 @@ git commit -m "feat(unity): Korean names for 둔화/가속 status"
 > 카드 이미지 리뷰 반영. 카드 스코프 상태는 **아트 영역 하단의 가로 아이콘 띠**(이름 바로 위)에 표기한다. 현재 카드 중앙의 "고정" 전용 텍스트 요소를 제거하고, 잠금을 그 띠의 아이콘으로 표시한다. (둔화/가속은 엔티티 상태라 카드가 아닌 초상화 아래 — Task 8.) 헤드리스 검증 불가 → Unity Play로 검증.
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/Resources/CardView.prefab` (Unity Inspector)
+- Modify: `Assets/FateWeaver/Unity/Prefabs/CardView.prefab` (Unity Inspector)
 - Modify: `Assets/FateWeaver/Unity/CardView.cs`
 
 - [ ] **Step 1: 프리팹 — 중앙 "고정" 텍스트 제거 + 하단 띠 추가**
@@ -697,7 +697,7 @@ Expected: 잠금 = 아트 하단 띠 아이콘, 중앙 텍스트 없음.
 - [ ] **Step 4: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardView.cs Assets/FateWeaver/Unity/Resources/CardView.prefab
+git add Assets/FateWeaver/Unity/CardView.cs Assets/FateWeaver/Unity/Prefabs/CardView.prefab
 git commit -m "feat(unity): card-status icon row at art bottom; remove central 고정 text"
 ```
 
