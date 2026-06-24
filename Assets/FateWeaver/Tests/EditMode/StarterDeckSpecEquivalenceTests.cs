@@ -57,15 +57,14 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Spec_heavy_strike_after_ally_attack_deals_ten()
+        public void Spec_counter_immediately_after_enemy_attack_deals_nine()
         {
             var session = new DeckCombatSession(
-                new[] { Def("slash"), Def("heavy_strike") }, 30,
+                new[] { Def("counter_stance") }, 30,
                 new[] { new Enemy("goblin", 100) },
-                new EnemyIntent(new List<IReadOnlyList<CardDefinition>>()), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "slash"));
-            session.PlayActionCard(HandIndex(session, "heavy_strike"));
-            Assert.AreEqual(10, DamageOf(session.ResolveTurn(), "heavy_strike"));
+                Goblin(6, 4), 3, 5, 1);
+            session.PlayActionCard(HandIndex(session, "counter_stance"));
+            Assert.AreEqual(9, DamageOf(session.ResolveTurn(), "counter_stance"));
         }
 
         [Test]

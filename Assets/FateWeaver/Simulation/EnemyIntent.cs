@@ -4,9 +4,9 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>Deterministic enemy telegraph: the enemy action cards placed on the future zone each turn.
-    /// Turns past the end clamp to the last defined turn. (Real enemy AI is a later phase.)</summary>
-    public sealed class EnemyIntent
+    /// <summary>Scripted enemy telegraph policy: a fixed, pre-defined list of enemy cards per turn.
+    /// Turns past the end clamp to the last defined turn. Ideal for tutorials/set-piece fights and tests.</summary>
+    public sealed class EnemyIntent : IEnemyTurnPolicy
     {
         private readonly IReadOnlyList<IReadOnlyList<CardDefinition>> _turns;
 
@@ -14,6 +14,8 @@ namespace FateWeaver.Simulation
         {
             _turns = turns ?? Array.Empty<IReadOnlyList<CardDefinition>>();
         }
+
+        public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex) => ForTurn(turnIndex);
 
         public IReadOnlyList<CardDefinition> ForTurn(int turnIndex)
         {

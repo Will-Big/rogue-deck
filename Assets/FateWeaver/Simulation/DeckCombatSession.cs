@@ -12,7 +12,7 @@ namespace FateWeaver.Simulation
     {
         private readonly CombatState _state;
         private readonly Deck _deck;
-        private readonly EnemyIntent _intent;
+        private readonly IEnemyTurnPolicy _enemyPolicy;
         private readonly TurnResolver _resolver;
         private readonly FatePlayResolver _fateResolver;
         private readonly int _handSize;
@@ -22,7 +22,7 @@ namespace FateWeaver.Simulation
             IReadOnlyList<CardDefinition> deckCards,
             int playerHp,
             IReadOnlyList<Enemy> enemies,
-            EnemyIntent intent,
+            IEnemyTurnPolicy enemyPolicy,
             int fateEnergyPerTurn = 3,
             int handSize = 5,
             int seed = 0)
@@ -39,7 +39,7 @@ namespace FateWeaver.Simulation
             }
 
             _deck = new Deck(deckCards, seed);
-            _intent = intent;
+            _enemyPolicy = enemyPolicy;
             _handSize = handSize;
             _resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
             _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
@@ -156,7 +156,7 @@ namespace FateWeaver.Simulation
             _lastTimeline = null;
 
             _state.Zone.Clear();
-            foreach (var enemyCard in _intent.ForTurn(index))
+            foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
                 _state.Zone.Add(new ActionCardInstance(enemyCard));
             }

@@ -108,6 +108,26 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void NoPrecedingCardOfSide_checks_all_earlier_cards()
+        {
+            var state = new CombatState();
+            var enemyGuard = Card("enemy_guard", Side.Enemy, CardType.Defense, 1);
+            var slyJab = Card("sly_jab", Side.Enemy, CardType.Attack, 2);
+            var player = Card("slash", Side.Player, CardType.Attack, 3);
+            state.Zone.Add(player);
+            state.Zone.Add(slyJab);
+            state.Zone.Add(enemyGuard);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(
+                ConditionTier.Success,
+                ConditionEvaluator.Evaluate(new NoPrecedingCardOfSide(Side.Player), slyJab, ctx));
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                ConditionEvaluator.Evaluate(new NoPrecedingCardOfSide(Side.Enemy), slyJab, ctx));
+        }
+
+        [Test]
         public void AllOf_uses_the_lowest_tier_from_its_child_conditions()
         {
             var state = new CombatState();

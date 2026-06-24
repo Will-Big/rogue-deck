@@ -8,8 +8,8 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>The 10-card starter deck (7 action : 3 fate). Player action cards share a base initiative
-    /// so order among them is placement order; fate cards + enemy initiative create the puzzle.</summary>
+    /// <summary>The 10-card starter deck (7 action : 3 fate). Card-specific initiative values plus
+    /// fate actions and enemy initiative create the ordering puzzle.</summary>
     public static class StarterDeck
     {
         public const int DefaultInitiative = 5;
@@ -22,7 +22,7 @@ namespace FateWeaver.Simulation
             cards.Add(Guard());
             cards.Add(Guard());
             cards.Add(QuickCut());
-            cards.Add(HeavyStrike());
+            cards.Add(Counter());
             cards.Add(Cover());
             cards.Add(PullForward());
             cards.Add(PullForward());
@@ -33,8 +33,8 @@ namespace FateWeaver.Simulation
         // --- action cards ---------------------------------------------------
 
         public static CardDefinition Slash() => new CardDefinition(
-            "slash", "베기", Side.Player, CardType.Attack, DefaultInitiative,
-            new[] { new EffectData(EffectKeys.Damage, 3) })
+            "slash", "베기", Side.Player, CardType.Attack, 4,
+            new[] { new EffectData(EffectKeys.Damage, 4) })
             { Cost = 1, Category = CardCategory.Action };
 
         public static CardDefinition Guard() => new CardDefinition(
@@ -50,13 +50,13 @@ namespace FateWeaver.Simulation
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8) })
             { Cost = 1, Category = CardCategory.Action };
 
-        public static CardDefinition HeavyStrike() => new CardDefinition(
-            "heavy_strike", "강타", Side.Player, CardType.Attack, DefaultInitiative,
+        public static CardDefinition Counter() => new CardDefinition(
+            "counter_stance", "반격", Side.Player, CardType.Attack, 7,
             new[]
             {
                 EffectData.Conditional(
-                    EffectKeys.Damage, 5,
-                    new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Attack), 10)
+                    EffectKeys.Damage, 4,
+                    new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack), 9)
             })
             { Cost = 2, Category = CardCategory.Action };
 

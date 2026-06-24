@@ -52,6 +52,19 @@ namespace FateWeaver.Core.Conditions
                 return ConditionTier.Success;
             }
 
+            if (condition is NoPrecedingCardOfSide noPreceding)
+            {
+                for (int i = 0; i < index; i++)
+                {
+                    if (ctx.Order[i].Def.Side == noPreceding.Side)
+                    {
+                        return ConditionTier.Basic;
+                    }
+                }
+
+                return ConditionTier.Success;
+            }
+
             if (condition is SameTarget)
             {
                 var previous = PreviousPlayerCard(ctx, index);

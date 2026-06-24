@@ -23,10 +23,25 @@ namespace FateWeaver.Tests
             Assert.AreEqual(2, cards.Count(c => c.Id == "slash"));
             Assert.AreEqual(2, cards.Count(c => c.Id == "guard"));
             Assert.AreEqual(1, cards.Count(c => c.Id == "quick_cut"));
-            Assert.AreEqual(1, cards.Count(c => c.Id == "heavy_strike"));
+            Assert.AreEqual(1, cards.Count(c => c.Id == "counter_stance"));
+            Assert.AreEqual(0, cards.Count(c => c.Id == "heavy_strike"));
             Assert.AreEqual(1, cards.Count(c => c.Id == "cover"));
             Assert.AreEqual(2, cards.Count(c => c.Id == "pull_forward"));
             Assert.AreEqual(1, cards.Count(c => c.Id == "swap_positions"));
+        }
+
+        [Test]
+        public void Slash_and_counter_have_updated_combat_values()
+        {
+            var slash = StarterDeck.Build().First(c => c.Id == "slash");
+            var counter = StarterDeck.Build().First(c => c.Id == "counter_stance");
+
+            Assert.AreEqual(4, slash.BaseInitiative);
+            Assert.AreEqual(4, slash.Effects.Single().Amount);
+            Assert.AreEqual("반격", counter.Name);
+            Assert.AreEqual(7, counter.BaseInitiative);
+            Assert.AreEqual(4, counter.Effects.Single().Amount);
+            Assert.AreEqual(9, counter.Effects.Single().SuccessAmount);
         }
 
         [Test]

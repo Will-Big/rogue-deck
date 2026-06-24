@@ -74,8 +74,12 @@ namespace FateWeaver.Simulation.Authoring
                 case ConditionKind.BeforeNextEnemyAttack: return new BeforeNextEnemyAttack();
                 case ConditionKind.PrevIsPlayerAttack:
                     return new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Attack);
+                case ConditionKind.PrevIsEnemyAttack:
+                    return new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack);
                 case ConditionKind.NextIsEnemyAttack:
                     return new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack);
+                case ConditionKind.NoPrecedingPlayerCard:
+                    return new NoPrecedingCardOfSide(Side.Player);
                 default: return null;
             }
         }

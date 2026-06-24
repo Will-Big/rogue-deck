@@ -44,10 +44,10 @@ namespace FateWeaver.Tests
         [Test]
         public void Cannot_play_action_card_without_enough_energy()
         {
-            // deck of two heavy strikes (cost 2 each); energy 3 -> only one is affordable.
-            var session = NewSession(new[] { StarterDeck.HeavyStrike(), StarterDeck.HeavyStrike() }, Goblin(4, 3));
-            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "heavy_strike")));  // 3 -> 1
-            Assert.IsFalse(session.PlayActionCard(HandIndex(session, "heavy_strike"))); // 1 < 2, rejected
+            // deck of two counters (cost 2 each); energy 3 -> only one is affordable.
+            var session = NewSession(new[] { StarterDeck.Counter(), StarterDeck.Counter() }, Goblin(4, 3));
+            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "counter_stance")));  // 3 -> 1
+            Assert.IsFalse(session.PlayActionCard(HandIndex(session, "counter_stance"))); // 1 < 2, rejected
             Assert.AreEqual(1, session.FateEnergy);
         }
 
@@ -67,15 +67,13 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Heavy_strike_after_an_ally_attack_gets_the_combo_bonus()
+        public void Counter_immediately_after_an_enemy_attack_gets_the_bonus()
         {
-            var session = NewSession(new[] { StarterDeck.Slash(), StarterDeck.HeavyStrike() }, new EnemyIntent(
-                new List<IReadOnlyList<CardDefinition>>())); // no enemy this turn
-            session.PlayActionCard(HandIndex(session, "slash"));        // initiative 5 (placed first)
-            session.PlayActionCard(HandIndex(session, "heavy_strike")); // initiative 5 (placed second -> after slash)
+            var session = NewSession(new[] { StarterDeck.Counter() }, Goblin(6, 3));
+            session.PlayActionCard(HandIndex(session, "counter_stance"));
 
             var timeline = session.ResolveTurn();
-            Assert.AreEqual(10, DamageOf(timeline, "heavy_strike")); // prev is a player attack -> +5
+            Assert.AreEqual(9, DamageOf(timeline, "counter_stance"));
         }
 
         [Test]
@@ -112,7 +110,7 @@ namespace FateWeaver.Tests
             => new DeckCombatSession(
                 deck, playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 100) },
-                intent: intent, fateEnergyPerTurn: 3, handSize: 5, seed: 1);
+                enemyPolicy: intent, fateEnergyPerTurn: 3, handSize: 5, seed: 1);
 
         private static int ZoneIndex(DeckCombatSession s, string cardId)
         {

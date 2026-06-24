@@ -11,15 +11,15 @@ namespace FateWeaver.Simulation.Authoring
     {
         public static IReadOnlyList<CardSpec> Build() => new List<CardSpec>
         {
-            Slash(), Slash(), Guard(), Guard(), QuickCut(), HeavyStrike(), Cover(),
+            Slash(), Slash(), Guard(), Guard(), QuickCut(), Counter(), Cover(),
             PullForward(), PullForward(), SwapPositions()
         };
 
         public static CardSpec Slash() => new CardSpec
         {
             Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
-            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 3 } }
+            Category = CardCategory.Action, Cost = 1, BaseInitiative = 4,
+            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 4 } }
         };
 
         public static CardSpec Guard() => new CardSpec
@@ -39,12 +39,12 @@ namespace FateWeaver.Simulation.Authoring
                 Kind = EffectKind.Damage, Amount = 2, Condition = ConditionKind.FirstToTrigger, SuccessAmount = 8 } }
         };
 
-        public static CardSpec HeavyStrike() => new CardSpec
+        public static CardSpec Counter() => new CardSpec
         {
-            Id = "heavy_strike", Name = "강타", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Action, Cost = 2, BaseInitiative = 5,
+            Id = "counter_stance", Name = "반격", Side = Side.Player, Type = CardType.Attack,
+            Category = CardCategory.Action, Cost = 2, BaseInitiative = 7,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, Amount = 5, Condition = ConditionKind.PrevIsPlayerAttack, SuccessAmount = 10 } }
+                Kind = EffectKind.Damage, Amount = 4, Condition = ConditionKind.PrevIsEnemyAttack, SuccessAmount = 9 } }
         };
 
         public static CardSpec Cover() => new CardSpec
