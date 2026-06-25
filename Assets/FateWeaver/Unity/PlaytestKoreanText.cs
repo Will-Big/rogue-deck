@@ -110,6 +110,8 @@ namespace FateWeaver.Unity
             if (key == StatusKeys.Vulnerable) return "취약";
             if (key == StatusKeys.RewardNullified) return "조건 보상 무효";
             if (key == StatusKeys.Block) return "방어";
+            if (key == StatusKeys.Slow) return "둔화";
+            if (key == StatusKeys.Haste) return "가속";
             return key.ToString();
         }
 
