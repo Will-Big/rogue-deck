@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
+using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
 {
@@ -61,6 +67,42 @@ namespace FateWeaver.Tests
             Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, Registry()));
             Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, null));
             Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, null, Registry()));
+        }
+
+        private static CardDefinition PlayerStrike() => new CardDefinition(
+            "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+
+        private static CardDefinition EnemyJab() => new CardDefinition(
+            "e_jab", "적찌르기", Side.Enemy, CardType.Attack, 5,
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+
+        private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]
+        {
+            new[] { EnemyJab() }, new[] { EnemyJab() }
+        });
+
+        [Test]
+        public void Enemy_slow_raises_next_turn_enemy_card_initiative()
+        {
+            var session = new DeckCombatSession(
+                new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
+            session.State.Enemies[0].Statuses.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
+            session.ResolveTurn();
+            session.BeginNextTurn();
+            var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
+            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
+        }
+
+        [Test]
+        public void Player_haste_lowers_initiative_of_cards_placed_after_it()
+        {
+            var session = new DeckCombatSession(
+                new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
+            session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+            session.PlayActionCard(0);
+            var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
+            Assert.AreEqual(2, strike.Initiative); // base 5 - haste 3
         }
     }
 }

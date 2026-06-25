@@ -3,6 +3,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Fate;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
@@ -15,6 +16,7 @@ namespace FateWeaver.Simulation
         private readonly IEnemyTurnPolicy _enemyPolicy;
         private readonly TurnResolver _resolver;
         private readonly FatePlayResolver _fateResolver;
+        private readonly StatusRegistry _statuses;
         private readonly int _handSize;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
 
@@ -41,7 +43,8 @@ namespace FateWeaver.Simulation
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
-            _resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
+            _statuses = CombatRegistries.Statuses();
+            _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
             _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
 
             BeginTurn(0);
@@ -74,7 +77,9 @@ namespace FateWeaver.Simulation
             }
 
             _state.FateEnergy -= def.Cost;
-            _state.Zone.Add(new ActionCardInstance(def));
+            var placed = new ActionCardInstance(def);
+            placed.Initiative = StatusInitiative.InitiativeFor(placed.Initiative, _state.PlayerStatuses, _statuses);
+            _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
             return true;
         }
@@ -156,9 +161,12 @@ namespace FateWeaver.Simulation
             _lastTimeline = null;
 
             _state.Zone.Clear();
+            var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
-                _state.Zone.Add(new ActionCardInstance(enemyCard));
+                var inst = new ActionCardInstance(enemyCard);
+                inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+                _state.Zone.Add(inst);
             }
 
             _state.FateEnergy = _state.FateEnergyPerTurn;
