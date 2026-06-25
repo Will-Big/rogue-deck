@@ -166,6 +166,7 @@ namespace FateWeaver.Simulation
             {
                 var inst = new ActionCardInstance(enemyCard);
                 inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+                inst.IsLocked = enemyCard.StartsLocked;
                 _state.Zone.Add(inst);
             }
 

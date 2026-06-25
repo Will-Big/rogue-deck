@@ -58,5 +58,8 @@ namespace FateWeaver.Core.Cards
 
         /// <summary>For fate cards: the action resolved when played (null for action cards).</summary>
         public FateActionData FateAction { get; init; }
+
+        /// <summary>When true, the card enters the future zone locked (fate reordering rejected).</summary>
+        public bool StartsLocked { get; init; }
     }
 }
