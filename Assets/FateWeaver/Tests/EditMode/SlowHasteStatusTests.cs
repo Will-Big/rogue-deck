@@ -6,6 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
+using FateWeaver.Simulation.Authoring;
 
 namespace FateWeaver.Tests
 {
@@ -103,6 +104,22 @@ namespace FateWeaver.Tests
             session.PlayActionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
             Assert.AreEqual(2, strike.Initiative); // base 5 - haste 3
+        }
+
+        [Test]
+        public void Playing_slow_card_slows_enemy_next_turn()
+        {
+            var slowCard = CardSpecMapper.ToDefinition(StarterDeckSpecs.SlowHex());
+            var session = new DeckCombatSession(
+                new[] { slowCard }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
+
+            int hand = session.Hand.Select((c, i) => (c, i)).First(x => x.c.Id == "slow_hex").i;
+            Assert.IsTrue(session.PlayActionCard(hand));
+            session.ResolveTurn();
+            Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));
+            session.BeginNextTurn();
+            var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
+            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
         }
     }
 }

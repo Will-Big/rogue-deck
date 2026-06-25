@@ -68,5 +68,23 @@ namespace FateWeaver.Simulation.Authoring
             Id = "swap_positions", Name = "자리 교환", Side = Side.Player, Type = CardType.Skill,
             Category = CardCategory.Fate, Cost = 1, Fate = FateKind.SwapInitiative, FateAmount = 0
         };
+
+        public static CardSpec SlowHex() => new CardSpec
+        {
+            Id = "slow_hex", Name = "둔화", Side = Side.Player, Type = CardType.Skill,
+            Category = CardCategory.Action, Cost = 1, BaseInitiative = 3,
+            Effects = new[] { new EffectSpec {
+                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Slow,
+                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy } }
+        };
+
+        public static CardSpec QuickenSelf() => new CardSpec
+        {
+            Id = "quicken_self", Name = "가속", Side = Side.Player, Type = CardType.Skill,
+            Category = CardCategory.Action, Cost = 1, BaseInitiative = 3,
+            Effects = new[] { new EffectSpec {
+                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Haste,
+                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self } }
+        };
     }
 }
