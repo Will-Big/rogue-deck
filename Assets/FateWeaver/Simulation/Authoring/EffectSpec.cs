@@ -8,7 +8,7 @@ namespace FateWeaver.Simulation.Authoring
 
     public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevIsPlayerAttack, NextIsEnemyAttack, PrevIsEnemyAttack, NoPrecedingPlayerCard }
 
-    public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified }
+    public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
 
     public enum FateKind { None, ChangeInitiative, SwapInitiative, Lock }
 

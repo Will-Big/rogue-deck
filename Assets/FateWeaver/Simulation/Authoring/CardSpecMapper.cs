@@ -91,6 +91,8 @@ namespace FateWeaver.Simulation.Authoring
                 case StatusKindRef.Stun: return StatusKeys.Stun;
                 case StatusKindRef.Vulnerable: return StatusKeys.Vulnerable;
                 case StatusKindRef.RewardNullified: return StatusKeys.RewardNullified;
+                case StatusKindRef.Slow: return StatusKeys.Slow;
+                case StatusKindRef.Haste: return StatusKeys.Haste;
                 default: return StatusKeys.Block;
             }
         }

@@ -85,5 +85,19 @@ namespace FateWeaver.Tests
             Assert.AreEqual(1, def.FateAction.Cost);
             Assert.AreEqual(-2, def.FateAction.Amount);
         }
+
+        [Test]
+        public void Maps_slow_and_haste_apply_status()
+        {
+            var slow = CardSpecMapper.ToEffectData(new EffectSpec {
+                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Slow,
+                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy });
+            Assert.AreEqual(StatusKeys.Slow, slow.StatusKey.Value);
+
+            var haste = CardSpecMapper.ToEffectData(new EffectSpec {
+                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Haste,
+                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self });
+            Assert.AreEqual(StatusKeys.Haste, haste.StatusKey.Value);
+        }
     }
 }
