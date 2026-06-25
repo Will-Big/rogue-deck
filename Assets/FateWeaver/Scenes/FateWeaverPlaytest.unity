@@ -2361,7 +2361,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.DeckPlaytestController
   _deck: {fileID: 11400000, guid: 1447c6f428ab36d44bab24c8b57b6548, type: 2}
-  _cardPrefab: {fileID: 0}
+  _enemyArtCards: []
+  _cardPrefab: {fileID: 2197522753874795815, guid: c02f5ba558cc26b498f384a135a6c2cf, type: 3}
   _handRow: {fileID: 757388398}
   _zoneRow: {fileID: 1616090270}
   _stateText: {fileID: 724991271}
