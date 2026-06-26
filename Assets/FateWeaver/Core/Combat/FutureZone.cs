@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Combat
 {
@@ -15,8 +16,11 @@ namespace FateWeaver.Core.Combat
         /// <summary>Empties the zone (used when rebuilding it for a new turn).</summary>
         public void Clear() => _cards.Clear();
 
-        /// <summary>Ascending initiative, stable on ties (LINQ OrderBy is a stable sort).</summary>
+        /// <summary>Ascending initiative, with player cards before enemy cards on ties.</summary>
         public IReadOnlyList<ActionCardInstance> ResolutionOrder()
-            => _cards.OrderBy(c => c.Initiative).ToList();
+            => _cards
+                .OrderBy(c => c.Initiative)
+                .ThenBy(c => c.Def.Side == Side.Player ? 0 : 1)
+                .ToList();
     }
 }
