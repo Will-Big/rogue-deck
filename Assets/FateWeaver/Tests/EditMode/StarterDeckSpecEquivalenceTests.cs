@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         {
             var session = new DeckCombatSession(
                 new[] { Def("quick_cut"), Def("pull_forward") }, 30,
-                new[] { new Enemy("goblin", 100) }, Goblin(4, 3), 3, 5, 1);
+                new[] { new Enemy("goblin", 100) }, Goblin(5, 3), 3, 5, 1);
             session.PlayActionCard(HandIndex(session, "quick_cut"));
             session.PlayFateCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
             Assert.AreEqual(8, DamageOf(session.ResolveTurn(), "quick_cut"));

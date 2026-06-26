@@ -12,7 +12,7 @@ namespace FateWeaver.Simulation.Authoring
         public static IReadOnlyList<CardSpec> Build() => new List<CardSpec>
         {
             Slash(), Slash(), Guard(), Guard(), QuickCut(), Counter(), Cover(),
-            PullForward(), PullForward(), SwapPositions()
+            PullForward(), PushBack(), SwapPositions()
         };
 
         public static CardSpec Slash() => new CardSpec
@@ -60,7 +60,13 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec PullForward() => new CardSpec
         {
             Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = -2
+            Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = -1
+        };
+
+        public static CardSpec PushBack() => new CardSpec
+        {
+            Id = "push_back", Name = "밀어내기", Side = Side.Player, Type = CardType.Skill,
+            Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = 1
         };
 
         public static CardSpec SwapPositions() => new CardSpec
