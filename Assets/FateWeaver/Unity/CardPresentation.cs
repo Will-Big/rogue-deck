@@ -1,6 +1,7 @@
 using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Simulation.Descriptions;
 using UnityEngine;
 
 namespace FateWeaver.Unity
@@ -42,7 +43,7 @@ namespace FateWeaver.Unity
                 card.Initiative,
                 def.Cost,
                 def.Side,
-                PlaytestKoreanText.CardDescription(def.Id),
+                DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
                 card.IsLocked);
         }
@@ -56,7 +57,7 @@ namespace FateWeaver.Unity
                 def.BaseInitiative,
                 def.Cost,
                 def.Side,
-                PlaytestKoreanText.CardDescription(def.Id),
+                DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
                 false);
         }

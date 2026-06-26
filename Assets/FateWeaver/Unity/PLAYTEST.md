@@ -23,5 +23,7 @@
 - 카드 위젯은 `CardView`(프리팹) + `CardPresentation`(뷰모델) + `PlaytestCardArt`/`PlaytestKoreanText`(룩업).
 - 멀티턴 진행 로직은 `MultiTurnPlaytestSession`(순수 C#)이며 헤드리스 테스트로 검증된다.
 - 컨트롤러/프리팹/에디터 빌더는 헤드리스 컴파일 대상이 아니므로 Unity Play에서만 검증된다.
-- `PlaytestCardArt.ResolveArtName` / `PlaytestKoreanText.CardDescription`는 `FateWeaver.Tests.UnityEditMode`
+- `PlaytestCardArt.ResolveArtName` / `PlaytestKoreanText.CardName`은 `FateWeaver.Tests.UnityEditMode`
   EditMode 테스트로 가드된다(Unity Test Runner에서 실행).
+- 카드 설명은 `DescriptionComposer` + `KoreanDescriptionVocabulary`(순수 C#)가 카드의 효과 데이터에서
+  조립하며, `FateWeaver.Tests.EditMode`의 `DescriptionComposerTests`(헤드리스)로 가드된다.
