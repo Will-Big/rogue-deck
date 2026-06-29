@@ -156,8 +156,20 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_sly_jab() =>
-            Assert.AreEqual("피해 3. 앞에 플레이어 카드가 없으면 피해 6.",
+            Assert.AreEqual("피해 3. 이전 수행한 플레이어 카드 없으면 피해 6.",
                 DescriptionComposer.Describe(GoblinDeck.SlyJab(), Kr));
+
+        [Test]
+        public void Korean_no_following_enemy_card_condition() =>
+            Assert.AreEqual("피해 2. 이후 수행한 적 카드 없으면 피해 7.",
+                DescriptionComposer.Describe(
+                    Action("warden_smash",
+                        EffectData.Conditional(
+                            EffectKeys.Damage,
+                            2,
+                            new NoFollowingCardOfSide(Side.Enemy),
+                            7)),
+                    Kr));
 
         [Test]
         public void Korean_number_token_follows_data()

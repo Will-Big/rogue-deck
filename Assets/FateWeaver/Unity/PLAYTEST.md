@@ -13,6 +13,7 @@
 ## 실행
 
 1. `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
+   - 간수 잠금 적 테스트는 `Assets/FateWeaver/Scenes/FateWeaverWardenPlaytest.unity`를 연다.
 2. 상단 버튼으로 시나리오 선택.
 3. 미래 영역의 카드(이미지 + 이름/주도력 + 하단 설명)를 눌러 주/보조 대상 선택.
 4. 운명 액션(주도력 ±2 / 교환 / 고정) 적용.

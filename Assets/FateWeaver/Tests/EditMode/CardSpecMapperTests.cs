@@ -99,5 +99,22 @@ namespace FateWeaver.Tests
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self });
             Assert.AreEqual(StatusKeys.Haste, haste.StatusKey.Value);
         }
+
+        [Test]
+        public void Maps_no_following_enemy_card_condition()
+        {
+            var effect = CardSpecMapper.ToEffectData(new EffectSpec
+            {
+                Kind = EffectKind.Damage,
+                Amount = 2,
+                Condition = ConditionKind.NoFollowingEnemyCard,
+                SuccessAmount = 7
+            });
+
+            Assert.AreEqual(2, effect.Amount);
+            Assert.AreEqual(7, effect.SuccessAmount);
+            var condition = (NoFollowingCardOfSide)effect.Condition;
+            Assert.AreEqual(Side.Enemy, condition.Side);
+        }
     }
 }

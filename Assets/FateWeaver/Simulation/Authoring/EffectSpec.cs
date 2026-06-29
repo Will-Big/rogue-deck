@@ -6,7 +6,7 @@ namespace FateWeaver.Simulation.Authoring
 {
     public enum EffectKind { Damage, ApplyStatus, GrantNextAttackBonus, NullifyNextReward }
 
-    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevIsPlayerAttack, NextIsEnemyAttack, PrevIsEnemyAttack, NoPrecedingPlayerCard }
+    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevIsPlayerAttack, NextIsEnemyAttack, PrevIsEnemyAttack, NoPrecedingPlayerCard, NoFollowingEnemyCard }
 
     public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
 

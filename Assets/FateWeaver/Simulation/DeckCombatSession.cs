@@ -165,8 +165,12 @@ namespace FateWeaver.Simulation
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
                 var inst = new ActionCardInstance(enemyCard);
-                inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
                 inst.IsLocked = enemyCard.StartsLocked;
+                if (!inst.IsLocked)
+                {
+                    inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+                }
+
                 _state.Zone.Add(inst);
             }
 

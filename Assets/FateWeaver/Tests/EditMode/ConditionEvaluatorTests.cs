@@ -128,6 +128,31 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void NoFollowingCardOfSide_checks_all_later_cards()
+        {
+            var state = new CombatState();
+            var enemyGuard = Card("enemy_guard", Side.Enemy, CardType.Defense, 1);
+            var smash = Card("warden_smash", Side.Enemy, CardType.Attack, 2);
+            var player = Card("slash", Side.Player, CardType.Attack, 3);
+            var enemyLate = Card("warden_swing", Side.Enemy, CardType.Attack, 4);
+            state.Zone.Add(enemyLate);
+            state.Zone.Add(player);
+            state.Zone.Add(smash);
+            state.Zone.Add(enemyGuard);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                ConditionEvaluator.Evaluate(new NoFollowingCardOfSide(Side.Player), smash, ctx));
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                ConditionEvaluator.Evaluate(new NoFollowingCardOfSide(Side.Enemy), smash, ctx));
+            Assert.AreEqual(
+                ConditionTier.Success,
+                ConditionEvaluator.Evaluate(new NoFollowingCardOfSide(Side.Enemy), enemyLate, ctx));
+        }
+
+        [Test]
         public void AllOf_uses_the_lowest_tier_from_its_child_conditions()
         {
             var state = new CombatState();
