@@ -18,9 +18,16 @@ namespace FateWeaver.Unity
     /// fate = 2-step click targeting) and the future zone of CardViews. UI only — logic is in the session.</summary>
     public sealed class DeckPlaytestController : MonoBehaviour
     {
+        private enum EnemyKind
+        {
+            Goblin,
+            Warden
+        }
+
         [Header("Data")]
         [SerializeField] private DeckAsset _deck;
-        [Tooltip("Enemy cards' art source (rules live in GoblinDeck). Seed via 'Fate Weaver/Seed Enemy Card Assets'.")]
+        [SerializeField] private EnemyKind _enemyKind = EnemyKind.Goblin;
+        [Tooltip("Enemy cards' art source (rules live in the selected pure enemy deck).")]
         [SerializeField] private CardAsset[] _enemyArtCards = System.Array.Empty<CardAsset>();
 
         [Header("Prefab + containers")]
@@ -65,14 +72,23 @@ namespace FateWeaver.Unity
         {
             var specs = _deck != null ? _deck.ToSpecs() : StarterDeckSpecs.Build();
             var deckDefs = specs.Select(CardSpecMapper.ToDefinition).ToList();
-            var enemies = new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) };
+            var enemies = new[] { new Enemy(EnemyId(), EnemyStartingHp()) };
             _session = new DeckCombatSession(
-                deckDefs, PlayerHp, enemies, GoblinDeck.Policy(Seed), FateEnergyPerTurn, HandSize, Seed);
+                deckDefs, PlayerHp, enemies, EnemyPolicy(Seed), FateEnergyPerTurn, HandSize, Seed);
             BuildArtLookup();
             ClearArmed();
             SetMessage(_deck != null ? "전투 시작." : "전투 시작 (코드 시작덱 폴백 — DeckAsset 미연결).");
             RefreshAll();
         }
+
+        private string EnemyId()
+            => _enemyKind == EnemyKind.Warden ? WardenDeck.EnemyId : GoblinDeck.EnemyId;
+
+        private int EnemyStartingHp()
+            => _enemyKind == EnemyKind.Warden ? WardenDeck.StartingHp : GoblinDeck.StartingHp;
+
+        private IEnemyTurnPolicy EnemyPolicy(int seed)
+            => _enemyKind == EnemyKind.Warden ? WardenDeck.Policy(seed) : GoblinDeck.Policy(seed);
 
         // --- input ---
 

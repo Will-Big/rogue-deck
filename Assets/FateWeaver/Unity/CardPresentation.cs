@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Simulation.Descriptions;
@@ -17,10 +18,12 @@ namespace FateWeaver.Unity
         public string Description { get; }
         public Sprite Art { get; }
         public bool IsLocked { get; }
+        public IReadOnlyList<CardStatusIcon> StatusIcons { get; }
 
         public CardPresentation(
             string id, string displayName, int initiative, int cost, Side side,
-            string description, Sprite art, bool isLocked)
+            string description, Sprite art, bool isLocked,
+            IReadOnlyList<CardStatusIcon> statusIcons = null)
         {
             Id = id;
             DisplayName = displayName;
@@ -30,6 +33,7 @@ namespace FateWeaver.Unity
             Description = description;
             Art = art;
             IsLocked = isLocked;
+            StatusIcons = statusIcons ?? Array.Empty<CardStatusIcon>();
         }
 
         /// <summary>Zone card (placed instance) — shows its current initiative. <paramref name="art"/> resolves
@@ -45,7 +49,8 @@ namespace FateWeaver.Unity
                 def.Side,
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
-                card.IsLocked);
+                card.IsLocked,
+                StatusIconsFor(card));
         }
 
         /// <summary>Hand card (definition) — initiative is the base value; cost is the key number.</summary>
@@ -59,11 +64,15 @@ namespace FateWeaver.Unity
                 def.Side,
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
-                false);
+                false,
+                Array.Empty<CardStatusIcon>());
         }
 
         // A resolver (GUID-backed CardAsset.Art) wins; with none supplied we fall back to the Resources path.
         private static Sprite ResolveArt(string id, Func<string, Sprite> art)
             => art != null ? art(id) : PlaytestCardArt.Sprite(id);
+
+        private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ActionCardInstance card)
+            => card.IsLocked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>();
     }
 }

@@ -33,6 +33,11 @@ namespace FateWeaver.Unity
                 case "goblin_jab": return "찌르기";
                 case "crude_guard": return "조잡한 방어";
                 case "sly_jab": return "약삭빠른 찌르기";
+                case "warden_swing": return "휘두르기";
+                case "warden_smash": return "내려치기";
+                case "warden_uppercut": return "올려치기";
+                case "warden_block": return "막기";
+                case "warden_brace": return "버티기";
                 case "mark": return "표식 새기기";
                 case "slash": return "베기";
                 case "counter_stance": return "반격";
@@ -48,6 +53,7 @@ namespace FateWeaver.Unity
             switch (id)
             {
                 case GoblinDeck.EnemyId: return "고블린";
+                case WardenDeck.EnemyId: return "간수";
                 default: return fallback;
             }
         }

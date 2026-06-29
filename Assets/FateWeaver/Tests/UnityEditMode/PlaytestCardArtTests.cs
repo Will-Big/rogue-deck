@@ -24,6 +24,13 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Lock_icon_uses_status_resource_path()
+        {
+            Assert.AreEqual("Status/icon_lock", PlaytestCardArt.LockIconResourcePath);
+            Assert.AreEqual("Status/icon_lock", PlaytestCardArt.ResolveStatusIconResourcePath(CardStatusIcon.Lock));
+        }
+
+        [Test]
         public void Suffixed_ids_normalize_by_prefix()
         {
             Assert.AreEqual("quick_cut", PlaytestCardArt.ResolveArtName("quick_cut_t3"));

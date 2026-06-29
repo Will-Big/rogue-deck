@@ -40,7 +40,9 @@ namespace FateWeaver.Simulation.Descriptions
             {
                 // Verb-stem predicate: takes "...없으면", not "...없으" + "이면".
                 case NoPrecedingCardOfSide n:
-                    return "앞에 " + SideName(n.Side) + " 카드가 없으면";
+                    return "이전 수행한 " + SideName(n.Side) + " 카드 없으면";
+                case NoFollowingCardOfSide n:
+                    return "이후 수행한 " + SideName(n.Side) + " 카드 없으면";
                 case AllOf all:
                     return JoinAll(all.Conditions) + "이면";
                 default:

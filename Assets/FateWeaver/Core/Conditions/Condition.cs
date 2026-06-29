@@ -28,5 +28,8 @@ namespace FateWeaver.Core.Conditions
     /// strikes before any player card acts). Mirror of BeforeNextEnemyAttack for an arbitrary side.</summary>
     public sealed record NoPrecedingCardOfSide(Side Side) : Condition;
 
+    /// <summary>Success when no card of the given side resolves after this one.</summary>
+    public sealed record NoFollowingCardOfSide(Side Side) : Condition;
+
     public sealed record AllOf(IReadOnlyList<Condition> Conditions) : Condition;
 }

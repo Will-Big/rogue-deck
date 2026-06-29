@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using TMPro;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private Image _selectionOutline;
+        // Template for card status icons. The prefab places its parent row as the root's last child so icons draw above art.
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
 
@@ -52,10 +54,7 @@ namespace FateWeaver.Unity
                 _artFallback.color = data.Side == Side.Enemy ? EnemyTint : PlayerTint;
             }
 
-            if (_lockBadge != null)
-            {
-                _lockBadge.SetActive(data.IsLocked);
-            }
+            RefreshStatusIcons(data.StatusIcons);
 
             _button.onClick.RemoveAllListeners();
             if (onClick != null)
@@ -72,6 +71,72 @@ namespace FateWeaver.Unity
                 kind == SelectionKind.Primary ? OutlinePrimary :
                 kind == SelectionKind.Secondary ? OutlineSecondary :
                 OutlineNone;
+        }
+
+        private void RefreshStatusIcons(IReadOnlyList<CardStatusIcon> icons)
+        {
+            if (_lockBadge == null)
+            {
+                return;
+            }
+
+            var statusRoot = _lockBadge.transform.parent as RectTransform;
+            if (statusRoot == null)
+            {
+                return;
+            }
+
+            ClearGeneratedStatusIcons(statusRoot);
+            bool hasIcons = icons != null && icons.Count > 0;
+            statusRoot.gameObject.SetActive(hasIcons);
+            _lockBadge.SetActive(false);
+            if (!hasIcons)
+            {
+                return;
+            }
+
+            for (int i = 0; i < icons.Count; i++)
+            {
+                var iconObject = i == 0
+                    ? _lockBadge
+                    : Instantiate(_lockBadge, statusRoot);
+                iconObject.SetActive(true);
+                ConfigureStatusIcon(iconObject, icons[i]);
+            }
+        }
+
+        private static void ClearGeneratedStatusIcons(RectTransform statusRoot)
+        {
+            for (int i = statusRoot.childCount - 1; i >= 1; i--)
+            {
+                var child = statusRoot.GetChild(i).gameObject;
+                if (Application.isPlaying)
+                {
+                    Destroy(child);
+                }
+                else
+                {
+                    DestroyImmediate(child);
+                }
+            }
+        }
+
+        private static void ConfigureStatusIcon(GameObject iconObject, CardStatusIcon icon)
+        {
+            var image = iconObject.GetComponent<Image>();
+            if (image == null)
+            {
+                return;
+            }
+
+            image.sprite = PlaytestCardArt.StatusIconSprite(icon);
+
+            if (image.sprite != null)
+            {
+                image.color = Color.white;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+            }
         }
     }
 }

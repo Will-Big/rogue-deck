@@ -9,6 +9,9 @@ namespace FateWeaver.Unity
     public static class PlaytestCardArt
     {
         private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<CardStatusIcon, Sprite> StatusIconCache = new Dictionary<CardStatusIcon, Sprite>();
+
+        public const string LockIconResourcePath = "Status/icon_lock";
 
         public static string ResolveArtName(string cardId)
         {
@@ -21,6 +24,7 @@ namespace FateWeaver.Unity
             if (cardId.StartsWith("wrist_cut", StringComparison.Ordinal)) return "wrist_cut";
             if (cardId.StartsWith("preemptive_thrust", StringComparison.Ordinal)) return "preemptive_thrust";
             if (cardId.StartsWith("goblin_jab", StringComparison.Ordinal)) return "goblin_jab";
+            if (cardId.StartsWith("warden_", StringComparison.Ordinal)) return null;
 
             switch (cardId)
             {
@@ -60,6 +64,46 @@ namespace FateWeaver.Unity
 
             var sprite = Resources.Load<Sprite>(path);
             Cache[path] = sprite; // cache null too, to avoid repeated misses
+            return sprite;
+        }
+
+        public static Sprite LockIconSprite()
+            => StatusIconSprite(CardStatusIcon.Lock);
+
+        public static string ResolveStatusIconResourcePath(CardStatusIcon icon)
+        {
+            switch (icon)
+            {
+                case CardStatusIcon.Lock:
+                    return LockIconResourcePath;
+                default:
+                    return null;
+            }
+        }
+
+        public static Sprite StatusIconSprite(CardStatusIcon icon)
+        {
+            if (StatusIconCache.TryGetValue(icon, out var cached))
+            {
+                return cached;
+            }
+
+            var path = ResolveStatusIconResourcePath(icon);
+            if (path == null)
+            {
+                StatusIconCache[icon] = null;
+                return null;
+            }
+
+            var sprites = Resources.LoadAll<Sprite>(path);
+            if (sprites != null && sprites.Length > 0)
+            {
+                StatusIconCache[icon] = sprites[0];
+                return sprites[0];
+            }
+
+            var sprite = Resources.Load<Sprite>(path);
+            StatusIconCache[icon] = sprite;
             return sprite;
         }
     }
