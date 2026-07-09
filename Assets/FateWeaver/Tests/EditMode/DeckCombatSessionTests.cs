@@ -29,7 +29,16 @@ namespace FateWeaver.Tests
             => timeline.OfType<CardResolved>().First(e => e.CardId == cardId).DamageDealt;
 
         [Test]
-        public void Playing_an_action_card_places_it_and_spends_energy()
+        public void Turn_starts_with_enemy_intent_only_and_player_cards_stay_in_hand()
+        {
+            var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
+
+            CollectionAssert.AreEqual(new[] { "goblin_jab" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+            CollectionAssert.AreEqual(new[] { "slash" }, session.Hand.Select(c => c.Id).ToArray());
+        }
+
+        [Test]
+        public void Playing_an_execution_card_places_it_and_spends_energy()
         {
             var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
             Assert.AreEqual(3, session.FateEnergy);
@@ -42,7 +51,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Cannot_play_action_card_without_enough_energy()
+        public void Cannot_play_execution_card_without_enough_energy()
         {
             // deck of two counters (cost 2 each); energy 3 -> only one is affordable.
             var session = NewSession(new[] { StarterDeck.Counter(), StarterDeck.Counter() }, Goblin(4, 3));
@@ -101,6 +110,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, session.FateEnergy);            // refilled
             Assert.IsFalse(session.CurrentTurnResolved);
             Assert.AreEqual(5, session.Hand.Count);            // fresh hand of 5
+            CollectionAssert.AreEqual(new[] { "goblin_jab" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
         }
 
         // --- helpers ---

@@ -14,8 +14,8 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>Playable deck screen over DeckCombatSession: a hand of CardViews (action = one-click place,
-    /// fate = 2-step click targeting) and the future zone of CardViews. UI only — logic is in the session.</summary>
+    /// <summary>Playable deck screen over DeckCombatSession: a hand of CardViews (execution = one-click place,
+    /// intervention = 2-step click targeting) and the future zone of CardViews. UI only — logic is in the session.</summary>
     public sealed class DeckPlaytestController : MonoBehaviour
     {
         private enum EnemyKind
