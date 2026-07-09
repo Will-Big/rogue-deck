@@ -4,20 +4,20 @@
 
 ## Goal
 
-Wire the M2 `ConditionEvaluator` into `TurnResolver` so an action card can use a low default amount and a higher condition-success amount. This proves the core balance rule: automatic action cards can be weak by default and strong only when their future-zone position is correct.
+Wire the M2 `ConditionEvaluator` into `TurnResolver` so an execution card can use a low default amount and a higher condition-success effect value. This proves the core balance rule: automatic execution cards can be weak by default and strong only when their future-zone position is correct.
 
 ## Constraints
 
 - Core stays pure C# with no UnityEngine references.
 - C# 9 compatible.
-- Do not add fate cards, manipulation phase, statuses, block, target selection, or scenario runner.
+- Do not add intervention cards, manipulation phase, statuses, block, target selection, or scenario runner.
 - Preserve existing unconditional `EffectData(key, amount)` card definitions.
 
 ## Milestone Checklist
 
 - [x] Add a conditional `EffectData` construction path.
 - [x] Resolve condition tier inside `TurnResolver` using a frozen `ResolutionContext`.
-- [x] Use `SuccessAmount` only when the tier is `Success`; otherwise use the default amount.
+- [x] Use `SuccessEffectValue` only when the tier is `Success`; otherwise use the default amount.
 - [x] Add `ConditionTier` to `CardResolved` for timeline/report inspection.
 - [x] Verify success and basic paths with headless tests.
 
@@ -40,4 +40,4 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 - Multiple condition aggregation per card/effect.
 - Failure-specific amount separate from basic amount.
 - Per-effect event records for cards with multiple targets.
-- Fate-card manipulation that changes the condition result before resolution.
+- Intervention-card manipulation that changes the condition result before resolution.

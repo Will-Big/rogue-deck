@@ -1,33 +1,33 @@
-# Fate Weaver M3.2 FatePlayResolver Plan
+# Fate Weaver M3.2 InterventionPlayResolver Plan
 
-> Continue from M3.1 ChangeInitiative. This slice adds only a small ordered runner for already-selected fate plays.
+> Continue from M3.1 ChangeExecutionOrder. This slice adds only a small ordered runner for already-selected intervention plays.
 
 ## Goal
 
-Apply multiple fate actions in script order before turn resolution, spending fate energy as each action succeeds. If a play cannot be applied, stop at that play and keep any earlier successful manipulation.
+Apply multiple intervention actions in script order before turn resolution, spending fate energy as each action succeeds. If a play cannot be applied, stop at that play and keep any earlier successful manipulation.
 
 ## Constraints
 
 - Core remains pure C# with no UnityEngine references.
 - C# 9 compatible.
 - Do not add deck, hand, draw, card discovery, UI, or ScriptableObject data.
-- Do not add new fate action types beyond `ChangeInitiative`.
-- Keep `ChangeInitiativeHandler` as the single source of initiative mutation.
+- Do not add new intervention action types beyond `ChangeExecutionOrder`.
+- Keep `ChangeExecutionOrderHandler` as the single source of execution order mutation.
 
 ## Milestone Checklist
 
-- [x] Add `FatePlay` data: action + target card.
-- [x] Add `FatePlayResult`: applied count, rejected index, total fate energy spent.
-- [x] Add `FatePlayResolver` that executes plays in order through `FateActionRegistry`.
+- [x] Add `InterventionPlay` data: action + target card.
+- [x] Add `InterventionPlayResult`: applied count, rejected index, total fate energy spent.
+- [x] Add `InterventionPlayResolver` that executes plays in order through `InterventionActionRegistry`.
 - [x] Verify multiple plays apply deterministically in order.
 - [x] Verify insufficient energy stops the sequence and preserves earlier changes.
 
 ## Test-First Steps
 
-1. Add `FatePlayResolverTests`.
-2. RED: assert two `ChangeInitiative` plays apply in order and spend total cost.
+1. Add `InterventionPlayResolverTests`.
+2. RED: assert two `ChangeExecutionOrder` plays apply in order and spend total cost.
 3. RED: assert the second play is rejected when energy runs out, while the first remains applied.
-4. GREEN: implement only `FatePlay`, `FatePlayResult`, and `FatePlayResolver`.
+4. GREEN: implement only `InterventionPlay`, `InterventionPlayResult`, and `InterventionPlayResolver`.
 5. Run the full headless test command.
 
 ## Verification
@@ -38,8 +38,8 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 
 ## Deferred Work
 
-- Fate card hand/deck/draw.
+- Intervention card hand/deck/draw.
 - Player input target selection.
 - Continue-on-error policy variants.
-- Timeline events for fate plays.
-- Additional fate actions such as swap, lock, nullify, and reorder.
+- Timeline events for intervention plays.
+- Additional intervention actions such as swap, lock, nullify, and reorder.

@@ -4,14 +4,14 @@
 
 ## Goal
 
-Add the pure-C# condition model and evaluator needed by action cards to ask "is this card in a good position?" The observable outcome is a deterministic `ConditionTier` for a card inside a frozen resolution context.
+Add the pure-C# condition model and evaluator needed by execution cards to ask "is this card in a good position?" The observable outcome is a deterministic `ConditionTier` for a card inside a frozen resolution context.
 
 ## Constraints
 
 - Core remains pure C# under `FateWeaver.Core` with `noEngineReferences:true`.
 - Stay within Unity 6 / C# 9 constraints.
 - Use tests first. A new behavior must fail before production code is added.
-- M2 does not add fate cards, conditional effect branching, statuses, or target resolution.
+- M2 does not add intervention cards, conditional effect branching, statuses, or target resolution.
 
 ## Milestone Checklist
 
@@ -43,7 +43,7 @@ Add the pure-C# condition model and evaluator needed by action cards to ask "is 
 - Create `Assets/FateWeaver/Core/Conditions/ConditionTier.cs`
 - Create `Assets/FateWeaver/Core/Conditions/Condition.cs`
 - Create `Assets/FateWeaver/Core/Conditions/ConditionEvaluator.cs`
-- Update `Assets/FateWeaver/Core/Combat/ActionCardInstance.cs` with an optional `TargetId`.
+- Update `Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs` with an optional `TargetId`.
 
 ## Verification
 

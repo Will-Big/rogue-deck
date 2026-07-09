@@ -12,7 +12,7 @@
 
 ```
 ┌ 상태: 플레이어 HP · 적 HP/상태 · 운명력 ●●● · 턴 N ───────────┐
-│ 미래 영역(주도력 순): [적공격][강타][막기] …   (줄 카드 = 운명 타깃) │
+│ 미래 영역(실행 순서 순): [적공격][강타][막기] …   (줄 카드 = 개입 타깃) │
 │ 메시지 / 해석 결과                                              │
 │ 손패: [베기①][막기①][앞당김①][강타②][엄호①]   (손패 카드 = 플레이)  │
 │ 덱 N · 버림 N                            [턴 실행] [다음 턴] [초기화] │
@@ -21,9 +21,9 @@
 
 ## 3. 인터랙션 (2단계 클릭)
 
-- **손패 행동 카드 클릭** → 비용 ≤ 운명력이면 즉시 미래 영역에 배치(자기 BaseInitiative), 운명력 차감, 손→버림. (원클릭)
-- **손패 운명 카드 클릭** → "타깃 선택" 상태(armed, 강조). 이어서:
-  - 단일 타깃(주도력 변경/잠금): **줄 카드 1장 클릭** → 적용.
+- **손패 실행 카드 클릭** → 비용 ≤ 운명력이면 즉시 미래 영역에 배치(자기 BaseExecutionOrder), 운명력 차감, 손→버림. (원클릭)
+- **손패 개입 카드 클릭** → "타깃 선택" 상태(armed, 강조). 이어서:
+  - 단일 타깃(실행 순서 변경/잠금): **줄 카드 1장 클릭** → 적용.
   - 교환: **줄 카드 2장 클릭** → 적용.
   - (대상 규칙 위반/운명력 부족 → 메시지 거부, armed 해제)
 - **턴 실행** → `ResolveTurn()` → 타임라인 표시. **다음 턴** → `BeginNextTurn()`(드로우·운명력 충전·적 의도).
@@ -32,9 +32,9 @@
 ## 4. 컴포넌트
 
 - **`CardView`(프리팹, 재사용)** — 손패 카드 = 줄 카드 동일 프리팹. **추가**: 비용 표시 텍스트(`_costText`).
-  손패/줄 모드는 바인딩 데이터로 구분(줄=현재 주도력 표시, 손패=비용 강조). 선택 아웃라인으로 armed/타깃 후보 표시.
-- **`CardPresentation`(뷰모델)** — **추가**: `int Cost`. **추가 팩토리**: `FromDefinition(CardDefinition)`(손패용,
-  BaseInitiative·Cost 사용). 기존 `From(ActionCardInstance)`는 줄용(현재 Initiative).
+  손패/줄 모드는 바인딩 데이터로 구분(줄=현재 실행 순서 표시, 손패=비용 강조). 선택 아웃라인으로 armed/타깃 후보 표시.
+- **`CardPresentation`(뷰모델)** — **추가**: `int EnergyCost`. **추가 팩토리**: `FromDefinition(CardDefinition)`(손패용,
+  BaseExecutionOrder·EnergyCost 사용). 기존 `From(ExecutionCardInstance)`는 줄용(현재 ExecutionOrder).
 - **`DeckPlaytestController`(재작성)** — `[SerializeField] DeckAsset _deck`(에디터 빌더가 `StarterDeck.asset` 와이어링).
   Start에서 `_deck.ToSpecs()` → `CardSpecMapper.ToDefinition` → `new DeckCombatSession(deck, hp, enemies, intent…)`.
   손패/줄 컨테이너에 CardView 인스턴스화·바인딩, 클릭 핸들링(armed 상태 머신), 버튼.
@@ -54,8 +54,8 @@
 DeckAsset(StarterDeck.asset) ─ToSpecs()→ CardSpec[] ─CardSpecMapper→ CardDefinition[]
    → new DeckCombatSession(...)
        Hand: IReadOnlyList<CardDefinition>      → CardPresentation.FromDefinition → 손패 CardView
-       CurrentOrder: ActionCardInstance[]        → CardPresentation.From          → 줄 CardView
-   클릭 → PlayActionCard / PlayFateCard / ResolveTurn / BeginNextTurn → 재렌더
+       CurrentOrder: ExecutionCardInstance[]        → CardPresentation.From          → 줄 CardView
+   클릭 → PlayExecutionCard / PlayInterventionCard / ResolveTurn / BeginNextTurn → 재렌더
 ```
 
 아트/이름/설명은 기존 표현 계층 재사용: `PlaytestCardArt.Sprite(id)`, `PlaytestKoreanText.CardName/CardDescription(id)`.
@@ -64,7 +64,7 @@ DeckAsset(StarterDeck.asset) ─ToSpecs()→ CardSpec[] ─CardSpecMapper→ Car
 ## 7. 검증
 
 - 진행 로직은 `DeckCombatSession`(헤드리스 검증 완료) → UI는 표시·입력만. **사용자가 Play로 검증.**
-- 순수 추가 로직(예: 운명 카드의 타깃 수 판정)이 생기면 작은 헤드리스/EditMode 테스트로 가드 가능.
+- 순수 추가 로직(예: 개입 카드의 타깃 수 판정)이 생기면 작은 헤드리스/EditMode 테스트로 가드 가능.
 
 ## 8. 범위 밖 (후속)
 

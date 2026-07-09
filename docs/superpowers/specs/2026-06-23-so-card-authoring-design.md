@@ -41,13 +41,13 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
   - `EffectKind` = Damage | ApplyStatus | GrantNextAttackBonus | NullifyNextReward
   - `ConditionKind` = None | FirstToTrigger | WithinNth | BeforeNextEnemyAttack | PrevIsPlayerAttack | NextIsEnemyAttack
   - `StatusKindRef` = None | Stun | Vulnerable | Block | RewardNullified
-  - `FateKind` = None | ChangeInitiative | SwapInitiative | Lock
+  - `InterventionKind` = None | ChangeExecutionOrder | SwapExecutionOrder | Lock
   - 재사용(이미 코어 enum): `Side`, `CardType`, `CardCategory`, `StatusApplyTarget`, `StatusLifetimeKind`
-- **`EffectSpec`** (평탄 `[System.Serializable]` struct): `EffectKind Kind`, `int Amount`, `ConditionKind Condition`,
-  `int ConditionN`, `int SuccessAmount`, `StatusKindRef Status`, `StatusLifetimeKind Lifetime`, `int LifetimeCount`,
+- **`EffectSpec`** (평탄 `[System.Serializable]` struct): `EffectKind Kind`, `int EffectValue`, `ConditionKind Condition`,
+  `int ConditionN`, `int SuccessEffectValue`, `StatusKindRef Status`, `StatusLifetimeKind Lifetime`, `int LifetimeCount`,
   `StatusApplyTarget Target`.
-- **`CardSpec`** (순수): `string Id, Name; Side Side; CardType Type; CardCategory Category; int Cost, BaseInitiative;`
-  `EffectSpec[] Effects; FateKind Fate; int FateAmount`.
+- **`CardSpec`** (순수): `string Id, Name; Side Side; CardType Type; CardCategory Category; int EnergyCost, BaseExecutionOrder;`
+  `EffectSpec[] Effects; InterventionKind Intervention; int InterventionEffectValue`.
 - **`CardSpecMapper`** (순수 static): `CardDefinition ToDefinition(CardSpec)`.
 
 #### 매핑 규칙 (CardSpecMapper)
@@ -58,16 +58,16 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
   NextIsEnemyAttack→`new AdjacentCardIs(Next, Enemy, Attack)`.
 - `StatusKindRef→StatusKey?`, `StatusLifetimeKind(+LifetimeCount)→StatusLifetime`.
 - `EffectSpec→EffectData`:
-  - ApplyStatus: `new EffectData(ApplyStatus, Amount){ StatusKey, StatusLifetime, StatusTarget=Target, Condition=(Condition!=None? map : null), SuccessAmount=(Condition!=None? SuccessAmount : (int?)null) }`.
-  - 그 외: `Condition!=None ? EffectData.Conditional(key, Amount, cond, SuccessAmount) : new EffectData(key, Amount)`.
+  - ApplyStatus: `new EffectData(ApplyStatus, EffectValue){ StatusKey, StatusLifetime, StatusTarget=Target, Condition=(Condition!=None? map : null), SuccessEffectValue=(Condition!=None? SuccessEffectValue : (int?)null) }`.
+  - 그 외: `Condition!=None ? EffectData.Conditional(key, EffectValue, cond, SuccessEffectValue) : new EffectData(key, EffectValue)`.
 - `CardSpec→CardDefinition`:
-  - Fate: `new CardDefinition(Id, Name, Side, Type, 0, Array.Empty<EffectData>()){ Cost, Category=Fate, FateAction = new FateActionData(map(Fate), Cost, FateAmount) }`.
-  - Action: `new CardDefinition(Id, Name, Side, Type, BaseInitiative, Effects.Select(ToEffectData).ToArray()){ Cost, Category=Action }`.
+  - Intervention: `new CardDefinition(Id, Name, Side, Type, 0, Array.Empty<EffectData>()){ EnergyCost, Category=CardCategory.Intervention, InterventionAction = new InterventionActionData(map(Intervention), EnergyCost, InterventionEffectValue) }`.
+  - Execution: `new CardDefinition(Id, Name, Side, Type, BaseExecutionOrder, Effects.Select(ToEffectData).ToArray()){ EnergyCost, Category=CardCategory.Execution }`.
 
 ### 3.2 Unity 저작 (Assets/FateWeaver/Unity — 사용자 검증)
 
-- **`CardAsset : ScriptableObject`**: `Id, DisplayName; Side; CardType; CardCategory; Cost; BaseInitiative;`
-  `Sprite Art; string Description; EffectSpec[] Effects; FateKind Fate; int FateAmount` + `CardSpec ToSpec()`.
+- **`CardAsset : ScriptableObject`**: `Id, DisplayName; Side; CardType; CardCategory; EnergyCost; BaseExecutionOrder;`
+  `Sprite Art; string Description; EffectSpec[] Effects; InterventionKind Intervention; int InterventionEffectValue` + `CardSpec ToSpec()`.
   (`[CreateAssetMenu]`로 인스펙터에서 생성. Art/Description은 저작 편의용이며 CardSpec엔 안 들어감 — 그건
   표현 계층 `PlaytestCardArt`/`CardDescription`이 담당.)
 - **`DeckAsset : ScriptableObject`**: `string Id; List<Entry> Entries`(Entry = `{ CardAsset Card, int Count }`) +
@@ -78,7 +78,7 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
 ## 4. 검증
 
 - **헤드리스(내가)**: 
-  - `CardSpecMapper` 필드 단위 테스트(각 EffectKind/ConditionKind/StatusKindRef/FateKind 매핑).
+  - `CardSpecMapper` 필드 단위 테스트(각 EffectKind/ConditionKind/StatusKindRef/InterventionKind 매핑).
   - **등가성 안전망**: 시작덱 10장을 `CardSpec`(순수 `StarterDeckSpecs`)으로 재표현 → ToDefinition → 그 덱으로
     `DeckCombatSession` 불변식(찰나 첫 발동 8 / 강타 콤보 10 / 엄호 적 공격 앞 흡수)을 다시 통과시켜 **손코딩
     `StarterDeck`과 동작 등가**임을 증명.

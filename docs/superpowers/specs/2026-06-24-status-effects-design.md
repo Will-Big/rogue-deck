@@ -2,9 +2,9 @@
 
 > 브레인스토밍 산출물. 다음 단계는 writing-plans로 구현 계획을 만드는 것이며, 코드 구현은 사용자의 "GO" 이후 시작한다.
 
-**목표:** 행동/운명 카드와 시너지를 이루는 *특색 있는* 핵심 상태이상 세트를 정의하고, 엔티티/카드 두 스코프 모델과 유저 피드백(표기) 방식을 확정한다.
+**목표:** 행동/개입 카드와 시너지를 이루는 *특색 있는* 핵심 상태이상 세트를 정의하고, 엔티티/카드 두 스코프 모델과 유저 피드백(표기) 방식을 확정한다.
 
-**설계 철학:** 단순 수치 조정(공격력±, 평범한 피해/회복 버프·디버프)이 아니라 **발동·순서·해석을 비트는** 상태만 핵심으로 삼는다. 이 게임의 코어 — 미래 영역의 주도력 순서, 운명 카드 재배치, 조건/인접 보너스 — 와 맞물리는 것이 우선이다.
+**설계 철학:** 단순 수치 조정(공격력±, 평범한 피해/회복 버프·디버프)이 아니라 **발동·순서·해석을 비트는** 상태만 핵심으로 삼는다. 이 게임의 코어 — 미래 영역의 실행 순서, 개입 카드 재배치, 조건/인접 보너스 — 와 맞물리는 것이 우선이다.
 
 ---
 
@@ -26,24 +26,24 @@
 | 상태 | 스코프 | 효과 | 신규/유지 |
 |---|---|---|---|
 | 방어(Block) | Entity | 받는 피해 흡수(Magnitude만큼) | 유지 (변경 없음) |
-| 둔화(Slow) | Entity | 보유자의 모든 카드 주도력 **+N** (늦게 발동) | **신규** |
-| 가속(Haste) | Entity | 보유자의 모든 카드 주도력 **−N** (빨리 발동) | **신규** |
+| 둔화(Slow) | Entity | 보유자의 모든 카드 실행 순서 **+N** (늦게 발동) | **신규** |
+| 가속(Haste) | Entity | 보유자의 모든 카드 실행 순서 **−N** (빨리 발동) | **신규** |
 | 기절(Stun) | Card | 그 카드의 발동 1회 완전 무효 | 유지 (효과 불변) |
-| 고정(Lock) | Card | 그 카드를 운명 카드로 재배치 불가 | **신규** |
+| 고정(Lock) | Card | 그 카드를 개입 카드로 재배치 불가 | **신규** |
 
 ### 2.1 방어(Block) — Entity
 - 기존 `BlockBehavior` 그대로. 변경 없음.
 - 후속(비범위): 턴을 넘겨 유지되는 "방어구(Armor)" 변형 여지만 남겨둔다.
 
 ### 2.2 둔화(Slow) — Entity, 신규
-- **효과:** 보유 엔티티의 모든 카드 주도력에 +N. 미래 영역을 세울 때 적용 → 그 카드들이 더 늦게 발동.
-- **수치 모델 (확정):** 고정 수치 + N턴 지속. (가변 수치·1턴이 아니라) 지속형 컨디션 — 일회성 운명 카드(앞당김/교환)와 역할이 갈린다: **운명 카드 = 즉발·단일 카드 수술 / 둔화 = 지속·엔티티 컨디션.**
-- **기본값(튜닝 가능):** N = **+3**, 지속 **2턴**. (고블린 주도력 3~6, 플레이어 4~7이라 +3이면 대부분 역전)
-- **전달:** 플레이어 행동 카드가 적에게 부여 — 기존 `StatusApplyTarget.TargetEnemy` 재사용(새 타깃 코드 불필요).
+- **효과:** 보유 엔티티의 모든 카드 실행 순서에 +N. 미래 영역을 세울 때 적용 → 그 카드들이 더 늦게 발동.
+- **수치 모델 (확정):** 고정 수치 + N턴 지속. (가변 수치·1턴이 아니라) 지속형 컨디션 — 일회성 개입 카드(앞당김/교환)와 역할이 갈린다: **개입 카드 = 즉발·단일 카드 수술 / 둔화 = 지속·엔티티 컨디션.**
+- **기본값(튜닝 가능):** N = **+3**, 지속 **2턴**. (고블린 실행 순서 3~6, 플레이어 4~7이라 +3이면 대부분 역전)
+- **전달:** 플레이어 실행 카드가 적에게 부여 — 기존 `StatusApplyTarget.TargetEnemy` 재사용(새 타깃 코드 불필요).
 - **시너지:** 둔화된 적의 카드가 플레이어 카드 뒤로 → 플레이어가 먼저 행동. 조건(인접, "앞에 적 카드 없음" 등)과 자연 결합.
 
 ### 2.3 가속(Haste) — Entity, 신규
-- 둔화와 **같은 메커니즘, 부호 반대**(주도력 −N). 하나의 "주도력 보정" 메커니즘을 두 이름/아이콘으로 노출.
+- 둔화와 **같은 메커니즘, 부호 반대**(실행 순서 −N). 하나의 "실행 순서 보정" 메커니즘을 두 이름/아이콘으로 노출.
 - **전달:** 플레이어가 자신에게 부여 — 기존 `StatusApplyTarget.Self` 재사용. 플레이어 카드가 더 빨리 발동.
 - 수치 모델/지속/기본값은 둔화와 동일(−3, 2턴, 튜닝 가능).
 
@@ -53,8 +53,8 @@
 - **전달:** 카드 스코프 — 미래 영역의 특정 카드에 부여하는 플레이어 카드(구현 계획에서 1장 정의).
 
 ### 2.5 고정(Lock) — Card, 신규
-- **효과:** 그 카드는 운명 카드로 순서를 바꿀 수 없다.
-- **엔진:** 기존 `ActionCardInstance.IsLocked` 플래그를 재사용 — `ChangeInitiativeHandler`/`SwapInitiativeHandler`가 이미 lock된 카드를 거부한다. 고정 상태의 존재가 곧 그 카드의 "재배치 불가"를 의미.
+- **효과:** 그 카드는 개입 카드로 순서를 바꿀 수 없다.
+- **엔진:** 기존 `ExecutionCardInstance.IsLocked` 플래그를 재사용 — `ChangeExecutionOrderHandler`/`SwapExecutionOrderHandler`가 이미 lock된 카드를 거부한다. 고정 상태의 존재가 곧 그 카드의 "재배치 불가"를 의미.
 - **카드 스코프 이유:** "이 *공격*은 못 옮긴다"는 본질이 특정 카드·이번 턴 사안. 한 카드만 잠그면 나머지는 재배치 가능 → **플레이어 agency 유지**(잠긴 걸 피해 짜맞추는 퍼즐). 엔티티 전체 잠금은 1번 무기를 통째로 봉쇄해 답답하므로 배제.
 - **전달(주):** 특정 적 카드에 *innate*하게 부여(잠긴 채로 텔레그래프) → "간수(warden)" 류 적의 시그니처. (기존 운명 `Lock` 액션은 플레이어 측 잠금용으로 별개 유지.)
 - **구현 계획에서 확정할 디테일:** 고정을 (a) 적 카드 정의에 붙는 innate 속성으로 spawn 시 `IsLocked=true`로 둘지, (b) 효과로 동적으로 부여할지. 1차 구현은 (a) innate 권장.
@@ -75,9 +75,9 @@
 
 ## 4. 엔진 변경 (작고 격리됨)
 
-1. **새 훅 1개:** `IStatusBehavior.ModifyInitiative(int baseInitiative, StatusContext ctx) → int` (기본 no-op를 `StatusBehavior`에 추가). `SlowBehavior`/`HasteBehavior`만 구현(+N / −N).
-2. **적용 지점 1곳:** 미래 영역 구성 시(`DeckCombatSession.BeginTurn`) 각 카드의 `Initiative`를, 그 카드 소유 엔티티의 엔티티 상태들을 `ModifyInitiative`에 통과시켜 확정한다. (소유 = `card.Def.Side`로 플레이어/적 판별; 단일 적 가정.)
-3. **고정(Lock):** **새 훅·새 behavior 불필요.** 기존 `ActionCardInstance.IsLocked` 경로를 그대로 재사용 — 운명 핸들러가 이미 거부한다. 1차 구현은 적 카드를 spawn 시 `IsLocked=true`로 텔레그래프(innate). 배지는 `IsLocked`로부터 표시. (StatusBag 항목으로도 통일 표기할지는 구현 계획에서 결정.)
+1. **새 훅 1개:** `IStatusBehavior.ModifyExecutionOrder(int baseExecutionOrder, StatusContext ctx) → int` (기본 no-op를 `StatusBehavior`에 추가). `SlowBehavior`/`HasteBehavior`만 구현(+N / −N).
+2. **적용 지점 1곳:** 미래 영역 구성 시(`DeckCombatSession.BeginTurn`) 각 카드의 `ExecutionOrder`를, 그 카드 소유 엔티티의 엔티티 상태들을 `ModifyExecutionOrder`에 통과시켜 확정한다. (소유 = `card.Def.Side`로 플레이어/적 판별; 단일 적 가정.)
+3. **고정(Lock):** **새 훅·새 behavior 불필요.** 기존 `ExecutionCardInstance.IsLocked` 경로를 그대로 재사용 — 운명 핸들러가 이미 거부한다. 1차 구현은 적 카드를 spawn 시 `IsLocked=true`로 텔레그래프(innate). 배지는 `IsLocked`로부터 표시. (StatusBag 항목으로도 통일 표기할지는 구현 계획에서 결정.)
 4. **권위(authoring) 추가:** `StatusKeys.Slow/Haste` + `StatusKindRef`에 대응 항목 + `CardSpecMapper.ToStatusKey` 케이스. 지속은 기존 `StatusLifetime.Turns(N)` 재사용. (고정은 IsLocked 경로라 StatusKey 추가 불요.)
 5. **레지스트리:** `SlowBehavior`/`HasteBehavior`를 `CombatRegistries.Statuses()`에 등록.
 6. **불변:** `BlockBehavior`/`StunBehavior` 로직은 손대지 않는다.
@@ -88,10 +88,10 @@
 
 ## 5. 카드 연계 (전달 + 활용)
 
-상태이상은 "행동/운명 카드와 묶인다"는 원칙. 1차 구현에서 각 신규 상태당 최소 1장의 전달 카드를 정의해 *플레이 가능·테스트 가능*하게 한다.
+상태이상은 "행동/개입 카드와 묶인다"는 원칙. 1차 구현에서 각 신규 상태당 최소 1장의 전달 카드를 정의해 *플레이 가능·테스트 가능*하게 한다.
 
-- **둔화:** 플레이어 행동 카드 1장 — `ApplyStatus(Slow, TargetEnemy, magnitude 3, Turns 2)`. (EffectSpec: Kind=ApplyStatus, Status=Slow, Target=TargetEnemy, Lifetime=Turns/2, Amount=3)
-- **가속:** 플레이어 행동 카드 1장 — `ApplyStatus(Haste, Self, magnitude 3, Turns 2)`.
+- **둔화:** 플레이어 실행 카드 1장 — `ApplyStatus(Slow, TargetEnemy, magnitude 3, Turns 2)`. (EffectSpec: Kind=ApplyStatus, Status=Slow, Target=TargetEnemy, Lifetime=Turns/2, EffectValue=3)
+- **가속:** 플레이어 실행 카드 1장 — `ApplyStatus(Haste, Self, magnitude 3, Turns 2)`.
 - **기절:** 플레이어 카드 1장 — 미래 영역의 적 카드에 기절 부여(카드 스코프).
 - **고정:** 고블린(또는 신규 적) 카드 1장을 innate 고정으로 텔레그래프.
 - **방어:** 기존 guard/cover/crude_guard 유지.
@@ -105,7 +105,7 @@
 UI 배치가 스코프 모델을 가르치도록 한다.
 
 - **엔티티 상태 → 초상화 아래** 상태 바. 기존 `StatusText` 패턴 확장(예: `[방어(3), 둔화(2)]`).
-- **카드 상태 → 아트 영역 하단의 가로 아이콘 띠(방식 A 확정).** 이름 바로 위에 위치(상단 코너는 Cost/Initiative가 점유). 카드 스코프 상태(기절·고정)를 가로로 누적.
+- **카드 상태 → 아트 영역 하단의 가로 아이콘 띠(방식 A 확정).** 이름 바로 위에 위치(상단 코너는 EnergyCost/ExecutionOrder가 점유). 카드 스코프 상태(기절·고정)를 가로로 누적.
 - **기존 중앙 "고정" 전용 텍스트 요소는 제거** — 잠금도 이 띠의 아이콘 하나로 표시. 현재 카드 중앙에 박힌 "고정" 텍스트(`CardView._lockBadge`)를 없애고 아이콘 띠로 통합.
 - **특례 — "발동 안 함" 강조:** 기절처럼 *카드가 아예 안 터지는* 상태는 작은 아이콘으로 부족하므로 **아트 전체를 딤(흐림)** 처리. 고정은 카드가 여전히 발동하므로 띠 아이콘으로 충분.
 - 학습되는 규칙: *초상화 밑 = 전투원 컨디션 / 아트 하단 띠 = 카드 태그 / 아트 전체 딤 = 이 카드 안 터짐.*
@@ -116,11 +116,11 @@ UI 배치가 스코프 모델을 가르치도록 한다.
 ## 7. 테스트 전략
 
 **헤드리스 (순수 C# — 내가 검증):**
-- `SlowBehavior.ModifyInitiative`가 +N, `HasteBehavior`가 −N 반환.
+- `SlowBehavior.ModifyExecutionOrder`가 +N, `HasteBehavior`가 −N 반환.
 - 둔화 걸린 엔티티의 카드가 zone 구성 시 +N → `ResolutionOrder`에서 플레이어 뒤로. 가속은 앞으로.
-- 지속(Turns 2) 후 만료 → 주도력 원복.
+- 지속(Turns 2) 후 만료 → 실행 순서 원복.
 - 플레이어 카드가 `TargetEnemy`로 적에 둔화 부여, `Self`로 자신에 가속 부여(세션 통합).
-- 고정된 카드에 운명 재배치(ChangeInitiative/Swap) 시도 → 거부.
+- 고정된 카드에 운명 재배치(ChangeExecutionOrder/Swap) 시도 → 거부.
 - 기절된 카드 → 발동 무효(회귀 테스트).
 - 중첩(갱신) 규칙 검증.
 

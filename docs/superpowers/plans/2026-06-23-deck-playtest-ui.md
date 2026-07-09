@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A playable uGUI screen over the pure `DeckCombatSession`: draw a hand, click an action card to place it on the future zone, click a fate card then a zone card (2-step) to reorder, resolve and advance turns.
+**Goal:** A playable uGUI screen over the pure `DeckCombatSession`: draw a hand, click an execution card to place it on the future zone, click an intervention card then a zone card (2-step) to reorder, resolve and advance turns.
 
 **Architecture:** `DeckPlaytestController` (MonoBehaviour) loads `StarterDeck.asset` (DeckAsset) → `CardSpecMapper` → `DeckCombatSession`, and renders the hand + future zone as reused `CardView` prefabs. Logic lives in the headless-verified `DeckCombatSession`; the UI only displays state and routes clicks. An editor menu builds the Canvas + wires everything.
 
@@ -16,7 +16,7 @@
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Unity/CardPresentation.cs` | add `Cost` + `FromDefinition` | Modify |
+| `Assets/FateWeaver/Unity/CardPresentation.cs` | add `EnergyCost` + `FromDefinition` | Modify |
 | `Assets/FateWeaver/Unity/CardView.cs` | show cost | Modify |
 | `Assets/FateWeaver/Unity/DeckPlaytestController.cs` | deck UI driver | Create |
 | `Assets/FateWeaver/Unity/Editor/DeckPlaytestSceneCreator.cs` | build deck scene + CardView prefab | Create |
@@ -25,7 +25,7 @@
 
 ---
 
-## Task 1: `CardPresentation.Cost` + `FromDefinition`, and `CardView` cost display
+## Task 1: `CardPresentation.EnergyCost` + `FromDefinition`, and `CardView` cost display
 
 **Files:**
 - Modify: `Assets/FateWeaver/Unity/CardPresentation.cs`
@@ -47,50 +47,50 @@ namespace FateWeaver.Unity
     {
         public string Id { get; }
         public string DisplayName { get; }
-        public int Initiative { get; }
-        public int Cost { get; }
+        public int ExecutionOrder { get; }
+        public int EnergyCost { get; }
         public Side Side { get; }
         public string Description { get; }
         public Sprite Art { get; }
         public bool IsLocked { get; }
 
         public CardPresentation(
-            string id, string displayName, int initiative, int cost, Side side,
+            string id, string displayName, int executionOrder, int cost, Side side,
             string description, Sprite art, bool isLocked)
         {
             Id = id;
             DisplayName = displayName;
-            Initiative = initiative;
-            Cost = cost;
+            ExecutionOrder = executionOrder;
+            EnergyCost = cost;
             Side = side;
             Description = description;
             Art = art;
             IsLocked = isLocked;
         }
 
-        /// <summary>Zone card (placed instance) — shows its current initiative.</summary>
-        public static CardPresentation From(ActionCardInstance card)
+        /// <summary>Zone card (placed instance) — shows its current execution order.</summary>
+        public static CardPresentation From(ExecutionCardInstance card)
         {
             var def = card.Def;
             return new CardPresentation(
                 def.Id,
                 PlaytestKoreanText.CardName(def.Id, def.Name),
-                card.Initiative,
-                def.Cost,
+                card.ExecutionOrder,
+                def.EnergyCost,
                 def.Side,
                 PlaytestKoreanText.CardDescription(def.Id),
                 PlaytestCardArt.Sprite(def.Id),
                 card.IsLocked);
         }
 
-        /// <summary>Hand card (definition) — initiative is the base value; cost is the key number.</summary>
+        /// <summary>Hand card (definition) — execution order is the base value; cost is the key number.</summary>
         public static CardPresentation FromDefinition(CardDefinition def)
         {
             return new CardPresentation(
                 def.Id,
                 PlaytestKoreanText.CardName(def.Id, def.Name),
-                def.BaseInitiative,
-                def.Cost,
+                def.BaseExecutionOrder,
+                def.EnergyCost,
                 def.Side,
                 PlaytestKoreanText.CardDescription(def.Id),
                 PlaytestCardArt.Sprite(def.Id),
@@ -102,20 +102,20 @@ namespace FateWeaver.Unity
 
 - [ ] **Step 2: Add a cost field to `CardView`**
 
-In `Assets/FateWeaver/Unity/CardView.cs`, add the serialized field after `_initiativeText`:
+In `Assets/FateWeaver/Unity/CardView.cs`, add the serialized field after `_executionOrderText`:
 
 ```csharp
-        [SerializeField] private TMP_Text _initiativeText;
+        [SerializeField] private TMP_Text _executionOrderText;
         [SerializeField] private TMP_Text _costText;
 ```
 
-And in `Bind(...)`, after the `_initiativeText.text` line, add:
+And in `Bind(...)`, after the `_executionOrderText.text` line, add:
 
 ```csharp
-            _initiativeText.text = data.Initiative.ToString();
+            _executionOrderText.text = data.ExecutionOrder.ToString();
             if (_costText != null)
             {
-                _costText.text = data.Cost.ToString();
+                _costText.text = data.EnergyCost.ToString();
             }
 ```
 
@@ -150,7 +150,7 @@ using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
@@ -161,7 +161,7 @@ using UnityEngine.UI;
 namespace FateWeaver.Unity
 {
     /// <summary>Playable deck screen over DeckCombatSession: a hand of CardViews (action = one-click place,
-    /// fate = 2-step click targeting) and the future zone of CardViews. UI only — logic is in the session.</summary>
+    /// intervention = 2-step click targeting) and the future zone of CardViews. UI only — logic is in the session.</summary>
     public sealed class DeckPlaytestController : MonoBehaviour
     {
         [Header("Data")]
@@ -184,7 +184,7 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _resetButton;
 
         private DeckCombatSession _session;
-        private int _armedFateHandIndex = -1;
+        private int _armedInterventionHandIndex = -1;
         private int _firstSwapZoneIndex = -1;
         private readonly List<CardView> _handViews = new List<CardView>();
         private readonly List<CardView> _zoneViews = new List<CardView>();
@@ -240,9 +240,9 @@ namespace FateWeaver.Unity
             }
 
             var def = _session.Hand[handIndex];
-            if (def.Category == CardCategory.Action)
+            if (def.Category == CardCategory.Execution)
             {
-                SetMessage(_session.PlayActionCard(handIndex)
+                SetMessage(_session.PlayExecutionCard(handIndex)
                     ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
                     : "운명력이 부족하거나 낼 수 없습니다.");
                 ClearArmed();
@@ -250,7 +250,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            _armedFateHandIndex = handIndex;
+            _armedInterventionHandIndex = handIndex;
             _firstSwapZoneIndex = -1;
             SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name) + " — 줄에서 대상을 선택하세요.");
             RefreshHand();
@@ -259,13 +259,13 @@ namespace FateWeaver.Unity
 
         private void OnZoneClicked(int zoneIndex)
         {
-            if (_armedFateHandIndex < 0)
+            if (_armedInterventionHandIndex < 0)
             {
                 return;
             }
 
-            var def = _session.Hand[_armedFateHandIndex];
-            var needsTwo = def.FateAction != null && def.FateAction.Key == FateActionKeys.SwapInitiative;
+            var def = _session.Hand[_armedInterventionHandIndex];
+            var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapExecutionOrder;
 
             if (needsTwo && _firstSwapZoneIndex < 0)
             {
@@ -276,10 +276,10 @@ namespace FateWeaver.Unity
             }
 
             bool ok = needsTwo
-                ? _session.PlayFateCard(_armedFateHandIndex, _firstSwapZoneIndex, zoneIndex)
-                : _session.PlayFateCard(_armedFateHandIndex, zoneIndex);
+                ? _session.PlayInterventionCard(_armedInterventionHandIndex, _firstSwapZoneIndex, zoneIndex)
+                : _session.PlayInterventionCard(_armedInterventionHandIndex, zoneIndex);
 
-            SetMessage(ok ? "운명 카드 적용." : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+            SetMessage(ok ? "개입 카드 적용." : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
             ClearArmed();
             RefreshAll();
         }
@@ -303,7 +303,7 @@ namespace FateWeaver.Unity
 
         private void ClearArmed()
         {
-            _armedFateHandIndex = -1;
+            _armedInterventionHandIndex = -1;
             _firstSwapZoneIndex = -1;
         }
 
@@ -328,7 +328,7 @@ namespace FateWeaver.Unity
                 var view = Instantiate(_cardPrefab, _handRow);
                 int captured = i;
                 view.Bind(CardPresentation.FromDefinition(_session.Hand[i]), () => OnHandClicked(captured));
-                view.SetSelection(i == _armedFateHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
+                view.SetSelection(i == _armedInterventionHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
                 _handViews.Add(view);
             }
         }
@@ -433,7 +433,7 @@ User: Unity reloads. Expected: compiles. (Serialized fields wired by the builder
 
 ```bash
 git add Assets/FateWeaver/Unity/DeckPlaytestController.cs
-git commit -m "feat(unity): DeckPlaytestController (hand play + 2-step fate targeting)"
+git commit -m "feat(unity): DeckPlaytestController (hand play + 2-step intervention targeting)"
 ```
 
 ---
@@ -505,7 +505,7 @@ namespace FateWeaver.Unity.Editor
 
             var state = NewText("State", root.transform, font, 18, FontStyles.Bold, Color.white);
             var zoneLabel = NewText("ZoneLabel", root.transform, font, 14, FontStyles.Normal, new Color(0.4f, 0.85f, 1f));
-            zoneLabel.text = "미래 영역 (주도력 순) — 운명 타깃";
+            zoneLabel.text = "미래 영역 (실행 순서 순) — 개입 타깃";
             var zoneRow = NewRow("ZoneRow", root.transform);
             ((RectTransform)zoneRow.transform).sizeDelta = new Vector2(0, 300);
             var message = NewText("Message", root.transform, font, 16, FontStyles.Bold, new Color(1f, 0.82f, 0.3f));
@@ -575,12 +575,12 @@ namespace FateWeaver.Unity.Editor
             AnchorTop(artFallback.rectTransform, 170);
             artFallback.enabled = false;
 
-            var cost = NewText("Cost", rootGo.transform, font, 18, FontStyles.Bold, new Color(0.6f, 0.85f, 1f));
+            var cost = NewText("EnergyCost", rootGo.transform, font, 18, FontStyles.Bold, new Color(0.6f, 0.85f, 1f));
             AnchorBand(cost.rectTransform, 4, 26);
             cost.alignment = TextAlignmentOptions.TopLeft;
-            var initiative = NewText("Initiative", rootGo.transform, font, 14, FontStyles.Bold, new Color(0.95f, 0.85f, 0.4f));
-            AnchorBand(initiative.rectTransform, 4, 26);
-            initiative.alignment = TextAlignmentOptions.TopRight;
+            var executionOrder = NewText("ExecutionOrder", rootGo.transform, font, 14, FontStyles.Bold, new Color(0.95f, 0.85f, 0.4f));
+            AnchorBand(executionOrder.rectTransform, 4, 26);
+            executionOrder.alignment = TextAlignmentOptions.TopRight;
             var nameText = NewText("Name", rootGo.transform, font, 15, FontStyles.Bold, Color.white);
             AnchorBand(nameText.rectTransform, 172, 24);
             var descText = NewText("Description", rootGo.transform, font, 12, FontStyles.Normal, new Color(0.9f, 0.9f, 0.9f));
@@ -596,7 +596,7 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_art").objectReferenceValue = art;
             so.FindProperty("_artFallback").objectReferenceValue = artFallback;
             so.FindProperty("_nameText").objectReferenceValue = nameText;
-            so.FindProperty("_initiativeText").objectReferenceValue = initiative;
+            so.FindProperty("_executionOrderText").objectReferenceValue = executionOrder;
             so.FindProperty("_costText").objectReferenceValue = cost;
             so.FindProperty("_descriptionText").objectReferenceValue = descText;
             so.FindProperty("_selectionOutline").objectReferenceValue = outline;
@@ -732,7 +732,7 @@ namespace FateWeaver.Unity.Editor
 
 - [ ] **Step 2: User runs the build menu**
 
-User: run `Fate Weaver ▸ Build Deck Playtest Scene`, open the scene, press Play. Expected: hand of cards (with cost), future zone with the goblin card, clicking an action card places it, clicking a fate card then a zone card reorders, `턴 실행`/`다음 턴` work. Report console errors / layout issues.
+User: run `Fate Weaver ▸ Build Deck Playtest Scene`, open the scene, press Play. Expected: hand of cards (with cost), future zone with the goblin card, clicking an execution card places it, clicking an intervention card then a zone card reorders, `턴 실행`/`다음 턴` work. Report console errors / layout issues.
 
 - [ ] **Step 3: Commit (after user confirms it builds)**
 
@@ -758,7 +758,7 @@ git rm Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs Assets/F
 
 - [ ] **Step 2: User verifies compile + Play**
 
-User: Unity reloads (no references to the deleted controller remain — the scene now uses `DeckPlaytestController`). Re-run `Build Deck Playtest Scene` if needed, Play, and confirm: place actions, 2-step fate targeting reorders the zone, resolve shows the timeline, next turn redraws, win/lose stops. Report issues.
+User: Unity reloads (no references to the deleted controller remain — the scene now uses `DeckPlaytestController`). Re-run `Build Deck Playtest Scene` if needed, Play, and confirm: place actions, 2-step intervention targeting reorders the zone, resolve shows the timeline, next turn redraws, win/lose stops. Report issues.
 
 - [ ] **Step 3: Commit**
 

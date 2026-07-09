@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 미래 영역의 주도력/순서를 비트는 핵심 상태이상(둔화·가속 신규, 고정 신규)을 엔진·저작·콘텐츠·표기까지 추가한다.
+**Goal:** 미래 영역의 실행 순서/순서를 비트는 핵심 상태이상(둔화·가속 신규, 고정 신규)을 엔진·저작·콘텐츠·표기까지 추가한다.
 
-**Architecture:** 엔티티 상태(둔화/가속)는 `IStatusBehavior`에 새 `ModifyInitiative` 훅을 추가하고, 카드가 미래 영역에 *진입할 때*(적 카드 = `BeginTurn`, 플레이어 카드 = `PlayActionCard`) 소유 엔티티의 상태를 통과시켜 `ActionCardInstance.Initiative`에 합산(bake)한다. 정렬은 기존 `FutureZone.ResolutionOrder()`(주도력 오름차순)가 그대로 처리하므로 해석/UI 순서가 자동 일관된다. 고정(Lock)은 기존 `IsLocked` 경로를 재사용한다.
+**Architecture:** 엔티티 상태(둔화/가속)는 `IStatusBehavior`에 새 `ModifyExecutionOrder` 훅을 추가하고, 카드가 미래 영역에 *진입할 때*(적 카드 = `BeginTurn`, 플레이어 카드 = `PlayExecutionCard`) 소유 엔티티의 상태를 통과시켜 `ExecutionCardInstance.ExecutionOrder`에 합산(bake)한다. 정렬은 기존 `FutureZone.ResolutionOrder()`(실행 순서 오름차순)가 그대로 처리하므로 해석/UI 순서가 자동 일관된다. 고정(Lock)은 기존 `IsLocked` 경로를 재사용한다.
 
-**동작 명시 (중요):** 둔화/가속은 *해석 단계*에 적용되므로 **이번 턴이 아니라 다음 턴부터** 작용하는 다턴 셋업 컨디션이다(이번 턴 즉시 템포 아님). 같은 턴 즉시 효과를 원하면 운명 카드 전달 + 정렬 시점 live-fold가 필요 — 후속.
+**동작 명시 (중요):** 둔화/가속은 *해석 단계*에 적용되므로 **이번 턴이 아니라 다음 턴부터** 작용하는 다턴 셋업 컨디션이다(이번 턴 즉시 템포 아님). 같은 턴 즉시 효과를 원하면 개입 카드 전달 + 정렬 시점 live-fold가 필요 — 후속.
 
 **Tech Stack:** C# 9 (Unity 6 / netstandard2.1), 순수 코어 + Simulation, 헤드리스 `dotnet test`.
 
@@ -21,18 +21,18 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 ## File Structure
 
 **생성**
-- `Assets/FateWeaver/Core/Status/SlowBehavior.cs` — 둔화: 엔티티 스코프, 주도력 +Magnitude.
-- `Assets/FateWeaver/Core/Status/HasteBehavior.cs` — 가속: 엔티티 스코프, 주도력 −Magnitude.
-- `Assets/FateWeaver/Core/Status/StatusInitiative.cs` — 보유자 엔티티 상태를 접어 실효 주도력 계산하는 정적 헬퍼.
+- `Assets/FateWeaver/Core/Status/SlowBehavior.cs` — 둔화: 엔티티 스코프, 실행 순서 +Magnitude.
+- `Assets/FateWeaver/Core/Status/HasteBehavior.cs` — 가속: 엔티티 스코프, 실행 순서 −Magnitude.
+- `Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs` — 보유자 엔티티 상태를 접어 실효 실행 순서 계산하는 정적 헬퍼.
 - `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs` — 훅/행동/헬퍼/세션 통합.
 - `Assets/FateWeaver/Tests/EditMode/LockCardTests.cs` — 고정.
 
 **수정**
-- `Assets/FateWeaver/Core/Status/IStatusBehavior.cs` — `ModifyInitiative` 훅 + 기본 no-op.
+- `Assets/FateWeaver/Core/Status/IStatusBehavior.cs` — `ModifyExecutionOrder` 훅 + 기본 no-op.
 - `Assets/FateWeaver/Core/Status/StatusKey.cs` — `Slow`, `Haste` 키.
 - `Assets/FateWeaver/Core/Cards/CardDefinition.cs` — `StartsLocked` init-prop.
 - `Assets/FateWeaver/Simulation/CombatRegistries.cs` — Slow/Haste 행동 등록.
-- `Assets/FateWeaver/Simulation/DeckCombatSession.cs` — 레지스트리 보관 + 진입 시 주도력/잠금 bake.
+- `Assets/FateWeaver/Simulation/DeckCombatSession.cs` — 레지스트리 보관 + 진입 시 실행 순서/잠금 bake.
 - `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs` — `StatusKindRef`에 `Slow`, `Haste`.
 - `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs` — `ToStatusKey` 케이스.
 - `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs` — 둔화/가속 전달 카드 팩토리.
@@ -41,7 +41,7 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 
 ---
 
-## Task 1: ModifyInitiative 훅
+## Task 1: ModifyExecutionOrder 훅
 
 **Files:**
 - Modify: `Assets/FateWeaver/Core/Status/IStatusBehavior.cs`
@@ -62,10 +62,10 @@ namespace FateWeaver.Tests
             new StatusContext { Instance = new StatusInstance(key, StatusLifetime.Turns(2), magnitude) };
 
         [Test]
-        public void Base_behavior_does_not_change_initiative()
+        public void Base_behavior_does_not_change_execution_order()
         {
             var block = new BlockBehavior();
-            Assert.AreEqual(5, block.ModifyInitiative(5, Ctx(StatusKeys.Block, 3)));
+            Assert.AreEqual(5, block.ModifyExecutionOrder(5, Ctx(StatusKeys.Block, 3)));
         }
     }
 }
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
 - [ ] **Step 2: 실패 확인**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~SlowHasteStatusTests"`
-Expected: 컴파일 실패 — `ModifyInitiative` 정의 없음.
+Expected: 컴파일 실패 — `ModifyExecutionOrder` 정의 없음.
 
 - [ ] **Step 3: 훅 추가**
 
@@ -89,13 +89,13 @@ Expected: 컴파일 실패 — `ModifyInitiative` 정의 없음.
 
         bool InterceptCardResolve(StatusContext ctx);
 
-        /// <summary>Entity-scoped: fold into the initiative of a card owned by the holder (e.g. slow/haste).</summary>
-        int ModifyInitiative(int initiative, StatusContext ctx);
+        /// <summary>Entity-scoped: fold into the execution order of a card owned by the holder (e.g. slow/haste).</summary>
+        int ModifyExecutionOrder(int executionOrder, StatusContext ctx);
     }
 ```
 그리고 `StatusBehavior` 추상 클래스에:
 ```csharp
-        public virtual int ModifyInitiative(int initiative, StatusContext ctx) => initiative;
+        public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
 ```
 
 - [ ] **Step 4: 통과 확인**
@@ -107,7 +107,7 @@ Expected: PASS (1).
 
 ```bash
 git add Assets/FateWeaver/Core/Status/IStatusBehavior.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
-git commit -m "feat(status): add ModifyInitiative hook (no-op default)"
+git commit -m "feat(status): add ModifyExecutionOrder hook (no-op default)"
 ```
 
 ---
@@ -129,7 +129,7 @@ git commit -m "feat(status): add ModifyInitiative hook (no-op default)"
             var slow = new SlowBehavior();
             Assert.AreEqual(StatusScope.Entity, slow.Scope);
             Assert.AreEqual(StatusKeys.Slow, slow.Key);
-            Assert.AreEqual(8, slow.ModifyInitiative(5, Ctx(StatusKeys.Slow, 3)));
+            Assert.AreEqual(8, slow.ModifyExecutionOrder(5, Ctx(StatusKeys.Slow, 3)));
         }
 
         [Test]
@@ -138,7 +138,7 @@ git commit -m "feat(status): add ModifyInitiative hook (no-op default)"
             var haste = new HasteBehavior();
             Assert.AreEqual(StatusScope.Entity, haste.Scope);
             Assert.AreEqual(StatusKeys.Haste, haste.Key);
-            Assert.AreEqual(2, haste.ModifyInitiative(5, Ctx(StatusKeys.Haste, 3)));
+            Assert.AreEqual(2, haste.ModifyExecutionOrder(5, Ctx(StatusKeys.Haste, 3)));
         }
 ```
 
@@ -158,14 +158,14 @@ Expected: 컴파일 실패 — `StatusKeys.Slow`/`SlowBehavior` 없음.
 ```csharp
 namespace FateWeaver.Core.Status
 {
-    /// <summary>둔화: the holder's cards resolve later (initiative += Magnitude). Entity-scoped.</summary>
+    /// <summary>둔화: the holder's cards resolve later (execution order += Magnitude). Entity-scoped.</summary>
     public sealed class SlowBehavior : StatusBehavior
     {
         public override StatusKey Key => StatusKeys.Slow;
         public override StatusScope Scope => StatusScope.Entity;
 
-        public override int ModifyInitiative(int initiative, StatusContext ctx)
-            => initiative + ctx.Instance.Magnitude;
+        public override int ModifyExecutionOrder(int executionOrder, StatusContext ctx)
+            => executionOrder + ctx.Instance.Magnitude;
     }
 }
 ```
@@ -173,14 +173,14 @@ namespace FateWeaver.Core.Status
 ```csharp
 namespace FateWeaver.Core.Status
 {
-    /// <summary>가속: the holder's cards resolve sooner (initiative -= Magnitude). Entity-scoped.</summary>
+    /// <summary>가속: the holder's cards resolve sooner (execution order -= Magnitude). Entity-scoped.</summary>
     public sealed class HasteBehavior : StatusBehavior
     {
         public override StatusKey Key => StatusKeys.Haste;
         public override StatusScope Scope => StatusScope.Entity;
 
-        public override int ModifyInitiative(int initiative, StatusContext ctx)
-            => initiative - ctx.Instance.Magnitude;
+        public override int ModifyExecutionOrder(int executionOrder, StatusContext ctx)
+            => executionOrder - ctx.Instance.Magnitude;
     }
 }
 ```
@@ -199,10 +199,10 @@ git commit -m "feat(status): add Slow/Haste keys and behaviors"
 
 ---
 
-## Task 3: 실효 주도력 fold 헬퍼
+## Task 3: 실효 실행 순서 fold 헬퍼
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Status/StatusInitiative.cs`
+- Create: `Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs`
 - Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`
 
 - [ ] **Step 1: 실패하는 테스트 추가**
@@ -223,11 +223,11 @@ git commit -m "feat(status): add Slow/Haste keys and behaviors"
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
-            Assert.AreEqual(8, StatusInitiative.InitiativeFor(5, bag, Registry()));
+            Assert.AreEqual(8, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
 
             var bag2 = new StatusBag();
             bag2.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 2);
-            Assert.AreEqual(3, StatusInitiative.InitiativeFor(5, bag2, Registry()));
+            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry()));
         }
 
         [Test]
@@ -235,41 +235,41 @@ git commit -m "feat(status): add Slow/Haste keys and behaviors"
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, Registry()));
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, null));
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, null, Registry()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry()));
         }
 ```
 
 - [ ] **Step 2: 실패 확인**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~SlowHasteStatusTests"`
-Expected: 컴파일 실패 — `StatusInitiative` 없음.
+Expected: 컴파일 실패 — `StatusExecutionOrder` 없음.
 
 - [ ] **Step 3: 헬퍼 구현**
 
-`StatusInitiative.cs`:
+`StatusExecutionOrder.cs`:
 ```csharp
 namespace FateWeaver.Core.Status
 {
-    /// <summary>Folds a holder's entity-scoped statuses into the initiative of a card it owns.
+    /// <summary>Folds a holder's entity-scoped statuses into the execution order of a card it owns.
     /// Mirrors DamageHandler.FoldIncoming, but duration-based (no charge consume).</summary>
-    public static class StatusInitiative
+    public static class StatusExecutionOrder
     {
-        public static int InitiativeFor(int baseInitiative, StatusBag bag, StatusRegistry registry)
+        public static int ExecutionOrderFor(int baseExecutionOrder, StatusBag bag, StatusRegistry registry)
         {
             if (registry == null || bag == null)
             {
-                return baseInitiative;
+                return baseExecutionOrder;
             }
 
-            var result = baseInitiative;
+            var result = baseExecutionOrder;
             foreach (var status in bag.All)
             {
                 if (registry.TryResolve(status.Key, out var behavior)
                     && behavior.Scope == StatusScope.Entity)
                 {
-                    result = behavior.ModifyInitiative(result, new StatusContext { Instance = status });
+                    result = behavior.ModifyExecutionOrder(result, new StatusContext { Instance = status });
                 }
             }
 
@@ -287,13 +287,13 @@ Expected: PASS (5).
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Core/Status/StatusInitiative.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
-git commit -m "feat(status): add StatusInitiative fold helper (entity-scoped only)"
+git add Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git commit -m "feat(status): add StatusExecutionOrder fold helper (entity-scoped only)"
 ```
 
 ---
 
-## Task 4: 세션이 진입 시 주도력 bake (둔화/가속 통합)
+## Task 4: 세션이 진입 시 실행 순서 bake (둔화/가속 통합)
 
 **Files:**
 - Modify: `Assets/FateWeaver/Simulation/CombatRegistries.cs`
@@ -306,11 +306,11 @@ git commit -m "feat(status): add StatusInitiative fold helper (entity-scoped onl
 ```csharp
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab() => new CardDefinition(
             "e_jab", "적찌르기", Side.Enemy, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]
         {
@@ -326,7 +326,7 @@ git commit -m "feat(status): add StatusInitiative fold helper (entity-scoped onl
             session.ResolveTurn();
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
+            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
         }
 
         [Test]
@@ -335,16 +335,16 @@ git commit -m "feat(status): add StatusInitiative fold helper (entity-scoped onl
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
             session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
-            session.PlayActionCard(0);
+            session.PlayExecutionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
-            Assert.AreEqual(2, strike.Initiative); // base 5 - haste 3
+            Assert.AreEqual(2, strike.ExecutionOrder); // base 5 - haste 3
         }
 ```
 
 - [ ] **Step 2: 실패 확인**
 
 Run: `dotnet test ... --filter "FullyQualifiedName~SlowHasteStatusTests"`
-Expected: FAIL — 주도력이 bake 안 됨(둘 다 5로 나옴).
+Expected: FAIL — 실행 순서이 bake 안 됨(둘 다 5로 나옴).
 
 - [ ] **Step 3: 등록 + bake 구현**
 
@@ -369,18 +369,18 @@ Expected: FAIL — 주도력이 bake 안 됨(둘 다 5로 나옴).
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
-                var inst = new ActionCardInstance(enemyCard);
-                inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+                var inst = new ExecutionCardInstance(enemyCard);
+                inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(inst.ExecutionOrder, enemyBag, _statuses);
                 _state.Zone.Add(inst);
             }
 ```
-`PlayActionCard`의 배치 한 줄을 교체:
+`PlayExecutionCard`의 배치 한 줄을 교체:
 ```csharp
-            var placed = new ActionCardInstance(def);
-            placed.Initiative = StatusInitiative.InitiativeFor(placed.Initiative, _state.PlayerStatuses, _statuses);
+            var placed = new ExecutionCardInstance(def);
+            placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(placed.ExecutionOrder, _state.PlayerStatuses, _statuses);
             _state.Zone.Add(placed);
 ```
-(기존 `_state.Zone.Add(new ActionCardInstance(def));` 대체)
+(기존 `_state.Zone.Add(new ExecutionCardInstance(def));` 대체)
 
 - [ ] **Step 4: 통과 확인**
 
@@ -393,7 +393,7 @@ Run: `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.H
 Expected: 전체 PASS.
 ```bash
 git add Assets/FateWeaver/Simulation/CombatRegistries.cs Assets/FateWeaver/Simulation/DeckCombatSession.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
-git commit -m "feat(sim): bake entity slow/haste into card initiative on zone entry"
+git commit -m "feat(sim): bake entity slow/haste into card execution order on zone entry"
 ```
 
 ---
@@ -424,7 +424,7 @@ namespace FateWeaver.Tests
         private static CardDefinition LockedJab() => new CardDefinition(
             "locked_jab", "고정된 일격", Side.Enemy, CardType.Attack, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) })
-            { Cost = 0, Category = CardCategory.Action, StartsLocked = true };
+            { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
 
         [Test]
         public void Locked_enemy_card_enters_zone_locked()
@@ -432,7 +432,7 @@ namespace FateWeaver.Tests
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var session = new DeckCombatSession(
                 new[] { new CardDefinition("p", "p", Side.Player, CardType.Attack, 6,
-                    new[] { new EffectData(EffectKeys.Damage, 1) }) { Cost = 0, Category = CardCategory.Action } },
+                    new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
                 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
             var jab = session.CurrentOrder.First(c => c.Def.Id == "locked_jab");
@@ -449,12 +449,12 @@ Expected: 컴파일 실패 — `StartsLocked` 없음.
 
 - [ ] **Step 3: StartsLocked + bake 구현**
 
-`CardDefinition.cs`의 `CardDefinition` record에 init-prop 추가(`FateAction` 옆):
+`CardDefinition.cs`의 `CardDefinition` record에 init-prop 추가(`InterventionAction` 옆):
 ```csharp
-        /// <summary>When true, the card enters the future zone locked (fate reordering rejected).</summary>
+        /// <summary>When true, the card enters the future zone locked (intervention reordering rejected).</summary>
         public bool StartsLocked { get; init; }
 ```
-`DeckCombatSession.BeginTurn`의 적 카드 추가 루프에서 `inst.Initiative` 설정 다음 줄에 추가:
+`DeckCombatSession.BeginTurn`의 적 카드 추가 루프에서 `inst.ExecutionOrder` 설정 다음 줄에 추가:
 ```csharp
                 inst.IsLocked = enemyCard.StartsLocked;
 ```
@@ -466,7 +466,7 @@ Expected: PASS (1).
 
 - [ ] **Step 5: 운명 재배치 거부 테스트 추가 + 구현 확인**
 
-`LockCardTests`에 추가(운명 카드로 잠긴 카드를 당기려 하면 거부):
+`LockCardTests`에 추가(개입 카드로 잠긴 카드를 당기려 하면 거부):
 ```csharp
         [Test]
         public void Fate_cannot_reorder_a_locked_card()
@@ -474,9 +474,9 @@ Expected: PASS (1).
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var pull = new CardDefinition("pull", "앞당김", Side.Player, CardType.Skill, 0,
                 System.Array.Empty<EffectData>())
-                { Cost = 1, Category = CardCategory.Fate,
-                  FateAction = new FateWeaver.Core.Fate.FateActionData(
-                      FateWeaver.Core.Fate.FateActionKeys.ChangeInitiative, 1, -2) };
+                { EnergyCost = 1, Category = CardCategory.Intervention,
+                  InterventionAction = new FateWeaver.Core.Intervention.InterventionActionData(
+                      FateWeaver.Core.Intervention.InterventionActionKeys.ChangeExecutionOrder, 1, -2) };
             var session = new DeckCombatSession(
                 new[] { pull }, 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
@@ -487,7 +487,7 @@ Expected: PASS (1).
             for (int i = 0; i < session.Hand.Count; i++)
                 if (session.Hand[i].Id == "pull") handIndex = i;
 
-            Assert.IsFalse(session.PlayFateCard(handIndex, zoneIndex));
+            Assert.IsFalse(session.PlayInterventionCard(handIndex, zoneIndex));
         }
 ```
 Run: `dotnet test ... --filter "FullyQualifiedName~LockCardTests"`
@@ -517,12 +517,12 @@ git commit -m "feat(cards): StartsLocked card property baked into zone (고정)"
         public void Maps_slow_and_haste_apply_status()
         {
             var slow = CardSpecMapper.ToEffectData(new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Slow,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Slow,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy });
             Assert.AreEqual(StatusKeys.Slow, slow.StatusKey.Value);
 
             var haste = CardSpecMapper.ToEffectData(new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Haste,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Haste,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self });
             Assert.AreEqual(StatusKeys.Haste, haste.StatusKey.Value);
         }
@@ -578,12 +578,12 @@ git commit -m "feat(authoring): map Slow/Haste status refs"
 
             int hand = 0;
             for (int i = 0; i < session.Hand.Count; i++) if (session.Hand[i].Id == "slow_hex") hand = i;
-            Assert.IsTrue(session.PlayActionCard(hand));
+            Assert.IsTrue(session.PlayExecutionCard(hand));
             session.ResolveTurn();
             Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
+            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
         }
 ```
 (상단 using에 `using FateWeaver.Simulation.Authoring;` 추가)
@@ -600,18 +600,18 @@ Expected: 컴파일 실패 — `StarterDeckSpecs.SlowHex` 없음.
         public static CardSpec SlowHex() => new CardSpec
         {
             Id = "slow_hex", Name = "둔화", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 3,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Slow,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Slow,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy } }
         };
 
         public static CardSpec QuickenSelf() => new CardSpec
         {
             Id = "quicken", Name = "가속", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 3,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Haste,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Haste,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self } }
         };
 ```
@@ -706,7 +706,7 @@ git commit -m "feat(unity): card-status icon row at art bottom; remove central �
 ## 후속 (이 계획 밖)
 
 - **기절 전달 카드 + 아트 전체 딤** — 카드를 표적하는 효과(카드 스코프 상태 부여) 머신리가 필요. 기절이 카드에 실제로 부여되면 `CardStatusRow`에 기절 아이콘 + 아트 딤(발동 안 함)을 함께 구현 → 별도 작업.
-- **같은-턴 즉시 둔화/가속** — 운명 카드 전달 + 정렬 시점 live-fold.
+- **같은-턴 즉시 둔화/가속** — 개입 카드 전달 + 정렬 시점 live-fold.
 - **적이 플레이어에 디버프** — `StatusApplyTarget.TargetPlayer` 프리미티브.
 - **콘텐츠 배치 + 신규 적 컨셉(간수/억제자)** — 본 상태이상 위에 별도 스펙.
 
@@ -719,13 +719,13 @@ git commit -m "feat(unity): card-status icon row at art bottom; remove central �
 - 둔화/가속(엔티티, +N/−N, N턴): Task 2/4/7 ✓ (지속은 기존 `StatusLifetime.Turns` 재사용 — Task 4 테스트가 Turns(2) 사용)
 - 기절: 기존 유지(변경 없음), 전달은 후속으로 명시 ✓
 - 고정(IsLocked 재사용, innate): Task 5 ✓
-- 엔진 변경(ModifyInitiative 훅 + 진입 시 bake): Task 1/4 ✓
+- 엔진 변경(ModifyExecutionOrder 훅 + 진입 시 bake): Task 1/4 ✓
 - 타깃(둔화=TargetEnemy, 가속=Self, 기존 재사용): Task 7 ✓
 - 피드백(엔티티=초상화 아래, 고정 배지): Task 8 ✓ (배지 행/딤은 후속 — 기절 전달이 없어 v1 불필요, 스펙의 후속 항목과 일치)
 - 배제(취약 휴면, RewardNullified 보류): 손대지 않음 ✓
 
 **2. 플레이스홀더 스캔:** 모든 단계에 실제 코드/명령/기대값 포함. TBD 없음.
 
-**3. 타입 일관성:** `ModifyInitiative(int, StatusContext)` 시그니처가 Task1(정의)·Task2(구현)·Task3(호출)에서 동일. `StatusInitiative.InitiativeFor(int, StatusBag, StatusRegistry)`가 Task3(정의)·Task4(호출) 동일. `StartsLocked` init-prop이 Task5 정의·사용 일관. `SlowHex()`/`QuickenSelf()` 팩토리 Task7 정의·사용 일관.
+**3. 타입 일관성:** `ModifyExecutionOrder(int, StatusContext)` 시그니처가 Task1(정의)·Task2(구현)·Task3(호출)에서 동일. `StatusExecutionOrder.ExecutionOrderFor(int, StatusBag, StatusRegistry)`가 Task3(정의)·Task4(호출) 동일. `StartsLocked` init-prop이 Task5 정의·사용 일관. `SlowHex()`/`QuickenSelf()` 팩토리 Task7 정의·사용 일관.
 
 **갭/주의:** 가속(Self) 전달이 same-turn이 아님(다음 턴 배치부터) — 동작 명시에 기재. 콘텐츠 덱 배치는 Unity 단계로 분리.

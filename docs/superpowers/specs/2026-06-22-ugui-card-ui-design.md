@@ -5,11 +5,11 @@
 ## 1. 목표와 범위
 
 플레이테스트 화면을 **IMGUI 텍스트 UI → uGUI 이미지 카드 UI**로 전환한다.
-미래 영역의 각 카드를 **아트 이미지 + 이름/주도력 + 하단 설명 텍스트 블록**으로 그려,
+미래 영역의 각 카드를 **아트 이미지 + 이름/실행 순서 + 하단 설명 텍스트 블록**으로 그려,
 "이 카드가 무슨 짓을 하는지"가 한눈에 보이게 한다(Slay the Spire식).
 
 - **유지**: 멀티턴 진행 로직(`MultiTurnPlaytestSession`, 순수 C#·헤드리스 검증 완료)과 세션 API
-  (`ApplyFateAction` / `ResolveTurn` / `AdvanceTurn`), 시나리오 피커, 운명 액션, 턴/HP/상태 이월.
+  (`ApplyInterventionAction` / `ResolveTurn` / `AdvanceTurn`), 시나리오 피커, 개입 액션, 턴/HP/상태 이월.
 - **교체**: `FateWeaverPlaytestController`의 `OnGUI` 전체 → uGUI 빌드/바인딩. IMGUI 전용
   `RuntimeOsFontLoader` 폐기.
 - **신규**: 카드 뷰(프리팹+컴포넌트), 카드 표현 뷰모델, 아트/설명 룩업, 에디터 빌더, 한글 TMP 폰트.
@@ -20,22 +20,22 @@
 ### 2.1 런타임 컴포넌트
 
 - **`CardPresentation`** (struct, `FateWeaver.Unity`): 코어 타입을 UI에서 분리하는 뷰모델.
-  `ActionCardInstance` → `{ string Id, string DisplayName, int Initiative, Side Side, string Description,
-  Sprite Art (nullable), bool IsLocked }`. `CardView`는 코어(`ActionCardInstance`/`CardDefinition`)에
+  `ExecutionCardInstance` → `{ string Id, string DisplayName, int ExecutionOrder, Side Side, string Description,
+  Sprite Art (nullable), bool IsLocked }`. `CardView`는 코어(`ExecutionCardInstance`/`CardDefinition`)에
   직접 의존하지 않는다 — 이후 uGUI 고도화/다른 화면에서도 재사용하는 seam.
 - **`CardView`** (MonoBehaviour, 프리팹에 부착): 직렬화 참조
-  `Image art`, `Image artFallback`, `TMP_Text nameText`, `TMP_Text initiativeText`,
+  `Image art`, `Image artFallback`, `TMP_Text nameText`, `TMP_Text executionOrderText`,
   `TMP_Text descriptionText`, `Image selectionOutline`, `GameObject lockBadge`, `Button button`.
   - `Bind(CardPresentation data, Action onClick)`: 아트가 있으면 `art`에 스프라이트, 없으면 `art`를 끄고
-    `artFallback`을 켜고 측(side)별 단색 틴트 + 이름만. 설명/이름/주도력 텍스트 채움. 클릭 콜백 등록.
+    `artFallback`을 켜고 측(side)별 단색 틴트 + 이름만. 설명/이름/실행 순서 텍스트 채움. 클릭 콜백 등록.
   - `SetSelection(SelectionKind kind)`: `None/Primary/Secondary` → `selectionOutline` 색/표시.
   - `lockBadge`는 `IsLocked`로 토글.
 - **`FateWeaverPlaytestController`** (재작성): `OnGUI` 제거.
   - 직렬화 참조: `CardView cardPrefab`, `RectTransform cardRow`(HorizontalLayoutGroup),
-    상태/메시지/타임라인용 `TMP_Text`들, 시나리오 버튼 컨테이너, 운명액션·턴실행·다음턴·초기화 `Button`들.
+    상태/메시지/타임라인용 `TMP_Text`들, 시나리오 버튼 컨테이너, 개입액션·턴실행·다음턴·초기화 `Button`들.
   - `RefreshCards()`: `cardRow`의 자식을 모두 제거 → `_session.CurrentOrder`마다 `cardPrefab` Instantiate,
     `CardPresentation`으로 Bind, 선택/고정 상태 반영.
-  - 선택 로직(주/보조 토글), 운명 액션 적용, RESOLVE/NEXT/RESET은 기존 의미 그대로 uGUI 핸들러로 이전.
+  - 선택 로직(주/보조 토글), 개입 액션 적용, RESOLVE/NEXT/RESET은 기존 의미 그대로 uGUI 핸들러로 이전.
   - 텍스트(시나리오명/HP/상태/결과/메시지/타임라인)는 TMP로 출력. 기존 한글 문자열 로직 재사용.
 
 ### 2.2 아트·설명 룩업 (재사용 가능, 순수 로직)
@@ -59,7 +59,7 @@
 | `slash` | 베기 | `slash` | 피해 2. |
 | `mark` | 표식 새기기 | `mark_target` | 다음 카드가 플레이어 공격이고 적 공격보다 먼저면, 다음 플레이어 공격 피해 +6. |
 | `counter` | 반격 자세 | `counter_stance` | 방어 2. 바로 앞에서 적이 공격했다면 피해 7 (3번째 안이면 +2). |
-| `chain` | 연쇄 베기 | `chain_slash` | 피해 1. 바로 앞이 플레이어 행동 카드이고 3번째 안이면 추가 피해 5. |
+| `chain` | 연쇄 베기 | `chain_slash` | 피해 1. 바로 앞이 플레이어 실행 카드이고 3번째 안이면 추가 피해 5. |
 | `prep` | 준비 | (없음→폴백) | 피해 1. |
 | `wrist_cut*` | 손목 베기 | `wrist_cut` | 피해 3. 다음 플레이어 조건 보상을 무효화. |
 | `goblin_jab*` | 고블린 찌르기 | `goblin_jab` | 고블린의 빠른 찌르기. |
@@ -71,7 +71,7 @@
 
 - **`Fate Weaver/Build Playtest Scene (uGUI)`**: Canvas(Screen Space Overlay)+CanvasScaler+EventSystem 생성 →
   `CardView.prefab`을 코드로 조립(Image/TMP/Outline/Button)해 `Assets/FateWeaver/Unity/Prefabs/`에 저장 →
-  상태/카드줄(HorizontalLayoutGroup)/운명액션·진행 버튼/타임라인 패널 배치 → 컨트롤러 부착·참조 와이어링 →
+  상태/카드줄(HorizontalLayoutGroup)/개입액션·진행 버튼/타임라인 패널 배치 → 컨트롤러 부착·참조 와이어링 →
   씬 저장. 드래그 없이 한 번 클릭으로 완성, 생성 후 인스펙터에서 자유롭게 수정 가능.
 - **`Fate Weaver/Create Korean TMP Font`**: 맑은 고딕(`C:/Windows/Fonts/malgun.ttf`)에서 **동적(Dynamic)**
   `TMP_FontAsset` 생성 → `Assets/FateWeaver/Unity/Resources/Fonts/`에 저장하고 TMP 기본/폴백으로 지정
@@ -81,7 +81,7 @@
 
 ```
 MultiTurnPlaytestSession (순수 C#)
-        │ CurrentOrder: IReadOnlyList<ActionCardInstance>
+        │ CurrentOrder: IReadOnlyList<ExecutionCardInstance>
         ▼
 FateWeaverPlaytestController.RefreshCards()
         │ 카드마다 CardPresentation 생성
@@ -93,7 +93,7 @@ CardView.Bind(presentation, onClick) → 화면
         │ onClick → 컨트롤러 선택 로직(주/보조) → SetSelection 갱신
 ```
 
-운명 액션/턴 진행 버튼은 기존과 동일하게 `_session`을 호출하고, 성공 시 `RefreshCards()` + 상태/타임라인
+개입 액션/턴 진행 버튼은 기존과 동일하게 `_session`을 호출하고, 성공 시 `RefreshCards()` + 상태/타임라인
 TMP 갱신.
 
 ## 4. 역할 분담

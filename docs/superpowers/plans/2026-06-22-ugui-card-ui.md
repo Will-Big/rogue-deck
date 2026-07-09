@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the IMGUI text playtest with a uGUI card UI — each future-zone card drawn as an art image + name/initiative + a wrapped Korean description block, built into the scene via an editor menu, text rendered with TextMeshPro + a dynamic Korean (Malgun Gothic) font.
+**Goal:** Replace the IMGUI text playtest with a uGUI card UI — each future-zone card drawn as an art image + name/execution order + a wrapped Korean description block, built into the scene via an editor menu, text rendered with TextMeshPro + a dynamic Korean (Malgun Gothic) font.
 
 **Architecture:** A pure view-model (`CardPresentation`) decouples the `CardView` prefab from core types. Presentation lookups (`PlaytestCardArt`, `PlaytestKoreanText.CardDescription`) map a card id to its Resources sprite and Korean text. `FateWeaverPlaytestController` (rewritten, no `OnGUI`) instantiates one `CardView` per `MultiTurnPlaytestSession.CurrentOrder` card and binds it. An editor menu builds the Canvas + `CardView.prefab` and wires the controller, plus a menu that creates the Korean TMP font asset.
 
@@ -20,7 +20,7 @@
 | `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef` | add TMP + UI asm refs | Modify |
 | `Assets/FateWeaver/Unity/PlaytestKoreanText.cs` | add `CardDescription(id)` | Modify |
 | `Assets/FateWeaver/Unity/PlaytestCardArt.cs` | id → art name / Sprite | Create |
-| `Assets/FateWeaver/Unity/CardPresentation.cs` | view-model from `ActionCardInstance` | Create |
+| `Assets/FateWeaver/Unity/CardPresentation.cs` | view-model from `ExecutionCardInstance` | Create |
 | `Assets/FateWeaver/Unity/CardView.cs` | card prefab component | Create |
 | `Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs` | uGUI controller (rewrite) | Modify |
 | `Assets/FateWeaver/Unity/RuntimeOsFontLoader.cs` | IMGUI-only OS font (remove) | Delete |
@@ -147,7 +147,7 @@ In `PlaytestKoreanText.cs`, add after `CardName(...)`:
                 case "slash": return "피해 2.";
                 case "mark": return "다음 카드가 플레이어 공격이고 적 공격보다 먼저면, 다음 플레이어 공격 피해 +6.";
                 case "counter": return "방어 2. 바로 앞에서 적이 공격했다면 피해 7 (3번째 안이면 +2).";
-                case "chain": return "피해 1. 바로 앞이 플레이어 행동 카드이고 3번째 안이면 추가 피해 5.";
+                case "chain": return "피해 1. 바로 앞이 플레이어 실행 카드이고 3번째 안이면 추가 피해 5.";
                 case "prep": return "피해 1.";
                 default: return string.Empty;
             }
@@ -315,32 +315,32 @@ namespace FateWeaver.Unity
     {
         public string Id { get; }
         public string DisplayName { get; }
-        public int Initiative { get; }
+        public int ExecutionOrder { get; }
         public Side Side { get; }
         public string Description { get; }
         public Sprite Art { get; }
         public bool IsLocked { get; }
 
         public CardPresentation(
-            string id, string displayName, int initiative, Side side,
+            string id, string displayName, int executionOrder, Side side,
             string description, Sprite art, bool isLocked)
         {
             Id = id;
             DisplayName = displayName;
-            Initiative = initiative;
+            ExecutionOrder = executionOrder;
             Side = side;
             Description = description;
             Art = art;
             IsLocked = isLocked;
         }
 
-        public static CardPresentation From(ActionCardInstance card)
+        public static CardPresentation From(ExecutionCardInstance card)
         {
             var def = card.Def;
             return new CardPresentation(
                 def.Id,
                 PlaytestKoreanText.CardName(def.Id, def.Name),
-                card.Initiative,
+                card.ExecutionOrder,
                 def.Side,
                 PlaytestKoreanText.CardDescription(def.Id),
                 PlaytestCardArt.Sprite(def.Id),
@@ -352,7 +352,7 @@ namespace FateWeaver.Unity
 
 - [ ] **Step 2: User verifies compile**
 
-User: Unity reloads. Expected: compiles. (If `card.Initiative` / `card.IsLocked` / `card.Def` names differ, report — they are the same members the old IMGUI controller used, so they should match.)
+User: Unity reloads. Expected: compiles. (If `card.ExecutionOrder` / `card.IsLocked` / `card.Def` names differ, report — they are the same members the old IMGUI controller used, so they should match.)
 
 - [ ] **Step 3: Commit**
 
@@ -381,7 +381,7 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>One card widget: art (or side-tinted fallback) + name/initiative + description block,
+    /// <summary>One card widget: art (or side-tinted fallback) + name/execution order + description block,
     /// a selection outline and a lock badge. Bound from a CardPresentation; clicking raises onClick.</summary>
     public sealed class CardView : MonoBehaviour
     {
@@ -390,7 +390,7 @@ namespace FateWeaver.Unity
         [SerializeField] private Image _art;
         [SerializeField] private Image _artFallback;
         [SerializeField] private TMP_Text _nameText;
-        [SerializeField] private TMP_Text _initiativeText;
+        [SerializeField] private TMP_Text _executionOrderText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private Image _selectionOutline;
         [SerializeField] private GameObject _lockBadge;
@@ -405,7 +405,7 @@ namespace FateWeaver.Unity
         public void Bind(CardPresentation data, Action onClick)
         {
             _nameText.text = data.DisplayName;
-            _initiativeText.text = data.Initiative.ToString();
+            _executionOrderText.text = data.ExecutionOrder.ToString();
             _descriptionText.text = data.Description;
 
             if (data.Art != null)
@@ -475,7 +475,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using TMPro;
@@ -484,7 +484,7 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>uGUI playtest driver: instantiates a CardView per future-zone card, applies fate actions,
+    /// <summary>uGUI playtest driver: instantiates a CardView per future-zone card, applies intervention actions,
     /// resolves/advances turns. UI objects are wired by FateWeaverPlaytestSceneCreator.</summary>
     public sealed class FateWeaverPlaytestController : MonoBehaviour
     {
@@ -503,7 +503,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _messageText;
         [SerializeField] private TMP_Text _timelineText;
 
-        [Header("Fate action buttons")]
+        [Header("Intervention action buttons")]
         [SerializeField] private Button _initMinusButton;
         [SerializeField] private Button _initPlusButton;
         [SerializeField] private Button _swapButton;
@@ -552,10 +552,10 @@ namespace FateWeaver.Unity
 
         private void WireButtons()
         {
-            _initMinusButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.ChangeInitiative, 1, -2)));
-            _initPlusButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.ChangeInitiative, 1, 2)));
-            _swapButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.SwapInitiative, 1, 0), needsSecondary: true));
-            _lockButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.Lock, 1, 0)));
+            _initMinusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, -2)));
+            _initPlusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, 2)));
+            _swapButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, 1, 0), needsSecondary: true));
+            _lockButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.Lock, 1, 0)));
 
             _resolveButton.onClick.AddListener(ResolveTurn);
             _nextButton.onClick.AddListener(NextTurn);
@@ -597,7 +597,7 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        private void Apply(FateActionData action, bool needsSecondary = false)
+        private void Apply(InterventionActionData action, bool needsSecondary = false)
         {
             if (_primaryCardId == null || (needsSecondary && _secondaryCardId == null))
             {
@@ -607,10 +607,10 @@ namespace FateWeaver.Unity
 
             try
             {
-                var result = _session.ApplyFateAction(
+                var result = _session.ApplyInterventionAction(
                     action, _primaryCardId, needsSecondary ? _secondaryCardId : null);
                 SetMessage(result.AppliedCount == 1
-                    ? PlaytestKoreanText.FateActionName(action.Key) + " 적용 완료."
+                    ? PlaytestKoreanText.InterventionActionName(action.Key) + " 적용 완료."
                     : "액션을 적용할 수 없습니다. 운명력·고정·대상 규칙을 확인하세요.");
             }
             catch (Exception exception)
@@ -884,9 +884,9 @@ namespace FateWeaver.Unity.Editor
             var selection = NewText("Selection", root.transform, font, 16, FontStyles.Normal, Color.white);
 
             var fateRow = NewRow("FateRow", root.transform);
-            var initMinus = NewButton("InitMinus", fateRow.transform, font, "주도력 -2");
-            var initPlus = NewButton("InitPlus", fateRow.transform, font, "주도력 +2");
-            var swap = NewButton("Swap", fateRow.transform, font, "주도력 교환");
+            var initMinus = NewButton("InitMinus", fateRow.transform, font, "실행 순서 -2");
+            var initPlus = NewButton("InitPlus", fateRow.transform, font, "실행 순서 +2");
+            var swap = NewButton("Swap", fateRow.transform, font, "실행 순서 교환");
             var lockBtn = NewButton("Lock", fateRow.transform, font, "주 대상 고정");
 
             var flowRow = NewRow("FlowRow", root.transform);
@@ -952,9 +952,9 @@ namespace FateWeaver.Unity.Editor
 
             var nameText = NewText("Name", rootGo.transform, font, 18, FontStyles.Bold, Color.white);
             AnchorBand(nameText.rectTransform, 224, 28);
-            var initText = NewText("Initiative", rootGo.transform, font, 16, FontStyles.Bold, new Color(0.95f, 0.85f, 0.4f));
-            AnchorBand(initText.rectTransform, 224, 28);
-            initText.alignment = TextAlignmentOptions.TopRight;
+            var executionOrderText = NewText("ExecutionOrder", rootGo.transform, font, 16, FontStyles.Bold, new Color(0.95f, 0.85f, 0.4f));
+            AnchorBand(executionOrderText.rectTransform, 224, 28);
+            executionOrderText.alignment = TextAlignmentOptions.TopRight;
             var descText = NewText("Description", rootGo.transform, font, 14, FontStyles.Normal, new Color(0.9f, 0.9f, 0.9f));
             AnchorBand(descText.rectTransform, 254, 80);
             descText.textWrappingMode = TextWrappingModes.Normal;
@@ -969,7 +969,7 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_art").objectReferenceValue = art;
             so.FindProperty("_artFallback").objectReferenceValue = artFallback;
             so.FindProperty("_nameText").objectReferenceValue = nameText;
-            so.FindProperty("_initiativeText").objectReferenceValue = initText;
+            so.FindProperty("_executionOrderText").objectReferenceValue = executionOrderText;
             so.FindProperty("_descriptionText").objectReferenceValue = descText;
             so.FindProperty("_selectionOutline").objectReferenceValue = outline;
             so.FindProperty("_lockBadge").objectReferenceValue = lockBadge.gameObject;
@@ -1110,7 +1110,7 @@ namespace FateWeaver.Unity.Editor
 - [ ] **Step 2: User runs the build menu**
 
 User: after Task 8 creates the font, run `Fate Weaver ▸ Build Playtest Scene (uGUI)`, open the scene, press Play.
-Expected: cards render with art + Korean name/description, scenario buttons switch, fate actions + resolve/next work. Report console errors or layout problems (anchors/sizes are the likely first fixes).
+Expected: cards render with art + Korean name/description, scenario buttons switch, intervention actions + resolve/next work. Report console errors or layout problems (anchors/sizes are the likely first fixes).
 
 - [ ] **Step 3: Commit (after user confirms it builds)**
 
@@ -1231,8 +1231,8 @@ Replace `Assets/FateWeaver/Unity/PLAYTEST.md` with:
 
 1. `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
 2. 상단 버튼으로 시나리오 선택.
-3. 미래 영역의 카드(이미지 + 이름/주도력 + 하단 설명)를 눌러 주/보조 대상 선택.
-4. 운명 액션(주도력 ±2 / 교환 / 고정) 적용.
+3. 미래 영역의 카드(이미지 + 이름/실행 순서 + 하단 설명)를 눌러 주/보조 대상 선택.
+4. 개입 액션(실행 순서 ±2 / 교환 / 고정) 적용.
 5. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나거나 마지막 턴이면 종료.
 
 ## 범위 / 검증
@@ -1261,6 +1261,6 @@ git commit -m "chore(unity): drop IMGUI font loader; document uGUI playtest setu
 
 - [ ] TMP Essentials imported; `Create Korean TMP Font` produced `KoreanTMP.asset`.
 - [ ] `Build Playtest Scene (uGUI)` produced the scene + `CardView.prefab` with no console errors.
-- [ ] Play: each card shows its art (player + enemy), Korean name/initiative, and a wrapped description block; `prep` shows the side-tinted fallback.
-- [ ] Scenario buttons switch scenarios; selecting a card outlines it; fate actions change order; `턴 실행` resolves; `다음 턴` carries HP/status; win/lose stops flow.
+- [ ] Play: each card shows its art (player + enemy), Korean name/execution order, and a wrapped description block; `prep` shows the side-tinted fallback.
+- [ ] Scenario buttons switch scenarios; selecting a card outlines it; intervention actions change order; `턴 실행` resolves; `다음 턴` carries HP/status; win/lose stops flow.
 - [ ] `FateWeaver.Tests.UnityEditMode` suite green.

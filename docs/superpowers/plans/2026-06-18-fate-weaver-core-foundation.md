@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stand up the pure-C# combat domain core so that a fixed future zone resolves in 주도력(initiative) order, applies damage, and emits a deterministic event timeline — all verified by headless EditMode tests.
+**Goal:** Stand up the pure-C# combat domain core so that a fixed future zone resolves in 실행 순서(execution order) order, applies damage, and emits a deterministic event timeline — all verified by headless EditMode tests.
 
-**Architecture:** A Unity asmdef `FateWeaver.Core` with `noEngineReferences:true` (no UnityEngine) holds all rules. Effects are dispatched through a typed-key handler registry (`EffectKey` → `IEffectHandler`). The `TurnResolver` freezes the zone into ascending-initiative order and produces a `List<ResolutionEvent>` as its sole output. `FateWeaver.Tests.EditMode` drives it with NUnit.
+**Architecture:** A Unity asmdef `FateWeaver.Core` with `noEngineReferences:true` (no UnityEngine) holds all rules. Effects are dispatched through a typed-key handler registry (`EffectKey` → `IEffectHandler`). The `TurnResolver` freezes the zone into ascending execution order and produces a `List<ResolutionEvent>` as its sole output. `FateWeaver.Tests.EditMode` drives it with NUnit.
 
 **Tech Stack:** Unity 6 (6000.2.13f1), C# (pure, no engine refs in Core), Unity Test Framework (NUnit) EditMode tests.
 
-**Spec:** [docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md](../specs/2026-06-18-fate-weaver-core-design.md) — this plan implements §3 (module boundaries), §4.2–4.4 (types, effect registry), §6 (turn resolution), and the M0/M1 rows of §10. Deferred to later plans: conditions (§4.3/M2), fate cards & registry generalization (§4.4/M3), status system & ApplyDamage/Block (§5/M4), simulation harness (§7/M5), param-resolution/growth (§4.6), `FateWeaver.Simulation` asmdef.
+**Spec:** [docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md](../specs/2026-06-18-fate-weaver-core-design.md) — this plan implements §3 (module boundaries), §4.2–4.4 (types, effect registry), §6 (turn resolution), and the M0/M1 rows of §10. Deferred to later plans: conditions (§4.3/M2), intervention cards & registry generalization (§4.4/M3), status system & ApplyDamage/Block (§5/M4), simulation harness (§7/M5), param-resolution/growth (§4.6), `FateWeaver.Simulation` asmdef.
 
 ---
 
@@ -54,7 +54,7 @@ Assets/FateWeaver/
       EffectRegistry.cs               # EffectKey -> IEffectHandler
       DamageHandler.cs                # the one M1 handler
     Combat/
-      ActionCardInstance.cs           # runtime card in the zone
+      ExecutionCardInstance.cs           # runtime card in the zone
       Enemy.cs                        # enemy entity
       CombatState.cs                  # player hp, enemies, zone, fate energy
       FutureZone.cs                   # ordered cards + ResolutionOrder()
@@ -79,14 +79,14 @@ The headless test harness already exists (created during setup): `Tests/Headless
 ## Task M0.1: Core assembly + folders + base enums
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/FateWeaver.Core.asmdef`
+- Create: `Assets/FateWeaver/Core/InterventionWeaver.Core.asmdef`
 - Create: `Assets/FateWeaver/Core/Cards/Side.cs`
 - Create: `Assets/FateWeaver/Core/Cards/CardType.cs`
 - Create: `Assets/FateWeaver/Core/Compat/IsExternalInit.cs` (lets C# 9 `record`/`init` compile under Unity 6 / netstandard2.1)
 
 - [ ] **Step 1: Create the Core asmdef**
 
-`Assets/FateWeaver/Core/FateWeaver.Core.asmdef`:
+`Assets/FateWeaver/Core/InterventionWeaver.Core.asmdef`:
 
 ```json
 {
@@ -262,7 +262,7 @@ Plain data/record types with no behavior. Verified by a construction smoke test.
 **Files:**
 - Create: `Assets/FateWeaver/Core/Effects/EffectKey.cs`
 - Create: `Assets/FateWeaver/Core/Cards/CardDefinition.cs`
-- Create: `Assets/FateWeaver/Core/Combat/ActionCardInstance.cs`
+- Create: `Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs`
 - Create: `Assets/FateWeaver/Core/Combat/Enemy.cs`
 - Create: `Assets/FateWeaver/Core/Events/ResolutionEvent.cs`
 - Test: `Assets/FateWeaver/Tests/EditMode/SmokeTests.cs` (add a test)
@@ -311,7 +311,7 @@ using FateWeaver.Core.Effects;
 namespace FateWeaver.Core.Cards
 {
     /// <summary>One effect entry on a card: which handler + its scalar amount (M1).</summary>
-    public sealed record EffectData(EffectKey Key, int Amount);
+    public sealed record EffectData(EffectKey Key, int EffectValue);
 
     /// <summary>Immutable card template. See spec §4.1 (Definition layer).</summary>
     public sealed record CardDefinition(
@@ -319,30 +319,30 @@ namespace FateWeaver.Core.Cards
         string Name,
         Side Side,
         CardType Type,
-        int BaseInitiative,
+        int BaseExecutionOrder,
         IReadOnlyList<EffectData> Effects);
 }
 ```
 
-- [ ] **Step 3: ActionCardInstance**
+- [ ] **Step 3: ExecutionCardInstance**
 
-`Assets/FateWeaver/Core/Combat/ActionCardInstance.cs`:
+`Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>A card placed in the future zone for one combat. Initiative is mutable (fate cards change it later).</summary>
-    public sealed class ActionCardInstance
+    /// <summary>A card placed in the future zone for one combat. ExecutionOrder is mutable (intervention cards change it later).</summary>
+    public sealed class ExecutionCardInstance
     {
         public CardDefinition Def { get; }
-        public int Initiative { get; set; }
+        public int ExecutionOrder { get; set; }
 
-        public ActionCardInstance(CardDefinition def)
+        public ExecutionCardInstance(CardDefinition def)
         {
             Def = def;
-            Initiative = def.BaseInitiative;
+            ExecutionOrder = def.BaseExecutionOrder;
         }
     }
 }
@@ -409,11 +409,11 @@ Append to `Assets/FateWeaver/Tests/EditMode/SmokeTests.cs` (inside the `SmokeTes
                 "strike", "Strike", Side.Player, CardType.Attack, 2,
                 new[] { new FateWeaver.Core.Cards.EffectData(FateWeaver.Core.Effects.EffectKeys.Damage, 5) });
 
-            var card = new FateWeaver.Core.Combat.ActionCardInstance(def);
+            var card = new FateWeaver.Core.Combat.ExecutionCardInstance(def);
             var enemy = new FateWeaver.Core.Combat.Enemy("goblin", 12);
 
             Assert.AreEqual("strike", def.Id);
-            Assert.AreEqual(2, card.Initiative);
+            Assert.AreEqual(2, card.ExecutionOrder);
             Assert.AreEqual(12, enemy.Hp);
         }
 ```
@@ -433,7 +433,7 @@ git commit -m "feat(core): add card, enemy, effect-key, and event data types"
 
 ## Task M1.2: FutureZone with stable ascending ResolutionOrder
 
-The zone resolves cards by ascending initiative (lower = earlier — spec §4.1), ties broken by insertion order (stable).
+The zone resolves cards by ascending execution order (lower = earlier — spec §4.1), ties broken by insertion order (stable).
 
 **Files:**
 - Create: `Assets/FateWeaver/Core/Combat/FutureZone.cs`
@@ -454,11 +454,11 @@ namespace FateWeaver.Tests
 {
     public class FutureZoneTests
     {
-        private static ActionCardInstance Card(string id, int initiative)
+        private static ExecutionCardInstance Card(string id, int executionOrder)
         {
-            var def = new CardDefinition(id, id, Side.Player, CardType.Attack, initiative,
+            var def = new CardDefinition(id, id, Side.Player, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -471,7 +471,7 @@ namespace FateWeaver.Tests
 
             var order = zone.ResolutionOrder().Select(c => c.Def.Id).ToArray();
 
-            // ascending initiative; B before C because of stable tie-break
+            // ascending execution order; B before C because of stable tie-break
             CollectionAssert.AreEqual(new[] { "B", "C", "A" }, order);
         }
     }
@@ -492,18 +492,18 @@ using System.Linq;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Ordered set of action cards for one turn. See spec §4.1, §4.7.</summary>
+    /// <summary>Ordered set of execution cards for one turn. See spec §4.1, §4.7.</summary>
     public sealed class FutureZone
     {
-        private readonly List<ActionCardInstance> _cards = new();
+        private readonly List<ExecutionCardInstance> _cards = new();
 
-        public IReadOnlyList<ActionCardInstance> Cards => _cards;
+        public IReadOnlyList<ExecutionCardInstance> Cards => _cards;
 
-        public void Add(ActionCardInstance card) => _cards.Add(card);
+        public void Add(ExecutionCardInstance card) => _cards.Add(card);
 
-        /// <summary>Ascending initiative, stable on ties (LINQ OrderBy is a stable sort).</summary>
-        public IReadOnlyList<ActionCardInstance> ResolutionOrder()
-            => _cards.OrderBy(c => c.Initiative).ToList();
+        /// <summary>Ascending execution order, stable on ties (LINQ OrderBy is a stable sort).</summary>
+        public IReadOnlyList<ExecutionCardInstance> ResolutionOrder()
+            => _cards.OrderBy(c => c.ExecutionOrder).ToList();
     }
 }
 ```
@@ -546,11 +546,11 @@ namespace FateWeaver.Tests
 {
     public class DamageHandlerTests
     {
-        private static ActionCardInstance Card(Side side, int amount)
+        private static ExecutionCardInstance Card(Side side, int amount)
         {
             var def = new CardDefinition("c", "c", side, CardType.Attack, 1,
                 new[] { new EffectData(EffectKeys.Damage, amount) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -558,7 +558,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, Amount = 5 };
+            var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, EffectValue = 5 };
 
             new DamageHandler().Apply(ctx);
 
@@ -572,7 +572,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, Amount = 4 };
+            var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, EffectValue = 4 };
 
             new DamageHandler().Apply(ctx);
 
@@ -632,9 +632,9 @@ namespace FateWeaver.Core.Effects
     /// <summary>Per-effect inputs/outputs. Handler mutates State and writes its outcome here.</summary>
     public sealed class EffectContext
     {
-        public ActionCardInstance Card;
+        public ExecutionCardInstance Card;
         public CombatState State;
-        public int Amount;
+        public int EffectValue;
 
         // outputs (read by TurnResolver)
         public int DamageDealt;
@@ -688,14 +688,14 @@ namespace FateWeaver.Core.Effects
             if (ctx.Card.Def.Side == Side.Player)
             {
                 var target = ctx.State.Enemies[0];
-                target.Hp -= ctx.Amount;
-                ctx.DamageDealt = ctx.Amount;
+                target.Hp -= ctx.EffectValue;
+                ctx.DamageDealt = ctx.EffectValue;
                 ctx.TargetId = target.Id;
             }
             else
             {
-                ctx.State.PlayerHp -= ctx.Amount;
-                ctx.DamageDealt = ctx.Amount;
+                ctx.State.PlayerHp -= ctx.EffectValue;
+                ctx.DamageDealt = ctx.EffectValue;
                 ctx.TargetId = "player";
             }
         }
@@ -747,11 +747,11 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        private static ActionCardInstance Card(string id, Side side, int initiative, int damage)
+        private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, initiative,
+            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -759,7 +759,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            // player card has higher initiative (2) than enemy card (1) => enemy resolves first
+            // player card has higher execution order (2) than enemy card (1) => enemy resolves first
             state.Zone.Add(Card("strike", Side.Player, 2, 5));
             state.Zone.Add(Card("jab", Side.Enemy, 1, 3));
 
@@ -773,7 +773,7 @@ namespace FateWeaver.Tests
             Assert.IsInstanceOf<TurnStarted>(events[0]);
             var first = (CardResolved)events[1];
             var second = (CardResolved)events[2];
-            Assert.AreEqual("jab", first.CardId);    // enemy first (lower initiative)
+            Assert.AreEqual("jab", first.CardId);    // enemy first (lower executionOrder)
             Assert.AreEqual("strike", second.CardId);
             Assert.AreEqual(5, second.DamageDealt);
             Assert.IsInstanceOf<TurnEnded>(events[^1]);
@@ -832,7 +832,7 @@ using FateWeaver.Core.Events;
 namespace FateWeaver.Core.Combat
 {
     /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.
-    /// See spec §6. Conditions, fate manipulation, and status folding arrive in later milestones.</summary>
+    /// See spec §6. Conditions, intervention manipulation, and status folding arrive in later milestones.</summary>
     public sealed class TurnResolver
     {
         private readonly EffectRegistry _effects;
@@ -854,7 +854,7 @@ namespace FateWeaver.Core.Combat
                     {
                         Card = card,
                         State = state,
-                        Amount = effect.Amount
+                        EffectValue = effect.EffectValue
                     };
                     _effects.Resolve(effect.Key).Apply(ctx);
                     totalDamage += ctx.DamageDealt;
@@ -895,7 +895,7 @@ git commit -m "feat(core): add TurnResolver with ordered resolution and event ti
 
 - [ ] `FateWeaver.Core` compiles with `noEngineReferences:true` and the compile guard (M0.3) was confirmed.
 - [ ] All EditMode tests pass: `SmokeTests`, `FutureZoneTests`, `DamageHandlerTests`, `TurnResolverTests`.
-- [ ] A fixed future zone resolves in ascending-initiative order, applies damage, and produces a deterministic `TurnStarted → CardResolved* → TurnEnded` timeline.
+- [ ] A fixed future zone resolves in ascending execution order, applies damage, and produces a deterministic `TurnStarted → CardResolved* → TurnEnded` timeline.
 
 ## Note on git
 
@@ -904,7 +904,7 @@ The project is currently **not** a git repository. Either initialize one before 
 ## Next plans (written just-in-time)
 
 - **M2 — Conditions:** `Condition` records + `ConditionEvaluator` + 실패/기본/성공 tiers (spec §4.3).
-- **M3 — Fate cards:** `FateActionKey`/registry generalization, fate energy economy, manipulation phase (spec §4.4, §8).
+- **M3 — Intervention cards:** `InterventionActionKey`/registry generalization, fate energy economy, manipulation phase (spec §4.4, §8).
 - **M4 — Status system:** `IStatusHolder`/`IStatusBehavior`, ApplyDamage pipeline (block/vulnerable), disruption (spec §5).
 - **M5 — Harness:** `FateWeaver.Simulation` asmdef, ScenarioRunner + Compare, report mode, doc ch.11 cards + ch.8 scenarios (spec §7, §9).
 - **M6 — Extension-seam docs** (spec §11).

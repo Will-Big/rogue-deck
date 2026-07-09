@@ -48,7 +48,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation.Authoring;
 
@@ -62,15 +62,15 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
-                Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 3 } }
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+                Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, EffectValue = 3 } }
             });
 
-            Assert.AreEqual(CardCategory.Action, def.Category);
-            Assert.AreEqual(1, def.Cost);
+            Assert.AreEqual(CardCategory.Execution, def.Category);
+            Assert.AreEqual(1, def.EnergyCost);
             Assert.AreEqual(1, def.Effects.Count);
             Assert.AreEqual(EffectKeys.Damage, def.Effects[0].Key);
-            Assert.AreEqual(3, def.Effects[0].Amount);
+            Assert.AreEqual(3, def.Effects[0].EffectValue);
             Assert.IsNull(def.Effects[0].Condition);
         }
 
@@ -80,15 +80,15 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
                 Effects = new[] { new EffectSpec {
-                    Kind = EffectKind.Damage, Amount = 2,
-                    Condition = ConditionKind.FirstToTrigger, SuccessAmount = 8 } }
+                    Kind = EffectKind.Damage, EffectValue = 2,
+                    Condition = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 } }
             });
 
             var e = def.Effects[0];
-            Assert.AreEqual(2, e.Amount);
-            Assert.AreEqual(8, e.SuccessAmount);
+            Assert.AreEqual(2, e.EffectValue);
+            Assert.AreEqual(8, e.SuccessEffectValue);
             Assert.IsInstanceOf<FirstToTrigger>(e.Condition);
         }
 
@@ -98,17 +98,17 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
                 Effects = new[] { new EffectSpec {
-                    Kind = EffectKind.ApplyStatus, Amount = 2, Status = StatusKindRef.Block,
+                    Kind = EffectKind.ApplyStatus, EffectValue = 2, Status = StatusKindRef.Block,
                     Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
-                    Condition = ConditionKind.NextIsEnemyAttack, SuccessAmount = 7 } }
+                    Condition = ConditionKind.NextIsEnemyAttack, SuccessEffectValue = 7 } }
             });
 
             var e = def.Effects[0];
             Assert.AreEqual(EffectKeys.ApplyStatus, e.Key);
-            Assert.AreEqual(2, e.Amount);
-            Assert.AreEqual(7, e.SuccessAmount);
+            Assert.AreEqual(2, e.EffectValue);
+            Assert.AreEqual(7, e.SuccessEffectValue);
             Assert.IsTrue(e.StatusKey.HasValue);
             Assert.AreEqual(StatusKeys.Block, e.StatusKey.Value);
             var adjacent = (AdjacentCardIs)e.Condition;
@@ -117,19 +117,19 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Maps_fate_card()
+        public void Maps_intervention_card()
         {
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
-                Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = -2
+                Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.ChangeExecutionOrder, InterventionEffectValue = -2
             });
 
-            Assert.AreEqual(CardCategory.Fate, def.Category);
+            Assert.AreEqual(CardCategory.Intervention, def.Category);
             Assert.AreEqual(0, def.Effects.Count);
-            Assert.AreEqual(FateActionKeys.ChangeInitiative, def.FateAction.Key);
-            Assert.AreEqual(1, def.FateAction.Cost);
-            Assert.AreEqual(-2, def.FateAction.Amount);
+            Assert.AreEqual(InterventionActionKeys.ChangeExecutionOrder, def.InterventionAction.Key);
+            Assert.AreEqual(1, def.InterventionAction.InterventionCost);
+            Assert.AreEqual(-2, def.InterventionAction.EffectValue);
         }
     }
 }
@@ -157,17 +157,17 @@ namespace FateWeaver.Simulation.Authoring
 
     public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified }
 
-    public enum FateKind { None, ChangeInitiative, SwapInitiative, Lock }
+    public enum InterventionKind { None, ChangeExecutionOrder, SwapExecutionOrder, Lock }
 
     /// <summary>Flat, Inspector- and codegen-friendly description of one effect. Mapped to core EffectData.</summary>
     [Serializable]
     public struct EffectSpec
     {
         public EffectKind Kind;
-        public int Amount;
+        public int EffectValue;
         public ConditionKind Condition;
         public int ConditionN;
-        public int SuccessAmount;
+        public int SuccessEffectValue;
         public StatusKindRef Status;
         public StatusLifetimeKind Lifetime;
         public int LifetimeCount;
@@ -192,11 +192,11 @@ namespace FateWeaver.Simulation.Authoring
         public Side Side;
         public CardType Type;
         public CardCategory Category;
-        public int Cost;
-        public int BaseInitiative;
+        public int EnergyCost;
+        public int BaseExecutionOrder;
         public EffectSpec[] Effects;
-        public FateKind Fate;
-        public int FateAmount;
+        public InterventionKind Intervention;
+        public int InterventionEffectValue;
     }
 }
 ```
@@ -211,32 +211,32 @@ using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
     /// <summary>Pure mapping from authored CardSpec to the core CardDefinition. Single place that knows
-    /// how the flat authoring enums correspond to core keys / condition records / status / fate actions.</summary>
+    /// how the flat authoring enums correspond to core keys / condition records / status / intervention actions.</summary>
     public static class CardSpecMapper
     {
         public static CardDefinition ToDefinition(CardSpec spec)
         {
-            if (spec.Category == CardCategory.Fate)
+            if (spec.Category == CardCategory.Intervention)
             {
                 return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, 0, Array.Empty<EffectData>())
                 {
-                    Cost = spec.Cost,
-                    Category = CardCategory.Fate,
-                    FateAction = new FateActionData(ToFateKey(spec.Fate), spec.Cost, spec.FateAmount)
+                    EnergyCost = spec.EnergyCost,
+                    Category = CardCategory.Intervention,
+                    InterventionAction = new InterventionActionData(ToInterventionKey(spec.Intervention), spec.EnergyCost, spec.InterventionEffectValue)
                 };
             }
 
             var effects = (spec.Effects ?? Array.Empty<EffectSpec>()).Select(ToEffectData).ToArray();
-            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseInitiative, effects)
+            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseExecutionOrder, effects)
             {
-                Cost = spec.Cost,
-                Category = CardCategory.Action
+                EnergyCost = spec.EnergyCost,
+                Category = CardCategory.Execution
             };
         }
 
@@ -247,19 +247,19 @@ namespace FateWeaver.Simulation.Authoring
 
             if (e.Kind == EffectKind.ApplyStatus)
             {
-                return new EffectData(key, e.Amount)
+                return new EffectData(key, e.EffectValue)
                 {
                     StatusKey = ToStatusKey(e.Status),
                     StatusLifetime = ToLifetime(e.Lifetime, e.LifetimeCount),
                     StatusTarget = e.Target,
                     Condition = hasCondition ? ToCondition(e) : null,
-                    SuccessAmount = hasCondition ? e.SuccessAmount : (int?)null
+                    SuccessEffectValue = hasCondition ? e.SuccessEffectValue : (int?)null
                 };
             }
 
             return hasCondition
-                ? EffectData.Conditional(key, e.Amount, ToCondition(e), e.SuccessAmount)
-                : new EffectData(key, e.Amount);
+                ? EffectData.Conditional(key, e.EffectValue, ToCondition(e), e.SuccessEffectValue)
+                : new EffectData(key, e.EffectValue);
         }
 
         private static EffectKey ToEffectKey(EffectKind kind)
@@ -310,13 +310,13 @@ namespace FateWeaver.Simulation.Authoring
             }
         }
 
-        private static FateActionKey ToFateKey(FateKind f)
+        private static InterventionActionKey ToInterventionKey(InterventionKind f)
         {
             switch (f)
             {
-                case FateKind.SwapInitiative: return FateActionKeys.SwapInitiative;
-                case FateKind.Lock: return FateActionKeys.Lock;
-                default: return FateActionKeys.ChangeInitiative;
+                case InterventionKind.SwapExecutionOrder: return InterventionActionKeys.SwapExecutionOrder;
+                case InterventionKind.Lock: return InterventionActionKeys.Lock;
+                default: return InterventionActionKeys.ChangeExecutionOrder;
             }
         }
     }
@@ -364,10 +364,10 @@ namespace FateWeaver.Tests
         private static CardDefinition Def(string id) =>
             CardSpecMapper.ToDefinition(StarterDeckSpecs.Build().First(s => s.Id == id));
 
-        private static EnemyIntent Goblin(int initiative, int damage) => new EnemyIntent(
+        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
             new IReadOnlyList<CardDefinition>[]
             {
-                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", initiative, damage) }
+                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", executionOrder, damage) }
             });
 
         private static int HandIndex(DeckCombatSession s, string id)
@@ -391,8 +391,8 @@ namespace FateWeaver.Tests
         {
             var specs = StarterDeckSpecs.Build();
             Assert.AreEqual(10, specs.Count);
-            Assert.AreEqual(7, specs.Count(s => s.Category == CardCategory.Action));
-            Assert.AreEqual(3, specs.Count(s => s.Category == CardCategory.Fate));
+            Assert.AreEqual(7, specs.Count(s => s.Category == CardCategory.Execution));
+            Assert.AreEqual(3, specs.Count(s => s.Category == CardCategory.Intervention));
         }
 
         [Test]
@@ -401,8 +401,8 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { Def("quick_cut"), Def("pull_forward") }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(4, 3), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "quick_cut"));
-            session.PlayFateCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
+            session.PlayExecutionCard(HandIndex(session, "quick_cut"));
+            session.PlayInterventionCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
             Assert.AreEqual(8, DamageOf(session.ResolveTurn(), "quick_cut"));
         }
 
@@ -413,8 +413,8 @@ namespace FateWeaver.Tests
                 new[] { Def("slash"), Def("heavy_strike") }, 30,
                 new[] { new Enemy("goblin", 100) },
                 new EnemyIntent(new List<IReadOnlyList<CardDefinition>>()), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "slash"));
-            session.PlayActionCard(HandIndex(session, "heavy_strike"));
+            session.PlayExecutionCard(HandIndex(session, "slash"));
+            session.PlayExecutionCard(HandIndex(session, "heavy_strike"));
             Assert.AreEqual(10, DamageOf(session.ResolveTurn(), "heavy_strike"));
         }
 
@@ -424,7 +424,7 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { Def("cover") }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "cover"));
+            session.PlayExecutionCard(HandIndex(session, "cover"));
             int hp = session.State.PlayerHp;
             session.ResolveTurn();
             Assert.AreEqual(hp, session.State.PlayerHp);
@@ -463,55 +463,55 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec Slash() => new CardSpec
         {
             Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
-            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 3 } }
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, EffectValue = 3 } }
         };
 
         public static CardSpec Guard() => new CardSpec
         {
             Id = "guard", Name = "막기", Side = Side.Player, Type = CardType.Defense,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 4, Status = StatusKindRef.Block,
+                Kind = EffectKind.ApplyStatus, EffectValue = 4, Status = StatusKindRef.Block,
                 Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self } }
         };
 
         public static CardSpec QuickCut() => new CardSpec
         {
             Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, Amount = 2, Condition = ConditionKind.FirstToTrigger, SuccessAmount = 8 } }
+                Kind = EffectKind.Damage, EffectValue = 2, Condition = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 } }
         };
 
         public static CardSpec HeavyStrike() => new CardSpec
         {
             Id = "heavy_strike", Name = "강타", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Action, Cost = 2, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, Amount = 5, Condition = ConditionKind.PrevIsPlayerAttack, SuccessAmount = 10 } }
+                Kind = EffectKind.Damage, EffectValue = 5, Condition = ConditionKind.PrevIsPlayerAttack, SuccessEffectValue = 10 } }
         };
 
         public static CardSpec Cover() => new CardSpec
         {
             Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
-            Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 2, Status = StatusKindRef.Block,
+                Kind = EffectKind.ApplyStatus, EffectValue = 2, Status = StatusKindRef.Block,
                 Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
-                Condition = ConditionKind.NextIsEnemyAttack, SuccessAmount = 7 } }
+                Condition = ConditionKind.NextIsEnemyAttack, SuccessEffectValue = 7 } }
         };
 
         public static CardSpec PullForward() => new CardSpec
         {
             Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = -2
+            Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.ChangeExecutionOrder, InterventionEffectValue = -2
         };
 
         public static CardSpec SwapPositions() => new CardSpec
         {
             Id = "swap_positions", Name = "자리 교환", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Fate, Cost = 1, Fate = FateKind.SwapInitiative, FateAmount = 0
+            Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.SwapExecutionOrder, InterventionEffectValue = 0
         };
     }
 }
@@ -561,13 +561,13 @@ namespace FateWeaver.Unity
         public Side Side;
         public CardType Type;
         public CardCategory Category;
-        public int Cost = 1;
-        public int BaseInitiative = 5;
+        public int EnergyCost = 1;
+        public int BaseExecutionOrder = 5;
         public Sprite Art;
         [TextArea] public string Description;
         public EffectSpec[] Effects = Array.Empty<EffectSpec>();
-        public FateKind Fate;
-        public int FateAmount;
+        public InterventionKind Intervention;
+        public int InterventionEffectValue;
 
         public CardSpec ToSpec() => new CardSpec
         {
@@ -576,11 +576,11 @@ namespace FateWeaver.Unity
             Side = Side,
             Type = Type,
             Category = Category,
-            Cost = Cost,
-            BaseInitiative = BaseInitiative,
+            EnergyCost = EnergyCost,
+            BaseExecutionOrder = BaseExecutionOrder,
             Effects = Effects,
-            Fate = Fate,
-            FateAmount = FateAmount
+            Intervention = Intervention,
+            InterventionEffectValue = InterventionEffectValue
         };
     }
 }
@@ -739,11 +739,11 @@ namespace FateWeaver.Unity.Editor
             card.Side = spec.Side;
             card.Type = spec.Type;
             card.Category = spec.Category;
-            card.Cost = spec.Cost;
-            card.BaseInitiative = spec.BaseInitiative;
+            card.EnergyCost = spec.EnergyCost;
+            card.BaseExecutionOrder = spec.BaseExecutionOrder;
             card.Effects = spec.Effects ?? System.Array.Empty<EffectSpec>();
-            card.Fate = spec.Fate;
-            card.FateAmount = spec.FateAmount;
+            card.Intervention = spec.Intervention;
+            card.InterventionEffectValue = spec.InterventionEffectValue;
         }
 
         private static IEnumerable<CardSpec> DistinctById(IReadOnlyList<CardSpec> specs, out Dictionary<string, int> counts)
@@ -799,10 +799,10 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Side = Side.").Append(s.Side).Append(", ");
             sb.Append("Type = CardType.").Append(s.Type).Append(", ");
             sb.Append("Category = CardCategory.").Append(s.Category).Append(", ");
-            sb.Append("Cost = ").Append(s.Cost).Append(", ");
-            sb.Append("BaseInitiative = ").Append(s.BaseInitiative).Append(", ");
-            sb.Append("Fate = FateKind.").Append(s.Fate).Append(", ");
-            sb.Append("FateAmount = ").Append(s.FateAmount).Append(", ");
+            sb.Append("EnergyCost = ").Append(s.EnergyCost).Append(", ");
+            sb.Append("BaseExecutionOrder = ").Append(s.BaseExecutionOrder).Append(", ");
+            sb.Append("Intervention = InterventionKind.").Append(s.Intervention).Append(", ");
+            sb.Append("InterventionEffectValue = ").Append(s.InterventionEffectValue).Append(", ");
             sb.Append("Effects = new EffectSpec[] { ");
             var effects = s.Effects ?? System.Array.Empty<EffectSpec>();
             for (int i = 0; i < effects.Length; i++)
@@ -819,10 +819,10 @@ namespace FateWeaver.Unity.Editor
             var sb = new StringBuilder();
             sb.Append("new EffectSpec { ");
             sb.Append("Kind = EffectKind.").Append(e.Kind).Append(", ");
-            sb.Append("Amount = ").Append(e.Amount).Append(", ");
+            sb.Append("EffectValue = ").Append(e.EffectValue).Append(", ");
             sb.Append("Condition = ConditionKind.").Append(e.Condition).Append(", ");
             sb.Append("ConditionN = ").Append(e.ConditionN).Append(", ");
-            sb.Append("SuccessAmount = ").Append(e.SuccessAmount).Append(", ");
+            sb.Append("SuccessEffectValue = ").Append(e.SuccessEffectValue).Append(", ");
             sb.Append("Status = StatusKindRef.").Append(e.Status).Append(", ");
             sb.Append("Lifetime = StatusLifetimeKind.").Append(e.Lifetime).Append(", ");
             sb.Append("LifetimeCount = ").Append(e.LifetimeCount).Append(", ");
@@ -854,7 +854,7 @@ git commit -m "feat(unity): editor seeder + CardSpec code generator"
 
 - [ ] **Step 1: Seed the starter SO assets**
 
-User: run `Fate Weaver ▸ Seed Starter Card Assets`. Expected: 7 `CardAsset` `.asset` files (slash, guard, quick_cut, heavy_strike, cover, pull_forward, swap_positions) + `StarterDeck.asset` appear under `Assets/FateWeaver/Unity/Cards/`. Inspect a card (e.g., `cover`) — its `Effects[0]` shows Kind=ApplyStatus, Amount=2, Condition=NextIsEnemyAttack, SuccessAmount=7.
+User: run `Fate Weaver ▸ Seed Starter Card Assets`. Expected: 7 `CardAsset` `.asset` files (slash, guard, quick_cut, heavy_strike, cover, pull_forward, swap_positions) + `StarterDeck.asset` appear under `Assets/FateWeaver/Unity/Cards/`. Inspect a card (e.g., `cover`) — its `Effects[0]` shows Kind=ApplyStatus, EffectValue=2, Condition=NextIsEnemyAttack, SuccessEffectValue=7.
 
 - [ ] **Step 2: Generate the pure cards**
 

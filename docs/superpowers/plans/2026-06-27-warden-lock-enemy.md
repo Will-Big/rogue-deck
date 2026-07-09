@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the Warden enemy as the first lock-tutorial enemy. The Warden draws from a deterministic shuffle bag, locks exactly one of its telegraphed cards each turn, and uses order-relative conditional cards so the player learns that locked cards cannot be moved or initiative-modified.
+**Goal:** Add the Warden enemy as the first lock-tutorial enemy. The Warden draws from a deterministic shuffle bag, locks exactly one of its telegraphed cards each turn, and uses order-relative conditional cards so the player learns that locked cards cannot be moved or execution order-modified.
 
 **Scope:** Pure Core/Simulation/headless work only. Unity CardAssets, Warden art, playtest encounter selection, and player-side lock mechanics are deferred.
 
@@ -17,8 +17,8 @@ Spec: [`docs/superpowers/specs/2026-06-27-warden-lock-enemy-design.md`](../specs
 Current seams to use:
 - `IEnemyTurnPolicy` (`Assets/FateWeaver/Simulation/Enemies/IEnemyTurnPolicy.cs`) is the enemy card selection seam.
 - `RandomMovesetPolicy` is deterministic per `(seed, turnIndex)` but is not a no-replacement deck cycle; Warden needs a new stateful `ShuffleBagPolicy`.
-- `CardDefinition.StartsLocked` already exists; `DeckCombatSession.BeginTurn` bakes it into `ActionCardInstance.IsLocked`.
-- Fate lock/reorder rejection already exists for locked cards. This plan adds the missing initiative-fold immunity.
+- `CardDefinition.StartsLocked` already exists; `DeckCombatSession.BeginTurn` bakes it into `ExecutionCardInstance.IsLocked`.
+- Intervention lock/reorder rejection already exists for locked cards. This plan adds the missing execution order-fold immunity.
 - `DescriptionComposer` + `KoreanDescriptionVocabulary` already generate descriptions from `EffectData`; Warden only needs the new condition vocabulary.
 
 Decision for this slice:
@@ -39,7 +39,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj
 
 - [ ] **M0: Conditions and wording** — `NoFollowingCardOfSide` evaluates correctly, authoring can map it, and Korean descriptions render the new/updated order-relative wording.
 - [ ] **M1: Enemy policies** — `ShuffleBagPolicy` and `SelfLockPolicy` pass deterministic headless tests.
-- [ ] **M2: Lock immunity** — locked enemy cards skip slow/haste initiative folding in `DeckCombatSession`.
+- [ ] **M2: Lock immunity** — locked enemy cards skip slow/haste execution order folding in `DeckCombatSession`.
 - [ ] **M3: Warden deck contract** — Warden card ids, HP, effects, policy composition, and simple combat integration pass headless tests.
 - [ ] **M4: Full headless regression** — all headless tests pass.
 
@@ -89,7 +89,7 @@ In `ConditionEvaluator.Evaluate`, after the existing `NoPrecedingCardOfSide` blo
 
 In `CardSpecMapperTests`, add an `EffectSpec` with:
 - `Condition = ConditionKind.NoFollowingEnemyCard`
-- `SuccessAmount` set
+- `SuccessEffectValue` set
 
 Assert that `CardSpecMapper.ToEffectData` maps the condition to `NoFollowingCardOfSide` with `Side.Enemy`.
 
@@ -241,7 +241,7 @@ Expected: PASS.
 
 ---
 
-## Task 4: Make locked enemy cards immune to initiative folding
+## Task 4: Make locked enemy cards immune to execution order folding
 
 **Files:**
 - Modify: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
@@ -253,12 +253,12 @@ Create a locked enemy card:
 
 ```csharp
 new CardDefinition("locked_jab", "잠긴 찌르기", Side.Enemy, CardType.Attack, 5, effects)
-{ Cost = 0, Category = CardCategory.Action, StartsLocked = true };
+{ EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
 ```
 
 Start a `DeckCombatSession` with that enemy card as the policy output, add enemy Slow before `BeginNextTurn`, then assert next turn:
 - The card is `IsLocked == true`.
-- The initiative stays at base `5`, not slowed to `8`.
+- The execution order stays at base `5`, not slowed to `8`.
 
 Use an unlocked enemy card in the same test file to preserve the existing slow behavior expectation.
 
@@ -268,18 +268,18 @@ Run:
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj --filter "FullyQualifiedName~LockedEnemyInitiative|FullyQualifiedName~SlowHasteStatusTests"
 ```
 
-Expected: FAIL because `DeckCombatSession.BeginTurn` currently folds initiative before setting `IsLocked`.
+Expected: FAIL because `DeckCombatSession.BeginTurn` currently folds execution order before setting `IsLocked`.
 
 - [ ] **Step 2: Implement the small order change**
 
 In `DeckCombatSession.BeginTurn`, change the enemy card loop from fold-then-lock to lock-then-conditional-fold:
 
 ```csharp
-var inst = new ActionCardInstance(enemyCard);
+var inst = new ExecutionCardInstance(enemyCard);
 inst.IsLocked = enemyCard.StartsLocked;
 if (!inst.IsLocked)
 {
-    inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+    inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(inst.ExecutionOrder, enemyBag, _statuses);
 }
 _state.Zone.Add(inst);
 ```
@@ -314,10 +314,10 @@ Assert:
   - `warden_uppercut`: 1
   - `warden_block`: 1
   - `warden_brace`: 1
-- Every card has `Side.Enemy`, `Cost = 0`, `Category = CardCategory.Action`.
-- `warden_smash` is damage 2 with `NoFollowingCardOfSide(Side.Enemy)` success amount 7.
-- `warden_uppercut` is damage 2 with `NoPrecedingCardOfSide(Side.Enemy)` success amount 7.
-- `warden_brace` is block 3 with `NoPrecedingCardOfSide(Side.Enemy)` success amount 6.
+- Every card has `Side.Enemy`, `EnergyCost = 0`, `Category = CardCategory.Execution`.
+- `warden_smash` is damage 2 with `NoFollowingCardOfSide(Side.Enemy)` success effect value 7.
+- `warden_uppercut` is damage 2 with `NoPrecedingCardOfSide(Side.Enemy)` success effect value 7.
+- `warden_brace` is block 3 with `NoPrecedingCardOfSide(Side.Enemy)` success effect value 6.
 - `WardenDeck.Policy(seed)` returns 2 cards per turn and exactly one card is locked each turn.
 
 Run:
@@ -341,11 +341,11 @@ Required constants and methods:
 - `public static IEnemyTurnPolicy Policy(int seed) => new SelfLockPolicy(new ShuffleBagPolicy(Deck(), CardsPerTurn, seed), seed);`
 
 Card data:
-- `warden_swing`, "휘두르기", Attack, initiative 5, `Damage(3)`.
-- `warden_smash`, "내려치기", Attack, initiative 5, `Damage(2, NoFollowingCardOfSide(Enemy) -> 7)`.
-- `warden_uppercut`, "올려치기", Attack, initiative 4, `Damage(2, NoPrecedingCardOfSide(Enemy) -> 7)`.
-- `warden_block`, "막기", Defense, initiative 4, self `Block` 3 this turn.
-- `warden_brace`, "버티기", Defense, initiative 4, self `Block` 3 this turn with success amount 6 on `NoPrecedingCardOfSide(Enemy)`.
+- `warden_swing`, "휘두르기", Attack, execution order 5, `Damage(3)`.
+- `warden_smash`, "내려치기", Attack, execution order 5, `Damage(2, NoFollowingCardOfSide(Enemy) -> 7)`.
+- `warden_uppercut`, "올려치기", Attack, execution order 4, `Damage(2, NoPrecedingCardOfSide(Enemy) -> 7)`.
+- `warden_block`, "막기", Defense, execution order 4, self `Block` 3 this turn.
+- `warden_brace`, "버티기", Defense, execution order 4, self `Block` 3 this turn with success effect value 6 on `NoPrecedingCardOfSide(Enemy)`.
 
 - [ ] **Step 3: Add Korean enemy name**
 
@@ -375,7 +375,7 @@ Expected: PASS.
 Cover at least these cases:
 - `warden_smash` resolves for 7 damage when no later enemy card exists in resolution order.
 - `warden_smash` resolves for 2 damage when a later enemy card exists.
-- A locked Warden card rejects fate movement through the existing fate action path. This can reuse existing lock/fate assertions if they already cover locked cards; otherwise add a direct `DeckCombatSession.PlayFateCard` regression with a locked Warden policy output.
+- A locked Warden card rejects intervention movement through the existing intervention action path. This can reuse existing lock/intervention assertions if they already cover locked cards; otherwise add a direct `DeckCombatSession.PlayInterventionCard` regression with a locked Warden policy output.
 
 Use fixed `EnemyIntent` where exact card order matters. Do not rely on shuffle randomness for condition-resolution tests.
 
@@ -435,7 +435,7 @@ Unity caveat:
 **Spec coverage:**
 - Shuffle bag without replacement and full reshuffle on insufficient remainder -> Task 2.
 - Exactly one self-locked Warden card per turn -> Task 3 and Task 5.
-- Lock as initiative-fold immunity -> Task 4.
+- Lock as execution order-fold immunity -> Task 4.
 - `NoFollowingCardOfSide` core/authoring/description support -> Task 1.
 - Warden HP/deck/cards/policy -> Task 5.
 - Warden conditional resolution proof -> Task 6.

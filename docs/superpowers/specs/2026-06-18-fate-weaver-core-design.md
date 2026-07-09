@@ -9,7 +9,7 @@
 ## 1. 목적과 범위
 
 ### 목적
-Fate Weaver의 핵심 차별점 — **행동 카드는 자동 발동되지만 불완전하고, 운명 카드로 미래 영역의 순서(주도력)를 조작해 완성시킨다** — 가 실제로 성립하는지를 **코드로 반복·자동 검증**한다. 원천 문서가 수기로 진행하던 "3턴 시뮬레이션"을 자동화된 회귀 스위트로 바꾸는 것이 1차 목표다.
+Fate Weaver의 핵심 차별점 — **실행 카드는 자동 발동되지만 불완전하고, 개입 카드로 미래 영역의 순서(실행 순서)를 조작해 완성시킨다** — 가 실제로 성립하는지를 **코드로 반복·자동 검증**한다. 원천 문서가 수기로 진행하던 "3턴 시뮬레이션"을 자동화된 회귀 스위트로 바꾸는 것이 1차 목표다.
 
 ### 이번 범위 (밸런스 검증 프로토타입)
 - 순수 C# 전투 도메인 코어 (규칙·턴 해석·조건·효과·상태)
@@ -24,7 +24,7 @@ Fate Weaver의 핵심 차별점 — **행동 카드는 자동 발동되지만 �
 구현·밸런스가 반드시 지켜야 하는 4가지:
 1. **무조작 시 손해가 명확한가**
 2. **조작 성공 시 결과가 크게 바뀌는가**
-3. **행동 카드 콤보가 자동 완성되지 않는가**
+3. **실행 카드 콤보가 자동 완성되지 않는가**
 4. **방해가 비피해 카드에도 의미 있는가**
 
 > 주의: 랜덤성이 있는 턴제이므로 **모든 턴이 유의미할 필요는 없다.** 위 불변식은 보편 강제가 아니라, 원칙을 보여주려 설계한 특정 시나리오에서만 임계값 기반으로 검사한다(§9).
@@ -40,12 +40,12 @@ Fate Weaver의 핵심 차별점 — **행동 카드는 자동 발동되지만 �
 Unity 레이어 (코어 참조 · Unity 기능 전면 활용)
   · 콘텐츠 저작   : ScriptableObject 카드 → 로드 시 코어 데이터로 변환
   · 표현·제어     : MonoBehaviour — 매 턴 코어 호출, 결과 수신
-  · UI            : uGUI / UI Toolkit — 미래 영역·핸드·운명 카드
+  · UI            : uGUI / UI Toolkit — 미래 영역·핸드·개입 카드
   · 연출·입력     : DOTween/Timeline · Input System
-        │  입력: 카드/운명 플레이              ▲ 출력: 해석 타임라인(이벤트)
+        │  입력: 카드/개입 플레이              ▲ 출력: 해석 타임라인(이벤트)
         ▼                                     │
 도메인 코어 (순수 C# · UnityEngine 미참조 · 테스트로 즉시 검증)
-  · 카드·조건·효과 데이터  · 턴 해석기  · 미래 영역/주도력  · 시뮬레이션 러너
+  · 카드·조건·효과 데이터  · 턴 해석기  · 미래 영역/실행 순서  · 시뮬레이션 러너
         ▲
 Unity Test Framework (EditMode) — 코어를 헤드리스로 구동, 문서 3턴 시나리오 = 자동 단언
 ```
@@ -65,7 +65,7 @@ Unity Test Framework (EditMode) — 코어를 헤드리스로 구동, 문서 3�
 
 | 어셈블리 | 참조 | 내용 |
 |---|---|---|
-| `FateWeaver.Core` | (BCL만, `noEngineReferences:true`) | Cards / Combat / Fate / Status / Events |
+| `FateWeaver.Core` | (BCL만, `noEngineReferences:true`) | Cards / Combat / Intervention / Status / Events |
 | `FateWeaver.Simulation` | Core | ScenarioDefinition·Runner·Result, 리포트 |
 | `FateWeaver.Tests.EditMode` | Core, Simulation, NUnit | 설계 불변식 단언 |
 | `FateWeaver.Unity` *(향후)* | Core | MonoBehaviour, SO, UI, 연출 |
@@ -84,7 +84,7 @@ Unity Test Framework (EditMode) — 코어를 헤드리스로 구동, 문서 3�
 2. OwnedCard            플레이어가 덱에 소유한 한 장 ★영구 성장이 여기★
                           def + permanentMods(수치 성장) + structuralMods(효과/조건 추가·교체)
                           → 런/세이브 데이터에 영속
-3. ActionCardInstance   이번 전투·턴의 런타임 (initiative, locked, temporaryMods, target …)
+3. ExecutionCardInstance   이번 전투·턴의 런타임 (executionOrder, locked, temporaryMods, target …)
 ```
 
 영구 성장 = 공유 Definition을 변형하는 게 아니라 **OwnedCard에 영구 modifier를 쌓는 것**.
@@ -103,35 +103,35 @@ record BeforeNextEnemyAttack  : Condition;
 record AdjacentCardIs(Dir Dir, Side Side, CardType Type) : Condition;
 record SameTarget             : Condition;
 
-ConditionTier Evaluate(Condition c, ActionCardInstance card, ResolutionContext ctx);
+ConditionTier Evaluate(Condition c, ExecutionCardInstance card, ResolutionContext ctx);
 // ConditionTier = 실패 | 기본 | 성공  (원천 문서 0~30 / 30~50 / 100%)
 ```
 
-### 4.4 효과 · 운명 액션 — 키 기반 핸들러 레지스트리
-`Effect`(행동 카드가 하는 일)와 `FateAction`(운명 카드가 미래 영역에 하는 일)은 **매우 다양하고 서로 겹치지 않는 고유 능력**이 폭발하는 영역이다. 중앙 switch는 god-function이 되므로 **탈중앙 핸들러 레지스트리**를 쓴다.
+### 4.4 효과 · 개입 액션 — 키 기반 핸들러 레지스트리
+`Effect`(실행 카드가 하는 일)와 `InterventionAction`(개입 카드가 미래 영역에 하는 일)은 **매우 다양하고 서로 겹치지 않는 고유 능력**이 폭발하는 영역이다. 중앙 switch는 god-function이 되므로 **탈중앙 핸들러 레지스트리**를 쓴다.
 
 - 카드 *콘텐츠* = `키 + 파라미터 + 대상` (데이터, 직렬화·검사 가능)
 - *행동* = 키로 찾은 핸들러(코드, 임의로 bespoke 가능)
 - 새 능력 = **핸들러 클래스 1개 + 키 등록**, 중앙 코드 무수정 (OCP)
-- 공통 프리미티브는 범용 핸들러(ChangeInitiative 등), 일회성 능력은 전용 핸들러
+- 공통 프리미티브는 범용 핸들러(ChangeExecutionOrder 등), 일회성 능력은 전용 핸들러
 
 ```csharp
-interface IFateActionHandler {
-    FateActionKey Key { get; }
-    bool   CanApply(FateActionContext ctx);   // 실행 없이 검증 (대상 유효? locked?)
-    void   Apply(FateActionContext ctx);      // 미래 영역 조작 + 이벤트 방출
+interface IInterventionActionHandler {
+    InterventionActionKey Key { get; }
+    bool   CanApply(InterventionActionContext ctx);   // 실행 없이 검증 (대상 유효? locked?)
+    void   Apply(InterventionActionContext ctx);      // 미래 영역 조작 + 이벤트 방출
     string Describe(ResolvedParams p);        // 실행 없이 툴팁/UI 문자열
 }
 // IEffectHandler 도 동형.
 ```
 
-문서 4장의 운명 카드 → FateAction 핸들러 매핑: ChangeInitiative(±N), Swap, SwapInitiative, Lock, Nullify, Reorder, ForceConditionSuccess, Reveal, DrawFate …
+문서 4장의 개입 카드 → InterventionAction 핸들러 매핑: ChangeExecutionOrder(±N), Swap, SwapExecutionOrder, Lock, Nullify, Reorder, ForceConditionSuccess, Reveal, DrawFate …
 
 ### 4.5 타입 안전 키 + 상수 카탈로그 + 부팅 검증
 키는 raw string의 개방성을 유지하되 stringly-typed 문제를 없애기 위해 **타입 안전 래퍼**로 통일한다.
 
 ```csharp
-readonly record struct StatusKey(string Id);       // FateActionKey, EffectKey 동형
+readonly record struct StatusKey(string Id);       // InterventionActionKey, EffectKey 동형
 static class StatusKeys {                            // 알려진 키 = 상수 (자동완성·오타 방지)
     public static readonly StatusKey Stun       = new("stun");
     public static readonly StatusKey Vulnerable = new("vulnerable");
@@ -160,9 +160,9 @@ CombatState {
     List<FateCardInstance> fateHand;
     FutureZone zone; int rngSeed;
 }
-FutureZone {                                        // 순서 있는 ActionCardInstance 목록
-    IReadOnlyList<ActionCardInstance> ResolutionOrder();  // 주도력 오름차순, 안정 정렬
-    void ChangeInitiative / Swap / Lock / Nullify(...);
+FutureZone {                                        // 순서 있는 ExecutionCardInstance 목록
+    IReadOnlyList<ExecutionCardInstance> ResolutionOrder();  // 실행 순서 오름차순, 안정 정렬
+    void ChangeExecutionOrder / Swap / Lock / Nullify(...);
 }
 ```
 
@@ -185,7 +185,7 @@ interface IStatusBehavior {
     void OnTurnEnd(StatusContext c) {}                            // 지속시간·도트
     string Describe(StatusInstance s);
 }
-interface IStatusHolder { StatusBag Statuses { get; } }           // Entity·ActionCardInstance가 구현
+interface IStatusHolder { StatusBag Statuses { get; } }           // Entity·ExecutionCardInstance가 구현
 ```
 
 해석 파이프라인은 수치를 하드코딩하지 않고 **각 훅 지점에서 관련 holder의 상태를 fold**한다:
@@ -213,17 +213,17 @@ ApplyDamage(source, target, baseDmg):
 
 ```
 Phase 0  턴 시작 (BeginTurn)
-  · 행동 카드 → 미래 영역 배치 (게임: 행동 덱 / 시뮬: 시나리오 주입)
-  · 적 의도 배치, baseInitiative 부여
-  · 운명력 = fateEnergyPerTurn 리셋, 운명 카드 드로우
+  · 실행 카드 → 미래 영역 배치 (게임: 실행 덱 / 시뮬: 시나리오 주입)
+  · 적 의도 배치, baseExecutionOrder 부여
+  · 운명력 = fateEnergyPerTurn 리셋, 개입 카드 드로우
   · 이벤트: TurnStarted + 미래 영역 스냅샷
 
-Phase 1  조작 (운명 카드 플레이) — 여기서만 주도력/순서가 바뀜
-  · FateCard 플레이 → 비용 검사(cost ≤ 운명력) → 차감 → FateAction 적용 (locked 거부)
-  · 이벤트: FatePlayed + 갱신 스냅샷
+Phase 1  조작 (개입 카드 플레이) — 여기서만 실행 순서/순서가 바뀜
+  · InterventionCard 플레이 → 비용 검사(cost ≤ 운명력) → 차감 → InterventionAction 적용 (locked 거부)
+  · 이벤트: InterventionPlayed + 갱신 스냅샷
 
 Phase 2  해석 (EndTurn) — TurnResolver.Resolve
-  1. resolved[] = 미래 영역을 주도력 오름차순(안정)으로 "동결"
+  1. resolved[] = 미래 영역을 실행 순서 오름차순(안정)으로 "동결"
   2. ResolutionContext 생성 (index·인접·순서 질의, 보류 상태 보관)
   3. for i in resolved[]:
        a. 이 카드에 걸린 카드 스코프 상태 적용 (예: 기절·reward_nullified)
@@ -239,10 +239,10 @@ Phase 3  전투 지속 시 Phase 0 반복
 ```
 
 핵심 결정:
-1. **해석 순서는 EndTurn에 "동결"** — 운명 카드는 Phase 1에서만 순서를 바꾼다.
+1. **해석 순서는 EndTurn에 "동결"** — 개입 카드는 Phase 1에서만 순서를 바꾼다.
 2. **순차·상태 기반 해석** — "다음 카드 방해", "적보다 먼저", "N번째 이내"가 자연스럽게 구현.
 3. **모든 것이 이벤트를 남긴다** — `ResolutionEvent` 타임라인이 코어의 유일한 출력.
-4. **결정론** — `(초기 미래 영역 + 운명 플레이 스크립트 + rngSeed)`가 같으면 결과가 항상 동일.
+4. **결정론** — `(초기 미래 영역 + 개입 플레이 스크립트 + rngSeed)`가 같으면 결과가 항상 동일.
 
 ---
 
@@ -253,7 +253,7 @@ Phase 3  전투 지속 시 Phase 0 반복
 
 ```csharp
 ScenarioResult   Run(ScenarioDefinition s);
-ComparisonResult Compare(ScenarioDefinition s);   // (A) 운명 플레이 제거=무조작, (B) 스크립트=조작
+ComparisonResult Compare(ScenarioDefinition s);   // (A) 개입 플레이 제거=무조작, (B) 스크립트=조작
 ```
 
 ### 7.2 시나리오 정의 (데이터)
@@ -261,8 +261,8 @@ ComparisonResult Compare(ScenarioDefinition s);   // (A) 운명 플레이 제거
 ScenarioDefinition { string name; int playerHp; EnemySpec[] enemies; TurnScript[] turns; }
 TurnScript {
     int fateEnergy;              // 턴별 운명력 (변수, §8)
-    ZonePlacement[] zone;        // cardDefId, Side, initiative, target
-    FatePlay[] fatePlays;        // 순서 있는 조작 스크립트
+    ZonePlacement[] zone;        // cardDefId, Side, executionOrder, target
+    InterventionPlay[] fatePlays;        // 순서 있는 조작 스크립트
 }
 ```
 테스트용은 fluent 빌더, 디자이너용은 향후 JSON.
@@ -282,7 +282,7 @@ TurnSummary {
 
 ### 7.4 첫 콘텐츠 세트
 - 문서 11장 카드: 손목 베기, 표식 새기기, 연쇄 베기, 반격 자세(후보 A)
-- 운명 카드: 주도력 ±2, 인접 위치 교환, 고정, 주도력 6↑ 무효화
+- 개입 카드: 실행 순서 ±2, 인접 위치 교환, 고정, 실행 순서 6↑ 무효화
 - 문서 8장의 1·2·3턴 구조를 시나리오로 인코딩. 특히 8.2의 **"옛 카드는 자동 콤보 완성(나쁨)"을 회귀 가드**로 남겨 수정안이 막는지 증명.
 
 ### 7.5 부가 기능
@@ -328,12 +328,12 @@ TurnSummary {
 | 단계 | 내용 | 검증 기준 |
 |---|---|---|
 | **M0 골격** | asmdef 3개(Core=`noEngineReferences`, Simulation, Tests), 폴더/네임스페이스 골격 | 테스트 러너 green; 코어에서 `using UnityEngine` 시 컴파일 실패 |
-| **M1 코어 루프** | Side/CardType, CardDefinition, OwnedCard, ActionCardInstance, FutureZone, CombatState(변수 운명력), TurnResolver(기본 효과)+이벤트 | 고정 미래 영역이 올바른 순서로 해석·피해 적용·타임라인 일치 |
+| **M1 코어 루프** | Side/CardType, CardDefinition, OwnedCard, ExecutionCardInstance, FutureZone, CombatState(변수 운명력), TurnResolver(기본 효과)+이벤트 | 고정 미래 영역이 올바른 순서로 해석·피해 적용·타임라인 일치 |
 | **M2 조건** | Condition 데이터 변형 + Evaluator, 실패/기본/성공 3단계 | 위치별 tier가 기대대로 |
-| **M3 운명·조작** | 타입안전 키+레지스트리+부팅 검증, FateAction 핸들러, 변수 운명력 경제, 조작 단계 | 운명 플레이가 미래 영역 변경, 비용 게이팅, locked 거부 |
+| **M3 운명·조작** | 타입안전 키+레지스트리+부팅 검증, InterventionAction 핸들러, 변수 운명력 경제, 조작 단계 | 개입 플레이가 미래 영역 변경, 비용 게이팅, locked 거부 |
 | **M4 상태 이상** | IStatusHolder(Entity+Card), IStatusBehavior(Scope+Hook), StatusKey 레지스트리, ApplyDamage 파이프라인; 기절/취약/약화/reward_nullified | 기절=무력화, 취약=피해↑, 손목베기=비피해 카드 방해 |
 | **M5 하니스·콘텐츠** | ScenarioDefinition/Runner/Result, Compare, fluent 빌더, 리포트, 결정론 테스트; 문서 11장 카드 + 8장 시나리오 | 문서 시나리오 재현, ③ 회귀 가드 통과, 리포트 가독 |
-| **M6 확장 seam 정리** | 확장 지점 문서화, "카드/상태/운명 액션 추가하는 법" 가이드 | 향후 Unity 레이어가 얹힐 경계 확정 |
+| **M6 확장 seam 정리** | 확장 지점 문서화, "카드/상태/개입 액션 추가하는 법" 가이드 | 향후 Unity 레이어가 얹힐 경계 확정 |
 
 ---
 
@@ -341,7 +341,7 @@ TurnSummary {
 
 | 확장 대상 | 방법 | 중앙 코드 수정 |
 |---|---|---|
-| 새 운명 액션 / 효과 | `IFateActionHandler`/`IEffectHandler` 구현 + 키 등록 | 없음 |
+| 새 개입 액션 / 효과 | `IInterventionActionHandler`/`IEffectHandler` 구현 + 키 등록 | 없음 |
 | 새 상태 이상 | `IStatusBehavior` 구현 + StatusKey 등록 | 없음 |
 | 새 조건 | `Condition` 레코드 추가 + Evaluator 분기 | Evaluator(소수·중앙) |
 | 새 개입 시점(훅) | 인터페이스에 훅 1개 + 파이프라인 질의 1줄 | 국소·드묾 |
@@ -352,7 +352,7 @@ TurnSummary {
 ## 12. 결정 기록 (왜 이렇게)
 
 - **순수 C# 코어**: 헤드리스 테스트 속도·결정론·규칙/표현 분리 강제. 비용은 경계에서 SO↔DTO 변환 보일러플레이트.
-- **조건=데이터, 효과/운명액션=핸들러 레지스트리**: 조건은 닫힌 조합형, 효과/액션은 열린 bespoke. 직렬화·검사·OCP를 위해 차등.
+- **조건=데이터, 효과/개입액션=핸들러 레지스트리**: 조건은 닫힌 조합형, 효과/액션은 열린 bespoke. 직렬화·검사·OCP를 위해 차등.
 - **키=타입 안전 래퍼**(enum 아님): 닫힌 집합을 강제하지 않으면서 타입 안전성 확보. 데이터/모드 확장 여지 보존.
 - **상태=Scope+Hook**: 카드·캐릭터 양쪽을 한 시스템으로. 방해 메커니즘 흡수.
 - **운명력 변수화**: 진행에 따른 증감 대비.

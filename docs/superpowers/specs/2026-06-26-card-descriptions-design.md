@@ -13,28 +13,28 @@
 로컬 키 + 토큰 템플릿. Slay the Spire의 `!D!`/`!B!`/`!M!` 토큰(언어별 cards.json, 런타임 치환, 수정값 색상)이 우리와 거의 동일.
 
 ## 아키텍처
-- **`DescriptionComposer` (순수 C#, Simulation, 헤드리스 테스트 가능)** — `CardDefinition`의 `Effects`(+ 운명 카드는 `FateAction`)를 순회하며 효과별 조각을 만들고 숫자 토큰을 그 데이터로 치환, 이어붙여 최종 설명 문자열 반환.
+- **`DescriptionComposer` (순수 C#, Simulation, 헤드리스 테스트 가능)** — `CardDefinition`의 `Effects`(+ 개입 카드는 `InterventionAction`)를 순회하며 효과별 조각을 만들고 숫자 토큰을 그 데이터로 치환, 이어붙여 최종 설명 문자열 반환.
 - **`IDescriptionVocabulary` (인터페이스)** — 로컬라이즈 템플릿 공급:
   - 효과 조각: `EffectKind`별 템플릿 (Damage / ApplyStatus / GrantNextAttackBonus / NullifyNextReward)
   - 조건 절: `ConditionKind`별 (FirstToTrigger, WithinNth, PrevIsEnemyAttack, PrevIsPlayerAttack, NextIsEnemyAttack, NoPrecedingPlayerCard, BeforeNextEnemyAttack)
   - 키워드(상태) 이름: `StatusKey`별 (방어/둔화/가속/기절/취약/조건보상무효)
-  - 운명 템플릿: `FateActionKey`별 (ChangeInitiative ±, SwapInitiative, Lock)
+  - 개입 템플릿: `InterventionActionKey`별 (ChangeExecutionOrder ±, SwapExecutionOrder, Lock)
 - **`KoreanDescriptionVocabulary` (Simulation, 순수)** — 한국어 구현 1개. 다국어는 구현 교체로 확장. (참고: `GoblinDeck`이 이미 한글명을 Simulation에 두므로 일관)
 - **호출부:** `CardPresentation.From/FromDefinition`이 `PlaytestKoreanText.CardDescription(def.Id)` 대신 `DescriptionComposer.Describe(def, koreanVocab)` 호출. 하드코딩 switch 제거.
 
 ## 토큰 → 데이터 매핑
-- `{dmg}` = `EffectData.Amount` (Damage)
-- `{dmg_success}` = `EffectData.SuccessAmount`
-- `{mag}` = 상태 magnitude (= ApplyStatus의 `Amount`)
+- `{dmg}` = `EffectData.EffectValue` (Damage)
+- `{dmg_success}` = `EffectData.SuccessEffectValue`
+- `{mag}` = 상태 magnitude (= ApplyStatus의 `EffectValue`)
 - `{turns}` = `StatusLifetime` count (Turns/UntilConsumed)
-- `{amt}` = 운명 `FateActionData.Amount`
+- `{amt}` = 개입 `InterventionActionData.EffectValue`
 - 대상 = `StatusApplyTarget` (자신/적) → 로컬 텍스트
 
 예시 조립:
 - slash `Damage(4)` → `"피해 4."`
 - quick_cut `Damage(2, FirstToTrigger→8)` → `"피해 2. 첫 발동이면 피해 8."`
 - slow_hex `ApplyStatus(Slow, mag3, Turns2, 적)` → `"적 둔화 3 (2턴)."`
-- pull_forward `Fate(ChangeInitiative, -1)` → `"한 카드의 주도력 -1."`
+- pull_forward `Intervention(ChangeExecutionOrder, -1)` → `"한 카드의 실행 순서 -1."`
 
 ## 4대 동적 변화 대응 (효과-조합이 핵심인 이유)
 - 수치 변화 → 토큰이 실효값 추종(추후 수정값 색상).
@@ -46,10 +46,10 @@
 
 ## 테스트 (헤드리스)
 - 효과별 조각 단위: 각 EffectKind → 기대 조각.
-- 숫자 토큰이 Amount/SuccessAmount/magnitude/turns 추종(값 바꾸면 출력 바뀜).
+- 숫자 토큰이 EffectValue/SuccessEffectValue/magnitude/turns 추종(값 바꾸면 출력 바뀜).
 - 조건 → 절 결합("...이면 ...").
 - 다중 효과 결합 순서/구분.
-- 운명 카드(±, 교환, 고정).
+- 개입 카드(±, 교환, 고정).
 - 가짜 vocab로 컴포저 로직 격리 + 한국어 vocab로 실제 출력 검증(기존 `CardDescriptionTests`를 헤드리스 조립 테스트로 재작성).
 
 ## 비목표 / 후속

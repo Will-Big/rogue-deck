@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the pure-C# deck combat loop — a single deck of action+fate cards drawn into a hand, fate-energy as a per-card cost, action cards placed onto the per-turn future zone and fate cards reordering it, resolved each turn — all headless-tested. Unity is untouched (Phase 2).
+**Goal:** Build the pure-C# deck combat loop — a single deck of execution+intervention cards drawn into a hand, fate-energy as a per-card cost, execution cards placed onto the per-turn future zone and intervention cards reordering it, resolved each turn — all headless-tested. Unity is untouched (Phase 2).
 
-**Architecture:** Reuse the existing `FutureZone` / `TurnResolver` / conditions / effects / statuses / `FatePlayResolver` unchanged. Add a `Deck` (draw/discard/hand + seeded shuffle), extend `CardDefinition` with `Cost`/`Category`/`FateAction`, define the 10-card starter deck and a deterministic enemy-intent script, and a `DeckCombatSession` driver that runs the turn loop. The conditional block on 엄호 already works through the existing `ResolveAmount`→`SuccessAmount` path, so **no Core effect code changes**.
+**Architecture:** Reuse the existing `FutureZone` / `TurnResolver` / conditions / effects / statuses / `InterventionPlayResolver` unchanged. Add a `Deck` (draw/discard/hand + seeded shuffle), extend `CardDefinition` with `EnergyCost`/`Category`/`InterventionAction`, define the 10-card starter deck and a deterministic enemy-intent script, and a `DeckCombatSession` driver that runs the turn loop. The conditional block on 엄호 already works through the existing `ResolveEffectValue`→`SuccessEffectValue` path, so **no Core effect code changes**.
 
 **Tech Stack:** C# 9 (Unity 6 constraint), NUnit, headless `dotnet test`. New code lives in `Assets/FateWeaver/Core` (pure) and `Assets/FateWeaver/Simulation` (uses the `internal` `CombatRegistries`); tests in `Assets/FateWeaver/Tests/EditMode`. All three are compiled by the headless project.
 
@@ -17,13 +17,13 @@ Filter one class: append `--filter "FullyQualifiedName~ClassName"`. Output may b
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Core/Cards/CardCategory.cs` | Action vs Fate enum | Create |
-| `Assets/FateWeaver/Core/Cards/CardDefinition.cs` | add `Cost`/`Category`/`FateAction` | Modify |
+| `Assets/FateWeaver/Core/Cards/CardCategory.cs` | Execution vs Intervention enum | Create |
+| `Assets/FateWeaver/Core/Cards/CardDefinition.cs` | add `EnergyCost`/`Category`/`InterventionAction` | Modify |
 | `Assets/FateWeaver/Core/Combat/Deck.cs` | draw/discard/hand piles + seeded shuffle/reshuffle | Create |
 | `Assets/FateWeaver/Simulation/StarterDeck.cs` | 10-card starter deck + enemy-attack helper | Create |
-| `Assets/FateWeaver/Simulation/EnemyIntent.cs` | per-turn enemy action cards (deterministic) | Create |
+| `Assets/FateWeaver/Simulation/EnemyIntent.cs` | per-turn enemy execution cards (deterministic) | Create |
 | `Assets/FateWeaver/Simulation/DeckCombatSession.cs` | the turn-loop driver | Create |
-| `Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs` | card data carries cost/category/fate | Create |
+| `Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs` | card data carries energy cost/category/intervention | Create |
 | `Assets/FateWeaver/Tests/EditMode/DeckTests.cs` | draw + reshuffle | Create |
 | `Assets/FateWeaver/Tests/EditMode/StarterDeckTests.cs` | composition (10 cards, 7:3, costs) | Create |
 | `Assets/FateWeaver/Tests/EditMode/EnemyIntentTests.cs` | ForTurn clamps | Create |
@@ -47,7 +47,7 @@ using System;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Tests
 {
@@ -58,23 +58,23 @@ namespace FateWeaver.Tests
         {
             var card = new CardDefinition(
                 "slash", "베기", Side.Player, CardType.Attack, 5,
-                new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 1 };
+                new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 1 };
 
-            Assert.AreEqual(CardCategory.Action, card.Category);
-            Assert.AreEqual(1, card.Cost);
-            Assert.IsNull(card.FateAction);
+            Assert.AreEqual(CardCategory.Execution, card.Category);
+            Assert.AreEqual(1, card.EnergyCost);
+            Assert.IsNull(card.InterventionAction);
         }
 
         [Test]
-        public void Fate_card_carries_a_fate_action()
+        public void Intervention_card_carries_an_intervention_action()
         {
-            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var card = new CardDefinition(
                 "pull", "앞당김", Side.Player, CardType.Skill, 0, Array.Empty<EffectData>())
-                { Cost = 1, Category = CardCategory.Fate, FateAction = action };
+                { EnergyCost = 1, Category = CardCategory.Intervention, InterventionAction = action };
 
-            Assert.AreEqual(CardCategory.Fate, card.Category);
-            Assert.AreSame(action, card.FateAction);
+            Assert.AreEqual(CardCategory.Intervention, card.Category);
+            Assert.AreSame(action, card.InterventionAction);
         }
     }
 }
@@ -83,7 +83,7 @@ namespace FateWeaver.Tests
 - [ ] **Step 2: Run it; verify it fails**
 
 Run: `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo --filter "FullyQualifiedName~CardDefinitionDataTests"`
-Expected: FAIL to compile — `CardCategory` / `Cost` / `Category` / `FateAction` do not exist.
+Expected: FAIL to compile — `CardCategory` / `EnergyCost` / `Category` / `InterventionAction` do not exist.
 
 - [ ] **Step 3: Create the enum**
 
@@ -92,18 +92,18 @@ Create `Assets/FateWeaver/Core/Cards/CardCategory.cs`:
 ```csharp
 namespace FateWeaver.Core.Cards
 {
-    /// <summary>Whether a card produces effects on the future zone (Action) or manipulates it (Fate).</summary>
+    /// <summary>Whether a card produces effects on the future zone (Execution) or manipulates it (Intervention).</summary>
     public enum CardCategory
     {
-        Action,
-        Fate
+        Execution,
+        Intervention
     }
 }
 ```
 
 - [ ] **Step 4: Extend `CardDefinition`**
 
-In `Assets/FateWeaver/Core/Cards/CardDefinition.cs`, replace the `CardDefinition` record declaration (the final record at the bottom of the file) with a bodied record. Add `using FateWeaver.Core.Fate;` to the top of the file (next to the existing usings):
+In `Assets/FateWeaver/Core/Cards/CardDefinition.cs`, replace the `CardDefinition` record declaration (the final record at the bottom of the file) with a bodied record. Add `using FateWeaver.Core.Intervention;` to the top of the file (next to the existing usings):
 
 ```csharp
     /// <summary>Immutable card template.</summary>
@@ -112,17 +112,17 @@ In `Assets/FateWeaver/Core/Cards/CardDefinition.cs`, replace the `CardDefinition
         string Name,
         Side Side,
         CardType Type,
-        int BaseInitiative,
+        int BaseExecutionOrder,
         IReadOnlyList<EffectData> Effects)
     {
         /// <summary>Fate-energy cost to play this card.</summary>
-        public int Cost { get; init; }
+        public int EnergyCost { get; init; }
 
-        /// <summary>Action (effects on the zone) or Fate (zone control).</summary>
+        /// <summary>Execution (effects on the zone) or Intervention (zone control).</summary>
         public CardCategory Category { get; init; }
 
-        /// <summary>For fate cards: the action resolved when played (null for action cards).</summary>
-        public FateActionData FateAction { get; init; }
+        /// <summary>For intervention cards: the action resolved when played (null for execution cards).</summary>
+        public InterventionActionData InterventionAction { get; init; }
     }
 ```
 
@@ -135,7 +135,7 @@ Expected: PASS (2 tests). (If the existing suite still compiles, positional cons
 
 ```bash
 git add Assets/FateWeaver/Core/Cards/CardCategory.cs Assets/FateWeaver/Core/Cards/CardDefinition.cs Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs
-git commit -m "feat(core): card cost/category/fate-action on CardDefinition"
+git commit -m "feat(core): card energy-cost/category/intervention-action on CardDefinition"
 ```
 
 ---
@@ -163,7 +163,7 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
             id, id, Side.Player, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) }) { Cost = 1 };
+            new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 1 };
 
         [Test]
         public void Draw_moves_cards_from_draw_pile_to_hand()
@@ -332,12 +332,12 @@ namespace FateWeaver.Tests
     public class StarterDeckTests
     {
         [Test]
-        public void Has_ten_cards_seven_action_three_fate()
+        public void Has_ten_cards_seven_execution_three_intervention()
         {
             var cards = StarterDeck.Build();
             Assert.AreEqual(10, cards.Count);
-            Assert.AreEqual(7, cards.Count(c => c.Category == CardCategory.Action));
-            Assert.AreEqual(3, cards.Count(c => c.Category == CardCategory.Fate));
+            Assert.AreEqual(7, cards.Count(c => c.Category == CardCategory.Execution));
+            Assert.AreEqual(3, cards.Count(c => c.Category == CardCategory.Intervention));
         }
 
         [Test]
@@ -354,11 +354,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Fate_card_cost_matches_its_fate_action_cost()
+        public void Intervention_card_cost_matches_its_intervention_action_cost()
         {
             var pull = StarterDeck.Build().First(c => c.Id == "pull_forward");
-            Assert.AreEqual(CardCategory.Fate, pull.Category);
-            Assert.AreEqual(pull.Cost, pull.FateAction.Cost);
+            Assert.AreEqual(CardCategory.Intervention, pull.Category);
+            Assert.AreEqual(pull.EnergyCost, pull.InterventionAction.InterventionCost);
         }
     }
 }
@@ -379,16 +379,16 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>The 10-card starter deck (7 action : 3 fate). Player action cards share a base initiative
-    /// so order among them is placement order; fate cards + enemy initiative create the puzzle.</summary>
+    /// <summary>The 10-card starter deck (7 execution : 3 intervention). Player execution cards share a base execution order
+    /// so order among them is placement order; intervention cards + enemy execution order create the puzzle.</summary>
     public static class StarterDeck
     {
-        public const int DefaultInitiative = 5;
+        public const int DefaultExecutionOrder = 5;
 
         public static IReadOnlyList<CardDefinition> Build()
         {
@@ -406,38 +406,38 @@ namespace FateWeaver.Simulation
             return cards;
         }
 
-        // --- action cards ---------------------------------------------------
+        // --- execution cards ---------------------------------------------------
 
         public static CardDefinition Slash() => new CardDefinition(
-            "slash", "베기", Side.Player, CardType.Attack, DefaultInitiative,
+            "slash", "베기", Side.Player, CardType.Attack, DefaultExecutionOrder,
             new[] { new EffectData(EffectKeys.Damage, 3) })
-            { Cost = 1, Category = CardCategory.Action };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition Guard() => new CardDefinition(
-            "guard", "막기", Side.Player, CardType.Defense, DefaultInitiative,
+            "guard", "막기", Side.Player, CardType.Defense, DefaultExecutionOrder,
             new[]
             {
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4)
             })
-            { Cost = 1, Category = CardCategory.Action };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition QuickCut() => new CardDefinition(
-            "quick_cut", "찰나의 베기", Side.Player, CardType.Attack, DefaultInitiative,
+            "quick_cut", "찰나의 베기", Side.Player, CardType.Attack, DefaultExecutionOrder,
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8) })
-            { Cost = 1, Category = CardCategory.Action };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition HeavyStrike() => new CardDefinition(
-            "heavy_strike", "강타", Side.Player, CardType.Attack, DefaultInitiative,
+            "heavy_strike", "강타", Side.Player, CardType.Attack, DefaultExecutionOrder,
             new[]
             {
                 EffectData.Conditional(
                     EffectKeys.Damage, 5,
                     new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Attack), 10)
             })
-            { Cost = 2, Category = CardCategory.Action };
+            { EnergyCost = 2, Category = CardCategory.Execution };
 
         public static CardDefinition Cover() => new CardDefinition(
-            "cover", "엄호", Side.Player, CardType.Defense, DefaultInitiative,
+            "cover", "엄호", Side.Player, CardType.Defense, DefaultExecutionOrder,
             new[]
             {
                 new EffectData(EffectKeys.ApplyStatus, 2)
@@ -446,31 +446,31 @@ namespace FateWeaver.Simulation
                     StatusLifetime = StatusLifetime.ThisTurn,
                     StatusTarget = StatusApplyTarget.Self,
                     Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessAmount = 7
+                    SuccessEffectValue = 7
                 }
             })
-            { Cost = 1, Category = CardCategory.Action };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
-        // --- fate cards -----------------------------------------------------
+        // --- intervention cards -----------------------------------------------------
 
-        public static CardDefinition PullForward() => FateCard(
+        public static CardDefinition PullForward() => InterventionCard(
             "pull_forward", "앞당김", cost: 1,
-            new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2));
+            new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2));
 
-        public static CardDefinition SwapPositions() => FateCard(
+        public static CardDefinition SwapPositions() => InterventionCard(
             "swap_positions", "자리 교환", cost: 1,
-            new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0));
+            new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0));
 
-        private static CardDefinition FateCard(string id, string name, int cost, FateActionData action) =>
+        private static CardDefinition InterventionCard(string id, string name, int cost, InterventionActionData action) =>
             new CardDefinition(id, name, Side.Player, CardType.Skill, 0, Array.Empty<EffectData>())
-            { Cost = cost, Category = CardCategory.Fate, FateAction = action };
+            { EnergyCost = cost, Category = CardCategory.Intervention, InterventionAction = action };
 
         // --- helper for enemy intent ---------------------------------------
 
-        public static CardDefinition EnemyAttack(string id, string name, int initiative, int damage) =>
-            new CardDefinition(id, name, Side.Enemy, CardType.Attack, initiative,
+        public static CardDefinition EnemyAttack(string id, string name, int executionOrder, int damage) =>
+            new CardDefinition(id, name, Side.Enemy, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) })
-                { Cost = 0, Category = CardCategory.Action };
+                { EnergyCost = 0, Category = CardCategory.Execution };
     }
 }
 ```
@@ -547,7 +547,7 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>Deterministic enemy telegraph: the enemy action cards placed on the future zone each turn.
+    /// <summary>Deterministic enemy telegraph: the enemy execution cards placed on the future zone each turn.
     /// Turns past the end clamp to the last defined turn. (Real enemy AI is a later phase.)</summary>
     public sealed class EnemyIntent
     {
@@ -592,8 +592,8 @@ git commit -m "feat(sim): deterministic per-turn EnemyIntent"
 - Create: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
 - Test: `Assets/FateWeaver/Tests/EditMode/DeckCombatSessionTests.cs`
 
-> Energy: **fate cards** deduct energy inside `FatePlayResolver` (the handler's `CanApply`/`Apply`).
-> **Action cards** deduct energy here. Both gate on `FateEnergy >= Cost`.
+> Energy: **intervention cards** deduct energy inside `InterventionPlayResolver` (the handler's `CanApply`/`Apply`).
+> **Execution cards** deduct energy here. Both gate on `FateEnergy >= EnergyCost`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -612,10 +612,10 @@ namespace FateWeaver.Tests
 {
     public class DeckCombatSessionTests
     {
-        private static EnemyIntent Goblin(int initiative, int damage) => new EnemyIntent(
+        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
             new IReadOnlyList<CardDefinition>[]
             {
-                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", initiative, damage) }
+                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", executionOrder, damage) }
             });
 
         private static int HandIndex(DeckCombatSession s, string id)
@@ -636,7 +636,7 @@ namespace FateWeaver.Tests
             var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
             Assert.AreEqual(3, session.FateEnergy);
 
-            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "slash")));
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "slash")));
 
             Assert.AreEqual(2, session.FateEnergy);                 // cost 1 spent
             Assert.IsTrue(session.CurrentOrder.Any(c => c.Def.Id == "slash"));
@@ -648,21 +648,21 @@ namespace FateWeaver.Tests
         {
             // deck of two heavy strikes (cost 2 each); energy 3 -> only one is affordable.
             var session = NewSession(new[] { StarterDeck.HeavyStrike(), StarterDeck.HeavyStrike() }, Goblin(4, 3));
-            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "heavy_strike")));  // 3 -> 1
-            Assert.IsFalse(session.PlayActionCard(HandIndex(session, "heavy_strike"))); // 1 < 2, rejected
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "heavy_strike")));  // 3 -> 1
+            Assert.IsFalse(session.PlayExecutionCard(HandIndex(session, "heavy_strike"))); // 1 < 2, rejected
             Assert.AreEqual(1, session.FateEnergy);
         }
 
         [Test]
         public void Quick_cut_pulled_to_the_front_lands_the_first_strike_bonus()
         {
-            // Enemy at initiative 4 acts before the player's cards (base 5) by default.
+            // Enemy at execution order 4 acts before the player's cards (base 5) by default.
             var session = NewSession(new[] { StarterDeck.QuickCut(), StarterDeck.PullForward() }, Goblin(4, 3));
-            session.PlayActionCard(HandIndex(session, "quick_cut")); // placed at initiative 5
+            session.PlayExecutionCard(HandIndex(session, "quick_cut")); // placed at execution order 5
 
-            // pull_forward (-2) on quick_cut -> initiative 3 -> now first.
+            // pull_forward (-2) on quick_cut -> execution order 3 -> now first.
             var quickIndex = ZoneIndex(session, "quick_cut");
-            Assert.IsTrue(session.PlayFateCard(HandIndex(session, "pull_forward"), quickIndex));
+            Assert.IsTrue(session.PlayInterventionCard(HandIndex(session, "pull_forward"), quickIndex));
 
             var timeline = session.ResolveTurn();
             Assert.AreEqual(8, DamageOf(timeline, "quick_cut")); // first-strike success
@@ -673,8 +673,8 @@ namespace FateWeaver.Tests
         {
             var session = NewSession(new[] { StarterDeck.Slash(), StarterDeck.HeavyStrike() }, new EnemyIntent(
                 new List<IReadOnlyList<CardDefinition>>())); // no enemy this turn
-            session.PlayActionCard(HandIndex(session, "slash"));        // initiative 5 (placed first)
-            session.PlayActionCard(HandIndex(session, "heavy_strike")); // initiative 5 (placed second -> after slash)
+            session.PlayExecutionCard(HandIndex(session, "slash"));        // execution order 5 (placed first)
+            session.PlayExecutionCard(HandIndex(session, "heavy_strike")); // execution order 5 (placed second -> after slash)
 
             var timeline = session.ResolveTurn();
             Assert.AreEqual(10, DamageOf(timeline, "heavy_strike")); // prev is a player attack -> +5
@@ -685,7 +685,7 @@ namespace FateWeaver.Tests
         {
             // cover (base 5) resolves before goblin (6); its "next is enemy attack" bonus -> block 7.
             var session = NewSession(new[] { StarterDeck.Cover() }, Goblin(6, 3));
-            session.PlayActionCard(HandIndex(session, "cover"));
+            session.PlayExecutionCard(HandIndex(session, "cover"));
 
             int hpBefore = session.State.PlayerHp;
             session.ResolveTurn();
@@ -696,7 +696,7 @@ namespace FateWeaver.Tests
         public void Begin_next_turn_discards_hand_refills_energy_and_redraws()
         {
             var session = NewSession(StarterDeck.Build(), Goblin(4, 3));
-            session.PlayActionCard(HandIndex(session, FirstActionId(session)));
+            session.PlayExecutionCard(HandIndex(session, FirstActionId(session)));
             session.ResolveTurn();
             Assert.IsTrue(session.CurrentTurnResolved);
 
@@ -727,7 +727,7 @@ namespace FateWeaver.Tests
         }
 
         private static string FirstActionId(DeckCombatSession s)
-            => s.Hand.First(c => c.Category == CardCategory.Action).Id;
+            => s.Hand.First(c => c.Category == CardCategory.Execution).Id;
     }
 }
 ```
@@ -746,19 +746,19 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>Drives the deck turn loop: draw a hand, spend fate energy to place action cards onto the
-    /// future zone and play fate cards to reorder it, resolve, then begin the next turn. Pure C#.</summary>
+    /// <summary>Drives the deck turn loop: draw a hand, spend fate energy to place execution cards onto the
+    /// future zone and play intervention cards to reorder it, resolve, then begin the next turn. Pure C#.</summary>
     public sealed class DeckCombatSession
     {
         private readonly CombatState _state;
         private readonly Deck _deck;
         private readonly EnemyIntent _intent;
         private readonly TurnResolver _resolver;
-        private readonly FatePlayResolver _fateResolver;
+        private readonly InterventionPlayResolver _interventionResolver;
         private readonly int _handSize;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
 
@@ -786,7 +786,7 @@ namespace FateWeaver.Simulation
             _intent = intent;
             _handSize = handSize;
             _resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
-            _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
+            _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
 
             BeginTurn(0);
         }
@@ -795,7 +795,7 @@ namespace FateWeaver.Simulation
         public IReadOnlyList<CardDefinition> Hand => _deck.Hand;
         public int FateEnergy => _state.FateEnergy;
         public CombatState State => _state;
-        public IReadOnlyList<ActionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
+        public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
         public IReadOnlyList<ResolutionEvent> LastTimeline => _lastTimeline;
         public Outcome Outcome { get; private set; } = Outcome.Ongoing;
         public bool CurrentTurnResolved { get; private set; }
@@ -803,8 +803,8 @@ namespace FateWeaver.Simulation
         public int DrawCount => _deck.DrawCount;
         public int DiscardCount => _deck.DiscardCount;
 
-        /// <summary>Place an action card from the hand onto the future zone (spends its fate-energy cost).</summary>
-        public bool PlayActionCard(int handIndex)
+        /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
+        public bool PlayExecutionCard(int handIndex)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -812,20 +812,20 @@ namespace FateWeaver.Simulation
             }
 
             var def = _deck.Hand[handIndex];
-            if (def.Category != CardCategory.Action || _state.FateEnergy < def.Cost)
+            if (def.Category != CardCategory.Execution || _state.FateEnergy < def.EnergyCost)
             {
                 return false;
             }
 
-            _state.FateEnergy -= def.Cost;
-            _state.Zone.Add(new ActionCardInstance(def));
+            _state.FateEnergy -= def.EnergyCost;
+            _state.Zone.Add(new ExecutionCardInstance(def));
             _deck.DiscardFromHand(handIndex);
             return true;
         }
 
-        /// <summary>Play a fate card from the hand, targeting card(s) by their index in CurrentOrder.
-        /// The fate handler deducts energy and rejects when locked / unaffordable.</summary>
-        public bool PlayFateCard(int handIndex, int targetZoneIndex, int secondaryZoneIndex = -1)
+        /// <summary>Play an intervention card from the hand, targeting card(s) by their index in CurrentOrder.
+        /// The intervention handler deducts energy and rejects when locked / unaffordable.</summary>
+        public bool PlayInterventionCard(int handIndex, int targetZoneIndex, int secondaryZoneIndex = -1)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -833,7 +833,7 @@ namespace FateWeaver.Simulation
             }
 
             var def = _deck.Hand[handIndex];
-            if (def.Category != CardCategory.Fate || def.FateAction == null)
+            if (def.Category != CardCategory.Intervention || def.InterventionAction == null)
             {
                 return false;
             }
@@ -845,7 +845,7 @@ namespace FateWeaver.Simulation
             }
 
             var target = order[targetZoneIndex];
-            ActionCardInstance secondary = null;
+            ExecutionCardInstance secondary = null;
             if (secondaryZoneIndex >= 0)
             {
                 if (secondaryZoneIndex >= order.Count)
@@ -856,7 +856,7 @@ namespace FateWeaver.Simulation
                 secondary = order[secondaryZoneIndex];
             }
 
-            var result = _fateResolver.Resolve(_state, new[] { new FatePlay(def.FateAction, target, secondary) });
+            var result = _interventionResolver.Resolve(_state, new[] { new InterventionPlay(def.InterventionAction, target, secondary) });
             if (result.AppliedCount != 1)
             {
                 return false;
@@ -902,7 +902,7 @@ namespace FateWeaver.Simulation
             _state.Zone.Clear();
             foreach (var enemyCard in _intent.ForTurn(index))
             {
-                _state.Zone.Add(new ActionCardInstance(enemyCard));
+                _state.Zone.Add(new ExecutionCardInstance(enemyCard));
             }
 
             _state.FateEnergy = _state.FateEnergyPerTurn;
@@ -928,7 +928,7 @@ namespace FateWeaver.Simulation
 - [ ] **Step 4: Run it; verify it passes**
 
 Run: `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo --filter "FullyQualifiedName~DeckCombatSessionTests"`
-Expected: PASS (6 tests). If `Heavy_strike...` fails because both cards share initiative 5 but sort order differs, confirm `FutureZone.ResolutionOrder` is a stable sort (it is — LINQ `OrderBy`), so placement order (slash then heavy_strike) holds.
+Expected: PASS (6 tests). If `Heavy_strike...` fails because both cards share execution order 5 but sort order differs, confirm `FutureZone.ResolutionOrder` is a stable sort (it is — LINQ `OrderBy`), so placement order (slash then heavy_strike) holds.
 
 - [ ] **Step 5: Commit**
 
@@ -963,6 +963,6 @@ git commit -m "test: keep full headless suite green after deck-loop addition"
 
 ## Self-review notes (for the implementer)
 
-- **Spec coverage:** single deck + per-card cost (Task 1/3), Deck draw/discard/reshuffle (Task 2), role split enforced by data (action cards = effects, fate cards = `FateAction`; Task 3), per-turn zone reset + loop (Task 5), starter deck (Task 3), enemy intent (Task 4), deterministic RNG/timeline + invariants (Task 5), conditional block on 엄호 (works via existing pipeline — verified by `Cover_before_the_enemy_attack_absorbs_it`). No Core effect code was needed.
+- **Spec coverage:** single deck + per-card cost (Task 1/3), Deck draw/discard/reshuffle (Task 2), role split enforced by data (execution cards = effects, intervention cards = `InterventionAction`; Task 3), per-turn zone reset + loop (Task 5), starter deck (Task 3), enemy intent (Task 4), deterministic RNG/timeline + invariants (Task 5), conditional block on 엄호 (works via existing pipeline — verified by `Cover_before_the_enemy_attack_absorbs_it`). No Core effect code was needed.
 - **Out of scope (later phases):** Unity deck/hand UI (Phase 2); reward card pool + new conditions `LastToTrigger`/`TargetHasStatus` (Phase 3); multi-enemy precise targeting (still `Enemies[0]` approximation).
 - **Deferred existing modules:** scenario-scripted runners (`MultiTurnRunner`/`ScenarioRunner`) and their tests stay as a balance-regression tool; they are not modified here.

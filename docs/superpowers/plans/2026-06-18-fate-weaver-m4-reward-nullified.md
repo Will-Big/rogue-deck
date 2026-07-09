@@ -1,6 +1,6 @@
 # Fate Weaver M4.1 Reward-Nullified Disruption Plan
 
-> Continue from M3.4. Add the smallest enemy disruption behavior: the next player action card cannot receive its condition-success reward.
+> Continue from M3.4. Add the smallest enemy disruption behavior: the next player execution card cannot receive its condition-success reward.
 
 ## Goal
 
@@ -11,12 +11,12 @@ Represent the design rule from the balance notes: enemy cards should disrupt act
 - Core remains pure C# with no UnityEngine references.
 - C# 9 compatible.
 - Do not build the full status system yet.
-- Keep the marker directly on `ActionCardInstance` for now.
+- Keep the marker directly on `ExecutionCardInstance` for now.
 - Do not add duration cleanup beyond the current single resolution pass.
 
 ## Milestone Checklist
 
-- [x] Add `ActionCardInstance.ConditionRewardNullified`.
+- [x] Add `ExecutionCardInstance.ConditionRewardNullified`.
 - [x] Add `EffectKeys.NullifyNextPlayerConditionReward`.
 - [x] Add `NullifyNextPlayerConditionRewardHandler`.
 - [x] Pass frozen `ResolutionContext` into `EffectContext`.

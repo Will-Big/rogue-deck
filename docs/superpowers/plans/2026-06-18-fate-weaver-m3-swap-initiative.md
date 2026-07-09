@@ -1,10 +1,10 @@
-# Fate Weaver M3.3 SwapInitiative Plan
+# Fate Weaver M3.3 SwapExecutionOrder Plan
 
-> Continue from M3.2. Add one representative order-manipulation action: swap the initiative values of two selected action cards.
+> Continue from M3.2. Add one representative order-manipulation action: swap the execution order values of two selected execution cards.
 
 ## Goal
 
-Prove that fate actions can reorder the future zone without numeric nudging. `SwapInitiative` exchanges two cards' initiatives before `TurnResolver`, allowing a conditional player card to move ahead of an enemy card and reach `Success`.
+Prove that intervention actions can reorder the future zone without numeric nudging. `SwapExecutionOrder` exchanges two cards' initiatives before `TurnResolver`, allowing a conditional player card to move ahead of an enemy card and reach `Success`.
 
 ## Constraints
 
@@ -15,17 +15,17 @@ Prove that fate actions can reorder the future zone without numeric nudging. `Sw
 
 ## Milestone Checklist
 
-- [x] Add `FateActionKeys.SwapInitiative`.
-- [x] Extend `FatePlay`/`FatePlayContext` with optional `SecondaryTarget`.
-- [x] Add `SwapInitiativeHandler`.
+- [x] Add `InterventionActionKeys.SwapExecutionOrder`.
+- [x] Extend `InterventionPlay`/`InterventionPlayContext` with optional `SecondaryTarget`.
+- [x] Add `SwapExecutionOrderHandler`.
 - [x] Verify direct handler swaps two cards and spends fate energy.
-- [x] Verify `FatePlayResolver` can execute `SwapInitiative`.
+- [x] Verify `InterventionPlayResolver` can execute `SwapExecutionOrder`.
 - [x] Verify swapping can turn a conditional card from `Basic` into `Success`.
 
 ## Test-First Steps
 
-1. Add tests to `FateActionTests` for handler behavior and condition outcome.
-2. Add one resolver test that executes `SwapInitiative` through `FatePlayResolver`.
+1. Add tests to `InterventionActionTests` for handler behavior and condition outcome.
+2. Add one resolver test that executes `SwapExecutionOrder` through `InterventionPlayResolver`.
 3. RED: observe missing key/handler/secondary target support.
 4. GREEN: implement the smallest support needed.
 5. Run full headless tests.
@@ -39,7 +39,7 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 ## Deferred Work
 
 - Adjacent-only validation.
-- Swapping zone list positions separately from initiative values.
+- Swapping zone list positions separately from execution order values.
 - UI target selection.
-- Timeline events for fate plays.
+- Timeline events for intervention plays.
 - Additional actions: lock, nullify, reorder.

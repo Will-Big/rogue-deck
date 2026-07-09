@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the hardcoded `PlaytestKoreanText.CardDescription(id)` switch with an effect-composed description system that builds each card's text from its `EffectData`/`FateAction`, substituting numbers from the data so descriptions auto-follow balance tuning.
+**Goal:** Replace the hardcoded `PlaytestKoreanText.CardDescription(id)` switch with an effect-composed description system that builds each card's text from its `EffectData`/`InterventionAction`, substituting numbers from the data so descriptions auto-follow balance tuning.
 
-**Architecture:** A pure-C# `DescriptionComposer` (in `Simulation`) walks a `CardDefinition`'s effects (or its `FateAction` for fate cards) and asks an `IDescriptionVocabulary` for each localized fragment, assembling sentences with a fixed structure (base sentence, then an optional `condition이면 success` sentence per effect, joined by spaces). One Korean implementation, `KoreanDescriptionVocabulary`, owns ALL Korean wording and grammar (including composite-condition joins) so the composer stays a pure dispatcher. The Unity `CardPresentation` calls the composer instead of the switch.
+**Architecture:** A pure-C# `DescriptionComposer` (in `Simulation`) walks a `CardDefinition`'s effects (or its `InterventionAction` for intervention cards) and asks an `IDescriptionVocabulary` for each localized fragment, assembling sentences with a fixed structure (base sentence, then an optional `condition이면 success` sentence per effect, joined by spaces). One Korean implementation, `KoreanDescriptionVocabulary`, owns ALL Korean wording and grammar (including composite-condition joins) so the composer stays a pure dispatcher. The Unity `CardPresentation` calls the composer instead of the switch.
 
 **Tech Stack:** C# 9 (Unity 6 constraint — no `record struct`, no file-scoped namespaces), NUnit, headless `dotnet test` proxy for the pure layers.
 
@@ -15,20 +15,20 @@
 Spec: [`docs/superpowers/specs/2026-06-26-card-descriptions-design.md`](../specs/2026-06-26-card-descriptions-design.md).
 
 Core types the composer reads (already exist — do NOT modify):
-- `CardDefinition` (`Assets/FateWeaver/Core/Cards/CardDefinition.cs`): `Id`, `Name`, `Category` (`Action`|`Fate`), `IReadOnlyList<EffectData> Effects`, `FateActionData FateAction`.
-- `EffectData` (same file): `EffectKey Key`, `int Amount`, `Condition Condition`, `int? SuccessAmount`, `StatusKey? StatusKey`, `StatusLifetime? StatusLifetime`, `StatusApplyTarget StatusTarget`. For `ApplyStatus`, the magnitude rides on `Amount`.
+- `CardDefinition` (`Assets/FateWeaver/Core/Cards/CardDefinition.cs`): `Id`, `Name`, `Category` ( `Execution`|`Intervention` ), `IReadOnlyList<EffectData> Effects`, `InterventionActionData InterventionAction`.
+- `EffectData` (same file): `EffectKey Key`, `int EffectValue`, `Condition Condition`, `int? SuccessEffectValue`, `StatusKey? StatusKey`, `StatusLifetime? StatusLifetime`, `StatusApplyTarget StatusTarget`. For `ApplyStatus`, the magnitude rides on `EffectValue`.
 - `EffectKeys` (`Core/Effects/EffectKey.cs`): `Damage`, `NullifyNextPlayerConditionReward`, `GrantNextPlayerAttackDamageBonus`, `ApplyStatus`.
 - `Condition` records (`Core/Conditions/Condition.cs`): `FirstToTrigger`, `WithinNth(int N)`, `BeforeNextEnemyAttack`, `AdjacentCardIs(AdjacentDirection Direction, Side Side, CardType? Type)`, `SameTarget`, `NoPrecedingCardOfSide(Side Side)`, `AllOf(IReadOnlyList<Condition> Conditions)`.
 - `StatusKeys` (`Core/Status/StatusKey.cs`): `Stun`, `Vulnerable`, `RewardNullified`, `Block`, `Slow`, `Haste`.
 - `StatusLifetime` (`Core/Status/StatusLifetime.cs`): `Kind` (`Permanent`|`ThisTurn`|`Turns`|`UntilConsumed`), `Count`.
 - `StatusApplyTarget` (`Core/Effects/ApplyStatusHandler.cs`): `Self`, `TargetEnemy`.
-- `FateActionData` (`Core/Fate/FateActionData.cs`): `FateActionKey Key`, `int Cost`, `int Amount`. `FateActionKeys`: `ChangeInitiative`, `SwapInitiative`, `Lock`.
+- `InterventionActionData` (`Core/Intervention/InterventionActionData.cs`): `InterventionActionKey Key`, `int InterventionCost`, `int EffectValue`. `InterventionActionKeys`: `ChangeExecutionOrder`, `SwapExecutionOrder`, `Lock`.
 
 The active decks the output must satisfy:
-- `StarterDeck` (`Assets/FateWeaver/Simulation/StarterDeck.cs`): slash `Damage(4)`; guard `ApplyStatus(Block, ThisTurn, Self, 4)`; quick_cut `Damage(2, FirstToTrigger→8)`; counter_stance `Damage(4, AdjacentCardIs(Previous,Enemy,Attack)→9)`; cover `ApplyStatus(Block, ThisTurn, Self, 2, AdjacentCardIs(Next,Enemy,Attack)→7)`; pull_forward `Fate(ChangeInitiative, -2)`; swap_positions `Fate(SwapInitiative, 0)`.
+- `StarterDeck` (`Assets/FateWeaver/Simulation/StarterDeck.cs`): slash `Damage(4)`; guard `ApplyStatus(Block, ThisTurn, Self, 4)`; quick_cut `Damage(2, FirstToTrigger→8)`; counter_stance `Damage(4, AdjacentCardIs(Previous,Enemy,Attack)→9)`; cover `ApplyStatus(Block, ThisTurn, Self, 2, AdjacentCardIs(Next,Enemy,Attack)→7)`; pull_forward `Intervention(ChangeExecutionOrder, -2)`; swap_positions `Intervention(SwapExecutionOrder, 0)`.
 - `GoblinDeck` (`Assets/FateWeaver/Simulation/GoblinDeck.cs`): goblin_jab `Damage(4)`; crude_guard `ApplyStatus(Block, ThisTurn, Self, 3)`; sly_jab `Damage(3, NoPrecedingCardOfSide(Player)→6)`.
 
-**Scope = coverage by KIND, not by card.** The vocab must handle every `EffectKey`, `Condition` record, `StatusKey`, and `FateActionKey` above, so any card composed from them renders. Curated flavor-only ids with no effects (e.g. scenario-only `preemptive_thrust`) are out of scope and render to empty string.
+**Scope = coverage by KIND, not by card.** The vocab must handle every `EffectKey`, `Condition` record, `StatusKey`, and `InterventionActionKey` above, so any card composed from them renders. Curated flavor-only ids with no effects (e.g. scenario-only `preemptive_thrust`) are out of scope and render to empty string.
 
 **Test runner:** the pure layers compile into `Tests/Headless/FateWeaver.Tests.Headless.csproj` via globs over `Core/`, `Simulation/`, and `Tests/EditMode/`. New files under those folders are picked up automatically. Run from repo root:
 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj`
@@ -64,7 +64,7 @@ This is a pure interface (no behavior to test on its own); it's exercised by the
 ```csharp
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Descriptions
@@ -78,7 +78,7 @@ namespace FateWeaver.Simulation.Descriptions
         string Damage(int amount);
 
         /// <summary>e.g. "방어 4", "적 둔화 3 (2턴)". <paramref name="magnitude"/> is the status strength
-        /// (rides on EffectData.Amount); <paramref name="lifetime"/> drives any duration suffix.</summary>
+        /// (rides on EffectData.EffectValue); <paramref name="lifetime"/> drives any duration suffix.</summary>
         string Status(StatusKey key, StatusApplyTarget target, int magnitude, StatusLifetime lifetime);
 
         /// <summary>e.g. "다음 플레이어 조건 보상을 무효화".</summary>
@@ -91,9 +91,9 @@ namespace FateWeaver.Simulation.Descriptions
         /// (e.g. "첫 발동이면", "바로 뒤가 적 공격이면"). Handles AllOf internally.</summary>
         string Condition(Condition condition);
 
-        /// <summary>A complete fate-card sentence fragment, e.g. "한 카드의 주도력 -2",
-        /// "두 카드의 주도력을 교환", "한 카드를 고정".</summary>
-        string Fate(FateActionData fate);
+        /// <summary>A complete intervention-card sentence fragment, e.g. "한 카드의 실행 순서 -2",
+        /// "두 카드의 실행 순서을 교환", "한 카드를 고정".</summary>
+        string Intervention(InterventionActionData intervention);
     }
 }
 ```
@@ -118,7 +118,7 @@ git commit -m "feat(descriptions): add IDescriptionVocabulary seam"
 - Create: `Assets/FateWeaver/Simulation/Descriptions/DescriptionComposer.cs`
 - Test: `Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs`
 
-The composer owns sentence STRUCTURE only; the fake vocab returns marker strings so tests assert assembly (base/condition/success ordering, separators, fate vs effect dispatch) without depending on Korean wording.
+The composer owns sentence STRUCTURE only; the fake vocab returns marker strings so tests assert assembly (base/condition/success ordering, separators, intervention vs effect dispatch) without depending on Korean wording.
 
 - [ ] **Step 1: Write the failing tests with a fake vocab**
 
@@ -128,7 +128,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation.Descriptions;
 
@@ -145,26 +145,26 @@ namespace FateWeaver.Tests.EditMode
             public string NullifyNextReward() => "NULLIFY";
             public string GrantNextAttackBonus(int amount) => "GRANT" + amount;
             public string Condition(Condition condition) => "COND[" + condition.GetType().Name + "]";
-            public string Fate(FateActionData fate) => "FATE:" + fate.Key.Id + ":" + fate.Amount;
+            public string Intervention(InterventionActionData intervention) => "INTERVENTION:" + intervention.Key.Id + ":" + intervention.EffectValue;
         }
 
         private static readonly IDescriptionVocabulary Vocab = new FakeVocabulary();
 
-        private static CardDefinition Action(string id, params EffectData[] effects)
+        private static CardDefinition Execution(string id, params EffectData[] effects)
             => new CardDefinition(id, id, Side.Player, CardType.Attack, 5, effects)
-               { Category = CardCategory.Action };
+               { Category = CardCategory.Execution };
 
         [Test]
         public void Single_damage_effect_is_one_sentence()
         {
-            var card = Action("slash", new EffectData(EffectKeys.Damage, 4));
+            var card = Execution("slash", new EffectData(EffectKeys.Damage, 4));
             Assert.AreEqual("DMG4.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
         public void Conditional_effect_appends_condition_then_success_sentence()
         {
-            var card = Action("quick_cut",
+            var card = Execution("quick_cut",
                 EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8));
             Assert.AreEqual("DMG2. COND[FirstToTrigger] DMG8.", DescriptionComposer.Describe(card, Vocab));
         }
@@ -172,7 +172,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Multiple_effects_join_with_a_space()
         {
-            var card = Action("wrist_cut",
+            var card = Execution("wrist_cut",
                 new EffectData(EffectKeys.Damage, 3),
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
             Assert.AreEqual("DMG3. NULLIFY.", DescriptionComposer.Describe(card, Vocab));
@@ -181,7 +181,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Apply_status_uses_amount_as_magnitude()
         {
-            var card = Action("guard",
+            var card = Execution("guard",
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4));
             Assert.AreEqual("STATUS:block:Self:4:ThisTurn.", DescriptionComposer.Describe(card, Vocab));
         }
@@ -189,14 +189,14 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Conditional_status_reuses_success_amount_for_the_success_fragment()
         {
-            var card = Action("cover",
+            var card = Execution("cover",
                 new EffectData(EffectKeys.ApplyStatus, 2)
                 {
                     StatusKey = StatusKeys.Block,
                     StatusLifetime = StatusLifetime.ThisTurn,
                     StatusTarget = StatusApplyTarget.Self,
                     Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessAmount = 7
+                    SuccessEffectValue = 7
                 });
             Assert.AreEqual(
                 "STATUS:block:Self:2:ThisTurn. COND[AdjacentCardIs] STATUS:block:Self:7:ThisTurn.",
@@ -206,26 +206,26 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Grant_next_attack_bonus_renders_its_amount()
         {
-            var card = Action("mark", new EffectData(EffectKeys.GrantNextPlayerAttackDamageBonus, 6));
+            var card = Execution("mark", new EffectData(EffectKeys.GrantNextPlayerAttackDamageBonus, 6));
             Assert.AreEqual("GRANT6.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
-        public void Fate_card_renders_the_fate_action_and_ignores_effects()
+        public void Intervention_card_renders_the_intervention_action_and_ignores_effects()
         {
             var card = new CardDefinition("pull_forward", "pull", Side.Player, CardType.Skill, 0,
                 new EffectData[0])
             {
-                Category = CardCategory.Fate,
-                FateAction = new FateActionData(FateActionKeys.ChangeInitiative, 1, -2)
+                Category = CardCategory.Intervention,
+                InterventionAction = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, -2)
             };
-            Assert.AreEqual("FATE:change_initiative:-2.", DescriptionComposer.Describe(card, Vocab));
+            Assert.AreEqual("INTERVENTION:change_execution_order:-2.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
-        public void Card_with_no_effects_or_fate_renders_empty()
+        public void Card_with_no_effects_or_intervention_renders_empty()
         {
-            var card = Action("flavor_only");
+            var card = Execution("flavor_only");
             Assert.AreEqual(string.Empty, DescriptionComposer.Describe(card, Vocab));
         }
     }
@@ -247,16 +247,16 @@ using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Simulation.Descriptions
 {
-    /// <summary>Builds a card's description from its effects (or fate action), substituting numbers from
+    /// <summary>Builds a card's description from its effects (or intervention action), substituting numbers from
     /// the data. Pure: all wording comes from the supplied <see cref="IDescriptionVocabulary"/>.
     /// Structure per effect: "{base}." optionally followed by " {condition} {success}." Effects join
-    /// with a single space. Fate cards render their fate action instead of effects.</summary>
+    /// with a single space. Intervention cards render their intervention action instead of effects.</summary>
     public static class DescriptionComposer
     {
         public static string Describe(CardDefinition def, IDescriptionVocabulary vocab)
         {
-            if (def.Category == CardCategory.Fate && def.FateAction != null)
-                return vocab.Fate(def.FateAction) + ".";
+            if (def.Category == CardCategory.Intervention && def.InterventionAction != null)
+                return vocab.Intervention(def.InterventionAction) + ".";
 
             if (def.Effects == null || def.Effects.Count == 0)
                 return string.Empty;
@@ -271,14 +271,14 @@ namespace FateWeaver.Simulation.Descriptions
         private static string RenderEffect(EffectData effect, IDescriptionVocabulary vocab)
         {
             var sb = new StringBuilder();
-            sb.Append(Fragment(effect, effect.Amount, vocab)).Append('.');
+            sb.Append(Fragment(effect, effect.EffectValue, vocab)).Append('.');
 
-            if (effect.Condition != null && effect.SuccessAmount.HasValue)
+            if (effect.Condition != null && effect.SuccessEffectValue.HasValue)
             {
                 sb.Append(' ')
                   .Append(vocab.Condition(effect.Condition))
                   .Append(' ')
-                  .Append(Fragment(effect, effect.SuccessAmount.Value, vocab))
+                  .Append(Fragment(effect, effect.SuccessEffectValue.Value, vocab))
                   .Append('.');
             }
 
@@ -370,12 +370,12 @@ Append these methods inside the existing `DescriptionComposerTests` class (befor
 
         [Test]
         public void Korean_pull_forward() =>
-            Assert.AreEqual("한 카드의 주도력 -2.",
+            Assert.AreEqual("한 카드의 실행 순서 -2.",
                 DescriptionComposer.Describe(StarterDeck.PullForward(), Kr));
 
         [Test]
         public void Korean_swap_positions() =>
-            Assert.AreEqual("두 카드의 주도력을 교환.",
+            Assert.AreEqual("두 카드의 실행 순서을 교환.",
                 DescriptionComposer.Describe(StarterDeck.SwapPositions(), Kr));
 
         [Test]
@@ -398,7 +398,7 @@ Append these methods inside the existing `DescriptionComposerTests` class (befor
         {
             // Re-tuning the amount changes the description automatically (the whole point).
             var tuned = new CardDefinition("slash", "베기", Side.Player, CardType.Attack, 4,
-                new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Action };
+                new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Execution };
             Assert.AreEqual("피해 99.", DescriptionComposer.Describe(tuned, Kr));
         }
 
@@ -410,7 +410,7 @@ Append these methods inside the existing `DescriptionComposerTests` class (befor
                 {
                     EffectData.ApplyStatus(StatusKeys.Slow, StatusLifetime.Turns(2),
                         StatusApplyTarget.TargetEnemy, 3)
-                }) { Category = CardCategory.Action };
+                }) { Category = CardCategory.Execution };
             Assert.AreEqual("적 둔화 3 (2턴).", DescriptionComposer.Describe(card, Kr));
         }
 
@@ -429,7 +429,7 @@ Append these methods inside the existing `DescriptionComposerTests` class (befor
                             new WithinNth(3)
                         }),
                         6)
-                }) { Category = CardCategory.Action };
+                }) { Category = CardCategory.Execution };
             Assert.AreEqual("피해 1. 바로 앞이 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Kr));
         }
@@ -450,7 +450,7 @@ using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Descriptions
@@ -495,13 +495,13 @@ namespace FateWeaver.Simulation.Descriptions
             }
         }
 
-        public string Fate(FateActionData fate)
+        public string Intervention(InterventionActionData intervention)
         {
-            if (fate.Key == FateActionKeys.ChangeInitiative)
-                return "한 카드의 주도력 " + (fate.Amount >= 0 ? "+" + fate.Amount : fate.Amount.ToString());
-            if (fate.Key == FateActionKeys.SwapInitiative)
-                return "두 카드의 주도력을 교환";
-            if (fate.Key == FateActionKeys.Lock)
+            if (intervention.Key == InterventionActionKeys.ChangeExecutionOrder)
+                return "한 카드의 실행 순서 " + (intervention.EffectValue >= 0 ? "+" + intervention.EffectValue : intervention.EffectValue.ToString());
+            if (intervention.Key == InterventionActionKeys.SwapExecutionOrder)
+                return "두 카드의 실행 순서을 교환";
+            if (intervention.Key == InterventionActionKeys.Lock)
                 return "한 카드를 고정";
             return string.Empty;
         }
@@ -698,9 +698,9 @@ git commit -m "feat(descriptions): drive CardPresentation from the composer, dro
 - Effect-composed descriptions, numbers from data → Tasks 2-3 (`Korean_number_token_follows_data`). ✓
 - `DescriptionComposer` pure + headless → Task 2. ✓
 - `IDescriptionVocabulary` + `KoreanDescriptionVocabulary` in Simulation → Tasks 1, 3. ✓
-- Token mapping (`{dmg}`=Amount, `{dmg_success}`=SuccessAmount, `{mag}`=ApplyStatus Amount, `{turns}`=lifetime Count, `{amt}`=fate Amount, target text) → `Damage`/`Status`/`Fate` + `Fragment` reuse of SuccessAmount. ✓
+- Token mapping (`{dmg}`=EffectValue, `{dmg_success}`=SuccessEffectValue, `{mag}`=ApplyStatus EffectValue, `{turns}`=lifetime Count, `{amt}`=intervention EffectValue, target text) → `Damage`/`Status`/`Intervention` + `Fragment` reuse of SuccessEffectValue. ✓
 - Call site swap in `CardPresentation`, switch removed → Task 4. ✓
-- Coverage of all current effects/conditions/statuses/fate → vocab handles every `EffectKey`, `Condition` record, `StatusKey`, `FateActionKey`. ✓
+- Coverage of all current effects/conditions/statuses/intervention → vocab handles every `EffectKey`, `Condition` record, `StatusKey`, `InterventionActionKey`. ✓
 - Open question #1 (condition on ApplyStatus, cover) → resolved: success fragment re-renders the same effect kind; tested by `Conditional_status_reuses_success_amount` + `Korean_cover`. ✓
 - Open question #2 (multi-effect separator) → resolved: per-sentence `.`, joined by single space; tested by `Multiple_effects_join_with_a_space`. ✓
 - Rewrite existing `CardDescriptionTests` as headless assembly tests → Task 3 replaces description coverage headless; Task 4 trims the Unity file to name-only. ✓
@@ -708,4 +708,4 @@ git commit -m "feat(descriptions): drive CardPresentation from the composer, dro
 
 **2. Placeholder scan:** No TBD/TODO/"add error handling"/"similar to". Every code step shows complete code. ✓
 
-**3. Type consistency:** `DescriptionComposer.Describe(CardDefinition, IDescriptionVocabulary)` used identically in Tasks 2, 3, 4. Vocab method names (`Damage`, `Status`, `NullifyNextReward`, `GrantNextAttackBonus`, `Condition`, `Fate`) consistent between interface (Task 1), fake (Task 2), Korean impl (Task 3). `KoreanDescriptionVocabulary.Instance` defined Task 3, used Tasks 3-4. `EffectData.SuccessAmount` is `int?` → guarded with `HasValue`/`.Value`. `EffectData.StatusKey` is `StatusKey?` → `.Value` in `Fragment` only on the ApplyStatus branch (safe — only ApplyStatus sets it). ✓
+**3. Type consistency:** `DescriptionComposer.Describe(CardDefinition, IDescriptionVocabulary)` used identically in Tasks 2, 3, 4. Vocab method names (`Damage`, `Status`, `NullifyNextReward`, `GrantNextAttackBonus`, `Condition`, `Intervention`) consistent between interface (Task 1), fake (Task 2), Korean impl (Task 3). `KoreanDescriptionVocabulary.Instance` defined Task 3, used Tasks 3-4. `EffectData.SuccessEffectValue` is `int?` → guarded with `HasValue`/`.Value`. `EffectData.StatusKey` is `StatusKey?` → `.Value` in `Fragment` only on the ApplyStatus branch (safe — only ApplyStatus sets it). ✓

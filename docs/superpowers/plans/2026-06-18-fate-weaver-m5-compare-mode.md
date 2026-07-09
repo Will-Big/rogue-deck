@@ -1,10 +1,10 @@
 # Fate Weaver M5.2 Compare Mode Plan
 
-> Continue from M5.1. Add no-manipulation baseline comparison so a human can see why fate plays matter.
+> Continue from M5.1. Add no-manipulation baseline comparison so a human can see why intervention plays matter.
 
 ## Goal
 
-Run the same scenario twice: once with no fate plays, once with the scripted fate plays. Report the behavioral delta in Markdown.
+Run the same scenario twice: once with no intervention plays, once with the scripted intervention plays. Report the behavioral delta in Markdown.
 
 ## Constraints
 
