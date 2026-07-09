@@ -28,7 +28,7 @@ Add the pure-C# condition model and evaluator needed by execution cards to ask "
 
 ## Test-First Steps
 
-1. Create `Assets/FateWeaver/Tests/EditMode/ConditionEvaluatorTests.cs`.
+1. Create `Assets/Core/Tests/EditMode/ConditionEvaluatorTests.cs`.
 2. Add tests that reference the intended API and fail because condition types do not exist.
 3. Implement only enough code to pass those tests.
 4. Keep evaluation rules explicit:
@@ -40,10 +40,10 @@ Add the pure-C# condition model and evaluator needed by execution cards to ask "
 
 ## Implementation Files
 
-- Create `Assets/FateWeaver/Core/Conditions/ConditionTier.cs`
-- Create `Assets/FateWeaver/Core/Conditions/Condition.cs`
-- Create `Assets/FateWeaver/Core/Conditions/ConditionEvaluator.cs`
-- Update `Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs` with an optional `TargetId`.
+- Create `Assets/Core/Conditions/ConditionTier.cs`
+- Create `Assets/Core/Conditions/Condition.cs`
+- Create `Assets/Core/Conditions/ConditionEvaluator.cs`
+- Update `Assets/Core/Combat/ExecutionCardInstance.cs` with an optional `TargetId`.
 
 ## Verification
 

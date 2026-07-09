@@ -21,35 +21,35 @@ dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headles
 ## File Structure
 
 **생성**
-- `Assets/FateWeaver/Core/Status/SlowBehavior.cs` — 둔화: 엔티티 스코프, 실행 순서 +Magnitude.
-- `Assets/FateWeaver/Core/Status/HasteBehavior.cs` — 가속: 엔티티 스코프, 실행 순서 −Magnitude.
-- `Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs` — 보유자 엔티티 상태를 접어 실효 실행 순서 계산하는 정적 헬퍼.
-- `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs` — 훅/행동/헬퍼/세션 통합.
-- `Assets/FateWeaver/Tests/EditMode/LockCardTests.cs` — 고정.
+- `Assets/Core/Status/SlowBehavior.cs` — 둔화: 엔티티 스코프, 실행 순서 +Magnitude.
+- `Assets/Core/Status/HasteBehavior.cs` — 가속: 엔티티 스코프, 실행 순서 −Magnitude.
+- `Assets/Core/Status/StatusExecutionOrder.cs` — 보유자 엔티티 상태를 접어 실효 실행 순서 계산하는 정적 헬퍼.
+- `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs` — 훅/행동/헬퍼/세션 통합.
+- `Assets/Core/Tests/EditMode/LockCardTests.cs` — 고정.
 
 **수정**
-- `Assets/FateWeaver/Core/Status/IStatusBehavior.cs` — `ModifyExecutionOrder` 훅 + 기본 no-op.
-- `Assets/FateWeaver/Core/Status/StatusKey.cs` — `Slow`, `Haste` 키.
-- `Assets/FateWeaver/Core/Cards/CardDefinition.cs` — `StartsLocked` init-prop.
-- `Assets/FateWeaver/Simulation/CombatRegistries.cs` — Slow/Haste 행동 등록.
-- `Assets/FateWeaver/Simulation/DeckCombatSession.cs` — 레지스트리 보관 + 진입 시 실행 순서/잠금 bake.
-- `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs` — `StatusKindRef`에 `Slow`, `Haste`.
-- `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs` — `ToStatusKey` 케이스.
-- `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs` — 둔화/가속 전달 카드 팩토리.
-- `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs` — Slow/Haste 매핑.
-- `Assets/FateWeaver/Unity/PlaytestKoreanText.cs` — 둔화/가속 한글 상태명.
+- `Assets/Core/Status/IStatusBehavior.cs` — `ModifyExecutionOrder` 훅 + 기본 no-op.
+- `Assets/Core/Status/StatusKey.cs` — `Slow`, `Haste` 키.
+- `Assets/Core/Cards/CardDefinition.cs` — `StartsLocked` init-prop.
+- `Assets/Core/Simulation/CombatRegistries.cs` — Slow/Haste 행동 등록.
+- `Assets/Core/Simulation/DeckCombatSession.cs` — 레지스트리 보관 + 진입 시 실행 순서/잠금 bake.
+- `Assets/Core/Simulation/Authoring/EffectSpec.cs` — `StatusKindRef`에 `Slow`, `Haste`.
+- `Assets/Core/Simulation/Authoring/CardSpecMapper.cs` — `ToStatusKey` 케이스.
+- `Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs` — 둔화/가속 전달 카드 팩토리.
+- `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs` — Slow/Haste 매핑.
+- `Assets/Unity/PlaytestKoreanText.cs` — 둔화/가속 한글 상태명.
 
 ---
 
 ## Task 1: ModifyExecutionOrder 훅
 
 **Files:**
-- Modify: `Assets/FateWeaver/Core/Status/IStatusBehavior.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs` (생성)
+- Modify: `Assets/Core/Status/IStatusBehavior.cs`
+- Test: `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs` (생성)
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`:
+`Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs`:
 ```csharp
 using NUnit.Framework;
 using FateWeaver.Core.Status;
@@ -106,7 +106,7 @@ Expected: PASS (1).
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Core/Status/IStatusBehavior.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git add Assets/Core/Status/IStatusBehavior.cs Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs
 git commit -m "feat(status): add ModifyExecutionOrder hook (no-op default)"
 ```
 
@@ -115,9 +115,9 @@ git commit -m "feat(status): add ModifyExecutionOrder hook (no-op default)"
 ## Task 2: 둔화/가속 키 + 행동
 
 **Files:**
-- Modify: `Assets/FateWeaver/Core/Status/StatusKey.cs`
-- Create: `Assets/FateWeaver/Core/Status/SlowBehavior.cs`, `Assets/FateWeaver/Core/Status/HasteBehavior.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`
+- Modify: `Assets/Core/Status/StatusKey.cs`
+- Create: `Assets/Core/Status/SlowBehavior.cs`, `Assets/Core/Status/HasteBehavior.cs`
+- Test: `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs`
 
 - [ ] **Step 1: 실패하는 테스트 추가**
 
@@ -193,7 +193,7 @@ Expected: PASS (3).
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Core/Status/StatusKey.cs Assets/FateWeaver/Core/Status/SlowBehavior.cs Assets/FateWeaver/Core/Status/HasteBehavior.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git add Assets/Core/Status/StatusKey.cs Assets/Core/Status/SlowBehavior.cs Assets/Core/Status/HasteBehavior.cs Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs
 git commit -m "feat(status): add Slow/Haste keys and behaviors"
 ```
 
@@ -202,8 +202,8 @@ git commit -m "feat(status): add Slow/Haste keys and behaviors"
 ## Task 3: 실효 실행 순서 fold 헬퍼
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`
+- Create: `Assets/Core/Status/StatusExecutionOrder.cs`
+- Test: `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs`
 
 - [ ] **Step 1: 실패하는 테스트 추가**
 
@@ -287,7 +287,7 @@ Expected: PASS (5).
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Core/Status/StatusExecutionOrder.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git add Assets/Core/Status/StatusExecutionOrder.cs Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs
 git commit -m "feat(status): add StatusExecutionOrder fold helper (entity-scoped only)"
 ```
 
@@ -296,9 +296,9 @@ git commit -m "feat(status): add StatusExecutionOrder fold helper (entity-scoped
 ## Task 4: 세션이 진입 시 실행 순서 bake (둔화/가속 통합)
 
 **Files:**
-- Modify: `Assets/FateWeaver/Simulation/CombatRegistries.cs`
-- Modify: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`
+- Modify: `Assets/Core/Simulation/CombatRegistries.cs`
+- Modify: `Assets/Core/Simulation/DeckCombatSession.cs`
+- Test: `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs`
 
 - [ ] **Step 1: 실패하는 통합 테스트 추가**
 
@@ -392,7 +392,7 @@ Expected: PASS (7).
 Run: `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo`
 Expected: 전체 PASS.
 ```bash
-git add Assets/FateWeaver/Simulation/CombatRegistries.cs Assets/FateWeaver/Simulation/DeckCombatSession.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git add Assets/Core/Simulation/CombatRegistries.cs Assets/Core/Simulation/DeckCombatSession.cs Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs
 git commit -m "feat(sim): bake entity slow/haste into card execution order on zone entry"
 ```
 
@@ -401,9 +401,9 @@ git commit -m "feat(sim): bake entity slow/haste into card execution order on zo
 ## Task 5: 고정(Lock) — 카드 정의 + bake
 
 **Files:**
-- Modify: `Assets/FateWeaver/Core/Cards/CardDefinition.cs`
-- Modify: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/LockCardTests.cs` (생성)
+- Modify: `Assets/Core/Cards/CardDefinition.cs`
+- Modify: `Assets/Core/Simulation/DeckCombatSession.cs`
+- Test: `Assets/Core/Tests/EditMode/LockCardTests.cs` (생성)
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
@@ -496,7 +496,7 @@ Expected: PASS (2) — 기존 `IsLocked` 거부 로직이 이미 처리하므로
 - [ ] **Step 6: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Core/Cards/CardDefinition.cs Assets/FateWeaver/Simulation/DeckCombatSession.cs Assets/FateWeaver/Tests/EditMode/LockCardTests.cs
+git add Assets/Core/Cards/CardDefinition.cs Assets/Core/Simulation/DeckCombatSession.cs Assets/Core/Tests/EditMode/LockCardTests.cs
 git commit -m "feat(cards): StartsLocked card property baked into zone (고정)"
 ```
 
@@ -505,9 +505,9 @@ git commit -m "feat(cards): StartsLocked card property baked into zone (고정)"
 ## Task 6: 저작 매핑 (StatusKindRef → Slow/Haste)
 
 **Files:**
-- Modify: `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs`
-- Modify: `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs`
+- Modify: `Assets/Core/Simulation/Authoring/EffectSpec.cs`
+- Modify: `Assets/Core/Simulation/Authoring/CardSpecMapper.cs`
+- Test: `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs`
 
 - [ ] **Step 1: 실패하는 테스트 추가**
 
@@ -553,7 +553,7 @@ Expected: PASS.
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs
+git add Assets/Core/Simulation/Authoring/EffectSpec.cs Assets/Core/Simulation/Authoring/CardSpecMapper.cs Assets/Core/Tests/EditMode/CardSpecMapperTests.cs
 git commit -m "feat(authoring): map Slow/Haste status refs"
 ```
 
@@ -562,8 +562,8 @@ git commit -m "feat(authoring): map Slow/Haste status refs"
 ## Task 7: 전달 카드(둔화/가속) + 엔드투엔드
 
 **Files:**
-- Modify: `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs`
+- Modify: `Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs`
+- Test: `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs`
 
 - [ ] **Step 1: 실패하는 e2e 테스트 추가**
 
@@ -626,7 +626,7 @@ Expected: PASS (8).
 Run: `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo`
 Expected: 전체 PASS.
 ```bash
-git add Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs
+git add Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs
 git commit -m "feat(content): 둔화/가속 delivery card specs + e2e"
 ```
 
@@ -637,7 +637,7 @@ git commit -m "feat(content): 둔화/가속 delivery card specs + e2e"
 ## Task 8: UI 한글 상태명 (Unity-레이어, 사용자 검증)
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/PlaytestKoreanText.cs`
+- Modify: `Assets/Unity/PlaytestKoreanText.cs`
 
 > 헤드리스 글롭 밖이라 dotnet 검증 불가 → Unity Play로 검증.
 
@@ -657,7 +657,7 @@ Expected: 엔티티 상태가 초상화 아래에 표기. (카드 위 표기는 
 - [ ] **Step 3: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Unity/PlaytestKoreanText.cs
+git add Assets/Unity/PlaytestKoreanText.cs
 git commit -m "feat(unity): Korean names for 둔화/가속 status"
 ```
 
@@ -668,8 +668,8 @@ git commit -m "feat(unity): Korean names for 둔화/가속 status"
 > 카드 이미지 리뷰 반영. 카드 스코프 상태는 **아트 영역 하단의 가로 아이콘 띠**(이름 바로 위)에 표기한다. 현재 카드 중앙의 "고정" 전용 텍스트 요소를 제거하고, 잠금을 그 띠의 아이콘으로 표시한다. (둔화/가속은 엔티티 상태라 카드가 아닌 초상화 아래 — Task 8.) 헤드리스 검증 불가 → Unity Play로 검증.
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/Prefabs/CardView.prefab` (Unity Inspector)
-- Modify: `Assets/FateWeaver/Unity/CardView.cs`
+- Modify: `Assets/Unity/Prefabs/CardView.prefab` (Unity Inspector)
+- Modify: `Assets/Unity/CardView.cs`
 
 - [ ] **Step 1: 프리팹 — 중앙 "고정" 텍스트 제거 + 하단 띠 추가**
 
@@ -697,7 +697,7 @@ Expected: 잠금 = 아트 하단 띠 아이콘, 중앙 텍스트 없음.
 - [ ] **Step 4: 커밋**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardView.cs Assets/FateWeaver/Unity/Prefabs/CardView.prefab
+git add Assets/Unity/CardView.cs Assets/Unity/Prefabs/CardView.prefab
 git commit -m "feat(unity): card-status icon row at art bottom; remove central 고정 text"
 ```
 

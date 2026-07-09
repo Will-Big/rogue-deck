@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: efe7344082be43bb8ee7828d00907082
+guid: 1dc06356b22a4a67b8637224d97dbee6
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1956326776257371309
-    second: serpent_priest_idle_05
+      213: 1826531549118874721
+    second: serpent_priest_idle_02
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: serpent_priest_idle_05
+      name: serpent_priest_idle_02
       rect:
         serializedVersion: 2
         x: 0
@@ -110,34 +110,34 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c6d76d6521584f288a492eb7e507ddea
-      internalID: 1956326776257371309
+      spriteID: 0f6495f8793c48b98ac7a6500852752d
+      internalID: 1826531549118874721
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     outline: []
-    customData:
+    customData: 
     physicsShape: []
     bones: []
-    spriteID:
+    spriteID: 
     internalID: 0
     vertices: []
-    indices:
+    indices: 
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      serpent_priest_idle_05: 1956326776257371309
-  mipmapLimitGroupName:
+      serpent_priest_idle_02: 1826531549118874721
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

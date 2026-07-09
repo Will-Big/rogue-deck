@@ -45,7 +45,7 @@
     `preemptive_thrust*`→`preemptive_thrust`, `goblin_jab*`→`goblin_jab`.
     직결: `slash`, `mark`→`mark_target`, `counter`→`counter_stance`, `chain`→`chain_slash`.
     매핑 없음(`prep` 등)→`null`.
-  - `Resources.Load<Sprite>(name)` + 정적 캐시(Dictionary). 자산은 이미 `Assets/FateWeaver/Unity/Resources/`
+  - `Resources.Load<Sprite>(name)` + 정적 캐시(Dictionary). 자산은 이미 `Assets/Unity/Resources/`
     루트에 있어 경로 = 파일명(확장자 제외).
 - **`PlaytestKoreanText.CardDescription(string cardId)`**: id → 손글씨 한글 설명(아래 표). 미등록=`""`.
   적 공격 카드(`goblin_jab`/`preemptive_thrust`)는 시나리오마다 피해 수치가 달라(예: goblin_jab 1 또는 3)
@@ -70,11 +70,11 @@
 `Editor/FateWeaverPlaytestSceneCreator` 확장. 메뉴 항목 추가:
 
 - **`Fate Weaver/Build Playtest Scene (uGUI)`**: Canvas(Screen Space Overlay)+CanvasScaler+EventSystem 생성 →
-  `CardView.prefab`을 코드로 조립(Image/TMP/Outline/Button)해 `Assets/FateWeaver/Unity/Prefabs/`에 저장 →
+  `CardView.prefab`을 코드로 조립(Image/TMP/Outline/Button)해 `Assets/Unity/Prefabs/`에 저장 →
   상태/카드줄(HorizontalLayoutGroup)/개입액션·진행 버튼/타임라인 패널 배치 → 컨트롤러 부착·참조 와이어링 →
   씬 저장. 드래그 없이 한 번 클릭으로 완성, 생성 후 인스펙터에서 자유롭게 수정 가능.
 - **`Fate Weaver/Create Korean TMP Font`**: 맑은 고딕(`C:/Windows/Fonts/malgun.ttf`)에서 **동적(Dynamic)**
-  `TMP_FontAsset` 생성 → `Assets/FateWeaver/Unity/Resources/Fonts/`에 저장하고 TMP 기본/폴백으로 지정
+  `TMP_FontAsset` 생성 → `Assets/Unity/Resources/Fonts/`에 저장하고 TMP 기본/폴백으로 지정
   (런타임에 한글 글리프 온디맨드 추가). 빌더가 PNG들의 `TextureImporter.textureType=Sprite`도 보장.
 
 ## 3. 데이터 흐름

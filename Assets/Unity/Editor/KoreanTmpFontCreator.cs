@@ -20,14 +20,19 @@ namespace FateWeaver.Unity.Editor
     /// set up front removes that dependency entirely.</summary>
     public static class KoreanTmpFontCreator
     {
-        private const string SourceTtfAssetPath = "Assets/FateWeaver/Unity/Fonts/Pretendard-Regular.ttf";
-        private const string FontFolder = "Assets/FateWeaver/Unity/Resources/Fonts";
+        private const string SourceTtfAssetPath = "Assets/Unity/Fonts/Pretendard-Regular.ttf";
+        private const string FontFolder = "Assets/Unity/Resources/Fonts";
         private const string FontAssetPath = FontFolder + "/KoreanTMP.asset";
         private const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
 
         // Roots scanned for Hangul so the atlas covers every string the game can display (card / enemy /
         // scenario names, description vocabulary, and the controller's runtime status text).
-        private const string ScanRoot = "Assets/FateWeaver";
+        private static readonly string[] ScanRoots =
+        {
+            "Assets/Core",
+            "Assets/Unity",
+            "Assets/Tests"
+        };
 
         // The playtest scenes (FateWeaverPlaytest / FateWeaverWardenPlaytest) reference this guid for
         // every TMP label. Pinning the generated asset to it makes the scenes render Pretendard directly.
@@ -139,11 +144,19 @@ namespace FateWeaver.Unity.Editor
             for (uint c = 0x20; c <= 0x7E; c++) set.Add(c);          // printable ASCII
             foreach (var c in "·—–…×○●□■◆★☆↑↓←→∞") set.Add(c);      // symbols seen in status/timeline text
 
-            foreach (var file in Directory.GetFiles(ScanRoot, "*.cs", SearchOption.AllDirectories))
+            foreach (var root in ScanRoots)
             {
-                foreach (var c in File.ReadAllText(file))
+                if (!Directory.Exists(root))
                 {
-                    if (IsHangul(c)) set.Add(c);
+                    continue;
+                }
+
+                foreach (var file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+                {
+                    foreach (var c in File.ReadAllText(file))
+                    {
+                        if (IsHangul(c)) set.Add(c);
+                    }
                 }
             }
 

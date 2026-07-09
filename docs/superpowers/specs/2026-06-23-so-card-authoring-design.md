@@ -35,7 +35,7 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
 
 ## 3. 컴포넌트
 
-### 3.1 순수 (Assets/FateWeaver/Simulation — 헤드리스 검증 가능)
+### 3.1 순수 (Assets/Core/Simulation — 헤드리스 검증 가능)
 
 - **저작 enum** (struct-키 코어 타입을 닫힌 enum으로 노출):
   - `EffectKind` = Damage | ApplyStatus | GrantNextAttackBonus | NullifyNextReward
@@ -64,7 +64,7 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
   - Intervention: `new CardDefinition(Id, Name, Side, Type, 0, Array.Empty<EffectData>()){ EnergyCost, Category=CardCategory.Intervention, InterventionAction = new InterventionActionData(map(Intervention), EnergyCost, InterventionEffectValue) }`.
   - Execution: `new CardDefinition(Id, Name, Side, Type, BaseExecutionOrder, Effects.Select(ToEffectData).ToArray()){ EnergyCost, Category=CardCategory.Execution }`.
 
-### 3.2 Unity 저작 (Assets/FateWeaver/Unity — 사용자 검증)
+### 3.2 Unity 저작 (Assets/Unity — 사용자 검증)
 
 - **`CardAsset : ScriptableObject`**: `Id, DisplayName; Side; CardType; CardCategory; EnergyCost; BaseExecutionOrder;`
   `Sprite Art; string Description; EffectSpec[] Effects; InterventionKind Intervention; int InterventionEffectValue` + `CardSpec ToSpec()`.
@@ -73,7 +73,7 @@ ScriptableObject는 헤드리스에서 못 읽으므로(에디터 없이 `dotnet
 - **`DeckAsset : ScriptableObject`**: `string Id; List<Entry> Entries`(Entry = `{ CardAsset Card, int Count }`) +
   `IReadOnlyList<CardSpec> ToSpecs()`(count만큼 펼침).
 - **`CardCodeGenerator`** (Editor): 메뉴 `Fate Weaver/Generate Cards from SO` — 프로젝트의 CardAsset/DeckAsset을
-  읽어 `Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs`(순수 `CardSpec` 팩토리)를 생성·저장.
+  읽어 `Assets/Core/Simulation/Generated/GeneratedCards.cs`(순수 `CardSpec` 팩토리)를 생성·저장.
 
 ## 4. 검증
 

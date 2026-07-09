@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse the existing `FutureZone` / `TurnResolver` / conditions / effects / statuses / `InterventionPlayResolver` unchanged. Add a `Deck` (draw/discard/hand + seeded shuffle), extend `CardDefinition` with `EnergyCost`/`Category`/`InterventionAction`, define the 10-card starter deck and a deterministic enemy-intent script, and a `DeckCombatSession` driver that runs the turn loop. The conditional block on 엄호 already works through the existing `ResolveEffectValue`→`SuccessEffectValue` path, so **no Core effect code changes**.
 
-**Tech Stack:** C# 9 (Unity 6 constraint), NUnit, headless `dotnet test`. New code lives in `Assets/FateWeaver/Core` (pure) and `Assets/FateWeaver/Simulation` (uses the `internal` `CombatRegistries`); tests in `Assets/FateWeaver/Tests/EditMode`. All three are compiled by the headless project.
+**Tech Stack:** C# 9 (Unity 6 constraint), NUnit, headless `dotnet test`. New code lives in `Assets/Core` (pure) and `Assets/Core/Simulation` (uses the `internal` `CombatRegistries`); tests in `Assets/Core/Tests/EditMode`. All three are compiled by the headless project.
 
 **Run tests:** `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo`
 Filter one class: append `--filter "FullyQualifiedName~ClassName"`. Output may be Korean ("통과!" = passed).
@@ -17,30 +17,30 @@ Filter one class: append `--filter "FullyQualifiedName~ClassName"`. Output may b
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Core/Cards/CardCategory.cs` | Execution vs Intervention enum | Create |
-| `Assets/FateWeaver/Core/Cards/CardDefinition.cs` | add `EnergyCost`/`Category`/`InterventionAction` | Modify |
-| `Assets/FateWeaver/Core/Combat/Deck.cs` | draw/discard/hand piles + seeded shuffle/reshuffle | Create |
-| `Assets/FateWeaver/Simulation/StarterDeck.cs` | 10-card starter deck + enemy-attack helper | Create |
-| `Assets/FateWeaver/Simulation/EnemyIntent.cs` | per-turn enemy execution cards (deterministic) | Create |
-| `Assets/FateWeaver/Simulation/DeckCombatSession.cs` | the turn-loop driver | Create |
-| `Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs` | card data carries energy cost/category/intervention | Create |
-| `Assets/FateWeaver/Tests/EditMode/DeckTests.cs` | draw + reshuffle | Create |
-| `Assets/FateWeaver/Tests/EditMode/StarterDeckTests.cs` | composition (10 cards, 7:3, costs) | Create |
-| `Assets/FateWeaver/Tests/EditMode/EnemyIntentTests.cs` | ForTurn clamps | Create |
-| `Assets/FateWeaver/Tests/EditMode/DeckCombatSessionTests.cs` | loop + balance invariants | Create |
+| `Assets/Core/Cards/CardCategory.cs` | Execution vs Intervention enum | Create |
+| `Assets/Core/Cards/CardDefinition.cs` | add `EnergyCost`/`Category`/`InterventionAction` | Modify |
+| `Assets/Core/Combat/Deck.cs` | draw/discard/hand piles + seeded shuffle/reshuffle | Create |
+| `Assets/Core/Simulation/StarterDeck.cs` | 10-card starter deck + enemy-attack helper | Create |
+| `Assets/Core/Simulation/EnemyIntent.cs` | per-turn enemy execution cards (deterministic) | Create |
+| `Assets/Core/Simulation/DeckCombatSession.cs` | the turn-loop driver | Create |
+| `Assets/Core/Tests/EditMode/CardDefinitionDataTests.cs` | card data carries energy cost/category/intervention | Create |
+| `Assets/Core/Tests/EditMode/DeckTests.cs` | draw + reshuffle | Create |
+| `Assets/Core/Tests/EditMode/StarterDeckTests.cs` | composition (10 cards, 7:3, costs) | Create |
+| `Assets/Core/Tests/EditMode/EnemyIntentTests.cs` | ForTurn clamps | Create |
+| `Assets/Core/Tests/EditMode/DeckCombatSessionTests.cs` | loop + balance invariants | Create |
 
 ---
 
 ## Task 1: `CardCategory` + extend `CardDefinition`
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Cards/CardCategory.cs`
-- Modify: `Assets/FateWeaver/Core/Cards/CardDefinition.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs`
+- Create: `Assets/Core/Cards/CardCategory.cs`
+- Modify: `Assets/Core/Cards/CardDefinition.cs`
+- Test: `Assets/Core/Tests/EditMode/CardDefinitionDataTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs`:
+Create `Assets/Core/Tests/EditMode/CardDefinitionDataTests.cs`:
 
 ```csharp
 using System;
@@ -87,7 +87,7 @@ Expected: FAIL to compile — `CardCategory` / `EnergyCost` / `Category` / `Inte
 
 - [ ] **Step 3: Create the enum**
 
-Create `Assets/FateWeaver/Core/Cards/CardCategory.cs`:
+Create `Assets/Core/Cards/CardCategory.cs`:
 
 ```csharp
 namespace FateWeaver.Core.Cards
@@ -103,7 +103,7 @@ namespace FateWeaver.Core.Cards
 
 - [ ] **Step 4: Extend `CardDefinition`**
 
-In `Assets/FateWeaver/Core/Cards/CardDefinition.cs`, replace the `CardDefinition` record declaration (the final record at the bottom of the file) with a bodied record. Add `using FateWeaver.Core.Intervention;` to the top of the file (next to the existing usings):
+In `Assets/Core/Cards/CardDefinition.cs`, replace the `CardDefinition` record declaration (the final record at the bottom of the file) with a bodied record. Add `using FateWeaver.Core.Intervention;` to the top of the file (next to the existing usings):
 
 ```csharp
     /// <summary>Immutable card template.</summary>
@@ -134,7 +134,7 @@ Expected: PASS (2 tests). (If the existing suite still compiles, positional cons
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core/Cards/CardCategory.cs Assets/FateWeaver/Core/Cards/CardDefinition.cs Assets/FateWeaver/Tests/EditMode/CardDefinitionDataTests.cs
+git add Assets/Core/Cards/CardCategory.cs Assets/Core/Cards/CardDefinition.cs Assets/Core/Tests/EditMode/CardDefinitionDataTests.cs
 git commit -m "feat(core): card energy-cost/category/intervention-action on CardDefinition"
 ```
 
@@ -143,12 +143,12 @@ git commit -m "feat(core): card energy-cost/category/intervention-action on Card
 ## Task 2: `Deck` (draw / discard / shuffle / reshuffle)
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Combat/Deck.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/DeckTests.cs`
+- Create: `Assets/Core/Combat/Deck.cs`
+- Test: `Assets/Core/Tests/EditMode/DeckTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/DeckTests.cs`:
+Create `Assets/Core/Tests/EditMode/DeckTests.cs`:
 
 ```csharp
 using System;
@@ -212,7 +212,7 @@ Expected: FAIL to compile — `Deck` does not exist.
 
 - [ ] **Step 3: Create `Deck`**
 
-Create `Assets/FateWeaver/Core/Combat/Deck.cs`:
+Create `Assets/Core/Combat/Deck.cs`:
 
 ```csharp
 using System;
@@ -305,7 +305,7 @@ Expected: PASS (3 tests).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core/Combat/Deck.cs Assets/FateWeaver/Tests/EditMode/DeckTests.cs
+git add Assets/Core/Combat/Deck.cs Assets/Core/Tests/EditMode/DeckTests.cs
 git commit -m "feat(core): seeded Deck with draw/discard/hand + reshuffle"
 ```
 
@@ -314,12 +314,12 @@ git commit -m "feat(core): seeded Deck with draw/discard/hand + reshuffle"
 ## Task 3: `StarterDeck` definition
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/StarterDeck.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/StarterDeckTests.cs`
+- Create: `Assets/Core/Simulation/StarterDeck.cs`
+- Test: `Assets/Core/Tests/EditMode/StarterDeckTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/StarterDeckTests.cs`:
+Create `Assets/Core/Tests/EditMode/StarterDeckTests.cs`:
 
 ```csharp
 using System.Linq;
@@ -371,7 +371,7 @@ Expected: FAIL to compile — `StarterDeck` does not exist.
 
 - [ ] **Step 3: Create `StarterDeck`**
 
-Create `Assets/FateWeaver/Simulation/StarterDeck.cs`:
+Create `Assets/Core/Simulation/StarterDeck.cs`:
 
 ```csharp
 using System;
@@ -483,7 +483,7 @@ Expected: PASS (3 tests).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Simulation/StarterDeck.cs Assets/FateWeaver/Tests/EditMode/StarterDeckTests.cs
+git add Assets/Core/Simulation/StarterDeck.cs Assets/Core/Tests/EditMode/StarterDeckTests.cs
 git commit -m "feat(sim): 10-card starter deck (베기/막기/찰나/강타/엄호/앞당김/교환)"
 ```
 
@@ -492,12 +492,12 @@ git commit -m "feat(sim): 10-card starter deck (베기/막기/찰나/강타/엄�
 ## Task 4: `EnemyIntent` (deterministic per-turn enemy cards)
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/EnemyIntent.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/EnemyIntentTests.cs`
+- Create: `Assets/Core/Simulation/EnemyIntent.cs`
+- Test: `Assets/Core/Tests/EditMode/EnemyIntentTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/EnemyIntentTests.cs`:
+Create `Assets/Core/Tests/EditMode/EnemyIntentTests.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -538,7 +538,7 @@ Expected: FAIL to compile — `EnemyIntent` does not exist.
 
 - [ ] **Step 3: Create `EnemyIntent`**
 
-Create `Assets/FateWeaver/Simulation/EnemyIntent.cs`:
+Create `Assets/Core/Simulation/EnemyIntent.cs`:
 
 ```csharp
 using System;
@@ -580,7 +580,7 @@ Expected: PASS (2 tests).
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Simulation/EnemyIntent.cs Assets/FateWeaver/Tests/EditMode/EnemyIntentTests.cs
+git add Assets/Core/Simulation/EnemyIntent.cs Assets/Core/Tests/EditMode/EnemyIntentTests.cs
 git commit -m "feat(sim): deterministic per-turn EnemyIntent"
 ```
 
@@ -589,15 +589,15 @@ git commit -m "feat(sim): deterministic per-turn EnemyIntent"
 ## Task 5: `DeckCombatSession` (the turn loop)
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/DeckCombatSessionTests.cs`
+- Create: `Assets/Core/Simulation/DeckCombatSession.cs`
+- Test: `Assets/Core/Tests/EditMode/DeckCombatSessionTests.cs`
 
 > Energy: **intervention cards** deduct energy inside `InterventionPlayResolver` (the handler's `CanApply`/`Apply`).
 > **Execution cards** deduct energy here. Both gate on `FateEnergy >= EnergyCost`.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/DeckCombatSessionTests.cs`:
+Create `Assets/Core/Tests/EditMode/DeckCombatSessionTests.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -739,7 +739,7 @@ Expected: FAIL to compile — `DeckCombatSession` does not exist.
 
 - [ ] **Step 3: Create `DeckCombatSession`**
 
-Create `Assets/FateWeaver/Simulation/DeckCombatSession.cs`:
+Create `Assets/Core/Simulation/DeckCombatSession.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -933,7 +933,7 @@ Expected: PASS (6 tests). If `Heavy_strike...` fails because both cards share ex
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Simulation/DeckCombatSession.cs Assets/FateWeaver/Tests/EditMode/DeckCombatSessionTests.cs
+git add Assets/Core/Simulation/DeckCombatSession.cs Assets/Core/Tests/EditMode/DeckCombatSessionTests.cs
 git commit -m "feat(sim): DeckCombatSession turn loop (draw/play/resolve/next) + invariants"
 ```
 

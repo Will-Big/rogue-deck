@@ -16,20 +16,20 @@
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Unity/CardPresentation.cs` | add `EnergyCost` + `FromDefinition` | Modify |
-| `Assets/FateWeaver/Unity/CardView.cs` | show cost | Modify |
-| `Assets/FateWeaver/Unity/DeckPlaytestController.cs` | deck UI driver | Create |
-| `Assets/FateWeaver/Unity/Editor/DeckPlaytestSceneCreator.cs` | build deck scene + CardView prefab | Create |
-| `Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs` | old scenario controller | Delete |
-| `Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` | old scenario scene builder | Delete |
+| `Assets/Unity/CardPresentation.cs` | add `EnergyCost` + `FromDefinition` | Modify |
+| `Assets/Unity/CardView.cs` | show cost | Modify |
+| `Assets/Unity/DeckPlaytestController.cs` | deck UI driver | Create |
+| `Assets/Unity/Editor/DeckPlaytestSceneCreator.cs` | build deck scene + CardView prefab | Create |
+| `Assets/Unity/FateWeaverPlaytestController.cs` | old scenario controller | Delete |
+| `Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` | old scenario scene builder | Delete |
 
 ---
 
 ## Task 1: `CardPresentation.EnergyCost` + `FromDefinition`, and `CardView` cost display
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/CardPresentation.cs`
-- Modify: `Assets/FateWeaver/Unity/CardView.cs`
+- Modify: `Assets/Unity/CardPresentation.cs`
+- Modify: `Assets/Unity/CardView.cs`
 
 > Unity-layer (uses `Sprite`); the **user** confirms it compiles. No headless test.
 
@@ -102,7 +102,7 @@ namespace FateWeaver.Unity
 
 - [ ] **Step 2: Add a cost field to `CardView`**
 
-In `Assets/FateWeaver/Unity/CardView.cs`, add the serialized field after `_executionOrderText`:
+In `Assets/Unity/CardView.cs`, add the serialized field after `_executionOrderText`:
 
 ```csharp
         [SerializeField] private TMP_Text _executionOrderText;
@@ -126,7 +126,7 @@ User: Unity reloads. Expected: compiles. (`_costText` is wired later by the buil
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardPresentation.cs Assets/FateWeaver/Unity/CardView.cs
+git add Assets/Unity/CardPresentation.cs Assets/Unity/CardView.cs
 git commit -m "feat(unity): CardPresentation cost + FromDefinition; CardView cost display"
 ```
 
@@ -135,13 +135,13 @@ git commit -m "feat(unity): CardPresentation cost + FromDefinition; CardView cos
 ## Task 2: `DeckPlaytestController`
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/DeckPlaytestController.cs`
+- Create: `Assets/Unity/DeckPlaytestController.cs`
 
 > The deck UI driver. Wired by the editor builder (Task 3). Verified in Play (Task 4).
 
 - [ ] **Step 1: Create the controller**
 
-Create `Assets/FateWeaver/Unity/DeckPlaytestController.cs`:
+Create `Assets/Unity/DeckPlaytestController.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -432,7 +432,7 @@ User: Unity reloads. Expected: compiles. (Serialized fields wired by the builder
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/DeckPlaytestController.cs
+git add Assets/Unity/DeckPlaytestController.cs
 git commit -m "feat(unity): DeckPlaytestController (hand play + 2-step intervention targeting)"
 ```
 
@@ -441,13 +441,13 @@ git commit -m "feat(unity): DeckPlaytestController (hand play + 2-step intervent
 ## Task 3: Editor builder — deck scene + CardView prefab (with cost)
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/Editor/DeckPlaytestSceneCreator.cs`
+- Create: `Assets/Unity/Editor/DeckPlaytestSceneCreator.cs`
 
 > Blind editor code — the **user** runs the menu and reports. Expect a fix iteration (anchors/sizes/wiring).
 
 - [ ] **Step 1: Create the builder**
 
-Create `Assets/FateWeaver/Unity/Editor/DeckPlaytestSceneCreator.cs`:
+Create `Assets/Unity/Editor/DeckPlaytestSceneCreator.cs`:
 
 ```csharp
 using System.IO;
@@ -462,10 +462,10 @@ namespace FateWeaver.Unity.Editor
 {
     public static class DeckPlaytestSceneCreator
     {
-        public const string ScenePath = "Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity";
-        public const string PrefabPath = "Assets/FateWeaver/Unity/Resources/CardView.prefab";
-        private const string FontAssetPath = "Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset";
-        private const string DeckAssetPath = "Assets/FateWeaver/Unity/Cards/StarterDeck.asset";
+        public const string ScenePath = "Assets/Scenes/FateWeaverPlaytest.unity";
+        public const string PrefabPath = "Assets/Unity/Resources/CardView.prefab";
+        private const string FontAssetPath = "Assets/Unity/Resources/Fonts/KoreanTMP.asset";
+        private const string DeckAssetPath = "Assets/Unity/Cards/StarterDeck.asset";
 
         [MenuItem("Fate Weaver/Build Deck Playtest Scene")]
         public static void Build()
@@ -479,7 +479,7 @@ namespace FateWeaver.Unity.Editor
                 Debug.LogWarning("No DeckAsset at " + DeckAssetPath + " — run 'Fate Weaver/Seed Starter Card Assets' first.");
             }
 
-            Directory.CreateDirectory("Assets/FateWeaver/Scenes");
+            Directory.CreateDirectory("Assets/Scenes");
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -547,7 +547,7 @@ namespace FateWeaver.Unity.Editor
 
         private static CardView BuildCardPrefab(TMP_FontAsset font)
         {
-            Directory.CreateDirectory("Assets/FateWeaver/Unity/Resources");
+            Directory.CreateDirectory("Assets/Unity/Resources");
 
             var rootGo = new GameObject("CardView", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement), typeof(CardView));
             var rootRt = rootGo.GetComponent<RectTransform>();
@@ -707,7 +707,7 @@ namespace FateWeaver.Unity.Editor
 
         private static void EnsureSpriteImport()
         {
-            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/FateWeaver/Unity/Resources" }))
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Unity/Resources" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 if (AssetImporter.GetAtPath(path) is TextureImporter importer
@@ -737,7 +737,7 @@ User: run `Fate Weaver ▸ Build Deck Playtest Scene`, open the scene, press Pla
 - [ ] **Step 3: Commit (after user confirms it builds)**
 
 ```bash
-git add Assets/FateWeaver/Unity/Editor/DeckPlaytestSceneCreator.cs Assets/FateWeaver/Unity/Resources/CardView.prefab Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity
+git add Assets/Unity/Editor/DeckPlaytestSceneCreator.cs Assets/Unity/Resources/CardView.prefab Assets/Scenes/FateWeaverPlaytest.unity
 git commit -m "feat(unity): editor builder for the deck playtest scene"
 ```
 
@@ -746,14 +746,14 @@ git commit -m "feat(unity): editor builder for the deck playtest scene"
 ## Task 4: Remove the old scenario controller/builder + user Play verification
 
 **Files:**
-- Delete: `Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs` (+ `.meta`)
-- Delete: `Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` (+ `.meta`)
+- Delete: `Assets/Unity/FateWeaverPlaytestController.cs` (+ `.meta`)
+- Delete: `Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` (+ `.meta`)
 
 - [ ] **Step 1: Delete the superseded scenario UI**
 
 ```bash
-git rm Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs.meta
-git rm Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs.meta
+git rm Assets/Unity/FateWeaverPlaytestController.cs Assets/Unity/FateWeaverPlaytestController.cs.meta
+git rm Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs.meta
 ```
 
 - [ ] **Step 2: User verifies compile + Play**

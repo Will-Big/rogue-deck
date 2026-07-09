@@ -6,7 +6,7 @@
 
 **Architecture:** Pure `EffectSpec`/`CardSpec` (enum-flattened) + `CardSpecMapper.ToDefinition` live in `Simulation` (headless-tested). Unity `CardAsset`/`DeckAsset` ScriptableObjects hold the same data + Sprite/description and expose `ToSpec()`. An editor `CardCodeGenerator` emits `Simulation/Generated/GeneratedCards.cs`. The hand-coded `StarterDeck` stays as the equivalence oracle.
 
-**Tech Stack:** C# 9 (Unity 6), NUnit, headless `dotnet test`. Pure code + tests in `Assets/FateWeaver/Simulation` / `Tests/EditMode` (headless-compiled); SO + generator in `Assets/FateWeaver/Unity` (+ `/Editor`, user-verified).
+**Tech Stack:** C# 9 (Unity 6), NUnit, headless `dotnet test`. Pure code + tests in `Assets/Core/Simulation` / `Tests/EditMode` (headless-compiled); SO + generator in `Assets/Unity` (+ `/Editor`, user-verified).
 
 **Run tests:** `dotnet test "C:/UnityProjects/Rogue-deck/Tests/Headless/FateWeaver.Tests.Headless.csproj" --nologo` (filter: `--filter "FullyQualifiedName~ClassName"`). Output may be Korean ("통과!" = passed).
 
@@ -18,30 +18,30 @@
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs` | authoring enums + flat EffectSpec | Create |
-| `Assets/FateWeaver/Simulation/Authoring/CardSpec.cs` | flat card data | Create |
-| `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs` | CardSpec → core CardDefinition | Create |
-| `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs` | the 10 starter cards as specs | Create |
-| `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs` | mapping unit tests | Create |
-| `Assets/FateWeaver/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs` | spec deck behaves like hand-coded | Create |
-| `Assets/FateWeaver/Unity/CardAsset.cs` | ScriptableObject card + ToSpec | Create |
-| `Assets/FateWeaver/Unity/DeckAsset.cs` | ScriptableObject deck + ToSpecs | Create |
-| `Assets/FateWeaver/Unity/Editor/CardCodeGenerator.cs` | generate C# + seed starter SO | Create |
-| `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef` | add Simulation ref | Modify |
+| `Assets/Core/Simulation/Authoring/EffectSpec.cs` | authoring enums + flat EffectSpec | Create |
+| `Assets/Core/Simulation/Authoring/CardSpec.cs` | flat card data | Create |
+| `Assets/Core/Simulation/Authoring/CardSpecMapper.cs` | CardSpec → core CardDefinition | Create |
+| `Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs` | the 10 starter cards as specs | Create |
+| `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs` | mapping unit tests | Create |
+| `Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs` | spec deck behaves like hand-coded | Create |
+| `Assets/Unity/CardAsset.cs` | ScriptableObject card + ToSpec | Create |
+| `Assets/Unity/DeckAsset.cs` | ScriptableObject deck + ToSpecs | Create |
+| `Assets/Unity/Editor/CardCodeGenerator.cs` | generate C# + seed starter SO | Create |
+| `Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef` | add Simulation ref | Modify |
 
 ---
 
 ## Task 1: Authoring data types + `CardSpecMapper`
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs`
-- Create: `Assets/FateWeaver/Simulation/Authoring/CardSpec.cs`
-- Create: `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs`
+- Create: `Assets/Core/Simulation/Authoring/EffectSpec.cs`
+- Create: `Assets/Core/Simulation/Authoring/CardSpec.cs`
+- Create: `Assets/Core/Simulation/Authoring/CardSpecMapper.cs`
+- Test: `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs`:
+Create `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs`:
 
 ```csharp
 using NUnit.Framework;
@@ -142,7 +142,7 @@ Expected: FAIL to compile — `EffectSpec` / `CardSpec` / `CardSpecMapper` do no
 
 - [ ] **Step 3: Create the authoring data types**
 
-Create `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs`:
+Create `Assets/Core/Simulation/Authoring/EffectSpec.cs`:
 
 ```csharp
 using System;
@@ -176,7 +176,7 @@ namespace FateWeaver.Simulation.Authoring
 }
 ```
 
-Create `Assets/FateWeaver/Simulation/Authoring/CardSpec.cs`:
+Create `Assets/Core/Simulation/Authoring/CardSpec.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
@@ -203,7 +203,7 @@ namespace FateWeaver.Simulation.Authoring
 
 - [ ] **Step 4: Create `CardSpecMapper`**
 
-Create `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs`:
+Create `Assets/Core/Simulation/Authoring/CardSpecMapper.cs`:
 
 ```csharp
 using System;
@@ -331,7 +331,7 @@ Expected: PASS (4 tests).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs Assets/FateWeaver/Simulation/Authoring/CardSpec.cs Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs
+git add Assets/Core/Simulation/Authoring/EffectSpec.cs Assets/Core/Simulation/Authoring/CardSpec.cs Assets/Core/Simulation/Authoring/CardSpecMapper.cs Assets/Core/Tests/EditMode/CardSpecMapperTests.cs
 git commit -m "feat(sim): flat CardSpec/EffectSpec + CardSpecMapper to core CardDefinition"
 ```
 
@@ -340,12 +340,12 @@ git commit -m "feat(sim): flat CardSpec/EffectSpec + CardSpecMapper to core Card
 ## Task 2: `StarterDeckSpecs` + equivalence safety net
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs`
+- Create: `Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs`
+- Test: `Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `Assets/FateWeaver/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs`:
+Create `Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -440,7 +440,7 @@ Expected: FAIL to compile — `StarterDeckSpecs` does not exist.
 
 - [ ] **Step 3: Create `StarterDeckSpecs`**
 
-Create `Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs`:
+Create `Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -525,7 +525,7 @@ Expected: PASS (4 tests) — the spec-built cards behave identically to the hand
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Simulation/Authoring/StarterDeckSpecs.cs Assets/FateWeaver/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs
+git add Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs
 git commit -m "feat(sim): StarterDeckSpecs + behavioral equivalence to hand-coded deck"
 ```
 
@@ -534,14 +534,14 @@ git commit -m "feat(sim): StarterDeckSpecs + behavioral equivalence to hand-code
 ## Task 3: `CardAsset` + `DeckAsset` ScriptableObjects (Unity)
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/CardAsset.cs`
-- Create: `Assets/FateWeaver/Unity/DeckAsset.cs`
+- Create: `Assets/Unity/CardAsset.cs`
+- Create: `Assets/Unity/DeckAsset.cs`
 
 > Unity-only; the **user** confirms it compiles. No headless test (ScriptableObject + Sprite are UnityEngine).
 
 - [ ] **Step 1: Create `CardAsset`**
 
-Create `Assets/FateWeaver/Unity/CardAsset.cs`:
+Create `Assets/Unity/CardAsset.cs`:
 
 ```csharp
 using System;
@@ -588,7 +588,7 @@ namespace FateWeaver.Unity
 
 - [ ] **Step 2: Create `DeckAsset`**
 
-Create `Assets/FateWeaver/Unity/DeckAsset.cs`:
+Create `Assets/Unity/DeckAsset.cs`:
 
 ```csharp
 using System;
@@ -641,7 +641,7 @@ User: let Unity reload. Expected: compiles; `Fate Weaver/Card` and `Fate Weaver/
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardAsset.cs Assets/FateWeaver/Unity/DeckAsset.cs
+git add Assets/Unity/CardAsset.cs Assets/Unity/DeckAsset.cs
 git commit -m "feat(unity): CardAsset/DeckAsset ScriptableObjects (author -> CardSpec)"
 ```
 
@@ -650,14 +650,14 @@ git commit -m "feat(unity): CardAsset/DeckAsset ScriptableObjects (author -> Car
 ## Task 4: `CardCodeGenerator` editor menu (+ seed starter SO)
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/Editor/CardCodeGenerator.cs`
-- Modify: `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef`
+- Create: `Assets/Unity/Editor/CardCodeGenerator.cs`
+- Modify: `Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef`
 
 > Editor-only; the **user** runs the menus. The generated file is pure and compiles in both Unity and headless.
 
 - [ ] **Step 1: Add the Simulation reference to the editor asmdef**
 
-Replace the `"references"` array in `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef` with:
+Replace the `"references"` array in `Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef` with:
 
 ```json
     "references": [
@@ -671,7 +671,7 @@ Replace the `"references"` array in `Assets/FateWeaver/Unity/Editor/FateWeaver.U
 
 - [ ] **Step 2: Create the generator + seeder**
 
-Create `Assets/FateWeaver/Unity/Editor/CardCodeGenerator.cs`:
+Create `Assets/Unity/Editor/CardCodeGenerator.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -688,9 +688,9 @@ namespace FateWeaver.Unity.Editor
     /// authored cards. The generated file lives under Simulation (compiled by Unity AND headless).</summary>
     public static class CardCodeGenerator
     {
-        private const string CardFolder = "Assets/FateWeaver/Unity/Cards";
+        private const string CardFolder = "Assets/Unity/Cards";
         private const string DeckAssetPath = CardFolder + "/StarterDeck.asset";
-        private const string GeneratedPath = "Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs";
+        private const string GeneratedPath = "Assets/Core/Simulation/Generated/GeneratedCards.cs";
 
         [MenuItem("Fate Weaver/Seed Starter Card Assets")]
         public static void SeedStarter()
@@ -726,7 +726,7 @@ namespace FateWeaver.Unity.Editor
                 return;
             }
 
-            Directory.CreateDirectory("Assets/FateWeaver/Simulation/Generated");
+            Directory.CreateDirectory("Assets/Core/Simulation/Generated");
             File.WriteAllText(GeneratedPath, Emit(deck.ToSpecs()), new UTF8Encoding(false));
             AssetDatabase.Refresh();
             Debug.Log("Generated " + GeneratedPath);
@@ -842,7 +842,7 @@ User: let Unity reload. Expected: editor compiles; menus `Fate Weaver/Seed Start
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/Editor/CardCodeGenerator.cs Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef
+git add Assets/Unity/Editor/CardCodeGenerator.cs Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef
 git commit -m "feat(unity): editor seeder + CardSpec code generator"
 ```
 
@@ -850,15 +850,15 @@ git commit -m "feat(unity): editor seeder + CardSpec code generator"
 
 ## Task 5: Author + generate + verify (user, in editor)
 
-**Files:** generated `Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs` (+ seeded SO assets under `Assets/FateWeaver/Unity/Cards/`)
+**Files:** generated `Assets/Core/Simulation/Generated/GeneratedCards.cs` (+ seeded SO assets under `Assets/Unity/Cards/`)
 
 - [ ] **Step 1: Seed the starter SO assets**
 
-User: run `Fate Weaver ▸ Seed Starter Card Assets`. Expected: 7 `CardAsset` `.asset` files (slash, guard, quick_cut, heavy_strike, cover, pull_forward, swap_positions) + `StarterDeck.asset` appear under `Assets/FateWeaver/Unity/Cards/`. Inspect a card (e.g., `cover`) — its `Effects[0]` shows Kind=ApplyStatus, EffectValue=2, Condition=NextIsEnemyAttack, SuccessEffectValue=7.
+User: run `Fate Weaver ▸ Seed Starter Card Assets`. Expected: 7 `CardAsset` `.asset` files (slash, guard, quick_cut, heavy_strike, cover, pull_forward, swap_positions) + `StarterDeck.asset` appear under `Assets/Unity/Cards/`. Inspect a card (e.g., `cover`) — its `Effects[0]` shows Kind=ApplyStatus, EffectValue=2, Condition=NextIsEnemyAttack, SuccessEffectValue=7.
 
 - [ ] **Step 2: Generate the pure cards**
 
-User: run `Fate Weaver ▸ Generate Cards from SO`. Expected: `Assets/FateWeaver/Simulation/Generated/GeneratedCards.cs` is created and the project recompiles with no errors.
+User: run `Fate Weaver ▸ Generate Cards from SO`. Expected: `Assets/Core/Simulation/Generated/GeneratedCards.cs` is created and the project recompiles with no errors.
 
 - [ ] **Step 3: Verify headless suite stays green**
 
@@ -868,7 +868,7 @@ Expected: all PASS — the generated file compiles headlessly and nothing regres
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/Cards Assets/FateWeaver/Simulation/Generated
+git add Assets/Unity/Cards Assets/Core/Simulation/Generated
 git commit -m "chore(content): seed starter card SO assets + generated CardSpecs"
 ```
 

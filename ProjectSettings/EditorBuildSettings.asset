@@ -9,10 +9,10 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
-    path: Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity
+    path: Assets/Scenes/FateWeaverPlaytest.unity
     guid: 6e6673ba34b084743ab5d6c872072d5b
   - enabled: 1
-    path: Assets/FateWeaver/Scenes/FateWeaverWardenPlaytest.unity
+    path: Assets/Scenes/FateWeaverWardenPlaytest.unity
     guid: 0218c6396de14bfaa0516ad3e5b44c64
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

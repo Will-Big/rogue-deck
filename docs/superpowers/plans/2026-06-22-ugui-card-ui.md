@@ -16,28 +16,28 @@
 
 | File | Responsibility | Action |
 |---|---|---|
-| `Assets/FateWeaver/Unity/FateWeaver.Unity.asmdef` | add TMP + UI asm refs | Modify |
-| `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef` | add TMP + UI asm refs | Modify |
-| `Assets/FateWeaver/Unity/PlaytestKoreanText.cs` | add `CardDescription(id)` | Modify |
-| `Assets/FateWeaver/Unity/PlaytestCardArt.cs` | id → art name / Sprite | Create |
-| `Assets/FateWeaver/Unity/CardPresentation.cs` | view-model from `ExecutionCardInstance` | Create |
-| `Assets/FateWeaver/Unity/CardView.cs` | card prefab component | Create |
-| `Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs` | uGUI controller (rewrite) | Modify |
-| `Assets/FateWeaver/Unity/RuntimeOsFontLoader.cs` | IMGUI-only OS font (remove) | Delete |
-| `Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` | scene+prefab builder menu | Modify |
-| `Assets/FateWeaver/Unity/Editor/KoreanTmpFontCreator.cs` | Korean TMP font menu | Create |
-| `Assets/FateWeaver/Tests/UnityEditMode/PlaytestCardArtTests.cs` | EditMode tests (art name) | Create |
-| `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs` | EditMode tests (descriptions) | Create |
-| `Assets/FateWeaver/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs` | remove (loader deleted) | Delete |
-| `Assets/FateWeaver/Unity/PLAYTEST.md` | new setup/run flow | Modify |
+| `Assets/Unity/FateWeaver.Unity.asmdef` | add TMP + UI asm refs | Modify |
+| `Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef` | add TMP + UI asm refs | Modify |
+| `Assets/Unity/PlaytestKoreanText.cs` | add `CardDescription(id)` | Modify |
+| `Assets/Unity/PlaytestCardArt.cs` | id → art name / Sprite | Create |
+| `Assets/Unity/CardPresentation.cs` | view-model from `ExecutionCardInstance` | Create |
+| `Assets/Unity/CardView.cs` | card prefab component | Create |
+| `Assets/Unity/FateWeaverPlaytestController.cs` | uGUI controller (rewrite) | Modify |
+| `Assets/Unity/RuntimeOsFontLoader.cs` | IMGUI-only OS font (remove) | Delete |
+| `Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs` | scene+prefab builder menu | Modify |
+| `Assets/Unity/Editor/KoreanTmpFontCreator.cs` | Korean TMP font menu | Create |
+| `Assets/Tests/UnityEditMode/PlaytestCardArtTests.cs` | EditMode tests (art name) | Create |
+| `Assets/Tests/UnityEditMode/CardDescriptionTests.cs` | EditMode tests (descriptions) | Create |
+| `Assets/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs` | remove (loader deleted) | Delete |
+| `Assets/Unity/PLAYTEST.md` | new setup/run flow | Modify |
 
 ---
 
 ## Task 1: Add TMP + uGUI assembly references
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/FateWeaver.Unity.asmdef`
-- Modify: `Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef`
+- Modify: `Assets/Unity/FateWeaver.Unity.asmdef`
+- Modify: `Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef`
 
 - [ ] **Step 1: Add refs to the runtime asmdef**
 
@@ -71,7 +71,7 @@ User: let Unity reload. Expected: project still compiles (no new code yet; the I
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/FateWeaver.Unity.asmdef Assets/FateWeaver/Unity/Editor/FateWeaver.Unity.Editor.asmdef
+git add Assets/Unity/FateWeaver.Unity.asmdef Assets/Unity/Editor/FateWeaver.Unity.Editor.asmdef
 git commit -m "build(unity): reference TextMeshPro and UnityEngine.UI"
 ```
 
@@ -80,12 +80,12 @@ git commit -m "build(unity): reference TextMeshPro and UnityEngine.UI"
 ## Task 2: `PlaytestKoreanText.CardDescription(id)`
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/PlaytestKoreanText.cs`
-- Test: `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs`
+- Modify: `Assets/Unity/PlaytestKoreanText.cs`
+- Test: `Assets/Tests/UnityEditMode/CardDescriptionTests.cs`
 
 - [ ] **Step 1: Write the failing EditMode test**
 
-Create `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs`:
+Create `Assets/Tests/UnityEditMode/CardDescriptionTests.cs`:
 
 ```csharp
 using NUnit.Framework;
@@ -163,7 +163,7 @@ User: re-run `CardDescriptionTests`. Expected: 3 PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/PlaytestKoreanText.cs Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs
+git add Assets/Unity/PlaytestKoreanText.cs Assets/Tests/UnityEditMode/CardDescriptionTests.cs
 git commit -m "feat(unity): curated Korean card descriptions"
 ```
 
@@ -172,12 +172,12 @@ git commit -m "feat(unity): curated Korean card descriptions"
 ## Task 3: `PlaytestCardArt` (id → art name / Sprite)
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/PlaytestCardArt.cs`
-- Test: `Assets/FateWeaver/Tests/UnityEditMode/PlaytestCardArtTests.cs`
+- Create: `Assets/Unity/PlaytestCardArt.cs`
+- Test: `Assets/Tests/UnityEditMode/PlaytestCardArtTests.cs`
 
 - [ ] **Step 1: Write the failing EditMode test (pure resolution only)**
 
-Create `Assets/FateWeaver/Tests/UnityEditMode/PlaytestCardArtTests.cs`:
+Create `Assets/Tests/UnityEditMode/PlaytestCardArtTests.cs`:
 
 ```csharp
 using NUnit.Framework;
@@ -221,7 +221,7 @@ User: Test Runner ▸ EditMode ▸ `PlaytestCardArtTests`. Expected: FAIL (type 
 
 - [ ] **Step 3: Create the class**
 
-Create `Assets/FateWeaver/Unity/PlaytestCardArt.cs`:
+Create `Assets/Unity/PlaytestCardArt.cs`:
 
 ```csharp
 using System;
@@ -286,7 +286,7 @@ User: re-run `PlaytestCardArtTests`. Expected: 3 PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/PlaytestCardArt.cs Assets/FateWeaver/Tests/UnityEditMode/PlaytestCardArtTests.cs
+git add Assets/Unity/PlaytestCardArt.cs Assets/Tests/UnityEditMode/PlaytestCardArtTests.cs
 git commit -m "feat(unity): card art lookup (id normalization + cached Sprite load)"
 ```
 
@@ -295,13 +295,13 @@ git commit -m "feat(unity): card art lookup (id normalization + cached Sprite lo
 ## Task 4: `CardPresentation` view-model
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/CardPresentation.cs`
+- Create: `Assets/Unity/CardPresentation.cs`
 
 > No standalone test: this is a thin assembler over already-tested lookups; it is exercised by the controller in Play.
 
 - [ ] **Step 1: Create the struct + factory**
 
-Create `Assets/FateWeaver/Unity/CardPresentation.cs`:
+Create `Assets/Unity/CardPresentation.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
@@ -357,7 +357,7 @@ User: Unity reloads. Expected: compiles. (If `card.ExecutionOrder` / `card.IsLoc
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardPresentation.cs
+git add Assets/Unity/CardPresentation.cs
 git commit -m "feat(unity): CardPresentation view-model"
 ```
 
@@ -366,11 +366,11 @@ git commit -m "feat(unity): CardPresentation view-model"
 ## Task 5: `CardView` prefab component
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/CardView.cs`
+- Create: `Assets/Unity/CardView.cs`
 
 - [ ] **Step 1: Create the component**
 
-Create `Assets/FateWeaver/Unity/CardView.cs`:
+Create `Assets/Unity/CardView.cs`:
 
 ```csharp
 using System;
@@ -453,7 +453,7 @@ User: Unity reloads. Expected: compiles (TMPro/UI refs from Task 1 resolve). Ser
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/CardView.cs
+git add Assets/Unity/CardView.cs
 git commit -m "feat(unity): CardView card widget component"
 ```
 
@@ -462,7 +462,7 @@ git commit -m "feat(unity): CardView card widget component"
 ## Task 6: Rewrite `FateWeaverPlaytestController` for uGUI
 
 **Files:**
-- Modify (full replace): `Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs`
+- Modify (full replace): `Assets/Unity/FateWeaverPlaytestController.cs`
 
 > The controller exposes `[SerializeField]` references that the editor builder (Task 7) wires. It no longer uses `OnGUI`. Verification is in Play after Task 7 builds the scene.
 
@@ -802,7 +802,7 @@ User: Unity reloads. Expected: compiles. (`RuntimeOsFontLoader` is no longer ref
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/FateWeaverPlaytestController.cs
+git add Assets/Unity/FateWeaverPlaytestController.cs
 git commit -m "feat(unity): rewrite playtest controller on uGUI CardViews"
 ```
 
@@ -811,7 +811,7 @@ git commit -m "feat(unity): rewrite playtest controller on uGUI CardViews"
 ## Task 7: Editor scene + `CardView.prefab` builder
 
 **Files:**
-- Modify (full replace): `Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs`
+- Modify (full replace): `Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs`
 
 > This is the riskiest task: ~UI construction code that I cannot run. Build it, then the user runs the menu and reports. Expect 1–2 fix iterations. Inline execution recommended so I can react to editor errors quickly.
 
@@ -832,9 +832,9 @@ namespace FateWeaver.Unity.Editor
 {
     public static class FateWeaverPlaytestSceneCreator
     {
-        public const string ScenePath = "Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity";
-        public const string PrefabPath = "Assets/FateWeaver/Unity/Prefabs/CardView.prefab";
-        private const string FontAssetPath = "Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset";
+        public const string ScenePath = "Assets/Scenes/FateWeaverPlaytest.unity";
+        public const string PrefabPath = "Assets/Unity/Prefabs/CardView.prefab";
+        private const string FontAssetPath = "Assets/Unity/Resources/Fonts/KoreanTMP.asset";
 
         [MenuItem("Fate Weaver/Build Playtest Scene (uGUI)")]
         public static void Build()
@@ -849,7 +849,7 @@ namespace FateWeaver.Unity.Editor
 
             var cardPrefab = BuildCardPrefab(font);
 
-            Directory.CreateDirectory("Assets/FateWeaver/Scenes");
+            Directory.CreateDirectory("Assets/Scenes");
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -928,7 +928,7 @@ namespace FateWeaver.Unity.Editor
 
         private static CardView BuildCardPrefab(TMP_FontAsset font)
         {
-            Directory.CreateDirectory("Assets/FateWeaver/Unity/Prefabs");
+            Directory.CreateDirectory("Assets/Unity/Prefabs");
 
             var rootGo = new GameObject("CardView", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement), typeof(CardView));
             var rootRt = rootGo.GetComponent<RectTransform>();
@@ -1080,7 +1080,7 @@ namespace FateWeaver.Unity.Editor
 
         private static void EnsureSpriteImport()
         {
-            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/FateWeaver/Unity/Resources" }))
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Unity/Resources" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 if (AssetImporter.GetAtPath(path) is TextureImporter importer
@@ -1115,7 +1115,7 @@ Expected: cards render with art + Korean name/description, scenario buttons swit
 - [ ] **Step 3: Commit (after user confirms it builds)**
 
 ```bash
-git add Assets/FateWeaver/Unity/Editor/FateWeaverPlaytestSceneCreator.cs Assets/FateWeaver/Unity/Prefabs Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity
+git add Assets/Unity/Editor/FateWeaverPlaytestSceneCreator.cs Assets/Unity/Prefabs Assets/Scenes/FateWeaverPlaytest.unity
 git commit -m "feat(unity): editor builder for uGUI playtest scene + CardView prefab"
 ```
 
@@ -1124,13 +1124,13 @@ git commit -m "feat(unity): editor builder for uGUI playtest scene + CardView pr
 ## Task 8: Korean TMP font creator menu
 
 **Files:**
-- Create: `Assets/FateWeaver/Unity/Editor/KoreanTmpFontCreator.cs`
+- Create: `Assets/Unity/Editor/KoreanTmpFontCreator.cs`
 
 > Dynamic TMP font asset creation is version-sensitive. If the script errors, fall back to the manual path documented in Task 9's PLAYTEST.md.
 
 - [ ] **Step 1: Create the editor script**
 
-Create `Assets/FateWeaver/Unity/Editor/KoreanTmpFontCreator.cs`:
+Create `Assets/Unity/Editor/KoreanTmpFontCreator.cs`:
 
 ```csharp
 using System.IO;
@@ -1142,7 +1142,7 @@ namespace FateWeaver.Unity.Editor
 {
     public static class KoreanTmpFontCreator
     {
-        private const string FontFolder = "Assets/FateWeaver/Unity/Resources/Fonts";
+        private const string FontFolder = "Assets/Unity/Resources/Fonts";
         private const string FontAssetPath = FontFolder + "/KoreanTMP.asset";
         private const string SourceTtf = "C:/Windows/Fonts/malgun.ttf";
 
@@ -1192,7 +1192,7 @@ Expected: `KoreanTMP.asset` appears under `Resources/Fonts/`, console logs succe
 - [ ] **Step 3: Commit (after user confirms creation)**
 
 ```bash
-git add Assets/FateWeaver/Unity/Editor/KoreanTmpFontCreator.cs Assets/FateWeaver/Unity/Resources/Fonts
+git add Assets/Unity/Editor/KoreanTmpFontCreator.cs Assets/Unity/Resources/Fonts
 git commit -m "feat(unity): editor menu to create dynamic Korean TMP font"
 ```
 
@@ -1201,20 +1201,20 @@ git commit -m "feat(unity): editor menu to create dynamic Korean TMP font"
 ## Task 9: Remove `RuntimeOsFontLoader`; update PLAYTEST.md
 
 **Files:**
-- Delete: `Assets/FateWeaver/Unity/RuntimeOsFontLoader.cs` (+ `.meta`)
-- Delete: `Assets/FateWeaver/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs` (+ `.meta`)
-- Modify: `Assets/FateWeaver/Unity/PLAYTEST.md`
+- Delete: `Assets/Unity/RuntimeOsFontLoader.cs` (+ `.meta`)
+- Delete: `Assets/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs` (+ `.meta`)
+- Modify: `Assets/Unity/PLAYTEST.md`
 
 - [ ] **Step 1: Delete the IMGUI font loader and its test**
 
 ```bash
-git rm Assets/FateWeaver/Unity/RuntimeOsFontLoader.cs Assets/FateWeaver/Unity/RuntimeOsFontLoader.cs.meta
-git rm Assets/FateWeaver/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs Assets/FateWeaver/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs.meta
+git rm Assets/Unity/RuntimeOsFontLoader.cs Assets/Unity/RuntimeOsFontLoader.cs.meta
+git rm Assets/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs Assets/Tests/UnityEditMode/RuntimeOsFontLoaderTests.cs.meta
 ```
 
 - [ ] **Step 2: Replace PLAYTEST.md setup section**
 
-Replace `Assets/FateWeaver/Unity/PLAYTEST.md` with:
+Replace `Assets/Unity/PLAYTEST.md` with:
 
 ```markdown
 # Fate Weaver Unity Playtest (uGUI)
@@ -1224,12 +1224,12 @@ Replace `Assets/FateWeaver/Unity/PLAYTEST.md` with:
 1. `Window ▸ TextMeshPro ▸ Import TMP Essential Resources`.
 2. `Fate Weaver ▸ Create Korean TMP Font` — `Resources/Fonts/KoreanTMP.asset` 생성.
    - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 `C:/Windows/Fonts/malgun.ttf`를
-     Source로, Atlas Population Mode = **Dynamic**으로 생성해 `Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
+     Source로, Atlas Population Mode = **Dynamic**으로 생성해 `Assets/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
 3. `Fate Weaver ▸ Build Playtest Scene (uGUI)` — Canvas/CardView 프리팹/컨트롤러를 생성·연결.
 
 ## 실행
 
-1. `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
+1. `Assets/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
 2. 상단 버튼으로 시나리오 선택.
 3. 미래 영역의 카드(이미지 + 이름/실행 순서 + 하단 설명)를 눌러 주/보조 대상 선택.
 4. 개입 액션(실행 순서 ±2 / 교환 / 고정) 적용.
@@ -1251,7 +1251,7 @@ User: Unity reloads (no `RuntimeOsFontLoader` references remain — Task 6 alrea
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Unity/PLAYTEST.md
+git add Assets/Unity/PLAYTEST.md
 git commit -m "chore(unity): drop IMGUI font loader; document uGUI playtest setup"
 ```
 

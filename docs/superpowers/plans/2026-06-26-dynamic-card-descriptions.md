@@ -15,7 +15,7 @@
 Spec: [`docs/superpowers/specs/2026-06-26-card-descriptions-design.md`](../specs/2026-06-26-card-descriptions-design.md).
 
 Core types the composer reads (already exist — do NOT modify):
-- `CardDefinition` (`Assets/FateWeaver/Core/Cards/CardDefinition.cs`): `Id`, `Name`, `Category` ( `Execution`|`Intervention` ), `IReadOnlyList<EffectData> Effects`, `InterventionActionData InterventionAction`.
+- `CardDefinition` (`Assets/Core/Cards/CardDefinition.cs`): `Id`, `Name`, `Category` ( `Execution`|`Intervention` ), `IReadOnlyList<EffectData> Effects`, `InterventionActionData InterventionAction`.
 - `EffectData` (same file): `EffectKey Key`, `int EffectValue`, `Condition Condition`, `int? SuccessEffectValue`, `StatusKey? StatusKey`, `StatusLifetime? StatusLifetime`, `StatusApplyTarget StatusTarget`. For `ApplyStatus`, the magnitude rides on `EffectValue`.
 - `EffectKeys` (`Core/Effects/EffectKey.cs`): `Damage`, `NullifyNextPlayerConditionReward`, `GrantNextPlayerAttackDamageBonus`, `ApplyStatus`.
 - `Condition` records (`Core/Conditions/Condition.cs`): `FirstToTrigger`, `WithinNth(int N)`, `BeforeNextEnemyAttack`, `AdjacentCardIs(AdjacentDirection Direction, Side Side, CardType? Type)`, `SameTarget`, `NoPrecedingCardOfSide(Side Side)`, `AllOf(IReadOnlyList<Condition> Conditions)`.
@@ -25,8 +25,8 @@ Core types the composer reads (already exist — do NOT modify):
 - `InterventionActionData` (`Core/Intervention/InterventionActionData.cs`): `InterventionActionKey Key`, `int InterventionCost`, `int EffectValue`. `InterventionActionKeys`: `ChangeExecutionOrder`, `SwapExecutionOrder`, `Lock`.
 
 The active decks the output must satisfy:
-- `StarterDeck` (`Assets/FateWeaver/Simulation/StarterDeck.cs`): slash `Damage(4)`; guard `ApplyStatus(Block, ThisTurn, Self, 4)`; quick_cut `Damage(2, FirstToTrigger→8)`; counter_stance `Damage(4, AdjacentCardIs(Previous,Enemy,Attack)→9)`; cover `ApplyStatus(Block, ThisTurn, Self, 2, AdjacentCardIs(Next,Enemy,Attack)→7)`; pull_forward `Intervention(ChangeExecutionOrder, -2)`; swap_positions `Intervention(SwapExecutionOrder, 0)`.
-- `GoblinDeck` (`Assets/FateWeaver/Simulation/GoblinDeck.cs`): goblin_jab `Damage(4)`; crude_guard `ApplyStatus(Block, ThisTurn, Self, 3)`; sly_jab `Damage(3, NoPrecedingCardOfSide(Player)→6)`.
+- `StarterDeck` (`Assets/Core/Simulation/StarterDeck.cs`): slash `Damage(4)`; guard `ApplyStatus(Block, ThisTurn, Self, 4)`; quick_cut `Damage(2, FirstToTrigger→8)`; counter_stance `Damage(4, AdjacentCardIs(Previous,Enemy,Attack)→9)`; cover `ApplyStatus(Block, ThisTurn, Self, 2, AdjacentCardIs(Next,Enemy,Attack)→7)`; pull_forward `Intervention(ChangeExecutionOrder, -2)`; swap_positions `Intervention(SwapExecutionOrder, 0)`.
+- `GoblinDeck` (`Assets/Core/Simulation/GoblinDeck.cs`): goblin_jab `Damage(4)`; crude_guard `ApplyStatus(Block, ThisTurn, Self, 3)`; sly_jab `Damage(3, NoPrecedingCardOfSide(Player)→6)`.
 
 **Scope = coverage by KIND, not by card.** The vocab must handle every `EffectKey`, `Condition` record, `StatusKey`, and `InterventionActionKey` above, so any card composed from them renders. Curated flavor-only ids with no effects (e.g. scenario-only `preemptive_thrust`) are out of scope and render to empty string.
 
@@ -40,13 +40,13 @@ When Unity re-imports the new files it generates `.meta` siblings — commit tho
 
 ## File Structure
 
-- **Create** `Assets/FateWeaver/Simulation/Descriptions/IDescriptionVocabulary.cs` — the localization seam (one interface).
-- **Create** `Assets/FateWeaver/Simulation/Descriptions/DescriptionComposer.cs` — pure assembly logic; depends only on Core types + the interface.
-- **Create** `Assets/FateWeaver/Simulation/Descriptions/KoreanDescriptionVocabulary.cs` — the single Korean implementation, owns all wording/grammar, exposes a stateless `Instance` singleton.
-- **Create** `Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs` — composer logic isolated via a fake vocab + a few real Korean integration assertions (headless).
-- **Modify** `Assets/FateWeaver/Unity/CardPresentation.cs` — call `DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance)` instead of `PlaytestKoreanText.CardDescription(def.Id)`.
-- **Modify** `Assets/FateWeaver/Unity/PlaytestKoreanText.cs` — delete the `CardDescription` method (now dead).
-- **Modify** `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs` — drop the `CardDescription` assertions (logic moved to headless); keep only the `CardName` assertions, renamed.
+- **Create** `Assets/Core/Simulation/Descriptions/IDescriptionVocabulary.cs` — the localization seam (one interface).
+- **Create** `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs` — pure assembly logic; depends only on Core types + the interface.
+- **Create** `Assets/Core/Simulation/Descriptions/KoreanDescriptionVocabulary.cs` — the single Korean implementation, owns all wording/grammar, exposes a stateless `Instance` singleton.
+- **Create** `Assets/Core/Tests/EditMode/DescriptionComposerTests.cs` — composer logic isolated via a fake vocab + a few real Korean integration assertions (headless).
+- **Modify** `Assets/Unity/CardPresentation.cs` — call `DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance)` instead of `PlaytestKoreanText.CardDescription(def.Id)`.
+- **Modify** `Assets/Unity/PlaytestKoreanText.cs` — delete the `CardDescription` method (now dead).
+- **Modify** `Assets/Tests/UnityEditMode/CardDescriptionTests.cs` — drop the `CardDescription` assertions (logic moved to headless); keep only the `CardName` assertions, renamed.
 
 All `Descriptions/*.cs` are in namespace `FateWeaver.Simulation.Descriptions` and reference only `FateWeaver.Core.*` (no UnityEngine) so they stay headless.
 
@@ -55,7 +55,7 @@ All `Descriptions/*.cs` are in namespace `FateWeaver.Simulation.Descriptions` an
 ## Task 1: Description vocabulary interface
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Descriptions/IDescriptionVocabulary.cs`
+- Create: `Assets/Core/Simulation/Descriptions/IDescriptionVocabulary.cs`
 
 This is a pure interface (no behavior to test on its own); it's exercised by the composer tests in Task 2 via a fake implementation, and by the Korean impl in Task 3. The composer asks the vocab for each *fragment* (no trailing period — the composer adds sentence punctuation). All condition rendering, including `AllOf`, lives behind a single `Condition` method so Korean grammar stays in the implementation.
 
@@ -106,7 +106,7 @@ Expected: build SUCCEEDS, 0 tests matched/run (no tests yet). A compile error he
 - [ ] **Step 3: Commit**
 
 ```bash
-git add "Assets/FateWeaver/Simulation/Descriptions/IDescriptionVocabulary.cs"
+git add "Assets/Core/Simulation/Descriptions/IDescriptionVocabulary.cs"
 git commit -m "feat(descriptions): add IDescriptionVocabulary seam"
 ```
 
@@ -115,8 +115,8 @@ git commit -m "feat(descriptions): add IDescriptionVocabulary seam"
 ## Task 2: DescriptionComposer (logic isolated with a fake vocab)
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Descriptions/DescriptionComposer.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs`
+- Create: `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs`
+- Test: `Assets/Core/Tests/EditMode/DescriptionComposerTests.cs`
 
 The composer owns sentence STRUCTURE only; the fake vocab returns marker strings so tests assert assembly (base/condition/success ordering, separators, intervention vs effect dispatch) without depending on Korean wording.
 
@@ -318,7 +318,7 @@ Expected: PASS, 8 tests.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add "Assets/FateWeaver/Simulation/Descriptions/DescriptionComposer.cs" "Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs"
+git add "Assets/Core/Simulation/Descriptions/DescriptionComposer.cs" "Assets/Core/Tests/EditMode/DescriptionComposerTests.cs"
 git commit -m "feat(descriptions): add DescriptionComposer with structure tests"
 ```
 
@@ -327,8 +327,8 @@ git commit -m "feat(descriptions): add DescriptionComposer with structure tests"
 ## Task 3: KoreanDescriptionVocabulary (real wording)
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Descriptions/KoreanDescriptionVocabulary.cs`
-- Test: append to `Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs`
+- Create: `Assets/Core/Simulation/Descriptions/KoreanDescriptionVocabulary.cs`
+- Test: append to `Assets/Core/Tests/EditMode/DescriptionComposerTests.cs`
 
 The Korean impl owns every word. It mirrors the existing wording in `PlaytestKoreanText` where sensible. Note: conditional cards now show the *actual success value* (e.g. "방어 7"), not the old "+5" delta — this is the intended behavior from the spec (numbers follow the data).
 
@@ -601,7 +601,7 @@ Expected: PASS, all prior tests still green.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add "Assets/FateWeaver/Simulation/Descriptions/KoreanDescriptionVocabulary.cs" "Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs"
+git add "Assets/Core/Simulation/Descriptions/KoreanDescriptionVocabulary.cs" "Assets/Core/Tests/EditMode/DescriptionComposerTests.cs"
 git commit -m "feat(descriptions): Korean vocabulary + integration tests"
 ```
 
@@ -610,15 +610,15 @@ git commit -m "feat(descriptions): Korean vocabulary + integration tests"
 ## Task 4: Wire CardPresentation to the composer; remove the dead switch
 
 **Files:**
-- Modify: `Assets/FateWeaver/Unity/CardPresentation.cs` (lines 45 and 59 — the two `PlaytestKoreanText.CardDescription(def.Id)` calls)
-- Modify: `Assets/FateWeaver/Unity/PlaytestKoreanText.cs` (delete `CardDescription`, lines 46-73)
-- Modify: `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs` (drop CardDescription assertions)
+- Modify: `Assets/Unity/CardPresentation.cs` (lines 45 and 59 — the two `PlaytestKoreanText.CardDescription(def.Id)` calls)
+- Modify: `Assets/Unity/PlaytestKoreanText.cs` (delete `CardDescription`, lines 46-73)
+- Modify: `Assets/Tests/UnityEditMode/CardDescriptionTests.cs` (drop CardDescription assertions)
 
 This layer is Unity (UnityEngine) — NOT headless. Verification is the user running Play after the edits (report nothing as "verified" beyond compile reasoning; ask the user to confirm in-editor). The `DescriptionComposer`/`KoreanDescriptionVocabulary` live in `FateWeaver.Simulation`, which `FateWeaver.Unity` already references (it uses `GoblinDeck`, `PlaytestKoreanText` imports `FateWeaver.Simulation`), so no asmdef change is needed.
 
 - [ ] **Step 1: Add the Descriptions using to CardPresentation**
 
-In `Assets/FateWeaver/Unity/CardPresentation.cs`, add to the using block (after `using FateWeaver.Core.Combat;`):
+In `Assets/Unity/CardPresentation.cs`, add to the using block (after `using FateWeaver.Core.Combat;`):
 
 ```csharp
 using FateWeaver.Simulation.Descriptions;
@@ -642,11 +642,11 @@ In `CardPresentation.FromDefinition` (line ~59) replace the identical line with 
 
 - [ ] **Step 3: Delete the dead CardDescription method**
 
-In `Assets/FateWeaver/Unity/PlaytestKoreanText.cs`, delete the entire `CardDescription` method (the block from `public static string CardDescription(string id)` through its closing brace, lines 46-73). Leave `CardName`, `StatusName`, and the rest intact. Remove now-unused usings only if the compiler flags them (it should not — others remain used).
+In `Assets/Unity/PlaytestKoreanText.cs`, delete the entire `CardDescription` method (the block from `public static string CardDescription(string id)` through its closing brace, lines 46-73). Leave `CardName`, `StatusName`, and the rest intact. Remove now-unused usings only if the compiler flags them (it should not — others remain used).
 
 - [ ] **Step 4: Trim the obsolete UnityEditMode test**
 
-The description coverage now lives in the headless `DescriptionComposerTests`. Replace the contents of `Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs` with only the still-valid `CardName` assertions:
+The description coverage now lives in the headless `DescriptionComposerTests`. Replace the contents of `Assets/Tests/UnityEditMode/CardDescriptionTests.cs` with only the still-valid `CardName` assertions:
 
 ```csharp
 using NUnit.Framework;
@@ -686,7 +686,7 @@ The Unity layer has no headless path. Ask the user to: open the project, let it 
 - [ ] **Step 7: Commit (after user confirms compile/Play)**
 
 ```bash
-git add "Assets/FateWeaver/Unity/CardPresentation.cs" "Assets/FateWeaver/Unity/PlaytestKoreanText.cs" "Assets/FateWeaver/Tests/UnityEditMode/CardDescriptionTests.cs"
+git add "Assets/Unity/CardPresentation.cs" "Assets/Unity/PlaytestKoreanText.cs" "Assets/Tests/UnityEditMode/CardDescriptionTests.cs"
 git commit -m "feat(descriptions): drive CardPresentation from the composer, drop hardcoded switch"
 ```
 

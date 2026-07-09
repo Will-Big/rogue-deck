@@ -15,7 +15,7 @@
 Spec: [`docs/superpowers/specs/2026-06-27-warden-lock-enemy-design.md`](../specs/2026-06-27-warden-lock-enemy-design.md).
 
 Current seams to use:
-- `IEnemyTurnPolicy` (`Assets/FateWeaver/Simulation/Enemies/IEnemyTurnPolicy.cs`) is the enemy card selection seam.
+- `IEnemyTurnPolicy` (`Assets/Core/Simulation/Enemies/IEnemyTurnPolicy.cs`) is the enemy card selection seam.
 - `RandomMovesetPolicy` is deterministic per `(seed, turnIndex)` but is not a no-replacement deck cycle; Warden needs a new stateful `ShuffleBagPolicy`.
 - `CardDefinition.StartsLocked` already exists; `DeckCombatSession.BeginTurn` bakes it into `ExecutionCardInstance.IsLocked`.
 - Intervention lock/reorder rejection already exists for locked cards. This plan adds the missing execution order-fold immunity.
@@ -48,14 +48,14 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj
 ## Task 1: Add `NoFollowingCardOfSide`
 
 **Files:**
-- Modify: `Assets/FateWeaver/Core/Conditions/Condition.cs`
-- Modify: `Assets/FateWeaver/Core/Conditions/ConditionEvaluator.cs`
-- Modify: `Assets/FateWeaver/Simulation/Authoring/EffectSpec.cs`
-- Modify: `Assets/FateWeaver/Simulation/Authoring/CardSpecMapper.cs`
-- Modify: `Assets/FateWeaver/Simulation/Descriptions/KoreanDescriptionVocabulary.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/ConditionEvaluatorTests.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/CardSpecMapperTests.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/DescriptionComposerTests.cs`
+- Modify: `Assets/Core/Conditions/Condition.cs`
+- Modify: `Assets/Core/Conditions/ConditionEvaluator.cs`
+- Modify: `Assets/Core/Simulation/Authoring/EffectSpec.cs`
+- Modify: `Assets/Core/Simulation/Authoring/CardSpecMapper.cs`
+- Modify: `Assets/Core/Simulation/Descriptions/KoreanDescriptionVocabulary.cs`
+- Test: `Assets/Core/Tests/EditMode/ConditionEvaluatorTests.cs`
+- Test: `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs`
+- Test: `Assets/Core/Tests/EditMode/DescriptionComposerTests.cs`
 
 - [ ] **Step 1: Write failing evaluator tests**
 
@@ -147,8 +147,8 @@ Expected: PASS.
 ## Task 2: Add `ShuffleBagPolicy`
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Enemies/ShuffleBagPolicy.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/ShuffleBagPolicyTests.cs`
+- Create: `Assets/Core/Simulation/Enemies/ShuffleBagPolicy.cs`
+- Test: `Assets/Core/Tests/EditMode/ShuffleBagPolicyTests.cs`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -195,8 +195,8 @@ Expected: PASS.
 ## Task 3: Add `SelfLockPolicy`
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/Enemies/SelfLockPolicy.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SelfLockPolicyTests.cs`
+- Create: `Assets/Core/Simulation/Enemies/SelfLockPolicy.cs`
+- Test: `Assets/Core/Tests/EditMode/SelfLockPolicyTests.cs`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -244,8 +244,8 @@ Expected: PASS.
 ## Task 4: Make locked enemy cards immune to execution order folding
 
 **Files:**
-- Modify: `Assets/FateWeaver/Simulation/DeckCombatSession.cs`
-- Test: extend `Assets/FateWeaver/Tests/EditMode/SlowHasteStatusTests.cs` or create `LockedEnemyInitiativeTests.cs`
+- Modify: `Assets/Core/Simulation/DeckCombatSession.cs`
+- Test: extend `Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs` or create `LockedEnemyInitiativeTests.cs`
 
 - [ ] **Step 1: Write failing session test**
 
@@ -299,8 +299,8 @@ Expected: PASS.
 ## Task 5: Add `WardenDeck`
 
 **Files:**
-- Create: `Assets/FateWeaver/Simulation/WardenDeck.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/WardenDeckTests.cs`
+- Create: `Assets/Core/Simulation/WardenDeck.cs`
+- Test: `Assets/Core/Tests/EditMode/WardenDeckTests.cs`
 
 - [ ] **Step 1: Write failing deck contract tests**
 
@@ -349,7 +349,7 @@ Card data:
 
 - [ ] **Step 3: Add Korean enemy name**
 
-In `Assets/FateWeaver/Unity/PlaytestKoreanText.cs`, map `WardenDeck.EnemyId` to `"간수"` in `EnemyName`.
+In `Assets/Unity/PlaytestKoreanText.cs`, map `WardenDeck.EnemyId` to `"간수"` in `EnemyName`.
 
 This is a tiny Unity file touch, but still no Warden encounter wiring in this plan.
 
@@ -368,7 +368,7 @@ Expected: PASS.
 ## Task 6: Add Warden combat integration proof
 
 **Files:**
-- Test: `Assets/FateWeaver/Tests/EditMode/WardenDeckTests.cs` or `Assets/FateWeaver/Tests/EditMode/WardenIntegrationTests.cs`
+- Test: `Assets/Core/Tests/EditMode/WardenDeckTests.cs` or `Assets/Core/Tests/EditMode/WardenIntegrationTests.cs`
 
 - [ ] **Step 1: Write integration tests**
 

@@ -41,26 +41,25 @@ Throughout this plan, **"Run the EditMode tests"** means the `dotnet test` comma
 ## File Structure
 
 ```
-Assets/FateWeaver/
-  Core/
-    FateWeaver.Core.asmdef            # noEngineReferences:true, no references
-    Cards/
-      Side.cs                         # enum Side { Player, Enemy }
-      CardType.cs                     # enum CardType { Attack, Skill, Defense }
-      CardDefinition.cs               # immutable card template + EffectData
-    Effects/
-      EffectKey.cs                    # readonly record struct EffectKey + EffectKeys catalog
-      IEffectHandler.cs               # handler interface + EffectContext
-      EffectRegistry.cs               # EffectKey -> IEffectHandler
-      DamageHandler.cs                # the one M1 handler
-    Combat/
-      ExecutionCardInstance.cs           # runtime card in the zone
-      Enemy.cs                        # enemy entity
-      CombatState.cs                  # player hp, enemies, zone, fate energy
-      FutureZone.cs                   # ordered cards + ResolutionOrder()
-      TurnResolver.cs                 # the resolution loop
-    Events/
-      ResolutionEvent.cs              # TurnStarted / CardResolved / TurnEnded / Outcome
+Assets/Core/
+  FateWeaver.Core.asmdef            # noEngineReferences:true, no references
+  Cards/
+    Side.cs                         # enum Side { Player, Enemy }
+    CardType.cs                     # enum CardType { Attack, Skill, Defense }
+    CardDefinition.cs               # immutable card template + EffectData
+  Effects/
+    EffectKey.cs                    # readonly record struct EffectKey + EffectKeys catalog
+    IEffectHandler.cs               # handler interface + EffectContext
+    EffectRegistry.cs               # EffectKey -> IEffectHandler
+    DamageHandler.cs                # the one M1 handler
+  Combat/
+    ExecutionCardInstance.cs        # runtime card in the zone
+    Enemy.cs                        # enemy entity
+    CombatState.cs                  # player hp, enemies, zone, fate energy
+    FutureZone.cs                   # ordered cards + ResolutionOrder()
+    TurnResolver.cs                 # the resolution loop
+  Events/
+    ResolutionEvent.cs              # TurnStarted / CardResolved / TurnEnded / Outcome
   Tests/
     EditMode/
       FateWeaver.Tests.EditMode.asmdef
@@ -72,21 +71,21 @@ Assets/FateWeaver/
 
 All Core types live in **one assembly**, so sub-namespace cross-references (e.g., `Effects` ↔ `Combat`) are fine.
 
-The headless test harness already exists (created during setup): `Tests/Headless/FateWeaver.Tests.Headless.csproj`. It `<Compile Include>`s `Assets/FateWeaver/Core/**/*.cs` and `Assets/FateWeaver/Tests/EditMode/**/*.cs`, so new Core/test files are picked up automatically — no edits to the csproj are needed during these tasks.
+The headless test harness already exists (created during setup): `Tests/Headless/FateWeaver.Tests.Headless.csproj`. It compiles `Assets/Core` source files plus `Assets/Core/Tests/EditMode/**/*.cs`, while excluding nested Simulation/Test folders from the Core glob, so new Core/test files are picked up automatically — no edits to the csproj are needed during these tasks.
 
 ---
 
 ## Task M0.1: Core assembly + folders + base enums
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/InterventionWeaver.Core.asmdef`
-- Create: `Assets/FateWeaver/Core/Cards/Side.cs`
-- Create: `Assets/FateWeaver/Core/Cards/CardType.cs`
-- Create: `Assets/FateWeaver/Core/Compat/IsExternalInit.cs` (lets C# 9 `record`/`init` compile under Unity 6 / netstandard2.1)
+- Create: `Assets/Core/FateWeaver.Core.asmdef`
+- Create: `Assets/Core/Cards/Side.cs`
+- Create: `Assets/Core/Cards/CardType.cs`
+- Create: `Assets/Core/Compat/IsExternalInit.cs` (lets C# 9 `record`/`init` compile under Unity 6 / netstandard2.1)
 
 - [ ] **Step 1: Create the Core asmdef**
 
-`Assets/FateWeaver/Core/InterventionWeaver.Core.asmdef`:
+`Assets/Core/FateWeaver.Core.asmdef`:
 
 ```json
 {
@@ -107,7 +106,7 @@ The headless test harness already exists (created during setup): `Tests/Headless
 
 - [ ] **Step 2: Create the base enums**
 
-`Assets/FateWeaver/Core/Cards/Side.cs`:
+`Assets/Core/Cards/Side.cs`:
 
 ```csharp
 namespace FateWeaver.Core.Cards
@@ -120,7 +119,7 @@ namespace FateWeaver.Core.Cards
 }
 ```
 
-`Assets/FateWeaver/Core/Cards/CardType.cs`:
+`Assets/Core/Cards/CardType.cs`:
 
 ```csharp
 namespace FateWeaver.Core.Cards
@@ -134,7 +133,7 @@ namespace FateWeaver.Core.Cards
 }
 ```
 
-`Assets/FateWeaver/Core/Compat/IsExternalInit.cs` (required for C# 9 records under Unity's netstandard2.1; excluded automatically on net6.0 where the BCL already provides it):
+`Assets/Core/Compat/IsExternalInit.cs` (required for C# 9 records under Unity's netstandard2.1; excluded automatically on net6.0 where the BCL already provides it):
 
 ```csharp
 #if !NET5_0_OR_GREATER
@@ -153,7 +152,7 @@ Run the EditMode tests (the `dotnet test` command from "Running Tests"). Expecte
 - [ ] **Step 4: Commit** (skip if the project is not yet a git repo — see "Note on git" at the end)
 
 ```bash
-git add Assets/FateWeaver/Core
+git add Assets/Core
 git commit -m "feat(core): add FateWeaver.Core assembly (noEngineReferences) and base enums"
 ```
 
@@ -162,12 +161,12 @@ git commit -m "feat(core): add FateWeaver.Core assembly (noEngineReferences) and
 ## Task M0.2: EditMode test assembly + smoke test (green pipeline)
 
 **Files:**
-- Create: `Assets/FateWeaver/Tests/EditMode/FateWeaver.Tests.EditMode.asmdef`
-- Test: `Assets/FateWeaver/Tests/EditMode/SmokeTests.cs`
+- Create: `Assets/Core/Tests/EditMode/FateWeaver.Tests.EditMode.asmdef`
+- Test: `Assets/Core/Tests/EditMode/SmokeTests.cs`
 
 - [ ] **Step 1: Create the test asmdef**
 
-`Assets/FateWeaver/Tests/EditMode/FateWeaver.Tests.EditMode.asmdef`:
+`Assets/Core/Tests/EditMode/FateWeaver.Tests.EditMode.asmdef`:
 
 ```json
 {
@@ -198,7 +197,7 @@ git commit -m "feat(core): add FateWeaver.Core assembly (noEngineReferences) and
 
 - [ ] **Step 2: Write the smoke test**
 
-`Assets/FateWeaver/Tests/EditMode/SmokeTests.cs`:
+`Assets/Core/Tests/EditMode/SmokeTests.cs`:
 
 ```csharp
 using NUnit.Framework;
@@ -225,7 +224,7 @@ Expected: `SmokeTests.Enums_are_referenceable_from_tests` PASSES. This proves th
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Assets/FateWeaver/Tests
+git add Assets/Core/Tests
 git commit -m "test: add EditMode test assembly and green smoke test"
 ```
 
@@ -237,7 +236,7 @@ This proves the architectural boundary is enforced by the build, not just conven
 
 - [ ] **Step 1: Temporarily add a UnityEngine reference inside Core**
 
-Add this line at the top of `Assets/FateWeaver/Core/Cards/Side.cs`:
+Add this line at the top of `Assets/Core/Cards/Side.cs`:
 
 ```csharp
 using UnityEngine; // TEMP - must fail to compile
@@ -260,16 +259,16 @@ Delete the `using UnityEngine;` line. Confirm the Console is clean again and the
 Plain data/record types with no behavior. Verified by a construction smoke test.
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Effects/EffectKey.cs`
-- Create: `Assets/FateWeaver/Core/Cards/CardDefinition.cs`
-- Create: `Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs`
-- Create: `Assets/FateWeaver/Core/Combat/Enemy.cs`
-- Create: `Assets/FateWeaver/Core/Events/ResolutionEvent.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/SmokeTests.cs` (add a test)
+- Create: `Assets/Core/Effects/EffectKey.cs`
+- Create: `Assets/Core/Cards/CardDefinition.cs`
+- Create: `Assets/Core/Combat/ExecutionCardInstance.cs`
+- Create: `Assets/Core/Combat/Enemy.cs`
+- Create: `Assets/Core/Events/ResolutionEvent.cs`
+- Test: `Assets/Core/Tests/EditMode/SmokeTests.cs` (add a test)
 
 - [ ] **Step 1: EffectKey + catalog**
 
-`Assets/FateWeaver/Core/Effects/EffectKey.cs`:
+`Assets/Core/Effects/EffectKey.cs`:
 
 ```csharp
 using System;
@@ -302,7 +301,7 @@ namespace FateWeaver.Core.Effects
 
 - [ ] **Step 2: CardDefinition + EffectData**
 
-`Assets/FateWeaver/Core/Cards/CardDefinition.cs`:
+`Assets/Core/Cards/CardDefinition.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -326,7 +325,7 @@ namespace FateWeaver.Core.Cards
 
 - [ ] **Step 3: ExecutionCardInstance**
 
-`Assets/FateWeaver/Core/Combat/ExecutionCardInstance.cs`:
+`Assets/Core/Combat/ExecutionCardInstance.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
@@ -350,7 +349,7 @@ namespace FateWeaver.Core.Combat
 
 - [ ] **Step 4: Enemy**
 
-`Assets/FateWeaver/Core/Combat/Enemy.cs`:
+`Assets/Core/Combat/Enemy.cs`:
 
 ```csharp
 namespace FateWeaver.Core.Combat
@@ -373,7 +372,7 @@ namespace FateWeaver.Core.Combat
 
 - [ ] **Step 5: ResolutionEvent timeline types**
 
-`Assets/FateWeaver/Core/Events/ResolutionEvent.cs`:
+`Assets/Core/Events/ResolutionEvent.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
@@ -399,7 +398,7 @@ namespace FateWeaver.Core.Events
 
 - [ ] **Step 6: Add a construction smoke test**
 
-Append to `Assets/FateWeaver/Tests/EditMode/SmokeTests.cs` (inside the `SmokeTests` class):
+Append to `Assets/Core/Tests/EditMode/SmokeTests.cs` (inside the `SmokeTests` class):
 
 ```csharp
         [Test]
@@ -425,7 +424,7 @@ Expected: `Can_build_a_card_and_enemy` PASSES.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core Assets/FateWeaver/Tests/EditMode/SmokeTests.cs
+git add Assets/Core Assets/Core/Tests/EditMode/SmokeTests.cs
 git commit -m "feat(core): add card, enemy, effect-key, and event data types"
 ```
 
@@ -436,12 +435,12 @@ git commit -m "feat(core): add card, enemy, effect-key, and event data types"
 The zone resolves cards by ascending execution order (lower = earlier — spec §4.1), ties broken by insertion order (stable).
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Combat/FutureZone.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/FutureZoneTests.cs`
+- Create: `Assets/Core/Combat/FutureZone.cs`
+- Test: `Assets/Core/Tests/EditMode/FutureZoneTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-`Assets/FateWeaver/Tests/EditMode/FutureZoneTests.cs`:
+`Assets/Core/Tests/EditMode/FutureZoneTests.cs`:
 
 ```csharp
 using System.Linq;
@@ -484,7 +483,7 @@ Run the EditMode tests. Expected: compile error / FAIL — `FutureZone` does not
 
 - [ ] **Step 3: Write the minimal implementation**
 
-`Assets/FateWeaver/Core/Combat/FutureZone.cs`:
+`Assets/Core/Combat/FutureZone.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -515,7 +514,7 @@ Run the EditMode tests. Expected: `ResolutionOrder_is_ascending_and_stable_on_ti
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core/Combat/FutureZone.cs Assets/FateWeaver/Tests/EditMode/FutureZoneTests.cs
+git add Assets/Core/Combat/FutureZone.cs Assets/Core/Tests/EditMode/FutureZoneTests.cs
 git commit -m "feat(core): add FutureZone with stable ascending resolution order"
 ```
 
@@ -526,15 +525,15 @@ git commit -m "feat(core): add FutureZone with stable ascending resolution order
 Effects are dispatched by `EffectKey` to an `IEffectHandler` (spec §4.4). M1 ships the one handler we need: damage. The handler writes its outcome into the context; the resolver (M1.4) reads it.
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Combat/CombatState.cs` (depends on `FutureZone` from M1.2)
-- Create: `Assets/FateWeaver/Core/Effects/IEffectHandler.cs`
-- Create: `Assets/FateWeaver/Core/Effects/EffectRegistry.cs`
-- Create: `Assets/FateWeaver/Core/Effects/DamageHandler.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/DamageHandlerTests.cs`
+- Create: `Assets/Core/Combat/CombatState.cs` (depends on `FutureZone` from M1.2)
+- Create: `Assets/Core/Effects/IEffectHandler.cs`
+- Create: `Assets/Core/Effects/EffectRegistry.cs`
+- Create: `Assets/Core/Effects/DamageHandler.cs`
+- Test: `Assets/Core/Tests/EditMode/DamageHandlerTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-`Assets/FateWeaver/Tests/EditMode/DamageHandlerTests.cs`:
+`Assets/Core/Tests/EditMode/DamageHandlerTests.cs`:
 
 ```csharp
 using NUnit.Framework;
@@ -602,7 +601,7 @@ Run the EditMode tests. Expected: compile error / FAIL — `CombatState`, `IEffe
 
 - [ ] **Step 3: Write the implementations**
 
-`Assets/FateWeaver/Core/Combat/CombatState.cs` (depends on `FutureZone` from M1.2):
+`Assets/Core/Combat/CombatState.cs` (depends on `FutureZone` from M1.2):
 
 ```csharp
 using System.Collections.Generic;
@@ -622,7 +621,7 @@ namespace FateWeaver.Core.Combat
 }
 ```
 
-`Assets/FateWeaver/Core/Effects/IEffectHandler.cs`:
+`Assets/Core/Effects/IEffectHandler.cs`:
 
 ```csharp
 using FateWeaver.Core.Combat;
@@ -649,7 +648,7 @@ namespace FateWeaver.Core.Effects
 }
 ```
 
-`Assets/FateWeaver/Core/Effects/EffectRegistry.cs`:
+`Assets/Core/Effects/EffectRegistry.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -670,7 +669,7 @@ namespace FateWeaver.Core.Effects
 }
 ```
 
-`Assets/FateWeaver/Core/Effects/DamageHandler.cs`:
+`Assets/Core/Effects/DamageHandler.cs`:
 
 ```csharp
 using FateWeaver.Core.Cards;
@@ -710,7 +709,7 @@ Run the EditMode tests. Expected: all three `DamageHandlerTests` PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core/Combat/CombatState.cs Assets/FateWeaver/Core/Effects Assets/FateWeaver/Tests/EditMode/DamageHandlerTests.cs
+git add Assets/Core/Combat/CombatState.cs Assets/Core/Effects Assets/Core/Tests/EditMode/DamageHandlerTests.cs
 git commit -m "feat(core): add combat state, effect handler registry, and DamageHandler"
 ```
 
@@ -721,12 +720,12 @@ git commit -m "feat(core): add combat state, effect handler registry, and Damage
 The resolver freezes the zone order, runs each card's effects through the registry, emits one `CardResolved` per card (aggregating damage), and brackets the turn with `TurnStarted`/`TurnEnded` (with win/lose outcome). Spec §6.
 
 **Files:**
-- Create: `Assets/FateWeaver/Core/Combat/TurnResolver.cs`
-- Test: `Assets/FateWeaver/Tests/EditMode/TurnResolverTests.cs`
+- Create: `Assets/Core/Combat/TurnResolver.cs`
+- Test: `Assets/Core/Tests/EditMode/TurnResolverTests.cs`
 
 - [ ] **Step 1: Write the failing test**
 
-`Assets/FateWeaver/Tests/EditMode/TurnResolverTests.cs`:
+`Assets/Core/Tests/EditMode/TurnResolverTests.cs`:
 
 ```csharp
 using System.Linq;
@@ -821,7 +820,7 @@ Run the EditMode tests. Expected: compile error / FAIL — `TurnResolver` does n
 
 - [ ] **Step 3: Write the implementation**
 
-`Assets/FateWeaver/Core/Combat/TurnResolver.cs`:
+`Assets/Core/Combat/TurnResolver.cs`:
 
 ```csharp
 using System.Collections.Generic;
@@ -885,7 +884,7 @@ Run the EditMode tests. Expected: all `TurnResolverTests` PASS, and every prior 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Assets/FateWeaver/Core/Combat/TurnResolver.cs Assets/FateWeaver/Tests/EditMode/TurnResolverTests.cs
+git add Assets/Core/Combat/TurnResolver.cs Assets/Core/Tests/EditMode/TurnResolverTests.cs
 git commit -m "feat(core): add TurnResolver with ordered resolution and event timeline"
 ```
 

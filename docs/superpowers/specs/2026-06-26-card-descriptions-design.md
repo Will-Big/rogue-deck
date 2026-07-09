@@ -5,7 +5,7 @@
 **목표:** 카드 설명을 *카드별 하드코딩 문자열*에서 ***효과(EffectData)별 조각을 조립하고 숫자는 데이터에서 치환*** 하는 방식으로 전환한다. 이로써 (a) 수치 튜닝 시 설명 자동 갱신, (b) 다국어 대비, (c) 미래의 동적 카드 변화(수치변화/능력추가/변신/대상변경)를 한 메커니즘으로 수용한다.
 
 ## 배경 (현재 문제)
-- 설명은 `Assets/FateWeaver/Unity/PlaytestKoreanText.cs`의 `CardDescription(string id)` **하드코딩 switch**에서 나옴(`case "slash": return "피해 4.";`).
+- 설명은 `Assets/Unity/PlaytestKoreanText.cs`의 `CardDescription(string id)` **하드코딩 switch**에서 나옴(`case "slash": return "피해 4.";`).
 - `CardAsset.Description` 필드는 존재하나 **죽어 있음**(ToSpec이 안 실음, 런타임 미사용) — 예전 `Art`와 동일 안티패턴.
 - 숫자가 문자열에 박혀 있어 **튜닝 시 설명이 어긋남**. `CardDescriptionTests`(UnityEditMode)도 문자열 하드코딩.
 

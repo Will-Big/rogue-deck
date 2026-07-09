@@ -28,11 +28,11 @@
 
   <ItemGroup>
     <!-- Pure-C# core (no UnityEngine references) -->
-    <Compile Include="../../Assets/FateWeaver/Core/**/*.cs" />
+    <Compile Include="../../Assets/Core/**/*.cs" Exclude="../../Assets/Core/Simulation/**/*.cs;../../Assets/Core/Tests/**/*.cs" />
     <!-- Pure-C# simulation layer -->
-    <Compile Include="../../Assets/FateWeaver/Simulation/**/*.cs" />
+    <Compile Include="../../Assets/Core/Simulation/**/*.cs" />
     <!-- Shared EditMode test sources (must use only NUnit, no UnityEngine.TestTools) -->
-    <Compile Include="../../Assets/FateWeaver/Tests/EditMode/**/*.cs" />
+    <Compile Include="../../Assets/Core/Tests/EditMode/**/*.cs" />
   </ItemGroup>
 
 </Project>
