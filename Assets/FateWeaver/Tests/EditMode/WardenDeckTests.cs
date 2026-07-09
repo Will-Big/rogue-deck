@@ -28,7 +28,7 @@ namespace FateWeaver.Tests
                 new[] { "warden_swing", "warden_swing", "warden_smash", "warden_uppercut", "warden_block", "warden_brace" },
                 cards.Select(c => c.Id).ToArray());
             Assert.IsTrue(cards.All(c => c.Side == Side.Enemy));
-            Assert.IsTrue(cards.All(c => c.Cost == 0));
+            Assert.IsTrue(cards.All(c => c.EnergyCost == 0));
             Assert.IsTrue(cards.All(c => c.Category == CardCategory.Execution));
         }
 
@@ -38,21 +38,21 @@ namespace FateWeaver.Tests
             var smash = WardenDeck.Deck().Single(c => c.Id == "warden_smash");
             var smashEffect = smash.Effects.Single();
             Assert.AreEqual(EffectKeys.Damage, smashEffect.Key);
-            Assert.AreEqual(2, smashEffect.Amount);
-            Assert.AreEqual(7, smashEffect.SuccessAmount);
+            Assert.AreEqual(2, smashEffect.EffectValue);
+            Assert.AreEqual(7, smashEffect.SuccessEffectValue);
             Assert.AreEqual(Side.Enemy, ((NoFollowingCardOfSide)smashEffect.Condition).Side);
 
             var uppercut = WardenDeck.Deck().Single(c => c.Id == "warden_uppercut");
             var uppercutEffect = uppercut.Effects.Single();
-            Assert.AreEqual(2, uppercutEffect.Amount);
-            Assert.AreEqual(7, uppercutEffect.SuccessAmount);
+            Assert.AreEqual(2, uppercutEffect.EffectValue);
+            Assert.AreEqual(7, uppercutEffect.SuccessEffectValue);
             Assert.AreEqual(Side.Enemy, ((NoPrecedingCardOfSide)uppercutEffect.Condition).Side);
 
             var brace = WardenDeck.Deck().Single(c => c.Id == "warden_brace");
             var braceEffect = brace.Effects.Single();
             Assert.AreEqual(EffectKeys.ApplyStatus, braceEffect.Key);
-            Assert.AreEqual(3, braceEffect.Amount);
-            Assert.AreEqual(6, braceEffect.SuccessAmount);
+            Assert.AreEqual(3, braceEffect.EffectValue);
+            Assert.AreEqual(6, braceEffect.SuccessEffectValue);
             Assert.AreEqual(StatusKeys.Block, braceEffect.StatusKey.Value);
             Assert.AreEqual(Side.Enemy, ((NoPrecedingCardOfSide)braceEffect.Condition).Side);
         }

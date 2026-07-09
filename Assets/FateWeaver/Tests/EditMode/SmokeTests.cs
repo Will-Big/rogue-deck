@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
             var enemy = new FateWeaver.Core.Combat.Enemy("goblin", 12);
 
             Assert.AreEqual("strike", def.Id);
-            Assert.AreEqual(2, card.Initiative);
+            Assert.AreEqual(2, card.ExecutionOrder);
             Assert.AreEqual(12, enemy.Hp);
         }
     }

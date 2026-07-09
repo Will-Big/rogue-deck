@@ -33,8 +33,8 @@ namespace FateWeaver.Simulation
         public static InterventionActionRegistry InterventionActions()
         {
             var actions = new InterventionActionRegistry();
-            actions.Register(new ChangeInitiativeHandler());
-            actions.Register(new SwapInitiativeHandler());
+            actions.Register(new ChangeExecutionOrderHandler());
+            actions.Register(new SwapExecutionOrderHandler());
             actions.Register(new LockHandler());
             return actions;
         }

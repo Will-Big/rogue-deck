@@ -71,14 +71,14 @@ namespace FateWeaver.Simulation
             }
 
             var def = _deck.Hand[handIndex];
-            if (def.Category != CardCategory.Execution || _state.FateEnergy < def.Cost)
+            if (def.Category != CardCategory.Execution || _state.FateEnergy < def.EnergyCost)
             {
                 return false;
             }
 
-            _state.FateEnergy -= def.Cost;
+            _state.FateEnergy -= def.EnergyCost;
             var placed = new ExecutionCardInstance(def);
-            placed.Initiative = StatusInitiative.InitiativeFor(placed.Initiative, _state.PlayerStatuses, _statuses);
+            placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(placed.ExecutionOrder, _state.PlayerStatuses, _statuses);
             _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
             return true;
@@ -168,7 +168,7 @@ namespace FateWeaver.Simulation
                 inst.IsLocked = enemyCard.StartsLocked;
                 if (!inst.IsLocked)
                 {
-                    inst.Initiative = StatusInitiative.InitiativeFor(inst.Initiative, enemyBag, _statuses);
+                    inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(inst.ExecutionOrder, enemyBag, _statuses);
                 }
 
                 _state.Zone.Add(inst);

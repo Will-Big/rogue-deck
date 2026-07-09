@@ -25,21 +25,21 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual("goblin_jab", thrust.Id);
             Assert.AreEqual("찌르기", thrust.Name);
-            Assert.AreEqual(6, thrust.BaseInitiative);
-            Assert.AreEqual(4, thrust.Effects.Single().Amount);
+            Assert.AreEqual(6, thrust.BaseExecutionOrder);
+            Assert.AreEqual(4, thrust.Effects.Single().EffectValue);
 
             Assert.AreEqual("crude_guard", guard.Id);
             Assert.AreEqual("조잡한 방어", guard.Name);
             Assert.AreEqual(CardType.Defense, guard.Type);
-            Assert.AreEqual(4, guard.BaseInitiative);
-            Assert.AreEqual(3, guard.Effects.Single().Amount);
+            Assert.AreEqual(4, guard.BaseExecutionOrder);
+            Assert.AreEqual(3, guard.Effects.Single().EffectValue);
             Assert.AreEqual(StatusKeys.Block, guard.Effects.Single().StatusKey.Value);
 
             Assert.AreEqual("sly_jab", sly.Id);
             Assert.AreEqual("약삭빠른 찌르기", sly.Name);
-            Assert.AreEqual(3, sly.BaseInitiative);
-            Assert.AreEqual(3, sly.Effects.Single().Amount);
-            Assert.AreEqual(6, sly.Effects.Single().SuccessAmount);
+            Assert.AreEqual(3, sly.BaseExecutionOrder);
+            Assert.AreEqual(3, sly.Effects.Single().EffectValue);
+            Assert.AreEqual(6, sly.Effects.Single().SuccessEffectValue);
             var condition = (NoPrecedingCardOfSide)sly.Effects.Single().Condition;
             Assert.AreEqual(Side.Player, condition.Side);
         }

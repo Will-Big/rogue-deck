@@ -8,9 +8,9 @@ namespace FateWeaver.Tests
 {
     public class FutureZoneTests
     {
-        private static ExecutionCardInstance Card(string id, int initiative, Side side = Side.Player)
+        private static ExecutionCardInstance Card(string id, int executionOrder, Side side = Side.Player)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, initiative,
+            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
             return new ExecutionCardInstance(def);
         }
@@ -25,12 +25,12 @@ namespace FateWeaver.Tests
 
             var order = zone.ResolutionOrder().Select(c => c.Def.Id).ToArray();
 
-            // ascending initiative; B before C because of stable tie-break
+            // ascending executionOrder; B before C because of stable tie-break
             CollectionAssert.AreEqual(new[] { "B", "C", "A" }, order);
         }
 
         [Test]
-        public void ResolutionOrder_prioritizes_player_cards_when_initiative_ties()
+        public void ResolutionOrder_prioritizes_player_cards_when_executionOrder_ties()
         {
             var zone = new FutureZone();
             zone.Add(Card("enemy", 2, Side.Enemy));

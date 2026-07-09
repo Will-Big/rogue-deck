@@ -10,7 +10,7 @@ namespace FateWeaver.Core.Intervention
                 && ctx.Target != null
                 && ctx.Intervention != null
                 && ctx.Intervention.Key == Key
-                && ctx.State.FateEnergy >= ctx.Intervention.Cost;
+                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost;
 
         public void Apply(InterventionPlayContext ctx)
         {
@@ -19,8 +19,8 @@ namespace FateWeaver.Core.Intervention
                 return;
             }
 
-            ctx.State.FateEnergy -= ctx.Intervention.Cost;
-            ctx.FateEnergySpent = ctx.Intervention.Cost;
+            ctx.State.FateEnergy -= ctx.Intervention.InterventionCost;
+            ctx.FateEnergySpent = ctx.Intervention.InterventionCost;
             ctx.Target.IsLocked = true;
         }
     }

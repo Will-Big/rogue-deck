@@ -18,78 +18,78 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec Slash() => new CardSpec
         {
             Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 4,
-            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 4 } }
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
+            Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, EffectValue = 4 } }
         };
 
         public static CardSpec Guard() => new CardSpec
         {
             Id = "guard", Name = "막기", Side = Side.Player, Type = CardType.Defense,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 4, Status = StatusKindRef.Block,
+                Kind = EffectKind.ApplyStatus, EffectValue = 4, Status = StatusKindRef.Block,
                 Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self } }
         };
 
         public static CardSpec QuickCut() => new CardSpec
         {
             Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, Amount = 2, Condition = ConditionKind.FirstToTrigger, SuccessAmount = 8 } }
+                Kind = EffectKind.Damage, EffectValue = 2, Condition = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 } }
         };
 
         public static CardSpec Counter() => new CardSpec
         {
             Id = "counter_stance", Name = "반격", Side = Side.Player, Type = CardType.Attack,
-            Category = CardCategory.Execution, Cost = 2, BaseInitiative = 7,
+            Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 7,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, Amount = 4, Condition = ConditionKind.PrevIsEnemyAttack, SuccessAmount = 9 } }
+                Kind = EffectKind.Damage, EffectValue = 4, Condition = ConditionKind.PrevIsEnemyAttack, SuccessEffectValue = 9 } }
         };
 
         public static CardSpec Cover() => new CardSpec
         {
             Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 2, Status = StatusKindRef.Block,
+                Kind = EffectKind.ApplyStatus, EffectValue = 2, Status = StatusKindRef.Block,
                 Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
-                Condition = ConditionKind.NextIsEnemyAttack, SuccessAmount = 7 } }
+                Condition = ConditionKind.NextIsEnemyAttack, SuccessEffectValue = 7 } }
         };
 
         public static CardSpec PullForward() => new CardSpec
         {
             Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Intervention, Cost = 1, Intervention = InterventionKind.ChangeInitiative, InterventionAmount = -1
+            Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.ChangeExecutionOrder, InterventionEffectValue = -1
         };
 
         public static CardSpec PushBack() => new CardSpec
         {
             Id = "push_back", Name = "밀어내기", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Intervention, Cost = 1, Intervention = InterventionKind.ChangeInitiative, InterventionAmount = 1
+            Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.ChangeExecutionOrder, InterventionEffectValue = 1
         };
 
         public static CardSpec SwapPositions() => new CardSpec
         {
             Id = "swap_positions", Name = "자리 교환", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Intervention, Cost = 1, Intervention = InterventionKind.SwapInitiative, InterventionAmount = 0
+            Category = CardCategory.Intervention, EnergyCost = 1, Intervention = InterventionKind.SwapExecutionOrder, InterventionEffectValue = 0
         };
 
         public static CardSpec SlowHex() => new CardSpec
         {
             Id = "slow_hex", Name = "둔화", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 3,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Slow,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Slow,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy } }
         };
 
         public static CardSpec QuickenSelf() => new CardSpec
         {
             Id = "quicken_self", Name = "가속", Side = Side.Player, Type = CardType.Skill,
-            Category = CardCategory.Execution, Cost = 1, BaseInitiative = 3,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.ApplyStatus, Amount = 3, Status = StatusKindRef.Haste,
+                Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Haste,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self } }
         };
     }

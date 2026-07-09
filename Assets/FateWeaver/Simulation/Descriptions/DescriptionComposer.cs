@@ -29,14 +29,14 @@ namespace FateWeaver.Simulation.Descriptions
         private static string RenderEffect(EffectData effect, IDescriptionVocabulary vocab)
         {
             var sb = new StringBuilder();
-            sb.Append(Fragment(effect, effect.Amount, vocab)).Append('.');
+            sb.Append(Fragment(effect, effect.EffectValue, vocab)).Append('.');
 
-            if (effect.Condition != null && effect.SuccessAmount.HasValue)
+            if (effect.Condition != null && effect.SuccessEffectValue.HasValue)
             {
                 sb.Append(' ')
                   .Append(vocab.Condition(effect.Condition))
                   .Append(' ')
-                  .Append(Fragment(effect, effect.SuccessAmount.Value, vocab))
+                  .Append(Fragment(effect, effect.SuccessEffectValue.Value, vocab))
                   .Append('.');
             }
 

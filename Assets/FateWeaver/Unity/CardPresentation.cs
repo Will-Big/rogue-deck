@@ -12,8 +12,8 @@ namespace FateWeaver.Unity
     {
         public string Id { get; }
         public string DisplayName { get; }
-        public int Initiative { get; }
-        public int Cost { get; }
+        public int ExecutionOrder { get; }
+        public int EnergyCost { get; }
         public Side Side { get; }
         public string Description { get; }
         public Sprite Art { get; }
@@ -21,14 +21,14 @@ namespace FateWeaver.Unity
         public IReadOnlyList<CardStatusIcon> StatusIcons { get; }
 
         public CardPresentation(
-            string id, string displayName, int initiative, int cost, Side side,
+            string id, string displayName, int executionOrder, int energyCost, Side side,
             string description, Sprite art, bool isLocked,
             IReadOnlyList<CardStatusIcon> statusIcons = null)
         {
             Id = id;
             DisplayName = displayName;
-            Initiative = initiative;
-            Cost = cost;
+            ExecutionOrder = executionOrder;
+            EnergyCost = energyCost;
             Side = side;
             Description = description;
             Art = art;
@@ -36,7 +36,7 @@ namespace FateWeaver.Unity
             StatusIcons = statusIcons ?? Array.Empty<CardStatusIcon>();
         }
 
-        /// <summary>Zone card (placed instance) — shows its current initiative. <paramref name="art"/> resolves
+        /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
         /// the sprite by id (e.g. from the authored CardAsset.Art); null falls back to Resources lookup.</summary>
         public static CardPresentation From(ExecutionCardInstance card, Func<string, Sprite> art = null)
         {
@@ -44,8 +44,8 @@ namespace FateWeaver.Unity
             return new CardPresentation(
                 def.Id,
                 PlaytestKoreanText.CardName(def.Id, def.Name),
-                card.Initiative,
-                def.Cost,
+                card.ExecutionOrder,
+                def.EnergyCost,
                 def.Side,
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
@@ -53,14 +53,14 @@ namespace FateWeaver.Unity
                 StatusIconsFor(card));
         }
 
-        /// <summary>Hand card (definition) — initiative is the base value; cost is the key number.</summary>
+        /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
         public static CardPresentation FromDefinition(CardDefinition def, Func<string, Sprite> art = null)
         {
             return new CardPresentation(
                 def.Id,
                 PlaytestKoreanText.CardName(def.Id, def.Name),
-                def.BaseInitiative,
-                def.Cost,
+                def.BaseExecutionOrder,
+                def.EnergyCost,
                 def.Side,
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),

@@ -8,11 +8,11 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>The 10-card starter deck (7 action : 3 fate). Card-specific initiative values plus
-    /// intervention actions and enemy initiative create the ordering puzzle.</summary>
+    /// <summary>The 10-card starter deck (7 action : 3 fate). Card-specific executionOrder values plus
+    /// intervention actions and enemy executionOrder create the ordering puzzle.</summary>
     public static class StarterDeck
     {
-        public const int DefaultInitiative = 5;
+        public const int DefaultExecutionOrder = 5;
 
         public static IReadOnlyList<CardDefinition> Build()
         {
@@ -35,20 +35,20 @@ namespace FateWeaver.Simulation
         public static CardDefinition Slash() => new CardDefinition(
             "slash", "베기", Side.Player, CardType.Attack, 4,
             new[] { new EffectData(EffectKeys.Damage, 4) })
-            { Cost = 1, Category = CardCategory.Execution };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition Guard() => new CardDefinition(
-            "guard", "막기", Side.Player, CardType.Defense, DefaultInitiative,
+            "guard", "막기", Side.Player, CardType.Defense, DefaultExecutionOrder,
             new[]
             {
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4)
             })
-            { Cost = 1, Category = CardCategory.Execution };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition QuickCut() => new CardDefinition(
-            "quick_cut", "찰나의 베기", Side.Player, CardType.Attack, DefaultInitiative,
+            "quick_cut", "찰나의 베기", Side.Player, CardType.Attack, DefaultExecutionOrder,
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8) })
-            { Cost = 1, Category = CardCategory.Execution };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition Counter() => new CardDefinition(
             "counter_stance", "반격", Side.Player, CardType.Attack, 7,
@@ -58,10 +58,10 @@ namespace FateWeaver.Simulation
                     EffectKeys.Damage, 4,
                     new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack), 9)
             })
-            { Cost = 2, Category = CardCategory.Execution };
+            { EnergyCost = 2, Category = CardCategory.Execution };
 
         public static CardDefinition Cover() => new CardDefinition(
-            "cover", "엄호", Side.Player, CardType.Defense, DefaultInitiative,
+            "cover", "엄호", Side.Player, CardType.Defense, DefaultExecutionOrder,
             new[]
             {
                 new EffectData(EffectKeys.ApplyStatus, 2)
@@ -70,30 +70,30 @@ namespace FateWeaver.Simulation
                     StatusLifetime = StatusLifetime.ThisTurn,
                     StatusTarget = StatusApplyTarget.Self,
                     Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessAmount = 7
+                    SuccessEffectValue = 7
                 }
             })
-            { Cost = 1, Category = CardCategory.Execution };
+            { EnergyCost = 1, Category = CardCategory.Execution };
 
         // --- intervention cards -----------------------------------------------------
 
         public static CardDefinition PullForward() => InterventionCard(
-            "pull_forward", "앞당김", cost: 1,
-            new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2));
+            "pull_forward", "앞당김", interventionCost: 1,
+            new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2));
 
         public static CardDefinition SwapPositions() => InterventionCard(
-            "swap_positions", "자리 교환", cost: 1,
-            new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0));
+            "swap_positions", "자리 교환", interventionCost: 1,
+            new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0));
 
-        private static CardDefinition InterventionCard(string id, string name, int cost, InterventionActionData action) =>
+        private static CardDefinition InterventionCard(string id, string name, int interventionCost, InterventionActionData action) =>
             new CardDefinition(id, name, Side.Player, CardType.Skill, 0, Array.Empty<EffectData>())
-            { Cost = cost, Category = CardCategory.Intervention, InterventionAction = action };
+            { EnergyCost = interventionCost, Category = CardCategory.Intervention, InterventionAction = action };
 
         // --- helper for enemy intent ---------------------------------------
 
-        public static CardDefinition EnemyAttack(string id, string name, int initiative, int damage) =>
-            new CardDefinition(id, name, Side.Enemy, CardType.Attack, initiative,
+        public static CardDefinition EnemyAttack(string id, string name, int executionOrder, int damage) =>
+            new CardDefinition(id, name, Side.Enemy, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) })
-                { Cost = 0, Category = CardCategory.Execution };
+                { EnergyCost = 0, Category = CardCategory.Execution };
     }
 }

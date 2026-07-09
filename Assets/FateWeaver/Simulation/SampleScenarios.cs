@@ -42,27 +42,27 @@ namespace FateWeaver.Simulation
                         "Enemy Jab",
                         Side.Enemy,
                         CardType.Attack,
-                        initiative: 1,
+                        executionOrder: 1,
                         effects: new[] { new EffectData(EffectKeys.Damage, 1) }),
                     new ZoneCardSpec(
                         "quick_cut",
                         "Quick Cut",
                         Side.Player,
                         CardType.Attack,
-                        initiative: 2,
+                        executionOrder: 2,
                         effects: new[]
                         {
                             EffectData.Conditional(
                                 EffectKeys.Damage,
-                                amount: 2,
+                                effectValue: 2,
                                 condition: new FirstToTrigger(),
-                                successAmount: 10)
+                                successEffectValue: 10)
                         })
                 },
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0),
+                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0),
                         "enemy_jab",
                         "quick_cut")
                 });
@@ -83,21 +83,21 @@ namespace FateWeaver.Simulation
                         "Quick Cut",
                         Side.Player,
                         CardType.Attack,
-                        initiative: 1,
+                        executionOrder: 1,
                         effects: new[]
                         {
                             EffectData.Conditional(
                                 EffectKeys.Damage,
-                                amount: 2,
+                                effectValue: 2,
                                 condition: new FirstToTrigger(),
-                                successAmount: 10)
+                                successEffectValue: 10)
                         }),
                     new ZoneCardSpec(
                         "wrist_cut",
                         "Wrist Cut",
                         Side.Enemy,
                         CardType.Attack,
-                        initiative: 2,
+                        executionOrder: 2,
                         effects: new[]
                         {
                             new EffectData(EffectKeys.Damage, 1),
@@ -107,7 +107,7 @@ namespace FateWeaver.Simulation
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0),
+                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0),
                         "quick_cut",
                         "wrist_cut")
                 });
@@ -128,7 +128,7 @@ namespace FateWeaver.Simulation
                         "Wrist Cut",
                         Side.Enemy,
                         CardType.Attack,
-                        initiative: 3,
+                        executionOrder: 3,
                         effects: new[]
                         {
                             new EffectData(EffectKeys.Damage, 3),
@@ -139,29 +139,29 @@ namespace FateWeaver.Simulation
                         "Mark Target",
                         Side.Player,
                         CardType.Skill,
-                        initiative: 4,
+                        executionOrder: 4,
                         effects: new[]
                         {
                             EffectData.Conditional(
                                 EffectKeys.GrantNextPlayerAttackDamageBonus,
-                                amount: 0,
+                                effectValue: 0,
                                 condition: new AdjacentCardIs(
                                     AdjacentDirection.Next,
                                     Side.Player,
                                     CardType.Attack),
-                                successAmount: 6)
+                                successEffectValue: 6)
                         }),
                     new ZoneCardSpec(
                         "chain_slash",
                         "Chain Slash",
                         Side.Player,
                         CardType.Attack,
-                        initiative: 4,
+                        executionOrder: 4,
                         effects: new[]
                         {
                             EffectData.Conditional(
                                 EffectKeys.Damage,
-                                amount: 1,
+                                effectValue: 1,
                                 condition: new AllOf(new Condition[]
                                 {
                                     new AdjacentCardIs(
@@ -170,23 +170,22 @@ namespace FateWeaver.Simulation
                                         CardType.Skill),
                                     new WithinNth(3)
                                 }),
-                                successAmount: 6)
+                                successEffectValue: 6)
                         }),
                     new ZoneCardSpec(
                         "gap_exposure",
                         "Gap Exposure",
                         Side.Enemy,
                         CardType.Attack,
-                        initiative: 6,
+                        executionOrder: 6,
                         effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                 },
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
                         new InterventionActionData(
-                            InterventionActionKeys.ChangeInitiative,
-                            cost: 1,
-                            amount: 2),
+                            InterventionActionKeys.ChangeExecutionOrder,
+                            interventionCost: 1, effectValue: 2),
                         "wrist_cut")
                 });
         }

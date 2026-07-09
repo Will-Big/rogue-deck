@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, Amount = 5 };
+            var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, EffectValue = 5 };
 
             new DamageHandler().Apply(ctx);
 
@@ -36,7 +36,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("b", 10));
             var card = Card(Side.Player, 4);
             card.TargetId = "b";
-            var ctx = new EffectContext { Card = card, State = state, Amount = 4 };
+            var ctx = new EffectContext { Card = card, State = state, EffectValue = 4 };
 
             new DamageHandler().Apply(ctx);
 
@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, Amount = 4 };
+            var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, EffectValue = 4 };
 
             new DamageHandler().Apply(ctx);
 

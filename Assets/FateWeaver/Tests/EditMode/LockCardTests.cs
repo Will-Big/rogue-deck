@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
         private static CardDefinition LockedJab() => new CardDefinition(
             "locked_jab", "고정된 일격", Side.Enemy, CardType.Attack, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) })
-            { Cost = 0, Category = CardCategory.Execution, StartsLocked = true };
+            { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
 
         [Test]
         public void Locked_enemy_card_enters_zone_locked()
@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var session = new DeckCombatSession(
                 new[] { new CardDefinition("p", "p", Side.Player, CardType.Attack, 6,
-                    new[] { new EffectData(EffectKeys.Damage, 1) }) { Cost = 0, Category = CardCategory.Execution } },
+                    new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
                 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
             var jab = session.CurrentOrder.First(c => c.Def.Id == "locked_jab");
@@ -34,9 +34,9 @@ namespace FateWeaver.Tests
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var pull = new CardDefinition("pull", "앞당김", Side.Player, CardType.Skill, 0,
                 System.Array.Empty<EffectData>())
-                { Cost = 1, Category = CardCategory.Intervention,
+                { EnergyCost = 1, Category = CardCategory.Intervention,
                   InterventionAction = new FateWeaver.Core.Intervention.InterventionActionData(
-                      FateWeaver.Core.Intervention.InterventionActionKeys.ChangeInitiative, 1, -2) };
+                      FateWeaver.Core.Intervention.InterventionActionKeys.ChangeExecutionOrder, 1, -2) };
             var session = new DeckCombatSession(
                 new[] { pull }, 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 

@@ -13,7 +13,7 @@ namespace FateWeaver.Core.Effects
         public ResolutionContext ResolutionContext;
         public StatusRegistry StatusRegistry;
         public EffectData Effect;
-        public int Amount;
+        public int EffectValue;
 
         // outputs (read by TurnResolver)
         public int DamageDealt;

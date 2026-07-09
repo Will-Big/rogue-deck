@@ -1,8 +1,8 @@
 namespace FateWeaver.Core.Intervention
 {
-    public sealed class ChangeInitiativeHandler : IInterventionActionHandler
+    public sealed class ChangeExecutionOrderHandler : IInterventionActionHandler
     {
-        public InterventionActionKey Key => InterventionActionKeys.ChangeInitiative;
+        public InterventionActionKey Key => InterventionActionKeys.ChangeExecutionOrder;
 
         public bool CanApply(InterventionPlayContext ctx)
             => ctx != null
@@ -11,7 +11,7 @@ namespace FateWeaver.Core.Intervention
                 && ctx.Intervention != null
                 && ctx.Intervention.Key == Key
                 && !ctx.Target.IsLocked
-                && ctx.State.FateEnergy >= ctx.Intervention.Cost;
+                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost;
 
         public void Apply(InterventionPlayContext ctx)
         {
@@ -20,9 +20,9 @@ namespace FateWeaver.Core.Intervention
                 return;
             }
 
-            ctx.State.FateEnergy -= ctx.Intervention.Cost;
-            ctx.FateEnergySpent = ctx.Intervention.Cost;
-            ctx.Target.Initiative += ctx.Intervention.Amount;
+            ctx.State.FateEnergy -= ctx.Intervention.InterventionCost;
+            ctx.FateEnergySpent = ctx.Intervention.InterventionCost;
+            ctx.Target.ExecutionOrder += ctx.Intervention.EffectValue;
         }
     }
 }

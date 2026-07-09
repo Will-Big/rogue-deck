@@ -16,19 +16,19 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        private static ExecutionCardInstance Card(string id, Side side, int initiative, int damage)
+        private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, initiative,
+            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
             return new ExecutionCardInstance(def);
         }
 
         [Test]
-        public void Resolves_in_initiative_order_and_emits_timeline()
+        public void Resolves_in_executionOrder_order_and_emits_timeline()
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 12));
-            // player card has higher initiative (2) than enemy card (1) => enemy resolves first
+            // player card has higher executionOrder (2) than enemy card (1) => enemy resolves first
             state.Zone.Add(Card("strike", Side.Player, 2, 5));
             state.Zone.Add(Card("jab", Side.Enemy, 1, 3));
 
@@ -40,7 +40,7 @@ namespace FateWeaver.Tests
             Assert.IsInstanceOf<TurnStarted>(events[0]);
             var first = (CardResolved)events[1];
             var second = (CardResolved)events[2];
-            Assert.AreEqual("jab", first.CardId);    // enemy first (lower initiative)
+            Assert.AreEqual("jab", first.CardId);    // enemy first (lower executionOrder)
             Assert.AreEqual("strike", second.CardId);
             Assert.AreEqual(5, second.DamageDealt);
             Assert.IsInstanceOf<TurnEnded>(events[^1]);

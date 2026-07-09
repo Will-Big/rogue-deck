@@ -36,12 +36,12 @@ namespace FateWeaver.Tests
             var slash = StarterDeck.Build().First(c => c.Id == "slash");
             var counter = StarterDeck.Build().First(c => c.Id == "counter_stance");
 
-            Assert.AreEqual(4, slash.BaseInitiative);
-            Assert.AreEqual(4, slash.Effects.Single().Amount);
+            Assert.AreEqual(4, slash.BaseExecutionOrder);
+            Assert.AreEqual(4, slash.Effects.Single().EffectValue);
             Assert.AreEqual("반격", counter.Name);
-            Assert.AreEqual(7, counter.BaseInitiative);
-            Assert.AreEqual(4, counter.Effects.Single().Amount);
-            Assert.AreEqual(9, counter.Effects.Single().SuccessAmount);
+            Assert.AreEqual(7, counter.BaseExecutionOrder);
+            Assert.AreEqual(4, counter.Effects.Single().EffectValue);
+            Assert.AreEqual(9, counter.Effects.Single().SuccessEffectValue);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace FateWeaver.Tests
         {
             var pull = StarterDeck.Build().First(c => c.Id == "pull_forward");
             Assert.AreEqual(CardCategory.Intervention, pull.Category);
-            Assert.AreEqual(pull.Cost, pull.InterventionAction.Cost);
+            Assert.AreEqual(pull.EnergyCost, pull.InterventionAction.InterventionCost);
         }
     }
 }

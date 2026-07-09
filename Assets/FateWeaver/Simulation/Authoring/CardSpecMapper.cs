@@ -18,16 +18,16 @@ namespace FateWeaver.Simulation.Authoring
             {
                 return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, 0, Array.Empty<EffectData>())
                 {
-                    Cost = spec.Cost,
+                    EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
-                    InterventionAction = new InterventionActionData(ToInterventionKey(spec.Intervention), spec.Cost, spec.InterventionAmount)
+                    InterventionAction = new InterventionActionData(ToInterventionKey(spec.Intervention), spec.EnergyCost, spec.InterventionEffectValue)
                 };
             }
 
             var effects = (spec.Effects ?? Array.Empty<EffectSpec>()).Select(ToEffectData).ToArray();
-            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseInitiative, effects)
+            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseExecutionOrder, effects)
             {
-                Cost = spec.Cost,
+                EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution
             };
         }
@@ -39,19 +39,19 @@ namespace FateWeaver.Simulation.Authoring
 
             if (e.Kind == EffectKind.ApplyStatus)
             {
-                return new EffectData(key, e.Amount)
+                return new EffectData(key, e.EffectValue)
                 {
                     StatusKey = ToStatusKey(e.Status),
                     StatusLifetime = ToLifetime(e.Lifetime, e.LifetimeCount),
                     StatusTarget = e.Target,
                     Condition = hasCondition ? ToCondition(e) : null,
-                    SuccessAmount = hasCondition ? e.SuccessAmount : (int?)null
+                    SuccessEffectValue = hasCondition ? e.SuccessEffectValue : (int?)null
                 };
             }
 
             return hasCondition
-                ? EffectData.Conditional(key, e.Amount, ToCondition(e), e.SuccessAmount)
-                : new EffectData(key, e.Amount);
+                ? EffectData.Conditional(key, e.EffectValue, ToCondition(e), e.SuccessEffectValue)
+                : new EffectData(key, e.EffectValue);
         }
 
         private static EffectKey ToEffectKey(EffectKind kind)
@@ -114,9 +114,9 @@ namespace FateWeaver.Simulation.Authoring
         {
             switch (f)
             {
-                case InterventionKind.SwapInitiative: return InterventionActionKeys.SwapInitiative;
+                case InterventionKind.SwapExecutionOrder: return InterventionActionKeys.SwapExecutionOrder;
                 case InterventionKind.Lock: return InterventionActionKeys.Lock;
-                default: return InterventionActionKeys.ChangeInitiative;
+                default: return InterventionActionKeys.ChangeExecutionOrder;
             }
         }
     }

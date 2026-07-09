@@ -85,7 +85,7 @@ namespace FateWeaver.Simulation
             foreach (var card in zoneCards)
             {
                 var def = new CardDefinition(
-                    card.Id, card.Name, card.Side, card.Type, card.Initiative, card.Effects);
+                    card.Id, card.Name, card.Side, card.Type, card.ExecutionOrder, card.Effects);
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);
                 cardsById.Add(card.Id, instance);
@@ -115,7 +115,7 @@ namespace FateWeaver.Simulation
             var summaries = new List<OrderCardSummary>();
             foreach (var card in cards)
             {
-                summaries.Add(new OrderCardSummary(card.Def.Id, card.Def.Side.ToString(), card.Initiative));
+                summaries.Add(new OrderCardSummary(card.Def.Id, card.Def.Side.ToString(), card.ExecutionOrder));
             }
 
             return summaries;

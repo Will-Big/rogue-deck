@@ -87,29 +87,29 @@ namespace FateWeaver.Simulation
                         fateEnergy: 3,
                         zoneCards: new[]
                         {
-                            EnemyAttack("goblin_jab", initiative: 1, damage: 1),
+                            EnemyAttack("goblin_jab", executionOrder: 1, damage: 1),
                             new ZoneCardSpec(
-                                "mark", "Mark", Side.Player, CardType.Skill, initiative: 2,
+                                "mark", "Mark", Side.Player, CardType.Skill, executionOrder: 2,
                                 effects: new[]
                                 {
                                     EffectData.Conditional(
                                         EffectKeys.GrantNextPlayerAttackDamageBonus,
-                                        amount: 0,
+                                        effectValue: 0,
                                         condition: new AllOf(new Condition[]
                                         {
                                             new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Attack),
                                             new BeforeNextEnemyAttack()
                                         }),
-                                        successAmount: 6)
+                                        successEffectValue: 6)
                                 }),
                             new ZoneCardSpec(
-                                "slash", "Slash", Side.Player, CardType.Attack, initiative: 3,
+                                "slash", "Slash", Side.Player, CardType.Attack, executionOrder: 3,
                                 effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                         },
                         interventionPlays: new[]
                         {
                             new InterventionPlaySpec(
-                                new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: 3),
+                                new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 3),
                                 "goblin_jab")
                         })
                 });
@@ -131,34 +131,34 @@ namespace FateWeaver.Simulation
                         fateEnergy: 3,
                         zoneCards: new[]
                         {
-                            EnemyAttack("goblin_jab", initiative: 1, damage: 3),
-                            CounterCard("counter", initiative: 2)
+                            EnemyAttack("goblin_jab", executionOrder: 1, damage: 3),
+                            CounterCard("counter", executionOrder: 2)
                         },
                         interventionPlays: new InterventionPlaySpec[0])
                 });
         }
 
-        private static ZoneCardSpec CounterCard(string id, int initiative)
+        private static ZoneCardSpec CounterCard(string id, int executionOrder)
             => new ZoneCardSpec(
-                id, "Counter Stance", Side.Player, CardType.Defense, initiative,
+                id, "Counter Stance", Side.Player, CardType.Defense, executionOrder,
                 new[]
                 {
                     EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
                     EffectData.Conditional(
                         EffectKeys.Damage,
-                        amount: 0,
+                        effectValue: 0,
                         condition: new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack),
-                        successAmount: 7),
+                        successEffectValue: 7),
                     EffectData.Conditional(
                         EffectKeys.Damage,
-                        amount: 0,
+                        effectValue: 0,
                         condition: new AllOf(new Condition[]
                         {
                             new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack),
                             new WithinNth(3)
                         }),
-                        successAmount: 2)
+                        successEffectValue: 2)
                 });
 
         /// <summary>연쇄 베기 (doc §11.3): deal 1, and if the immediately-previous card is a player action
@@ -179,27 +179,27 @@ namespace FateWeaver.Simulation
                         {
                             new ZoneCardSpec("prep", "Prep", Side.Player, CardType.Skill, 1,
                                 new[] { new EffectData(EffectKeys.Damage, 1) }),
-                            ChainSlashCard("chain", initiative: 2)
+                            ChainSlashCard("chain", executionOrder: 2)
                         },
                         interventionPlays: new InterventionPlaySpec[0])
                 });
         }
 
-        private static ZoneCardSpec ChainSlashCard(string id, int initiative)
+        private static ZoneCardSpec ChainSlashCard(string id, int executionOrder)
             => new ZoneCardSpec(
-                id, "Chain Slash", Side.Player, CardType.Attack, initiative,
+                id, "Chain Slash", Side.Player, CardType.Attack, executionOrder,
                 new[]
                 {
                     new EffectData(EffectKeys.Damage, 1),
                     EffectData.Conditional(
                         EffectKeys.Damage,
-                        amount: 0,
+                        effectValue: 0,
                         condition: new AllOf(new Condition[]
                         {
                             new AdjacentCardIs(AdjacentDirection.Previous, Side.Player), // any player execution card
                             new WithinNth(3)
                         }),
-                        successAmount: 5)
+                        successEffectValue: 5)
                 });
 
         private static TurnScript OpeningTurn(string suffix, string enemyId, int enemyDamage)
@@ -209,13 +209,13 @@ namespace FateWeaver.Simulation
                 fateEnergy: 3,
                 zoneCards: new[]
                 {
-                    EnemyAttack(enemyId + "_" + suffix, initiative: 1, damage: enemyDamage),
-                    QuickCut(quickCutId, initiative: 2)
+                    EnemyAttack(enemyId + "_" + suffix, executionOrder: 1, damage: enemyDamage),
+                    QuickCut(quickCutId, executionOrder: 2)
                 },
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2),
+                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2),
                         quickCutId)
                 });
         }
@@ -232,45 +232,45 @@ namespace FateWeaver.Simulation
                         "Wrist Cut",
                         Side.Enemy,
                         CardType.Attack,
-                        initiative: 1,
+                        executionOrder: 1,
                         effects: new[]
                         {
                             new EffectData(EffectKeys.Damage, 3),
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
                         }),
-                    QuickCut(quickCutId, initiative: 2)
+                    QuickCut(quickCutId, executionOrder: 2)
                 },
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2),
+                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2),
                         quickCutId)
                 });
         }
 
-        private static ZoneCardSpec QuickCut(string id, int initiative)
+        private static ZoneCardSpec QuickCut(string id, int executionOrder)
             => new ZoneCardSpec(
                 id,
                 "Quick Cut",
                 Side.Player,
                 CardType.Attack,
-                initiative,
+                executionOrder,
                 new[]
                 {
                     EffectData.Conditional(
                         EffectKeys.Damage,
-                        amount: 2,
+                        effectValue: 2,
                         condition: new FirstToTrigger(),
-                        successAmount: 10)
+                        successEffectValue: 10)
                 });
 
-        private static ZoneCardSpec EnemyAttack(string id, int initiative, int damage)
+        private static ZoneCardSpec EnemyAttack(string id, int executionOrder, int damage)
             => new ZoneCardSpec(
                 id,
                 id,
                 Side.Enemy,
                 CardType.Attack,
-                initiative,
+                executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
     }
 

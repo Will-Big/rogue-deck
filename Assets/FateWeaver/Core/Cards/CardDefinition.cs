@@ -6,26 +6,26 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Cards
 {
-    /// <summary>One effect entry on a card: which handler + its scalar amount (M1).</summary>
-    public sealed record EffectData(EffectKey Key, int Amount)
+    /// <summary>One effect entry on a card: which handler + its scalar effect value (M1).</summary>
+    public sealed record EffectData(EffectKey Key, int EffectValue)
     {
         public Condition Condition { get; init; }
-        public int? SuccessAmount { get; init; }
+        public int? SuccessEffectValue { get; init; }
 
-        // Status application (read by the ApplyStatus effect handler). Magnitude rides on Amount.
+        // Status application (read by the ApplyStatus effect handler). Magnitude rides on EffectValue.
         public StatusKey? StatusKey { get; init; }
         public StatusLifetime? StatusLifetime { get; init; }
         public StatusApplyTarget StatusTarget { get; init; }
 
         public static EffectData Conditional(
             EffectKey key,
-            int amount,
+            int effectValue,
             Condition condition,
-            int successAmount)
-            => new EffectData(key, amount)
+            int successEffectValue)
+            => new EffectData(key, effectValue)
             {
                 Condition = condition,
-                SuccessAmount = successAmount
+                SuccessEffectValue = successEffectValue
             };
 
         public static EffectData ApplyStatus(
@@ -47,11 +47,11 @@ namespace FateWeaver.Core.Cards
         string Name,
         Side Side,
         CardType Type,
-        int BaseInitiative,
+        int BaseExecutionOrder,
         IReadOnlyList<EffectData> Effects)
     {
         /// <summary>Energy cost to play this card.</summary>
-        public int Cost { get; init; }
+        public int EnergyCost { get; init; }
 
         /// <summary>Execution (effects on the zone) or intervention (zone control).</summary>
         public CardCategory Category { get; init; }

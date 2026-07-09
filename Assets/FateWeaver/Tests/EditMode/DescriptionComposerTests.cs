@@ -22,7 +22,7 @@ namespace FateWeaver.Tests.EditMode
             public string GrantNextAttackBonus(int amount) => "GRANT" + amount;
             public string Condition(Condition condition) => "COND[" + condition.GetType().Name + "]";
             public string Intervention(InterventionActionData intervention)
-                => "INTERVENTION:" + intervention.Key.Id + ":" + intervention.Amount;
+                => "INTERVENTION:" + intervention.Key.Id + ":" + intervention.EffectValue;
         }
 
         private static readonly IDescriptionVocabulary Vocab = new FakeVocabulary();
@@ -73,7 +73,7 @@ namespace FateWeaver.Tests.EditMode
                     StatusLifetime = StatusLifetime.ThisTurn,
                     StatusTarget = StatusApplyTarget.Self,
                     Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessAmount = 7
+                    SuccessEffectValue = 7
                 });
             Assert.AreEqual(
                 "STATUS:block:Self:2:ThisTurn. COND[AdjacentCardIs] STATUS:block:Self:7:ThisTurn.",
@@ -94,9 +94,9 @@ namespace FateWeaver.Tests.EditMode
                 new EffectData[0])
             {
                 Category = CardCategory.Intervention,
-                InterventionAction = new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, -2)
+                InterventionAction = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, -2)
             };
-            Assert.AreEqual("INTERVENTION:change_initiative:-2.", DescriptionComposer.Describe(card, Vocab));
+            Assert.AreEqual("INTERVENTION:change_execution_order:-2.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
@@ -137,12 +137,12 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_pull_forward() =>
-            Assert.AreEqual("한 카드의 주도력 -2.",
+            Assert.AreEqual("한 카드의 실행 순서 -2.",
                 DescriptionComposer.Describe(StarterDeck.PullForward(), Kr));
 
         [Test]
         public void Korean_swap_positions() =>
-            Assert.AreEqual("두 카드의 주도력을 교환.",
+            Assert.AreEqual("두 카드의 실행 순서를 교환.",
                 DescriptionComposer.Describe(StarterDeck.SwapPositions(), Kr));
 
         [Test]

@@ -10,10 +10,10 @@ namespace FateWeaver.Tests
 {
     public class DeckCombatSessionTests
     {
-        private static EnemyIntent Goblin(int initiative, int damage) => new EnemyIntent(
+        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
             new IReadOnlyList<CardDefinition>[]
             {
-                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", initiative, damage) }
+                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", executionOrder, damage) }
             });
 
         private static int HandIndex(DeckCombatSession s, string id)
@@ -54,11 +54,11 @@ namespace FateWeaver.Tests
         [Test]
         public void Quick_cut_pulled_to_the_front_lands_the_first_strike_bonus()
         {
-            // Enemy at initiative 4 acts before the player's cards (base 5) by default.
+            // Enemy at executionOrder 4 acts before the player's cards (base 5) by default.
             var session = NewSession(new[] { StarterDeck.QuickCut(), StarterDeck.PullForward() }, Goblin(4, 3));
-            session.PlayExecutionCard(HandIndex(session, "quick_cut")); // placed at initiative 5
+            session.PlayExecutionCard(HandIndex(session, "quick_cut")); // placed at executionOrder 5
 
-            // pull_forward (-2) on quick_cut -> initiative 3 -> now first.
+            // pull_forward (-2) on quick_cut -> executionOrder 3 -> now first.
             var quickIndex = ZoneIndex(session, "quick_cut");
             Assert.IsTrue(session.PlayInterventionCard(HandIndex(session, "pull_forward"), quickIndex));
 

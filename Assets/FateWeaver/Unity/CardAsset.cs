@@ -16,15 +16,18 @@ namespace FateWeaver.Unity
         public Side Side;
         public CardType Type;
         public CardCategory Category;
-        public int Cost = 1;
-        public int BaseInitiative = 5;
+        [FormerlySerializedAs("Cost")]
+        public int EnergyCost = 1;
+        [FormerlySerializedAs("BaseInitiative")]
+        public int BaseExecutionOrder = 5;
         public Sprite Art;
         [TextArea] public string Description;
         public EffectSpec[] Effects = Array.Empty<EffectSpec>();
         [FormerlySerializedAs("Fate")]
         public InterventionKind Intervention;
+        [FormerlySerializedAs("InterventionAmount")]
         [FormerlySerializedAs("FateAmount")]
-        public int InterventionAmount;
+        public int InterventionEffectValue;
 
         public CardSpec ToSpec() => new CardSpec
         {
@@ -33,11 +36,11 @@ namespace FateWeaver.Unity
             Side = Side,
             Type = Type,
             Category = Category,
-            Cost = Cost,
-            BaseInitiative = BaseInitiative,
+            EnergyCost = EnergyCost,
+            BaseExecutionOrder = BaseExecutionOrder,
             Effects = Effects,
             Intervention = Intervention,
-            InterventionAmount = InterventionAmount
+            InterventionEffectValue = InterventionEffectValue
         };
     }
 }

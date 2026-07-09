@@ -80,7 +80,7 @@ namespace FateWeaver.Simulation
                     card.Name,
                     card.Side,
                     card.Type,
-                    card.Initiative,
+                    card.ExecutionOrder,
                     card.Effects);
                 var instance = new ExecutionCardInstance(definition);
                 state.Zone.Add(instance);

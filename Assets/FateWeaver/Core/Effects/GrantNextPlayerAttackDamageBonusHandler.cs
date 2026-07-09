@@ -14,7 +14,7 @@ namespace FateWeaver.Core.Effects
                 var card = ctx.ResolutionContext.Order[i];
                 if (card.Def.Side == Side.Player && card.Def.Type == CardType.Attack)
                 {
-                    card.AddPendingDamageBonus(ctx.Amount);
+                    card.AddPendingDamageBonus(ctx.EffectValue);
                     ctx.TargetId = card.Def.Id;
                     return;
                 }

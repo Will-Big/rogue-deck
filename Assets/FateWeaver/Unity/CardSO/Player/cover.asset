@@ -17,19 +17,19 @@ MonoBehaviour:
   Side: 0
   Type: 2
   Category: 0
-  Cost: 1
-  BaseInitiative: 5
+  EnergyCost: 1
+  BaseExecutionOrder: 5
   Art: {fileID: 8158265256486050621, guid: c948fe3ade5da6f429c3899eef605bbe, type: 3}
   Description: 
   Effects:
   - Kind: 1
-    Amount: 2
+    EffectValue: 2
     Condition: 5
     ConditionN: 0
-    SuccessAmount: 7
+    SuccessEffectValue: 7
     Status: 3
     Lifetime: 1
     LifetimeCount: 0
     Target: 0
   Intervention: 0
-  InterventionAmount: 0
+  InterventionEffectValue: 0

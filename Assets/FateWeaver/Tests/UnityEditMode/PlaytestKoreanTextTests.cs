@@ -23,7 +23,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual("성공", PlaytestKoreanText.ConditionName(ConditionTier.Success));
             Assert.AreEqual("승리", PlaytestKoreanText.OutcomeName(Outcome.Win));
             Assert.AreEqual("방어", PlaytestKoreanText.StatusName(StatusKeys.Block));
-            Assert.AreEqual("주도력 변경", PlaytestKoreanText.InterventionActionName(InterventionActionKeys.ChangeInitiative));
+            Assert.AreEqual("실행 순서 변경", PlaytestKoreanText.InterventionActionName(InterventionActionKeys.ChangeExecutionOrder));
             Assert.AreEqual("fallback", PlaytestKoreanText.CardName("unknown", "fallback"));
         }
     }

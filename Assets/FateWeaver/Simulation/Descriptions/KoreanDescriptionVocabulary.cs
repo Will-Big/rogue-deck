@@ -52,10 +52,10 @@ namespace FateWeaver.Simulation.Descriptions
 
         public string Intervention(InterventionActionData intervention)
         {
-            if (intervention.Key == InterventionActionKeys.ChangeInitiative)
-                return "한 카드의 주도력 " + (intervention.Amount >= 0 ? "+" + intervention.Amount : intervention.Amount.ToString());
-            if (intervention.Key == InterventionActionKeys.SwapInitiative)
-                return "두 카드의 주도력을 교환";
+            if (intervention.Key == InterventionActionKeys.ChangeExecutionOrder)
+                return "한 카드의 실행 순서 " + (intervention.EffectValue >= 0 ? "+" + intervention.EffectValue : intervention.EffectValue.ToString());
+            if (intervention.Key == InterventionActionKeys.SwapExecutionOrder)
+                return "두 카드의 실행 순서를 교환";
             if (intervention.Key == InterventionActionKeys.Lock)
                 return "한 카드를 고정";
             return string.Empty;

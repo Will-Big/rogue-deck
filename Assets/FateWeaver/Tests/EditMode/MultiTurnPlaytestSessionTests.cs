@@ -42,7 +42,7 @@ namespace FateWeaver.Tests
             // delaying the enemy by hand completes the combo.
             var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo());
             session.ApplyInterventionAction(
-                new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: 3), "goblin_jab");
+                new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 3), "goblin_jab");
 
             var timeline = session.ResolveTurn();
             var mark = timeline.OfType<CardResolved>().Single(e => e.CardId == "mark");
@@ -58,7 +58,7 @@ namespace FateWeaver.Tests
 
             Assert.Throws<InvalidOperationException>(() =>
                 session.ApplyInterventionAction(
-                    new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, 3), "goblin_jab"));
+                    new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, 3), "goblin_jab"));
         }
     }
 }

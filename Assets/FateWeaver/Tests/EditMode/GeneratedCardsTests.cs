@@ -14,13 +14,13 @@ namespace FateWeaver.Tests
             var slash = cards.First(c => c.Id == "slash");
             var counter = cards.First(c => c.Id == "counter_stance");
 
-            Assert.AreEqual(4, slash.BaseInitiative);
-            Assert.AreEqual(4, slash.Effects.Single().Amount);
+            Assert.AreEqual(4, slash.BaseExecutionOrder);
+            Assert.AreEqual(4, slash.Effects.Single().EffectValue);
             Assert.AreEqual("반격", counter.Name);
-            Assert.AreEqual(7, counter.BaseInitiative);
-            Assert.AreEqual(4, counter.Effects.Single().Amount);
+            Assert.AreEqual(7, counter.BaseExecutionOrder);
+            Assert.AreEqual(4, counter.Effects.Single().EffectValue);
             Assert.AreEqual(ConditionKind.PrevIsEnemyAttack, counter.Effects.Single().Condition);
-            Assert.AreEqual(9, counter.Effects.Single().SuccessAmount);
+            Assert.AreEqual(9, counter.Effects.Single().SuccessEffectValue);
         }
     }
 }

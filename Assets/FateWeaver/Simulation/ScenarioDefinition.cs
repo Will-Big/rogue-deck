@@ -70,7 +70,7 @@ namespace FateWeaver.Simulation
         public string Name { get; }
         public Side Side { get; }
         public CardType Type { get; }
-        public int Initiative { get; }
+        public int ExecutionOrder { get; }
         public IReadOnlyList<EffectData> Effects { get; }
 
         public ZoneCardSpec(
@@ -78,14 +78,14 @@ namespace FateWeaver.Simulation
             string name,
             Side side,
             CardType type,
-            int initiative,
+            int executionOrder,
             IReadOnlyList<EffectData> effects)
         {
             Id = id;
             Name = name;
             Side = side;
             Type = type;
-            Initiative = initiative;
+            ExecutionOrder = executionOrder;
             Effects = effects;
         }
     }

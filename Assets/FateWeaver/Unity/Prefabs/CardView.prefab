@@ -246,7 +246,7 @@ GameObject:
   - component: {fileID: 1030000000000000003}
   - component: {fileID: 1030000000000000004}
   m_Layer: 0
-  m_Name: InitiativeBadge
+  m_Name: ExecutionOrderBadge
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -549,7 +549,7 @@ GameObject:
   - component: {fileID: 924496051591240796}
   - component: {fileID: 1185163567138981799}
   m_Layer: 0
-  m_Name: Initiative
+  m_Name: ExecutionOrder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1080,7 +1080,7 @@ GameObject:
   - component: {fileID: 7116304083570510391}
   - component: {fileID: 2897489585936660495}
   m_Layer: 0
-  m_Name: Cost
+  m_Name: EnergyCost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1392,7 +1392,7 @@ MonoBehaviour:
   _art: {fileID: 6263891033719570005}
   _artFallback: {fileID: 4681993690519598642}
   _nameText: {fileID: 4745278057498446098}
-  _initiativeText: {fileID: 924496051591240796}
+  _executionOrderText: {fileID: 924496051591240796}
   _costText: {fileID: 7116304083570510391}
   _descriptionText: {fileID: 6086406749619244364}
   _selectionOutline: {fileID: 5255540204861092008}

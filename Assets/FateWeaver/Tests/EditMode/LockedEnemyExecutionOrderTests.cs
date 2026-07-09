@@ -9,16 +9,16 @@ using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
 {
-    public class LockedEnemyInitiativeTests
+    public class LockedEnemyExecutionOrderTests
     {
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) }) { Cost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab(bool locked) => new CardDefinition(
             locked ? "locked_jab" : "enemy_jab", "찌르기", Side.Enemy, CardType.Attack, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
-            { Cost = 0, Category = CardCategory.Execution, StartsLocked = locked };
+            { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = locked };
 
         [Test]
         public void Locked_enemy_cards_ignore_enemy_slow_when_entering_the_zone()
@@ -43,7 +43,7 @@ namespace FateWeaver.Tests
 
             var jab = session.CurrentOrder.First(c => c.Def.Id == "locked_jab");
             Assert.IsTrue(jab.IsLocked);
-            Assert.AreEqual(5, jab.Initiative);
+            Assert.AreEqual(5, jab.ExecutionOrder);
         }
     }
 }

@@ -14,10 +14,10 @@ namespace FateWeaver.Tests
         private static CardDefinition Def(string id) =>
             CardSpecMapper.ToDefinition(StarterDeckSpecs.Build().First(s => s.Id == id));
 
-        private static EnemyIntent Goblin(int initiative, int damage) => new EnemyIntent(
+        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
             new IReadOnlyList<CardDefinition>[]
             {
-                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", initiative, damage) }
+                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", executionOrder, damage) }
             });
 
         private static int HandIndex(DeckCombatSession s, string id)

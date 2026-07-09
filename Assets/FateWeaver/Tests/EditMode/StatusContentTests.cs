@@ -12,16 +12,16 @@ namespace FateWeaver.Tests
     /// card-applied Vulnerable persists and expires across turns (exercising lifetime in scenarios).</summary>
     public class StatusContentTests
     {
-        private static ZoneCardSpec Strike(string id, int initiative, int damage)
-            => new ZoneCardSpec(id, id, Side.Player, CardType.Attack, initiative,
+        private static ZoneCardSpec Strike(string id, int executionOrder, int damage)
+            => new ZoneCardSpec(id, id, Side.Player, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
-        private static ZoneCardSpec EnemyHit(string id, int initiative, int damage)
-            => new ZoneCardSpec(id, id, Side.Enemy, CardType.Attack, initiative,
+        private static ZoneCardSpec EnemyHit(string id, int executionOrder, int damage)
+            => new ZoneCardSpec(id, id, Side.Enemy, CardType.Attack, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
-        private static ZoneCardSpec Guard(string id, int initiative, int block)
-            => new ZoneCardSpec(id, id, Side.Player, CardType.Defense, initiative,
+        private static ZoneCardSpec Guard(string id, int executionOrder, int block)
+            => new ZoneCardSpec(id, id, Side.Player, CardType.Defense, executionOrder,
                 new[]
                 {
                     EffectData.ApplyStatus(

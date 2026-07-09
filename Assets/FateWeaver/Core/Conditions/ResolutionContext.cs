@@ -3,7 +3,7 @@ using FateWeaver.Core.Combat;
 
 namespace FateWeaver.Core.Conditions
 {
-    /// <summary>Frozen, ordered view of the cards resolving this turn (ascending initiative).
+    /// <summary>Frozen, ordered view of the cards resolving this turn (ascending executionOrder).
     /// Conditions and effect handlers query position/adjacency against this snapshot.</summary>
     public sealed class ResolutionContext
     {

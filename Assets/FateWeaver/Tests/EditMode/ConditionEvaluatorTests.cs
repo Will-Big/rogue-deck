@@ -12,10 +12,10 @@ namespace FateWeaver.Tests
             string id,
             Side side,
             CardType type,
-            int initiative,
+            int executionOrder,
             string targetId = null)
         {
-            var def = new CardDefinition(id, id, side, type, initiative,
+            var def = new CardDefinition(id, id, side, type, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
             return new ExecutionCardInstance(def) { TargetId = targetId };
         }

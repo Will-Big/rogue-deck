@@ -11,10 +11,10 @@ namespace FateWeaver.Simulation.Authoring
         public Side Side;
         public CardType Type;
         public CardCategory Category;
-        public int Cost;
-        public int BaseInitiative;
+        public int EnergyCost;
+        public int BaseExecutionOrder;
         public EffectSpec[] Effects;
         public InterventionKind Intervention;
-        public int InterventionAmount;
+        public int InterventionEffectValue;
     }
 }

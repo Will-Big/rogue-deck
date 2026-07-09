@@ -12,7 +12,7 @@ namespace FateWeaver.Core.Effects
     }
 
     /// <summary>Applies a status (key + lifetime + magnitude) to a holder. Magnitude rides on the
-    /// resolved Amount (e.g. block points). The status's lifetime/parameters live in the EffectData.</summary>
+    /// resolved EffectValue (e.g. block points). The status's lifetime/parameters live in the EffectData.</summary>
     public sealed class ApplyStatusHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.ApplyStatus;
@@ -31,7 +31,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            bag.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.Amount);
+            bag.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
         }
 
         private static StatusBag ResolveBag(EffectContext ctx)

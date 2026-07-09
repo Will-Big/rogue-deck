@@ -16,28 +16,28 @@ namespace FateWeaver.Tests
             new StatusContext { Instance = new StatusInstance(key, StatusLifetime.Turns(2), magnitude) };
 
         [Test]
-        public void Base_behavior_does_not_change_initiative()
+        public void Base_behavior_does_not_change_executionOrder()
         {
             var block = new BlockBehavior();
-            Assert.AreEqual(5, block.ModifyInitiative(5, Ctx(StatusKeys.Block, 3)));
+            Assert.AreEqual(5, block.ModifyExecutionOrder(5, Ctx(StatusKeys.Block, 3)));
         }
 
         [Test]
-        public void Slow_adds_magnitude_to_initiative()
+        public void Slow_adds_magnitude_to_executionOrder()
         {
             var slow = new SlowBehavior();
             Assert.AreEqual(StatusScope.Entity, slow.Scope);
             Assert.AreEqual(StatusKeys.Slow, slow.Key);
-            Assert.AreEqual(8, slow.ModifyInitiative(5, Ctx(StatusKeys.Slow, 3)));
+            Assert.AreEqual(8, slow.ModifyExecutionOrder(5, Ctx(StatusKeys.Slow, 3)));
         }
 
         [Test]
-        public void Haste_subtracts_magnitude_from_initiative()
+        public void Haste_subtracts_magnitude_from_executionOrder()
         {
             var haste = new HasteBehavior();
             Assert.AreEqual(StatusScope.Entity, haste.Scope);
             Assert.AreEqual(StatusKeys.Haste, haste.Key);
-            Assert.AreEqual(2, haste.ModifyInitiative(5, Ctx(StatusKeys.Haste, 3)));
+            Assert.AreEqual(2, haste.ModifyExecutionOrder(5, Ctx(StatusKeys.Haste, 3)));
         }
         private static StatusRegistry Registry()
         {
@@ -53,11 +53,11 @@ namespace FateWeaver.Tests
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
-            Assert.AreEqual(8, StatusInitiative.InitiativeFor(5, bag, Registry()));
+            Assert.AreEqual(8, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
 
             var bag2 = new StatusBag();
             bag2.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 2);
-            Assert.AreEqual(3, StatusInitiative.InitiativeFor(5, bag2, Registry()));
+            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry()));
         }
 
         [Test]
@@ -65,18 +65,18 @@ namespace FateWeaver.Tests
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, Registry()));
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, bag, null));
-            Assert.AreEqual(5, StatusInitiative.InitiativeFor(5, null, Registry()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry()));
         }
 
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab() => new CardDefinition(
             "e_jab", "적찌르기", Side.Enemy, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]
         {
@@ -84,7 +84,7 @@ namespace FateWeaver.Tests
         });
 
         [Test]
-        public void Enemy_slow_raises_next_turn_enemy_card_initiative()
+        public void Enemy_slow_raises_next_turn_enemy_card_executionOrder()
         {
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
@@ -92,18 +92,18 @@ namespace FateWeaver.Tests
             session.ResolveTurn();
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
+            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
         }
 
         [Test]
-        public void Player_haste_lowers_initiative_of_cards_placed_after_it()
+        public void Player_haste_lowers_executionOrder_of_cards_placed_after_it()
         {
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
             session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
             session.PlayExecutionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
-            Assert.AreEqual(2, strike.Initiative); // base 5 - haste 3
+            Assert.AreEqual(2, strike.ExecutionOrder); // base 5 - haste 3
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace FateWeaver.Tests
             Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.Initiative); // base 5 + slow 3
+            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
         }
     }
 }

@@ -18,8 +18,8 @@
 1. `Assets/FateWeaver/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
    - 간수 잠금 적 테스트는 `Assets/FateWeaver/Scenes/FateWeaverWardenPlaytest.unity`를 연다.
 2. 상단 버튼으로 시나리오 선택.
-3. 미래 영역의 카드(이미지 + 이름/주도력 + 하단 설명)를 눌러 주/보조 대상 선택.
-4. 개입 액션(주도력 ±2 / 교환 / 고정) 적용.
+3. 미래 영역의 카드(이미지 + 이름/실행 순서 + 하단 설명)를 눌러 주/보조 대상 선택.
+4. 개입 액션(실행 순서 ±2 / 교환 / 고정) 적용.
 5. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나거나 마지막 턴이면 종료.
 
 ## 범위 / 검증

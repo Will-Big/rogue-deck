@@ -31,7 +31,7 @@ namespace FateWeaver.Tests
             StringAssert.Contains("## Initial Order", markdown);
             StringAssert.Contains("enemy_jab", markdown);
             StringAssert.Contains("## Intervention Plays", markdown);
-            StringAssert.Contains("swap_initiative", markdown);
+            StringAssert.Contains("swap_execution_order", markdown);
             StringAssert.Contains("## Resolution", markdown);
             StringAssert.Contains("quick_cut | Player | Success | damage 10", markdown);
             StringAssert.Contains("## Final State", markdown);

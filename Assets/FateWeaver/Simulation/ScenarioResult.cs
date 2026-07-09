@@ -35,13 +35,13 @@ namespace FateWeaver.Simulation
     {
         public string CardId { get; }
         public string Side { get; }
-        public int Initiative { get; }
+        public int ExecutionOrder { get; }
 
-        public OrderCardSummary(string cardId, string side, int initiative)
+        public OrderCardSummary(string cardId, string side, int executionOrder)
         {
             CardId = cardId;
             Side = side;
-            Initiative = initiative;
+            ExecutionOrder = executionOrder;
         }
     }
 }

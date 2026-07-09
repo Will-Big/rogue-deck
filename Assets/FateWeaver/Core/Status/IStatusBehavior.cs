@@ -19,8 +19,8 @@ namespace FateWeaver.Core.Status
         /// <summary>Card-scoped: return true to nullify/skip the card's resolution (e.g. stun).</summary>
         bool InterceptCardResolve(StatusContext ctx);
 
-        /// <summary>Entity-scoped: fold into the initiative of a card owned by the holder (e.g. slow/haste).</summary>
-        int ModifyInitiative(int initiative, StatusContext ctx);
+        /// <summary>Entity-scoped: fold into the executionOrder of a card owned by the holder (e.g. slow/haste).</summary>
+        int ModifyExecutionOrder(int executionOrder, StatusContext ctx);
     }
 
     /// <summary>Base class with no-op hook defaults. Concrete statuses override what they use.
@@ -32,6 +32,6 @@ namespace FateWeaver.Core.Status
 
         public virtual int ModifyIncomingDamage(int damage, StatusContext ctx) => damage;
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
-        public virtual int ModifyInitiative(int initiative, StatusContext ctx) => initiative;
+        public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
     }
 }

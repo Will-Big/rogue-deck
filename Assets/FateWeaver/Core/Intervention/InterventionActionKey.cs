@@ -19,8 +19,8 @@ namespace FateWeaver.Core.Intervention
 
     public static class InterventionActionKeys
     {
-        public static readonly InterventionActionKey ChangeInitiative = new InterventionActionKey("change_initiative");
-        public static readonly InterventionActionKey SwapInitiative = new InterventionActionKey("swap_initiative");
+        public static readonly InterventionActionKey ChangeExecutionOrder = new InterventionActionKey("change_execution_order");
+        public static readonly InterventionActionKey SwapExecutionOrder = new InterventionActionKey("swap_execution_order");
         public static readonly InterventionActionKey Lock = new InterventionActionKey("lock");
     }
 }

@@ -52,7 +52,7 @@ namespace FateWeaver.Core.Combat
                         ResolutionContext = resolutionContext,
                         StatusRegistry = _statuses,
                         Effect = effect,
-                        Amount = ResolveAmount(effect, tier)
+                        EffectValue = ResolveEffectValue(effect, tier)
                     };
                     _effects.Resolve(effect.Key).Apply(ctx);
                     totalDamage += ctx.DamageDealt;
@@ -124,10 +124,10 @@ namespace FateWeaver.Core.Combat
             return tier;
         }
 
-        private static int ResolveAmount(Cards.EffectData effect, ConditionTier tier)
-            => tier == ConditionTier.Success && effect.SuccessAmount.HasValue
-                ? effect.SuccessAmount.Value
-                : effect.Amount;
+        private static int ResolveEffectValue(Cards.EffectData effect, ConditionTier tier)
+            => tier == ConditionTier.Success && effect.SuccessEffectValue.HasValue
+                ? effect.SuccessEffectValue.Value
+                : effect.EffectValue;
 
         private static Outcome ComputeOutcome(CombatState state)
         {

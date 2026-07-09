@@ -14,7 +14,7 @@ namespace FateWeaver.Simulation.Descriptions
         string Damage(int amount);
 
         /// <summary>e.g. "방어 4", "적 둔화 3 (2턴)". <paramref name="magnitude"/> is the status strength
-        /// (rides on EffectData.Amount); <paramref name="lifetime"/> drives any duration suffix.</summary>
+        /// (rides on EffectData.EffectValue); <paramref name="lifetime"/> drives any duration suffix.</summary>
         string Status(StatusKey key, StatusApplyTarget target, int magnitude, StatusLifetime lifetime);
 
         /// <summary>e.g. "다음 플레이어 조건 보상을 무효화".</summary>
@@ -27,8 +27,8 @@ namespace FateWeaver.Simulation.Descriptions
         /// (e.g. "첫 발동이면", "바로 뒤가 적 공격이면"). Handles AllOf internally.</summary>
         string Condition(Condition condition);
 
-        /// <summary>A complete intervention-card sentence fragment, e.g. "한 카드의 주도력 -2",
-        /// "두 카드의 주도력을 교환", "한 카드를 고정".</summary>
+        /// <summary>A complete intervention-card sentence fragment, e.g. "한 카드의 실행 순서 -2",
+        /// "두 카드의 실행 순서를 교환", "한 카드를 고정".</summary>
         string Intervention(InterventionActionData intervention);
     }
 }

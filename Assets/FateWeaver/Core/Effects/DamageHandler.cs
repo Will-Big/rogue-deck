@@ -13,7 +13,7 @@ namespace FateWeaver.Core.Effects
 
         public void Apply(EffectContext ctx)
         {
-            var amount = ctx.Amount + ctx.Card.ConsumePendingDamageBonus();
+            var amount = ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus();
             if (ctx.Card.Def.Side == Side.Player)
             {
                 var target = SelectEnemy(ctx.State, ctx.Card.TargetId);

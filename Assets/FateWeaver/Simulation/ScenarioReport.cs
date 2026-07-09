@@ -24,7 +24,7 @@ namespace FateWeaver.Simulation
             for (int i = 0; i < order.Count; i++)
             {
                 var card = order[i];
-                sb.AppendLine((i + 1) + ". " + card.CardId + " | " + card.Side + " | initiative " + card.Initiative);
+                sb.AppendLine((i + 1) + ". " + card.CardId + " | " + card.Side + " | execution order " + card.ExecutionOrder);
             }
 
             sb.AppendLine();
@@ -41,7 +41,7 @@ namespace FateWeaver.Simulation
                     line += " / " + play.SecondaryTargetCardId;
                 }
 
-                line += " (cost " + play.Intervention.Cost + ")";
+                line += " (intervention cost " + play.Intervention.InterventionCost + ")";
                 sb.AppendLine(line);
             }
 

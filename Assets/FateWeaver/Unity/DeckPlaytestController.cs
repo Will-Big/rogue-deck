@@ -128,7 +128,7 @@ namespace FateWeaver.Unity
             }
 
             var def = _session.Hand[_armedInterventionHandIndex];
-            var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapInitiative;
+            var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapExecutionOrder;
 
             if (needsTwo && _firstSwapZoneIndex < 0)
             {

@@ -16,10 +16,10 @@ namespace FateWeaver.Core.Combat
         /// <summary>Empties the zone (used when rebuilding it for a new turn).</summary>
         public void Clear() => _cards.Clear();
 
-        /// <summary>Ascending initiative, with player cards before enemy cards on ties.</summary>
+        /// <summary>Ascending executionOrder, with player cards before enemy cards on ties.</summary>
         public IReadOnlyList<ExecutionCardInstance> ResolutionOrder()
             => _cards
-                .OrderBy(c => c.Initiative)
+                .OrderBy(c => c.ExecutionOrder)
                 .ThenBy(c => c.Def.Side == Side.Player ? 0 : 1)
                 .ToList();
     }

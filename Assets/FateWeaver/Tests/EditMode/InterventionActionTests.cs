@@ -20,46 +20,46 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(
             string id,
             Side side,
-            int initiative,
+            int executionOrder,
             EffectData effect)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, initiative, new[] { effect });
+            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder, new[] { effect });
             return new ExecutionCardInstance(def);
         }
 
         [Test]
-        public void ChangeInitiative_spends_cost_and_changes_target_initiative()
+        public void ChangeExecutionOrder_spends_cost_and_changes_target_executionOrder()
         {
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
-            new ChangeInitiativeHandler().Apply(ctx);
+            new ChangeExecutionOrderHandler().Apply(ctx);
 
-            Assert.AreEqual(2, card.Initiative);
+            Assert.AreEqual(2, card.ExecutionOrder);
             Assert.AreEqual(2, state.FateEnergy);
             Assert.AreEqual(1, ctx.FateEnergySpent);
         }
 
         [Test]
-        public void ChangeInitiative_rejects_when_fate_energy_is_insufficient()
+        public void ChangeExecutionOrder_rejects_when_fate_energy_is_insufficient()
         {
             var state = new CombatState { FateEnergy = 0 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
-            Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
-            new ChangeInitiativeHandler().Apply(ctx);
+            Assert.IsFalse(new ChangeExecutionOrderHandler().CanApply(ctx));
+            new ChangeExecutionOrderHandler().Apply(ctx);
 
-            Assert.AreEqual(4, card.Initiative);
+            Assert.AreEqual(4, card.ExecutionOrder);
             Assert.AreEqual(0, state.FateEnergy);
             Assert.AreEqual(0, ctx.FateEnergySpent);
         }
 
         [Test]
-        public void ChangeInitiative_can_turn_basic_condition_into_success_before_resolution()
+        public void ChangeExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
             var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
             state.Enemies.Add(new Enemy("goblin", 12));
@@ -70,9 +70,9 @@ namespace FateWeaver.Tests
                 2,
                 EffectData.Conditional(
                     EffectKeys.Damage,
-                    amount: 2,
+                    effectValue: 2,
                     condition: new FirstToTrigger(),
-                    successAmount: 10));
+                    successEffectValue: 10));
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
@@ -81,28 +81,28 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
             Assert.AreEqual(2, before.DamageDealt);
 
-            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var intervention = new InterventionActionRegistry();
-            intervention.Register(new ChangeInitiativeHandler());
-            intervention.Resolve(InterventionActionKeys.ChangeInitiative)
+            intervention.Register(new ChangeExecutionOrderHandler());
+            intervention.Resolve(InterventionActionKeys.ChangeExecutionOrder)
                 .Apply(new InterventionPlayContext { State = state, Target = player, Intervention = action });
 
             var afterEvents = new TurnResolver(EffectRegistry()).Resolve(state, 0);
             var after = (CardResolved)afterEvents[1];
 
-            Assert.AreEqual(0, player.Initiative);
+            Assert.AreEqual(0, player.ExecutionOrder);
             Assert.AreEqual(ConditionTier.Success, after.ConditionTier);
             Assert.AreEqual(10, after.DamageDealt);
             Assert.AreEqual(2, state.FateEnergy);
         }
 
         [Test]
-        public void SwapInitiative_spends_cost_and_swaps_two_target_initiatives()
+        public void SwapExecutionOrder_spends_cost_and_swaps_two_target_executionOrders()
         {
             var state = new CombatState { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
             var ctx = new InterventionPlayContext
             {
                 State = state,
@@ -111,16 +111,16 @@ namespace FateWeaver.Tests
                 Intervention = action
             };
 
-            new SwapInitiativeHandler().Apply(ctx);
+            new SwapExecutionOrderHandler().Apply(ctx);
 
-            Assert.AreEqual(5, first.Initiative);
-            Assert.AreEqual(1, second.Initiative);
+            Assert.AreEqual(5, first.ExecutionOrder);
+            Assert.AreEqual(1, second.ExecutionOrder);
             Assert.AreEqual(2, state.FateEnergy);
             Assert.AreEqual(1, ctx.FateEnergySpent);
         }
 
         [Test]
-        public void SwapInitiative_can_turn_basic_condition_into_success_before_resolution()
+        public void SwapExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
             var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
             state.Enemies.Add(new Enemy("goblin", 12));
@@ -131,14 +131,14 @@ namespace FateWeaver.Tests
                 2,
                 EffectData.Conditional(
                     EffectKeys.Damage,
-                    amount: 2,
+                    effectValue: 2,
                     condition: new FirstToTrigger(),
-                    successAmount: 10));
+                    successEffectValue: 10));
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
-            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
-            new SwapInitiativeHandler().Apply(new InterventionPlayContext
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
+            new SwapExecutionOrderHandler().Apply(new InterventionPlayContext
             {
                 State = state,
                 Target = enemy,
@@ -149,8 +149,8 @@ namespace FateWeaver.Tests
             var events = new TurnResolver(EffectRegistry()).Resolve(state, 0);
             var resolved = (CardResolved)events[1];
 
-            Assert.AreEqual(2, enemy.Initiative);
-            Assert.AreEqual(1, player.Initiative);
+            Assert.AreEqual(2, enemy.ExecutionOrder);
+            Assert.AreEqual(1, player.ExecutionOrder);
             Assert.AreEqual(ConditionTier.Success, resolved.ConditionTier);
             Assert.AreEqual(10, resolved.DamageDealt);
             Assert.AreEqual(2, state.FateEnergy);
@@ -161,7 +161,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 2, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.Lock, cost: 1, amount: 0);
+            var action = new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1, effectValue: 0);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             new LockHandler().Apply(ctx);
@@ -172,30 +172,30 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void ChangeInitiative_rejects_locked_target()
+        public void ChangeExecutionOrder_rejects_locked_target()
         {
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             card.IsLocked = true;
-            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
-            Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
-            new ChangeInitiativeHandler().Apply(ctx);
+            Assert.IsFalse(new ChangeExecutionOrderHandler().CanApply(ctx));
+            new ChangeExecutionOrderHandler().Apply(ctx);
 
-            Assert.AreEqual(4, card.Initiative);
+            Assert.AreEqual(4, card.ExecutionOrder);
             Assert.AreEqual(3, state.FateEnergy);
             Assert.AreEqual(0, ctx.FateEnergySpent);
         }
 
         [Test]
-        public void SwapInitiative_rejects_when_either_target_is_locked()
+        public void SwapExecutionOrder_rejects_when_either_target_is_locked()
         {
             var state = new CombatState { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
             second.IsLocked = true;
-            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
             var ctx = new InterventionPlayContext
             {
                 State = state,
@@ -204,11 +204,11 @@ namespace FateWeaver.Tests
                 Intervention = action
             };
 
-            Assert.IsFalse(new SwapInitiativeHandler().CanApply(ctx));
-            new SwapInitiativeHandler().Apply(ctx);
+            Assert.IsFalse(new SwapExecutionOrderHandler().CanApply(ctx));
+            new SwapExecutionOrderHandler().Apply(ctx);
 
-            Assert.AreEqual(1, first.Initiative);
-            Assert.AreEqual(5, second.Initiative);
+            Assert.AreEqual(1, first.ExecutionOrder);
+            Assert.AreEqual(5, second.ExecutionOrder);
             Assert.AreEqual(3, state.FateEnergy);
             Assert.AreEqual(0, ctx.FateEnergySpent);
         }
@@ -232,7 +232,7 @@ namespace FateWeaver.Tests
             {
                 clone.Zone.Add(new ExecutionCardInstance(card.Def)
                 {
-                    Initiative = card.Initiative,
+                    ExecutionOrder = card.ExecutionOrder,
                     TargetId = card.TargetId
                 });
             }

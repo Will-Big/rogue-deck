@@ -79,9 +79,9 @@ namespace FateWeaver.Unity
 
         private void WireButtons()
         {
-            _initMinusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, -2)));
-            _initPlusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, 2)));
-            _swapButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.SwapInitiative, 1, 0), needsSecondary: true));
+            _initMinusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, -2)));
+            _initPlusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, 2)));
+            _swapButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, 1, 0), needsSecondary: true));
             _lockButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.Lock, 1, 0)));
 
             _resolveButton.onClick.AddListener(ResolveTurn);

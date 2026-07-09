@@ -17,10 +17,10 @@ MonoBehaviour:
   Side: 0
   Type: 1
   Category: 1
-  Cost: 1
-  BaseInitiative: 0
+  EnergyCost: 1
+  BaseExecutionOrder: 0
   Art: {fileID: 5409132075344508697, guid: 3122fba242e1e0b4cb3a0202157899af, type: 3}
   Description: 
   Effects: []
   Intervention: 1
-  InterventionAmount: -1
+  InterventionEffectValue: -1

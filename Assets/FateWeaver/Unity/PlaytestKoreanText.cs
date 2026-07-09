@@ -94,8 +94,8 @@ namespace FateWeaver.Unity
 
         public static string InterventionActionName(InterventionActionKey key)
         {
-            if (key == InterventionActionKeys.ChangeInitiative) return "주도력 변경";
-            if (key == InterventionActionKeys.SwapInitiative) return "주도력 교환";
+            if (key == InterventionActionKeys.ChangeExecutionOrder) return "실행 순서 변경";
+            if (key == InterventionActionKeys.SwapExecutionOrder) return "실행 순서 교환";
             if (key == InterventionActionKeys.Lock) return "고정";
             return key.ToString();
         }

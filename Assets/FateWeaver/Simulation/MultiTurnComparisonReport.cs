@@ -62,7 +62,7 @@ namespace FateWeaver.Simulation
 
                 sb.Append(cards[i].CardId);
                 sb.Append("(");
-                sb.Append(cards[i].Initiative);
+                sb.Append(cards[i].ExecutionOrder);
                 sb.Append(")");
             }
 

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>One card widget: art (or side-tinted fallback) + name/initiative + description block,
+    /// <summary>One card widget: art (or side-tinted fallback) + name/executionOrder + description block,
     /// a selection outline and a lock badge. Bound from a CardPresentation; clicking raises onClick.</summary>
     public sealed class CardView : MonoBehaviour
     {
@@ -21,7 +21,7 @@ namespace FateWeaver.Unity
         [SerializeField] private Image _art;
         [SerializeField] private Image _artFallback;
         [SerializeField] private TMP_Text _nameText;
-        [SerializeField] private TMP_Text _initiativeText;
+        [SerializeField] private TMP_Text _executionOrderText;
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private Image _selectionOutline;
@@ -61,10 +61,10 @@ namespace FateWeaver.Unity
         public void Bind(CardPresentation data, Action onClick)
         {
             _nameText.text = data.DisplayName;
-            _initiativeText.text = data.Initiative.ToString();
+            _executionOrderText.text = data.ExecutionOrder.ToString();
             if (_costText != null)
             {
-                _costText.text = data.Cost.ToString();
+                _costText.text = data.EnergyCost.ToString();
             }
 
             _descriptionText.text = data.Description;
@@ -210,9 +210,9 @@ namespace FateWeaver.Unity
             LayoutTopStretch(TextRect(_descriptionText), 23f, 175.5f, 23f, 82.4f, scale);
 
             LayoutTopLeft(ParentRect(_costText), 29f, 29f, 48f, 48f, scale);
-            LayoutTopRight(ParentRect(_initiativeText), 25f, 27f, 40f, 40f, scale);
+            LayoutTopRight(ParentRect(_executionOrderText), 25f, 27f, 40f, 40f, scale);
             LayoutTopLeft(TextRect(_costText), 23f, 22f, 34f, 32f, scale);
-            LayoutTopRight(TextRect(_initiativeText), 20f, 19f, 32f, 28f, scale);
+            LayoutTopRight(TextRect(_executionOrderText), 20f, 19f, 32f, 28f, scale);
             LayoutStatusRow(scale);
             LayoutSelectionOutline(scale);
             ScaleText(scale);
@@ -360,7 +360,7 @@ namespace FateWeaver.Unity
         {
             SetFontSize(_nameText, 13f, scale);
             SetFontSize(_descriptionText, 11f, scale);
-            SetFontSize(_initiativeText, 12f, scale);
+            SetFontSize(_executionOrderText, 12f, scale);
             SetFontSize(_costText, 20f, scale);
         }
 

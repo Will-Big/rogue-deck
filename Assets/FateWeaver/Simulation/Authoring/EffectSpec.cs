@@ -10,17 +10,17 @@ namespace FateWeaver.Simulation.Authoring
 
     public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
 
-    public enum InterventionKind { None, ChangeInitiative, SwapInitiative, Lock }
+    public enum InterventionKind { None, ChangeExecutionOrder, SwapExecutionOrder, Lock }
 
     /// <summary>Flat, Inspector- and codegen-friendly description of one effect. Mapped to core EffectData.</summary>
     [Serializable]
     public struct EffectSpec
     {
         public EffectKind Kind;
-        public int Amount;
+        public int EffectValue;
         public ConditionKind Condition;
         public int ConditionN;
-        public int SuccessAmount;
+        public int SuccessEffectValue;
         public StatusKindRef Status;
         public StatusLifetimeKind Lifetime;
         public int LifetimeCount;

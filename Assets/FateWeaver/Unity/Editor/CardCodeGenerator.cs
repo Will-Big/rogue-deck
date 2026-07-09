@@ -99,11 +99,11 @@ namespace FateWeaver.Unity.Editor
             card.Side = spec.Side;
             card.Type = spec.Type;
             card.Category = spec.Category;
-            card.Cost = spec.Cost;
-            card.BaseInitiative = spec.BaseInitiative;
+            card.EnergyCost = spec.EnergyCost;
+            card.BaseExecutionOrder = spec.BaseExecutionOrder;
             card.Effects = spec.Effects ?? System.Array.Empty<EffectSpec>();
             card.Intervention = spec.Intervention;
-            card.InterventionAmount = spec.InterventionAmount;
+            card.InterventionEffectValue = spec.InterventionEffectValue;
         }
 
         // Enemy CardAssets mirror the pure GoblinDeck definition for id/display, but carry no rules
@@ -115,8 +115,8 @@ namespace FateWeaver.Unity.Editor
             card.Side = def.Side;
             card.Type = def.Type;
             card.Category = def.Category;
-            card.Cost = def.Cost;
-            card.BaseInitiative = def.BaseInitiative;
+            card.EnergyCost = def.EnergyCost;
+            card.BaseExecutionOrder = def.BaseExecutionOrder;
             card.Effects = System.Array.Empty<EffectSpec>();
         }
 
@@ -173,10 +173,10 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Side = Side.").Append(s.Side).Append(", ");
             sb.Append("Type = CardType.").Append(s.Type).Append(", ");
             sb.Append("Category = CardCategory.").Append(s.Category).Append(", ");
-            sb.Append("Cost = ").Append(s.Cost).Append(", ");
-            sb.Append("BaseInitiative = ").Append(s.BaseInitiative).Append(", ");
+            sb.Append("EnergyCost = ").Append(s.EnergyCost).Append(", ");
+            sb.Append("BaseExecutionOrder = ").Append(s.BaseExecutionOrder).Append(", ");
             sb.Append("Intervention = InterventionKind.").Append(s.Intervention).Append(", ");
-            sb.Append("InterventionAmount = ").Append(s.InterventionAmount).Append(", ");
+            sb.Append("InterventionEffectValue = ").Append(s.InterventionEffectValue).Append(", ");
             sb.Append("Effects = new EffectSpec[] { ");
             var effects = s.Effects ?? System.Array.Empty<EffectSpec>();
             for (int i = 0; i < effects.Length; i++)
@@ -193,10 +193,10 @@ namespace FateWeaver.Unity.Editor
             var sb = new StringBuilder();
             sb.Append("new EffectSpec { ");
             sb.Append("Kind = EffectKind.").Append(e.Kind).Append(", ");
-            sb.Append("Amount = ").Append(e.Amount).Append(", ");
+            sb.Append("EffectValue = ").Append(e.EffectValue).Append(", ");
             sb.Append("Condition = ConditionKind.").Append(e.Condition).Append(", ");
             sb.Append("ConditionN = ").Append(e.ConditionN).Append(", ");
-            sb.Append("SuccessAmount = ").Append(e.SuccessAmount).Append(", ");
+            sb.Append("SuccessEffectValue = ").Append(e.SuccessEffectValue).Append(", ");
             sb.Append("Status = StatusKindRef.").Append(e.Status).Append(", ");
             sb.Append("Lifetime = StatusLifetimeKind.").Append(e.Lifetime).Append(", ");
             sb.Append("LifetimeCount = ").Append(e.LifetimeCount).Append(", ");

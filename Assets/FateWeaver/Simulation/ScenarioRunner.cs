@@ -65,7 +65,7 @@ namespace FateWeaver.Simulation
                     card.Name,
                     card.Side,
                     card.Type,
-                    card.Initiative,
+                    card.ExecutionOrder,
                     card.Effects);
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);
@@ -101,7 +101,7 @@ namespace FateWeaver.Simulation
                 summaries.Add(new OrderCardSummary(
                     card.Def.Id,
                     card.Def.Side.ToString(),
-                    card.Initiative));
+                    card.ExecutionOrder));
             }
 
             return summaries;

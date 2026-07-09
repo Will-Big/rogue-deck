@@ -3,13 +3,13 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>A card placed in the future zone for one combat. Initiative is mutable.</summary>
+    /// <summary>A card placed in the future zone for one combat. ExecutionOrder is mutable.</summary>
     public sealed class ExecutionCardInstance : IStatusHolder
     {
         private int _pendingDamageBonus;
 
         public CardDefinition Def { get; }
-        public int Initiative { get; set; }
+        public int ExecutionOrder { get; set; }
         public string TargetId { get; set; }
         public bool IsLocked { get; set; }
         public StatusBag Statuses { get; } = new();
@@ -17,7 +17,7 @@ namespace FateWeaver.Core.Combat
         public ExecutionCardInstance(CardDefinition def)
         {
             Def = def;
-            Initiative = def.BaseInitiative;
+            ExecutionOrder = def.BaseExecutionOrder;
         }
 
         internal void AddPendingDamageBonus(int amount)
