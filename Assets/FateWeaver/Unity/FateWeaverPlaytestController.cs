@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using TMPro;
@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>uGUI playtest driver: instantiates a CardView per future-zone card, applies fate actions,
+    /// <summary>uGUI playtest driver: instantiates a CardView per future-zone card, applies intervention actions,
     /// resolves/advances turns. UI objects are wired by FateWeaverPlaytestSceneCreator.</summary>
     public sealed class FateWeaverPlaytestController : MonoBehaviour
     {
@@ -30,7 +30,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _messageText;
         [SerializeField] private TMP_Text _timelineText;
 
-        [Header("Fate action buttons")]
+        [Header("Intervention action buttons")]
         [SerializeField] private Button _initMinusButton;
         [SerializeField] private Button _initPlusButton;
         [SerializeField] private Button _swapButton;
@@ -79,10 +79,10 @@ namespace FateWeaver.Unity
 
         private void WireButtons()
         {
-            _initMinusButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.ChangeInitiative, 1, -2)));
-            _initPlusButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.ChangeInitiative, 1, 2)));
-            _swapButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.SwapInitiative, 1, 0), needsSecondary: true));
-            _lockButton.onClick.AddListener(() => Apply(new FateActionData(FateActionKeys.Lock, 1, 0)));
+            _initMinusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, -2)));
+            _initPlusButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, 2)));
+            _swapButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.SwapInitiative, 1, 0), needsSecondary: true));
+            _lockButton.onClick.AddListener(() => Apply(new InterventionActionData(InterventionActionKeys.Lock, 1, 0)));
 
             _resolveButton.onClick.AddListener(ResolveTurn);
             _nextButton.onClick.AddListener(NextTurn);
@@ -124,7 +124,7 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        private void Apply(FateActionData action, bool needsSecondary = false)
+        private void Apply(InterventionActionData action, bool needsSecondary = false)
         {
             if (_primaryCardId == null || (needsSecondary && _secondaryCardId == null))
             {
@@ -134,11 +134,11 @@ namespace FateWeaver.Unity
 
             try
             {
-                var result = _session.ApplyFateAction(
+                var result = _session.ApplyInterventionAction(
                     action, _primaryCardId, needsSecondary ? _secondaryCardId : null);
                 SetMessage(result.AppliedCount == 1
-                    ? PlaytestKoreanText.FateActionName(action.Key) + " 적용 완료."
-                    : "액션을 적용할 수 없습니다. 운명력·고정·대상 규칙을 확인하세요.");
+                    ? PlaytestKoreanText.InterventionActionName(action.Key) + " 적용 완료."
+                    : "개입을 적용할 수 없습니다. 운명력·고정·대상 규칙을 확인하세요.");
             }
             catch (Exception exception)
             {

@@ -8,7 +8,7 @@ namespace FateWeaver.Core.Effects
     /// <summary>Per-effect inputs/outputs. Handler mutates State and writes its outcome here.</summary>
     public sealed class EffectContext
     {
-        public ActionCardInstance Card;
+        public ExecutionCardInstance Card;
         public CombatState State;
         public ResolutionContext ResolutionContext;
         public StatusRegistry StatusRegistry;

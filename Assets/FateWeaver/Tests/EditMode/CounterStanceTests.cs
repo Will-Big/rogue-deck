@@ -48,7 +48,7 @@ namespace FateWeaver.Tests
 
             var scenario = new MultiTurnScenario("no-trigger", 30,
                 new[] { new EnemySpec("goblin", 100) },
-                new[] { new TurnScript(3, new[] { counter, enemy }, new FatePlaySpec[0]) });
+                new[] { new TurnScript(3, new[] { counter, enemy }, new InterventionPlaySpec[0]) });
 
             var result = new MultiTurnRunner().Run(scenario);
 

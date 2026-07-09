@@ -8,7 +8,7 @@ namespace FateWeaver.Core.Conditions
     {
         public static ConditionTier Evaluate(
             Condition condition,
-            ActionCardInstance card,
+            ExecutionCardInstance card,
             ResolutionContext ctx)
         {
             var index = ctx.IndexOf(card);
@@ -106,7 +106,7 @@ namespace FateWeaver.Core.Conditions
             throw new NotSupportedException($"Unsupported condition type '{condition.GetType().Name}'.");
         }
 
-        private static ActionCardInstance PreviousPlayerCard(ResolutionContext ctx, int index)
+        private static ExecutionCardInstance PreviousPlayerCard(ResolutionContext ctx, int index)
         {
             for (int i = index - 1; i >= 0; i--)
             {

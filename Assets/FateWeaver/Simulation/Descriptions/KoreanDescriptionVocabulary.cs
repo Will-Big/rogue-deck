@@ -3,7 +3,7 @@ using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Descriptions
@@ -50,13 +50,13 @@ namespace FateWeaver.Simulation.Descriptions
             }
         }
 
-        public string Fate(FateActionData fate)
+        public string Intervention(InterventionActionData intervention)
         {
-            if (fate.Key == FateActionKeys.ChangeInitiative)
-                return "한 카드의 주도력 " + (fate.Amount >= 0 ? "+" + fate.Amount : fate.Amount.ToString());
-            if (fate.Key == FateActionKeys.SwapInitiative)
+            if (intervention.Key == InterventionActionKeys.ChangeInitiative)
+                return "한 카드의 주도력 " + (intervention.Amount >= 0 ? "+" + intervention.Amount : intervention.Amount.ToString());
+            if (intervention.Key == InterventionActionKeys.SwapInitiative)
                 return "두 카드의 주도력을 교환";
-            if (fate.Key == FateActionKeys.Lock)
+            if (intervention.Key == InterventionActionKeys.Lock)
                 return "한 카드를 고정";
             return string.Empty;
         }

@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
                 cards.Select(c => c.Id).ToArray());
             Assert.IsTrue(cards.All(c => c.Side == Side.Enemy));
             Assert.IsTrue(cards.All(c => c.Cost == 0));
-            Assert.IsTrue(cards.All(c => c.Category == CardCategory.Action));
+            Assert.IsTrue(cards.All(c => c.Category == CardCategory.Execution));
         }
 
         [Test]

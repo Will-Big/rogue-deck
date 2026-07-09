@@ -1,5 +1,5 @@
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
@@ -30,9 +30,9 @@ namespace FateWeaver.Simulation
             return statuses;
         }
 
-        public static FateActionRegistry FateActions()
+        public static InterventionActionRegistry InterventionActions()
         {
-            var actions = new FateActionRegistry();
+            var actions = new InterventionActionRegistry();
             actions.Register(new ChangeInitiativeHandler());
             actions.Register(new SwapInitiativeHandler());
             actions.Register(new LockHandler());

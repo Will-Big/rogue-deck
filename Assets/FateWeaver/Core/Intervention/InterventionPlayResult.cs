@@ -1,12 +1,12 @@
-namespace FateWeaver.Core.Fate
+namespace FateWeaver.Core.Intervention
 {
-    public sealed class FatePlayResult
+    public sealed class InterventionPlayResult
     {
         public int AppliedCount { get; }
         public int RejectedIndex { get; }
         public int FateEnergySpent { get; }
 
-        public FatePlayResult(int appliedCount, int rejectedIndex, int fateEnergySpent)
+        public InterventionPlayResult(int appliedCount, int rejectedIndex, int fateEnergySpent)
         {
             AppliedCount = appliedCount;
             RejectedIndex = rejectedIndex;

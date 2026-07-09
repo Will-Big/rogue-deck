@@ -2,7 +2,7 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 
@@ -92,11 +92,11 @@ namespace FateWeaver.Unity
             return key.ToString();
         }
 
-        public static string FateActionName(FateActionKey key)
+        public static string InterventionActionName(InterventionActionKey key)
         {
-            if (key == FateActionKeys.ChangeInitiative) return "주도력 변경";
-            if (key == FateActionKeys.SwapInitiative) return "주도력 교환";
-            if (key == FateActionKeys.Lock) return "고정";
+            if (key == InterventionActionKeys.ChangeInitiative) return "주도력 변경";
+            if (key == InterventionActionKeys.SwapInitiative) return "주도력 교환";
+            if (key == InterventionActionKeys.Lock) return "고정";
             return key.ToString();
         }
     }

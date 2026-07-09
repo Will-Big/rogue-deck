@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
             id, id, Side.Enemy, CardType.Attack, 5, new[] { new EffectData(EffectKeys.Damage, 1) })
-            { Cost = 0, Category = CardCategory.Action };
+            { Cost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent Intent(params IReadOnlyList<CardDefinition>[] turns) => new EnemyIntent(turns);
 

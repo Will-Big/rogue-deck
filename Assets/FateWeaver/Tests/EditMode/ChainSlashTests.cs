@@ -9,7 +9,7 @@ using FateWeaver.Simulation;
 namespace FateWeaver.Tests
 {
     /// <summary>연쇄 베기 (doc §11.3): "activate once more" modelled as a conditional second hit, gated by
-    /// AllOf(previous card is a player action card, within the 3rd slot) so it does not auto-complete.</summary>
+    /// AllOf(previous card is a player execution card, within the 3rd slot) so it does not auto-complete.</summary>
     public class ChainSlashTests
     {
         private static CardResolved Resolved(MultiTurnResult result, string id)
@@ -18,7 +18,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Chain_re_triggers_after_a_player_action_card_within_3rd()
         {
-            // prep is a player SKILL (not an attack) -> exercises the "any player action card" adjacency.
+            // prep is a player SKILL (not an attack) -> exercises the "any player execution card" adjacency.
             var result = new MultiTurnRunner().Run(SampleMultiTurnScenarios.ChainSlash());
 
             Assert.AreEqual(6, Resolved(result, "chain").DamageDealt); // 1 + (1+4)
@@ -44,7 +44,7 @@ namespace FateWeaver.Tests
 
             var scenario = new MultiTurnScenario("chain-no-trigger", 30,
                 new[] { new EnemySpec("goblin", 100) },
-                new[] { new TurnScript(3, new[] { enemy, chain }, new FatePlaySpec[0]) });
+                new[] { new TurnScript(3, new[] { enemy, chain }, new InterventionPlaySpec[0]) });
 
             var result = new MultiTurnRunner().Run(scenario);
 

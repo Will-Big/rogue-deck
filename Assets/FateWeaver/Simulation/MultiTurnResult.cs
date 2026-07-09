@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
@@ -11,20 +11,20 @@ namespace FateWeaver.Simulation
         public int TurnIndex { get; }
         public IReadOnlyList<OrderCardSummary> InitialOrder { get; }
         public IReadOnlyList<OrderCardSummary> ManipulatedOrder { get; }
-        public FatePlayResult FatePlayResult { get; }
+        public InterventionPlayResult InterventionPlayResult { get; }
         public IReadOnlyList<ResolutionEvent> Timeline { get; }
 
         public TurnOutcome(
             int turnIndex,
             IReadOnlyList<OrderCardSummary> initialOrder,
             IReadOnlyList<OrderCardSummary> manipulatedOrder,
-            FatePlayResult fatePlayResult,
+            InterventionPlayResult fatePlayResult,
             IReadOnlyList<ResolutionEvent> timeline)
         {
             TurnIndex = turnIndex;
             InitialOrder = initialOrder;
             ManipulatedOrder = manipulatedOrder;
-            FatePlayResult = fatePlayResult;
+            InterventionPlayResult = fatePlayResult;
             Timeline = timeline;
         }
     }

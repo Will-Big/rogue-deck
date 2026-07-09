@@ -1,6 +1,6 @@
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Descriptions
@@ -27,8 +27,8 @@ namespace FateWeaver.Simulation.Descriptions
         /// (e.g. "첫 발동이면", "바로 뒤가 적 공격이면"). Handles AllOf internally.</summary>
         string Condition(Condition condition);
 
-        /// <summary>A complete fate-card sentence fragment, e.g. "한 카드의 주도력 -2",
+        /// <summary>A complete intervention-card sentence fragment, e.g. "한 카드의 주도력 -2",
         /// "두 카드의 주도력을 교환", "한 카드를 고정".</summary>
-        string Fate(FateActionData fate);
+        string Intervention(InterventionActionData intervention);
     }
 }

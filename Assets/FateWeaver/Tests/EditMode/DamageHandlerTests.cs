@@ -7,11 +7,11 @@ namespace FateWeaver.Tests
 {
     public class DamageHandlerTests
     {
-        private static ActionCardInstance Card(Side side, int amount)
+        private static ExecutionCardInstance Card(Side side, int amount)
         {
             var def = new CardDefinition("c", "c", side, CardType.Attack, 1,
                 new[] { new EffectData(EffectKeys.Damage, amount) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]

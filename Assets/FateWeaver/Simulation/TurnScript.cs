@@ -8,16 +8,16 @@ namespace FateWeaver.Simulation
     {
         public int FateEnergy { get; }
         public IReadOnlyList<ZoneCardSpec> ZoneCards { get; }
-        public IReadOnlyList<FatePlaySpec> FatePlays { get; }
+        public IReadOnlyList<InterventionPlaySpec> InterventionPlays { get; }
 
         public TurnScript(
             int fateEnergy,
             IReadOnlyList<ZoneCardSpec> zoneCards,
-            IReadOnlyList<FatePlaySpec> fatePlays)
+            IReadOnlyList<InterventionPlaySpec> interventionPlays)
         {
             FateEnergy = fateEnergy;
             ZoneCards = zoneCards;
-            FatePlays = fatePlays;
+            InterventionPlays = interventionPlays;
         }
     }
 }

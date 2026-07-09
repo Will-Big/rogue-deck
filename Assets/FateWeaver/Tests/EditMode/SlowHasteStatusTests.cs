@@ -72,11 +72,11 @@ namespace FateWeaver.Tests
 
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab() => new CardDefinition(
             "e_jab", "적찌르기", Side.Enemy, CardType.Attack, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Action };
+            new[] { new EffectData(EffectKeys.Damage, 3) }) { Cost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]
         {
@@ -101,7 +101,7 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
             session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
-            session.PlayActionCard(0);
+            session.PlayExecutionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
             Assert.AreEqual(2, strike.Initiative); // base 5 - haste 3
         }
@@ -114,7 +114,7 @@ namespace FateWeaver.Tests
                 new[] { slowCard }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
 
             int hand = session.Hand.Select((c, i) => (c, i)).First(x => x.c.Id == "slow_hex").i;
-            Assert.IsTrue(session.PlayActionCard(hand));
+            Assert.IsTrue(session.PlayExecutionCard(hand));
             session.ResolveTurn();
             Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));
             session.BeginNextTurn();

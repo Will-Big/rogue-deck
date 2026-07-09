@@ -38,7 +38,7 @@ namespace FateWeaver.Unity
 
         /// <summary>Zone card (placed instance) — shows its current initiative. <paramref name="art"/> resolves
         /// the sprite by id (e.g. from the authored CardAsset.Art); null falls back to Resources lookup.</summary>
-        public static CardPresentation From(ActionCardInstance card, Func<string, Sprite> art = null)
+        public static CardPresentation From(ExecutionCardInstance card, Func<string, Sprite> art = null)
         {
             var def = card.Def;
             return new CardPresentation(
@@ -72,7 +72,7 @@ namespace FateWeaver.Unity
         private static Sprite ResolveArt(string id, Func<string, Sprite> art)
             => art != null ? art(id) : PlaytestCardArt.Sprite(id);
 
-        private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ActionCardInstance card)
+        private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ExecutionCardInstance card)
             => card.IsLocked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>();
     }
 }

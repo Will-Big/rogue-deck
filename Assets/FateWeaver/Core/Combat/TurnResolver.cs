@@ -67,7 +67,7 @@ namespace FateWeaver.Core.Combat
             return events;
         }
 
-        private bool IsResolveIntercepted(ActionCardInstance card)
+        private bool IsResolveIntercepted(ExecutionCardInstance card)
         {
             if (_statuses == null)
             {
@@ -101,7 +101,7 @@ namespace FateWeaver.Core.Combat
 
         private static ConditionTier ResolveTier(
             Cards.EffectData effect,
-            ActionCardInstance card,
+            ExecutionCardInstance card,
             ResolutionContext resolutionContext)
         {
             if (effect.Condition == null)

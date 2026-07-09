@@ -5,16 +5,16 @@ using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Simulation.Descriptions
 {
-    /// <summary>Builds a card's description from its effects (or fate action), substituting numbers from
+    /// <summary>Builds a card's description from its effects (or intervention action), substituting numbers from
     /// the data. Pure: all wording comes from the supplied <see cref="IDescriptionVocabulary"/>.
     /// Structure per effect: "{base}." optionally followed by " {condition} {success}." Effects join
-    /// with a single space. Fate cards render their fate action instead of effects.</summary>
+    /// with a single space. Intervention cards render their intervention action instead of effects.</summary>
     public static class DescriptionComposer
     {
         public static string Describe(CardDefinition def, IDescriptionVocabulary vocab)
         {
-            if (def.Category == CardCategory.Fate && def.FateAction != null)
-                return vocab.Fate(def.FateAction) + ".";
+            if (def.Category == CardCategory.Intervention && def.InterventionAction != null)
+                return vocab.Intervention(def.InterventionAction) + ".";
 
             if (def.Effects == null || def.Effects.Count == 0)
                 return string.Empty;

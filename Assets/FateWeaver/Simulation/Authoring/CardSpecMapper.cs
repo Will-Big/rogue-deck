@@ -3,24 +3,24 @@ using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
     /// <summary>Pure mapping from authored CardSpec to the core CardDefinition. Single place that knows
-    /// how the flat authoring enums correspond to core keys / condition records / status / fate actions.</summary>
+    /// how the flat authoring enums correspond to core keys / condition records / status / intervention actions.</summary>
     public static class CardSpecMapper
     {
         public static CardDefinition ToDefinition(CardSpec spec)
         {
-            if (spec.Category == CardCategory.Fate)
+            if (spec.Category == CardCategory.Intervention)
             {
                 return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, 0, Array.Empty<EffectData>())
                 {
                     Cost = spec.Cost,
-                    Category = CardCategory.Fate,
-                    FateAction = new FateActionData(ToFateKey(spec.Fate), spec.Cost, spec.FateAmount)
+                    Category = CardCategory.Intervention,
+                    InterventionAction = new InterventionActionData(ToInterventionKey(spec.Intervention), spec.Cost, spec.InterventionAmount)
                 };
             }
 
@@ -28,7 +28,7 @@ namespace FateWeaver.Simulation.Authoring
             return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseInitiative, effects)
             {
                 Cost = spec.Cost,
-                Category = CardCategory.Action
+                Category = CardCategory.Execution
             };
         }
 
@@ -110,13 +110,13 @@ namespace FateWeaver.Simulation.Authoring
             }
         }
 
-        private static FateActionKey ToFateKey(FateKind f)
+        private static InterventionActionKey ToInterventionKey(InterventionKind f)
         {
             switch (f)
             {
-                case FateKind.SwapInitiative: return FateActionKeys.SwapInitiative;
-                case FateKind.Lock: return FateActionKeys.Lock;
-                default: return FateActionKeys.ChangeInitiative;
+                case InterventionKind.SwapInitiative: return InterventionActionKeys.SwapInitiative;
+                case InterventionKind.Lock: return InterventionActionKeys.Lock;
+                default: return InterventionActionKeys.ChangeInitiative;
             }
         }
     }

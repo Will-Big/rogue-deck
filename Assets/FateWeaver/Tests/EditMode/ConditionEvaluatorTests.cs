@@ -8,7 +8,7 @@ namespace FateWeaver.Tests
 {
     public class ConditionEvaluatorTests
     {
-        private static ActionCardInstance Card(
+        private static ExecutionCardInstance Card(
             string id,
             Side side,
             CardType type,
@@ -17,7 +17,7 @@ namespace FateWeaver.Tests
         {
             var def = new CardDefinition(id, id, side, type, initiative,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
-            return new ActionCardInstance(def) { TargetId = targetId };
+            return new ExecutionCardInstance(def) { TargetId = targetId };
         }
 
         [Test]

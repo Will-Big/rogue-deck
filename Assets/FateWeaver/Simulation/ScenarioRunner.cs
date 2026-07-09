@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
@@ -9,7 +9,7 @@ namespace FateWeaver.Simulation
     {
         public ScenarioComparisonResult Compare(ScenarioDefinition scenario)
         {
-            var baseline = Run(WithoutFatePlays(scenario));
+            var baseline = Run(WithoutInterventionPlays(scenario));
             var manipulated = Run(scenario);
             return new ScenarioComparisonResult(scenario, baseline, manipulated);
         }
@@ -18,7 +18,7 @@ namespace FateWeaver.Simulation
         {
             var state = BuildState(scenario, out var cardsById);
             var initialOrder = SummarizeOrder(state.Zone.ResolutionOrder());
-            var fateResult = ApplyFatePlays(state, scenario.FatePlays, cardsById);
+            var interventionResult = ApplyInterventionPlays(state, scenario.InterventionPlays, cardsById);
             var manipulatedOrder = SummarizeOrder(state.Zone.ResolutionOrder());
             var timeline = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses())
                 .Resolve(state, turnIndex: 0);
@@ -28,11 +28,11 @@ namespace FateWeaver.Simulation
                 state,
                 initialOrder,
                 manipulatedOrder,
-                fateResult,
+                interventionResult,
                 timeline);
         }
 
-        private static ScenarioDefinition WithoutFatePlays(ScenarioDefinition scenario)
+        private static ScenarioDefinition WithoutInterventionPlays(ScenarioDefinition scenario)
             => new ScenarioDefinition(
                 scenario.Id,
                 scenario.Name,
@@ -40,11 +40,11 @@ namespace FateWeaver.Simulation
                 scenario.FateEnergy,
                 scenario.Enemies,
                 scenario.ZoneCards,
-                new FatePlaySpec[0]);
+                new InterventionPlaySpec[0]);
 
         private static CombatState BuildState(
             ScenarioDefinition scenario,
-            out Dictionary<string, ActionCardInstance> cardsById)
+            out Dictionary<string, ExecutionCardInstance> cardsById)
         {
             var state = new CombatState
             {
@@ -57,7 +57,7 @@ namespace FateWeaver.Simulation
                 state.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));
             }
 
-            cardsById = new Dictionary<string, ActionCardInstance>();
+            cardsById = new Dictionary<string, ExecutionCardInstance>();
             foreach (var card in scenario.ZoneCards)
             {
                 var def = new CardDefinition(
@@ -67,7 +67,7 @@ namespace FateWeaver.Simulation
                     card.Type,
                     card.Initiative,
                     card.Effects);
-                var instance = new ActionCardInstance(def);
+                var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);
                 cardsById.Add(card.Id, instance);
             }
@@ -75,25 +75,25 @@ namespace FateWeaver.Simulation
             return state;
         }
 
-        private static FatePlayResult ApplyFatePlays(
+        private static InterventionPlayResult ApplyInterventionPlays(
             CombatState state,
-            IReadOnlyList<FatePlaySpec> specs,
-            Dictionary<string, ActionCardInstance> cardsById)
+            IReadOnlyList<InterventionPlaySpec> specs,
+            Dictionary<string, ExecutionCardInstance> cardsById)
         {
-            var plays = new List<FatePlay>();
+            var plays = new List<InterventionPlay>();
             foreach (var spec in specs)
             {
                 var target = cardsById[spec.TargetCardId];
                 var secondary = spec.SecondaryTargetCardId == null
                     ? null
                     : cardsById[spec.SecondaryTargetCardId];
-                plays.Add(new FatePlay(spec.Action, target, secondary));
+                plays.Add(new InterventionPlay(spec.Intervention, target, secondary));
             }
 
-            return new FatePlayResolver(CombatRegistries.FateActions()).Resolve(state, plays);
+            return new InterventionPlayResolver(CombatRegistries.InterventionActions()).Resolve(state, plays);
         }
 
-        private static IReadOnlyList<OrderCardSummary> SummarizeOrder(IReadOnlyList<ActionCardInstance> cards)
+        private static IReadOnlyList<OrderCardSummary> SummarizeOrder(IReadOnlyList<ExecutionCardInstance> cards)
         {
             var summaries = new List<OrderCardSummary>();
             foreach (var card in cards)

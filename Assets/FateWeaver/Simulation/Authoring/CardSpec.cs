@@ -14,7 +14,7 @@ namespace FateWeaver.Simulation.Authoring
         public int Cost;
         public int BaseInitiative;
         public EffectSpec[] Effects;
-        public FateKind Fate;
-        public int FateAmount;
+        public InterventionKind Intervention;
+        public int InterventionAmount;
     }
 }

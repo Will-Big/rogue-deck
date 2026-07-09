@@ -2,7 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
@@ -18,12 +18,12 @@ namespace FateWeaver.Tests
                 new[] { "enemy_jab", "quick_cut" },
                 session.CurrentOrder.Select(card => card.Def.Id).ToArray());
 
-            var fateResult = session.ApplyFateAction(
-                new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0),
+            var interventionResult = session.ApplyInterventionAction(
+                new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0),
                 "enemy_jab",
                 "quick_cut");
 
-            Assert.AreEqual(1, fateResult.AppliedCount);
+            Assert.AreEqual(1, interventionResult.AppliedCount);
             Assert.AreEqual(2, session.State.FateEnergy);
             CollectionAssert.AreEqual(
                 new[] { "quick_cut", "enemy_jab" },

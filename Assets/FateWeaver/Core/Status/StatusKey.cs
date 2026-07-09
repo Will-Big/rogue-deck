@@ -2,7 +2,7 @@ using System;
 
 namespace FateWeaver.Core.Status
 {
-    /// <summary>Typed wrapper over a string id (open set, type-safe). Mirrors EffectKey/FateActionKey.
+    /// <summary>Typed wrapper over a string id (open set, type-safe). Mirrors EffectKey/InterventionActionKey.
     /// Plain readonly struct (NOT record struct) to stay within Unity 6's C# 9.</summary>
     public readonly struct StatusKey : IEquatable<StatusKey>
     {

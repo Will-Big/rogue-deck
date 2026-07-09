@@ -3,7 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
@@ -41,8 +41,8 @@ namespace FateWeaver.Tests
             // MarkCombo (1 turn): unmanipulated the enemy resolves first so mark stays Basic;
             // delaying the enemy by hand completes the combo.
             var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo());
-            session.ApplyFateAction(
-                new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: 3), "goblin_jab");
+            session.ApplyInterventionAction(
+                new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: 3), "goblin_jab");
 
             var timeline = session.ResolveTurn();
             var mark = timeline.OfType<CardResolved>().Single(e => e.CardId == "mark");
@@ -57,8 +57,8 @@ namespace FateWeaver.Tests
             session.ResolveTurn();
 
             Assert.Throws<InvalidOperationException>(() =>
-                session.ApplyFateAction(
-                    new FateActionData(FateActionKeys.ChangeInitiative, 1, 3), "goblin_jab"));
+                session.ApplyInterventionAction(
+                    new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, 3), "goblin_jab"));
         }
     }
 }

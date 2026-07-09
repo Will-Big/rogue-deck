@@ -2,25 +2,25 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Tests
 {
-    public class FatePlayResolverTests
+    public class InterventionPlayResolverTests
     {
-        private static FateActionRegistry Registry()
+        private static InterventionActionRegistry Registry()
         {
-            var r = new FateActionRegistry();
+            var r = new InterventionActionRegistry();
             r.Register(new ChangeInitiativeHandler());
             r.Register(new LockHandler());
             return r;
         }
 
-        private static ActionCardInstance Card(string id, int initiative)
+        private static ExecutionCardInstance Card(string id, int initiative)
         {
             var def = new CardDefinition(id, id, Side.Player, CardType.Attack, initiative,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -30,11 +30,11 @@ namespace FateWeaver.Tests
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
-                new FatePlay(new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2), card),
-                new FatePlay(new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: 1), card)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2), card),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: 1), card)
             };
 
-            var result = new FatePlayResolver(Registry()).Resolve(state, plays);
+            var result = new InterventionPlayResolver(Registry()).Resolve(state, plays);
 
             Assert.AreEqual(4, card.Initiative);
             Assert.AreEqual(1, state.FateEnergy);
@@ -50,11 +50,11 @@ namespace FateWeaver.Tests
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
-                new FatePlay(new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2), card),
-                new FatePlay(new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2), card)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2), card),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2), card)
             };
 
-            var result = new FatePlayResolver(Registry()).Resolve(state, plays);
+            var result = new InterventionPlayResolver(Registry()).Resolve(state, plays);
 
             Assert.AreEqual(3, card.Initiative);
             Assert.AreEqual(0, state.FateEnergy);
@@ -73,10 +73,10 @@ namespace FateWeaver.Tests
             registry.Register(new SwapInitiativeHandler());
             var plays = new[]
             {
-                new FatePlay(new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0), first, second)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0), first, second)
             };
 
-            var result = new FatePlayResolver(registry).Resolve(state, plays);
+            var result = new InterventionPlayResolver(registry).Resolve(state, plays);
 
             Assert.AreEqual(5, first.Initiative);
             Assert.AreEqual(1, second.Initiative);
@@ -93,14 +93,14 @@ namespace FateWeaver.Tests
             var second = Card("second", 3);
             var plays = new[]
             {
-                new FatePlay(new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2), first),
-                new FatePlay(new FateActionData(FateActionKeys.Lock, cost: 1, amount: 0), first),
-                new FatePlay(new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0), first, second)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2), first),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.Lock, cost: 1, amount: 0), first),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0), first, second)
             };
             var registry = Registry();
             registry.Register(new SwapInitiativeHandler());
 
-            var result = new FatePlayResolver(registry).Resolve(state, plays);
+            var result = new InterventionPlayResolver(registry).Resolve(state, plays);
 
             Assert.AreEqual(3, first.Initiative);
             Assert.AreEqual(3, second.Initiative);

@@ -4,11 +4,11 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Tests
 {
-    public class FateActionTests
+    public class InterventionActionTests
     {
         private static EffectRegistry EffectRegistry()
         {
@@ -17,14 +17,14 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        private static ActionCardInstance Card(
+        private static ExecutionCardInstance Card(
             string id,
             Side side,
             int initiative,
             EffectData effect)
         {
             var def = new CardDefinition(id, id, side, CardType.Attack, initiative, new[] { effect });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -32,8 +32,8 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
-            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             new ChangeInitiativeHandler().Apply(ctx);
 
@@ -47,8 +47,8 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { FateEnergy = 0 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
-            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
             new ChangeInitiativeHandler().Apply(ctx);
@@ -81,11 +81,11 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
             Assert.AreEqual(2, before.DamageDealt);
 
-            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
-            var fate = new FateActionRegistry();
-            fate.Register(new ChangeInitiativeHandler());
-            fate.Resolve(FateActionKeys.ChangeInitiative)
-                .Apply(new FatePlayContext { State = state, Target = player, Action = action });
+            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var intervention = new InterventionActionRegistry();
+            intervention.Register(new ChangeInitiativeHandler());
+            intervention.Resolve(InterventionActionKeys.ChangeInitiative)
+                .Apply(new InterventionPlayContext { State = state, Target = player, Intervention = action });
 
             var afterEvents = new TurnResolver(EffectRegistry()).Resolve(state, 0);
             var after = (CardResolved)afterEvents[1];
@@ -102,13 +102,13 @@ namespace FateWeaver.Tests
             var state = new CombatState { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
-            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
-            var ctx = new FatePlayContext
+            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var ctx = new InterventionPlayContext
             {
                 State = state,
                 Target = first,
                 SecondaryTarget = second,
-                Action = action
+                Intervention = action
             };
 
             new SwapInitiativeHandler().Apply(ctx);
@@ -137,13 +137,13 @@ namespace FateWeaver.Tests
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
-            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
-            new SwapInitiativeHandler().Apply(new FatePlayContext
+            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
+            new SwapInitiativeHandler().Apply(new InterventionPlayContext
             {
                 State = state,
                 Target = enemy,
                 SecondaryTarget = player,
-                Action = action
+                Intervention = action
             });
 
             var events = new TurnResolver(EffectRegistry()).Resolve(state, 0);
@@ -161,8 +161,8 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 2, new EffectData(EffectKeys.Damage, 2));
-            var action = new FateActionData(FateActionKeys.Lock, cost: 1, amount: 0);
-            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+            var action = new InterventionActionData(InterventionActionKeys.Lock, cost: 1, amount: 0);
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             new LockHandler().Apply(ctx);
 
@@ -177,8 +177,8 @@ namespace FateWeaver.Tests
             var state = new CombatState { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             card.IsLocked = true;
-            var action = new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2);
-            var ctx = new FatePlayContext { State = state, Target = card, Action = action };
+            var action = new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2);
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             Assert.IsFalse(new ChangeInitiativeHandler().CanApply(ctx));
             new ChangeInitiativeHandler().Apply(ctx);
@@ -195,13 +195,13 @@ namespace FateWeaver.Tests
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
             second.IsLocked = true;
-            var action = new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0);
-            var ctx = new FatePlayContext
+            var action = new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0);
+            var ctx = new InterventionPlayContext
             {
                 State = state,
                 Target = first,
                 SecondaryTarget = second,
-                Action = action
+                Intervention = action
             };
 
             Assert.IsFalse(new SwapInitiativeHandler().CanApply(ctx));
@@ -230,7 +230,7 @@ namespace FateWeaver.Tests
 
             foreach (var card in source.Zone.Cards)
             {
-                clone.Zone.Add(new ActionCardInstance(card.Def)
+                clone.Zone.Add(new ExecutionCardInstance(card.Def)
                 {
                     Initiative = card.Initiative,
                     TargetId = card.TargetId

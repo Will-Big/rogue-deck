@@ -24,7 +24,7 @@ namespace FateWeaver.Simulation
                 sb.AppendLine("### Turn " + (turn.TurnIndex + 1));
                 sb.AppendLine("- Initial order: " + Order(turn.InitialOrder));
                 sb.AppendLine("- Resolved order: " + Order(turn.ManipulatedOrder));
-                sb.AppendLine("- Fate spent: " + turn.FatePlayResult.FateEnergySpent);
+                sb.AppendLine("- Energy spent: " + turn.InterventionPlayResult.FateEnergySpent);
 
                 foreach (var evt in turn.Timeline)
                 {

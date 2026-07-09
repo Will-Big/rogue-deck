@@ -7,19 +7,19 @@ namespace FateWeaver.Core.Conditions
     /// Conditions and effect handlers query position/adjacency against this snapshot.</summary>
     public sealed class ResolutionContext
     {
-        private readonly IReadOnlyList<ActionCardInstance> _order;
+        private readonly IReadOnlyList<ExecutionCardInstance> _order;
 
-        private ResolutionContext(IReadOnlyList<ActionCardInstance> order)
+        private ResolutionContext(IReadOnlyList<ExecutionCardInstance> order)
         {
             _order = order;
         }
 
-        public IReadOnlyList<ActionCardInstance> Order => _order;
+        public IReadOnlyList<ExecutionCardInstance> Order => _order;
 
         public static ResolutionContext From(CombatState state)
             => new ResolutionContext(state.Zone.ResolutionOrder());
 
-        public int IndexOf(ActionCardInstance card)
+        public int IndexOf(ExecutionCardInstance card)
         {
             for (int i = 0; i < _order.Count; i++)
             {
@@ -32,7 +32,7 @@ namespace FateWeaver.Core.Conditions
             return -1;
         }
 
-        public ActionCardInstance CardAt(int index)
+        public ExecutionCardInstance CardAt(int index)
             => index >= 0 && index < _order.Count ? _order[index] : null;
     }
 }

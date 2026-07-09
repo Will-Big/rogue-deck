@@ -8,11 +8,11 @@ namespace FateWeaver.Tests
 {
     public class FutureZoneTests
     {
-        private static ActionCardInstance Card(string id, int initiative, Side side = Side.Player)
+        private static ExecutionCardInstance Card(string id, int initiative, Side side = Side.Player)
         {
             var def = new CardDefinition(id, id, side, CardType.Attack, initiative,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]

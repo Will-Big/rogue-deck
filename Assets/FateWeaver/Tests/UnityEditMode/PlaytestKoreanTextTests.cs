@@ -2,7 +2,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Unity;
 
@@ -23,7 +23,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual("성공", PlaytestKoreanText.ConditionName(ConditionTier.Success));
             Assert.AreEqual("승리", PlaytestKoreanText.OutcomeName(Outcome.Win));
             Assert.AreEqual("방어", PlaytestKoreanText.StatusName(StatusKeys.Block));
-            Assert.AreEqual("주도력 변경", PlaytestKoreanText.FateActionName(FateActionKeys.ChangeInitiative));
+            Assert.AreEqual("주도력 변경", PlaytestKoreanText.InterventionActionName(InterventionActionKeys.ChangeInitiative));
             Assert.AreEqual("fallback", PlaytestKoreanText.CardName("unknown", "fallback"));
         }
     }

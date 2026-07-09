@@ -4,7 +4,7 @@ using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
@@ -53,7 +53,7 @@ namespace FateWeaver.Unity
         private const int Seed = 1;
 
         private DeckCombatSession _session;
-        private int _armedFateHandIndex = -1;
+        private int _armedInterventionHandIndex = -1;
         private int _firstSwapZoneIndex = -1;
         private readonly List<CardView> _handViews = new List<CardView>();
         private readonly List<CardView> _zoneViews = new List<CardView>();
@@ -102,9 +102,9 @@ namespace FateWeaver.Unity
             }
 
             var def = _session.Hand[handIndex];
-            if (def.Category == CardCategory.Action)
+            if (def.Category == CardCategory.Execution)
             {
-                SetMessage(_session.PlayActionCard(handIndex)
+                SetMessage(_session.PlayExecutionCard(handIndex)
                     ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
                     : "운명력이 부족하거나 낼 수 없습니다.");
                 ClearArmed();
@@ -112,7 +112,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            _armedFateHandIndex = handIndex;
+            _armedInterventionHandIndex = handIndex;
             _firstSwapZoneIndex = -1;
             SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name) + " — 줄에서 대상을 선택하세요.");
             RefreshHand();
@@ -122,13 +122,13 @@ namespace FateWeaver.Unity
         private void OnZoneClicked(int zoneIndex)
         {
             if (_session == null) return;
-            if (_armedFateHandIndex < 0)
+            if (_armedInterventionHandIndex < 0)
             {
                 return;
             }
 
-            var def = _session.Hand[_armedFateHandIndex];
-            var needsTwo = def.FateAction != null && def.FateAction.Key == FateActionKeys.SwapInitiative;
+            var def = _session.Hand[_armedInterventionHandIndex];
+            var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapInitiative;
 
             if (needsTwo && _firstSwapZoneIndex < 0)
             {
@@ -139,10 +139,10 @@ namespace FateWeaver.Unity
             }
 
             bool ok = needsTwo
-                ? _session.PlayFateCard(_armedFateHandIndex, _firstSwapZoneIndex, zoneIndex)
-                : _session.PlayFateCard(_armedFateHandIndex, zoneIndex);
+                ? _session.PlayInterventionCard(_armedInterventionHandIndex, _firstSwapZoneIndex, zoneIndex)
+                : _session.PlayInterventionCard(_armedInterventionHandIndex, zoneIndex);
 
-            SetMessage(ok ? "운명 카드 적용." : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+            SetMessage(ok ? "개입 카드 적용." : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
             ClearArmed();
             RefreshAll();
         }
@@ -166,7 +166,7 @@ namespace FateWeaver.Unity
 
         private void ClearArmed()
         {
-            _armedFateHandIndex = -1;
+            _armedInterventionHandIndex = -1;
             _firstSwapZoneIndex = -1;
         }
 
@@ -220,7 +220,7 @@ namespace FateWeaver.Unity
                 var view = Instantiate(_cardPrefab, _handRow);
                 int captured = i;
                 view.Bind(CardPresentation.FromDefinition(_session.Hand[i], ArtFor), () => OnHandClicked(captured));
-                view.SetSelection(i == _armedFateHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
+                view.SetSelection(i == _armedInterventionHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
                 _handViews.Add(view);
             }
         }

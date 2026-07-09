@@ -4,7 +4,7 @@ using FateWeaver.Core.Status;
 namespace FateWeaver.Core.Combat
 {
     /// <summary>A card placed in the future zone for one combat. Initiative is mutable.</summary>
-    public sealed class ActionCardInstance : IStatusHolder
+    public sealed class ExecutionCardInstance : IStatusHolder
     {
         private int _pendingDamageBonus;
 
@@ -14,7 +14,7 @@ namespace FateWeaver.Core.Combat
         public bool IsLocked { get; set; }
         public StatusBag Statuses { get; } = new();
 
-        public ActionCardInstance(CardDefinition def)
+        public ExecutionCardInstance(CardDefinition def)
         {
             Def = def;
             Initiative = def.BaseInitiative;

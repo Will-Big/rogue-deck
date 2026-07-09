@@ -46,7 +46,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Chapter_8_guard_requires_fate_to_restore_the_mark_chain_combo()
+        public void Chapter_8_guard_requires_intervention_to_restore_the_mark_chain_combo()
         {
             var comparison = new ScenarioRunner().Compare(
                 SampleScenarios.Chapter8AutoComboGuard());

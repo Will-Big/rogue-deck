@@ -102,8 +102,8 @@ namespace FateWeaver.Unity.Editor
             card.Cost = spec.Cost;
             card.BaseInitiative = spec.BaseInitiative;
             card.Effects = spec.Effects ?? System.Array.Empty<EffectSpec>();
-            card.Fate = spec.Fate;
-            card.FateAmount = spec.FateAmount;
+            card.Intervention = spec.Intervention;
+            card.InterventionAmount = spec.InterventionAmount;
         }
 
         // Enemy CardAssets mirror the pure GoblinDeck definition for id/display, but carry no rules
@@ -175,8 +175,8 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Category = CardCategory.").Append(s.Category).Append(", ");
             sb.Append("Cost = ").Append(s.Cost).Append(", ");
             sb.Append("BaseInitiative = ").Append(s.BaseInitiative).Append(", ");
-            sb.Append("Fate = FateKind.").Append(s.Fate).Append(", ");
-            sb.Append("FateAmount = ").Append(s.FateAmount).Append(", ");
+            sb.Append("Intervention = InterventionKind.").Append(s.Intervention).Append(", ");
+            sb.Append("InterventionAmount = ").Append(s.InterventionAmount).Append(", ");
             sb.Append("Effects = new EffectSpec[] { ");
             var effects = s.Effects ?? System.Array.Empty<EffectSpec>();
             for (int i = 0; i < effects.Length; i++)

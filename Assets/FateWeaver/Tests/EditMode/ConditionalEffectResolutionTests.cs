@@ -18,14 +18,14 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        private static ActionCardInstance Card(
+        private static ExecutionCardInstance Card(
             string id,
             Side side,
             int initiative,
             EffectData effect)
         {
             var def = new CardDefinition(id, id, side, CardType.Attack, initiative, new[] { effect });
-            return new ActionCardInstance(def);
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 20));
-            var mark = new ActionCardInstance(new CardDefinition(
+            var mark = new ExecutionCardInstance(new CardDefinition(
                 "mark_target",
                 "Mark Target",
                 Side.Player,

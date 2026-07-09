@@ -18,7 +18,7 @@ namespace FateWeaver.Tests
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
         private static TurnScript Turn(params ZoneCardSpec[] cards)
-            => new TurnScript(fateEnergy: 3, zoneCards: cards, fatePlays: new FatePlaySpec[0]);
+            => new TurnScript(fateEnergy: 3, zoneCards: cards, interventionPlays: new InterventionPlaySpec[0]);
 
         [Test]
         public void Enemy_and_player_hp_carry_across_turns()

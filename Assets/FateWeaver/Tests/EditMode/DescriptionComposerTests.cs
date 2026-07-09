@@ -3,7 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Descriptions;
@@ -21,26 +21,27 @@ namespace FateWeaver.Tests.EditMode
             public string NullifyNextReward() => "NULLIFY";
             public string GrantNextAttackBonus(int amount) => "GRANT" + amount;
             public string Condition(Condition condition) => "COND[" + condition.GetType().Name + "]";
-            public string Fate(FateActionData fate) => "FATE:" + fate.Key.Id + ":" + fate.Amount;
+            public string Intervention(InterventionActionData intervention)
+                => "INTERVENTION:" + intervention.Key.Id + ":" + intervention.Amount;
         }
 
         private static readonly IDescriptionVocabulary Vocab = new FakeVocabulary();
 
-        private static CardDefinition Action(string id, params EffectData[] effects)
+        private static CardDefinition Execution(string id, params EffectData[] effects)
             => new CardDefinition(id, id, Side.Player, CardType.Attack, 5, effects)
-               { Category = CardCategory.Action };
+               { Category = CardCategory.Execution };
 
         [Test]
         public void Single_damage_effect_is_one_sentence()
         {
-            var card = Action("slash", new EffectData(EffectKeys.Damage, 4));
+            var card = Execution("slash", new EffectData(EffectKeys.Damage, 4));
             Assert.AreEqual("DMG4.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
         public void Conditional_effect_appends_condition_then_success_sentence()
         {
-            var card = Action("quick_cut",
+            var card = Execution("quick_cut",
                 EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8));
             Assert.AreEqual("DMG2. COND[FirstToTrigger] DMG8.", DescriptionComposer.Describe(card, Vocab));
         }
@@ -48,7 +49,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Multiple_effects_join_with_a_space()
         {
-            var card = Action("wrist_cut",
+            var card = Execution("wrist_cut",
                 new EffectData(EffectKeys.Damage, 3),
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
             Assert.AreEqual("DMG3. NULLIFY.", DescriptionComposer.Describe(card, Vocab));
@@ -57,7 +58,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Apply_status_uses_amount_as_magnitude()
         {
-            var card = Action("guard",
+            var card = Execution("guard",
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4));
             Assert.AreEqual("STATUS:block:Self:4:ThisTurn.", DescriptionComposer.Describe(card, Vocab));
         }
@@ -65,7 +66,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Conditional_status_reuses_success_amount_for_the_success_fragment()
         {
-            var card = Action("cover",
+            var card = Execution("cover",
                 new EffectData(EffectKeys.ApplyStatus, 2)
                 {
                     StatusKey = StatusKeys.Block,
@@ -82,26 +83,26 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Grant_next_attack_bonus_renders_its_amount()
         {
-            var card = Action("mark", new EffectData(EffectKeys.GrantNextPlayerAttackDamageBonus, 6));
+            var card = Execution("mark", new EffectData(EffectKeys.GrantNextPlayerAttackDamageBonus, 6));
             Assert.AreEqual("GRANT6.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
-        public void Fate_card_renders_the_fate_action_and_ignores_effects()
+        public void Intervention_card_renders_the_intervention_action_and_ignores_effects()
         {
             var card = new CardDefinition("pull_forward", "pull", Side.Player, CardType.Skill, 0,
                 new EffectData[0])
             {
-                Category = CardCategory.Fate,
-                FateAction = new FateActionData(FateActionKeys.ChangeInitiative, 1, -2)
+                Category = CardCategory.Intervention,
+                InterventionAction = new InterventionActionData(InterventionActionKeys.ChangeInitiative, 1, -2)
             };
-            Assert.AreEqual("FATE:change_initiative:-2.", DescriptionComposer.Describe(card, Vocab));
+            Assert.AreEqual("INTERVENTION:change_initiative:-2.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
-        public void Card_with_no_effects_or_fate_renders_empty()
+        public void Card_with_no_effects_or_intervention_renders_empty()
         {
-            var card = Action("flavor_only");
+            var card = Execution("flavor_only");
             Assert.AreEqual(string.Empty, DescriptionComposer.Describe(card, Vocab));
         }
 
@@ -163,7 +164,7 @@ namespace FateWeaver.Tests.EditMode
         public void Korean_no_following_enemy_card_condition() =>
             Assert.AreEqual("피해 2. 이후 수행한 적 카드 없으면 피해 7.",
                 DescriptionComposer.Describe(
-                    Action("warden_smash",
+                    Execution("warden_smash",
                         EffectData.Conditional(
                             EffectKeys.Damage,
                             2,
@@ -175,7 +176,7 @@ namespace FateWeaver.Tests.EditMode
         public void Korean_number_token_follows_data()
         {
             var tuned = new CardDefinition("slash", "베기", Side.Player, CardType.Attack, 4,
-                new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Action };
+                new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Execution };
             Assert.AreEqual("피해 99.", DescriptionComposer.Describe(tuned, Kr));
         }
 
@@ -187,7 +188,7 @@ namespace FateWeaver.Tests.EditMode
                 {
                     EffectData.ApplyStatus(StatusKeys.Slow, StatusLifetime.Turns(2),
                         StatusApplyTarget.TargetEnemy, 3)
-                }) { Category = CardCategory.Action };
+                }) { Category = CardCategory.Execution };
             Assert.AreEqual("적 둔화 3 (2턴).", DescriptionComposer.Describe(card, Kr));
         }
 
@@ -206,7 +207,7 @@ namespace FateWeaver.Tests.EditMode
                             new WithinNth(3)
                         }),
                         6)
-                }) { Category = CardCategory.Action };
+                }) { Category = CardCategory.Execution };
             Assert.AreEqual("피해 1. 바로 앞이 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Kr));
         }

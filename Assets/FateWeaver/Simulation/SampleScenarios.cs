@@ -1,7 +1,7 @@
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
@@ -59,10 +59,10 @@ namespace FateWeaver.Simulation
                                 successAmount: 10)
                         })
                 },
-                fatePlays: new[]
+                interventionPlays: new[]
                 {
-                    new FatePlaySpec(
-                        new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0),
+                    new InterventionPlaySpec(
+                        new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0),
                         "enemy_jab",
                         "quick_cut")
                 });
@@ -104,10 +104,10 @@ namespace FateWeaver.Simulation
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
                         })
                 },
-                fatePlays: new[]
+                interventionPlays: new[]
                 {
-                    new FatePlaySpec(
-                        new FateActionData(FateActionKeys.SwapInitiative, cost: 1, amount: 0),
+                    new InterventionPlaySpec(
+                        new InterventionActionData(InterventionActionKeys.SwapInitiative, cost: 1, amount: 0),
                         "quick_cut",
                         "wrist_cut")
                 });
@@ -180,11 +180,11 @@ namespace FateWeaver.Simulation
                         initiative: 6,
                         effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                 },
-                fatePlays: new[]
+                interventionPlays: new[]
                 {
-                    new FatePlaySpec(
-                        new FateActionData(
-                            FateActionKeys.ChangeInitiative,
+                    new InterventionPlaySpec(
+                        new InterventionActionData(
+                            InterventionActionKeys.ChangeInitiative,
                             cost: 1,
                             amount: 2),
                         "wrist_cut")

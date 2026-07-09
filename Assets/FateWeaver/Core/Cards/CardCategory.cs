@@ -1,9 +1,9 @@
 namespace FateWeaver.Core.Cards
 {
-    /// <summary>Whether a card produces effects on the future zone (Action) or manipulates it (Fate).</summary>
+    /// <summary>Whether a card executes in the future zone or intervenes with that sequence.</summary>
     public enum CardCategory
     {
-        Action,
-        Fate
+        Execution,
+        Intervention
     }
 }

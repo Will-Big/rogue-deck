@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
     /// <summary>Interactive driver for a MultiTurnScenario used by the Unity playtest screen: the human
-    /// applies fate actions each turn (instead of the scenario's scripted plays), resolves, then advances.
+    /// applies intervention actions each turn (instead of the scenario's scripted plays), resolves, then advances.
     /// Pure C# (no UnityEngine) so the turn-advancement logic is headless-testable.</summary>
     public sealed class MultiTurnPlaytestSession
     {
         private readonly MultiTurnScenario _scenario;
         private readonly CombatState _state;
         private readonly TurnResolver _resolver;
-        private readonly FatePlayResolver _fateResolver;
+        private readonly InterventionPlayResolver _interventionResolver;
 
-        private Dictionary<string, ActionCardInstance> _cardsById;
+        private Dictionary<string, ExecutionCardInstance> _cardsById;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
 
         public MultiTurnPlaytestSession(MultiTurnScenario scenario)
@@ -30,7 +30,7 @@ namespace FateWeaver.Simulation
             }
 
             _resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
-            _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
+            _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
 
             BeginTurn(0);
         }
@@ -39,7 +39,7 @@ namespace FateWeaver.Simulation
         public int TurnIndex { get; private set; }
         public int TurnCount => _scenario.Turns.Count;
         public CombatState State => _state;
-        public IReadOnlyList<ActionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
+        public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
         public IReadOnlyList<ResolutionEvent> LastTimeline => _lastTimeline;
         public Outcome Outcome { get; private set; } = Outcome.Ongoing;
         public bool CurrentTurnResolved { get; private set; }
@@ -48,8 +48,8 @@ namespace FateWeaver.Simulation
         public bool IsComplete =>
             Outcome != Outcome.Ongoing || (TurnIndex >= TurnCount - 1 && CurrentTurnResolved);
 
-        public FatePlayResult ApplyFateAction(
-            FateActionData action, string targetCardId, string secondaryTargetCardId = null)
+        public InterventionPlayResult ApplyInterventionAction(
+            InterventionActionData action, string targetCardId, string secondaryTargetCardId = null)
         {
             if (CurrentTurnResolved)
             {
@@ -58,7 +58,7 @@ namespace FateWeaver.Simulation
 
             var target = Card(targetCardId);
             var secondary = secondaryTargetCardId == null ? null : Card(secondaryTargetCardId);
-            return _fateResolver.Resolve(_state, new[] { new FatePlay(action, target, secondary) });
+            return _interventionResolver.Resolve(_state, new[] { new InterventionPlay(action, target, secondary) });
         }
 
         public IReadOnlyList<ResolutionEvent> ResolveTurn()
@@ -95,12 +95,12 @@ namespace FateWeaver.Simulation
 
             var script = _scenario.Turns[index];
             _state.Zone.Clear();
-            _cardsById = new Dictionary<string, ActionCardInstance>();
+            _cardsById = new Dictionary<string, ExecutionCardInstance>();
             foreach (var card in script.ZoneCards)
             {
                 var def = new CardDefinition(
                     card.Id, card.Name, card.Side, card.Type, card.Initiative, card.Effects);
-                var instance = new ActionCardInstance(def);
+                var instance = new ExecutionCardInstance(def);
                 _state.Zone.Add(instance);
                 _cardsById[card.Id] = instance;
             }
@@ -108,7 +108,7 @@ namespace FateWeaver.Simulation
             _state.FateEnergy = script.FateEnergy;
         }
 
-        private ActionCardInstance Card(string id)
+        private ExecutionCardInstance Card(string id)
             => _cardsById.TryGetValue(id, out var card)
                 ? card
                 : throw new KeyNotFoundException("No playtest card found for '" + id + "'");

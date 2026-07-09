@@ -22,17 +22,17 @@ namespace FateWeaver.Simulation
         public static CardDefinition Thrust() => new CardDefinition(
             "goblin_jab", "찌르기", Side.Enemy, CardType.Attack, 6,
             new[] { new EffectData(EffectKeys.Damage, 4) })
-            { Cost = 0, Category = CardCategory.Action };
+            { Cost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition CrudeGuard() => new CardDefinition(
             "crude_guard", "조잡한 방어", Side.Enemy, CardType.Defense, 4,
             new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) })
-            { Cost = 0, Category = CardCategory.Action };
+            { Cost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition SlyJab() => new CardDefinition(
             "sly_jab", "약삭빠른 찌르기", Side.Enemy, CardType.Attack, 3,
             new[] { EffectData.Conditional(EffectKeys.Damage, 3, new NoPrecedingCardOfSide(Side.Player), 6) })
-            { Cost = 0, Category = CardCategory.Action };
+            { Cost = 0, Category = CardCategory.Execution };
 
         private static readonly Func<CardDefinition>[] Catalog = { Thrust, CrudeGuard, SlyJab };
 

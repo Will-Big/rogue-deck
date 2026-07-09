@@ -8,12 +8,12 @@ namespace FateWeaver.Tests
     public class StarterDeckTests
     {
         [Test]
-        public void Has_ten_cards_seven_action_three_fate()
+        public void Has_ten_cards_seven_execution_three_intervention()
         {
             var cards = StarterDeck.Build();
             Assert.AreEqual(10, cards.Count);
-            Assert.AreEqual(7, cards.Count(c => c.Category == CardCategory.Action));
-            Assert.AreEqual(3, cards.Count(c => c.Category == CardCategory.Fate));
+            Assert.AreEqual(7, cards.Count(c => c.Category == CardCategory.Execution));
+            Assert.AreEqual(3, cards.Count(c => c.Category == CardCategory.Intervention));
         }
 
         [Test]
@@ -45,11 +45,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Fate_card_cost_matches_its_fate_action_cost()
+        public void Intervention_card_cost_matches_its_intervention_action_cost()
         {
             var pull = StarterDeck.Build().First(c => c.Id == "pull_forward");
-            Assert.AreEqual(CardCategory.Fate, pull.Category);
-            Assert.AreEqual(pull.Cost, pull.FateAction.Cost);
+            Assert.AreEqual(CardCategory.Intervention, pull.Category);
+            Assert.AreEqual(pull.Cost, pull.InterventionAction.Cost);
         }
     }
 }

@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Combat;
 
-namespace FateWeaver.Core.Fate
+namespace FateWeaver.Core.Intervention
 {
-    public sealed class FatePlayResolver
+    public sealed class InterventionPlayResolver
     {
-        private readonly FateActionRegistry _actions;
+        private readonly InterventionActionRegistry _actions;
 
-        public FatePlayResolver(FateActionRegistry actions)
+        public InterventionPlayResolver(InterventionActionRegistry actions)
         {
             _actions = actions;
         }
 
-        public FatePlayResult Resolve(CombatState state, IReadOnlyList<FatePlay> plays)
+        public InterventionPlayResult Resolve(CombatState state, IReadOnlyList<InterventionPlay> plays)
         {
             int appliedCount = 0;
             int fateEnergySpent = 0;
@@ -20,18 +20,18 @@ namespace FateWeaver.Core.Fate
             for (int i = 0; i < plays.Count; i++)
             {
                 var play = plays[i];
-                var handler = _actions.Resolve(play.Action.Key);
-                var ctx = new FatePlayContext
+                var handler = _actions.Resolve(play.Intervention.Key);
+                var ctx = new InterventionPlayContext
                 {
                     State = state,
                     Target = play.Target,
                     SecondaryTarget = play.SecondaryTarget,
-                    Action = play.Action
+                    Intervention = play.Intervention
                 };
 
                 if (!handler.CanApply(ctx))
                 {
-                    return new FatePlayResult(appliedCount, i, fateEnergySpent);
+                    return new InterventionPlayResult(appliedCount, i, fateEnergySpent);
                 }
 
                 handler.Apply(ctx);
@@ -39,7 +39,7 @@ namespace FateWeaver.Core.Fate
                 fateEnergySpent += ctx.FateEnergySpent;
             }
 
-            return new FatePlayResult(appliedCount, -1, fateEnergySpent);
+            return new InterventionPlayResult(appliedCount, -1, fateEnergySpent);
         }
     }
 }

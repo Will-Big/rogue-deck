@@ -2,6 +2,7 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Authoring;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace FateWeaver.Unity
 {
@@ -20,8 +21,10 @@ namespace FateWeaver.Unity
         public Sprite Art;
         [TextArea] public string Description;
         public EffectSpec[] Effects = Array.Empty<EffectSpec>();
-        public FateKind Fate;
-        public int FateAmount;
+        [FormerlySerializedAs("Fate")]
+        public InterventionKind Intervention;
+        [FormerlySerializedAs("FateAmount")]
+        public int InterventionAmount;
 
         public CardSpec ToSpec() => new CardSpec
         {
@@ -33,8 +36,8 @@ namespace FateWeaver.Unity
             Cost = Cost,
             BaseInitiative = BaseInitiative,
             Effects = Effects,
-            Fate = Fate,
-            FateAmount = FateAmount
+            Intervention = Intervention,
+            InterventionAmount = InterventionAmount
         };
     }
 }

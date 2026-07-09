@@ -20,7 +20,7 @@ namespace FateWeaver.Core.Conditions
     public sealed record AdjacentCardIs(
         AdjacentDirection Direction,
         Side Side,
-        CardType? Type = null) : Condition; // Type null = any card type (e.g. "any player action card")
+        CardType? Type = null) : Condition; // Type null = any card type (e.g. "any player execution card")
 
     public sealed record SameTarget : Condition;
 

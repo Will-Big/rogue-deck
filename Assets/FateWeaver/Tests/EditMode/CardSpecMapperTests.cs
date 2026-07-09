@@ -2,7 +2,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation.Authoring;
 
@@ -16,11 +16,11 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+                Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
                 Effects = new[] { new EffectSpec { Kind = EffectKind.Damage, Amount = 3 } }
             });
 
-            Assert.AreEqual(CardCategory.Action, def.Category);
+            Assert.AreEqual(CardCategory.Execution, def.Category);
             Assert.AreEqual(1, def.Cost);
             Assert.AreEqual(1, def.Effects.Count);
             Assert.AreEqual(EffectKeys.Damage, def.Effects[0].Key);
@@ -34,7 +34,7 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+                Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
                 Effects = new[] { new EffectSpec {
                     Kind = EffectKind.Damage, Amount = 2,
                     Condition = ConditionKind.FirstToTrigger, SuccessAmount = 8 } }
@@ -52,7 +52,7 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
-                Category = CardCategory.Action, Cost = 1, BaseInitiative = 5,
+                Category = CardCategory.Execution, Cost = 1, BaseInitiative = 5,
                 Effects = new[] { new EffectSpec {
                     Kind = EffectKind.ApplyStatus, Amount = 2, Status = StatusKindRef.Block,
                     Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
@@ -76,14 +76,14 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
                 Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
-                Category = CardCategory.Fate, Cost = 1, Fate = FateKind.ChangeInitiative, FateAmount = -2
+                Category = CardCategory.Intervention, Cost = 1, Intervention = InterventionKind.ChangeInitiative, InterventionAmount = -2
             });
 
-            Assert.AreEqual(CardCategory.Fate, def.Category);
+            Assert.AreEqual(CardCategory.Intervention, def.Category);
             Assert.AreEqual(0, def.Effects.Count);
-            Assert.AreEqual(FateActionKeys.ChangeInitiative, def.FateAction.Key);
-            Assert.AreEqual(1, def.FateAction.Cost);
-            Assert.AreEqual(-2, def.FateAction.Amount);
+            Assert.AreEqual(InterventionActionKeys.ChangeInitiative, def.InterventionAction.Key);
+            Assert.AreEqual(1, def.InterventionAction.Cost);
+            Assert.AreEqual(-2, def.InterventionAction.Amount);
         }
 
         [Test]

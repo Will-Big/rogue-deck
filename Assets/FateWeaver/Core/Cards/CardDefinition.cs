@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Cards
@@ -50,16 +50,16 @@ namespace FateWeaver.Core.Cards
         int BaseInitiative,
         IReadOnlyList<EffectData> Effects)
     {
-        /// <summary>Fate-energy cost to play this card.</summary>
+        /// <summary>Energy cost to play this card.</summary>
         public int Cost { get; init; }
 
-        /// <summary>Action (effects on the zone) or Fate (zone control).</summary>
+        /// <summary>Execution (effects on the zone) or intervention (zone control).</summary>
         public CardCategory Category { get; init; }
 
-        /// <summary>For fate cards: the action resolved when played (null for action cards).</summary>
-        public FateActionData FateAction { get; init; }
+        /// <summary>For intervention cards: the action resolved when played (null for execution cards).</summary>
+        public InterventionActionData InterventionAction { get; init; }
 
-        /// <summary>When true, the card enters the future zone locked (fate reordering rejected).</summary>
+        /// <summary>When true, the card enters the future zone locked (intervention reordering rejected).</summary>
         public bool StartsLocked { get; init; }
     }
 }

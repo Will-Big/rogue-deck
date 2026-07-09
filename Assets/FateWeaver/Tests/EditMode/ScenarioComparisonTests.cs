@@ -9,7 +9,7 @@ namespace FateWeaver.Tests
     public class ScenarioComparisonTests
     {
         [Test]
-        public void Compare_runs_baseline_without_fate_plays_and_scripted_with_fate_plays()
+        public void Compare_runs_baseline_without_intervention_plays_and_scripted_with_intervention_plays()
         {
             var comparison = new ScenarioRunner().Compare(SampleScenarios.QuickCutSwap());
 

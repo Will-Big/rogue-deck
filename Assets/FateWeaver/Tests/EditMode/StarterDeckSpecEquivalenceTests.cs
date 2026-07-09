@@ -41,8 +41,8 @@ namespace FateWeaver.Tests
         {
             var specs = StarterDeckSpecs.Build();
             Assert.AreEqual(10, specs.Count);
-            Assert.AreEqual(7, specs.Count(s => s.Category == CardCategory.Action));
-            Assert.AreEqual(3, specs.Count(s => s.Category == CardCategory.Fate));
+            Assert.AreEqual(7, specs.Count(s => s.Category == CardCategory.Execution));
+            Assert.AreEqual(3, specs.Count(s => s.Category == CardCategory.Intervention));
         }
 
         [Test]
@@ -51,8 +51,8 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { Def("quick_cut"), Def("pull_forward") }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(5, 3), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "quick_cut"));
-            session.PlayFateCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
+            session.PlayExecutionCard(HandIndex(session, "quick_cut"));
+            session.PlayInterventionCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
             Assert.AreEqual(8, DamageOf(session.ResolveTurn(), "quick_cut"));
         }
 
@@ -63,7 +63,7 @@ namespace FateWeaver.Tests
                 new[] { Def("counter_stance") }, 30,
                 new[] { new Enemy("goblin", 100) },
                 Goblin(6, 4), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "counter_stance"));
+            session.PlayExecutionCard(HandIndex(session, "counter_stance"));
             Assert.AreEqual(9, DamageOf(session.ResolveTurn(), "counter_stance"));
         }
 
@@ -73,7 +73,7 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { Def("cover") }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
-            session.PlayActionCard(HandIndex(session, "cover"));
+            session.PlayExecutionCard(HandIndex(session, "cover"));
             int hp = session.State.PlayerHp;
             session.ResolveTurn();
             Assert.AreEqual(hp, session.State.PlayerHp);

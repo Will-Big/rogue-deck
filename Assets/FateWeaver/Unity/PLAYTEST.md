@@ -4,11 +4,14 @@
 
 1. `Window ▸ TextMeshPro ▸ Import TMP Essential Resources`.
 2. `Fate Weaver ▸ Create Korean TMP Font` — `Resources/Fonts/KoreanTMP.asset` 생성.
-   - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 `C:/Windows/Fonts/malgun.ttf`를
-     Source로, Atlas Population Mode = **Dynamic**으로 생성해 `Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
+   - 소스 폰트는 리포에 커밋된 **Pretendard**(`Assets/FateWeaver/Unity/Fonts/Pretendard-Regular.ttf`, OFL)라
+     OS 상관없이(macOS/Windows/Linux) 동작한다. 생성 애셋은 씬이 참조하는 guid에 자동으로 핀되어 별도 배선이 필요 없다.
+   - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 위 Pretendard TTF를 Source로,
+     Atlas Population Mode = **Dynamic**으로 생성해 `Assets/FateWeaver/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
 3. `Fate Weaver ▸ Build Playtest Scene (uGUI)` — Canvas/CardView 프리팹/컨트롤러를 생성·연결.
 
-> `Resources/Fonts/`는 gitignore 대상(생성물 + 시스템 폰트). 머신마다 2~3번을 다시 실행한다.
+> `Resources/Fonts/`(생성된 동적 아틀라스)만 gitignore 대상이다. Pretendard TTF는 커밋되어 있으니
+> 머신마다 2번(과 필요 시 3번)만 다시 실행하면 된다.
 
 ## 실행
 
@@ -16,7 +19,7 @@
    - 간수 잠금 적 테스트는 `Assets/FateWeaver/Scenes/FateWeaverWardenPlaytest.unity`를 연다.
 2. 상단 버튼으로 시나리오 선택.
 3. 미래 영역의 카드(이미지 + 이름/주도력 + 하단 설명)를 눌러 주/보조 대상 선택.
-4. 운명 액션(주도력 ±2 / 교환 / 고정) 적용.
+4. 개입 액션(주도력 ±2 / 교환 / 고정) 적용.
 5. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나거나 마지막 턴이면 종료.
 
 ## 범위 / 검증

@@ -12,12 +12,12 @@ namespace FateWeaver.Tests.UnityEditMode
         private static CardDefinition EnemyCard() => new CardDefinition(
             "locked_jab", "잠긴 일격", Side.Enemy, CardType.Attack, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
-            { Cost = 0, Category = CardCategory.Action };
+            { Cost = 0, Category = CardCategory.Execution };
 
         [Test]
         public void Locked_zone_card_exposes_lock_status_icon()
         {
-            var instance = new ActionCardInstance(EnemyCard()) { IsLocked = true };
+            var instance = new ExecutionCardInstance(EnemyCard()) { IsLocked = true };
 
             var presentation = CardPresentation.From(instance);
 

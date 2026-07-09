@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
 
         private static MultiTurnScenario OneTurn(int playerHp, EnemySpec[] enemies, params ZoneCardSpec[] cards)
             => new MultiTurnScenario("t", playerHp, enemies,
-                new[] { new TurnScript(3, cards, new FatePlaySpec[0]) });
+                new[] { new TurnScript(3, cards, new InterventionPlaySpec[0]) });
 
         [Test]
         public void Block_absorbs_incoming_damage()
@@ -72,9 +72,9 @@ namespace FateWeaver.Tests
                     {
                         new ZoneCardSpec("expose", "Expose", Side.Player, CardType.Skill, 1, expose),
                         Strike("strike1", 2, 4)
-                    }, new FatePlaySpec[0]),
-                    new TurnScript(3, new[] { Strike("strike2", 1, 4) }, new FatePlaySpec[0]),
-                    new TurnScript(3, new[] { Strike("strike3", 1, 4) }, new FatePlaySpec[0])
+                    }, new InterventionPlaySpec[0]),
+                    new TurnScript(3, new[] { Strike("strike2", 1, 4) }, new InterventionPlaySpec[0]),
+                    new TurnScript(3, new[] { Strike("strike3", 1, 4) }, new InterventionPlaySpec[0])
                 });
 
             var result = new MultiTurnRunner().Run(scenario);

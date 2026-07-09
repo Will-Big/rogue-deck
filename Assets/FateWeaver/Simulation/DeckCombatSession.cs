@@ -2,20 +2,20 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>Drives the deck turn loop: draw a hand, spend fate energy to place action cards onto the
-    /// future zone and play fate cards to reorder it, resolve, then begin the next turn. Pure C#.</summary>
+    /// <summary>Drives the deck turn loop: draw a hand, spend fate energy to place execution cards onto the
+    /// future zone and play intervention cards to reorder it, resolve, then begin the next turn. Pure C#.</summary>
     public sealed class DeckCombatSession
     {
         private readonly CombatState _state;
         private readonly Deck _deck;
         private readonly IEnemyTurnPolicy _enemyPolicy;
         private readonly TurnResolver _resolver;
-        private readonly FatePlayResolver _fateResolver;
+        private readonly InterventionPlayResolver _interventionResolver;
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
@@ -45,7 +45,7 @@ namespace FateWeaver.Simulation
             _handSize = handSize;
             _statuses = CombatRegistries.Statuses();
             _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
-            _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
+            _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
 
             BeginTurn(0);
         }
@@ -54,7 +54,7 @@ namespace FateWeaver.Simulation
         public IReadOnlyList<CardDefinition> Hand => _deck.Hand;
         public int FateEnergy => _state.FateEnergy;
         public CombatState State => _state;
-        public IReadOnlyList<ActionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
+        public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
         public IReadOnlyList<ResolutionEvent> LastTimeline => _lastTimeline;
         public Outcome Outcome { get; private set; } = Outcome.Ongoing;
         public bool CurrentTurnResolved { get; private set; }
@@ -62,8 +62,8 @@ namespace FateWeaver.Simulation
         public int DrawCount => _deck.DrawCount;
         public int DiscardCount => _deck.DiscardCount;
 
-        /// <summary>Place an action card from the hand onto the future zone (spends its fate-energy cost).</summary>
-        public bool PlayActionCard(int handIndex)
+        /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
+        public bool PlayExecutionCard(int handIndex)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -71,22 +71,22 @@ namespace FateWeaver.Simulation
             }
 
             var def = _deck.Hand[handIndex];
-            if (def.Category != CardCategory.Action || _state.FateEnergy < def.Cost)
+            if (def.Category != CardCategory.Execution || _state.FateEnergy < def.Cost)
             {
                 return false;
             }
 
             _state.FateEnergy -= def.Cost;
-            var placed = new ActionCardInstance(def);
+            var placed = new ExecutionCardInstance(def);
             placed.Initiative = StatusInitiative.InitiativeFor(placed.Initiative, _state.PlayerStatuses, _statuses);
             _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
             return true;
         }
 
-        /// <summary>Play a fate card from the hand, targeting card(s) by their index in CurrentOrder.
+        /// <summary>Play a intervention card from the hand, targeting card(s) by their index in CurrentOrder.
         /// The fate handler deducts energy and rejects when locked / unaffordable.</summary>
-        public bool PlayFateCard(int handIndex, int targetZoneIndex, int secondaryZoneIndex = -1)
+        public bool PlayInterventionCard(int handIndex, int targetZoneIndex, int secondaryZoneIndex = -1)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -94,7 +94,7 @@ namespace FateWeaver.Simulation
             }
 
             var def = _deck.Hand[handIndex];
-            if (def.Category != CardCategory.Fate || def.FateAction == null)
+            if (def.Category != CardCategory.Intervention || def.InterventionAction == null)
             {
                 return false;
             }
@@ -106,7 +106,7 @@ namespace FateWeaver.Simulation
             }
 
             var target = order[targetZoneIndex];
-            ActionCardInstance secondary = null;
+            ExecutionCardInstance secondary = null;
             if (secondaryZoneIndex >= 0)
             {
                 if (secondaryZoneIndex >= order.Count)
@@ -117,7 +117,7 @@ namespace FateWeaver.Simulation
                 secondary = order[secondaryZoneIndex];
             }
 
-            var result = _fateResolver.Resolve(_state, new[] { new FatePlay(def.FateAction, target, secondary) });
+            var result = _interventionResolver.Resolve(_state, new[] { new InterventionPlay(def.InterventionAction, target, secondary) });
             if (result.AppliedCount != 1)
             {
                 return false;
@@ -164,7 +164,7 @@ namespace FateWeaver.Simulation
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
-                var inst = new ActionCardInstance(enemyCard);
+                var inst = new ExecutionCardInstance(enemyCard);
                 inst.IsLocked = enemyCard.StartsLocked;
                 if (!inst.IsLocked)
                 {

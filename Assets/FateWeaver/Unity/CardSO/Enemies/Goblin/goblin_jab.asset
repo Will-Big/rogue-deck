@@ -22,5 +22,5 @@ MonoBehaviour:
   Art: {fileID: 4952004340561987688, guid: bb65265ff4f149f1a31435dcab3ae8e7, type: 3}
   Description: 
   Effects: []
-  Fate: 0
-  FateAmount: 0
+  Intervention: 0
+  InterventionAmount: 0

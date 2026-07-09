@@ -10,7 +10,7 @@ namespace FateWeaver.Simulation.Authoring
 
     public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
 
-    public enum FateKind { None, ChangeInitiative, SwapInitiative, Lock }
+    public enum InterventionKind { None, ChangeInitiative, SwapInitiative, Lock }
 
     /// <summary>Flat, Inspector- and codegen-friendly description of one effect. Mapped to core EffectData.</summary>
     [Serializable]

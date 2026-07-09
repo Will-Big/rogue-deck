@@ -90,6 +90,7 @@ Tests/Headless/obj/
 
 # ============================================
 # Generated Korean TMP font (run "Fate Weaver/Create Korean TMP Font" per machine).
-# The Malgun Gothic TTF is a Windows system font — not committed.
+# The generated dynamic atlas is a machine-local binary artifact — not committed.
+# The source Pretendard TTF (OFL) lives in Assets/FateWeaver/Unity/Fonts/ and IS committed.
 # ============================================
 /Assets/FateWeaver/Unity/Resources/Fonts/

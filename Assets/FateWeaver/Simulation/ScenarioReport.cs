@@ -11,7 +11,7 @@ namespace FateWeaver.Simulation
             sb.AppendLine("# Scenario: " + result.Scenario.Name);
             sb.AppendLine();
             AppendOrder(sb, "Initial Order", result.InitialOrder);
-            AppendFatePlays(sb, result);
+            AppendInterventionPlays(sb, result);
             AppendOrder(sb, "Manipulated Order", result.ManipulatedOrder);
             AppendResolution(sb, result);
             AppendFinalState(sb, result);
@@ -30,24 +30,24 @@ namespace FateWeaver.Simulation
             sb.AppendLine();
         }
 
-        private static void AppendFatePlays(StringBuilder sb, ScenarioResult result)
+        private static void AppendInterventionPlays(StringBuilder sb, ScenarioResult result)
         {
-            sb.AppendLine("## Fate Plays");
-            foreach (var play in result.Scenario.FatePlays)
+            sb.AppendLine("## Intervention Plays");
+            foreach (var play in result.Scenario.InterventionPlays)
             {
-                var line = "- " + play.Action.Key + " -> " + play.TargetCardId;
+                var line = "- " + play.Intervention.Key + " -> " + play.TargetCardId;
                 if (play.SecondaryTargetCardId != null)
                 {
                     line += " / " + play.SecondaryTargetCardId;
                 }
 
-                line += " (cost " + play.Action.Cost + ")";
+                line += " (cost " + play.Intervention.Cost + ")";
                 sb.AppendLine(line);
             }
 
-            sb.AppendLine("- Applied: " + result.FatePlayResult.AppliedCount
-                + ", Rejected: " + result.FatePlayResult.RejectedIndex
-                + ", Spent: " + result.FatePlayResult.FateEnergySpent);
+            sb.AppendLine("- Applied: " + result.InterventionPlayResult.AppliedCount
+                + ", Rejected: " + result.InterventionPlayResult.RejectedIndex
+                + ", Spent: " + result.InterventionPlayResult.FateEnergySpent);
             sb.AppendLine();
         }
 

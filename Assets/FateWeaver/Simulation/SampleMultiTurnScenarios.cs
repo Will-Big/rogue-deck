@@ -1,7 +1,7 @@
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
@@ -106,10 +106,10 @@ namespace FateWeaver.Simulation
                                 "slash", "Slash", Side.Player, CardType.Attack, initiative: 3,
                                 effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                         },
-                        fatePlays: new[]
+                        interventionPlays: new[]
                         {
-                            new FatePlaySpec(
-                                new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: 3),
+                            new InterventionPlaySpec(
+                                new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: 3),
                                 "goblin_jab")
                         })
                 });
@@ -134,7 +134,7 @@ namespace FateWeaver.Simulation
                             EnemyAttack("goblin_jab", initiative: 1, damage: 3),
                             CounterCard("counter", initiative: 2)
                         },
-                        fatePlays: new FatePlaySpec[0])
+                        interventionPlays: new InterventionPlaySpec[0])
                 });
         }
 
@@ -181,7 +181,7 @@ namespace FateWeaver.Simulation
                                 new[] { new EffectData(EffectKeys.Damage, 1) }),
                             ChainSlashCard("chain", initiative: 2)
                         },
-                        fatePlays: new FatePlaySpec[0])
+                        interventionPlays: new InterventionPlaySpec[0])
                 });
         }
 
@@ -196,7 +196,7 @@ namespace FateWeaver.Simulation
                         amount: 0,
                         condition: new AllOf(new Condition[]
                         {
-                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Player), // any player action card
+                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Player), // any player execution card
                             new WithinNth(3)
                         }),
                         successAmount: 5)
@@ -212,10 +212,10 @@ namespace FateWeaver.Simulation
                     EnemyAttack(enemyId + "_" + suffix, initiative: 1, damage: enemyDamage),
                     QuickCut(quickCutId, initiative: 2)
                 },
-                fatePlays: new[]
+                interventionPlays: new[]
                 {
-                    new FatePlaySpec(
-                        new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2),
+                    new InterventionPlaySpec(
+                        new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2),
                         quickCutId)
                 });
         }
@@ -240,10 +240,10 @@ namespace FateWeaver.Simulation
                         }),
                     QuickCut(quickCutId, initiative: 2)
                 },
-                fatePlays: new[]
+                interventionPlays: new[]
                 {
-                    new FatePlaySpec(
-                        new FateActionData(FateActionKeys.ChangeInitiative, cost: 1, amount: -2),
+                    new InterventionPlaySpec(
+                        new InterventionActionData(InterventionActionKeys.ChangeInitiative, cost: 1, amount: -2),
                         quickCutId)
                 });
         }

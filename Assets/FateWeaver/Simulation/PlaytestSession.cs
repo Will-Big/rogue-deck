@@ -3,33 +3,33 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
     /// <summary>Mutable single-turn session used by the Unity playtest screen.</summary>
     public sealed class PlaytestSession
     {
-        private readonly Dictionary<string, ActionCardInstance> _cardsById = new();
-        private readonly FatePlayResolver _fateResolver;
+        private readonly Dictionary<string, ExecutionCardInstance> _cardsById = new();
+        private readonly InterventionPlayResolver _interventionResolver;
         private readonly TurnResolver _turnResolver;
         private IReadOnlyList<ResolutionEvent> _timeline;
 
         public ScenarioDefinition Scenario { get; }
         public CombatState State { get; }
-        public IReadOnlyList<ActionCardInstance> CurrentOrder => State.Zone.ResolutionOrder();
+        public IReadOnlyList<ExecutionCardInstance> CurrentOrder => State.Zone.ResolutionOrder();
         public bool IsResolved => _timeline != null;
 
         public PlaytestSession(ScenarioDefinition scenario)
         {
             Scenario = scenario;
             State = BuildState(scenario);
-            _fateResolver = new FatePlayResolver(CombatRegistries.FateActions());
+            _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
             _turnResolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
         }
 
-        public FatePlayResult ApplyFateAction(
-            FateActionData action,
+        public InterventionPlayResult ApplyInterventionAction(
+            InterventionActionData action,
             string targetCardId,
             string secondaryTargetCardId = null)
         {
@@ -40,9 +40,9 @@ namespace FateWeaver.Simulation
 
             var target = Card(targetCardId);
             var secondary = secondaryTargetCardId == null ? null : Card(secondaryTargetCardId);
-            return _fateResolver.Resolve(
+            return _interventionResolver.Resolve(
                 State,
-                new[] { new FatePlay(action, target, secondary) });
+                new[] { new InterventionPlay(action, target, secondary) });
         }
 
         public IReadOnlyList<ResolutionEvent> Resolve()
@@ -55,7 +55,7 @@ namespace FateWeaver.Simulation
             return _timeline;
         }
 
-        private ActionCardInstance Card(string id)
+        private ExecutionCardInstance Card(string id)
             => _cardsById.TryGetValue(id, out var card)
                 ? card
                 : throw new KeyNotFoundException("No playtest card found for '" + id + "'");
@@ -82,7 +82,7 @@ namespace FateWeaver.Simulation
                     card.Type,
                     card.Initiative,
                     card.Effects);
-                var instance = new ActionCardInstance(definition);
+                var instance = new ExecutionCardInstance(definition);
                 state.Zone.Add(instance);
                 _cardsById.Add(card.Id, instance);
             }

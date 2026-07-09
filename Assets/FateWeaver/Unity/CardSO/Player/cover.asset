@@ -31,5 +31,5 @@ MonoBehaviour:
     Lifetime: 1
     LifetimeCount: 0
     Target: 0
-  Fate: 0
-  FateAmount: 0
+  Intervention: 0
+  InterventionAmount: 0

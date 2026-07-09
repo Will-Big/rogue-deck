@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Fate;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Simulation
 {
@@ -13,7 +13,7 @@ namespace FateWeaver.Simulation
         public int FateEnergy { get; }
         public IReadOnlyList<EnemySpec> Enemies { get; }
         public IReadOnlyList<ZoneCardSpec> ZoneCards { get; }
-        public IReadOnlyList<FatePlaySpec> FatePlays { get; }
+        public IReadOnlyList<InterventionPlaySpec> InterventionPlays { get; }
 
         public ScenarioDefinition(
             string name,
@@ -21,7 +21,7 @@ namespace FateWeaver.Simulation
             int fateEnergy,
             IReadOnlyList<EnemySpec> enemies,
             IReadOnlyList<ZoneCardSpec> zoneCards,
-            IReadOnlyList<FatePlaySpec> fatePlays)
+            IReadOnlyList<InterventionPlaySpec> interventionPlays)
             : this(
                 name.ToLowerInvariant().Replace(" ", "-"),
                 name,
@@ -29,7 +29,7 @@ namespace FateWeaver.Simulation
                 fateEnergy,
                 enemies,
                 zoneCards,
-                fatePlays)
+                interventionPlays)
         {
         }
 
@@ -40,7 +40,7 @@ namespace FateWeaver.Simulation
             int fateEnergy,
             IReadOnlyList<EnemySpec> enemies,
             IReadOnlyList<ZoneCardSpec> zoneCards,
-            IReadOnlyList<FatePlaySpec> fatePlays)
+            IReadOnlyList<InterventionPlaySpec> interventionPlays)
         {
             Id = id;
             Name = name;
@@ -48,7 +48,7 @@ namespace FateWeaver.Simulation
             FateEnergy = fateEnergy;
             Enemies = enemies;
             ZoneCards = zoneCards;
-            FatePlays = fatePlays;
+            InterventionPlays = interventionPlays;
         }
     }
 
@@ -90,15 +90,15 @@ namespace FateWeaver.Simulation
         }
     }
 
-    public sealed class FatePlaySpec
+    public sealed class InterventionPlaySpec
     {
-        public FateActionData Action { get; }
+        public InterventionActionData Intervention { get; }
         public string TargetCardId { get; }
         public string SecondaryTargetCardId { get; }
 
-        public FatePlaySpec(FateActionData action, string targetCardId, string secondaryTargetCardId = null)
+        public InterventionPlaySpec(InterventionActionData action, string targetCardId, string secondaryTargetCardId = null)
         {
-            Action = action;
+            Intervention = action;
             TargetCardId = targetCardId;
             SecondaryTargetCardId = secondaryTargetCardId;
         }

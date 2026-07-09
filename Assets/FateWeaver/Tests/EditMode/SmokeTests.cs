@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
                 "strike", "Strike", Side.Player, CardType.Attack, 2,
                 new[] { new FateWeaver.Core.Cards.EffectData(FateWeaver.Core.Effects.EffectKeys.Damage, 5) });
 
-            var card = new FateWeaver.Core.Combat.ActionCardInstance(def);
+            var card = new FateWeaver.Core.Combat.ExecutionCardInstance(def);
             var enemy = new FateWeaver.Core.Combat.Enemy("goblin", 12);
 
             Assert.AreEqual("strike", def.Id);

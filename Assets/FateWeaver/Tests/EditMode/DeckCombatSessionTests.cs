@@ -34,7 +34,7 @@ namespace FateWeaver.Tests
             var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
             Assert.AreEqual(3, session.FateEnergy);
 
-            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "slash")));
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "slash")));
 
             Assert.AreEqual(2, session.FateEnergy);                 // cost 1 spent
             Assert.IsTrue(session.CurrentOrder.Any(c => c.Def.Id == "slash"));
@@ -46,8 +46,8 @@ namespace FateWeaver.Tests
         {
             // deck of two counters (cost 2 each); energy 3 -> only one is affordable.
             var session = NewSession(new[] { StarterDeck.Counter(), StarterDeck.Counter() }, Goblin(4, 3));
-            Assert.IsTrue(session.PlayActionCard(HandIndex(session, "counter_stance")));  // 3 -> 1
-            Assert.IsFalse(session.PlayActionCard(HandIndex(session, "counter_stance"))); // 1 < 2, rejected
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "counter_stance")));  // 3 -> 1
+            Assert.IsFalse(session.PlayExecutionCard(HandIndex(session, "counter_stance"))); // 1 < 2, rejected
             Assert.AreEqual(1, session.FateEnergy);
         }
 
@@ -56,11 +56,11 @@ namespace FateWeaver.Tests
         {
             // Enemy at initiative 4 acts before the player's cards (base 5) by default.
             var session = NewSession(new[] { StarterDeck.QuickCut(), StarterDeck.PullForward() }, Goblin(4, 3));
-            session.PlayActionCard(HandIndex(session, "quick_cut")); // placed at initiative 5
+            session.PlayExecutionCard(HandIndex(session, "quick_cut")); // placed at initiative 5
 
             // pull_forward (-2) on quick_cut -> initiative 3 -> now first.
             var quickIndex = ZoneIndex(session, "quick_cut");
-            Assert.IsTrue(session.PlayFateCard(HandIndex(session, "pull_forward"), quickIndex));
+            Assert.IsTrue(session.PlayInterventionCard(HandIndex(session, "pull_forward"), quickIndex));
 
             var timeline = session.ResolveTurn();
             Assert.AreEqual(8, DamageOf(timeline, "quick_cut")); // first-strike success
@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
         public void Counter_immediately_after_an_enemy_attack_gets_the_bonus()
         {
             var session = NewSession(new[] { StarterDeck.Counter() }, Goblin(6, 3));
-            session.PlayActionCard(HandIndex(session, "counter_stance"));
+            session.PlayExecutionCard(HandIndex(session, "counter_stance"));
 
             var timeline = session.ResolveTurn();
             Assert.AreEqual(9, DamageOf(timeline, "counter_stance"));
@@ -81,7 +81,7 @@ namespace FateWeaver.Tests
         {
             // cover (base 5) resolves before goblin (6); its "next is enemy attack" bonus -> block 7.
             var session = NewSession(new[] { StarterDeck.Cover() }, Goblin(6, 3));
-            session.PlayActionCard(HandIndex(session, "cover"));
+            session.PlayExecutionCard(HandIndex(session, "cover"));
 
             int hpBefore = session.State.PlayerHp;
             session.ResolveTurn();
@@ -92,7 +92,7 @@ namespace FateWeaver.Tests
         public void Begin_next_turn_discards_hand_refills_energy_and_redraws()
         {
             var session = NewSession(StarterDeck.Build(), Goblin(4, 3));
-            session.PlayActionCard(HandIndex(session, FirstActionId(session)));
+            session.PlayExecutionCard(HandIndex(session, FirstExecutionId(session)));
             session.ResolveTurn();
             Assert.IsTrue(session.CurrentTurnResolved);
 
@@ -122,7 +122,7 @@ namespace FateWeaver.Tests
             return -1;
         }
 
-        private static string FirstActionId(DeckCombatSession s)
-            => s.Hand.First(c => c.Category == CardCategory.Action).Id;
+        private static string FirstExecutionId(DeckCombatSession s)
+            => s.Hand.First(c => c.Category == CardCategory.Execution).Id;
     }
 }
