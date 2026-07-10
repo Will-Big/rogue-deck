@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** [스펙](../specs/2026-07-10-battle-scene-visual-design.md) §9 1단계 — 새 전투 씬에 구도 전체(유닛 무대 + 유닛별 HP 바, 스크롤 실행 레일 + 미니 카드 + 호버 프리뷰, 곡선 손패, 덱 버튼 3종, 운명력, 턴 버튼)를 구현한다. 정지 이미지(플레이스홀더 초상), 기존 클릭 입력 임시 유지.
+**Goal:** [스펙](../specs/2026-07-10-battle-scene-visual-design.md) §9 1단계 — 새 전투 씬에 구도 전체(유닛 무대 + 유닛별 HP 바, 스크롤 실행 레일 + 미니 카드 + 호버 프리뷰, 곡선 손패, 덱 버튼 3종, 운명력, 턴 버튼)와 선택 모드 UX(레일 제외 전체 딤 + 좌측 실행 취소 버튼, 스펙 §6)를 구현한다. 정지 이미지(플레이스홀더 초상), 기존 클릭 입력 임시 유지.
 
 **Architecture:** 게임 로직(`DeckCombatSession` 등 순수 C#)은 동작 변경 없이 그대로 소비하고, 새 UI 컴포넌트(`UnitView`/`RailCardView`/`ExecutionRailView`/`HandFanView`/`PileView`)와 새 컨트롤러(`BattleScreenController`)를 만든다. 씬은 손으로 만들지 않고 에디터 메뉴(`BattleSceneBuilder`)가 코드로 생성·저장한다. UI 위젯의 자식 계층도 프리팹 없이 코드로 조립한다(기존 `CardView.prefab`만 재사용).
 
@@ -1170,7 +1170,9 @@ git commit -m "feat(ui): deck pile button with scrollable card-list popup"
 
 **Interfaces:**
 - Consumes: `DeckCombatSession` (Task 2의 `DrawPile`/`DiscardPile`/`AllDeckCards` 포함), `HandFanView`/`ExecutionRailView`/`UnitView`/`PileView` (Task 4–8), `GoblinDeck`, `DeckAsset`/`CardAsset`, `PlaytestKoreanText`
-- Produces: `BattleScreenController` — 다음 [SerializeField] 필드명을 갖는다 (Task 10 빌더가 `SerializedObject.FindProperty`로 이름 일치 배선): `_deck`, `_enemyArtCards`, `_hand`, `_rail`, `_playerUnitsRow`, `_enemyUnitsRow`, `_drawPile`, `_discardPile`, `_fullDeck`, `_energyText`, `_messageText`, `_turnButton`, `_turnButtonLabel`, `_resetButton`
+- Produces: `BattleScreenController` — 다음 [SerializeField] 필드명을 갖는다 (Task 10 빌더가 `SerializedObject.FindProperty`로 이름 일치 배선): `_deck`, `_enemyArtCards`, `_hand`, `_rail`, `_playerUnitsRow`, `_enemyUnitsRow`, `_drawPile`, `_discardPile`, `_fullDeck`, `_energyText`, `_messageText`, `_turnButton`, `_turnButtonLabel`, `_resetButton`, `_cancelButton`, `_dimLayer`
+
+선택 모드(스펙 §6): 개입 카드가 무장된 동안(`_armedInterventionHandIndex >= 0`) `_dimLayer`를 켠다. 딤 레이어는 레일 아래·나머지 UI 위에 깔려(씬 계층은 Task 10이 보장) 레일 카드만 클릭 가능하게 만들고, 그 안의 실행 취소 버튼이 유일한 탈출구다.
 
 클릭 입력 로직은 `DeckPlaytestController`(Assets/Unity/DeckPlaytestController.cs:95-148)의 armed-intervention 흐름을 그대로 이식한다. 기존 컨트롤러/씬은 삭제하지 않는다(디버그용 유지, 스펙 §7).
 
@@ -1195,8 +1197,9 @@ namespace FateWeaver.Unity
 {
     /// <summary>Battle screen over DeckCombatSession (visual revamp phase 1): stage units with per-unit
     /// HP bars, the scrollable execution rail, a curved hand fan, three pile viewers, and a single
-    /// resolve/next turn button. Input is still the 2-step click flow (drag arrives in phase 2);
-    /// resolution presentation arrives in phase 3. UI only — logic stays in the session.</summary>
+    /// resolve/next turn button. Input is still the 2-step click flow (drag arrives in phase 2), but the
+    /// selection-mode UX is final: while an intervention card is armed, everything except the rail dims
+    /// and the left-side cancel button is the only way out. UI only — logic stays in the session.</summary>
     public sealed class BattleScreenController : MonoBehaviour
     {
         [Header("Data")]
@@ -1217,6 +1220,8 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _turnButton;
         [SerializeField] private TMP_Text _turnButtonLabel;
         [SerializeField] private Button _resetButton;
+        [SerializeField] private Button _cancelButton;
+        [SerializeField] private GameObject _dimLayer;
 
         private const int PlayerHp = 30;
         private const int FateEnergyPerTurn = 3;
@@ -1238,6 +1243,7 @@ namespace FateWeaver.Unity
         {
             _turnButton.onClick.AddListener(OnTurnButton);
             _resetButton.onClick.AddListener(StartSession);
+            _cancelButton.onClick.AddListener(OnCancelSelection);
             StartSession();
         }
 
@@ -1361,6 +1367,13 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
+        private void OnCancelSelection()
+        {
+            SetMessage("실행 취소.");
+            ClearArmed();
+            RefreshAll();
+        }
+
         private void ClearArmed()
         {
             _armedInterventionHandIndex = -1;
@@ -1406,6 +1419,8 @@ namespace FateWeaver.Unity
 
         private void RefreshSelections()
         {
+            // Selection mode (spec §6): dim everything but the rail while an intervention wants targets.
+            _dimLayer.SetActive(_armedInterventionHandIndex >= 0);
             _hand.SetSelection(_armedInterventionHandIndex, CardView.SelectionKind.Primary);
             _rail.SetSelection(_firstSwapZoneIndex, CardView.SelectionKind.Secondary);
         }
@@ -1573,6 +1588,20 @@ namespace FateWeaver.Unity.Editor
             var resetButton = MakeButton(canvasRect, "ResetButton", "초기화", 18f, out _);
             Place((RectTransform)resetButton.transform, new Vector2(0f, 1f), new Vector2(90f, -40f), new Vector2(120f, 40f));
 
+            // --- selection-mode dim + left-side cancel button (spec §6; hidden until targets are wanted) ---
+            var dimLayer = BattleUiKit.Rect(canvasRect, "SelectionDim");
+            BattleUiKit.Stretch(dimLayer);
+            var dimImage = BattleUiKit.Image(dimLayer, "Dim", new Color(0f, 0f, 0f, 0.6f));
+            BattleUiKit.Stretch(dimImage.rectTransform);
+            var cancelButton = MakeButton(dimLayer, "CancelButton", "실행 취소", 20f, out _);
+            Place((RectTransform)cancelButton.transform, new Vector2(0f, 0.5f), new Vector2(110f, 0f), new Vector2(150f, 48f));
+            dimLayer.gameObject.SetActive(false);
+
+            // Z-order: the dim covers everything except the rail (the selection candidates) and the
+            // message line; popups/hover preview stay on the very top.
+            dimLayer.SetAsLastSibling();
+            railRect.SetAsLastSibling();
+            ((RectTransform)message.transform).SetAsLastSibling();
             overlay.SetAsLastSibling();
 
             // --- controller wiring (field names must match BattleScreenController) ---
@@ -1600,6 +1629,8 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_turnButton").objectReferenceValue = turnButton;
             so.FindProperty("_turnButtonLabel").objectReferenceValue = turnLabel;
             so.FindProperty("_resetButton").objectReferenceValue = resetButton;
+            so.FindProperty("_cancelButton").objectReferenceValue = cancelButton;
+            so.FindProperty("_dimLayer").objectReferenceValue = dimLayer.gameObject;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -1679,10 +1710,11 @@ Expected: Console에 `BattleSceneBuilder: saved Assets/Scenes/FateWeaverBattle.u
 3. 레일 카드에 마우스 호버 → 전체 카드 프리뷰가 위에 표시, 벗어나면 사라짐
 4. 손패: 5장이 곡선(가장자리 카드가 기울고 가라앉음)으로 배열
 5. 손패 실행 카드 클릭 → 운명력 차감 + 레일에 배치; 개입 카드 클릭 → 레일 대상 클릭으로 적용(교환은 2회 클릭)
-6. 덱 버튼: 좌하 뽑을 덱(이름순 목록), 우하 버린 덱, 우상 전체 덱 — 각각 팝업 열림/딤 클릭으로 닫힘, 개수 표기 갱신
-7. `턴 실행` → HP 갱신, 라벨이 `다음 턴`으로; `다음 턴` → 새 손패/레일; `초기화` → 처음 상태
-8. 승패 도달 시 메시지에 결과 표기, 턴 버튼 비활성
-9. Console 에러 0
+6. 선택 모드: 개입 카드 클릭 시 레일·메시지를 제외한 화면 전체가 딤 처리되고 좌측에 `실행 취소` 버튼 표시. 딤 상태에서 손패/턴 버튼 클릭이 막히는지, `실행 취소` 클릭 시 딤 해제 + 카드 미사용(운명력 그대로)인지, 대상 선택을 마치면 딤이 자동 해제되는지 확인
+7. 덱 버튼: 좌하 뽑을 덱(이름순 목록), 우하 버린 덱, 우상 전체 덱 — 각각 팝업 열림/배경 클릭으로 닫힘, 개수 표기 갱신
+8. `턴 실행` → HP 갱신, 라벨이 `다음 턴`으로; `다음 턴` → 새 손패/레일; `초기화` → 처음 상태
+9. 승패 도달 시 메시지에 결과 표기, 턴 버튼 비활성
+10. Console 에러 0
 
 문제 발견 시 해당 Task로 돌아가 수정 후 재실행.
 
@@ -1696,7 +1728,8 @@ Expected: Console에 `BattleSceneBuilder: saved Assets/Scenes/FateWeaverBattle.u
 1. `Fate Weaver ▸ Build Battle Scene`으로 `Assets/Scenes/FateWeaverBattle.unity`를 생성(재실행 시 덮어씀)하고 Play.
 2. 구도: 유닛 무대(유닛별 HP 바) / 스크롤 실행 레일(미니 카드, 호버 시 전체 카드) / 곡선 손패 /
    덱 버튼 3종(좌하 뽑을 덱 · 우하 버린 덱 · 우상 전체 덱) / 좌측 운명력 / 우측 턴 버튼.
-3. 입력은 아직 클릭 2단계(1단계 범위) — 드래그는 2단계에서 교체 예정.
+3. 개입 카드의 대상 선택 중에는 레일을 제외한 화면이 딤 처리되고 좌측 `실행 취소` 버튼으로 취소한다.
+4. 입력은 아직 클릭 2단계(1단계 범위) — 드래그(카드 내기)+클릭(대상 선택)은 2단계에서 교체 예정.
    구현 계획: `docs/superpowers/plans/2026-07-10-battle-screen-skeleton.md`.
 ```
 
