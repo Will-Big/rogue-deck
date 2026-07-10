@@ -18,6 +18,7 @@ namespace FateWeaver.Simulation
         private readonly InterventionPlayResolver _interventionResolver;
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
+        private readonly List<CardDefinition> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
 
         public DeckCombatSession(
@@ -40,6 +41,7 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
+            _allCards = new List<CardDefinition>(deckCards);
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
@@ -61,6 +63,12 @@ namespace FateWeaver.Simulation
         public bool IsComplete => Outcome != Outcome.Ongoing;
         public int DrawCount => _deck.DrawCount;
         public int DiscardCount => _deck.DiscardCount;
+
+        /// <summary>Deck-viewer UI: real draw order (UI sorts for display), discard order, and the
+        /// full list the player brought into combat (authoring order).</summary>
+        public IReadOnlyList<CardDefinition> DrawPile => _deck.DrawPile;
+        public IReadOnlyList<CardDefinition> DiscardPile => _deck.DiscardPile;
+        public IReadOnlyList<CardDefinition> AllDeckCards => _allCards;
 
         /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
         public bool PlayExecutionCard(int handIndex)

@@ -29,6 +29,10 @@ namespace FateWeaver.Core.Combat
         public int DiscardCount => _discard.Count;
         public int HandCount => _hand.Count;
 
+        /// <summary>Read-only pile views for deck-viewer UI. Draw order is real — UI must sort for display.</summary>
+        public IReadOnlyList<CardDefinition> DrawPile => _draw;
+        public IReadOnlyList<CardDefinition> DiscardPile => _discard;
+
         public void Draw(int count)
         {
             for (int i = 0; i < count; i++)
