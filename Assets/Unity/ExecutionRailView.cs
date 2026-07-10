@@ -1,0 +1,138 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace FateWeaver.Unity
+{
+    /// <summary>The execution rail: a horizontally scrollable strip of RailCardViews in resolution order
+    /// (spec §2 — the rail can hold many cards). Hovering a card shows the full CardView preview on the
+    /// overlay layer since mini cards carry no rules text (spec §3).</summary>
+    public sealed class ExecutionRailView : MonoBehaviour
+    {
+        [SerializeField] private RectTransform _content;
+        [SerializeField] private CardView _previewPrefab;
+        [SerializeField] private RectTransform _previewLayer;
+
+        private static readonly Vector2 CardSize = new Vector2(96f, 132f);
+        private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
+
+        private readonly List<RailCardView> _views = new List<RailCardView>();
+        private CardView _preview;
+
+        /// <summary>Editor-time construction (called by BattleSceneBuilder); the built children and
+        /// references serialize into the scene.</summary>
+        public void EditorBuild(CardView previewPrefab, RectTransform previewLayer)
+        {
+            _previewPrefab = previewPrefab;
+            _previewLayer = previewLayer;
+
+            var rect = (RectTransform)transform;
+            var scroll = gameObject.AddComponent<ScrollRect>();
+
+            var viewport = BattleUiKit.Rect(rect, "Viewport");
+            BattleUiKit.Stretch(viewport);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var backdrop = viewport.gameObject.AddComponent<Image>();
+            backdrop.color = new Color(0f, 0f, 0f, 0.25f);
+
+            var content = BattleUiKit.Rect(viewport, "Content");
+            content.anchorMin = new Vector2(0f, 0f);
+            content.anchorMax = new Vector2(0f, 1f);
+            content.pivot = new Vector2(0f, 0.5f);
+            content.offsetMin = Vector2.zero;
+            content.offsetMax = Vector2.zero;
+            var layout = content.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.padding = new RectOffset(16, 16, 10, 10);
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.horizontal = true;
+            scroll.vertical = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 30f;
+
+            _content = content;
+        }
+
+        public void SetCards(IReadOnlyList<CardPresentation> cards, Action<int> onClick)
+        {
+            HidePreview();
+            foreach (var view in _views)
+            {
+                Destroy(view.gameObject);
+            }
+
+            _views.Clear();
+            for (int i = 0; i < cards.Count; i++)
+            {
+                var view = RailCardView.Create(_content, CardSize);
+                int captured = i;
+                var data = cards[i];
+                view.Bind(data, () => onClick?.Invoke(captured), hovering => OnHover(view, data, hovering));
+                _views.Add(view);
+            }
+        }
+
+        public void SetSelection(int index, CardView.SelectionKind kind)
+        {
+            for (int i = 0; i < _views.Count; i++)
+            {
+                _views[i].SetSelection(i == index ? kind : CardView.SelectionKind.None);
+            }
+        }
+
+        private void OnHover(RailCardView source, CardPresentation data, bool hovering)
+        {
+            if (!hovering)
+            {
+                HidePreview();
+                return;
+            }
+
+            if (_previewPrefab == null || _previewLayer == null)
+            {
+                return;
+            }
+
+            if (_preview == null)
+            {
+                _preview = Instantiate(_previewPrefab, _previewLayer);
+                var previewRect = (RectTransform)_preview.transform;
+                previewRect.anchorMin = previewRect.anchorMax = new Vector2(0.5f, 0.5f);
+                previewRect.sizeDelta = PreviewSize;
+                foreach (var graphic in _preview.GetComponentsInChildren<Graphic>(true))
+                {
+                    graphic.raycastTarget = false;
+                }
+            }
+
+            _preview.gameObject.SetActive(true);
+            _preview.Bind(data, null);
+
+            var screen = RectTransformUtility.WorldToScreenPoint(null, source.transform.position);
+            Vector2 local;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(_previewLayer, screen, null, out local);
+            local.y += CardSize.y * 0.5f + PreviewSize.y * 0.5f + 14f;
+            float maxX = _previewLayer.rect.width * 0.5f - PreviewSize.x * 0.5f - 8f;
+            local.x = Mathf.Clamp(local.x, -maxX, maxX);
+            ((RectTransform)_preview.transform).anchoredPosition = local;
+        }
+
+        private void HidePreview()
+        {
+            if (_preview != null)
+            {
+                _preview.gameObject.SetActive(false);
+            }
+        }
+    }
+}
