@@ -18,12 +18,14 @@ namespace FateWeaver.Unity
         public string Description { get; }
         public Sprite Art { get; }
         public bool IsLocked { get; }
+        public CardCategory Category { get; }
         public IReadOnlyList<CardStatusIcon> StatusIcons { get; }
 
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
             string description, Sprite art, bool isLocked,
-            IReadOnlyList<CardStatusIcon> statusIcons = null)
+            IReadOnlyList<CardStatusIcon> statusIcons = null,
+            CardCategory category = CardCategory.Execution)
         {
             Id = id;
             DisplayName = displayName;
@@ -34,6 +36,7 @@ namespace FateWeaver.Unity
             Art = art;
             IsLocked = isLocked;
             StatusIcons = statusIcons ?? Array.Empty<CardStatusIcon>();
+            Category = category;
         }
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
@@ -50,7 +53,8 @@ namespace FateWeaver.Unity
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
                 card.IsLocked,
-                StatusIconsFor(card));
+                StatusIconsFor(card),
+                def.Category);
         }
 
         /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
@@ -65,7 +69,8 @@ namespace FateWeaver.Unity
                 DescriptionComposer.Describe(def, KoreanDescriptionVocabulary.Instance),
                 ResolveArt(def.Id, art),
                 false,
-                Array.Empty<CardStatusIcon>());
+                Array.Empty<CardStatusIcon>(),
+                def.Category);
         }
 
         // A resolver (GUID-backed CardAsset.Art) wins; with none supplied we fall back to the Resources path.
