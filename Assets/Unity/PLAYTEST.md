@@ -22,6 +22,15 @@
 3. 손패의 개입 카드를 클릭한 뒤 미래 영역의 대상 카드를 선택하면 실행 순서 변경/교환 같은 개입이 적용된다.
 4. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나면 종료.
 
+### 전투 화면 (시각 개편 1단계)
+
+1. `Fate Weaver ▸ Build Battle Scene`으로 `Assets/Scenes/FateWeaverBattle.unity`를 생성(재실행 시 덮어씀)하고 Play.
+2. 구도: 유닛 무대(유닛별 HP 바) / 스크롤 실행 레일(미니 카드, 호버 시 전체 카드) / 곡선 손패 /
+   덱 버튼 3종(좌하 뽑을 덱 · 우하 버린 덱 · 우상 전체 덱) / 좌측 운명력 / 우측 턴 버튼.
+3. 개입 카드의 대상 선택 중에는 레일을 제외한 화면이 딤 처리되고 좌측 `실행 취소` 버튼으로 취소한다.
+4. 입력은 아직 클릭 2단계(1단계 범위) — 드래그(카드 내기)+클릭(대상 선택)은 2단계에서 교체 예정.
+   구현 계획: `docs/superpowers/plans/2026-07-10-battle-screen-skeleton.md`.
+
 ## 범위 / 검증
 
 - 카드 위젯은 `CardView`(프리팹) + `CardPresentation`(뷰모델) + `PlaytestCardArt`/`PlaytestKoreanText`(룩업).

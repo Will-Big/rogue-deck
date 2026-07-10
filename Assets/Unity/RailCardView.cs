@@ -1,4 +1,5 @@
 using System;
+using FateWeaver.Core.Cards;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
