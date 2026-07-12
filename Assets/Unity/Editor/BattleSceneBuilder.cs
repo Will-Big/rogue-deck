@@ -14,7 +14,7 @@ namespace FateWeaver.Unity.Editor
     public static class BattleSceneBuilder
     {
         private const string ScenePath = "Assets/Scenes/FateWeaverBattle.unity";
-        private const string CardPrefabPath = "Assets/Unity/Prefabs/CardView.prefab";
+        private const string CardPrefabPath = "Assets/Unity/Prefabs/CardViewArchiveTemp.prefab";
         private const string DeckAssetPath = "Assets/Unity/CardSO/Player/StarterDeck.asset";
         private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
 
@@ -42,6 +42,7 @@ namespace FateWeaver.Unity.Editor
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             var canvas = canvasGo.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            CreateUiCamera();
             var scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280f, 720f);
@@ -153,6 +154,18 @@ namespace FateWeaver.Unity.Editor
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("BattleSceneBuilder: saved " + ScenePath);
+        }
+
+        private static void CreateUiCamera()
+        {
+            var cameraGo = new GameObject("UICamera");
+            var camera = cameraGo.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.08f, 0.1f, 0.16f, 1f);
+            camera.cullingMask = 0;
+            camera.orthographic = true;
+            camera.depth = -100f;
+            camera.targetDisplay = 0;
         }
 
         private static RectTransform UnitRow(RectTransform stage, string name, float xMin, float xMax, TextAnchor align)
