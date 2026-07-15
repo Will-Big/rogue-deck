@@ -164,8 +164,7 @@ namespace FateWeaver.Simulation
                                 effectValue: 1,
                                 condition: new AllOf(new Condition[]
                                 {
-                                    new AdjacentCardIs(
-                                        AdjacentDirection.Previous,
+                                    new PreviousExecutedCardIs(
                                         Side.Player,
                                         CardType.Skill),
                                     new WithinNth(3)

@@ -37,7 +37,7 @@ namespace FateWeaver.Tests
                     EffectData.Conditional(EffectKeys.Damage, 0,
                         new AllOf(new Condition[]
                         {
-                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Player),
+                            new PreviousExecutedCardIs(Side.Player),
                             new WithinNth(3)
                         }), 5)
                 });

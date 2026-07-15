@@ -127,7 +127,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_counter_stance() =>
-            Assert.AreEqual("피해 4. 바로 앞이 적 공격이면 피해 9.",
+            Assert.AreEqual("피해 4. 직전 실행 카드가 적 공격이면 피해 9.",
                 DescriptionComposer.Describe(StarterDeck.Counter(), Kr));
 
         [Test]
@@ -203,12 +203,12 @@ namespace FateWeaver.Tests.EditMode
                         EffectKeys.Damage, 1,
                         new AllOf(new Condition[]
                         {
-                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, null),
+                            new PreviousExecutedCardIs(Side.Player, null),
                             new WithinNth(3)
                         }),
                         6)
                 }) { Category = CardCategory.Execution };
-            Assert.AreEqual("피해 1. 바로 앞이 플레이어 카드이고 3번째 안이면 피해 6.",
+            Assert.AreEqual("피해 1. 직전 실행 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Kr));
         }
     }

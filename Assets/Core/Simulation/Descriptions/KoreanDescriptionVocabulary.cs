@@ -78,6 +78,8 @@ namespace FateWeaver.Simulation.Descriptions
                     return "같은 대상";
                 case AdjacentCardIs a:
                     return AdjacentStem(a);
+                case PreviousExecutedCardIs p:
+                    return PreviousExecutedStem(p);
                 case AllOf all:
                     return JoinAll(all.Conditions);
                 default:
@@ -85,7 +87,8 @@ namespace FateWeaver.Simulation.Descriptions
             }
         }
 
-        // "바로 앞이 적 공격" / "바로 뒤가 적 공격" / "바로 앞이 플레이어 카드"
+        // "바로 뒤가 적 공격" (only AdjacentDirection.Next reaches content via CardSpecMapper now;
+        // Previous is authored as PreviousExecutedCardIs instead, see PreviousExecutedStem below).
         private static string AdjacentStem(AdjacentCardIs a)
         {
             var position = a.Direction == AdjacentDirection.Previous ? "바로 앞이 " : "바로 뒤가 ";
@@ -93,6 +96,16 @@ namespace FateWeaver.Simulation.Descriptions
                 ? SideName(a.Side) + " " + CardTypeName(a.Type.Value)
                 : SideName(a.Side) + " 카드";
             return position + subject;
+        }
+
+        // "직전 실행 카드가 적 공격" / "직전 실행 카드가 플레이어 카드": the nearest card that actually
+        // finished resolution (cancelled cards are skipped), not just the raw adjacent zone slot.
+        private static string PreviousExecutedStem(PreviousExecutedCardIs p)
+        {
+            var subject = p.Type.HasValue
+                ? SideName(p.Side) + " " + CardTypeName(p.Type.Value)
+                : SideName(p.Side) + " 카드";
+            return "직전 실행 카드가 " + subject;
         }
 
         // Join child stems with "이고 ", e.g. "바로 앞이 플레이어 카드이고 3번째 안".

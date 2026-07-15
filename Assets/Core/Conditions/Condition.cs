@@ -22,6 +22,15 @@ namespace FateWeaver.Core.Conditions
         Side Side,
         CardType? Type = null) : Condition; // Type null = any card type (e.g. "any player execution card")
 
+    /// <summary>Success when the immediately-previous card to actually finish resolution (i.e. the
+    /// current ResolutionContext.LastExecutedCard, which skips cancelled cards) matches the given
+    /// side/type. Replaces AdjacentCardIs(Previous, ...) for authored content: it looks at the
+    /// nearest EXECUTED card rather than the raw adjacent zone slot, so a card cancelled between two
+    /// others (OwnerDied / NoValidTarget / StatusIntercepted) is skipped over.</summary>
+    public sealed record PreviousExecutedCardIs(
+        Side Side,
+        CardType? Type = null) : Condition; // Type null = any card type
+
     public sealed record SameTarget : Condition;
 
     /// <summary>Success when no card of the given side resolves before this one (e.g. an enemy card that

@@ -54,9 +54,14 @@ namespace FateWeaver.Core.Conditions
 
             if (condition is NoPrecedingCardOfSide noPreceding)
             {
+                // Only counts cards that actually finished resolution: a placed-but-cancelled card
+                // (OwnerDied / NoValidTarget / StatusIntercepted) never "preceded" anything. By the
+                // time this card resolves, every earlier-index card has already concluded, so its
+                // final CancellationReason is settled.
                 for (int i = 0; i < index; i++)
                 {
-                    if (ctx.Order[i].Def.Side == noPreceding.Side)
+                    var earlier = ctx.Order[i];
+                    if (earlier.Def.Side == noPreceding.Side && earlier.CancellationReason == null)
                     {
                         return ConditionTier.Basic;
                     }
@@ -78,9 +83,21 @@ namespace FateWeaver.Core.Conditions
                 return ConditionTier.Success;
             }
 
+            if (condition is PreviousExecutedCardIs previousExecuted)
+            {
+                var last = ctx.LastExecutedCard;
+                return last != null
+                    && last.Def.Side == previousExecuted.Side
+                    && (!previousExecuted.Type.HasValue || last.Def.Type == previousExecuted.Type.Value)
+                        ? ConditionTier.Success
+                        : ConditionTier.Basic;
+            }
+
             if (condition is SameTarget)
             {
-                var previous = PreviousPlayerCard(ctx, index);
+                // Skips cancelled player cards: only the last player card that actually resolved
+                // (and therefore has a meaningful TargetId) counts.
+                var previous = ctx.LastExecutedPlayerCard;
                 return previous != null
                     && !string.IsNullOrEmpty(card.TargetId)
                     && card.TargetId == previous.TargetId
@@ -104,19 +121,6 @@ namespace FateWeaver.Core.Conditions
             }
 
             throw new NotSupportedException($"Unsupported condition type '{condition.GetType().Name}'.");
-        }
-
-        private static ExecutionCardInstance PreviousPlayerCard(ResolutionContext ctx, int index)
-        {
-            for (int i = index - 1; i >= 0; i--)
-            {
-                if (ctx.Order[i].Def.Side == Side.Player)
-                {
-                    return ctx.Order[i];
-                }
-            }
-
-            return null;
         }
     }
 }

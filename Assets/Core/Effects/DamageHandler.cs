@@ -46,7 +46,10 @@ namespace FateWeaver.Core.Effects
                 }
 
                 var damage = FoldIncoming(ctx, target.Statuses, amount);
-                target.Hp -= damage;
+                // Routed through PartyMember.TakeDamage (not a raw Hp -=) so a lethal hit can be
+                // absorbed by a SurviveCharges charge (DeathsDoor); TurnResolver's death sweep reads
+                // the resulting Hp/SurviveCharges state to emit DeathsDoorSurvived/PartyMemberDied.
+                target.TakeDamage(damage);
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
             }

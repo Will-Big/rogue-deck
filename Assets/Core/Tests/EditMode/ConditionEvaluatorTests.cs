@@ -62,11 +62,12 @@ namespace FateWeaver.Tests
             state.Zone.Add(enemy);
             state.Zone.Add(setup);
             var ctx = ResolutionContext.From(state);
+            ctx.MarkExecuted(setup); // simulates setup having already resolved, ahead of strike
 
             Assert.AreEqual(
                 ConditionTier.Success,
                 ConditionEvaluator.Evaluate(
-                    new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Skill),
+                    new PreviousExecutedCardIs(Side.Player, CardType.Skill),
                     strike,
                     ctx));
             Assert.AreEqual(
@@ -102,6 +103,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(strike);
             state.Zone.Add(mark);
             var ctx = ResolutionContext.From(state);
+            ctx.MarkExecuted(mark); // simulates mark having already resolved, ahead of strike/other
 
             Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new SameTarget(), strike, ctx));
             Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new SameTarget(), other, ctx));
@@ -161,10 +163,11 @@ namespace FateWeaver.Tests
             state.Zone.Add(mark);
             state.Zone.Add(chain);
             var ctx = ResolutionContext.From(state);
+            ctx.MarkExecuted(mark); // simulates mark having already resolved, ahead of chain
 
             var success = new AllOf(new Condition[]
             {
-                new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Skill),
+                new PreviousExecutedCardIs(Side.Player, CardType.Skill),
                 new WithinNth(3)
             });
             var basic = new AllOf(new Condition[]

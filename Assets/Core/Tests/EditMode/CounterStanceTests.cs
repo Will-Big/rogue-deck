@@ -35,11 +35,11 @@ namespace FateWeaver.Tests
                     EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
                     EffectData.Conditional(EffectKeys.Damage, 0,
-                        new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack), 7),
+                        new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), 7),
                     EffectData.Conditional(EffectKeys.Damage, 0,
                         new AllOf(new Condition[]
                         {
-                            new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy, CardType.Attack),
+                            new PreviousExecutedCardIs(Side.Enemy, CardType.Attack),
                             new WithinNth(3)
                         }), 2)
                 });

@@ -1,4 +1,5 @@
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
 using FateWeaver.Core.Conditions;
 
 namespace FateWeaver.Core.Events
@@ -11,11 +12,42 @@ namespace FateWeaver.Core.Events
     public sealed record TurnStarted(int TurnIndex) : ResolutionEvent;
 
     public sealed record CardResolved(
+        int InstanceId,
+        string OwnerId,
         string CardId,
         Side Side,
         int DamageDealt,
         string TargetId,
-        ConditionTier ConditionTier = ConditionTier.Basic) : ResolutionEvent;
+        ConditionTier ConditionTier = ConditionTier.Basic) : ResolutionEvent
+    {
+        /// <summary>Compat constructor for pre-Task-3 callers that don't track card identity. Real
+        /// resolution (TurnResolver) always uses the primary constructor with the card's actual
+        /// InstanceId/OwnerId; this exists only so older unit tests keep compiling unchanged.</summary>
+        public CardResolved(
+            string cardId,
+            Side side,
+            int damageDealt,
+            string targetId,
+            ConditionTier conditionTier = ConditionTier.Basic)
+            : this(-1, null, cardId, side, damageDealt, targetId, conditionTier)
+        {
+        }
+    }
+
+    /// <summary>A placed execution card whose effects did not run: the whole card is a no-op besides
+    /// this single event. Reason distinguishes why (see CardCancellationReason).</summary>
+    public sealed record CardCancelled(
+        int InstanceId,
+        string CardId,
+        string OwnerId,
+        CardCancellationReason Reason) : ResolutionEvent;
+
+    /// <summary>A party member's HP reached zero or below and they had no SurviveCharges left to
+    /// absorb the hit.</summary>
+    public sealed record PartyMemberDied(string MemberId) : ResolutionEvent;
+
+    /// <summary>A party member spent one SurviveCharges charge to steady at 1 HP instead of dying.</summary>
+    public sealed record DeathsDoorSurvived(string MemberId) : ResolutionEvent;
 
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }

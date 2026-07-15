@@ -7,7 +7,10 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.</summary>
+    /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.
+    /// Per card: intercept/pre-cancellation check, then effects (with a per-effect death-sweep snapshot),
+    /// then either CardResolved + pending survive/death events, or CardCancelled alone. See the class-level
+    /// design note in the Task 3 brief for the exact 6-step ordering this implements.</summary>
     public sealed class TurnResolver
     {
         private readonly EffectRegistry _effects;
@@ -26,40 +29,7 @@ namespace FateWeaver.Core.Combat
 
             foreach (var card in resolutionContext.Order)
             {
-                if (IsResolveIntercepted(card))
-                {
-                    // e.g. Stun: the card is present but its resolution is nullified.
-                    events.Add(new CardResolved(card.Def.Id, card.Def.Side, 0, null, ConditionTier.Basic));
-                    continue;
-                }
-
-                int totalDamage = 0;
-                string targetId = null;
-                var strongestTier = ConditionTier.Basic;
-
-                foreach (var effect in card.Def.Effects)
-                {
-                    var tier = ResolveTier(effect, card, resolutionContext);
-                    if (tier > strongestTier)
-                    {
-                        strongestTier = tier;
-                    }
-
-                    var ctx = new EffectContext
-                    {
-                        Card = card,
-                        State = state,
-                        ResolutionContext = resolutionContext,
-                        StatusRegistry = _statuses,
-                        Effect = effect,
-                        EffectValue = ResolveEffectValue(effect, tier)
-                    };
-                    _effects.Resolve(effect.Key).Apply(ctx);
-                    totalDamage += ctx.DamageDealt;
-                    if (ctx.TargetId != null) targetId = ctx.TargetId;
-                }
-
-                events.Add(new CardResolved(card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier));
+                ResolveCard(state, resolutionContext, card, events);
             }
 
             EndOfTurnMaintenance(state);
@@ -67,7 +37,147 @@ namespace FateWeaver.Core.Combat
             return events;
         }
 
-        private bool IsResolveIntercepted(ExecutionCardInstance card)
+        private void ResolveCard(
+            CombatState state,
+            ResolutionContext resolutionContext,
+            ExecutionCardInstance card,
+            List<ResolutionEvent> events)
+        {
+            // Step 6 (part 1): a cancellation reason recorded before this card's turn to resolve
+            // (OwnerDied from an earlier card's death sweep this same turn) skips effects entirely.
+            if (card.CancellationReason == null && IsInterceptedByStatus(card))
+            {
+                card.CancellationReason = CardCancellationReason.StatusIntercepted;
+            }
+
+            if (card.CancellationReason != null)
+            {
+                events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
+                return;
+            }
+
+            int totalDamage = 0;
+            string targetId = null;
+            var strongestTier = ConditionTier.Basic;
+            var pendingDeathEvents = new List<ResolutionEvent>();
+
+            foreach (var effect in card.Def.Effects)
+            {
+                var tier = ResolveTier(effect, card, resolutionContext);
+                if (tier > strongestTier)
+                {
+                    strongestTier = tier;
+                }
+
+                var beforeSnapshot = SnapshotParty(state);
+
+                var ctx = new EffectContext
+                {
+                    Card = card,
+                    State = state,
+                    ResolutionContext = resolutionContext,
+                    StatusRegistry = _statuses,
+                    Effect = effect,
+                    EffectValue = ResolveEffectValue(effect, tier)
+                };
+                _effects.Resolve(effect.Key).Apply(ctx);
+                totalDamage += ctx.DamageDealt;
+                if (ctx.TargetId != null) targetId = ctx.TargetId;
+
+                CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
+
+                // Step 6 (part 2): once an effect records NoValidTarget, the card is cancelled and
+                // its remaining effects must not run (enforced centrally here, not per-handler).
+                if (card.CancellationReason != null)
+                {
+                    break;
+                }
+            }
+
+            var newlyDeadMemberIds = pendingDeathEvents.OfType<PartyMemberDied>().Select(e => e.MemberId);
+
+            if (card.CancellationReason == null)
+            {
+                // Step 4: CardResolved first, LastExecutedCard updates, then the pending survive/death
+                // events in the order they occurred (so a death caused by this card's own effects
+                // follows its CardResolved immediately).
+                events.Add(new CardResolved(
+                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier));
+                resolutionContext.MarkExecuted(card);
+                events.AddRange(pendingDeathEvents);
+            }
+            else
+            {
+                // Step 6: a card cancelled mid-effects (NoValidTarget) emits CardCancelled only; the
+                // survive/death events already collected from its earlier, already-applied effects are
+                // not announced. The state mutation itself (a member actually reaching 0 HP) still
+                // happened, so the OwnerDied sweep below still runs off the real newly-dead set.
+                events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
+            }
+
+            // Step 5: mark OwnerDied on every not-yet-resolved card owned by a member who just died,
+            // regardless of whether the current card itself ended up resolved or cancelled.
+            foreach (var memberId in newlyDeadMemberIds)
+            {
+                MarkOwnerDiedForFutureCards(resolutionContext, card, memberId);
+            }
+        }
+
+        /// <summary>Snapshots (IsAlive, SurviveCharges) for every party member immediately before an
+        /// effect applies, so the caller can diff after the effect and detect a death or a
+        /// SurviveCharges-consuming save. HP alone (e.g. "HP == 1") is never the trigger.</summary>
+        private static Dictionary<string, (bool IsAlive, int SurviveCharges)> SnapshotParty(CombatState state)
+        {
+            var snapshot = new Dictionary<string, (bool, int)>();
+            foreach (var member in state.Party)
+            {
+                snapshot[member.Id] = (member.IsAlive, member.SurviveCharges);
+            }
+
+            return snapshot;
+        }
+
+        /// <summary>Diffs the party against a pre-effect snapshot and appends DeathsDoorSurvived /
+        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.</summary>
+        private static void CollectDeathSweepEvents(
+            CombatState state,
+            Dictionary<string, (bool IsAlive, int SurviveCharges)> before,
+            List<ResolutionEvent> pending)
+        {
+            foreach (var member in state.Party)
+            {
+                var prior = before[member.Id];
+
+                if (member.SurviveCharges < prior.SurviveCharges && member.IsAlive)
+                {
+                    pending.Add(new DeathsDoorSurvived(member.Id));
+                }
+                else if (prior.IsAlive && !member.IsAlive)
+                {
+                    pending.Add(new PartyMemberDied(member.Id));
+                }
+            }
+        }
+
+        /// <summary>Records OwnerDied on every card later in the frozen resolution order that belongs
+        /// to the given (now-dead) party member and has not already concluded.</summary>
+        private static void MarkOwnerDiedForFutureCards(
+            ResolutionContext resolutionContext,
+            ExecutionCardInstance current,
+            string deadMemberId)
+        {
+            var currentIndex = resolutionContext.IndexOf(current);
+            for (int i = currentIndex + 1; i < resolutionContext.Order.Count; i++)
+            {
+                var future = resolutionContext.Order[i];
+                if (future.CancellationReason == null && future.OwnerId == deadMemberId)
+                {
+                    future.CancellationReason = CardCancellationReason.OwnerDied;
+                }
+            }
+        }
+
+        private bool IsInterceptedByStatus(ExecutionCardInstance card)
         {
             if (_statuses == null)
             {
