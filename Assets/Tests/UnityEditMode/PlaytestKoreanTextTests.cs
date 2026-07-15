@@ -26,5 +26,11 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual("실행 순서 변경", PlaytestKoreanText.InterventionActionName(InterventionActionKeys.ChangeExecutionOrder));
             Assert.AreEqual("fallback", PlaytestKoreanText.CardName("unknown", "fallback"));
         }
+
+        [Test]
+        public void Party_owner_name_has_one_localized_source()
+        {
+            Assert.AreEqual("파티", PlaytestKoreanText.PartyOwnerName());
+        }
     }
 }

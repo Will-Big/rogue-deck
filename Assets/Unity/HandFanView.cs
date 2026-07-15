@@ -54,5 +54,13 @@ namespace FateWeaver.Unity
                 _views[i].SetSelection(i == index ? kind : CardView.SelectionKind.None);
             }
         }
+
+        public void SetInputEnabled(bool value)
+        {
+            foreach (var view in _views)
+            {
+                view.SetInteractable(value);
+            }
+        }
     }
 }

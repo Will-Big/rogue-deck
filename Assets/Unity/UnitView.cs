@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using FateWeaver.Core.Status;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,11 +16,15 @@ namespace FateWeaver.Unity
         [SerializeField] private RectTransform _hpFill;
         [SerializeField] private TMP_Text _hpText;
         [SerializeField] private TMP_Text _nameText;
+        [SerializeField] private TMP_Text _statusText;
+        [SerializeField] private GameObject _targetHighlight;
+        [SerializeField] private Button _targetButton;
 
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
         private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
 
         private Color _aliveTint = Color.white;
+        private string _memberId;
 
         public void Bind(string displayName, Color portraitTint)
         {
@@ -35,10 +42,63 @@ namespace FateWeaver.Unity
             _hpFill.offsetMax = Vector2.zero;
             _hpText.text = Mathf.Max(0, current) + " / " + max;
             _portrait.color = current > 0 ? _aliveTint : DeadTint;
+            if (current <= 0)
+            {
+                SetTargetable(false);
+            }
         }
 
-        /// <summary>Builds the whole child hierarchy in code — no prefab to author.</summary>
-        public static UnitView Create(RectTransform parent, Vector2 size)
+        public void BindTarget(string memberId, Action<string> onClick)
+        {
+            _memberId = memberId;
+            if (_targetButton == null)
+            {
+                return;
+            }
+
+            _targetButton.onClick.RemoveAllListeners();
+            if (onClick != null)
+            {
+                _targetButton.onClick.AddListener(() => onClick(_memberId));
+            }
+        }
+
+        public void SetStatuses(IReadOnlyList<StatusInstance> statuses)
+        {
+            if (_statusText == null)
+            {
+                return;
+            }
+
+            var parts = new List<string>();
+            if (statuses != null)
+            {
+                foreach (var status in statuses)
+                {
+                    int value = status.Magnitude > 0 ? status.Magnitude : status.Count;
+                    var name = PlaytestKoreanText.StatusName(status.Key);
+                    parts.Add(value > 0 ? name + "(" + value + ")" : name);
+                }
+            }
+
+            _statusText.text = string.Join(" · ", parts);
+        }
+
+        public void SetTargetable(bool value)
+        {
+            if (_targetButton != null)
+            {
+                _targetButton.interactable = value;
+            }
+
+            if (_targetHighlight != null)
+            {
+                _targetHighlight.SetActive(value);
+            }
+        }
+
+        /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
+        public static UnitView EditorCreate(RectTransform parent, Vector2 size)
         {
             var root = BattleUiKit.Rect(parent, "Unit");
             root.sizeDelta = size;
@@ -48,9 +108,15 @@ namespace FateWeaver.Unity
 
             var view = root.gameObject.AddComponent<UnitView>();
 
+            var targetHighlight = BattleUiKit.Image(root, "TargetHighlight", new Color(0.95f, 0.72f, 0.25f, 0.9f));
+            BattleUiKit.Anchor(targetHighlight.rectTransform, -0.02f, 0.26f, 1.02f, 1.02f);
+            targetHighlight.raycastTarget = false;
+
             var portrait = BattleUiKit.Image(root, "Portrait", Color.white);
             BattleUiKit.Anchor(portrait.rectTransform, 0f, 0.28f, 1f, 1f);
-            portrait.raycastTarget = false;
+            portrait.raycastTarget = true;
+            var targetButton = root.gameObject.AddComponent<Button>();
+            targetButton.targetGraphic = portrait;
 
             var hpBack = BattleUiKit.Image(root, "HpBack", new Color(0f, 0f, 0f, 0.55f));
             BattleUiKit.Anchor(hpBack.rectTransform, 0.05f, 0.16f, 0.95f, 0.26f);
@@ -64,12 +130,19 @@ namespace FateWeaver.Unity
             BattleUiKit.Stretch(hpText.rectTransform);
 
             var nameText = BattleUiKit.Text(root, "Name", 16f, TextAlignmentOptions.Center);
-            BattleUiKit.Anchor(nameText.rectTransform, 0f, 0f, 1f, 0.14f);
+            BattleUiKit.Anchor(nameText.rectTransform, 0f, 0f, 1f, 0.10f);
+
+            var statusText = BattleUiKit.Text(root, "Statuses", 13f, TextAlignmentOptions.Center);
+            BattleUiKit.Anchor(statusText.rectTransform, 0f, 0.10f, 1f, 0.16f);
 
             view._portrait = portrait;
             view._hpFill = hpFill.rectTransform;
             view._hpText = hpText;
             view._nameText = nameText;
+            view._statusText = statusText;
+            view._targetHighlight = targetHighlight.gameObject;
+            view._targetButton = targetButton;
+            view.SetTargetable(false);
             return view;
         }
     }

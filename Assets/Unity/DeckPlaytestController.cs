@@ -51,6 +51,7 @@ namespace FateWeaver.Unity
         private const int FateEnergyPerTurn = 3;
         private const int HandSize = 5;
         private const int Seed = 1;
+        private static readonly Color PlayerOwnerColor = new Color(0.25f, 0.4f, 0.55f, 1f);
 
         private DeckCombatSession _session;
         private int _armedInterventionHandIndex = -1;
@@ -101,7 +102,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            var def = _session.Hand[handIndex];
+            var def = _session.Hand[handIndex].Def;
             if (def.Category == CardCategory.Execution)
             {
                 SetMessage(_session.PlayExecutionCard(handIndex)
@@ -127,7 +128,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            var def = _session.Hand[_armedInterventionHandIndex];
+            var def = _session.Hand[_armedInterventionHandIndex].Def;
             var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapExecutionOrder;
 
             if (needsTwo && _firstSwapZoneIndex < 0)
@@ -219,7 +220,15 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_cardPrefab, _handRow);
                 int captured = i;
-                view.Bind(CardPresentation.FromDefinition(_session.Hand[i], ArtFor), () => OnHandClicked(captured));
+                var owned = _session.Hand[i];
+                view.Bind(
+                    CardPresentation.FromDefinition(
+                        owned.Def,
+                        ArtFor,
+                        PlaytestKoreanText.SideName(Side.Player),
+                        PlayerOwnerColor,
+                        false),
+                    () => OnHandClicked(captured));
                 view.SetSelection(i == _armedInterventionHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
                 _handViews.Add(view);
             }
@@ -235,7 +244,7 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_cardPrefab, _zoneRow);
                 int captured = i;
-                view.Bind(CardPresentation.From(order[i], ArtFor), () => OnZoneClicked(captured));
+                view.Bind(PresentationFor(order[i]), () => OnZoneClicked(captured));
                 view.SetSelection(i == _firstSwapZoneIndex ? CardView.SelectionKind.Secondary : CardView.SelectionKind.None);
                 _zoneViews.Add(view);
             }
@@ -263,6 +272,16 @@ namespace FateWeaver.Unity
             _stateText.text = sb.ToString();
             _pilesText.text = "덱 " + _session.DrawCount + " · 버림 " + _session.DiscardCount;
         }
+
+        private CardPresentation PresentationFor(ExecutionCardInstance card)
+            => card.Def.Side == Side.Enemy
+                ? CardPresentation.From(card, ArtFor)
+                : CardPresentation.From(
+                    card,
+                    ArtFor,
+                    PlaytestKoreanText.SideName(Side.Player),
+                    PlayerOwnerColor,
+                    false);
 
         private void RefreshTimeline()
         {

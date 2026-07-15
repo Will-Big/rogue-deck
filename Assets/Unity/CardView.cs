@@ -25,6 +25,9 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private Image _selectionOutline;
+        [SerializeField] private GameObject _ownerChip;
+        [SerializeField] private Image _ownerChipBackground;
+        [SerializeField] private TMP_Text _ownerChipText;
         // Template for card status icons. The prefab places its parent row as the root's last child so icons draw above art.
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
@@ -84,6 +87,7 @@ namespace FateWeaver.Unity
             }
 
             RefreshStatusIcons(data.StatusIcons);
+            RefreshOwnerChip(data);
 
             _button.onClick.RemoveAllListeners();
             if (onClick != null)
@@ -93,6 +97,14 @@ namespace FateWeaver.Unity
 
             SetSelection(SelectionKind.None);
             ApplyResponsiveLayout();
+        }
+
+        public void SetInteractable(bool value)
+        {
+            if (_button != null)
+            {
+                _button.interactable = value;
+            }
         }
 
         public void SetSelection(SelectionKind kind)
@@ -214,6 +226,7 @@ namespace FateWeaver.Unity
             LayoutTopLeft(TextRect(_costText), 23f, 22f, 34f, 32f, scale);
             LayoutTopRight(TextRect(_executionOrderText), 20f, 19f, 32f, 28f, scale);
             LayoutStatusRow(scale);
+            LayoutOwnerChip(scale);
             LayoutSelectionOutline(scale);
             ScaleText(scale);
         }
@@ -339,6 +352,45 @@ namespace FateWeaver.Unity
             {
                 layout.spacing = 6f * scale;
             }
+        }
+
+        private void RefreshOwnerChip(CardPresentation data)
+        {
+            if (_ownerChip == null)
+            {
+                return;
+            }
+
+            bool visible = data.Side == Side.Player && !string.IsNullOrEmpty(data.OwnerDisplayName);
+            _ownerChip.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            if (_ownerChipText != null)
+            {
+                _ownerChipText.text = data.OwnerDisplayName;
+            }
+
+            if (_ownerChipBackground != null)
+            {
+                _ownerChipBackground.color = data.OwnerColor;
+            }
+        }
+
+        private void LayoutOwnerChip(float scale)
+        {
+            var rect = _ownerChip != null ? _ownerChip.transform as RectTransform : null;
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 0f);
+            rect.pivot = new Vector2(0f, 0f);
+            rect.anchoredPosition = new Vector2(18f * scale, 17f * scale);
+            rect.sizeDelta = new Vector2(84f * scale, 24f * scale);
         }
 
         private void LayoutSelectionOutline(float scale)

@@ -18,6 +18,11 @@ namespace FateWeaver.Unity.Editor
         private const string PlayerCardFolder = CardFolder + "/Player";
         public const string EnemyCardFolder = CardFolder + "/Enemies";
         private const string DeckAssetPath = PlayerCardFolder + "/StarterDeck.asset";
+        private const string ValidationCardFolder = CardFolder + "/Validation";
+        private const string ValidationDeckPath = ValidationCardFolder + "/PartyPrototypeDeck.asset";
+        private const string CharacterFolder = "Assets/Unity/CharacterSO";
+        private const string MemberAPath = CharacterFolder + "/member_a.asset";
+        private const string MemberBPath = CharacterFolder + "/member_b.asset";
         private const string GeneratedPath = "Assets/Core/Simulation/Generated/GeneratedCards.cs";
 
         [MenuItem("Fate Weaver/Seed Starter Card Assets")]
@@ -90,6 +95,115 @@ namespace FateWeaver.Unity.Editor
             File.WriteAllText(GeneratedPath, Emit(deck.ToSpecs()), new UTF8Encoding(false));
             AssetDatabase.Refresh();
             Debug.Log("Generated " + GeneratedPath);
+        }
+
+        [MenuItem("Fate Weaver/Seed Party Prototype Assets")]
+        public static void SeedPartyPrototype()
+        {
+            var starterDeck = AssetDatabase.LoadAssetAtPath<DeckAsset>(DeckAssetPath);
+            if (starterDeck == null)
+            {
+                Debug.LogError("No DeckAsset at " + DeckAssetPath + " — run 'Fate Weaver/Seed Starter Card Assets' first.");
+                return;
+            }
+
+            Directory.CreateDirectory(ValidationCardFolder);
+            Directory.CreateDirectory(CharacterFolder);
+            var entries = new List<DeckAsset.Entry>();
+            foreach (var spec in DistinctById(PartyPrototypeDeckSpecs.Build(), out var counts))
+            {
+                var card = UpsertCard(ValidationCardFolder + "/" + spec.Id + ".asset", spec);
+                entries.Add(new DeckAsset.Entry { Card = card, Count = counts[spec.Id] });
+            }
+
+            var validationDeck = AssetDatabase.LoadAssetAtPath<DeckAsset>(ValidationDeckPath);
+            bool newDeck = validationDeck == null;
+            if (newDeck)
+            {
+                validationDeck = ScriptableObject.CreateInstance<DeckAsset>();
+            }
+
+            validationDeck.Id = "party_prototype";
+            validationDeck.Entries = entries.ToArray();
+            if (newDeck)
+            {
+                AssetDatabase.CreateAsset(validationDeck, ValidationDeckPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(validationDeck);
+            }
+
+            UpsertCharacter(
+                MemberAPath,
+                PartyPrototypeRoster.MemberAId,
+                PartyPrototypeRoster.MemberAName,
+                new Color(0.35f, 0.65f, 0.95f, 1f),
+                starterDeck);
+            UpsertCharacter(
+                MemberBPath,
+                PartyPrototypeRoster.MemberBId,
+                PartyPrototypeRoster.MemberBName,
+                new Color(0.90f, 0.62f, 0.25f, 1f),
+                validationDeck);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Seeded party prototype CardAssets, DeckAsset, and CharacterAssets.");
+        }
+
+        private static CardAsset UpsertCard(string path, CardSpec spec)
+        {
+            var card = AssetDatabase.LoadAssetAtPath<CardAsset>(path);
+            bool isNew = card == null;
+            if (isNew)
+            {
+                card = ScriptableObject.CreateInstance<CardAsset>();
+            }
+
+            // Apply intentionally leaves CardAsset.Art untouched, preserving assigned art on repeated seeds.
+            Apply(card, spec);
+            if (isNew)
+            {
+                AssetDatabase.CreateAsset(card, path);
+            }
+            else
+            {
+                EditorUtility.SetDirty(card);
+            }
+
+            return card;
+        }
+
+        private static void UpsertCharacter(
+            string path,
+            string id,
+            string displayName,
+            Color color,
+            DeckAsset deck)
+        {
+            var character = AssetDatabase.LoadAssetAtPath<CharacterAsset>(path);
+            bool isNew = character == null;
+            if (isNew)
+            {
+                character = ScriptableObject.CreateInstance<CharacterAsset>();
+            }
+
+            var serialized = new SerializedObject(character);
+            serialized.FindProperty("_id").stringValue = id;
+            serialized.FindProperty("_displayName").stringValue = displayName;
+            serialized.FindProperty("_color").colorValue = color;
+            serialized.FindProperty("_deck").objectReferenceValue = deck;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            if (isNew)
+            {
+                AssetDatabase.CreateAsset(character, path);
+            }
+            else
+            {
+                EditorUtility.SetDirty(character);
+            }
         }
 
         private static void Apply(CardAsset card, CardSpec spec)

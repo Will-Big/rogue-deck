@@ -10,6 +10,8 @@ namespace FateWeaver.Unity
 {
     public static class PlaytestKoreanText
     {
+        public static string PartyOwnerName() => "파티";
+
         public static string ScenarioName(string id, string fallback)
         {
             switch (id)

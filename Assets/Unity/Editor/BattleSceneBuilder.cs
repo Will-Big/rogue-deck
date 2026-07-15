@@ -14,8 +14,11 @@ namespace FateWeaver.Unity.Editor
     public static class BattleSceneBuilder
     {
         private const string ScenePath = "Assets/Scenes/FateWeaverBattle.unity";
-        private const string CardPrefabPath = "Assets/Unity/Prefabs/CardViewArchiveTemp.prefab";
-        private const string DeckAssetPath = "Assets/Unity/CardSO/Player/StarterDeck.asset";
+        private const string CardPrefabPath = "Assets/Unity/Prefabs/CardView.prefab";
+        private const string UnitPrefabPath = "Assets/Unity/Prefabs/UnitView.prefab";
+        private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
+        private const string MemberAPath = "Assets/Unity/CharacterSO/member_a.asset";
+        private const string MemberBPath = "Assets/Unity/CharacterSO/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
 
         private static readonly string[] EnemyArtCardPaths =
@@ -28,15 +31,38 @@ namespace FateWeaver.Unity.Editor
         [MenuItem("Fate Weaver/Build Battle Scene")]
         public static void Build()
         {
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
-            var deck = AssetDatabase.LoadAssetAtPath<DeckAsset>(DeckAssetPath);
-            if (cardPrefab == null || deck == null)
+            var preflightParty = new[]
             {
-                Debug.LogError("BattleSceneBuilder: missing CardView prefab or StarterDeck asset.");
+                AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberAPath),
+                AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberBPath)
+            };
+            if (preflightParty[0] == null || preflightParty[1] == null)
+            {
+                Debug.LogError("BattleSceneBuilder: missing party CharacterAsset. Run 'Fate Weaver/Seed Party Prototype Assets' first.");
                 return;
             }
 
+            EnsureCardOwnerChip();
+            EnsureUnitPrefab();
+            EnsureRailCardPrefab();
+
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // Opening a scene in Single mode unloads assets loaded above. Reload every object that will
+            // be written through SerializedObject or another serialized scene reference.
+            var party = new[]
+            {
+                AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberAPath),
+                AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberBPath)
+            };
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
+            var unitPrefab = AssetDatabase.LoadAssetAtPath<UnitView>(UnitPrefabPath);
+            var railCardPrefab = AssetDatabase.LoadAssetAtPath<RailCardView>(RailCardPrefabPath);
+            if (cardPrefab == null || unitPrefab == null || railCardPrefab == null)
+            {
+                Debug.LogError("BattleSceneBuilder: missing CardView or UnitView prefab.");
+                return;
+            }
 
             // --- canvas + event system ---
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -63,8 +89,8 @@ namespace FateWeaver.Unity.Editor
             // --- stage: player row left, enemy row right, each unit carries its own HP bar ---
             var stage = BattleUiKit.Rect(canvasRect, "Stage");
             BattleUiKit.Anchor(stage, 0.03f, 0.52f, 0.97f, 0.94f);
-            var playerRow = UnitRow(stage, "PlayerUnits", 0f, 0.45f, TextAnchor.LowerLeft);
-            var enemyRow = UnitRow(stage, "EnemyUnits", 0.55f, 1f, TextAnchor.LowerRight);
+            var playerRow = UnitRow(stage, "PlayerUnits", 0f, 0.45f, TextAnchor.LowerRight);
+            var enemyRow = UnitRow(stage, "EnemyUnits", 0.55f, 1f, TextAnchor.LowerLeft);
 
             // --- overlay (popups + hover preview; forced last sibling below) ---
             var overlay = BattleUiKit.Rect(canvasRect, "Overlay");
@@ -74,7 +100,7 @@ namespace FateWeaver.Unity.Editor
             var railRect = BattleUiKit.Rect(canvasRect, "ExecutionRail");
             BattleUiKit.Anchor(railRect, 0.03f, 0.30f, 0.97f, 0.51f);
             var rail = railRect.gameObject.AddComponent<ExecutionRailView>();
-            rail.EditorBuild(cardPrefab, overlay);
+            rail.EditorBuild(cardPrefab, railCardPrefab, overlay);
 
             // --- hand fan ---
             var handRect = BattleUiKit.Rect(canvasRect, "HandFan");
@@ -107,14 +133,15 @@ namespace FateWeaver.Unity.Editor
             var resetButton = MakeButton(canvasRect, "ResetButton", "초기화", 18f, out _);
             Place((RectTransform)resetButton.transform, new Vector2(0f, 1f), new Vector2(90f, -40f), new Vector2(120f, 40f));
 
-            // --- selection-mode dim + left-side cancel button (spec §6; hidden until targets are wanted) ---
+            // --- intervention dim and selection cancel (cancel remains usable in both targeting modes) ---
             var dimLayer = BattleUiKit.Rect(canvasRect, "SelectionDim");
             BattleUiKit.Stretch(dimLayer);
             var dimImage = BattleUiKit.Image(dimLayer, "Dim", new Color(0f, 0f, 0f, 0.6f));
             BattleUiKit.Stretch(dimImage.rectTransform);
-            var cancelButton = MakeButton(dimLayer, "CancelButton", "실행 취소", 20f, out _);
+            var cancelButton = MakeButton(canvasRect, "CancelButton", "실행 취소", 20f, out _);
             Place((RectTransform)cancelButton.transform, new Vector2(0f, 0.5f), new Vector2(110f, 0f), new Vector2(150f, 48f));
             dimLayer.gameObject.SetActive(false);
+            cancelButton.gameObject.SetActive(false);
 
             // Z-order: the dim covers everything except the rail (the selection candidates) and the
             // message line; popups/hover preview stay on the very top.
@@ -122,12 +149,18 @@ namespace FateWeaver.Unity.Editor
             railRect.SetAsLastSibling();
             ((RectTransform)message.transform).SetAsLastSibling();
             overlay.SetAsLastSibling();
+            ((RectTransform)cancelButton.transform).SetAsLastSibling();
 
             // --- controller wiring (field names must match BattleScreenController) ---
             var controllerGo = new GameObject("BattleScreenController");
             var controller = controllerGo.AddComponent<BattleScreenController>();
             var so = new SerializedObject(controller);
-            so.FindProperty("_deck").objectReferenceValue = deck;
+            var serializedParty = so.FindProperty("_party");
+            serializedParty.arraySize = party.Length;
+            for (int i = 0; i < party.Length; i++)
+            {
+                serializedParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
+            }
             var arts = so.FindProperty("_enemyArtCards");
             arts.arraySize = EnemyArtCardPaths.Length;
             for (int i = 0; i < EnemyArtCardPaths.Length; i++)
@@ -138,6 +171,7 @@ namespace FateWeaver.Unity.Editor
 
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
+            so.FindProperty("_unitPrefab").objectReferenceValue = unitPrefab;
             so.FindProperty("_playerUnitsRow").objectReferenceValue = playerRow;
             so.FindProperty("_enemyUnitsRow").objectReferenceValue = enemyRow;
             so.FindProperty("_drawPile").objectReferenceValue = drawPile;
@@ -154,6 +188,75 @@ namespace FateWeaver.Unity.Editor
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("BattleSceneBuilder: saved " + ScenePath);
+        }
+
+        private static void EnsureCardOwnerChip()
+        {
+            var root = PrefabUtility.LoadPrefabContents(CardPrefabPath);
+            try
+            {
+                var cardView = root.GetComponent<CardView>();
+                var serialized = new SerializedObject(cardView);
+                if (serialized.FindProperty("_ownerChip").objectReferenceValue != null)
+                {
+                    return;
+                }
+
+                var chip = BattleUiKit.Rect((RectTransform)root.transform, "OwnerChip");
+                chip.anchorMin = chip.anchorMax = new Vector2(0f, 0f);
+                chip.pivot = new Vector2(0f, 0f);
+                chip.anchoredPosition = new Vector2(18f, 17f);
+                chip.sizeDelta = new Vector2(84f, 24f);
+                var background = BattleUiKit.Image(chip, "Background", new Color(0.25f, 0.4f, 0.55f, 1f));
+                BattleUiKit.Stretch(background.rectTransform);
+                background.raycastTarget = false;
+                var label = BattleUiKit.Text(chip, "Label", 12f, TextAlignmentOptions.Center);
+                BattleUiKit.Stretch(label.rectTransform);
+                label.raycastTarget = false;
+                chip.gameObject.SetActive(false);
+
+                serialized.FindProperty("_ownerChip").objectReferenceValue = chip.gameObject;
+                serialized.FindProperty("_ownerChipBackground").objectReferenceValue = background;
+                serialized.FindProperty("_ownerChipText").objectReferenceValue = label;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, CardPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void EnsureUnitPrefab()
+        {
+            var temporaryRoot = new GameObject("UnitViewPrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = UnitView.EditorCreate((RectTransform)temporaryRoot.transform, new Vector2(180f, 250f));
+                view.gameObject.name = "UnitView";
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, UnitPrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
+        }
+
+        private static void EnsureRailCardPrefab()
+        {
+            var temporaryRoot = new GameObject("RailCardPrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = RailCardView.EditorCreate(
+                    (RectTransform)temporaryRoot.transform,
+                    new Vector2(96f, 132f));
+                view.gameObject.name = "RailCardView";
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, RailCardPrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
         }
 
         private static void CreateUiCamera()

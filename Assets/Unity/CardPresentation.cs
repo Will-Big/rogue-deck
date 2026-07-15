@@ -20,12 +20,18 @@ namespace FateWeaver.Unity
         public bool IsLocked { get; }
         public CardCategory Category { get; }
         public IReadOnlyList<CardStatusIcon> StatusIcons { get; }
+        public string OwnerDisplayName { get; }
+        public Color OwnerColor { get; }
+        public bool IsPartyOwned { get; }
 
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
             string description, Sprite art, bool isLocked,
             IReadOnlyList<CardStatusIcon> statusIcons = null,
-            CardCategory category = CardCategory.Execution)
+            CardCategory category = CardCategory.Execution,
+            string ownerDisplayName = null,
+            Color ownerColor = default,
+            bool isPartyOwned = false)
         {
             Id = id;
             DisplayName = displayName;
@@ -37,11 +43,19 @@ namespace FateWeaver.Unity
             IsLocked = isLocked;
             StatusIcons = statusIcons ?? Array.Empty<CardStatusIcon>();
             Category = category;
+            OwnerDisplayName = ownerDisplayName;
+            OwnerColor = ownerColor;
+            IsPartyOwned = isPartyOwned;
         }
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
         /// the sprite by id (e.g. from the authored CardAsset.Art); null falls back to Resources lookup.</summary>
-        public static CardPresentation From(ExecutionCardInstance card, Func<string, Sprite> art = null)
+        public static CardPresentation From(
+            ExecutionCardInstance card,
+            Func<string, Sprite> art = null,
+            string ownerDisplayName = null,
+            Color ownerColor = default,
+            bool isPartyOwned = false)
         {
             var def = card.Def;
             return new CardPresentation(
@@ -54,11 +68,19 @@ namespace FateWeaver.Unity
                 ResolveArt(def.Id, art),
                 card.IsLocked,
                 StatusIconsFor(card),
-                def.Category);
+                def.Category,
+                ownerDisplayName,
+                ownerColor,
+                isPartyOwned);
         }
 
         /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
-        public static CardPresentation FromDefinition(CardDefinition def, Func<string, Sprite> art = null)
+        public static CardPresentation FromDefinition(
+            CardDefinition def,
+            Func<string, Sprite> art = null,
+            string ownerDisplayName = null,
+            Color ownerColor = default,
+            bool isPartyOwned = false)
         {
             return new CardPresentation(
                 def.Id,
@@ -70,7 +92,10 @@ namespace FateWeaver.Unity
                 ResolveArt(def.Id, art),
                 false,
                 Array.Empty<CardStatusIcon>(),
-                def.Category);
+                def.Category,
+                ownerDisplayName,
+                ownerColor,
+                isPartyOwned);
         }
 
         // A resolver (GUID-backed CardAsset.Art) wins; with none supplied we fall back to the Resources path.

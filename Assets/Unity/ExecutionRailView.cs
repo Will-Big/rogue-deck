@@ -12,6 +12,7 @@ namespace FateWeaver.Unity
     {
         [SerializeField] private RectTransform _content;
         [SerializeField] private CardView _previewPrefab;
+        [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
@@ -22,9 +23,10 @@ namespace FateWeaver.Unity
 
         /// <summary>Editor-time construction (called by BattleSceneBuilder); the built children and
         /// references serialize into the scene.</summary>
-        public void EditorBuild(CardView previewPrefab, RectTransform previewLayer)
+        public void EditorBuild(CardView previewPrefab, RailCardView cardPrefab, RectTransform previewLayer)
         {
             _previewPrefab = previewPrefab;
+            _cardPrefab = cardPrefab;
             _previewLayer = previewLayer;
 
             var rect = (RectTransform)transform;
@@ -74,7 +76,8 @@ namespace FateWeaver.Unity
             _views.Clear();
             for (int i = 0; i < cards.Count; i++)
             {
-                var view = RailCardView.Create(_content, CardSize);
+                var view = Instantiate(_cardPrefab, _content);
+                ((RectTransform)view.transform).sizeDelta = CardSize;
                 int captured = i;
                 var data = cards[i];
                 view.Bind(data, () => onClick?.Invoke(captured), hovering => OnHover(view, data, hovering));
@@ -87,6 +90,14 @@ namespace FateWeaver.Unity
             for (int i = 0; i < _views.Count; i++)
             {
                 _views[i].SetSelection(i == index ? kind : CardView.SelectionKind.None);
+            }
+        }
+
+        public void SetInputEnabled(bool value)
+        {
+            foreach (var view in _views)
+            {
+                view.SetInteractable(value);
             }
         }
 

@@ -18,6 +18,9 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _orderText;
         [SerializeField] private Image _selectionOutline;
         [SerializeField] private Image _lockIcon;
+        [SerializeField] private GameObject _ownerChip;
+        [SerializeField] private Image _ownerChipBackground;
+        [SerializeField] private TMP_Text _ownerChipText;
         [SerializeField] private Button _button;
 
         private static readonly Color ExecutionFrame = new Color(0.55f, 0.42f, 0.22f, 1f);
@@ -51,6 +54,13 @@ namespace FateWeaver.Unity
             }
 
             _lockIcon.gameObject.SetActive(data.IsLocked);
+            bool showOwner = data.Side == Side.Player && !string.IsNullOrEmpty(data.OwnerDisplayName);
+            _ownerChip.SetActive(showOwner);
+            if (showOwner)
+            {
+                _ownerChipBackground.color = data.OwnerColor;
+                _ownerChipText.text = data.OwnerDisplayName;
+            }
             _button.onClick.RemoveAllListeners();
             if (onClick != null)
             {
@@ -59,6 +69,8 @@ namespace FateWeaver.Unity
 
             SetSelection(CardView.SelectionKind.None);
         }
+
+        public void SetInteractable(bool value) => _button.interactable = value;
 
         public void SetSelection(CardView.SelectionKind kind)
         {
@@ -72,7 +84,8 @@ namespace FateWeaver.Unity
 
         public void OnPointerExit(PointerEventData eventData) => _onHover?.Invoke(false);
 
-        public static RailCardView Create(RectTransform parent, Vector2 size)
+        /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
+        public static RailCardView EditorCreate(RectTransform parent, Vector2 size)
         {
             var root = BattleUiKit.Rect(parent, "RailCard");
             root.sizeDelta = size;
@@ -121,6 +134,19 @@ namespace FateWeaver.Unity
             lockIcon.raycastTarget = false;
             lockIcon.gameObject.SetActive(false);
 
+            var ownerChip = BattleUiKit.Rect(root, "OwnerChip");
+            ownerChip.anchorMin = ownerChip.anchorMax = new Vector2(0f, 0f);
+            ownerChip.pivot = new Vector2(0f, 0f);
+            ownerChip.anchoredPosition = new Vector2(6f, 6f);
+            ownerChip.sizeDelta = new Vector2(70f, 18f);
+            var ownerBackground = BattleUiKit.Image(ownerChip, "Background", PlayerTint);
+            BattleUiKit.Stretch(ownerBackground.rectTransform);
+            ownerBackground.raycastTarget = false;
+            var ownerText = BattleUiKit.Text(ownerChip, "Label", 10f, TextAlignmentOptions.Center);
+            BattleUiKit.Stretch(ownerText.rectTransform);
+            ownerText.raycastTarget = false;
+            ownerChip.gameObject.SetActive(false);
+
             // Click/hover land on the frame graphic; the handlers live on this root (uGUI bubbles up).
             var button = root.gameObject.AddComponent<Button>();
             button.targetGraphic = frame;
@@ -131,6 +157,9 @@ namespace FateWeaver.Unity
             view._orderText = orderText;
             view._selectionOutline = selection;
             view._lockIcon = lockIcon;
+            view._ownerChip = ownerChip.gameObject;
+            view._ownerChipBackground = ownerBackground;
+            view._ownerChipText = ownerText;
             view._button = button;
             return view;
         }

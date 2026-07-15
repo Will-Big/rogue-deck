@@ -38,6 +38,15 @@ namespace FateWeaver.Unity
             _labelText.text = _title + "\n" + count;
         }
 
+        public void SetInputEnabled(bool value)
+        {
+            _button.interactable = value;
+            if (!value && _popup.activeSelf)
+            {
+                Close();
+            }
+        }
+
         private void Open()
         {
             if (_cards == null)
