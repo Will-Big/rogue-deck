@@ -1,22 +1,36 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Player cards hit their target enemy (by id, else the first enemy); enemy cards hit the
-    /// player. Incoming damage is folded through the target's entity-scoped statuses (e.g. Vulnerable)
-    /// when a StatusRegistry is present; with no registry it applies raw.</summary>
+    /// <summary>Player cards hit their target enemy (by id, else the first enemy); enemy cards hit a
+    /// party member chosen by the effect's TargetSelector (null defaults to FrontMost, for pre-party
+    /// compat). Incoming damage is folded through the target's entity-scoped statuses (e.g. Vulnerable,
+    /// Block) when a StatusRegistry is present; with no registry it applies raw. If no target can be
+    /// resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
 
         public void Apply(EffectContext ctx)
         {
+            if (ctx.Card.CancellationReason != null)
+            {
+                return;
+            }
+
             var amount = ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus();
             if (ctx.Card.Def.Side == Side.Player)
             {
                 var target = SelectEnemy(ctx.State, ctx.Card.TargetId);
+                if (target == null)
+                {
+                    ctx.Cancel(CardCancellationReason.NoValidTarget);
+                    return;
+                }
+
                 var damage = FoldIncoming(ctx, target.Statuses, amount);
                 target.Hp -= damage;
                 ctx.DamageDealt = damage;
@@ -24,15 +38,24 @@ namespace FateWeaver.Core.Effects
             }
             else
             {
-                var damage = FoldIncoming(ctx, ctx.State.PlayerStatuses, amount);
-                ctx.State.PlayerHp -= damage;
+                var target = SelectPartyTarget(ctx);
+                if (target == null)
+                {
+                    ctx.Cancel(CardCancellationReason.NoValidTarget);
+                    return;
+                }
+
+                var damage = FoldIncoming(ctx, target.Statuses, amount);
+                target.Hp -= damage;
                 ctx.DamageDealt = damage;
-                ctx.TargetId = "player";
+                ctx.TargetId = target.Id;
             }
         }
 
-        /// <summary>Picks the card's intended target enemy by id; falls back to the first enemy.</summary>
-        private static Combat.Enemy SelectEnemy(Combat.CombatState state, string targetId)
+        /// <summary>Picks the card's intended target enemy by id, else the first enemy. An explicit id
+        /// that no longer matches any enemy resolves to no target (the caller cancels) rather than
+        /// silently falling back to the front.</summary>
+        private static Enemy SelectEnemy(CombatState state, string targetId)
         {
             if (!string.IsNullOrEmpty(targetId))
             {
@@ -43,9 +66,19 @@ namespace FateWeaver.Core.Effects
                         return enemy;
                     }
                 }
+
+                return null;
             }
 
-            return state.Enemies[0];
+            return state.Enemies.Count > 0 ? state.Enemies[0] : null;
+        }
+
+        /// <summary>Picks the party member an enemy attack hits, via the effect's position selector
+        /// (defaulting to FrontMost) evaluated against the living party formation at execution time.</summary>
+        private static PartyMember SelectPartyTarget(EffectContext ctx)
+        {
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            return PartyTargeting.Select(ctx.State, selector);
         }
 
         /// <summary>Folds the target's entity-scoped statuses into incoming damage. An UntilConsumed

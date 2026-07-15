@@ -10,9 +10,23 @@ namespace FateWeaver.Core.Combat
 
         public CardDefinition Def { get; }
         public int ExecutionOrder { get; set; }
+
+        /// <summary>Session-assigned identity for this placed card. Core unit tests may inject distinct
+        /// ids directly; sessions assign real ids from an increasing counter (from Task 4 onward).</summary>
+        public int InstanceId { get; set; } = -1;
+
+        /// <summary>Id of the party member or enemy that owns this card (null = owned by the party/enemy
+        /// side as a whole, e.g. all pre-Task-4 content). Drives strict Self-target resolution.</summary>
+        public string OwnerId { get; set; }
+
         public string TargetId { get; set; }
         public bool IsLocked { get; set; }
         public StatusBag Statuses { get; } = new();
+
+        /// <summary>Set by an effect handler via EffectContext.Cancel when the card's target cannot be
+        /// resolved. First cancellation reason wins; a cancelled card's remaining effects must not
+        /// mutate state (see IEffectHandler.cs).</summary>
+        public CardCancellationReason? CancellationReason { get; set; }
 
         public ExecutionCardInstance(CardDefinition def)
         {

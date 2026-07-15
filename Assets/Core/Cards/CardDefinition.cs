@@ -17,6 +17,10 @@ namespace FateWeaver.Core.Cards
         public StatusLifetime? StatusLifetime { get; init; }
         public StatusApplyTarget StatusTarget { get; init; }
 
+        // Position selector for enemy attacks against the player party formation. Null means
+        // FrontMost (pre-party content has no selector, so this keeps single-enemy-attack compat).
+        public TargetSelector? TargetSelector { get; init; }
+
         public static EffectData Conditional(
             EffectKey key,
             int effectValue,

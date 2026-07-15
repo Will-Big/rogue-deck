@@ -18,6 +18,16 @@ namespace FateWeaver.Core.Effects
         // outputs (read by TurnResolver)
         public int DamageDealt;
         public string TargetId;
+
+        /// <summary>Records why this card's effects could not resolve. Only the first reason is kept;
+        /// handlers must not mutate state or HP after cancelling (see ExecutionCardInstance.CancellationReason).</summary>
+        public void Cancel(Combat.CardCancellationReason reason)
+        {
+            if (Card != null && Card.CancellationReason == null)
+            {
+                Card.CancellationReason = reason;
+            }
+        }
     }
 
     public interface IEffectHandler
