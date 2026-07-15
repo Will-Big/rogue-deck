@@ -20,7 +20,7 @@ namespace FateWeaver.Tests
         {
             for (int i = 0; i < s.Hand.Count; i++)
             {
-                if (s.Hand[i].Id == id) return i;
+                if (s.Hand[i].Def.Id == id) return i;
             }
             return -1;
         }
@@ -34,7 +34,7 @@ namespace FateWeaver.Tests
             var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
 
             CollectionAssert.AreEqual(new[] { "goblin_jab" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
-            CollectionAssert.AreEqual(new[] { "slash" }, session.Hand.Select(c => c.Id).ToArray());
+            CollectionAssert.AreEqual(new[] { "slash" }, session.Hand.Select(c => c.Def.Id).ToArray());
         }
 
         [Test]
@@ -47,7 +47,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(2, session.FateEnergy);                 // cost 1 spent
             Assert.IsTrue(session.CurrentOrder.Any(c => c.Def.Id == "slash"));
-            Assert.AreEqual(0, session.Hand.Count(c => c.Id == "slash")); // moved to discard
+            Assert.AreEqual(0, session.Hand.Count(c => c.Def.Id == "slash")); // moved to discard
         }
 
         [Test]
@@ -133,6 +133,6 @@ namespace FateWeaver.Tests
         }
 
         private static string FirstExecutionId(DeckCombatSession s)
-            => s.Hand.First(c => c.Category == CardCategory.Execution).Id;
+            => s.Hand.First(c => c.Def.Category == CardCategory.Execution).Def.Id;
     }
 }

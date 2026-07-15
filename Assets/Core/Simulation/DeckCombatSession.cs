@@ -18,11 +18,26 @@ namespace FateWeaver.Simulation
         private readonly InterventionPlayResolver _interventionResolver;
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
-        private readonly List<CardDefinition> _allCards;
+        private readonly List<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
+        private int _nextInstanceId;
 
         public DeckCombatSession(
             IReadOnlyList<CardDefinition> deckCards,
+            int playerHp,
+            IReadOnlyList<Enemy> enemies,
+            IEnemyTurnPolicy enemyPolicy,
+            int fateEnergyPerTurn = 3,
+            int handSize = 5,
+            int seed = 0)
+            : this(
+                WithLegacyOwner(deckCards), playerHp, enemies, enemyPolicy,
+                fateEnergyPerTurn, handSize, seed)
+        {
+        }
+
+        public DeckCombatSession(
+            IReadOnlyList<OwnedCard> deckCards,
             int playerHp,
             IReadOnlyList<Enemy> enemies,
             IEnemyTurnPolicy enemyPolicy,
@@ -41,7 +56,7 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
-            _allCards = new List<CardDefinition>(deckCards);
+            _allCards = new List<OwnedCard>(deckCards);
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
@@ -53,7 +68,7 @@ namespace FateWeaver.Simulation
         }
 
         public int TurnIndex { get; private set; }
-        public IReadOnlyList<CardDefinition> Hand => _deck.Hand;
+        public IReadOnlyList<OwnedCard> Hand => _deck.Hand;
         public int FateEnergy => _state.FateEnergy;
         public CombatState State => _state;
         public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
@@ -66,9 +81,9 @@ namespace FateWeaver.Simulation
 
         /// <summary>Deck-viewer UI: real draw order (UI sorts for display), discard order, and the
         /// full list the player brought into combat (authoring order).</summary>
-        public IReadOnlyList<CardDefinition> DrawPile => _deck.DrawPile;
-        public IReadOnlyList<CardDefinition> DiscardPile => _deck.DiscardPile;
-        public IReadOnlyList<CardDefinition> AllDeckCards => _allCards;
+        public IReadOnlyList<OwnedCard> DrawPile => _deck.DrawPile;
+        public IReadOnlyList<OwnedCard> DiscardPile => _deck.DiscardPile;
+        public IReadOnlyList<OwnedCard> AllDeckCards => _allCards;
 
         /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
         public bool PlayExecutionCard(int handIndex)
@@ -78,14 +93,19 @@ namespace FateWeaver.Simulation
                 return false;
             }
 
-            var def = _deck.Hand[handIndex];
+            var card = _deck.Hand[handIndex];
+            var def = card.Def;
             if (def.Category != CardCategory.Execution || _state.FateEnergy < def.EnergyCost)
             {
                 return false;
             }
 
             _state.FateEnergy -= def.EnergyCost;
-            var placed = new ExecutionCardInstance(def);
+            var placed = new ExecutionCardInstance(def)
+            {
+                InstanceId = _nextInstanceId++,
+                OwnerId = card.OwnerId
+            };
             placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(placed.ExecutionOrder, _state.PlayerStatuses, _statuses);
             _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
@@ -101,7 +121,7 @@ namespace FateWeaver.Simulation
                 return false;
             }
 
-            var def = _deck.Hand[handIndex];
+            var def = _deck.Hand[handIndex].Def;
             if (def.Category != CardCategory.Intervention || def.InterventionAction == null)
             {
                 return false;
@@ -172,7 +192,10 @@ namespace FateWeaver.Simulation
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
             {
-                var inst = new ExecutionCardInstance(enemyCard);
+                var inst = new ExecutionCardInstance(enemyCard)
+                {
+                    InstanceId = _nextInstanceId++
+                };
                 inst.IsLocked = enemyCard.StartsLocked;
                 if (!inst.IsLocked)
                 {
@@ -184,6 +207,17 @@ namespace FateWeaver.Simulation
 
             _state.FateEnergy = _state.FateEnergyPerTurn;
             _deck.Draw(_handSize);
+        }
+
+        private static IReadOnlyList<OwnedCard> WithLegacyOwner(IReadOnlyList<CardDefinition> cards)
+        {
+            var owned = new List<OwnedCard>(cards.Count);
+            foreach (var card in cards)
+            {
+                owned.Add(new OwnedCard(card, CombatState.LegacyPlayerId));
+            }
+
+            return owned;
         }
 
         private static Outcome OutcomeOf(IReadOnlyList<ResolutionEvent> timeline)

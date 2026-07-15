@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
                 if (session.CurrentOrder[i].Def.Id == "locked_jab") zoneIndex = i;
             int handIndex = 0;
             for (int i = 0; i < session.Hand.Count; i++)
-                if (session.Hand[i].Id == "pull") handIndex = i;
+                if (session.Hand[i].Def.Id == "pull") handIndex = i;
 
             Assert.IsFalse(session.PlayInterventionCard(handIndex, zoneIndex));
         }

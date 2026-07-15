@@ -8,12 +8,17 @@ namespace FateWeaver.Core.Combat
     /// Pure C# (no UnityEngine) so the loop is headless-testable and deterministic.</summary>
     public sealed class Deck
     {
-        private readonly List<CardDefinition> _draw = new List<CardDefinition>();
-        private readonly List<CardDefinition> _discard = new List<CardDefinition>();
-        private readonly List<CardDefinition> _hand = new List<CardDefinition>();
+        private readonly List<OwnedCard> _draw = new List<OwnedCard>();
+        private readonly List<OwnedCard> _discard = new List<OwnedCard>();
+        private readonly List<OwnedCard> _hand = new List<OwnedCard>();
         private readonly Random _rng;
 
         public Deck(IEnumerable<CardDefinition> cards, int seed)
+            : this(WithLegacyOwner(cards), seed)
+        {
+        }
+
+        public Deck(IEnumerable<OwnedCard> cards, int seed)
         {
             _rng = new Random(seed);
             foreach (var card in cards)
@@ -24,14 +29,14 @@ namespace FateWeaver.Core.Combat
             Shuffle(_draw);
         }
 
-        public IReadOnlyList<CardDefinition> Hand => _hand;
+        public IReadOnlyList<OwnedCard> Hand => _hand;
         public int DrawCount => _draw.Count;
         public int DiscardCount => _discard.Count;
         public int HandCount => _hand.Count;
 
         /// <summary>Read-only pile views for deck-viewer UI. Draw order is real — UI must sort for display.</summary>
-        public IReadOnlyList<CardDefinition> DrawPile => _draw;
-        public IReadOnlyList<CardDefinition> DiscardPile => _discard;
+        public IReadOnlyList<OwnedCard> DrawPile => _draw;
+        public IReadOnlyList<OwnedCard> DiscardPile => _discard;
 
         public void Draw(int count)
         {
@@ -72,7 +77,22 @@ namespace FateWeaver.Core.Combat
             _hand.Clear();
         }
 
-        private void Shuffle(List<CardDefinition> list)
+        public void RemoveOwnedBy(string ownerId)
+        {
+            _draw.RemoveAll(card => card.OwnerId != null && card.OwnerId == ownerId);
+            _discard.RemoveAll(card => card.OwnerId != null && card.OwnerId == ownerId);
+            _hand.RemoveAll(card => card.OwnerId != null && card.OwnerId == ownerId);
+        }
+
+        private static IEnumerable<OwnedCard> WithLegacyOwner(IEnumerable<CardDefinition> cards)
+        {
+            foreach (var card in cards)
+            {
+                yield return new OwnedCard(card, CombatState.LegacyPlayerId);
+            }
+        }
+
+        private void Shuffle(List<OwnedCard> list)
         {
             for (int i = list.Count - 1; i > 0; i--)
             {

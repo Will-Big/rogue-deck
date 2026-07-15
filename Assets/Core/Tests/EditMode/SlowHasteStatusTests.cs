@@ -113,7 +113,7 @@ namespace FateWeaver.Tests
             var session = new DeckCombatSession(
                 new[] { slowCard }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
 
-            int hand = session.Hand.Select((c, i) => (c, i)).First(x => x.c.Id == "slow_hex").i;
+            int hand = session.Hand.Select((c, i) => (c, i)).First(x => x.c.Def.Id == "slow_hex").i;
             Assert.IsTrue(session.PlayExecutionCard(hand));
             session.ResolveTurn();
             Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));

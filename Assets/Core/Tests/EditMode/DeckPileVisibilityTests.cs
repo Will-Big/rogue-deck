@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
         {
             for (int i = 0; i < session.Hand.Count; i++)
             {
-                var def = session.Hand[i];
+                var def = session.Hand[i].Def;
                 if (def.Category == CardCategory.Execution && def.EnergyCost <= session.FateEnergy)
                 {
                     return i;
@@ -53,10 +53,10 @@ namespace FateWeaver.Tests
         {
             var session = NewSession();
             int index = IndexOfAffordableExecution(session);
-            var id = session.Hand[index].Id;
+            var id = session.Hand[index].Def.Id;
 
             Assert.IsTrue(session.PlayExecutionCard(index));
-            Assert.IsTrue(session.DiscardPile.Any(c => c.Id == id));
+            Assert.IsTrue(session.DiscardPile.Any(c => c.Def.Id == id));
         }
 
         [Test]

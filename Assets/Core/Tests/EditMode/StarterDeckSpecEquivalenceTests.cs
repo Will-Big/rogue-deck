@@ -22,7 +22,7 @@ namespace FateWeaver.Tests
 
         private static int HandIndex(DeckCombatSession s, string id)
         {
-            for (int i = 0; i < s.Hand.Count; i++) if (s.Hand[i].Id == id) return i;
+            for (int i = 0; i < s.Hand.Count; i++) if (s.Hand[i].Def.Id == id) return i;
             return -1;
         }
 
