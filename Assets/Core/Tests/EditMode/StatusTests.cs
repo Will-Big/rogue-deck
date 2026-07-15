@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
             var r = new StatusRegistry();
             r.Register(new StunBehavior());
             r.Register(new VulnerableBehavior());
-            r.Register(new RewardNullifiedBehavior());
+            r.Register(new RewardSuppressionBehavior());
             return r;
         }
 

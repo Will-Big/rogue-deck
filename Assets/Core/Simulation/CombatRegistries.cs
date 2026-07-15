@@ -24,7 +24,7 @@ namespace FateWeaver.Simulation
             var statuses = new StatusRegistry();
             statuses.Register(new StunBehavior());
             statuses.Register(new VulnerableBehavior());
-            statuses.Register(new RewardNullifiedBehavior());
+            statuses.Register(new RewardSuppressionBehavior());
             statuses.Register(new BlockBehavior());
             statuses.Register(new SlowBehavior());
             statuses.Register(new HasteBehavior());
