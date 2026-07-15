@@ -19,6 +19,7 @@ namespace FateWeaver.Simulation
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
         private readonly PartyTuning _partyTuning;
+        private readonly bool _isPartyMode;
         private readonly List<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
         private int _nextInstanceId;
@@ -92,11 +93,11 @@ namespace FateWeaver.Simulation
         {
             _state = new CombatState
             {
-                PlayerHp = playerHp,
                 FateEnergyPerTurn = fateEnergyPerTurn,
                 RngSeed = seed
             };
-            if (party != null)
+            _isPartyMode = party != null;
+            if (_isPartyMode)
             {
                 _state.Party.Clear();
                 foreach (var loadout in party)
@@ -107,6 +108,10 @@ namespace FateWeaver.Simulation
                         loadout.MaxHp,
                         partyTuning.SurviveChargesPerCombat));
                 }
+            }
+            else
+            {
+                _state.PlayerHp = playerHp;
             }
 
             foreach (var enemy in enemies)
@@ -172,13 +177,21 @@ namespace FateWeaver.Simulation
                 OwnerId = card.OwnerId,
                 TargetId = targetId
             };
-            StatusBag ownerStatuses = null;
-            foreach (var member in _state.Party)
+            StatusBag ownerStatuses;
+            if (!_isPartyMode)
             {
-                if (member.IsAlive && member.Id == card.OwnerId)
+                ownerStatuses = _state.PlayerStatuses;
+            }
+            else
+            {
+                ownerStatuses = null;
+                foreach (var member in _state.Party)
                 {
-                    ownerStatuses = member.Statuses;
-                    break;
+                    if (member.IsAlive && member.Id == card.OwnerId)
+                    {
+                        ownerStatuses = member.Statuses;
+                        break;
+                    }
                 }
             }
 

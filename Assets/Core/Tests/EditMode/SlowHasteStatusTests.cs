@@ -107,6 +107,25 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Legacy_owned_card_constructor_applies_player_haste_to_arbitrary_owner_id()
+        {
+            var session = new DeckCombatSession(
+                new[] { new OwnedCard(PlayerStrike(), "warrior") },
+                playerHp: 100,
+                enemies: new[] { new Enemy("goblin", 100) },
+                enemyPolicy: JabEachTurn(),
+                fateEnergyPerTurn: 3,
+                handSize: 5,
+                seed: 1);
+            session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+
+            Assert.IsTrue(session.PlayExecutionCard(0));
+
+            var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
+            Assert.AreEqual(2, strike.ExecutionOrder);
+        }
+
+        [Test]
         public void Playing_slow_card_slows_enemy_next_turn()
         {
             var slowCard = CardSpecMapper.ToDefinition(StarterDeckSpecs.SlowHex());
