@@ -1,3 +1,4 @@
+using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
@@ -10,6 +11,9 @@ namespace FateWeaver.Simulation.Descriptions
     /// per language owns all wording and grammar (including composite-condition joins).</summary>
     public interface IDescriptionVocabulary
     {
+        /// <summary>e.g. "가장 앞의 대상에게".</summary>
+        string Target(TargetSelector selector);
+
         /// <summary>e.g. "피해 4".</summary>
         string Damage(int amount);
 

@@ -46,21 +46,25 @@ namespace FateWeaver.Simulation.Descriptions
         // One effect's fragment for a given amount (base or success). No trailing punctuation.
         private static string Fragment(EffectData effect, int amount, IDescriptionVocabulary vocab)
         {
+            var target = effect.TargetSelector.HasValue
+                ? vocab.Target(effect.TargetSelector.Value) + " "
+                : string.Empty;
+
             if (effect.Key == EffectKeys.Damage)
-                return vocab.Damage(amount);
+                return target + vocab.Damage(amount);
 
             if (effect.Key == EffectKeys.ApplyStatus)
-                return vocab.Status(
+                return target + vocab.Status(
                     effect.StatusKey.Value,
                     effect.StatusTarget,
                     amount,
                     effect.StatusLifetime ?? Core.Status.StatusLifetime.ThisTurn);
 
             if (effect.Key == EffectKeys.NullifyNextPlayerConditionReward)
-                return vocab.NullifyNextReward();
+                return target + vocab.NullifyNextReward();
 
             if (effect.Key == EffectKeys.GrantNextPlayerAttackDamageBonus)
-                return vocab.GrantNextAttackBonus(amount);
+                return target + vocab.GrantNextAttackBonus(amount);
 
             return string.Empty;
         }

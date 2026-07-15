@@ -14,6 +14,17 @@ namespace FateWeaver.Simulation.Descriptions
     {
         public static readonly KoreanDescriptionVocabulary Instance = new KoreanDescriptionVocabulary();
 
+        public string Target(TargetSelector selector)
+        {
+            switch (selector)
+            {
+                case TargetSelector.FrontMost: return "가장 앞의 대상에게";
+                case TargetSelector.SecondFromFront: return "전열에서 두 번째 대상에게";
+                case TargetSelector.BackMost: return "가장 뒤의 대상에게";
+                default: return "무작위 대상에게";
+            }
+        }
+
         public string Damage(int amount) => "피해 " + amount;
 
         public string Status(StatusKey key, StatusApplyTarget target, int magnitude, StatusLifetime lifetime)
@@ -21,6 +32,10 @@ namespace FateWeaver.Simulation.Descriptions
             var sb = new StringBuilder();
             if (target == StatusApplyTarget.TargetEnemy)
                 sb.Append("적 ");
+            else if (target == StatusApplyTarget.PartyMember)
+                sb.Append("선택한 아군에게 ");
+            else if (target == StatusApplyTarget.AllPartyMembers)
+                sb.Append("모든 아군에게 ");
             sb.Append(StatusName(key)).Append(' ').Append(magnitude);
 
             var suffix = LifetimeSuffix(lifetime);
@@ -40,9 +55,9 @@ namespace FateWeaver.Simulation.Descriptions
             {
                 // Verb-stem predicate: takes "...없으면", not "...없으" + "이면".
                 case NoPrecedingCardOfSide n:
-                    return "이전 수행한 " + SideName(n.Side) + " 카드 없으면";
+                    return "이전에 실행한 " + SideName(n.Side) + " 카드가 없으면";
                 case NoFollowingCardOfSide n:
-                    return "이후 수행한 " + SideName(n.Side) + " 카드 없으면";
+                    return "뒤에 배치된 " + SideName(n.Side) + " 카드가 없으면";
                 case AllOf all:
                     return JoinAll(all.Conditions) + "이면";
                 default:
@@ -98,14 +113,14 @@ namespace FateWeaver.Simulation.Descriptions
             return position + subject;
         }
 
-        // "직전 실행 카드가 적 공격" / "직전 실행 카드가 플레이어 카드": the nearest card that actually
+        // "직전에 실행한 카드가 적 공격" / "직전에 실행한 카드가 플레이어 카드": the nearest card that actually
         // finished resolution (cancelled cards are skipped), not just the raw adjacent zone slot.
         private static string PreviousExecutedStem(PreviousExecutedCardIs p)
         {
             var subject = p.Type.HasValue
                 ? SideName(p.Side) + " " + CardTypeName(p.Type.Value)
                 : SideName(p.Side) + " 카드";
-            return "직전 실행 카드가 " + subject;
+            return "직전에 실행한 카드가 " + subject;
         }
 
         // Join child stems with "이고 ", e.g. "바로 앞이 플레이어 카드이고 3번째 안".

@@ -44,7 +44,7 @@ namespace FateWeaver.Simulation.Authoring
             Id = "counter_stance", Name = "반격", Side = Side.Player, Type = CardType.Attack,
             Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 7,
             Effects = new[] { new EffectSpec {
-                Kind = EffectKind.Damage, EffectValue = 4, Condition = ConditionKind.PrevIsEnemyAttack, SuccessEffectValue = 9 } }
+                Kind = EffectKind.Damage, EffectValue = 4, Condition = ConditionKind.PrevExecutedIsEnemyAttack, SuccessEffectValue = 9 } }
         };
 
         public static CardSpec Cover() => new CardSpec

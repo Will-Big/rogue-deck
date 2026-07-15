@@ -4,9 +4,11 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
-    public enum EffectKind { Damage, ApplyStatus, GrantNextAttackBonus, NullifyNextReward }
+    public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random }
 
-    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevIsPlayerAttack, NextIsEnemyAttack, PrevIsEnemyAttack, NoPrecedingPlayerCard, NoFollowingEnemyCard }
+    public enum EffectKind { Damage, ApplyStatus, GrantNextAttackBonus, NullifyNextReward, MoveFormation }
+
+    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevExecutedIsPlayerAttack, NextIsEnemyAttack, PrevExecutedIsEnemyAttack, NoPrecedingPlayerCard, NoFollowingEnemyCard }
 
     public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
 
@@ -25,5 +27,6 @@ namespace FateWeaver.Simulation.Authoring
         public StatusLifetimeKind Lifetime;
         public int LifetimeCount;
         public StatusApplyTarget Target;
+        public TargetSelectorRef Selector;
     }
 }

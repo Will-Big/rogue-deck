@@ -116,5 +116,60 @@ namespace FateWeaver.Tests
             var condition = (NoFollowingCardOfSide)effect.Condition;
             Assert.AreEqual(Side.Enemy, condition.Side);
         }
+
+        [Test]
+        public void Maps_second_from_front_selector()
+        {
+            var effect = CardSpecMapper.ToEffectData(new EffectSpec
+            {
+                Kind = EffectKind.Damage,
+                EffectValue = 4,
+                Selector = TargetSelectorRef.SecondFromFront
+            });
+
+            Assert.AreEqual(TargetSelector.SecondFromFront, effect.TargetSelector);
+        }
+
+        [Test]
+        public void Maps_all_party_members_status_target()
+        {
+            var effect = CardSpecMapper.ToEffectData(new EffectSpec
+            {
+                Kind = EffectKind.ApplyStatus,
+                EffectValue = 4,
+                Status = StatusKindRef.Block,
+                Lifetime = StatusLifetimeKind.ThisTurn,
+                Target = StatusApplyTarget.AllPartyMembers
+            });
+
+            Assert.AreEqual(StatusApplyTarget.AllPartyMembers, effect.StatusTarget);
+        }
+
+        [Test]
+        public void Maps_move_formation_effect_key()
+        {
+            var effect = CardSpecMapper.ToEffectData(new EffectSpec
+            {
+                Kind = EffectKind.MoveFormation,
+                EffectValue = -1
+            });
+
+            Assert.AreEqual(EffectKeys.MoveFormation, effect.Key);
+        }
+
+        [Test]
+        public void Maps_previous_executed_player_attack_condition()
+        {
+            var effect = CardSpecMapper.ToEffectData(new EffectSpec
+            {
+                Kind = EffectKind.Damage,
+                Condition = ConditionKind.PrevExecutedIsPlayerAttack,
+                SuccessEffectValue = 4
+            });
+
+            Assert.AreEqual(
+                new PreviousExecutedCardIs(Side.Player, CardType.Attack),
+                effect.Condition);
+        }
     }
 }

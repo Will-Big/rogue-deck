@@ -36,10 +36,11 @@ namespace FateWeaver.Simulation.Authoring
         {
             var key = ToEffectKey(e.Kind);
             var hasCondition = e.Condition != ConditionKind.None;
+            EffectData effect;
 
             if (e.Kind == EffectKind.ApplyStatus)
             {
-                return new EffectData(key, e.EffectValue)
+                effect = new EffectData(key, e.EffectValue)
                 {
                     StatusKey = ToStatusKey(e.Status),
                     StatusLifetime = ToLifetime(e.Lifetime, e.LifetimeCount),
@@ -48,10 +49,14 @@ namespace FateWeaver.Simulation.Authoring
                     SuccessEffectValue = hasCondition ? e.SuccessEffectValue : (int?)null
                 };
             }
+            else
+            {
+                effect = hasCondition
+                    ? EffectData.Conditional(key, e.EffectValue, ToCondition(e), e.SuccessEffectValue)
+                    : new EffectData(key, e.EffectValue);
+            }
 
-            return hasCondition
-                ? EffectData.Conditional(key, e.EffectValue, ToCondition(e), e.SuccessEffectValue)
-                : new EffectData(key, e.EffectValue);
+            return effect with { TargetSelector = ToTargetSelector(e.Selector) };
         }
 
         private static EffectKey ToEffectKey(EffectKind kind)
@@ -61,7 +66,20 @@ namespace FateWeaver.Simulation.Authoring
                 case EffectKind.ApplyStatus: return EffectKeys.ApplyStatus;
                 case EffectKind.GrantNextAttackBonus: return EffectKeys.GrantNextPlayerAttackDamageBonus;
                 case EffectKind.NullifyNextReward: return EffectKeys.NullifyNextPlayerConditionReward;
+                case EffectKind.MoveFormation: return EffectKeys.MoveFormation;
                 default: return EffectKeys.Damage;
+            }
+        }
+
+        private static TargetSelector? ToTargetSelector(TargetSelectorRef selector)
+        {
+            switch (selector)
+            {
+                case TargetSelectorRef.FrontMost: return TargetSelector.FrontMost;
+                case TargetSelectorRef.SecondFromFront: return TargetSelector.SecondFromFront;
+                case TargetSelectorRef.BackMost: return TargetSelector.BackMost;
+                case TargetSelectorRef.Random: return TargetSelector.Random;
+                default: return null;
             }
         }
 
@@ -72,9 +90,9 @@ namespace FateWeaver.Simulation.Authoring
                 case ConditionKind.FirstToTrigger: return new FirstToTrigger();
                 case ConditionKind.WithinNth: return new WithinNth(e.ConditionN);
                 case ConditionKind.BeforeNextEnemyAttack: return new BeforeNextEnemyAttack();
-                case ConditionKind.PrevIsPlayerAttack:
+                case ConditionKind.PrevExecutedIsPlayerAttack:
                     return new PreviousExecutedCardIs(Side.Player, CardType.Attack);
-                case ConditionKind.PrevIsEnemyAttack:
+                case ConditionKind.PrevExecutedIsEnemyAttack:
                     return new PreviousExecutedCardIs(Side.Enemy, CardType.Attack);
                 case ConditionKind.NextIsEnemyAttack:
                     return new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack);

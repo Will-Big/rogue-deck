@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual("반격", counter.Name);
             Assert.AreEqual(7, counter.BaseExecutionOrder);
             Assert.AreEqual(4, counter.Effects.Single().EffectValue);
-            Assert.AreEqual(ConditionKind.PrevIsEnemyAttack, counter.Effects.Single().Condition);
+            Assert.AreEqual(ConditionKind.PrevExecutedIsEnemyAttack, counter.Effects.Single().Condition);
             Assert.AreEqual(9, counter.Effects.Single().SuccessEffectValue);
         }
     }

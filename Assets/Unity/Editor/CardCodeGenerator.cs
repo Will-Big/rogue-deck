@@ -200,6 +200,7 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Status = StatusKindRef.").Append(e.Status).Append(", ");
             sb.Append("Lifetime = StatusLifetimeKind.").Append(e.Lifetime).Append(", ");
             sb.Append("LifetimeCount = ").Append(e.LifetimeCount).Append(", ");
+            sb.Append("Selector = TargetSelectorRef.").Append(e.Selector).Append(", ");
             sb.Append("Target = StatusApplyTarget.").Append(e.Target).Append(" }");
             return sb.ToString();
         }

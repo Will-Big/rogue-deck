@@ -15,6 +15,7 @@ namespace FateWeaver.Tests.EditMode
         // Fake vocab: marker strings so we assert STRUCTURE, not Korean wording.
         private sealed class FakeVocabulary : IDescriptionVocabulary
         {
+            public string Target(TargetSelector selector) => "TARGET[" + selector + "]";
             public string Damage(int amount) => "DMG" + amount;
             public string Status(StatusKey key, StatusApplyTarget target, int magnitude, StatusLifetime lifetime)
                 => "STATUS:" + key.Id + ":" + target + ":" + magnitude + ":" + lifetime.Kind;
@@ -36,6 +37,14 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("slash", new EffectData(EffectKeys.Damage, 4));
             Assert.AreEqual("DMG4.", DescriptionComposer.Describe(card, Vocab));
+        }
+
+        [Test]
+        public void Target_selector_prefixes_the_effect_fragment_through_the_vocabulary()
+        {
+            var card = Execution("aimed_slash",
+                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackMost });
+            Assert.AreEqual("TARGET[BackMost] DMG4.", DescriptionComposer.Describe(card, Vocab));
         }
 
         [Test]
@@ -127,7 +136,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_counter_stance() =>
-            Assert.AreEqual("피해 4. 직전 실행 카드가 적 공격이면 피해 9.",
+            Assert.AreEqual("피해 4. 직전에 실행한 카드가 적 공격이면 피해 9.",
                 DescriptionComposer.Describe(StarterDeck.Counter(), Kr));
 
         [Test]
@@ -157,12 +166,12 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_sly_jab() =>
-            Assert.AreEqual("피해 3. 이전 수행한 플레이어 카드 없으면 피해 6.",
+            Assert.AreEqual("피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
                 DescriptionComposer.Describe(GoblinDeck.SlyJab(), Kr));
 
         [Test]
         public void Korean_no_following_enemy_card_condition() =>
-            Assert.AreEqual("피해 2. 이후 수행한 적 카드 없으면 피해 7.",
+            Assert.AreEqual("피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
                 DescriptionComposer.Describe(
                     Execution("warden_smash",
                         EffectData.Conditional(
@@ -208,7 +217,7 @@ namespace FateWeaver.Tests.EditMode
                         }),
                         6)
                 }) { Category = CardCategory.Execution };
-            Assert.AreEqual("피해 1. 직전 실행 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
+            Assert.AreEqual("피해 1. 직전에 실행한 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Kr));
         }
     }

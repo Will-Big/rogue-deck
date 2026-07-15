@@ -46,6 +46,16 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Counter_spec_uses_previous_executed_enemy_attack_condition()
+        {
+            var counter = StarterDeckSpecs.Build().Single(s => s.Id == "counter_stance");
+
+            Assert.AreEqual(
+                ConditionKind.PrevExecutedIsEnemyAttack,
+                counter.Effects.Single().Condition);
+        }
+
+        [Test]
         public void Spec_quick_cut_pulled_first_deals_eight()
         {
             var session = new DeckCombatSession(
