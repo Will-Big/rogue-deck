@@ -251,6 +251,50 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Kill_then_cancel_path_removes_dead_owner_from_every_pile_and_keeps_party_cards()
+        {
+            var ownedByA = Enumerable.Range(0, 8).Select(i => Execution("a_" + i, order: 2)).ToArray();
+            var killThenCancel = new CardDefinition(
+                "kill_then_cancel",
+                "kill_then_cancel",
+                Side.Enemy,
+                CardType.Attack,
+                1,
+                new[]
+                {
+                    new EffectData(EffectKeys.Damage, 25),
+                    new EffectData(EffectKeys.Damage, 1)
+                })
+            {
+                Category = CardCategory.Execution
+            };
+            var session = Session(
+                new[] { Loadout("a", ownedByA) },
+                new[] { killThenCancel },
+                partyCards: new[] { Execution("party_0"), Execution("party_1") });
+            session.State.Party.Single().SurviveCharges = 0;
+            var ownedHandIndex = session.Hand
+                .Select((card, index) => new { card, index })
+                .First(entry => entry.card.OwnerId == "a")
+                .index;
+            Assert.IsTrue(session.PlayExecutionCard(ownedHandIndex));
+
+            var timeline = session.ResolveTurn();
+
+            var relevant = timeline.Where(e => e is CardCancelled || e is PartyMemberDied).ToArray();
+            Assert.AreEqual(3, relevant.Length);
+            Assert.AreEqual("kill_then_cancel", ((CardCancelled)relevant[0]).CardId);
+            Assert.AreEqual("a", ((PartyMemberDied)relevant[1]).MemberId);
+            Assert.AreEqual(CardCancellationReason.OwnerDied, ((CardCancelled)relevant[2]).Reason);
+            Assert.IsFalse(session.DrawPile.Any(card => card.OwnerId == "a"));
+            Assert.IsFalse(session.Hand.Any(card => card.OwnerId == "a"));
+            Assert.IsFalse(session.DiscardPile.Any(card => card.OwnerId == "a"));
+            Assert.IsTrue(
+                session.DrawPile.Concat(session.Hand).Concat(session.DiscardPile)
+                    .Any(card => card.IsPartyOwned));
+        }
+
+        [Test]
         public void Draw_count_uses_living_member_count()
         {
             var session = Session(

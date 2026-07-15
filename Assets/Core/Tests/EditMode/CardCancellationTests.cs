@@ -151,6 +151,58 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Kill_then_no_target_emits_cancellation_before_death_and_owner_cancellation()
+        {
+            var state = new CombatState();
+            state.Party.Clear();
+            var memberA = new PartyMember("a", "A", maxHp: 5, surviveCharges: 0);
+            state.Party.Add(memberA);
+            state.Enemies.Add(new Enemy("goblin", 100));
+
+            var killThenCancel = new CardDefinition(
+                "kill_then_cancel",
+                "kill_then_cancel",
+                Side.Enemy,
+                CardType.Attack,
+                1,
+                new[]
+                {
+                    new EffectData(EffectKeys.Damage, 5),
+                    new EffectData(EffectKeys.Damage, 1)
+                });
+            state.Zone.Add(new ExecutionCardInstance(killThenCancel) { InstanceId = 1, OwnerId = "goblin" });
+            state.Zone.Add(Card(
+                "a_pending",
+                Side.Player,
+                executionOrder: 2,
+                damage: 3,
+                ownerId: memberA.Id,
+                instanceId: 2));
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            var relevant = events
+                .Where(e => e is CardCancelled || e is PartyMemberDied)
+                .ToArray();
+            Assert.AreEqual(3, relevant.Length);
+            Assert.AreEqual(typeof(CardCancelled), relevant[0].GetType());
+            var current = (CardCancelled)relevant[0];
+            Assert.AreEqual("kill_then_cancel", current.CardId);
+            Assert.AreEqual(CardCancellationReason.NoValidTarget, current.Reason);
+
+            Assert.AreEqual(typeof(PartyMemberDied), relevant[1].GetType());
+            var died = (PartyMemberDied)relevant[1];
+            Assert.AreEqual(memberA.Id, died.MemberId);
+
+            Assert.AreEqual(typeof(CardCancelled), relevant[2].GetType());
+            var pending = (CardCancelled)relevant[2];
+            Assert.AreEqual("a_pending", pending.CardId);
+            Assert.AreEqual(CardCancellationReason.OwnerDied, pending.Reason);
+            Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "kill_then_cancel"));
+            Assert.AreEqual(1, events.OfType<CardCancelled>().Count(e => e.CardId == "kill_then_cancel"));
+        }
+
+        [Test]
         public void Duplicate_card_ids_are_distinguished_by_instance_id()
         {
             var state = new CombatState { PlayerHp = 30 };

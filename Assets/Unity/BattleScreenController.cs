@@ -55,9 +55,9 @@ namespace FateWeaver.Unity
         private int _armedInterventionHandIndex = -1;
         private int _armedAllyTargetHandIndex = -1;
         private int _firstSwapZoneIndex = -1;
-        private readonly List<UnitView> _partyUnits = new List<UnitView>();
-        private readonly List<UnitView> _enemyUnits = new List<UnitView>();
-        private readonly List<int> _enemyMaxHp = new List<int>();
+        private readonly Dictionary<string, UnitView> _partyUnits = new Dictionary<string, UnitView>();
+        private readonly Dictionary<string, UnitView> _enemyUnits = new Dictionary<string, UnitView>();
+        private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
         private readonly Dictionary<string, Sprite> _artById = new Dictionary<string, Sprite>();
 
         private void Start()
@@ -114,7 +114,7 @@ namespace FateWeaver.Unity
                 var asset = CharacterFor(member.Id);
                 view.Bind(member.Name, asset != null ? asset.Color : PartyOwnerColor);
                 view.BindTarget(member.Id, OnAllyUnitClicked);
-                _partyUnits.Add(view);
+                _partyUnits.Add(member.Id, view);
             }
 
             foreach (var enemy in _session.State.Enemies)
@@ -122,8 +122,8 @@ namespace FateWeaver.Unity
                 var view = Instantiate(_unitPrefab, _enemyUnitsRow);
                 view.Bind(PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id), EnemyUnitTint);
                 view.BindTarget(enemy.Id, null);
-                _enemyUnits.Add(view);
-                _enemyMaxHp.Add(enemy.Hp);
+                _enemyUnits.Add(enemy.Id, view);
+                _enemyMaxHp.Add(enemy.Id, enemy.Hp);
             }
         }
 
@@ -365,29 +365,40 @@ namespace FateWeaver.Unity
             _resetButton.interactable = _inputMode == InputMode.Normal;
             _turnButton.interactable = _inputMode == InputMode.Normal && !_session.IsComplete;
 
-            for (int i = 0; i < _partyUnits.Count && i < _session.State.Party.Count; i++)
+            foreach (var member in _session.State.Party)
             {
-                _partyUnits[i].SetTargetable(ally && _session.State.Party[i].IsAlive);
+                if (_partyUnits.TryGetValue(member.Id, out var view))
+                {
+                    view.SetTargetable(ally && member.IsAlive);
+                }
             }
         }
 
         private void RefreshUnits()
         {
-            int partyCount = Math.Min(_partyUnits.Count, _session.State.Party.Count);
+            int partyCount = _session.State.Party.Count;
             for (int i = 0; i < partyCount; i++)
             {
                 var member = _session.State.Party[i];
-                _partyUnits[i].SetHp(member.Hp, member.MaxHp);
-                _partyUnits[i].SetStatuses(member.Statuses.All);
-                _partyUnits[i].transform.SetSiblingIndex(partyCount - 1 - i);
+                if (_partyUnits.TryGetValue(member.Id, out var view))
+                {
+                    view.SetHp(member.Hp, member.MaxHp);
+                    view.SetStatuses(member.Statuses.All);
+                    view.transform.SetSiblingIndex(partyCount - 1 - i);
+                }
             }
 
-            int enemyCount = Math.Min(_enemyUnits.Count, _session.State.Enemies.Count);
+            int enemyCount = _session.State.Enemies.Count;
             for (int i = 0; i < enemyCount; i++)
             {
-                _enemyUnits[i].SetHp(_session.State.Enemies[i].Hp, _enemyMaxHp[i]);
-                _enemyUnits[i].SetStatuses(_session.State.Enemies[i].Statuses.All);
-                _enemyUnits[i].transform.SetSiblingIndex(i);
+                var enemy = _session.State.Enemies[i];
+                if (_enemyUnits.TryGetValue(enemy.Id, out var view)
+                    && _enemyMaxHp.TryGetValue(enemy.Id, out var maxHp))
+                {
+                    view.SetHp(enemy.Hp, maxHp);
+                    view.SetStatuses(enemy.Statuses.All);
+                    view.transform.SetSiblingIndex(i);
+                }
             }
         }
 

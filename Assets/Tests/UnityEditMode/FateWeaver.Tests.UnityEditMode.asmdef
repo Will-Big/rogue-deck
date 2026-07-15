@@ -5,6 +5,7 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "FateWeaver.Core",
+        "FateWeaver.Simulation",
         "FateWeaver.Unity"
     ],
     "includePlatforms": [

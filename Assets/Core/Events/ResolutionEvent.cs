@@ -34,8 +34,9 @@ namespace FateWeaver.Core.Events
         }
     }
 
-    /// <summary>A placed execution card whose effects did not run: the whole card is a no-op besides
-    /// this single event. Reason distinguishes why (see CardCancellationReason).</summary>
+    /// <summary>A placed execution card that did not complete. Effects applied before cancellation
+    /// persist, and their independent state-change events may follow this single cancellation event.
+    /// Reason distinguishes why (see CardCancellationReason).</summary>
     public sealed record CardCancelled(
         int InstanceId,
         string CardId,

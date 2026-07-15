@@ -9,8 +9,8 @@ namespace FateWeaver.Core.Combat
 {
     /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.
     /// Per card: intercept/pre-cancellation check, then effects (with a per-effect death-sweep snapshot),
-    /// then either CardResolved + pending survive/death events, or CardCancelled alone. See the class-level
-    /// design note in the Task 3 brief for the exact 6-step ordering this implements.</summary>
+    /// then either CardResolved or CardCancelled, followed by pending survive/death events from effects
+    /// that already applied. See the class-level design note in the Task 3 brief for the exact ordering.</summary>
     public sealed class TurnResolver
     {
         private readonly EffectRegistry _effects;
@@ -108,11 +108,11 @@ namespace FateWeaver.Core.Combat
             }
             else
             {
-                // Step 6: a card cancelled mid-effects (NoValidTarget) emits CardCancelled only; the
-                // survive/death events already collected from its earlier, already-applied effects are
-                // not announced. The state mutation itself (a member actually reaching 0 HP) still
-                // happened, so the OwnerDied sweep below still runs off the real newly-dead set.
+                // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
+                // CardCancelled. State-change events from earlier, already-applied effects follow in
+                // occurrence order, then the OwnerDied sweep below uses the same newly-dead set.
                 events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
+                events.AddRange(pendingDeathEvents);
             }
 
             // Step 5: mark OwnerDied on every not-yet-resolved card owned by a member who just died,
