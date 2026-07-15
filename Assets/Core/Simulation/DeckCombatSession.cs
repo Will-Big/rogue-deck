@@ -18,6 +18,7 @@ namespace FateWeaver.Simulation
         private readonly InterventionPlayResolver _interventionResolver;
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
+        private readonly PartyTuning _partyTuning;
         private readonly List<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
         private int _nextInstanceId;
@@ -44,6 +45,50 @@ namespace FateWeaver.Simulation
             int fateEnergyPerTurn = 3,
             int handSize = 5,
             int seed = 0)
+            : this(
+                deckCards,
+                playerHp,
+                enemies,
+                enemyPolicy,
+                fateEnergyPerTurn,
+                handSize,
+                seed,
+                null,
+                null)
+        {
+        }
+
+        public DeckCombatSession(
+            IReadOnlyList<PartyMemberLoadout> party,
+            IReadOnlyList<Enemy> enemies,
+            IEnemyTurnPolicy enemyPolicy,
+            PartyTuning tuning,
+            IReadOnlyList<CardDefinition> partyCards = null,
+            int fateEnergyPerTurn = 3,
+            int seed = 0)
+            : this(
+                BuildPartyDeck(party, partyCards, tuning),
+                0,
+                enemies,
+                enemyPolicy,
+                fateEnergyPerTurn,
+                0,
+                seed,
+                party,
+                tuning)
+        {
+        }
+
+        private DeckCombatSession(
+            IReadOnlyList<OwnedCard> deckCards,
+            int playerHp,
+            IReadOnlyList<Enemy> enemies,
+            IEnemyTurnPolicy enemyPolicy,
+            int fateEnergyPerTurn,
+            int handSize,
+            int seed,
+            IReadOnlyList<PartyMemberLoadout> party,
+            PartyTuning partyTuning)
         {
             _state = new CombatState
             {
@@ -51,6 +96,19 @@ namespace FateWeaver.Simulation
                 FateEnergyPerTurn = fateEnergyPerTurn,
                 RngSeed = seed
             };
+            if (party != null)
+            {
+                _state.Party.Clear();
+                foreach (var loadout in party)
+                {
+                    _state.Party.Add(new PartyMember(
+                        loadout.Id,
+                        loadout.Name,
+                        loadout.MaxHp,
+                        partyTuning.SurviveChargesPerCombat));
+                }
+            }
+
             foreach (var enemy in enemies)
             {
                 _state.Enemies.Add(enemy);
@@ -60,6 +118,7 @@ namespace FateWeaver.Simulation
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
+            _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
             _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
             _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
@@ -86,7 +145,7 @@ namespace FateWeaver.Simulation
         public IReadOnlyList<OwnedCard> AllDeckCards => _allCards;
 
         /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
-        public bool PlayExecutionCard(int handIndex)
+        public bool PlayExecutionCard(int handIndex, string targetId = null)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -100,13 +159,33 @@ namespace FateWeaver.Simulation
                 return false;
             }
 
+            if (PartyTargetRules.RequiresExplicitAllyTarget(def)
+                && !PartyTargetRules.IsValidExplicitAllyTarget(_state, targetId))
+            {
+                return false;
+            }
+
             _state.FateEnergy -= def.EnergyCost;
             var placed = new ExecutionCardInstance(def)
             {
                 InstanceId = _nextInstanceId++,
-                OwnerId = card.OwnerId
+                OwnerId = card.OwnerId,
+                TargetId = targetId
             };
-            placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(placed.ExecutionOrder, _state.PlayerStatuses, _statuses);
+            StatusBag ownerStatuses = null;
+            foreach (var member in _state.Party)
+            {
+                if (member.IsAlive && member.Id == card.OwnerId)
+                {
+                    ownerStatuses = member.Statuses;
+                    break;
+                }
+            }
+
+            placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(
+                placed.ExecutionOrder,
+                ownerStatuses,
+                _statuses);
             _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
             return true;
@@ -163,6 +242,15 @@ namespace FateWeaver.Simulation
             }
 
             _lastTimeline = _resolver.Resolve(_state, TurnIndex);
+            var removedOwners = new HashSet<string>();
+            foreach (var resolutionEvent in _lastTimeline)
+            {
+                if (resolutionEvent is PartyMemberDied died && removedOwners.Add(died.MemberId))
+                {
+                    _deck.RemoveOwnedBy(died.MemberId);
+                }
+            }
+
             CurrentTurnResolved = true;
             Outcome = OutcomeOf(_lastTimeline);
             return _lastTimeline;
@@ -194,7 +282,8 @@ namespace FateWeaver.Simulation
             {
                 var inst = new ExecutionCardInstance(enemyCard)
                 {
-                    InstanceId = _nextInstanceId++
+                    InstanceId = _nextInstanceId++,
+                    OwnerId = _state.Enemies.Count > 0 ? _state.Enemies[0].Id : null
                 };
                 inst.IsLocked = enemyCard.StartsLocked;
                 if (!inst.IsLocked)
@@ -206,7 +295,117 @@ namespace FateWeaver.Simulation
             }
 
             _state.FateEnergy = _state.FateEnergyPerTurn;
-            _deck.Draw(_handSize);
+            var drawCount = _partyTuning == null
+                ? _handSize
+                : _partyTuning.DrawFor(LivingPartyCount());
+            _deck.Draw(drawCount);
+        }
+
+        private int LivingPartyCount()
+        {
+            var count = 0;
+            foreach (var member in _state.Party)
+            {
+                if (member.IsAlive)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static IReadOnlyList<OwnedCard> BuildPartyDeck(
+            IReadOnlyList<PartyMemberLoadout> party,
+            IReadOnlyList<CardDefinition> partyCards,
+            PartyTuning tuning)
+        {
+            ValidateParty(party, partyCards, tuning);
+
+            var cards = new List<OwnedCard>();
+            foreach (var loadout in party)
+            {
+                foreach (var card in loadout.Cards)
+                {
+                    cards.Add(new OwnedCard(card, loadout.Id));
+                }
+            }
+
+            if (partyCards != null)
+            {
+                foreach (var card in partyCards)
+                {
+                    cards.Add(new OwnedCard(card, null));
+                }
+            }
+
+            return cards;
+        }
+
+        private static void ValidateParty(
+            IReadOnlyList<PartyMemberLoadout> party,
+            IReadOnlyList<CardDefinition> partyCards,
+            PartyTuning tuning)
+        {
+            if (tuning == null
+                || tuning.DefaultMemberMaxHp <= 0
+                || tuning.SurviveChargesPerCombat < 0)
+            {
+                throw new System.ArgumentException("Party tuning is invalid.");
+            }
+
+            if (party == null
+                || party.Count < tuning.MinPartySize
+                || party.Count > tuning.MaxPartySize)
+            {
+                throw new System.ArgumentException("Party size is outside the configured bounds.");
+            }
+
+            var ids = new HashSet<string>();
+            foreach (var loadout in party)
+            {
+                if (loadout == null
+                    || string.IsNullOrEmpty(loadout.Id)
+                    || !ids.Add(loadout.Id)
+                    || loadout.MaxHp <= 0
+                    || loadout.Cards == null)
+                {
+                    throw new System.ArgumentException("Party loadout is invalid.");
+                }
+
+                foreach (var card in loadout.Cards)
+                {
+                    if (card == null)
+                    {
+                        throw new System.ArgumentException("Party loadout contains a null card definition.");
+                    }
+                }
+            }
+
+            if (partyCards != null)
+            {
+                foreach (var card in partyCards)
+                {
+                    if (card == null)
+                    {
+                        throw new System.ArgumentException("Party-owned cards contain a null definition.");
+                    }
+                }
+            }
+
+            if (tuning.DrawByLivingCount == null)
+            {
+                throw new System.ArgumentException("Draw tuning is required.");
+            }
+
+            for (int livingCount = 1; livingCount <= party.Count; livingCount++)
+            {
+                if (!tuning.DrawByLivingCount.TryGetValue(livingCount, out var drawCount)
+                    || drawCount <= 0)
+                {
+                    throw new System.ArgumentException("Draw tuning must cover every possible living count.");
+                }
+            }
         }
 
         private static IReadOnlyList<OwnedCard> WithLegacyOwner(IReadOnlyList<CardDefinition> cards)
