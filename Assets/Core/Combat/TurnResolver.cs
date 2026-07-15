@@ -92,7 +92,11 @@ namespace FateWeaver.Core.Combat
 
         private static void EndOfTurnMaintenance(CombatState state)
         {
-            state.PlayerStatuses.EndOfTurn();
+            foreach (var member in state.Party)
+            {
+                member.Statuses.EndOfTurn();
+            }
+
             foreach (var enemy in state.Enemies)
             {
                 enemy.Statuses.EndOfTurn();
@@ -131,7 +135,7 @@ namespace FateWeaver.Core.Combat
 
         private static Outcome ComputeOutcome(CombatState state)
         {
-            if (state.PlayerHp <= 0) return Outcome.Lose;
+            if (state.Party.All(m => !m.IsAlive)) return Outcome.Lose;
             if (state.Enemies.All(e => e.Hp <= 0)) return Outcome.Win;
             return Outcome.Ongoing;
         }
