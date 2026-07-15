@@ -58,6 +58,20 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Previous_adjacent_condition_names_frozen_placement_order()
+        {
+            var card = Execution(EffectData.Conditional(
+                EffectKeys.Damage,
+                1,
+                new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Attack),
+                2));
+
+            Assert.AreEqual(
+                "피해 1. 앞에 배치된 카드가 플레이어 공격이면 피해 2.",
+                DescriptionComposer.Describe(card, Kr));
+        }
+
+        [Test]
         public void No_preceding_condition_names_execution_history()
         {
             var card = Execution(EffectData.Conditional(

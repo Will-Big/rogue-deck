@@ -106,11 +106,12 @@ namespace FateWeaver.Simulation.Descriptions
         // Previous is authored as PreviousExecutedCardIs instead, see PreviousExecutedStem below).
         private static string AdjacentStem(AdjacentCardIs a)
         {
-            var position = a.Direction == AdjacentDirection.Previous ? "바로 앞이 " : "바로 뒤가 ";
             var subject = a.Type.HasValue
                 ? SideName(a.Side) + " " + CardTypeName(a.Type.Value)
                 : SideName(a.Side) + " 카드";
-            return position + subject;
+            return a.Direction == AdjacentDirection.Previous
+                ? "앞에 배치된 카드가 " + subject
+                : "바로 뒤가 " + subject;
         }
 
         // "직전에 실행한 카드가 적 공격" / "직전에 실행한 카드가 플레이어 카드": the nearest card that actually
@@ -123,7 +124,7 @@ namespace FateWeaver.Simulation.Descriptions
             return "직전에 실행한 카드가 " + subject;
         }
 
-        // Join child stems with "이고 ", e.g. "바로 앞이 플레이어 카드이고 3번째 안".
+        // Join child stems with "이고 ", e.g. "앞에 배치된 카드가 플레이어 카드이고 3번째 안".
         private static string JoinAll(IReadOnlyList<Condition> children)
         {
             var stems = new string[children.Count];
