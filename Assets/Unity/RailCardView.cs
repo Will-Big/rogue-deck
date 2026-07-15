@@ -32,6 +32,7 @@ namespace FateWeaver.Unity
         private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
 
         private Action<bool> _onHover;
+        private bool _inputEnabled = true;
 
         public void Bind(CardPresentation data, Action onClick, Action<bool> onHover)
         {
@@ -70,7 +71,11 @@ namespace FateWeaver.Unity
             SetSelection(CardView.SelectionKind.None);
         }
 
-        public void SetInteractable(bool value) => _button.interactable = value;
+        public void SetInteractable(bool value)
+        {
+            _inputEnabled = value;
+            _button.interactable = value;
+        }
 
         public void SetSelection(CardView.SelectionKind kind)
         {
@@ -80,9 +85,21 @@ namespace FateWeaver.Unity
                 OutlineNone;
         }
 
-        public void OnPointerEnter(PointerEventData eventData) => _onHover?.Invoke(true);
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (_inputEnabled)
+            {
+                _onHover?.Invoke(true);
+            }
+        }
 
-        public void OnPointerExit(PointerEventData eventData) => _onHover?.Invoke(false);
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (_inputEnabled)
+            {
+                _onHover?.Invoke(false);
+            }
+        }
 
         /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
         public static RailCardView EditorCreate(RectTransform parent, Vector2 size)

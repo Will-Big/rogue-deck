@@ -10,6 +10,7 @@ namespace FateWeaver.Unity
     /// overlay layer since mini cards carry no rules text (spec §3).</summary>
     public sealed class ExecutionRailView : MonoBehaviour
     {
+        [SerializeField] private ScrollRect _scrollRect;
         [SerializeField] private RectTransform _content;
         [SerializeField] private CardView _previewPrefab;
         [SerializeField] private RailCardView _cardPrefab;
@@ -30,7 +31,7 @@ namespace FateWeaver.Unity
             _previewLayer = previewLayer;
 
             var rect = (RectTransform)transform;
-            var scroll = gameObject.AddComponent<ScrollRect>();
+            _scrollRect = gameObject.AddComponent<ScrollRect>();
 
             var viewport = BattleUiKit.Rect(rect, "Viewport");
             BattleUiKit.Stretch(viewport);
@@ -55,12 +56,12 @@ namespace FateWeaver.Unity
             var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            scroll.viewport = viewport;
-            scroll.content = content;
-            scroll.horizontal = true;
-            scroll.vertical = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 30f;
+            _scrollRect.viewport = viewport;
+            _scrollRect.content = content;
+            _scrollRect.horizontal = true;
+            _scrollRect.vertical = false;
+            _scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            _scrollRect.scrollSensitivity = 30f;
 
             _content = content;
         }
@@ -95,6 +96,16 @@ namespace FateWeaver.Unity
 
         public void SetInputEnabled(bool value)
         {
+            if (_scrollRect != null)
+            {
+                _scrollRect.enabled = value;
+            }
+
+            if (!value)
+            {
+                HidePreview();
+            }
+
             foreach (var view in _views)
             {
                 view.SetInteractable(value);
