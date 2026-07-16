@@ -239,7 +239,7 @@ public void RejectCompletion(IReadOnlyCollection<SelectionTargetRef> validTarget
 public void Cancel();
 ```
 
-Rules: zero targets require `None`; one target enters `PickSingleTarget`; two or more enter `PickMultipleTargets`; mismatched kinds and duplicates do nothing; single clicks return a result immediately; multiple clicks require `Confirm`; results copy `_picked` into a new array; only `CommitSucceeded` returns to idle; rejection retains only valid picks and restores the appropriate picking phase.
+Rules: zero targets require `None`; one target enters `PickSingleTarget`; two or more enter `PickMultipleTargets`; mismatched kinds and duplicates do nothing; single clicks return a result immediately; multiple clicks require `Confirm`; results copy `_picked` into a new array; only `CommitSucceeded` returns to idle. A rejected single-target completion clears its pending pick so the player can click again. A rejected multi-target completion retains only valid picks and restores `PickMultipleTargets` unless the requirement is still satisfied.
 
 - [ ] **Step 5: Run focused and full headless tests**
 
