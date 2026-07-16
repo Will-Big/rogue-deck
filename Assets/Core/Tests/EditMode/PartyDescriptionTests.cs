@@ -9,7 +9,8 @@ namespace FateWeaver.Tests
 {
     public class PartyDescriptionTests
     {
-        private static readonly IDescriptionVocabulary Kr = KoreanDescriptionVocabulary.Instance;
+        private static readonly KoreanDescriptionCatalog Korean =
+            KoreanDescriptionCatalog.CreateDefault();
 
         private static CardDefinition Execution(params EffectData[] effects) =>
             new CardDefinition("party_test", "파티 테스트", Side.Player, CardType.Skill, 0, effects)
@@ -25,7 +26,7 @@ namespace FateWeaver.Tests
         {
             var card = Execution(new EffectData(EffectKeys.Damage, 4) { TargetSelector = selector });
 
-            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Kr));
+            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
 
         [TestCase(StatusApplyTarget.PartyMember, "선택한 아군에게 방어 4.")]
@@ -40,7 +41,7 @@ namespace FateWeaver.Tests
                 target,
                 4));
 
-            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Kr));
+            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 "피해 1. 직전에 실행한 카드가 적 공격이면 피해 2.",
-                DescriptionComposer.Describe(card, Kr));
+                DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -68,7 +69,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 "피해 1. 앞에 배치된 카드가 플레이어 공격이면 피해 2.",
-                DescriptionComposer.Describe(card, Kr));
+                DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -82,7 +83,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 "피해 1. 이전에 실행한 플레이어 카드가 없으면 피해 2.",
-                DescriptionComposer.Describe(card, Kr));
+                DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -96,7 +97,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 "피해 1. 뒤에 배치된 적 카드가 없으면 피해 2.",
-                DescriptionComposer.Describe(card, Kr));
+                DescriptionComposer.Describe(card, Korean));
         }
     }
 }
