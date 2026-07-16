@@ -163,10 +163,12 @@ namespace FateWeaver.Unity.Editor
             dimClickCatcher.transition = Selectable.Transition.None;
             dimLayer.gameObject.SetActive(false);
 
-            // Z-order: the dim covers everything except the rail (the selection candidates) and the
-            // confirmation/message layers; popups and the targeting arrow stay on top.
+            // Z-order: each candidate view sits above the global dim and owns its local noncandidate
+            // dim. Confirmation, guidance, popups, and the targeting arrow stay on top.
             dimLayer.SetAsLastSibling();
+            stage.SetAsLastSibling();
             railRect.SetAsLastSibling();
+            handRect.SetAsLastSibling();
             ((RectTransform)confirmButton.transform).SetAsLastSibling();
             ((RectTransform)message.transform).SetAsLastSibling();
             overlay.SetAsLastSibling();

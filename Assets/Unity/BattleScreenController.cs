@@ -16,12 +16,6 @@ namespace FateWeaver.Unity
     /// authored assets into a session and renders its snapshots.</summary>
     public sealed class BattleScreenController : MonoBehaviour
     {
-        private enum InputMode
-        {
-            Normal,
-            AllyTargeting
-        }
-
         [Header("Data")]
         [SerializeField] private CharacterAsset[] _party = Array.Empty<CharacterAsset>();
         [Tooltip("Enemy cards' art source (rules live in the goblin deck).")]
@@ -51,8 +45,6 @@ namespace FateWeaver.Unity
         private static readonly Color PartyOwnerColor = new Color(0.55f, 0.48f, 0.75f, 1f);
 
         private DeckCombatSession _session;
-        private InputMode _inputMode;
-        private int _armedAllyTargetHandIndex = -1;
         private readonly Dictionary<string, UnitView> _partyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, UnitView> _enemyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
@@ -64,7 +56,7 @@ namespace FateWeaver.Unity
             _resetButton.onClick.AddListener(StartSession);
             _emptyClickCatcher.onClick.AddListener(OnEmptyClicked);
             _dimClickCatcher.onClick.AddListener(OnEmptyClicked);
-            _selection.Initialize(ApplyCommand);
+            _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
             _rail.SetRailClicked(_selection.OnRailAreaClicked);
             StartSession();
         }
@@ -72,7 +64,6 @@ namespace FateWeaver.Unity
         private void StartSession()
         {
             _selection.CancelSelection();
-            ClearAllyTargeting();
             if (_unitPrefab == null || _party == null || _party.Length == 0 || _party.Any(member => member == null || member.Deck == null))
             {
                 SetMessage("파티 CharacterAsset, 덱 또는 UnitView 프리팹이 연결되지 않았습니다.");
@@ -104,6 +95,7 @@ namespace FateWeaver.Unity
 
         private void SpawnUnits()
         {
+            _selection.ClearUnitTargets();
             foreach (Transform child in _playerUnitsRow) Destroy(child.gameObject);
             foreach (Transform child in _enemyUnitsRow) Destroy(child.gameObject);
             _partyUnits.Clear();
@@ -115,7 +107,10 @@ namespace FateWeaver.Unity
                 var view = Instantiate(_unitPrefab, _playerUnitsRow);
                 var asset = CharacterFor(member.Id);
                 view.Bind(member.Name, asset != null ? asset.Color : PartyOwnerColor);
-                view.BindTarget(member.Id, OnAllyUnitClicked);
+                var target = SelectionTargetRef.PartyMember(member.Id);
+                view.BindTarget(member.Id, id => _selection.OnTargetClicked(
+                    SelectionTargetRef.PartyMember(id), null));
+                _selection.RegisterUnitTarget(target, view);
                 _partyUnits.Add(member.Id, view);
             }
 
@@ -123,7 +118,10 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_unitPrefab, _enemyUnitsRow);
                 view.Bind(PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id), EnemyUnitTint);
-                view.BindTarget(enemy.Id, null);
+                var target = SelectionTargetRef.Enemy(enemy.Id);
+                view.BindTarget(enemy.Id, id => _selection.OnTargetClicked(
+                    SelectionTargetRef.Enemy(id), null));
+                _selection.RegisterUnitTarget(target, view);
                 _enemyUnits.Add(enemy.Id, view);
                 _enemyMaxHp.Add(enemy.Id, enemy.Hp);
             }
@@ -142,8 +140,7 @@ namespace FateWeaver.Unity
 
         private void OnHandClicked(int handIndex)
         {
-            if (_session == null || _inputMode != InputMode.Normal
-                || handIndex < 0 || handIndex >= _session.Hand.Count)
+            if (_session == null || handIndex < 0 || handIndex >= _session.Hand.Count)
             {
                 return;
             }
@@ -162,53 +159,43 @@ namespace FateWeaver.Unity
                 return;
             }
 
+            var name = PlaytestKoreanText.CardName(def.Id, def.Name);
             if (def.Category == CardCategory.Execution && PartyTargetRules.RequiresExplicitAllyTarget(def))
             {
-                _selection.CancelSelection();
-                _inputMode = InputMode.AllyTargeting;
-                _armedAllyTargetHandIndex = handIndex;
-                _hand.SetHoverSuppressed(true);
-                _hand.SetHeld(handIndex, true);
-                SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name)
-                    + " — 살아 있는 아군을 선택하세요.");
-                RefreshSelections();
-                return;
+                var targets = CurrentValidTargets(SelectionTargetKind.PartyMember);
+                _selection.BeginTargetSelection(
+                    handIndex, SelectionTargetKind.PartyMember, 1, targets);
+                SetMessage(name + " — 살아 있는 아군을 선택하세요.");
             }
-
-            int requiredTargets = CardTargetRules.RequiredRailTargets(def);
-            if (_session.CurrentOrder.Count < requiredTargets)
+            else
             {
-                SetMessage("대상으로 삼을 카드가 레일에 부족합니다.");
-                return;
+                int requiredTargets = CardTargetRules.RequiredRailTargets(def);
+                if (requiredTargets == 0)
+                {
+                    _selection.BeginPlacement(handIndex, PresentationFor(card));
+                    SetMessage(name + " — 실행 순서를 클릭해 배치하세요.");
+                }
+                else
+                {
+                    var targets = CurrentValidTargets(SelectionTargetKind.ExecutionCard);
+                    if (targets.Count < requiredTargets)
+                    {
+                        SetMessage("대상으로 삼을 카드가 실행 순서에 부족합니다.");
+                        return;
+                    }
+
+                    _selection.BeginTargetSelection(
+                        handIndex, SelectionTargetKind.ExecutionCard, requiredTargets, targets);
+                    SetMessage(name + " — 대상 " + requiredTargets + "개를 선택하세요.");
+                }
             }
 
-            _selection.BeginSelection(handIndex, requiredTargets, PresentationFor(card));
-            var name = PlaytestKoreanText.CardName(def.Id, def.Name);
-            SetMessage(requiredTargets == 0
-                ? name + " — 레일을 클릭해 배치하세요."
-                : requiredTargets == 1
-                    ? name + " — 대상을 클릭하세요."
-                    : name + " — 대상 " + requiredTargets + "개를 클릭하세요.");
             RefreshSelections();
-        }
-
-        private void OnAllyUnitClicked(string memberId)
-        {
-            if (_session == null || _inputMode != InputMode.AllyTargeting || _armedAllyTargetHandIndex < 0)
-            {
-                return;
-            }
-
-            bool targetIsAlive = PartyTargetRules.IsValidExplicitAllyTarget(_session.State, memberId);
-            bool played = targetIsAlive && _session.PlayExecutionCard(_armedAllyTargetHandIndex, memberId);
-            SetMessage(played ? "아군 대상 카드 배치." : "대상이 쓰러졌거나 카드를 낼 수 없습니다.");
-            ClearAllyTargeting();
-            RefreshAll();
         }
 
         private void OnZoneClicked(int zoneIndex)
         {
-            if (_session == null || _inputMode == InputMode.AllyTargeting || _session.CurrentTurnResolved)
+            if (_session == null || _session.CurrentTurnResolved)
             {
                 return;
             }
@@ -219,7 +206,8 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            _selection.OnZoneClicked(zoneIndex, PresentationFor(order[zoneIndex]));
+            _selection.OnTargetClicked(
+                SelectionTargetRef.ExecutionCard(zoneIndex), PresentationFor(order[zoneIndex]));
         }
 
         private void OnEmptyClicked()
@@ -229,53 +217,66 @@ namespace FateWeaver.Unity
                 _selection.CancelSelection();
                 SetMessage("선택 취소.");
                 RefreshSelections();
-                return;
-            }
-
-            if (_inputMode == InputMode.AllyTargeting)
-            {
-                ClearAllyTargeting();
-                SetMessage("선택 취소.");
-                RefreshSelections();
             }
         }
 
-        private void ApplyCommand(SelectionCommand command)
+        private bool TryApplySelection(SelectionResult result)
         {
-            if (_session == null || command.HandIndex < 0 || command.HandIndex >= _session.Hand.Count)
+            if (_session == null || result.HandIndex < 0 || result.HandIndex >= _session.Hand.Count)
             {
                 SetMessage("선택한 카드를 더 이상 사용할 수 없습니다.");
-                RefreshAll();
-                return;
+                return false;
             }
 
-            if (command.PlayExecution)
+            var def = _session.Hand[result.HandIndex].Def;
+            if (def.Category == CardCategory.Execution)
             {
-                var def = _session.Hand[command.HandIndex].Def;
-                SetMessage(_session.PlayExecutionCard(command.HandIndex)
-                    ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
-                    : "운명력이 부족하거나 낼 수 없습니다.");
-            }
-            else if (command.PlayIntervention)
-            {
-                bool played = _session.PlayInterventionCard(
-                    command.HandIndex, command.TargetA, command.TargetB);
+                if (result.Targets.Count > 1
+                    || (result.Targets.Count == 1
+                        && result.Targets[0].Kind != SelectionTargetKind.PartyMember
+                        && result.Targets[0].Kind != SelectionTargetKind.Enemy))
+                {
+                    SetMessage("대상이 쓰러졌거나 카드를 낼 수 없습니다.");
+                    return false;
+                }
+
+                string targetId = result.Targets.Count == 0
+                    ? null
+                    : result.Targets[0].EntityId;
+                bool played = _session.PlayExecutionCard(result.HandIndex, targetId);
                 SetMessage(played
-                    ? "개입 카드 적용."
-                    : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+                    ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
+                    : "대상이 쓰러졌거나 카드를 낼 수 없습니다.");
+                return played;
             }
 
-            RefreshAll();
+            int requiredTargets = CardTargetRules.RequiredRailTargets(def);
+            if (def.Category != CardCategory.Intervention
+                || requiredTargets < 1
+                || requiredTargets > 2
+                || result.Targets.Count != requiredTargets
+                || result.Targets.Any(target => target.Kind != SelectionTargetKind.ExecutionCard))
+            {
+                SetMessage("대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+                return false;
+            }
+
+            int secondaryTarget = requiredTargets == 2 ? result.Targets[1].Index : -1;
+            bool interventionPlayed = _session.PlayInterventionCard(
+                result.HandIndex, result.Targets[0].Index, secondaryTarget);
+            SetMessage(interventionPlayed
+                ? "개입 카드 적용."
+                : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+            return interventionPlayed;
         }
 
         private void OnTurnButton()
         {
-            if (_session == null || _session.IsComplete || _inputMode != InputMode.Normal)
+            if (_session == null || _session.IsComplete || _selection.SelectionActive)
             {
                 return;
             }
 
-            _selection.CancelSelection();
             if (!_session.CurrentTurnResolved)
             {
                 _session.ResolveTurn();
@@ -289,14 +290,6 @@ namespace FateWeaver.Unity
             }
 
             RefreshAll();
-        }
-
-        private void ClearAllyTargeting()
-        {
-            _hand.SetHeld(_armedAllyTargetHandIndex, false);
-            _hand.SetHoverSuppressed(false);
-            _inputMode = InputMode.Normal;
-            _armedAllyTargetHandIndex = -1;
         }
 
         private void BuildArtLookup()
@@ -375,6 +368,34 @@ namespace FateWeaver.Unity
             return null;
         }
 
+        private IReadOnlyList<SelectionTargetRef> CurrentValidTargets(SelectionTargetKind kind)
+        {
+            if (_session == null)
+            {
+                return Array.Empty<SelectionTargetRef>();
+            }
+
+            switch (kind)
+            {
+                case SelectionTargetKind.PartyMember:
+                    return _session.State.Party
+                        .Where(member => member.IsAlive)
+                        .Select(member => SelectionTargetRef.PartyMember(member.Id))
+                        .ToList();
+                case SelectionTargetKind.Enemy:
+                    return _session.State.Enemies
+                        .Where(enemy => enemy.Hp > 0)
+                        .Select(enemy => SelectionTargetRef.Enemy(enemy.Id))
+                        .ToList();
+                case SelectionTargetKind.ExecutionCard:
+                    return Enumerable.Range(0, _session.CurrentOrder.Count)
+                        .Select(SelectionTargetRef.ExecutionCard)
+                        .ToList();
+                default:
+                    return Array.Empty<SelectionTargetRef>();
+            }
+        }
+
         private void RefreshAll()
         {
             _hand.SetCards(_session.Hand.Select(PresentationFor).ToList(), OnHandClicked);
@@ -386,24 +407,12 @@ namespace FateWeaver.Unity
 
         private void RefreshSelections()
         {
-            bool ally = _inputMode == InputMode.AllyTargeting;
-            bool cardSelection = _selection.SelectionActive;
-            _hand.SetSelection(ally ? _armedAllyTargetHandIndex : -1, CardView.SelectionKind.Primary);
-            _hand.SetInputEnabled(!ally);
-            _rail.SetInputEnabled(!ally);
-            _drawPile.SetInputEnabled(!ally && !cardSelection);
-            _discardPile.SetInputEnabled(!ally && !cardSelection);
-            _fullDeck.SetInputEnabled(!ally && !cardSelection);
-            _resetButton.interactable = !ally && !cardSelection;
-            _turnButton.interactable = !ally && !_session.IsComplete;
-
-            foreach (var member in _session.State.Party)
-            {
-                if (_partyUnits.TryGetValue(member.Id, out var view))
-                {
-                    view.SetTargetable(ally && member.IsAlive);
-                }
-            }
+            bool selectionActive = _selection.SelectionActive;
+            _drawPile.SetInputEnabled(!selectionActive);
+            _discardPile.SetInputEnabled(!selectionActive);
+            _fullDeck.SetInputEnabled(!selectionActive);
+            _resetButton.interactable = !selectionActive;
+            _turnButton.interactable = !selectionActive && !_session.IsComplete;
         }
 
         private void RefreshUnits()
@@ -441,7 +450,7 @@ namespace FateWeaver.Unity
             _discardPile.SetCount(_session.DiscardCount);
             _fullDeck.SetCount(_session.AllDeckCards.Count);
             _turnButtonLabel.text = _session.CurrentTurnResolved ? "다음 턴" : "턴 실행";
-            _turnButton.interactable = _inputMode == InputMode.Normal && !_session.IsComplete;
+            _turnButton.interactable = !_selection.SelectionActive && !_session.IsComplete;
         }
 
         private void SetMessage(string message)

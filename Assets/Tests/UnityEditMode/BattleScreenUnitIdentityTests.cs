@@ -7,6 +7,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
+using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace FateWeaver.Tests.UnityEditMode
         private RectTransform _enemyRow;
         private UnitView _unitPrefab;
         private BattleScreenController _controller;
+        private CardSelectionController _selection;
+        private Button _confirmButton;
         private DeckCombatSession _session;
 
         [SetUp]
@@ -80,7 +83,7 @@ namespace FateWeaver.Tests.UnityEditMode
             memberA.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 1);
             memberB.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 2);
             memberC.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 3);
-            SetAllyTargetingMode();
+            BeginPartyTargeting();
             Invoke(_controller, "RefreshUnits");
             Invoke(_controller, "RefreshSelections");
             var before = PartyViews().ToDictionary(MemberId, Snapshot);
@@ -123,6 +126,30 @@ namespace FateWeaver.Tests.UnityEditMode
                 _session.State.Enemies.Select(enemy => enemy.Id).ToArray());
         }
 
+        [Test]
+        public void Party_unit_button_completes_common_single_target_selection_without_confirm()
+        {
+            var completed = new List<SelectionResult>();
+            _selection.Initialize(
+                result =>
+                {
+                    completed.Add(result);
+                    return true;
+                },
+                _ => Array.Empty<SelectionTargetRef>(),
+                () => { });
+            var target = SelectionTargetRef.PartyMember("b");
+
+            _selection.BeginTargetSelection(
+                0, SelectionTargetKind.PartyMember, 1, new[] { target });
+            GetField<Button>(ViewById(_partyRow, "b"), "_targetButton").onClick.Invoke();
+
+            Assert.AreEqual(1, completed.Count);
+            Assert.IsTrue(completed[0].IsComplete);
+            Assert.AreEqual("b", completed[0].Targets.Single().EntityId);
+            Assert.IsFalse(_confirmButton.gameObject.activeSelf);
+        }
+
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
             => new PartyMemberLoadout(id, name, maxHp, Array.Empty<CardDefinition>());
 
@@ -138,17 +165,29 @@ namespace FateWeaver.Tests.UnityEditMode
             var inactive = new GameObject("InactiveSelectionDependencies", typeof(RectTransform));
             inactive.transform.SetParent(_root.transform, false);
             inactive.SetActive(false);
-            SetField(_controller, "_hand", inactive.AddComponent<HandFanView>());
-            SetField(_controller, "_rail", inactive.AddComponent<ExecutionRailView>());
+            var hand = inactive.AddComponent<HandFanView>();
+            var rail = inactive.AddComponent<ExecutionRailView>();
+            SetField(_controller, "_hand", hand);
+            SetField(_controller, "_rail", rail);
             SetField(_controller, "_drawPile", Pile(inactive.transform, "Draw"));
             SetField(_controller, "_discardPile", Pile(inactive.transform, "Discard"));
             SetField(_controller, "_fullDeck", Pile(inactive.transform, "Full"));
             SetField(_controller, "_resetButton", Button(inactive.transform, "Reset"));
             SetField(_controller, "_turnButton", Button(inactive.transform, "Turn"));
-            SetField(_controller, "_cancelButton", Button(inactive.transform, "Cancel"));
             var dim = new GameObject("Dim");
             dim.transform.SetParent(inactive.transform, false);
-            SetField(_controller, "_dimLayer", dim);
+            _confirmButton = Button(inactive.transform, "Confirm");
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            overlay.transform.SetParent(inactive.transform, false);
+            var arrow = TargetingArrowView.EditorCreate((RectTransform)overlay.transform);
+            _selection = inactive.AddComponent<CardSelectionController>();
+            SetField(_selection, "_hand", hand);
+            SetField(_selection, "_rail", rail);
+            SetField(_selection, "_dimLayer", dim);
+            SetField(_selection, "_confirmButton", _confirmButton);
+            SetField(_selection, "_overlay", (RectTransform)overlay.transform);
+            SetField(_selection, "_arrow", arrow);
+            SetField(_controller, "_selection", _selection);
         }
 
         private static PileView Pile(Transform parent, string name)
@@ -171,10 +210,16 @@ namespace FateWeaver.Tests.UnityEditMode
             return button;
         }
 
-        private void SetAllyTargetingMode()
+        private void BeginPartyTargeting()
         {
-            var field = Field(typeof(BattleScreenController), "_inputMode");
-            field.SetValue(_controller, Enum.ToObject(field.FieldType, 2));
+            _selection.BeginTargetSelection(
+                0,
+                SelectionTargetKind.PartyMember,
+                1,
+                _session.State.Party
+                    .Where(member => member.IsAlive)
+                    .Select(member => SelectionTargetRef.PartyMember(member.Id))
+                    .ToList());
         }
 
         private void ApplyMove(Side side, string ownerId, int distance)
