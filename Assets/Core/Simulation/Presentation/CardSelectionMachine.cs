@@ -91,10 +91,24 @@ namespace FateWeaver.Simulation.Presentation
 
         public SelectionResult ClickTarget(SelectionTargetRef target)
         {
-            if ((Phase != SelectionPhase.PickSingleTarget
-                    && Phase != SelectionPhase.PickMultipleTargets)
-                || target.Kind != _targetKind
-                || _picked.Contains(target)
+            bool isSingleTarget = Phase == SelectionPhase.PickSingleTarget;
+            bool isMultipleTarget = Phase == SelectionPhase.PickMultipleTargets
+                || Phase == SelectionPhase.ReadyToConfirm;
+            if ((!isSingleTarget && !isMultipleTarget) || target.Kind != _targetKind)
+            {
+                return SelectionResult.None;
+            }
+
+            int pickedIndex = _picked.IndexOf(target);
+            if (isMultipleTarget && pickedIndex >= 0)
+            {
+                _picked.RemoveAt(pickedIndex);
+                Phase = SelectionPhase.PickMultipleTargets;
+                return SelectionResult.None;
+            }
+
+            if (Phase == SelectionPhase.ReadyToConfirm
+                || pickedIndex >= 0
                 || _picked.Count >= RequiredTargets)
             {
                 return SelectionResult.None;

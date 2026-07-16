@@ -102,7 +102,6 @@ namespace FateWeaver.Tests
             machine.SelectCard(4, SelectionTargetKind.ExecutionCard, 2);
 
             Assert.IsFalse(machine.ClickTarget(first).IsComplete);
-            Assert.IsFalse(machine.ClickTarget(first).IsComplete);
             Assert.IsFalse(machine.ClickTarget(second).IsComplete);
             Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
             CollectionAssert.AreEqual(new[] { first, second }, machine.PickedTargets);
@@ -217,6 +216,43 @@ namespace FateWeaver.Tests
             Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
             Assert.AreEqual(0, machine.PickedTargets.Count);
             Assert.AreEqual(3, machine.SelectedHandIndex);
+        }
+
+        [Test]
+        public void Selected_multiple_target_click_removes_pick_before_requirement_is_met()
+        {
+            var machine = new CardSelectionMachine();
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(2);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 3);
+            machine.ClickTarget(first);
+            machine.ClickTarget(second);
+
+            var result = machine.ClickTarget(first);
+
+            Assert.IsFalse(result.IsComplete);
+            Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
+            CollectionAssert.AreEqual(new[] { second }, machine.PickedTargets);
+        }
+
+        [Test]
+        public void Ready_target_click_removes_pick_and_reselection_restores_ready()
+        {
+            var machine = new CardSelectionMachine();
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(2);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(first);
+            machine.ClickTarget(second);
+            Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
+
+            Assert.IsFalse(machine.ClickTarget(first).IsComplete);
+            Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
+            CollectionAssert.AreEqual(new[] { second }, machine.PickedTargets);
+
+            Assert.IsFalse(machine.ClickTarget(first).IsComplete);
+            Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
+            CollectionAssert.AreEqual(new[] { second, first }, machine.PickedTargets);
         }
 
         [Test]
