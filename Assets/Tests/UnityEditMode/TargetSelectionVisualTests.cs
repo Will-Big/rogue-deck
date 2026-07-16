@@ -3,7 +3,6 @@ using System.Reflection;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +10,11 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class TargetSelectionVisualTests
     {
+        private static readonly Color CandidateOutline =
+            new Color(0.95f, 0.72f, 0.25f, 1f);
+        private static readonly Color SelectedOutline =
+            new Color(0.35f, 0.75f, 0.95f, 1f);
+
         [Test]
         public void Arrow_tracks_a_new_start_point_each_frame()
         {
@@ -34,20 +38,23 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Unit_target_state_shows_candidate_and_selection_order()
+        public void Unit_target_state_uses_gold_for_candidate_and_blue_for_selected()
         {
             var root = new GameObject("Root", typeof(RectTransform));
             try
             {
                 var view = UnitView.EditorCreate(
                     (RectTransform)root.transform, new Vector2(180f, 250f));
-                view.SetTargetSelection(true, true, 2);
-
-                var badge = (GameObject)typeof(UnitView)
-                    .GetField("_targetOrderBadge", BindingFlags.Instance | BindingFlags.NonPublic)
+                var highlight = (Image)typeof(UnitView)
+                    .GetField("_targetHighlight", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(view);
-                Assert.IsTrue(badge.activeSelf);
-                Assert.AreEqual("2", badge.GetComponentInChildren<TMP_Text>().text);
+
+                view.SetTargetSelection(true, true, false);
+                Assert.AreEqual(CandidateOutline, highlight.color);
+
+                view.SetTargetSelection(true, true, true);
+                Assert.AreEqual(SelectedOutline, highlight.color);
+                Assert.IsNull(view.transform.Find("TargetOrderBadge"));
             }
             finally
             {
@@ -56,7 +63,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Rail_target_state_shows_pick_order_and_dims_noncandidates()
+        public void Rail_target_state_uses_blue_for_picks_and_dims_noncandidates()
         {
             var root = new GameObject("Root", typeof(RectTransform));
             try
@@ -80,9 +87,12 @@ namespace FateWeaver.Tests.UnityEditMode
 
                 rail.SetTargetSelection(true, candidates, pickedTargets);
 
-                var firstBadge = (GameObject)typeof(RailCardView)
-                    .GetField("_targetOrderBadge", BindingFlags.Instance | BindingFlags.NonPublic)
+                var firstOutline = (Image)typeof(RailCardView)
+                    .GetField("_selectionOutline", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(views[0]);
+                var secondOutline = (Image)typeof(RailCardView)
+                    .GetField("_selectionOutline", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(views[1]);
                 var thirdDim = (GameObject)typeof(RailCardView)
                     .GetField("_targetDim", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(views[2]);
@@ -92,15 +102,20 @@ namespace FateWeaver.Tests.UnityEditMode
                 var thirdButton = (Button)typeof(RailCardView)
                     .GetField("_button", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(views[2]);
-                Assert.IsTrue(firstBadge.activeSelf);
-                Assert.AreEqual("1", firstBadge.GetComponentInChildren<TMP_Text>().text);
+                Assert.AreEqual(SelectedOutline, firstOutline.color);
+                Assert.AreEqual(CandidateOutline, secondOutline.color);
                 Assert.IsTrue(thirdDim.activeSelf);
                 Assert.IsTrue(firstButton.interactable);
                 Assert.IsFalse(thirdButton.interactable);
+                foreach (var view in views)
+                {
+                    Assert.IsNull(view.transform.Find("TargetOrderBadge"));
+                }
 
                 rail.SetTargetSelection(false, candidates, pickedTargets);
 
-                Assert.IsFalse(firstBadge.activeSelf);
+                Assert.AreEqual(Color.clear, firstOutline.color);
+                Assert.AreEqual(Color.clear, secondOutline.color);
                 Assert.IsFalse(thirdDim.activeSelf);
                 Assert.IsTrue(firstButton.interactable);
                 Assert.IsTrue(thirdButton.interactable);

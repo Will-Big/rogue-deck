@@ -80,8 +80,8 @@ namespace FateWeaver.Unity
             {
                 var target = SelectionTargetRef.ExecutionCard(i);
                 bool candidate = Contains(candidates, target);
-                int selectionOrder = active ? IndexOf(pickedTargets, target) + 1 : 0;
-                _views[i].SetTargetSelection(active, candidate, selectionOrder);
+                bool selected = active && IndexOf(pickedTargets, target) >= 0;
+                _views[i].SetTargetSelection(active, candidate, selected);
                 _views[i].SetInteractable(!active || candidate);
             }
         }

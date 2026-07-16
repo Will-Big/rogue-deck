@@ -202,7 +202,7 @@ namespace FateWeaver.Unity
             foreach (var pair in _unitTargets)
             {
                 pair.Value.SetTargetSelection(
-                    active, _validTargets.Contains(pair.Key), SelectionOrder(pair.Key));
+                    active, _validTargets.Contains(pair.Key), IsPicked(pair.Key));
             }
 
             _confirmButton.gameObject.SetActive(
@@ -210,17 +210,17 @@ namespace FateWeaver.Unity
                 && _machine.Phase == SelectionPhase.ReadyToConfirm);
         }
 
-        private int SelectionOrder(SelectionTargetRef target)
+        private bool IsPicked(SelectionTargetRef target)
         {
             for (int i = 0; i < _machine.PickedTargets.Count; i++)
             {
                 if (_machine.PickedTargets[i].Equals(target))
                 {
-                    return i + 1;
+                    return true;
                 }
             }
 
-            return 0;
+            return false;
         }
 
         private Vector2 SelectedCardScreen()
@@ -310,7 +310,7 @@ namespace FateWeaver.Unity
             _rail.SetTargetSelection(false, _validTargets, _machine.PickedTargets);
             foreach (var view in _unitTargets.Values)
             {
-                view.SetTargetSelection(false, false, 0);
+                view.SetTargetSelection(false, false, false);
             }
 
             _dimLayer.SetActive(false);

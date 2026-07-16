@@ -4,7 +4,6 @@ using System.Reflection;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +16,8 @@ namespace FateWeaver.Tests.UnityEditMode
         private Button _confirmButton;
         private TargetingArrowView _arrow;
         private readonly List<SelectionResult> _appliedResults = new List<SelectionResult>();
+        private static readonly Color SelectedOutline =
+            new Color(0.35f, 0.75f, 0.95f, 1f);
 
         [SetUp]
         public void SetUp()
@@ -123,9 +124,11 @@ namespace FateWeaver.Tests.UnityEditMode
 
             Assert.AreEqual(1, _appliedResults.Count);
             Assert.IsTrue(_controller.SelectionActive);
-            Assert.IsFalse(Badge(firstView).activeSelf);
-            Assert.IsTrue(Badge(secondView).activeSelf);
-            Assert.AreEqual("1", Badge(secondView).GetComponentInChildren<TMP_Text>().text);
+            var firstDim = Field<GameObject>(firstView, "_targetDim");
+            var secondHighlight = Field<Image>(secondView, "_targetHighlight");
+            Assert.IsTrue(firstDim.activeSelf);
+            Assert.IsTrue(secondHighlight.gameObject.activeSelf);
+            Assert.AreEqual(SelectedOutline, secondHighlight.color);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
         }
 
@@ -136,12 +139,10 @@ namespace FateWeaver.Tests.UnityEditMode
             return child;
         }
 
-        private static GameObject Badge(UnitView view)
-        {
-            return (GameObject)typeof(UnitView)
-                .GetField("_targetOrderBadge", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(view);
-        }
+        private static T Field<T>(object target, string name)
+            => (T)target.GetType()
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(target);
 
         private static void SetField(object target, string name, object value)
         {
