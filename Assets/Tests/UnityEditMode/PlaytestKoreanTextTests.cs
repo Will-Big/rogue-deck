@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
@@ -31,6 +32,18 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Party_owner_name_has_one_localized_source()
         {
             Assert.AreEqual("파티", PlaytestKoreanText.PartyOwnerName());
+        }
+
+        [Test]
+        public void Registered_labels_share_the_description_catalog()
+        {
+            Assert.AreEqual("방어", PlaytestKoreanText.StatusName(StatusKeys.Block));
+            Assert.AreEqual(
+                "실행 순서 변경",
+                PlaytestKoreanText.InterventionActionName(
+                    InterventionActionKeys.ChangeExecutionOrder));
+            Assert.Throws<KeyNotFoundException>(() =>
+                PlaytestKoreanText.StatusName(new StatusKey("unknown_status")));
         }
     }
 }

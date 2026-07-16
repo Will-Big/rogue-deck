@@ -5,6 +5,7 @@ using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
+using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Unity
 {
@@ -84,22 +85,9 @@ namespace FateWeaver.Unity
         }
 
         public static string StatusName(StatusKey key)
-        {
-            if (key == StatusKeys.Stun) return "기절";
-            if (key == StatusKeys.Vulnerable) return "취약";
-            if (key == StatusKeys.RewardNullified) return "조건 보상 무효";
-            if (key == StatusKeys.Block) return "방어";
-            if (key == StatusKeys.Slow) return "둔화";
-            if (key == StatusKeys.Haste) return "가속";
-            return key.ToString();
-        }
+            => KoreanDescriptionCatalog.Default.Statuses.Resolve(key);
 
         public static string InterventionActionName(InterventionActionKey key)
-        {
-            if (key == InterventionActionKeys.ChangeExecutionOrder) return "실행 순서 변경";
-            if (key == InterventionActionKeys.SwapExecutionOrder) return "실행 순서 교환";
-            if (key == InterventionActionKeys.Lock) return "고정";
-            return key.ToString();
-        }
+            => KoreanDescriptionCatalog.Default.Interventions.Resolve(key).DisplayName;
     }
 }

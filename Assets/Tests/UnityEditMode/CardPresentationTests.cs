@@ -3,6 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Simulation;
 using FateWeaver.Unity;
 using UnityEngine;
 
@@ -67,6 +68,18 @@ namespace FateWeaver.Tests.UnityEditMode
 
             Assert.AreEqual("파티", presentation.OwnerDisplayName);
             Assert.IsTrue(presentation.IsPartyOwned);
+        }
+
+        [Test]
+        public void Formation_card_uses_the_registered_dynamic_description()
+        {
+            var presentation = CardPresentation.FromDefinition(
+                PartyPrototypeDeck.MoveForward(),
+                id => null);
+
+            Assert.AreEqual(
+                "소유자를 대형 전방으로 1칸 이동.",
+                presentation.Description);
         }
     }
 }
