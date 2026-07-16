@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,8 +8,7 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>Owns the visual flow for execution placement and execution-rail intervention targets.
-    /// Party-member targeting remains in BattleScreenController.</summary>
+    /// <summary>Coordinates targetless placement and every explicit card-target selection flow.</summary>
     public sealed class CardSelectionController : MonoBehaviour
     {
         [SerializeField] private HandFanView _hand;
@@ -25,11 +25,18 @@ namespace FateWeaver.Unity
         private const float EmphasisGrowSeconds = 0.12f;
 
         private readonly CardSelectionMachine _machine = new CardSelectionMachine();
-        private Action<SelectionCommand> _onCommand;
+        private readonly HashSet<SelectionTargetRef> _validTargets =
+            new HashSet<SelectionTargetRef>();
+        private readonly Dictionary<SelectionTargetRef, UnitView> _unitTargets =
+            new Dictionary<SelectionTargetRef, UnitView>();
+        private Func<SelectionResult, bool> _tryApply;
+        private Func<SelectionTargetKind, IReadOnlyList<SelectionTargetRef>> _currentTargets;
+        private Action _onApplied;
         private CardView _floatingCard;
         private CardView _emphasisCard;
         private Coroutine _emphasis;
         private int _visualHandIndex = -1;
+        private SelectionTargetKind _targetKind = SelectionTargetKind.None;
 
         public bool SelectionActive => _machine.Phase != SelectionPhase.Idle;
 
@@ -38,71 +45,99 @@ namespace FateWeaver.Unity
             _confirmButton.onClick.AddListener(OnConfirmClicked);
         }
 
-        public void Initialize(Action<SelectionCommand> onCommand)
+        public void Initialize(
+            Func<SelectionResult, bool> tryApply,
+            Func<SelectionTargetKind, IReadOnlyList<SelectionTargetRef>> currentTargets,
+            Action onApplied)
         {
-            _onCommand = onCommand;
+            _tryApply = tryApply;
+            _currentTargets = currentTargets;
+            _onApplied = onApplied;
         }
 
-        public void BeginSelection(int handIndex, int requiredTargets, CardPresentation card)
+        public void RegisterUnitTarget(SelectionTargetRef target, UnitView view)
+        {
+            _unitTargets[target] = view;
+        }
+
+        public void ClearUnitTargets()
+        {
+            _unitTargets.Clear();
+        }
+
+        public void BeginPlacement(int handIndex, CardPresentation card)
         {
             EndSelectionVisuals();
-            _machine.SelectCard(handIndex, requiredTargets);
+            _machine.SelectCard(handIndex, SelectionTargetKind.None, 0);
             _visualHandIndex = handIndex;
             _hand.SetHoverSuppressed(true);
-
-            if (_machine.Phase == SelectionPhase.ConfirmPlacement)
-            {
-                _rail.SetDropHint(true);
-                _hand.SetGhost(handIndex, true);
-                SpawnFloatingCard(card);
-            }
-            else if (_machine.Phase == SelectionPhase.PickSingleTarget)
-            {
-                _hand.SetHeld(handIndex, true);
-                _arrow.Show(MouseScreen());
-            }
-            else
-            {
-                _dimLayer.SetActive(true);
-            }
+            _rail.SetDropHint(true);
+            _hand.SetGhost(handIndex, true);
+            SpawnFloatingCard(card);
         }
 
-        public bool OnZoneClicked(int zoneIndex, CardPresentation zoneCard)
+        public void BeginTargetSelection(
+            int handIndex,
+            SelectionTargetKind targetKind,
+            int requiredTargets,
+            IReadOnlyList<SelectionTargetRef> candidates)
         {
-            if (!SelectionActive)
+            if (targetKind == SelectionTargetKind.None)
             {
-                return false;
+                throw new ArgumentException("Explicit target selection requires a target kind.",
+                    nameof(targetKind));
             }
 
-            if (_machine.Phase == SelectionPhase.ConfirmPlacement)
+            if (requiredTargets < 1)
             {
-                Dispatch(_machine.ClickApplyArea());
-                return true;
+                throw new ArgumentException("Explicit target selection requires at least one target.",
+                    nameof(requiredTargets));
+            }
+
+            EndSelectionVisuals();
+            _machine.SelectCard(handIndex, targetKind, requiredTargets);
+            _targetKind = targetKind;
+            _visualHandIndex = handIndex;
+            if (candidates != null)
+            {
+                for (int i = 0; i < candidates.Count; i++)
+                {
+                    _validTargets.Add(candidates[i]);
+                }
+            }
+
+            _hand.SetHoverSuppressed(true);
+            _hand.SetHeld(handIndex, true);
+            _dimLayer.SetActive(true);
+            RefreshTargetVisuals();
+            _arrow.Show(SelectedCardScreen(), MouseScreen());
+        }
+
+        public void OnTargetClicked(SelectionTargetRef target, CardPresentation? card)
+        {
+            if (!SelectionActive
+                || target.Kind != _targetKind
+                || !_validTargets.Contains(target))
+            {
+                return;
             }
 
             int previousCount = _machine.PickedTargets.Count;
-            var command = _machine.ClickTarget(zoneIndex);
-            if (_machine.Phase == SelectionPhase.PickMultipleTargets
-                || _machine.Phase == SelectionPhase.ReadyToConfirm)
+            var result = _machine.ClickTarget(target);
+            RefreshTargetVisuals();
+            if (_machine.PickedTargets.Count > previousCount && card.HasValue)
             {
-                _rail.SetPickedTargets(_machine.PickedTargets);
-                if (_machine.PickedTargets.Count > previousCount)
-                {
-                    PlayCenterEmphasis(zoneCard);
-                }
-
-                _confirmButton.gameObject.SetActive(_machine.Phase == SelectionPhase.ReadyToConfirm);
+                PlayCenterEmphasis(card.Value);
             }
 
-            Dispatch(command);
-            return true;
+            TryDispatch(result);
         }
 
         public void OnRailAreaClicked()
         {
-            if (SelectionActive)
+            if (_machine.Phase == SelectionPhase.ConfirmPlacement)
             {
-                Dispatch(_machine.ClickApplyArea());
+                TryDispatch(_machine.ClickApplyArea());
             }
         }
 
@@ -114,18 +149,85 @@ namespace FateWeaver.Unity
 
         private void OnConfirmClicked()
         {
-            Dispatch(_machine.Confirm());
+            TryDispatch(_machine.Confirm());
         }
 
-        private void Dispatch(SelectionCommand command)
+        private void TryDispatch(SelectionResult result)
         {
-            if (!command.PlayExecution && !command.PlayIntervention)
+            if (!result.IsComplete)
             {
                 return;
             }
 
-            EndSelectionVisuals();
-            _onCommand?.Invoke(command);
+            bool applied = _tryApply != null && _tryApply(result);
+            if (applied)
+            {
+                _machine.CommitSucceeded();
+                EndSelectionVisuals();
+                _onApplied?.Invoke();
+                return;
+            }
+
+            ReloadValidTargetsAfterRejection();
+            _machine.RejectCompletion(_validTargets);
+            RefreshTargetVisuals();
+            if (_validTargets.Count < _machine.RequiredTargets)
+            {
+                CancelSelection();
+            }
+        }
+
+        private void ReloadValidTargetsAfterRejection()
+        {
+            _validTargets.Clear();
+            var targets = _currentTargets?.Invoke(_targetKind);
+            if (targets == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                _validTargets.Add(targets[i]);
+            }
+        }
+
+        private void RefreshTargetVisuals()
+        {
+            bool active = _machine.Phase == SelectionPhase.PickSingleTarget
+                || _machine.Phase == SelectionPhase.PickMultipleTargets
+                || _machine.Phase == SelectionPhase.ReadyToConfirm;
+            _hand.SetTargetSelection(_visualHandIndex, active);
+            _rail.SetTargetSelection(active, _validTargets, _machine.PickedTargets);
+            foreach (var pair in _unitTargets)
+            {
+                pair.Value.SetTargetSelection(
+                    active, _validTargets.Contains(pair.Key), SelectionOrder(pair.Key));
+            }
+
+            _confirmButton.gameObject.SetActive(
+                _machine.RequiredTargets >= 2
+                && _machine.Phase == SelectionPhase.ReadyToConfirm);
+        }
+
+        private int SelectionOrder(SelectionTargetRef target)
+        {
+            for (int i = 0; i < _machine.PickedTargets.Count; i++)
+            {
+                if (_machine.PickedTargets[i].Equals(target))
+                {
+                    return i + 1;
+                }
+            }
+
+            return 0;
+        }
+
+        private Vector2 SelectedCardScreen()
+        {
+            return _hand.TryGetCardScreenPoint(_visualHandIndex, out var screenPoint)
+                ? screenPoint
+                : Vector2.zero;
         }
 
         private void Update()
@@ -134,9 +236,11 @@ namespace FateWeaver.Unity
             {
                 MoveToScreen((RectTransform)_floatingCard.transform, MouseScreen());
             }
-            else if (_machine.Phase == SelectionPhase.PickSingleTarget)
+            else if (_machine.Phase == SelectionPhase.PickSingleTarget
+                || _machine.Phase == SelectionPhase.PickMultipleTargets
+                || _machine.Phase == SelectionPhase.ReadyToConfirm)
             {
-                _arrow.Track(MouseScreen());
+                _arrow.Track(SelectedCardScreen(), MouseScreen());
             }
         }
 
@@ -200,9 +304,15 @@ namespace FateWeaver.Unity
 
         private void EndSelectionVisuals()
         {
+            _hand.SetTargetSelection(-1, false);
             _hand.SetHoverSuppressed(false);
             _rail.SetDropHint(false);
-            _rail.SetPickedTargets(null);
+            _rail.SetTargetSelection(false, _validTargets, _machine.PickedTargets);
+            foreach (var view in _unitTargets.Values)
+            {
+                view.SetTargetSelection(false, false, 0);
+            }
+
             _dimLayer.SetActive(false);
             _confirmButton.gameObject.SetActive(false);
             _arrow.Hide();
@@ -225,6 +335,9 @@ namespace FateWeaver.Unity
             {
                 _emphasisCard.gameObject.SetActive(false);
             }
+
+            _validTargets.Clear();
+            _targetKind = SelectionTargetKind.None;
         }
 
         private static void DisableRaycasts(CardView card)
