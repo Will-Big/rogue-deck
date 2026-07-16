@@ -17,6 +17,8 @@
 - 대상이 1개면 확인 버튼을 표시하지 않고 대상 클릭 즉시 완료한다.
 - 대상이 2개 이상이면 필요한 대상을 모두 고른 뒤에만 확인 버튼을 표시한다.
 - 다중 선택 중 화살표 시작점은 항상 선택한 손패 카드의 화면상 중심이다.
+- 선택 가능한 대상 후보는 황금색 테두리, 선택 완료 대상은 푸른색 테두리로 표시한다.
+- 아군, 적, 실행 순서 카드에 같은 색상 규칙을 적용하고 번호 배지는 표시하지 않는다.
 - 구현 전부터 존재하는 `KoreanTMP.asset` 변경은 사용자 변경으로 간주해 커밋하지 않는다.
 - 현재 미커밋된 씬과 타겟 화살표 프리팹은 마지막 태스크에서 빌더를 재실행한 결과만 검증 후 커밋한다.
 
@@ -26,7 +28,7 @@
 - Modify `Assets/Core/Simulation/Presentation/CardSelectionMachine.cs`: 대상 종류·개수·검증 실패 복구.
 - Modify `Assets/Core/Tests/EditMode/CardSelectionMachineTests.cs`: 순수 상태 전이 테스트.
 - Modify `Assets/Unity/TargetingArrowView.cs`, `HandFanView.cs`: 동적 화살표 시작점.
-- Modify `Assets/Unity/UnitView.cs`, `RailCardView.cs`, `ExecutionRailView.cs`: 후보 딤과 번호 배지.
+- Modify `Assets/Unity/UnitView.cs`, `RailCardView.cs`, `ExecutionRailView.cs`: 후보 딤과 황금색/푸른색 선택 테두리.
 - Create `Assets/Tests/UnityEditMode/TargetSelectionVisualTests.cs`: 공통 표현 테스트.
 - Modify `Assets/Unity/CardSelectionController.cs`: 모든 명시적 대상의 단일 조정기.
 - Create `Assets/Tests/UnityEditMode/CardSelectionControllerTests.cs`: 확인 규칙 테스트.
@@ -704,7 +706,7 @@ handRect.SetAsLastSibling();
 overlay.SetAsLastSibling();
 ```
 
-Views above the global dim use their own `_targetDim` to darken noncandidates. Keep the dim click catcher wired to `OnEmptyClicked`. Ensure regenerated prefabs serialize every new badge/dim field and the selection controller retains non-null `_arrow`, `_hand`, `_rail`, `_dimLayer`, and `_confirmButton` references.
+Views above the global dim use their own `_targetDim` to darken noncandidates. Keep the dim click catcher wired to `OnEmptyClicked`. Ensure regenerated prefabs serialize every target dim/highlight field and the selection controller retains non-null `_arrow`, `_hand`, `_rail`, `_dimLayer`, and `_confirmButton` references.
 
 - [ ] **Step 7: Update the playtest checklist**
 
@@ -713,7 +715,7 @@ Add these exact cases to `Assets/Unity/PLAYTEST.md`:
 1. 대상 없는 실행 카드는 마우스를 따라가고 실행 순서 영역 클릭으로 배치된다.
 2. 선택 방어는 손패 카드 중심에서 아군까지 화살표가 표시되며 확인 버튼 없이 즉시 배치된다.
 3. 앞당김/미룸은 같은 화살표 규칙으로 실행 순서 카드 하나를 즉시 선택한다.
-4. 자리 교환은 화살표 시작점이 손패 카드에 고정되고 두 대상에 1·2 번호가 표시된 뒤 확인 버튼이 나타난다.
+4. 자리 교환은 화살표 시작점이 손패 카드에 고정되고 선택한 두 대상이 푸른색 테두리로 표시된 뒤 확인 버튼이 나타난다.
 5. 빈 영역 취소는 카드와 운명력을 소비하지 않고 모든 선택 표현을 지운다.
 
 - [ ] **Step 8: Run tests and rebuild the scene**
@@ -749,3 +751,215 @@ git log --oneline -6
 ```
 
 Expected: all headless tests pass; only the pre-existing `Assets/Unity/Resources/Fonts/KoreanTMP.asset` user change remains unstaged; the four implementation commits appear above the design and plan commits.
+
+---
+
+### Task 5: Replace target-order badges with blue selected outlines
+
+**Files:**
+- Modify: `Assets/Unity/UnitView.cs`
+- Modify: `Assets/Unity/RailCardView.cs`
+- Modify: `Assets/Unity/ExecutionRailView.cs`
+- Modify: `Assets/Unity/CardSelectionController.cs`
+- Modify: `Assets/Tests/UnityEditMode/TargetSelectionVisualTests.cs`
+- Modify: `Assets/Tests/UnityEditMode/CardSelectionControllerTests.cs`
+- Modify: `Assets/Unity/PLAYTEST.md`
+- Regenerate: `Assets/Unity/Prefabs/UnitView.prefab`
+- Regenerate: `Assets/Unity/Prefabs/RailCardView.prefab`
+- Regenerate: `Assets/Scenes/FateWeaverBattle.unity`
+
+**Interfaces:**
+- Replaces: `UnitView.SetTargetSelection(bool active, bool candidate, int selectionOrder)`.
+- Produces: `UnitView.SetTargetSelection(bool active, bool candidate, bool selected)`.
+- Replaces: `RailCardView.SetTargetSelection(bool active, bool candidate, int selectionOrder)`.
+- Produces: `RailCardView.SetTargetSelection(bool active, bool candidate, bool selected)`.
+- Preserves: `ExecutionRailView.SetTargetSelection(bool, IReadOnlyCollection<SelectionTargetRef>, IReadOnlyList<SelectionTargetRef>)`.
+- Preserves: `CardSelectionController` public API and all core selection rules.
+
+- [ ] **Step 1: Write failing visual tests for the new color language**
+
+Replace badge assertions in `TargetSelectionVisualTests.cs` with tests that use these exact colors and the new boolean selected API:
+
+```csharp
+private static readonly Color CandidateOutline =
+    new Color(0.95f, 0.72f, 0.25f, 1f);
+private static readonly Color SelectedOutline =
+    new Color(0.35f, 0.75f, 0.95f, 1f);
+
+[Test]
+public void Unit_target_state_uses_gold_for_candidate_and_blue_for_selected()
+{
+    var root = new GameObject("Root", typeof(RectTransform));
+    try
+    {
+        var view = UnitView.EditorCreate(
+            (RectTransform)root.transform, new Vector2(180f, 250f));
+        var highlight = (Image)typeof(UnitView)
+            .GetField("_targetHighlight", BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetValue(view);
+
+        view.SetTargetSelection(true, true, false);
+        Assert.AreEqual(CandidateOutline, highlight.color);
+
+        view.SetTargetSelection(true, true, true);
+        Assert.AreEqual(SelectedOutline, highlight.color);
+        Assert.IsNull(view.transform.Find("TargetOrderBadge"));
+    }
+    finally
+    {
+        Object.DestroyImmediate(root);
+    }
+}
+```
+
+Rename the rail test to `Rail_target_state_uses_blue_for_picks_and_dims_noncandidates`. It must assert: candidate index 1 has `CandidateOutline`, picked index 0 has `SelectedOutline`, index 2 is dimmed and non-interactable, no view has a `TargetOrderBadge` child, and `active: false` clears outlines/dim while restoring input.
+
+- [ ] **Step 2: Update the controller rejection test before implementation**
+
+Remove `TMPro` and the badge helper from `CardSelectionControllerTests.cs`. In `Rejected_result_removes_stale_pick_and_keeps_selection_active`, assert the retained second target has a blue active highlight and the stale first target is dimmed:
+
+```csharp
+var firstDim = Field<GameObject>(firstView, "_targetDim");
+var secondHighlight = Field<Image>(secondView, "_targetHighlight");
+Assert.IsTrue(firstDim.activeSelf);
+Assert.IsTrue(secondHighlight.gameObject.activeSelf);
+Assert.AreEqual(SelectedOutline, secondHighlight.color);
+Assert.IsFalse(_confirmButton.gameObject.activeSelf);
+```
+
+Use one generic reflection helper:
+
+```csharp
+private static T Field<T>(object target, string name)
+    => (T)target.GetType()
+        .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+        .GetValue(target);
+```
+
+- [ ] **Step 3: Run the focused Unity tests and verify RED**
+
+Run in the licensed Unity editor Test Runner or with:
+
+```bash
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/ish/Git/rogue-deck/.worktrees/card-selection-integration -runTests -testPlatform EditMode -testFilter FateWeaver.Tests.UnityEditMode.TargetSelectionVisualTests,FateWeaver.Tests.UnityEditMode.CardSelectionControllerTests -testResults /private/tmp/target-outline-red.xml -quit
+```
+
+Expected: compilation fails because the new boolean `selected` signatures and `Image _targetHighlight` field do not exist, or the new color/badge-removal assertions fail against the current implementation.
+
+- [ ] **Step 4: Replace numbered unit feedback with a colored outline**
+
+In `UnitView`, change `_targetHighlight` to `Image`, remove `_targetOrderBadge` and `_targetOrderText`, and add:
+
+```csharp
+private static readonly Color TargetCandidate =
+    new Color(0.95f, 0.72f, 0.25f, 1f);
+private static readonly Color TargetSelected =
+    new Color(0.35f, 0.75f, 0.95f, 1f);
+
+public void SetTargetable(bool value)
+{
+    SetTargetSelection(value, value, false);
+}
+
+public void SetTargetSelection(bool active, bool candidate, bool selected)
+{
+    _targetDim.SetActive(active && !candidate);
+    _targetHighlight.gameObject.SetActive(active && candidate);
+    _targetHighlight.color = selected ? TargetSelected : TargetCandidate;
+    _targetButton.interactable = active && candidate;
+}
+```
+
+Delete `TargetOrderBadge` creation and assignments from `EditorCreate`; assign the created `targetHighlight` image directly to `_targetHighlight`.
+
+- [ ] **Step 5: Replace numbered rail feedback with primary/secondary outlines**
+
+In `RailCardView`, remove `_targetOrderBadge`, `_targetOrderText`, and their `EditorCreate` nodes. Replace the method with:
+
+```csharp
+public void SetTargetSelection(bool active, bool candidate, bool selected)
+{
+    _targetDim.SetActive(active && !candidate);
+    SetSelection(active && candidate
+        ? selected ? CardView.SelectionKind.Secondary : CardView.SelectionKind.Primary
+        : CardView.SelectionKind.None);
+}
+```
+
+In `ExecutionRailView.SetTargetSelection`, replace the one-based selection order calculation with:
+
+```csharp
+bool selected = active && IndexOf(pickedTargets, target) >= 0;
+_views[i].SetTargetSelection(active, candidate, selected);
+```
+
+- [ ] **Step 6: Project selected state onto every registered unit**
+
+Replace `SelectionOrder` in `CardSelectionController` with:
+
+```csharp
+private bool IsPicked(SelectionTargetRef target)
+{
+    for (int i = 0; i < _machine.PickedTargets.Count; i++)
+    {
+        if (_machine.PickedTargets[i].Equals(target))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+```
+
+Call `pair.Value.SetTargetSelection(active, _validTargets.Contains(pair.Key), IsPicked(pair.Key))`. Cleanup calls `view.SetTargetSelection(false, false, false)`.
+
+- [ ] **Step 7: Update playtest wording and run verification**
+
+Change PLAYTEST case 4 to:
+
+```text
+4. 자리 교환은 화살표 시작점이 손패 카드에 고정되고, 선택 가능한 대상은 황금색 테두리,
+   선택한 두 대상은 푸른색 테두리로 표시된 뒤 확인 버튼이 나타난다. 번호 배지는 표시되지 않는다.
+```
+
+Run:
+
+```bash
+dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/ish/Git/rogue-deck/.worktrees/card-selection-integration -runTests -testPlatform EditMode -testResults /private/tmp/target-outline-green.xml -quit
+```
+
+Expected: 278 headless tests and all EditMode tests pass with zero failures; no `TargetOrderBadge`, `_targetOrderBadge`, or `_targetOrderText` reference remains in C# source.
+
+- [ ] **Step 8: Commit source and tests**
+
+```bash
+git add Assets/Unity/UnitView.cs Assets/Unity/RailCardView.cs Assets/Unity/ExecutionRailView.cs Assets/Unity/CardSelectionController.cs Assets/Tests/UnityEditMode/TargetSelectionVisualTests.cs Assets/Tests/UnityEditMode/CardSelectionControllerTests.cs Assets/Unity/PLAYTEST.md
+git commit -m "refactor(ui): use blue outlines for selected targets"
+```
+
+- [ ] **Step 9: Regenerate and verify serialized assets**
+
+In licensed Unity 6000.5.2f1, run `Fate Weaver ▸ Build Battle Scene`, save, and verify:
+
+- `UnitView.prefab` and `RailCardView.prefab` contain no `TargetOrderBadge` child.
+- Their target dim/highlight references are non-null.
+- `FateWeaverBattle.unity` contains no Missing Script or missing serialized selection reference.
+- All five PLAYTEST cases pass without Console errors.
+
+Stage generated assets while excluding `KoreanTMP.asset`:
+
+```bash
+git add Assets/Unity/Prefabs/UnitView.prefab Assets/Unity/Prefabs/RailCardView.prefab Assets/Unity/Prefabs/TargetingArrowView.prefab Assets/Unity/Prefabs/TargetingArrowView.prefab.meta Assets/Scenes/FateWeaverBattle.unity
+git commit -m "chore(unity): regenerate unified target selection assets"
+```
+
+- [ ] **Step 10: Final check**
+
+```bash
+git diff --check
+git status --short --branch
+```
+
+Expected: only the user-owned `Assets/Unity/Resources/Fonts/KoreanTMP.asset` change remains unstaged.
