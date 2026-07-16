@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "FateWeaver.Core",
         "FateWeaver.Simulation",
-        "FateWeaver.Unity"
+        "FateWeaver.Unity",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"
