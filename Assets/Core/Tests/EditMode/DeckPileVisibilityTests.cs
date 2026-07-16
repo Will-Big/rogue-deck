@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
@@ -72,6 +73,16 @@ namespace FateWeaver.Tests
                 session.AllDeckCards.Count,
                 session.DrawPile.Count + session.DiscardPile.Count + session.Hand.Count);
             Assert.GreaterOrEqual(handBefore, 1);
+        }
+
+        [Test]
+        public void Piles_are_not_downcastable_to_mutable_lists()
+        {
+            var session = NewSession();
+
+            Assert.IsNotInstanceOf<List<OwnedCard>>(session.DrawPile);
+            Assert.IsNotInstanceOf<List<OwnedCard>>(session.DiscardPile);
+            Assert.IsNotInstanceOf<List<OwnedCard>>(session.AllDeckCards);
         }
     }
 }

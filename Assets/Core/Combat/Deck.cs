@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Combat
@@ -12,6 +13,8 @@ namespace FateWeaver.Core.Combat
         private readonly List<OwnedCard> _discard = new List<OwnedCard>();
         private readonly List<OwnedCard> _hand = new List<OwnedCard>();
         private readonly Random _rng;
+        private readonly ReadOnlyCollection<OwnedCard> _drawView;
+        private readonly ReadOnlyCollection<OwnedCard> _discardView;
 
         public Deck(IEnumerable<CardDefinition> cards, int seed)
             : this(WithLegacyOwner(cards), seed)
@@ -27,6 +30,8 @@ namespace FateWeaver.Core.Combat
             }
 
             Shuffle(_draw);
+            _drawView = _draw.AsReadOnly();
+            _discardView = _discard.AsReadOnly();
         }
 
         public IReadOnlyList<OwnedCard> Hand => _hand;
@@ -35,8 +40,8 @@ namespace FateWeaver.Core.Combat
         public int HandCount => _hand.Count;
 
         /// <summary>Read-only pile views for deck-viewer UI. Draw order is real — UI must sort for display.</summary>
-        public IReadOnlyList<OwnedCard> DrawPile => _draw;
-        public IReadOnlyList<OwnedCard> DiscardPile => _discard;
+        public IReadOnlyList<OwnedCard> DrawPile => _drawView;
+        public IReadOnlyList<OwnedCard> DiscardPile => _discardView;
 
         public void Draw(int count)
         {

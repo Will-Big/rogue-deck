@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -20,7 +21,7 @@ namespace FateWeaver.Simulation
         private readonly int _handSize;
         private readonly PartyTuning _partyTuning;
         private readonly bool _isPartyMode;
-        private readonly List<OwnedCard> _allCards;
+        private readonly ReadOnlyCollection<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
         private int _nextInstanceId;
 
@@ -119,7 +120,7 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
-            _allCards = new List<OwnedCard>(deckCards);
+            _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
