@@ -15,12 +15,60 @@ namespace FateWeaver.Unity
         [SerializeField] private CardView _previewPrefab;
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
+        [SerializeField] private Image _backdrop;
+        [SerializeField] private Button _railClickButton;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
+        private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.25f);
+        private static readonly Color DropHintColor = new Color(0.95f, 0.72f, 0.25f, 0.14f);
 
         private readonly List<RailCardView> _views = new List<RailCardView>();
         private CardView _preview;
+        private Action _onRailClicked;
+
+        private void Awake()
+        {
+            if (_railClickButton != null)
+            {
+                _railClickButton.onClick.AddListener(() => _onRailClicked?.Invoke());
+            }
+        }
+
+        public void SetRailClicked(Action onRailClicked)
+        {
+            _onRailClicked = onRailClicked;
+        }
+
+        public void SetDropHint(bool value)
+        {
+            if (_backdrop != null)
+            {
+                _backdrop.color = value ? DropHintColor : BackdropColor;
+            }
+        }
+
+        public void SetPickedTargets(IReadOnlyList<int> picked)
+        {
+            for (int i = 0; i < _views.Count; i++)
+            {
+                bool isPicked = false;
+                if (picked != null)
+                {
+                    for (int p = 0; p < picked.Count; p++)
+                    {
+                        if (picked[p] == i)
+                        {
+                            isPicked = true;
+                            break;
+                        }
+                    }
+                }
+
+                _views[i].SetSelection(
+                    isPicked ? CardView.SelectionKind.Secondary : CardView.SelectionKind.None);
+            }
+        }
 
         /// <summary>Editor-time construction (called by BattleSceneBuilder); the built children and
         /// references serialize into the scene.</summary>
@@ -36,8 +84,11 @@ namespace FateWeaver.Unity
             var viewport = BattleUiKit.Rect(rect, "Viewport");
             BattleUiKit.Stretch(viewport);
             viewport.gameObject.AddComponent<RectMask2D>();
-            var backdrop = viewport.gameObject.AddComponent<Image>();
-            backdrop.color = new Color(0f, 0f, 0f, 0.25f);
+            _backdrop = viewport.gameObject.AddComponent<Image>();
+            _backdrop.color = BackdropColor;
+            _railClickButton = viewport.gameObject.AddComponent<Button>();
+            _railClickButton.targetGraphic = _backdrop;
+            _railClickButton.transition = Selectable.Transition.None;
 
             var content = BattleUiKit.Rect(viewport, "Content");
             content.anchorMin = new Vector2(0f, 0f);

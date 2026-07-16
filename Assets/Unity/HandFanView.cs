@@ -6,7 +6,8 @@ using UnityEngine;
 namespace FateWeaver.Unity
 {
     /// <summary>The hand as a slight curved fan (spec §2): full CardViews positioned by HandFanLayout,
-    /// no layout group — poses are absolute so cards can tilt.</summary>
+    /// no layout group — poses are absolute so cards can tilt. Hover, held, and ghost presentation
+    /// are layered on each prefab instance without changing the underlying card data.</summary>
     public sealed class HandFanView : MonoBehaviour
     {
         [SerializeField] private CardView _cardPrefab;
@@ -17,6 +18,8 @@ namespace FateWeaver.Unity
         private static readonly Vector2 CardSize = new Vector2(170f, 238f);
 
         private readonly List<CardView> _views = new List<CardView>();
+        private readonly List<HandCardHoverEffect> _hoverEffects = new List<HandCardHoverEffect>();
+        private readonly List<CanvasGroup> _groups = new List<CanvasGroup>();
 
         public void EditorBuild(CardView cardPrefab)
         {
@@ -31,6 +34,8 @@ namespace FateWeaver.Unity
             }
 
             _views.Clear();
+            _hoverEffects.Clear();
+            _groups.Clear();
             var root = (RectTransform)transform;
             for (int i = 0; i < cards.Count; i++)
             {
@@ -43,7 +48,35 @@ namespace FateWeaver.Unity
                 rect.localRotation = Quaternion.Euler(0f, 0f, pose.AngleDegrees);
                 int captured = i;
                 view.Bind(cards[i], () => onClick?.Invoke(captured));
+                var hover = view.gameObject.AddComponent<HandCardHoverEffect>();
+                hover.Capture();
+                _hoverEffects.Add(hover);
+                _groups.Add(view.gameObject.AddComponent<CanvasGroup>());
                 _views.Add(view);
+            }
+        }
+
+        public void SetHeld(int index, bool value)
+        {
+            if (index >= 0 && index < _hoverEffects.Count)
+            {
+                _hoverEffects[index].Hold(value);
+            }
+        }
+
+        public void SetGhost(int index, bool value)
+        {
+            if (index >= 0 && index < _groups.Count)
+            {
+                _groups[index].alpha = value ? 0.35f : 1f;
+            }
+        }
+
+        public void SetHoverSuppressed(bool value)
+        {
+            foreach (var hover in _hoverEffects)
+            {
+                hover.SetSuppressed(value);
             }
         }
 

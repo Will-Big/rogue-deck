@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
-using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
+using FateWeaver.Simulation.Presentation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +19,6 @@ namespace FateWeaver.Unity
         private enum InputMode
         {
             Normal,
-            InterventionTargeting,
             AllyTargeting
         }
 
@@ -42,8 +41,9 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _turnButton;
         [SerializeField] private TMP_Text _turnButtonLabel;
         [SerializeField] private Button _resetButton;
-        [SerializeField] private Button _cancelButton;
-        [SerializeField] private GameObject _dimLayer;
+        [SerializeField] private CardSelectionController _selection;
+        [SerializeField] private Button _emptyClickCatcher;
+        [SerializeField] private Button _dimClickCatcher;
 
         private const int FateEnergyPerTurn = 3;
         private const int Seed = 1;
@@ -52,9 +52,7 @@ namespace FateWeaver.Unity
 
         private DeckCombatSession _session;
         private InputMode _inputMode;
-        private int _armedInterventionHandIndex = -1;
         private int _armedAllyTargetHandIndex = -1;
-        private int _firstSwapZoneIndex = -1;
         private readonly Dictionary<string, UnitView> _partyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, UnitView> _enemyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
@@ -64,12 +62,17 @@ namespace FateWeaver.Unity
         {
             _turnButton.onClick.AddListener(OnTurnButton);
             _resetButton.onClick.AddListener(StartSession);
-            _cancelButton.onClick.AddListener(OnCancelSelection);
+            _emptyClickCatcher.onClick.AddListener(OnEmptyClicked);
+            _dimClickCatcher.onClick.AddListener(OnEmptyClicked);
+            _selection.Initialize(ApplyCommand);
+            _rail.SetRailClicked(_selection.OnRailAreaClicked);
             StartSession();
         }
 
         private void StartSession()
         {
+            _selection.CancelSelection();
+            ClearAllyTargeting();
             if (_unitPrefab == null || _party == null || _party.Length == 0 || _party.Any(member => member == null || member.Deck == null))
             {
                 SetMessage("파티 CharacterAsset, 덱 또는 UnitView 프리팹이 연결되지 않았습니다.");
@@ -95,7 +98,6 @@ namespace FateWeaver.Unity
             BuildArtLookup();
             SpawnUnits();
             BindPiles();
-            ClearArmed();
             SetMessage("전투 시작.");
             RefreshAll();
         }
@@ -140,7 +142,8 @@ namespace FateWeaver.Unity
 
         private void OnHandClicked(int handIndex)
         {
-            if (_session == null || _inputMode != InputMode.Normal || handIndex < 0 || handIndex >= _session.Hand.Count)
+            if (_session == null || _inputMode != InputMode.Normal
+                || handIndex < 0 || handIndex >= _session.Hand.Count)
             {
                 return;
             }
@@ -151,30 +154,41 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            var def = _session.Hand[handIndex].Def;
-            if (def.Category == CardCategory.Execution)
+            var card = _session.Hand[handIndex];
+            var def = card.Def;
+            if (def.EnergyCost > _session.FateEnergy)
             {
-                if (PartyTargetRules.RequiresExplicitAllyTarget(def))
-                {
-                    _inputMode = InputMode.AllyTargeting;
-                    _armedAllyTargetHandIndex = handIndex;
-                    SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name) + " — 살아 있는 아군을 선택하세요.");
-                    RefreshSelections();
-                    return;
-                }
-
-                SetMessage(_session.PlayExecutionCard(handIndex)
-                    ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
-                    : "운명력이 부족하거나 낼 수 없습니다.");
-                ClearArmed();
-                RefreshAll();
+                SetMessage("운명력이 부족합니다.");
                 return;
             }
 
-            _inputMode = InputMode.InterventionTargeting;
-            _armedInterventionHandIndex = handIndex;
-            _firstSwapZoneIndex = -1;
-            SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name) + " — 레일에서 대상을 선택하세요.");
+            if (def.Category == CardCategory.Execution && PartyTargetRules.RequiresExplicitAllyTarget(def))
+            {
+                _selection.CancelSelection();
+                _inputMode = InputMode.AllyTargeting;
+                _armedAllyTargetHandIndex = handIndex;
+                _hand.SetHoverSuppressed(true);
+                _hand.SetHeld(handIndex, true);
+                SetMessage(PlaytestKoreanText.CardName(def.Id, def.Name)
+                    + " — 살아 있는 아군을 선택하세요.");
+                RefreshSelections();
+                return;
+            }
+
+            int requiredTargets = CardTargetRules.RequiredRailTargets(def);
+            if (_session.CurrentOrder.Count < requiredTargets)
+            {
+                SetMessage("대상으로 삼을 카드가 레일에 부족합니다.");
+                return;
+            }
+
+            _selection.BeginSelection(handIndex, requiredTargets, PresentationFor(card));
+            var name = PlaytestKoreanText.CardName(def.Id, def.Name);
+            SetMessage(requiredTargets == 0
+                ? name + " — 레일을 클릭해 배치하세요."
+                : requiredTargets == 1
+                    ? name + " — 대상을 클릭하세요."
+                    : name + " — 대상 " + requiredTargets + "개를 클릭하세요.");
             RefreshSelections();
         }
 
@@ -188,33 +202,69 @@ namespace FateWeaver.Unity
             bool targetIsAlive = PartyTargetRules.IsValidExplicitAllyTarget(_session.State, memberId);
             bool played = targetIsAlive && _session.PlayExecutionCard(_armedAllyTargetHandIndex, memberId);
             SetMessage(played ? "아군 대상 카드 배치." : "대상이 쓰러졌거나 카드를 낼 수 없습니다.");
-            ClearArmed();
+            ClearAllyTargeting();
             RefreshAll();
         }
 
         private void OnZoneClicked(int zoneIndex)
         {
-            if (_session == null || _inputMode != InputMode.InterventionTargeting || _armedInterventionHandIndex < 0)
+            if (_session == null || _inputMode == InputMode.AllyTargeting || _session.CurrentTurnResolved)
             {
                 return;
             }
 
-            var def = _session.Hand[_armedInterventionHandIndex].Def;
-            bool needsTwo = def.InterventionAction != null
-                && def.InterventionAction.Key == InterventionActionKeys.SwapExecutionOrder;
-            if (needsTwo && _firstSwapZoneIndex < 0)
+            var order = _session.CurrentOrder;
+            if (zoneIndex < 0 || zoneIndex >= order.Count)
             {
-                _firstSwapZoneIndex = zoneIndex;
-                SetMessage("교환할 두 번째 카드를 선택하세요.");
+                return;
+            }
+
+            _selection.OnZoneClicked(zoneIndex, PresentationFor(order[zoneIndex]));
+        }
+
+        private void OnEmptyClicked()
+        {
+            if (_selection.SelectionActive)
+            {
+                _selection.CancelSelection();
+                SetMessage("선택 취소.");
                 RefreshSelections();
                 return;
             }
 
-            bool played = needsTwo
-                ? _session.PlayInterventionCard(_armedInterventionHandIndex, _firstSwapZoneIndex, zoneIndex)
-                : _session.PlayInterventionCard(_armedInterventionHandIndex, zoneIndex);
-            SetMessage(played ? "개입 카드 적용." : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
-            ClearArmed();
+            if (_inputMode == InputMode.AllyTargeting)
+            {
+                ClearAllyTargeting();
+                SetMessage("선택 취소.");
+                RefreshSelections();
+            }
+        }
+
+        private void ApplyCommand(SelectionCommand command)
+        {
+            if (_session == null || command.HandIndex < 0 || command.HandIndex >= _session.Hand.Count)
+            {
+                SetMessage("선택한 카드를 더 이상 사용할 수 없습니다.");
+                RefreshAll();
+                return;
+            }
+
+            if (command.PlayExecution)
+            {
+                var def = _session.Hand[command.HandIndex].Def;
+                SetMessage(_session.PlayExecutionCard(command.HandIndex)
+                    ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
+                    : "운명력이 부족하거나 낼 수 없습니다.");
+            }
+            else if (command.PlayIntervention)
+            {
+                bool played = _session.PlayInterventionCard(
+                    command.HandIndex, command.TargetA, command.TargetB);
+                SetMessage(played
+                    ? "개입 카드 적용."
+                    : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+            }
+
             RefreshAll();
         }
 
@@ -225,41 +275,28 @@ namespace FateWeaver.Unity
                 return;
             }
 
+            _selection.CancelSelection();
             if (!_session.CurrentTurnResolved)
             {
                 _session.ResolveTurn();
-                ClearArmed();
                 SetMessage(_session.IsComplete
                     ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
                     : "턴 해석 완료.");
             }
             else if (_session.BeginNextTurn())
             {
-                ClearArmed();
                 SetMessage((_session.TurnIndex + 1) + "턴 준비 완료.");
             }
 
             RefreshAll();
         }
 
-        private void OnCancelSelection()
+        private void ClearAllyTargeting()
         {
-            if (_inputMode == InputMode.Normal)
-            {
-                return;
-            }
-
-            SetMessage("실행 취소.");
-            ClearArmed();
-            RefreshAll();
-        }
-
-        private void ClearArmed()
-        {
+            _hand.SetHeld(_armedAllyTargetHandIndex, false);
+            _hand.SetHoverSuppressed(false);
             _inputMode = InputMode.Normal;
-            _armedInterventionHandIndex = -1;
             _armedAllyTargetHandIndex = -1;
-            _firstSwapZoneIndex = -1;
         }
 
         private void BuildArtLookup()
@@ -349,21 +386,16 @@ namespace FateWeaver.Unity
 
         private void RefreshSelections()
         {
-            bool intervention = _inputMode == InputMode.InterventionTargeting;
             bool ally = _inputMode == InputMode.AllyTargeting;
-            _dimLayer.SetActive(intervention);
-            _cancelButton.gameObject.SetActive(intervention || ally);
-            _hand.SetSelection(
-                ally ? _armedAllyTargetHandIndex : _armedInterventionHandIndex,
-                CardView.SelectionKind.Primary);
-            _rail.SetSelection(_firstSwapZoneIndex, CardView.SelectionKind.Secondary);
-            _hand.SetInputEnabled(_inputMode == InputMode.Normal);
+            bool cardSelection = _selection.SelectionActive;
+            _hand.SetSelection(ally ? _armedAllyTargetHandIndex : -1, CardView.SelectionKind.Primary);
+            _hand.SetInputEnabled(!ally);
             _rail.SetInputEnabled(!ally);
-            _drawPile.SetInputEnabled(_inputMode == InputMode.Normal);
-            _discardPile.SetInputEnabled(_inputMode == InputMode.Normal);
-            _fullDeck.SetInputEnabled(_inputMode == InputMode.Normal);
-            _resetButton.interactable = _inputMode == InputMode.Normal;
-            _turnButton.interactable = _inputMode == InputMode.Normal && !_session.IsComplete;
+            _drawPile.SetInputEnabled(!ally && !cardSelection);
+            _discardPile.SetInputEnabled(!ally && !cardSelection);
+            _fullDeck.SetInputEnabled(!ally && !cardSelection);
+            _resetButton.interactable = !ally && !cardSelection;
+            _turnButton.interactable = !ally && !_session.IsComplete;
 
             foreach (var member in _session.State.Party)
             {
