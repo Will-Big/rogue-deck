@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -67,6 +68,21 @@ namespace FateWeaver.Unity
 
                 _views[i].SetSelection(
                     isPicked ? CardView.SelectionKind.Secondary : CardView.SelectionKind.None);
+            }
+        }
+
+        public void SetTargetSelection(
+            bool active,
+            IReadOnlyCollection<SelectionTargetRef> candidates,
+            IReadOnlyList<SelectionTargetRef> pickedTargets)
+        {
+            for (int i = 0; i < _views.Count; i++)
+            {
+                var target = SelectionTargetRef.ExecutionCard(i);
+                bool candidate = Contains(candidates, target);
+                int selectionOrder = active ? IndexOf(pickedTargets, target) + 1 : 0;
+                _views[i].SetTargetSelection(active, candidate, selectionOrder);
+                _views[i].SetInteractable(!active || candidate);
             }
         }
 
@@ -206,6 +222,46 @@ namespace FateWeaver.Unity
             {
                 _preview.gameObject.SetActive(false);
             }
+        }
+
+        private static bool Contains(
+            IReadOnlyCollection<SelectionTargetRef> targets,
+            SelectionTargetRef target)
+        {
+            if (targets == null)
+            {
+                return false;
+            }
+
+            foreach (var candidate in targets)
+            {
+                if (candidate.Equals(target))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int IndexOf(
+            IReadOnlyList<SelectionTargetRef> targets,
+            SelectionTargetRef target)
+        {
+            if (targets == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (targets[i].Equals(target))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

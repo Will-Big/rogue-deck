@@ -72,6 +72,31 @@ namespace FateWeaver.Unity
             }
         }
 
+        public bool TryGetCardScreenPoint(int index, out Vector2 screenPoint)
+        {
+            if (index < 0 || index >= _views.Count)
+            {
+                screenPoint = Vector2.zero;
+                return false;
+            }
+
+            screenPoint = RectTransformUtility.WorldToScreenPoint(
+                null, _views[index].transform.position);
+            return true;
+        }
+
+        public void SetTargetSelection(int selectedIndex, bool active)
+        {
+            for (int i = 0; i < _views.Count; i++)
+            {
+                _groups[i].alpha = !active || i == selectedIndex ? 1f : 0.35f;
+                _views[i].SetInteractable(!active);
+                _views[i].SetSelection(active && i == selectedIndex
+                    ? CardView.SelectionKind.Primary
+                    : CardView.SelectionKind.None);
+            }
+        }
+
         public void SetHoverSuppressed(bool value)
         {
             foreach (var hover in _hoverEffects)

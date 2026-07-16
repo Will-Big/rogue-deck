@@ -21,6 +21,9 @@ namespace FateWeaver.Unity
         [SerializeField] private GameObject _ownerChip;
         [SerializeField] private Image _ownerChipBackground;
         [SerializeField] private TMP_Text _ownerChipText;
+        [SerializeField] private GameObject _targetDim;
+        [SerializeField] private GameObject _targetOrderBadge;
+        [SerializeField] private TMP_Text _targetOrderText;
         [SerializeField] private Button _button;
 
         private static readonly Color ExecutionFrame = new Color(0.55f, 0.42f, 0.22f, 1f);
@@ -83,6 +86,18 @@ namespace FateWeaver.Unity
                 kind == CardView.SelectionKind.Primary ? OutlinePrimary :
                 kind == CardView.SelectionKind.Secondary ? OutlineSecondary :
                 OutlineNone;
+        }
+
+        public void SetTargetSelection(bool active, bool candidate, int selectionOrder)
+        {
+            _targetDim.SetActive(active && !candidate);
+            SetSelection(active && candidate
+                ? CardView.SelectionKind.Primary
+                : CardView.SelectionKind.None);
+            _targetOrderBadge.SetActive(selectionOrder > 0);
+            _targetOrderText.text = selectionOrder > 0
+                ? selectionOrder.ToString()
+                : string.Empty;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -164,6 +179,23 @@ namespace FateWeaver.Unity
             ownerText.raycastTarget = false;
             ownerChip.gameObject.SetActive(false);
 
+            var targetDim = BattleUiKit.Image(root, "TargetDim", new Color(0f, 0f, 0f, 0.55f));
+            BattleUiKit.Stretch(targetDim.rectTransform);
+            targetDim.raycastTarget = false;
+
+            var targetOrderBadge = BattleUiKit.Image(
+                root, "TargetOrderBadge", new Color(0.95f, 0.72f, 0.25f, 1f));
+            var targetOrderBadgeRect = targetOrderBadge.rectTransform;
+            targetOrderBadgeRect.anchorMin = targetOrderBadgeRect.anchorMax = new Vector2(1f, 1f);
+            targetOrderBadgeRect.anchoredPosition = new Vector2(-16f, -14f);
+            targetOrderBadgeRect.sizeDelta = new Vector2(28f, 22f);
+            targetOrderBadge.raycastTarget = false;
+
+            var targetOrderText = BattleUiKit.Text(
+                targetOrderBadgeRect, "Order", 14f, TextAlignmentOptions.Center);
+            BattleUiKit.Stretch(targetOrderText.rectTransform);
+            targetOrderText.color = new Color(0.12f, 0.12f, 0.16f, 1f);
+
             // Click/hover land on the frame graphic; the handlers live on this root (uGUI bubbles up).
             var button = root.gameObject.AddComponent<Button>();
             button.targetGraphic = frame;
@@ -177,7 +209,12 @@ namespace FateWeaver.Unity
             view._ownerChip = ownerChip.gameObject;
             view._ownerChipBackground = ownerBackground;
             view._ownerChipText = ownerText;
+            view._targetDim = targetDim.gameObject;
+            view._targetOrderBadge = targetOrderBadge.gameObject;
+            view._targetOrderText = targetOrderText;
             view._button = button;
+            targetDim.gameObject.SetActive(false);
+            targetOrderBadge.gameObject.SetActive(false);
             return view;
         }
     }

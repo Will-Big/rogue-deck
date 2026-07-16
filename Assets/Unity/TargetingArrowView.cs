@@ -10,8 +10,6 @@ namespace FateWeaver.Unity
         [SerializeField] private RectTransform _head;
 
         private static readonly Color ArrowColor = new Color(0.95f, 0.72f, 0.25f, 0.9f);
-        private Vector2 _startLocal;
-
         /// <summary>Editor-scene construction hook used only by BattleSceneBuilder.</summary>
         public static TargetingArrowView EditorCreate(RectTransform overlay)
         {
@@ -39,19 +37,19 @@ namespace FateWeaver.Unity
             return view;
         }
 
-        public void Show(Vector2 startScreen)
+        public void Show(Vector2 startScreen, Vector2 currentScreen)
         {
-            _startLocal = ToLocal(startScreen);
             gameObject.SetActive(true);
-            Track(startScreen);
+            Track(startScreen, currentScreen);
         }
 
-        public void Track(Vector2 currentScreen)
+        public void Track(Vector2 startScreen, Vector2 currentScreen)
         {
+            var start = ToLocal(startScreen);
             var current = ToLocal(currentScreen);
-            var delta = current - _startLocal;
+            var delta = current - start;
             float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
-            _shaft.anchoredPosition = _startLocal;
+            _shaft.anchoredPosition = start;
             _shaft.sizeDelta = new Vector2(delta.magnitude, 6f);
             _shaft.localRotation = Quaternion.Euler(0f, 0f, angle);
             _head.anchoredPosition = current;

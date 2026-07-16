@@ -18,6 +18,9 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private GameObject _targetHighlight;
+        [SerializeField] private GameObject _targetDim;
+        [SerializeField] private GameObject _targetOrderBadge;
+        [SerializeField] private TMP_Text _targetOrderText;
         [SerializeField] private Button _targetButton;
 
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
@@ -86,15 +89,18 @@ namespace FateWeaver.Unity
 
         public void SetTargetable(bool value)
         {
-            if (_targetButton != null)
-            {
-                _targetButton.interactable = value;
-            }
+            SetTargetSelection(value, value, 0);
+        }
 
-            if (_targetHighlight != null)
-            {
-                _targetHighlight.SetActive(value);
-            }
+        public void SetTargetSelection(bool active, bool candidate, int selectionOrder)
+        {
+            _targetDim.SetActive(active && !candidate);
+            _targetHighlight.SetActive(active && candidate);
+            _targetButton.interactable = active && candidate;
+            _targetOrderBadge.SetActive(selectionOrder > 0);
+            _targetOrderText.text = selectionOrder > 0
+                ? selectionOrder.ToString()
+                : string.Empty;
         }
 
         /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
@@ -135,13 +141,35 @@ namespace FateWeaver.Unity
             var statusText = BattleUiKit.Text(root, "Statuses", 13f, TextAlignmentOptions.Center);
             BattleUiKit.Anchor(statusText.rectTransform, 0f, 0.10f, 1f, 0.16f);
 
+            var targetDim = BattleUiKit.Image(root, "TargetDim", new Color(0f, 0f, 0f, 0.55f));
+            BattleUiKit.Stretch(targetDim.rectTransform);
+            targetDim.raycastTarget = false;
+
+            var targetOrderBadge = BattleUiKit.Image(
+                root, "TargetOrderBadge", new Color(0.95f, 0.72f, 0.25f, 1f));
+            var targetOrderBadgeRect = targetOrderBadge.rectTransform;
+            targetOrderBadgeRect.anchorMin = targetOrderBadgeRect.anchorMax = new Vector2(1f, 1f);
+            targetOrderBadgeRect.anchoredPosition = new Vector2(-18f, -18f);
+            targetOrderBadgeRect.sizeDelta = new Vector2(32f, 24f);
+            targetOrderBadge.raycastTarget = false;
+
+            var targetOrderText = BattleUiKit.Text(
+                targetOrderBadgeRect, "Order", 16f, TextAlignmentOptions.Center);
+            BattleUiKit.Stretch(targetOrderText.rectTransform);
+            targetOrderText.color = new Color(0.12f, 0.12f, 0.16f, 1f);
+
             view._portrait = portrait;
             view._hpFill = hpFill.rectTransform;
             view._hpText = hpText;
             view._nameText = nameText;
             view._statusText = statusText;
             view._targetHighlight = targetHighlight.gameObject;
+            view._targetDim = targetDim.gameObject;
+            view._targetOrderBadge = targetOrderBadge.gameObject;
+            view._targetOrderText = targetOrderText;
             view._targetButton = targetButton;
+            targetDim.gameObject.SetActive(false);
+            targetOrderBadge.gameObject.SetActive(false);
             view.SetTargetable(false);
             return view;
         }
