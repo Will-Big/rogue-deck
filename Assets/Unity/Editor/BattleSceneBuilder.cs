@@ -17,6 +17,7 @@ namespace FateWeaver.Unity.Editor
         private const string CardPrefabPath = "Assets/Unity/Prefabs/CardView.prefab";
         private const string UnitPrefabPath = "Assets/Unity/Prefabs/UnitView.prefab";
         private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
+        private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
         private const string MemberAPath = "Assets/Unity/CharacterSO/member_a.asset";
         private const string MemberBPath = "Assets/Unity/CharacterSO/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
@@ -45,6 +46,7 @@ namespace FateWeaver.Unity.Editor
             EnsureCardOwnerChip();
             EnsureUnitPrefab();
             EnsureRailCardPrefab();
+            EnsureTargetingArrowPrefab();
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -58,9 +60,10 @@ namespace FateWeaver.Unity.Editor
             var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
             var unitPrefab = AssetDatabase.LoadAssetAtPath<UnitView>(UnitPrefabPath);
             var railCardPrefab = AssetDatabase.LoadAssetAtPath<RailCardView>(RailCardPrefabPath);
-            if (cardPrefab == null || unitPrefab == null || railCardPrefab == null)
+            var targetingArrowPrefab = AssetDatabase.LoadAssetAtPath<TargetingArrowView>(TargetingArrowPrefabPath);
+            if (cardPrefab == null || unitPrefab == null || railCardPrefab == null || targetingArrowPrefab == null)
             {
-                Debug.LogError("BattleSceneBuilder: missing CardView or UnitView prefab.");
+                Debug.LogError("BattleSceneBuilder: missing required battle view prefab.");
                 return;
             }
 
@@ -81,10 +84,20 @@ namespace FateWeaver.Unity.Editor
             {
                 uiModule.actionsAsset = actions;
             }
+            else
+            {
+                Debug.LogWarning("BattleSceneBuilder: UIInputActions asset is missing; UI input needs an assigned actions asset.");
+            }
 
             var background = BattleUiKit.Image(canvasRect, "Background", new Color(0.08f, 0.1f, 0.16f, 1f));
             BattleUiKit.Stretch(background.rectTransform);
             background.raycastTarget = false;
+
+            var clickCatcher = BattleUiKit.Image(canvasRect, "ClickCatcher", new Color(0f, 0f, 0f, 0f));
+            BattleUiKit.Stretch(clickCatcher.rectTransform);
+            var emptyClickCatcher = clickCatcher.gameObject.AddComponent<Button>();
+            emptyClickCatcher.targetGraphic = clickCatcher;
+            emptyClickCatcher.transition = Selectable.Transition.None;
 
             // --- stage: player row left, enemy row right, each unit carries its own HP bar ---
             var stage = BattleUiKit.Rect(canvasRect, "Stage");
@@ -95,6 +108,9 @@ namespace FateWeaver.Unity.Editor
             // --- overlay (popups + hover preview; forced last sibling below) ---
             var overlay = BattleUiKit.Rect(canvasRect, "Overlay");
             BattleUiKit.Stretch(overlay);
+            var targetingArrowObject = (GameObject)PrefabUtility.InstantiatePrefab(
+                targetingArrowPrefab.gameObject, overlay);
+            var targetingArrow = targetingArrowObject.GetComponent<TargetingArrowView>();
 
             // --- execution rail ---
             var railRect = BattleUiKit.Rect(canvasRect, "ExecutionRail");
@@ -133,23 +149,39 @@ namespace FateWeaver.Unity.Editor
             var resetButton = MakeButton(canvasRect, "ResetButton", "초기화", 18f, out _);
             Place((RectTransform)resetButton.transform, new Vector2(0f, 1f), new Vector2(90f, -40f), new Vector2(120f, 40f));
 
-            // --- intervention dim and selection cancel (cancel remains usable in both targeting modes) ---
+            var confirmButton = MakeButton(canvasRect, "ConfirmButton", "확인", 22f, out _);
+            Place((RectTransform)confirmButton.transform, new Vector2(1f, 0f), new Vector2(-120f, 150f), new Vector2(160f, 52f));
+            confirmButton.gameObject.SetActive(false);
+
+            // --- multi-target dim; clicking the dim cancels without consuming the card ---
             var dimLayer = BattleUiKit.Rect(canvasRect, "SelectionDim");
             BattleUiKit.Stretch(dimLayer);
             var dimImage = BattleUiKit.Image(dimLayer, "Dim", new Color(0f, 0f, 0f, 0.6f));
             BattleUiKit.Stretch(dimImage.rectTransform);
-            var cancelButton = MakeButton(canvasRect, "CancelButton", "실행 취소", 20f, out _);
-            Place((RectTransform)cancelButton.transform, new Vector2(0f, 0.5f), new Vector2(110f, 0f), new Vector2(150f, 48f));
+            var dimClickCatcher = dimImage.gameObject.AddComponent<Button>();
+            dimClickCatcher.targetGraphic = dimImage;
+            dimClickCatcher.transition = Selectable.Transition.None;
             dimLayer.gameObject.SetActive(false);
-            cancelButton.gameObject.SetActive(false);
 
             // Z-order: the dim covers everything except the rail (the selection candidates) and the
-            // message line; popups/hover preview stay on the very top.
+            // confirmation/message layers; popups and the targeting arrow stay on top.
             dimLayer.SetAsLastSibling();
             railRect.SetAsLastSibling();
+            ((RectTransform)confirmButton.transform).SetAsLastSibling();
             ((RectTransform)message.transform).SetAsLastSibling();
             overlay.SetAsLastSibling();
-            ((RectTransform)cancelButton.transform).SetAsLastSibling();
+
+            var selectionGo = new GameObject("CardSelectionController");
+            var selection = selectionGo.AddComponent<CardSelectionController>();
+            var selectionSo = new SerializedObject(selection);
+            selectionSo.FindProperty("_hand").objectReferenceValue = hand;
+            selectionSo.FindProperty("_rail").objectReferenceValue = rail;
+            selectionSo.FindProperty("_dimLayer").objectReferenceValue = dimLayer.gameObject;
+            selectionSo.FindProperty("_confirmButton").objectReferenceValue = confirmButton;
+            selectionSo.FindProperty("_overlay").objectReferenceValue = overlay;
+            selectionSo.FindProperty("_cardPrefab").objectReferenceValue = cardPrefab;
+            selectionSo.FindProperty("_arrow").objectReferenceValue = targetingArrow;
+            selectionSo.ApplyModifiedPropertiesWithoutUndo();
 
             // --- controller wiring (field names must match BattleScreenController) ---
             var controllerGo = new GameObject("BattleScreenController");
@@ -182,8 +214,9 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_turnButton").objectReferenceValue = turnButton;
             so.FindProperty("_turnButtonLabel").objectReferenceValue = turnLabel;
             so.FindProperty("_resetButton").objectReferenceValue = resetButton;
-            so.FindProperty("_cancelButton").objectReferenceValue = cancelButton;
-            so.FindProperty("_dimLayer").objectReferenceValue = dimLayer.gameObject;
+            so.FindProperty("_selection").objectReferenceValue = selection;
+            so.FindProperty("_emptyClickCatcher").objectReferenceValue = emptyClickCatcher;
+            so.FindProperty("_dimClickCatcher").objectReferenceValue = dimClickCatcher;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -252,6 +285,20 @@ namespace FateWeaver.Unity.Editor
                     new Vector2(96f, 132f));
                 view.gameObject.name = "RailCardView";
                 PrefabUtility.SaveAsPrefabAsset(view.gameObject, RailCardPrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
+        }
+
+        private static void EnsureTargetingArrowPrefab()
+        {
+            var temporaryRoot = new GameObject("TargetingArrowPrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = TargetingArrowView.EditorCreate((RectTransform)temporaryRoot.transform);
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, TargetingArrowPrefabPath);
             }
             finally
             {
