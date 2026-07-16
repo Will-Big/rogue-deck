@@ -94,7 +94,8 @@ namespace FateWeaver.Simulation.Presentation
             if ((Phase != SelectionPhase.PickSingleTarget
                     && Phase != SelectionPhase.PickMultipleTargets)
                 || target.Kind != _targetKind
-                || _picked.Contains(target))
+                || _picked.Contains(target)
+                || _picked.Count >= RequiredTargets)
             {
                 return SelectionResult.None;
             }
@@ -130,8 +131,15 @@ namespace FateWeaver.Simulation.Presentation
 
         public void RejectCompletion(IReadOnlyCollection<SelectionTargetRef> validTargets)
         {
-            var validTargetSet = new HashSet<SelectionTargetRef>(validTargets);
-            _picked.RemoveAll(target => !validTargetSet.Contains(target));
+            if (RequiredTargets == 1)
+            {
+                _picked.Clear();
+            }
+            else
+            {
+                var validTargetSet = new HashSet<SelectionTargetRef>(validTargets);
+                _picked.RemoveAll(target => !validTargetSet.Contains(target));
+            }
 
             Phase = RequiredTargets <= 0
                 ? SelectionPhase.ConfirmPlacement

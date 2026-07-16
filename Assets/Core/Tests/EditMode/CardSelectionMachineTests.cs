@@ -54,6 +54,22 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Pending_single_target_completion_ignores_another_target()
+        {
+            var machine = new CardSelectionMachine();
+            var first = SelectionTargetRef.PartyMember("member-a");
+            var second = SelectionTargetRef.PartyMember("member-b");
+            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+
+            Assert.IsTrue(machine.ClickTarget(first).IsComplete);
+
+            var result = machine.ClickTarget(second);
+
+            Assert.IsFalse(result.IsComplete);
+            CollectionAssert.AreEqual(new[] { first }, machine.PickedTargets);
+        }
+
+        [Test]
         public void Target_from_wrong_domain_is_ignored()
         {
             var machine = new CardSelectionMachine();
@@ -123,6 +139,23 @@ namespace FateWeaver.Tests
             machine.RejectCompletion(new[] { second, SelectionTargetRef.ExecutionCard(5) });
 
             Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
+            CollectionAssert.AreEqual(new[] { second }, machine.PickedTargets);
+        }
+
+        [Test]
+        public void Rejected_single_target_completion_clears_pick_and_allows_another_target()
+        {
+            var machine = new CardSelectionMachine();
+            var first = SelectionTargetRef.PartyMember("member-a");
+            var second = SelectionTargetRef.PartyMember("member-b");
+            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+            machine.ClickTarget(first);
+
+            machine.RejectCompletion(new[] { first, second });
+
+            CollectionAssert.IsEmpty(machine.PickedTargets);
+            Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
+            Assert.IsTrue(machine.ClickTarget(second).IsComplete);
             CollectionAssert.AreEqual(new[] { second }, machine.PickedTargets);
         }
 
