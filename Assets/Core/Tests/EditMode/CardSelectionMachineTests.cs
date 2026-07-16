@@ -143,6 +143,25 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Rejected_completion_with_all_required_targets_still_valid_stays_ready_to_confirm()
+        {
+            var machine = new CardSelectionMachine();
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(3);
+            machine.SelectCard(4, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(first);
+            machine.ClickTarget(second);
+            machine.Confirm();
+
+            machine.RejectCompletion(new[] { first, second });
+
+            Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
+            var result = machine.Confirm();
+            Assert.IsTrue(result.IsComplete);
+            CollectionAssert.AreEqual(new[] { first, second }, result.Targets);
+        }
+
+        [Test]
         public void Rejected_single_target_completion_clears_pick_and_allows_another_target()
         {
             var machine = new CardSelectionMachine();

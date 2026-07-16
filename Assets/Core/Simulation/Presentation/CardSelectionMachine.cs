@@ -145,7 +145,9 @@ namespace FateWeaver.Simulation.Presentation
                 ? SelectionPhase.ConfirmPlacement
                 : RequiredTargets == 1
                     ? SelectionPhase.PickSingleTarget
-                    : SelectionPhase.PickMultipleTargets;
+                    : _picked.Count >= RequiredTargets
+                        ? SelectionPhase.ReadyToConfirm
+                        : SelectionPhase.PickMultipleTargets;
         }
 
         public void Cancel()
