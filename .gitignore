@@ -72,6 +72,9 @@ crashlytics-build.properties
 # ============================================
 /test-results.xml
 
+# Local Git worktrees used for isolated feature development
+/.worktrees/
+
 # ============================================
 # Headless .NET test project (FateWeaver.Tests.Headless)
 # Ignore build output, but KEEP the hand-written .csproj
