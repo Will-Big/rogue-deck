@@ -15,99 +15,136 @@ namespace FateWeaver.Tests
         public void Zero_target_card_waits_for_apply_area_click()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(2, 0);
+            machine.SelectCard(2, SelectionTargetKind.None, 0);
             Assert.AreEqual(SelectionPhase.ConfirmPlacement, machine.Phase);
 
-            var command = machine.ClickApplyArea();
+            var result = machine.ClickApplyArea();
 
-            Assert.IsTrue(command.PlayExecution);
-            Assert.AreEqual(2, command.HandIndex);
-            Assert.AreEqual(SelectionPhase.Idle, machine.Phase);
+            Assert.IsTrue(result.IsComplete);
+            Assert.AreEqual(2, result.HandIndex);
+            CollectionAssert.IsEmpty(result.Targets);
+            Assert.AreEqual(SelectionPhase.ConfirmPlacement, machine.Phase);
         }
 
         [Test]
         public void Apply_area_click_does_nothing_while_picking_targets()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 1);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 1);
 
-            var command = machine.ClickApplyArea();
+            var result = machine.ClickApplyArea();
 
-            Assert.IsFalse(command.PlayExecution || command.PlayIntervention);
+            Assert.IsFalse(result.IsComplete);
             Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
         }
 
         [Test]
-        public void Single_target_commits_on_target_click()
+        public void Single_party_target_completes_without_confirmation()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(1, 1);
+            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+            var target = SelectionTargetRef.PartyMember("member-b");
 
-            var command = machine.ClickTarget(3);
+            var result = machine.ClickTarget(target);
 
-            Assert.IsTrue(command.PlayIntervention);
-            Assert.AreEqual(1, command.HandIndex);
-            Assert.AreEqual(3, command.TargetA);
-            Assert.AreEqual(-1, command.TargetB);
-            Assert.AreEqual(SelectionPhase.Idle, machine.Phase);
+            Assert.IsTrue(result.IsComplete);
+            Assert.AreEqual(1, result.HandIndex);
+            CollectionAssert.AreEqual(new[] { target }, result.Targets);
+            Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
+        }
+
+        [Test]
+        public void Target_from_wrong_domain_is_ignored()
+        {
+            var machine = new CardSelectionMachine();
+            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+
+            var result = machine.ClickTarget(SelectionTargetRef.ExecutionCard(0));
+
+            Assert.IsFalse(result.IsComplete);
+            Assert.AreEqual(0, machine.PickedTargets.Count);
         }
 
         [Test]
         public void Target_click_in_confirm_placement_is_ignored()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 0);
+            machine.SelectCard(0, SelectionTargetKind.None, 0);
 
-            var command = machine.ClickTarget(1);
+            var result = machine.ClickTarget(SelectionTargetRef.ExecutionCard(1));
 
-            Assert.IsFalse(command.PlayExecution || command.PlayIntervention);
+            Assert.IsFalse(result.IsComplete);
             Assert.AreEqual(SelectionPhase.ConfirmPlacement, machine.Phase);
         }
 
         [Test]
-        public void Two_target_flow_requires_distinct_picks_then_confirm()
+        public void Multiple_targets_require_explicit_confirmation()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(4, 2);
-            Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(3);
+            machine.SelectCard(4, SelectionTargetKind.ExecutionCard, 2);
 
-            Assert.IsFalse(machine.ClickTarget(1).PlayIntervention);
-            CollectionAssert.AreEqual(new[] { 1 }, machine.PickedTargets);
-
-            Assert.IsFalse(machine.ClickTarget(1).PlayIntervention);
-            CollectionAssert.AreEqual(new[] { 1 }, machine.PickedTargets);
-
-            Assert.IsFalse(machine.ClickTarget(3).PlayIntervention);
+            Assert.IsFalse(machine.ClickTarget(first).IsComplete);
+            Assert.IsFalse(machine.ClickTarget(first).IsComplete);
+            Assert.IsFalse(machine.ClickTarget(second).IsComplete);
             Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
+            CollectionAssert.AreEqual(new[] { first, second }, machine.PickedTargets);
 
-            var command = machine.Confirm();
-
-            Assert.IsTrue(command.PlayIntervention);
-            Assert.AreEqual(4, command.HandIndex);
-            Assert.AreEqual(1, command.TargetA);
-            Assert.AreEqual(3, command.TargetB);
-            Assert.AreEqual(SelectionPhase.Idle, machine.Phase);
+            var result = machine.Confirm();
+            Assert.IsTrue(result.IsComplete);
+            CollectionAssert.AreEqual(new[] { first, second }, result.Targets);
         }
 
         [Test]
         public void Confirm_before_requirement_met_does_nothing()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 2);
-            machine.ClickTarget(1);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(SelectionTargetRef.ExecutionCard(1));
 
-            var command = machine.Confirm();
+            var result = machine.Confirm();
 
-            Assert.IsFalse(command.PlayIntervention);
+            Assert.IsFalse(result.IsComplete);
             Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
         }
 
         [Test]
-        public void Cancel_clears_everything_without_command()
+        public void Rejected_completion_removes_invalid_picks_and_resumes_selection()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 2);
-            machine.ClickTarget(1);
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(3);
+            machine.SelectCard(4, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(first);
+            machine.ClickTarget(second);
+            machine.Confirm();
+
+            machine.RejectCompletion(new[] { second, SelectionTargetRef.ExecutionCard(5) });
+
+            Assert.AreEqual(SelectionPhase.PickMultipleTargets, machine.Phase);
+            CollectionAssert.AreEqual(new[] { second }, machine.PickedTargets);
+        }
+
+        [Test]
+        public void Successful_completion_is_the_only_operation_that_returns_to_idle()
+        {
+            var machine = new CardSelectionMachine();
+            machine.SelectCard(2, SelectionTargetKind.PartyMember, 1);
+            machine.ClickTarget(SelectionTargetRef.PartyMember("member-a"));
+
+            machine.CommitSucceeded();
+
+            Assert.AreEqual(SelectionPhase.Idle, machine.Phase);
+            Assert.AreEqual(0, machine.PickedTargets.Count);
+        }
+
+        [Test]
+        public void Cancel_clears_everything_without_result()
+        {
+            var machine = new CardSelectionMachine();
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(SelectionTargetRef.ExecutionCard(1));
 
             machine.Cancel();
 
@@ -120,10 +157,10 @@ namespace FateWeaver.Tests
         public void Selecting_another_card_resets_previous_picks()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 2);
-            machine.ClickTarget(1);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(SelectionTargetRef.ExecutionCard(1));
 
-            machine.SelectCard(3, 1);
+            machine.SelectCard(3, SelectionTargetKind.PartyMember, 1);
 
             Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
             Assert.AreEqual(0, machine.PickedTargets.Count);
@@ -134,13 +171,15 @@ namespace FateWeaver.Tests
         public void Extra_target_click_after_ready_is_ignored()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(0, 2);
-            machine.ClickTarget(1);
-            machine.ClickTarget(2);
+            var first = SelectionTargetRef.ExecutionCard(1);
+            var second = SelectionTargetRef.ExecutionCard(2);
+            machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
+            machine.ClickTarget(first);
+            machine.ClickTarget(second);
             Assert.AreEqual(SelectionPhase.ReadyToConfirm, machine.Phase);
 
-            Assert.IsFalse(machine.ClickTarget(4).PlayIntervention);
-            CollectionAssert.AreEqual(new[] { 1, 2 }, machine.PickedTargets);
+            Assert.IsFalse(machine.ClickTarget(SelectionTargetRef.ExecutionCard(4)).IsComplete);
+            CollectionAssert.AreEqual(new[] { first, second }, machine.PickedTargets);
         }
     }
 }

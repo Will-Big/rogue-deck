@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -12,39 +13,47 @@ namespace FateWeaver.Simulation.Presentation
         ReadyToConfirm
     }
 
-    /// <summary>Command emitted when the UI has collected enough explicit input to call the session.</summary>
-    public readonly struct SelectionCommand
+    public readonly struct SelectionResult
     {
-        public bool PlayExecution { get; }
-        public bool PlayIntervention { get; }
-        public int HandIndex { get; }
-        public int TargetA { get; }
-        public int TargetB { get; }
+        private readonly SelectionTargetRef[] _targets;
 
-        private SelectionCommand(bool playExecution, bool playIntervention, int handIndex, int targetA, int targetB)
+        public bool IsComplete { get; }
+        public int HandIndex { get; }
+        public IReadOnlyList<SelectionTargetRef> Targets
+            => _targets ?? Array.Empty<SelectionTargetRef>();
+
+        private SelectionResult(
+            bool isComplete, int handIndex, SelectionTargetRef[] targets)
         {
-            PlayExecution = playExecution;
-            PlayIntervention = playIntervention;
+            IsComplete = isComplete;
             HandIndex = handIndex;
-            TargetA = targetA;
-            TargetB = targetB;
+            _targets = targets;
         }
 
-        public static SelectionCommand None => new SelectionCommand(false, false, -1, -1, -1);
+        public static SelectionResult None
+            => new SelectionResult(false, -1, Array.Empty<SelectionTargetRef>());
 
-        public static SelectionCommand Execution(int handIndex)
-            => new SelectionCommand(true, false, handIndex, -1, -1);
+        internal static SelectionResult Complete(
+            int handIndex, IReadOnlyCollection<SelectionTargetRef> targets)
+        {
+            var copy = new SelectionTargetRef[targets.Count];
+            int index = 0;
+            foreach (var target in targets)
+            {
+                copy[index++] = target;
+            }
 
-        public static SelectionCommand Intervention(int handIndex, int targetA, int targetB = -1)
-            => new SelectionCommand(false, true, handIndex, targetA, targetB);
+            return new SelectionResult(true, handIndex, copy);
+        }
     }
 
-    /// <summary>Pure selection-flow state machine. The Unity layer supplies clicks and applies emitted
-    /// commands; party-member targeting is intentionally handled by the party battle controller.</summary>
+    /// <summary>Pure selection-flow state machine. The Unity layer supplies target references,
+    /// applies completed results, and reports whether the commit succeeded.</summary>
     public sealed class CardSelectionMachine
     {
-        private readonly List<int> _picked = new List<int>();
-        private readonly ReadOnlyCollection<int> _pickedView;
+        private readonly List<SelectionTargetRef> _picked = new List<SelectionTargetRef>();
+        private readonly ReadOnlyCollection<SelectionTargetRef> _pickedView;
+        private SelectionTargetKind _targetKind;
 
         public CardSelectionMachine()
         {
@@ -54,13 +63,15 @@ namespace FateWeaver.Simulation.Presentation
         public SelectionPhase Phase { get; private set; } = SelectionPhase.Idle;
         public int SelectedHandIndex { get; private set; } = -1;
         public int RequiredTargets { get; private set; }
-        public IReadOnlyList<int> PickedTargets => _pickedView;
+        public IReadOnlyList<SelectionTargetRef> PickedTargets => _pickedView;
 
-        public void SelectCard(int handIndex, int requiredTargets)
+        public void SelectCard(
+            int handIndex, SelectionTargetKind targetKind, int requiredTargets)
         {
             Cancel();
             SelectedHandIndex = handIndex;
             RequiredTargets = requiredTargets;
+            _targetKind = targetKind;
             Phase = requiredTargets <= 0
                 ? SelectionPhase.ConfirmPlacement
                 : requiredTargets == 1
@@ -68,49 +79,65 @@ namespace FateWeaver.Simulation.Presentation
                     : SelectionPhase.PickMultipleTargets;
         }
 
-        public SelectionCommand ClickApplyArea()
+        public SelectionResult ClickApplyArea()
         {
             if (Phase != SelectionPhase.ConfirmPlacement)
             {
-                return SelectionCommand.None;
+                return SelectionResult.None;
             }
 
-            var command = SelectionCommand.Execution(SelectedHandIndex);
-            Cancel();
-            return command;
+            return SelectionResult.Complete(SelectedHandIndex, _picked);
         }
 
-        public SelectionCommand ClickTarget(int zoneIndex)
+        public SelectionResult ClickTarget(SelectionTargetRef target)
         {
+            if ((Phase != SelectionPhase.PickSingleTarget
+                    && Phase != SelectionPhase.PickMultipleTargets)
+                || target.Kind != _targetKind
+                || _picked.Contains(target))
+            {
+                return SelectionResult.None;
+            }
+
+            _picked.Add(target);
             if (Phase == SelectionPhase.PickSingleTarget)
             {
-                var command = SelectionCommand.Intervention(SelectedHandIndex, zoneIndex);
-                Cancel();
-                return command;
+                return SelectionResult.Complete(SelectedHandIndex, _picked);
             }
 
-            if (Phase == SelectionPhase.PickMultipleTargets && !_picked.Contains(zoneIndex))
+            if (_picked.Count >= RequiredTargets)
             {
-                _picked.Add(zoneIndex);
-                if (_picked.Count >= RequiredTargets)
-                {
-                    Phase = SelectionPhase.ReadyToConfirm;
-                }
+                Phase = SelectionPhase.ReadyToConfirm;
             }
 
-            return SelectionCommand.None;
+            return SelectionResult.None;
         }
 
-        public SelectionCommand Confirm()
+        public SelectionResult Confirm()
         {
             if (Phase != SelectionPhase.ReadyToConfirm)
             {
-                return SelectionCommand.None;
+                return SelectionResult.None;
             }
 
-            var command = SelectionCommand.Intervention(SelectedHandIndex, _picked[0], _picked[1]);
+            return SelectionResult.Complete(SelectedHandIndex, _picked);
+        }
+
+        public void CommitSucceeded()
+        {
             Cancel();
-            return command;
+        }
+
+        public void RejectCompletion(IReadOnlyCollection<SelectionTargetRef> validTargets)
+        {
+            var validTargetSet = new HashSet<SelectionTargetRef>(validTargets);
+            _picked.RemoveAll(target => !validTargetSet.Contains(target));
+
+            Phase = RequiredTargets <= 0
+                ? SelectionPhase.ConfirmPlacement
+                : RequiredTargets == 1
+                    ? SelectionPhase.PickSingleTarget
+                    : SelectionPhase.PickMultipleTargets;
         }
 
         public void Cancel()
@@ -118,6 +145,7 @@ namespace FateWeaver.Simulation.Presentation
             Phase = SelectionPhase.Idle;
             SelectedHandIndex = -1;
             RequiredTargets = 0;
+            _targetKind = SelectionTargetKind.None;
             _picked.Clear();
         }
     }
