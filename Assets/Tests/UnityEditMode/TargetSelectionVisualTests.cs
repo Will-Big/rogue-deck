@@ -45,9 +45,11 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 var view = UnitView.EditorCreate(
                     (RectTransform)root.transform, new Vector2(180f, 250f));
-                var highlight = (Image)typeof(UnitView)
-                    .GetField("_targetHighlight", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .GetValue(view);
+                var highlightField = typeof(UnitView)
+                    .GetField("_targetHighlight", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.AreEqual(typeof(GameObject), highlightField.FieldType);
+                var highlightObject = (GameObject)highlightField.GetValue(view);
+                var highlight = highlightObject.GetComponent<Image>();
 
                 view.SetTargetSelection(true, true, false);
                 Assert.AreEqual(CandidateOutline, highlight.color);

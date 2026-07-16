@@ -17,7 +17,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _hpText;
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _statusText;
-        [SerializeField] private Image _targetHighlight;
+        [SerializeField] private GameObject _targetHighlight;
         [SerializeField] private GameObject _targetDim;
         [SerializeField] private Button _targetButton;
 
@@ -97,8 +97,9 @@ namespace FateWeaver.Unity
         public void SetTargetSelection(bool active, bool candidate, bool selected)
         {
             _targetDim.SetActive(active && !candidate);
-            _targetHighlight.gameObject.SetActive(active && candidate);
-            _targetHighlight.color = selected ? TargetSelected : TargetCandidate;
+            _targetHighlight.SetActive(active && candidate);
+            _targetHighlight.GetComponent<Image>().color =
+                selected ? TargetSelected : TargetCandidate;
             _targetButton.interactable = active && candidate;
         }
 
@@ -149,7 +150,7 @@ namespace FateWeaver.Unity
             view._hpText = hpText;
             view._nameText = nameText;
             view._statusText = statusText;
-            view._targetHighlight = targetHighlight;
+            view._targetHighlight = targetHighlight.gameObject;
             view._targetDim = targetDim.gameObject;
             view._targetButton = targetButton;
             targetDim.gameObject.SetActive(false);
