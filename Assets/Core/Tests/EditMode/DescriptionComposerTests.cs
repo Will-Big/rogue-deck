@@ -114,6 +114,51 @@ namespace FateWeaver.Tests.EditMode
             Assert.AreEqual(string.Empty, DescriptionComposer.Describe(card, Korean));
         }
 
+        [Test]
+        public void Execution_card_with_null_effects_fails_fast()
+        {
+            var card = new CardDefinition(
+                "null_effects",
+                "null_effects",
+                Side.Player,
+                CardType.Skill,
+                5,
+                null)
+            {
+                Category = CardCategory.Execution
+            };
+
+            Assert.Throws<ArgumentException>(() =>
+                DescriptionComposer.Describe(card, Korean));
+        }
+
+        [Test]
+        public void Execution_card_with_intervention_action_fails_fast()
+        {
+            var card = Execution("execution_with_intervention") with
+            {
+                InterventionAction = new InterventionActionData(
+                    InterventionActionKeys.ChangeExecutionOrder,
+                    1,
+                    -2)
+            };
+
+            Assert.Throws<ArgumentException>(() =>
+                DescriptionComposer.Describe(card, Korean));
+        }
+
+        [Test]
+        public void Card_with_undefined_category_fails_fast()
+        {
+            var card = Execution("undefined_category") with
+            {
+                Category = (CardCategory)99
+            };
+
+            Assert.Throws<ArgumentException>(() =>
+                DescriptionComposer.Describe(card, Korean));
+        }
+
         [TestCase(-2, "소유자를 대형 전방으로 2칸 이동.")]
         [TestCase(2, "소유자를 대형 후방으로 2칸 이동.")]
         [TestCase(0, "소유자의 대형 위치를 유지.")]

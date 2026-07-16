@@ -33,7 +33,19 @@ namespace FateWeaver.Simulation.Descriptions
                 return fragment + ".";
             }
 
-            if (def.Effects == null || def.Effects.Count == 0)
+            if (def.Category != CardCategory.Execution)
+                throw new ArgumentException(
+                    "Card category must be execution or intervention.",
+                    nameof(def));
+            if (def.InterventionAction != null)
+                throw new ArgumentException(
+                    "Execution card cannot contain an intervention action.",
+                    nameof(def));
+            if (def.Effects == null)
+                throw new ArgumentException(
+                    "Execution card requires an effects collection.",
+                    nameof(def));
+            if (def.Effects.Count == 0)
                 return string.Empty;
 
             var sentences = new List<string>(def.Effects.Count);
