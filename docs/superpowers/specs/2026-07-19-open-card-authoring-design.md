@@ -37,11 +37,14 @@
 
 | 서브클래스 | 파라미터 | 대응 코어 키 |
 |---|---|---|
-| `DamageSpec` | Value | `EffectKeys.Damage` |
-| `ApplyStatusSpec` | StatusKeyRef, Value, Lifetime, LifetimeCount, Target | `EffectKeys.ApplyStatus` |
+| `DamageSpec` | Value, Selector | `EffectKeys.Damage` |
+| `ApplyStatusSpec` | StatusKeyRef, Value, Lifetime, LifetimeCount, Target, Selector | `EffectKeys.ApplyStatus` |
 | `GrantNextAttackBonusSpec` | Value | `EffectKeys.GrantNextPlayerAttackDamageBonus` |
 | `NullifyNextRewardSpec` | (없음) | `EffectKeys.NullifyNextPlayerConditionReward` |
-| `MoveFormationSpec` | Value, Selector | `EffectKeys.MoveFormation` |
+| `MoveFormationSpec` | Value (이동 거리, 음수=전방) | `EffectKeys.MoveFormation` |
+
+Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 효과(Damage, ApplyStatus)에만
+둔다. 현재 mapper는 모든 효과에 selector를 적용하지만 저작된 콘텐츠는 전부 None이므로 등가성에 영향 없다.
 
 각 서브클래스가 구현하는 것:
 
