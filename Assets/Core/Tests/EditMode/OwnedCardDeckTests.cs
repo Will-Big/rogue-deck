@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Cards;
@@ -29,7 +30,7 @@ namespace FateWeaver.Tests
                 Owned("draw", "warrior"),
                 Owned("hand", "warrior"),
                 Owned("discard", "warrior")
-            }, seed: 1);
+            }, new Random(1));
             deck.Draw(2);
             deck.DiscardFromHand(0);
 
@@ -47,7 +48,7 @@ namespace FateWeaver.Tests
             {
                 Owned("warrior_card", "warrior"),
                 Owned("mage_card", "mage")
-            }, seed: 1);
+            }, new Random(1));
             deck.Draw(1);
 
             deck.RemoveOwnedBy("warrior");
@@ -64,7 +65,7 @@ namespace FateWeaver.Tests
             {
                 Owned("warrior_card", "warrior"),
                 Owned("party_card", null)
-            }, seed: 1);
+            }, new Random(1));
             deck.Draw(1);
 
             deck.RemoveOwnedBy("warrior");
@@ -115,7 +116,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Legacy_definition_deck_assigns_legacy_player_owner()
         {
-            var deck = new Deck(new[] { Card("legacy") }, seed: 1);
+            var deck = new Deck(new[] { Card("legacy") }, new Random(1));
 
             Assert.AreEqual(CombatState.LegacyPlayerId, deck.DrawPile.Single().OwnerId);
         }

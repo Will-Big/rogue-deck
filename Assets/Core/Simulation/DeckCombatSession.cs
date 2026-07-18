@@ -134,7 +134,7 @@ namespace FateWeaver.Simulation
 
             ValidateBaseExecutionDefinitions(deckCards);
             _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
-            _deck = new Deck(deckCards, seed);
+            _deck = new Deck(deckCards, _state.Rng);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
             _partyTuning = partyTuning;
@@ -348,7 +348,7 @@ namespace FateWeaver.Simulation
 
             _state.Zone.Clear();
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
-            foreach (var enemyCard in _enemyPolicy.CardsForTurn(index))
+            foreach (var enemyCard in _enemyPolicy.CardsForTurn(index, _state.Rng))
             {
                 var inst = new ExecutionCardInstance(enemyCard)
                 {

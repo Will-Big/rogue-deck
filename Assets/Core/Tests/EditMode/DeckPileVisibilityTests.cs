@@ -15,7 +15,7 @@ namespace FateWeaver.Tests
             var deck = StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition).ToList();
             return new DeckCombatSession(
                 deck, 30, new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
-                GoblinDeck.Policy(1), 3, 5, 1);
+                GoblinDeck.Policy(), 3, 5, 1);
         }
 
         private static int IndexOfAffordableExecution(DeckCombatSession session)

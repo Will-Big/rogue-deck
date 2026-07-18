@@ -79,7 +79,7 @@ namespace FateWeaver.Unity
             _session = new DeckCombatSession(
                 loadouts,
                 enemies,
-                GoblinDeck.Policy(Seed),
+                GoblinDeck.Policy(),
                 tuning,
                 partyCards: null,
                 fateEnergyPerTurn: FateEnergyPerTurn,

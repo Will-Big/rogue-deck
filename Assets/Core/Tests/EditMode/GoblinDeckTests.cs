@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
@@ -54,10 +55,11 @@ namespace FateWeaver.Tests
         [Test]
         public void Policy_telegraphs_one_or_two_distinct_cards_per_turn()
         {
-            var policy = GoblinDeck.Policy(seed: 17);
+            var policy = GoblinDeck.Policy();
+            var rng = new Random(17);
             for (int turn = 0; turn < 50; turn++)
             {
-                var cards = policy.CardsForTurn(turn);
+                var cards = policy.CardsForTurn(turn, rng);
                 Assert.That(cards.Count, Is.InRange(1, 2));
                 Assert.AreEqual(cards.Count, cards.Select(c => c.Id).Distinct().Count());
             }
@@ -68,9 +70,10 @@ namespace FateWeaver.Tests
         {
             string Signature(int seed)
             {
-                var policy = GoblinDeck.Policy(seed);
+                var policy = GoblinDeck.Policy();
+                var rng = new Random(seed);
                 return string.Join("|", Enumerable.Range(0, 20).Select(turn =>
-                    string.Join(",", policy.CardsForTurn(turn).Select(c => c.Id))));
+                    string.Join(",", policy.CardsForTurn(turn, rng).Select(c => c.Id))));
             }
 
             Assert.AreEqual(Signature(7), Signature(7));

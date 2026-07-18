@@ -5,7 +5,8 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Draw pile / discard pile / hand for one combat, with a seeded shuffle.
+    /// <summary>Draw pile / discard pile / hand for one combat. Shuffles draw from the injected combat RNG
+    /// (CombatState.Rng — AGENTS.md rule 7), so the deck never owns its own randomness.
     /// Pure C# (no UnityEngine) so the loop is headless-testable and deterministic.</summary>
     public sealed class Deck
     {
@@ -16,14 +17,14 @@ namespace FateWeaver.Core.Combat
         private readonly ReadOnlyCollection<OwnedCard> _drawView;
         private readonly ReadOnlyCollection<OwnedCard> _discardView;
 
-        public Deck(IEnumerable<CardDefinition> cards, int seed)
-            : this(WithLegacyOwner(cards), seed)
+        public Deck(IEnumerable<CardDefinition> cards, Random rng)
+            : this(WithLegacyOwner(cards), rng)
         {
         }
 
-        public Deck(IEnumerable<OwnedCard> cards, int seed)
+        public Deck(IEnumerable<OwnedCard> cards, Random rng)
         {
-            _rng = new Random(seed);
+            _rng = rng ?? throw new ArgumentNullException(nameof(rng));
             foreach (var card in cards)
             {
                 _draw.Add(card);

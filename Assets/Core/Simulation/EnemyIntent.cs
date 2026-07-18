@@ -15,7 +15,7 @@ namespace FateWeaver.Simulation
             _turns = turns ?? Array.Empty<IReadOnlyList<CardDefinition>>();
         }
 
-        public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex) => ForTurn(turnIndex);
+        public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex, Random rng) => ForTurn(turnIndex);
 
         public IReadOnlyList<CardDefinition> ForTurn(int turnIndex)
         {

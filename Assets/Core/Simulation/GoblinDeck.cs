@@ -50,9 +50,9 @@ namespace FateWeaver.Simulation
         }
 
         /// <summary>The goblin's default turn policy: each turn telegraphs a variable 1..MaxCardsPerTurn
-        /// distinct cards from the catalog (deterministic by seed). Swap for another IEnemyTurnPolicy to
-        /// change behavior without touching the combat loop.</summary>
-        public static IEnemyTurnPolicy Policy(int seed)
-            => new RandomMovesetPolicy(AllCards(), minCards: 1, maxCards: MaxCardsPerTurn, seed: seed);
+        /// distinct cards from the catalog (randomness comes from the combat RNG). Swap for another
+        /// IEnemyTurnPolicy to change behavior without touching the combat loop.</summary>
+        public static IEnemyTurnPolicy Policy()
+            => new RandomMovesetPolicy(AllCards(), minCards: 1, maxCards: MaxCardsPerTurn);
     }
 }

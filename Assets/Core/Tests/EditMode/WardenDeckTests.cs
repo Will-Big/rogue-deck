@@ -60,10 +60,11 @@ namespace FateWeaver.Tests
         [Test]
         public void Warden_policy_draws_two_cards_and_locks_one()
         {
-            var policy = WardenDeck.Policy(seed: 17);
+            var policy = WardenDeck.Policy();
+            var rng = new System.Random(17);
             for (int turn = 0; turn < 6; turn++)
             {
-                var cards = policy.CardsForTurn(turn);
+                var cards = policy.CardsForTurn(turn, rng);
                 Assert.AreEqual(2, cards.Count);
                 Assert.AreEqual(1, cards.Count(c => c.StartsLocked));
             }

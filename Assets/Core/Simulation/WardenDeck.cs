@@ -58,7 +58,7 @@ namespace FateWeaver.Simulation
             Brace()
         };
 
-        public static IEnemyTurnPolicy Policy(int seed)
-            => new SelfLockPolicy(new ShuffleBagPolicy(Deck(), CardsPerTurn, seed), seed);
+        public static IEnemyTurnPolicy Policy()
+            => new SelfLockPolicy(new ShuffleBagPolicy(Deck(), CardsPerTurn));
     }
 }

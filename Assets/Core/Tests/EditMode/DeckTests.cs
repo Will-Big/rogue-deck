@@ -15,7 +15,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Draw_moves_cards_from_draw_pile_to_hand()
         {
-            var deck = new Deck(new[] { Card("a"), Card("b"), Card("c") }, seed: 1);
+            var deck = new Deck(new[] { Card("a"), Card("b"), Card("c") }, new Random(1));
             Assert.AreEqual(3, deck.DrawCount);
             Assert.AreEqual(0, deck.HandCount);
 
@@ -28,7 +28,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Draw_reshuffles_discard_when_draw_pile_empty()
         {
-            var deck = new Deck(new[] { Card("a"), Card("b"), Card("c") }, seed: 1);
+            var deck = new Deck(new[] { Card("a"), Card("b"), Card("c") }, new Random(1));
             deck.Draw(3);          // hand 3, draw 0
             deck.DiscardHand();    // discard 3, hand 0
             Assert.AreEqual(0, deck.DrawCount);
@@ -44,7 +44,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Draw_stops_when_no_cards_remain_anywhere()
         {
-            var deck = new Deck(new[] { Card("a") }, seed: 1);
+            var deck = new Deck(new[] { Card("a") }, new Random(1));
             deck.Draw(5); // only one card exists
             Assert.AreEqual(1, deck.HandCount);
         }

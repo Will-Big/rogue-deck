@@ -40,6 +40,8 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 3. P0-A — 전투 RNG를 CombatState로 단일화
 
+- 상태: **완료 (2026-07-18)** — 구현 기록: [`2026-07-18-p0a-rng-unification.md`](2026-07-18-p0a-rng-unification.md)
+
 ### 문제
 
 `Deck`, `RandomMovesetPolicy`, `ShuffleBagPolicy`, `SelfLockPolicy`가 각각 `System.Random`을 생성한다. 개별 시드로

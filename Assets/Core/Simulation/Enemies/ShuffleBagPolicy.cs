@@ -5,22 +5,21 @@ using FateWeaver.Core.Cards;
 namespace FateWeaver.Simulation
 {
     /// <summary>Stateful no-replacement enemy policy. When fewer than the draw count remains, it discards
-    /// the partial remainder and starts a freshly shuffled full deck.</summary>
+    /// the partial remainder and starts a freshly shuffled full deck. Shuffles draw from the combat RNG
+    /// passed to <see cref="CardsForTurn"/>.</summary>
     public sealed class ShuffleBagPolicy : IEnemyTurnPolicy
     {
         private readonly IReadOnlyList<CardDefinition> _deck;
         private readonly int _drawPerTurn;
-        private readonly Random _rng;
         private List<CardDefinition> _bag = new List<CardDefinition>();
 
-        public ShuffleBagPolicy(IReadOnlyList<CardDefinition> deck, int drawPerTurn, int seed)
+        public ShuffleBagPolicy(IReadOnlyList<CardDefinition> deck, int drawPerTurn)
         {
             _deck = deck ?? Array.Empty<CardDefinition>();
             _drawPerTurn = Math.Max(0, drawPerTurn);
-            _rng = new Random(seed);
         }
 
-        public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex)
+        public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex, Random rng)
         {
             if (_deck.Count == 0 || _drawPerTurn == 0)
             {
@@ -29,7 +28,7 @@ namespace FateWeaver.Simulation
 
             if (_bag.Count < _drawPerTurn)
             {
-                _bag = ShuffledDeck();
+                _bag = ShuffledDeck(rng);
             }
 
             var count = Math.Min(_drawPerTurn, _bag.Count);
@@ -38,12 +37,12 @@ namespace FateWeaver.Simulation
             return drawn;
         }
 
-        private List<CardDefinition> ShuffledDeck()
+        private List<CardDefinition> ShuffledDeck(Random rng)
         {
             var cards = new List<CardDefinition>(_deck);
             for (int i = cards.Count - 1; i > 0; i--)
             {
-                int j = _rng.Next(i + 1);
+                int j = rng.Next(i + 1);
                 var tmp = cards[i];
                 cards[i] = cards[j];
                 cards[j] = tmp;

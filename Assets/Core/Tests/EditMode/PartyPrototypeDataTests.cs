@@ -15,7 +15,7 @@ namespace FateWeaver.Tests
     {
         private sealed class NoEnemyTurns : IEnemyTurnPolicy
         {
-            public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex)
+            public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex, Random rng)
                 => Array.Empty<CardDefinition>();
         }
 

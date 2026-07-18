@@ -75,7 +75,7 @@ namespace FateWeaver.Unity
             var deckDefs = specs.Select(CardSpecMapper.ToDefinition).ToList();
             var enemies = new[] { new Enemy(EnemyId(), EnemyStartingHp()) };
             _session = new DeckCombatSession(
-                deckDefs, PlayerHp, enemies, EnemyPolicy(Seed), FateEnergyPerTurn, HandSize, Seed);
+                deckDefs, PlayerHp, enemies, EnemyPolicy(), FateEnergyPerTurn, HandSize, Seed);
             BuildArtLookup();
             ClearArmed();
             SetMessage(_deck != null ? "전투 시작." : "전투 시작 (코드 시작덱 폴백 — DeckAsset 미연결).");
@@ -88,8 +88,8 @@ namespace FateWeaver.Unity
         private int EnemyStartingHp()
             => _enemyKind == EnemyKind.Warden ? WardenDeck.StartingHp : GoblinDeck.StartingHp;
 
-        private IEnemyTurnPolicy EnemyPolicy(int seed)
-            => _enemyKind == EnemyKind.Warden ? WardenDeck.Policy(seed) : GoblinDeck.Policy(seed);
+        private IEnemyTurnPolicy EnemyPolicy()
+            => _enemyKind == EnemyKind.Warden ? WardenDeck.Policy() : GoblinDeck.Policy();
 
         // --- input ---
 
