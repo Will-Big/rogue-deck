@@ -16,6 +16,12 @@ namespace FateWeaver.Unity
         private bool _hovering;
         private bool _held;
         private bool _suppressed;
+        private System.Action<bool> _onHover;
+
+        public void Initialize(System.Action<bool> onHover)
+        {
+            _onHover = onHover;
+        }
 
         public void Capture()
         {
@@ -57,14 +63,21 @@ namespace FateWeaver.Unity
 
             _hovering = true;
             Enlarge();
+            _onHover?.Invoke(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            bool wasHovering = _hovering;
             _hovering = false;
             if (!_held)
             {
                 Restore();
+            }
+
+            if (wasHovering)
+            {
+                _onHover?.Invoke(false);
             }
         }
 

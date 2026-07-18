@@ -6,7 +6,7 @@ using UnityEngine;
 namespace FateWeaver.Unity
 {
     /// <summary>The hand as a slight curved fan (spec §2): full CardViews positioned by HandFanLayout,
-    /// no layout group — poses are absolute so cards can tilt. Hover, held, and ghost presentation
+    /// no layout group — poses are absolute so cards can tilt. Hover and held presentation
     /// are layered on each prefab instance without changing the underlying card data.</summary>
     public sealed class HandFanView : MonoBehaviour
     {
@@ -26,7 +26,10 @@ namespace FateWeaver.Unity
             _cardPrefab = cardPrefab;
         }
 
-        public void SetCards(IReadOnlyList<CardPresentation> cards, Action<int> onClick)
+        public void SetCards(
+            IReadOnlyList<CardPresentation> cards,
+            Action<int> onClick,
+            Action<int, bool> onHover)
         {
             foreach (var view in _views)
             {
@@ -50,6 +53,7 @@ namespace FateWeaver.Unity
                 view.Bind(cards[i], () => onClick?.Invoke(captured));
                 var hover = view.gameObject.AddComponent<HandCardHoverEffect>();
                 hover.Capture();
+                hover.Initialize(hovering => onHover?.Invoke(captured, hovering));
                 _hoverEffects.Add(hover);
                 _groups.Add(view.gameObject.AddComponent<CanvasGroup>());
                 _views.Add(view);
@@ -61,14 +65,6 @@ namespace FateWeaver.Unity
             if (index >= 0 && index < _hoverEffects.Count)
             {
                 _hoverEffects[index].Hold(value);
-            }
-        }
-
-        public void SetGhost(int index, bool value)
-        {
-            if (index >= 0 && index < _groups.Count)
-            {
-                _groups[index].alpha = value ? 0.35f : 1f;
             }
         }
 

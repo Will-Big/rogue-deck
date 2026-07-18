@@ -114,7 +114,6 @@ namespace FateWeaver.Tests.UnityEditMode
                 SetField(selection, "_rail", rail);
                 SetField(selection, "_dimLayer", dim);
                 SetField(selection, "_confirmButton", confirmButton);
-                SetField(selection, "_overlay", overlay);
                 SetField(selection, "_arrow", arrow);
 
                 var completed = new List<SelectionResult>();
@@ -131,7 +130,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 rail.SetCards(
                     new[] { card },
                     index => selection.OnTargetClicked(
-                        SelectionTargetRef.ExecutionCard(index), card));
+                        SelectionTargetRef.ExecutionCard(index)));
                 var target = SelectionTargetRef.ExecutionCard(0);
                 root.SetActive(true);
 

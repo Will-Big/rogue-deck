@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DG.Tweening;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
@@ -14,6 +15,7 @@ namespace FateWeaver.Tests.UnityEditMode
         private GameObject _root;
         private CardSelectionController _controller;
         private Button _confirmButton;
+        private RectTransform _overlay;
         private TargetingArrowView _arrow;
         private readonly List<SelectionResult> _appliedResults = new List<SelectionResult>();
         private static readonly Color SelectedOutline =
@@ -24,23 +26,31 @@ namespace FateWeaver.Tests.UnityEditMode
         [SetUp]
         public void SetUp()
         {
+            SimulateDotweenRuntimeInitializationForEditMode();
             _root = new GameObject("CardSelectionControllerTests", typeof(RectTransform));
             _root.SetActive(false);
 
             var hand = Child("Hand").AddComponent<HandFanView>();
-            var rail = Child("Rail").AddComponent<ExecutionRailView>();
+            var rail = Child("Rail", typeof(RectTransform)).AddComponent<ExecutionRailView>();
             var dim = Child("Dim");
             _confirmButton = Child("Confirm").AddComponent<Button>();
-            var overlay = (RectTransform)Child("Overlay", typeof(RectTransform)).transform;
-            _arrow = TargetingArrowView.EditorCreate(overlay);
+            _overlay = (RectTransform)Child("Overlay", typeof(RectTransform)).transform;
+            var railPrefab = RailCardView.EditorCreate(
+                (RectTransform)Child("RailPrefabRoot", typeof(RectTransform)).transform,
+                new Vector2(96f, 132f));
+            rail.EditorBuild(null, railPrefab, _overlay);
+            rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+            _arrow = TargetingArrowView.EditorCreate(_overlay);
             _controller = _root.AddComponent<CardSelectionController>();
 
             SetField(_controller, "_hand", hand);
             SetField(_controller, "_rail", rail);
             SetField(_controller, "_dimLayer", dim);
             SetField(_controller, "_confirmButton", _confirmButton);
-            SetField(_controller, "_overlay", overlay);
             SetField(_controller, "_arrow", _arrow);
+            typeof(CardSelectionController)
+                .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(_controller, null);
 
             dim.SetActive(false);
             _confirmButton.gameObject.SetActive(false);
@@ -58,6 +68,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [TearDown]
         public void TearDown()
         {
+            DOTween.Clear(true);
             UnityEngine.Object.DestroyImmediate(_root);
             _appliedResults.Clear();
         }
@@ -72,7 +83,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsTrue(_arrow.gameObject.activeSelf);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
 
-            _controller.OnTargetClicked(target, null);
+            _controller.OnTargetClicked(target);
 
             Assert.AreEqual(1, _appliedResults.Count);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
@@ -86,10 +97,10 @@ namespace FateWeaver.Tests.UnityEditMode
             _controller.BeginTargetSelection(
                 0, SelectionTargetKind.ExecutionCard, 2, new[] { first, second });
 
-            _controller.OnTargetClicked(first, null);
+            _controller.OnTargetClicked(first);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
 
-            _controller.OnTargetClicked(second, null);
+            _controller.OnTargetClicked(second);
             Assert.IsTrue(_confirmButton.gameObject.activeSelf);
             Assert.AreEqual(0, _appliedResults.Count);
 
@@ -111,18 +122,18 @@ namespace FateWeaver.Tests.UnityEditMode
             _controller.BeginTargetSelection(
                 0, SelectionTargetKind.PartyMember, 2, new[] { first, second });
 
-            _controller.OnTargetClicked(first, null);
-            _controller.OnTargetClicked(second, null);
+            _controller.OnTargetClicked(first);
+            _controller.OnTargetClicked(second);
             Assert.IsTrue(_confirmButton.gameObject.activeSelf);
             Assert.AreEqual(SelectedOutline, Highlight(firstView).color);
             Assert.AreEqual(SelectedOutline, Highlight(secondView).color);
 
-            _controller.OnTargetClicked(first, null);
+            _controller.OnTargetClicked(first);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
             Assert.AreEqual(CandidateOutline, Highlight(firstView).color);
             Assert.AreEqual(SelectedOutline, Highlight(secondView).color);
 
-            _controller.OnTargetClicked(first, null);
+            _controller.OnTargetClicked(first);
             Assert.IsTrue(_confirmButton.gameObject.activeSelf);
             Assert.AreEqual(SelectedOutline, Highlight(firstView).color);
         }
@@ -150,8 +161,8 @@ namespace FateWeaver.Tests.UnityEditMode
 
             _controller.BeginTargetSelection(
                 0, SelectionTargetKind.PartyMember, 2, new[] { first, second, third });
-            _controller.OnTargetClicked(first, null);
-            _controller.OnTargetClicked(second, null);
+            _controller.OnTargetClicked(first);
+            _controller.OnTargetClicked(second);
             _confirmButton.onClick.Invoke();
 
             Assert.AreEqual(1, _appliedResults.Count);
@@ -162,6 +173,132 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsTrue(secondHighlight.gameObject.activeSelf);
             Assert.AreEqual(SelectedOutline, secondHighlight.color);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
+        }
+
+        [Test]
+        public void Target_click_does_not_create_center_emphasis_card()
+        {
+            var target = SelectionTargetRef.PartyMember("member-a");
+            int childCountBefore = _overlay.childCount;
+            _controller.BeginTargetSelection(
+                0, SelectionTargetKind.PartyMember, 1, new[] { target });
+
+            _controller.OnTargetClicked(target);
+
+            Assert.AreEqual(childCountBefore, _overlay.childCount);
+        }
+
+        [Test]
+        public void Placement_hover_is_static_until_hand_card_is_selected()
+        {
+            var card = ExecutionPresentation();
+            _controller.ShowPlacementHover(0, card, 0);
+            var rail = Field<ExecutionRailView>(_controller, "_rail");
+            var preview = Field<RailCardView>(rail, "_placementPreview");
+
+            Assert.IsTrue(preview.gameObject.activeSelf);
+            Assert.IsNull(Field<Tween>(rail, "_placementPreviewTween"));
+
+            _controller.BeginPlacement(0, card, 0);
+
+            Assert.IsTrue(_controller.SelectionActive);
+            Assert.IsNotNull(Field<Tween>(rail, "_placementPreviewTween"));
+            Assert.AreEqual(0, _appliedResults.Count);
+        }
+
+        [Test]
+        public void Armed_silhouette_click_dispatches_targetless_placement_once()
+        {
+            var card = ExecutionPresentation();
+            _controller.ShowPlacementHover(0, card, 0);
+            _controller.BeginPlacement(0, card, 0);
+            var rail = Field<ExecutionRailView>(_controller, "_rail");
+            var preview = Field<RailCardView>(rail, "_placementPreview");
+
+            Field<Button>(preview, "_button").onClick.Invoke();
+
+            Assert.AreEqual(1, _appliedResults.Count);
+            Assert.IsTrue(_appliedResults[0].IsComplete);
+            Assert.AreEqual(0, _appliedResults[0].HandIndex);
+            CollectionAssert.IsEmpty(_appliedResults[0].Targets);
+            Assert.IsFalse(_controller.SelectionActive);
+        }
+
+        [Test]
+        public void Placement_hover_exit_hides_unselected_preview()
+        {
+            _controller.ShowPlacementHover(0, ExecutionPresentation(), 0);
+            var rail = Field<ExecutionRailView>(_controller, "_rail");
+            var preview = Field<RailCardView>(rail, "_placementPreview");
+
+            _controller.HidePlacementHover(0);
+
+            Assert.IsFalse(preview.gameObject.activeSelf);
+        }
+
+        [Test]
+        public void Intervention_hover_never_creates_execution_preview()
+        {
+            var intervention = new CardPresentation(
+                "intervention", "intervention", 0, 1,
+                FateWeaver.Core.Cards.Side.Player,
+                string.Empty, null, false,
+                category: FateWeaver.Core.Cards.CardCategory.Intervention);
+            _controller.ShowPlacementHover(0, intervention, 0);
+            var rail = Field<ExecutionRailView>(_controller, "_rail");
+
+            Assert.IsNull(Field<RailCardView>(rail, "_placementPreview"));
+        }
+
+        [Test]
+        public void Rejected_targetless_placement_clears_selection_and_pulse()
+        {
+            _controller.Initialize(
+                result =>
+                {
+                    _appliedResults.Add(result);
+                    return false;
+                },
+                _ => Array.Empty<SelectionTargetRef>(),
+                () => { });
+            _controller.ShowPlacementHover(0, ExecutionPresentation(), 0);
+            _controller.BeginPlacement(0, ExecutionPresentation(), 0);
+            var rail = Field<ExecutionRailView>(_controller, "_rail");
+            var preview = Field<RailCardView>(rail, "_placementPreview");
+            var tween = Field<Tween>(rail, "_placementPreviewTween");
+
+            Field<Button>(preview, "_button").onClick.Invoke();
+
+            Assert.AreEqual(1, _appliedResults.Count);
+            Assert.IsFalse(_controller.SelectionActive);
+            Assert.IsFalse(preview.gameObject.activeSelf);
+            Assert.IsFalse(tween.IsActive());
+        }
+
+        [Test]
+        public void Existing_rail_card_click_does_not_confirm_armed_placement()
+        {
+            _controller.ShowPlacementHover(0, ExecutionPresentation(), 0);
+            _controller.BeginPlacement(0, ExecutionPresentation(), 0);
+
+            _controller.OnTargetClicked(SelectionTargetRef.ExecutionCard(0));
+
+            Assert.AreEqual(0, _appliedResults.Count);
+            Assert.IsTrue(_controller.SelectionActive);
+        }
+
+        private static CardPresentation ExecutionPresentation()
+            => new CardPresentation(
+                "execution", "execution", 3, 1,
+                FateWeaver.Core.Cards.Side.Player,
+                string.Empty, null, false);
+
+        private static void SimulateDotweenRuntimeInitializationForEditMode()
+        {
+            var initialized = typeof(DOTween).GetField(
+                "initialized", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(initialized);
+            initialized.SetValue(null, true);
         }
 
         private GameObject Child(string name, params Type[] components)

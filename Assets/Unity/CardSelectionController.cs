@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -15,14 +15,7 @@ namespace FateWeaver.Unity
         [SerializeField] private ExecutionRailView _rail;
         [SerializeField] private GameObject _dimLayer;
         [SerializeField] private Button _confirmButton;
-        [SerializeField] private RectTransform _overlay;
-        [SerializeField] private CardView _cardPrefab;
         [SerializeField] private TargetingArrowView _arrow;
-
-        private const float FloatingScale = 1.25f;
-        private const float FloatingLift = 30f;
-        private const float EmphasisHoldSeconds = 0.55f;
-        private const float EmphasisGrowSeconds = 0.12f;
 
         private readonly CardSelectionMachine _machine = new CardSelectionMachine();
         private readonly HashSet<SelectionTargetRef> _validTargets =
@@ -32,10 +25,8 @@ namespace FateWeaver.Unity
         private Func<SelectionResult, bool> _tryApply;
         private Func<SelectionTargetKind, IReadOnlyList<SelectionTargetRef>> _currentTargets;
         private Action _onApplied;
-        private CardView _floatingCard;
-        private CardView _emphasisCard;
-        private Coroutine _emphasis;
         private int _visualHandIndex = -1;
+        private int _hoverHandIndex = -1;
         private SelectionTargetKind _targetKind = SelectionTargetKind.None;
 
         public bool SelectionActive => _machine.Phase != SelectionPhase.Idle;
@@ -71,12 +62,35 @@ namespace FateWeaver.Unity
             EndSelectionVisuals();
             _machine.SelectCard(handIndex, SelectionTargetKind.None, 0);
             _visualHandIndex = handIndex;
+            _hoverHandIndex = -1;
             _hand.SetHoverSuppressed(true);
+            _hand.SetSelection(handIndex, CardView.SelectionKind.Primary);
             _rail.SetDropHint(true);
             _rail.ShowPlacementHover(card, insertionIndex);
-            _rail.ArmPlacementPreview(OnRailAreaClicked);
-            _hand.SetGhost(handIndex, true);
-            SpawnFloatingCard(card);
+            _rail.ArmPlacementPreview(OnPlacementPreviewClicked);
+        }
+
+        public void ShowPlacementHover(
+            int handIndex, CardPresentation card, int insertionIndex)
+        {
+            if (SelectionActive || card.Category != CardCategory.Execution)
+            {
+                return;
+            }
+
+            _hoverHandIndex = handIndex;
+            _rail.ShowPlacementHover(card, insertionIndex);
+        }
+
+        public void HidePlacementHover(int handIndex)
+        {
+            if (SelectionActive || _hoverHandIndex != handIndex)
+            {
+                return;
+            }
+
+            _hoverHandIndex = -1;
+            _rail.ClearPlacementPreview();
         }
 
         public void BeginTargetSelection(
@@ -116,7 +130,7 @@ namespace FateWeaver.Unity
             _arrow.Show(SelectedCardScreen(), MouseScreen());
         }
 
-        public void OnTargetClicked(SelectionTargetRef target, CardPresentation? card)
+        public void OnTargetClicked(SelectionTargetRef target)
         {
             if (!SelectionActive
                 || target.Kind != _targetKind
@@ -125,23 +139,9 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            int previousCount = _machine.PickedTargets.Count;
             var result = _machine.ClickTarget(target);
             RefreshTargetVisuals();
-            if (_machine.PickedTargets.Count > previousCount && card.HasValue)
-            {
-                PlayCenterEmphasis(card.Value);
-            }
-
             TryDispatch(result);
-        }
-
-        public void OnRailAreaClicked()
-        {
-            if (_machine.Phase == SelectionPhase.ConfirmPlacement)
-            {
-                TryDispatch(_machine.ClickApplyArea());
-            }
         }
 
         public void CancelSelection()
@@ -153,6 +153,11 @@ namespace FateWeaver.Unity
         private void OnConfirmClicked()
         {
             TryDispatch(_machine.Confirm());
+        }
+
+        private void OnPlacementPreviewClicked()
+        {
+            TryDispatch(_machine.ClickApplyArea());
         }
 
         private void TryDispatch(SelectionResult result)
@@ -168,6 +173,12 @@ namespace FateWeaver.Unity
                 _machine.CommitSucceeded();
                 EndSelectionVisuals();
                 _onApplied?.Invoke();
+                return;
+            }
+
+            if (_machine.RequiredTargets <= 0)
+            {
+                CancelSelection();
                 return;
             }
 
@@ -235,11 +246,7 @@ namespace FateWeaver.Unity
 
         private void Update()
         {
-            if (_machine.Phase == SelectionPhase.ConfirmPlacement && _floatingCard != null)
-            {
-                MoveToScreen((RectTransform)_floatingCard.transform, MouseScreen());
-            }
-            else if (_machine.Phase == SelectionPhase.PickSingleTarget
+            if (_machine.Phase == SelectionPhase.PickSingleTarget
                 || _machine.Phase == SelectionPhase.PickMultipleTargets
                 || _machine.Phase == SelectionPhase.ReadyToConfirm)
             {
@@ -247,67 +254,10 @@ namespace FateWeaver.Unity
             }
         }
 
-        private void SpawnFloatingCard(CardPresentation card)
-        {
-            if (_floatingCard == null)
-            {
-                _floatingCard = Instantiate(_cardPrefab, _overlay);
-                var rect = (RectTransform)_floatingCard.transform;
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = new Vector2(170f, 238f);
-                rect.localScale = Vector3.one * FloatingScale;
-                rect.localRotation = Quaternion.identity;
-                DisableRaycasts(_floatingCard);
-            }
-
-            _floatingCard.gameObject.SetActive(true);
-            _floatingCard.Bind(card, null);
-            MoveToScreen((RectTransform)_floatingCard.transform, MouseScreen());
-        }
-
-        private void PlayCenterEmphasis(CardPresentation card)
-        {
-            if (_emphasis != null)
-            {
-                StopCoroutine(_emphasis);
-            }
-
-            _emphasis = StartCoroutine(CenterEmphasis(card));
-        }
-
-        private IEnumerator CenterEmphasis(CardPresentation card)
-        {
-            if (_emphasisCard == null)
-            {
-                _emphasisCard = Instantiate(_cardPrefab, _overlay);
-                var rect = (RectTransform)_emphasisCard.transform;
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = Vector2.zero;
-                rect.sizeDelta = new Vector2(200f, 280f);
-                DisableRaycasts(_emphasisCard);
-            }
-
-            _emphasisCard.gameObject.SetActive(true);
-            _emphasisCard.Bind(card, null);
-            var rectTransform = (RectTransform)_emphasisCard.transform;
-            float elapsed = 0f;
-            while (elapsed < EmphasisGrowSeconds)
-            {
-                elapsed += Time.deltaTime;
-                rectTransform.localScale = Vector3.one
-                    * Mathf.Lerp(0.6f, 1f, elapsed / EmphasisGrowSeconds);
-                yield return null;
-            }
-
-            rectTransform.localScale = Vector3.one;
-            yield return new WaitForSeconds(EmphasisHoldSeconds);
-            _emphasisCard.gameObject.SetActive(false);
-            _emphasis = null;
-        }
-
         private void EndSelectionVisuals()
         {
             _hand.SetTargetSelection(-1, false);
+            _hand.SetSelection(-1, CardView.SelectionKind.None);
             _hand.SetHoverSuppressed(false);
             _rail.SetDropHint(false);
             _rail.ClearPlacementPreview();
@@ -320,36 +270,12 @@ namespace FateWeaver.Unity
             _dimLayer.SetActive(false);
             _confirmButton.gameObject.SetActive(false);
             _arrow.Hide();
-            _hand.SetGhost(_visualHandIndex, false);
             _hand.SetHeld(_visualHandIndex, false);
             _visualHandIndex = -1;
-
-            if (_floatingCard != null)
-            {
-                _floatingCard.gameObject.SetActive(false);
-            }
-
-            if (_emphasis != null)
-            {
-                StopCoroutine(_emphasis);
-                _emphasis = null;
-            }
-
-            if (_emphasisCard != null)
-            {
-                _emphasisCard.gameObject.SetActive(false);
-            }
+            _hoverHandIndex = -1;
 
             _validTargets.Clear();
             _targetKind = SelectionTargetKind.None;
-        }
-
-        private static void DisableRaycasts(CardView card)
-        {
-            foreach (var graphic in card.GetComponentsInChildren<Graphic>(true))
-            {
-                graphic.raycastTarget = false;
-            }
         }
 
         private static Vector2 MouseScreen()
@@ -358,10 +284,5 @@ namespace FateWeaver.Unity
             return mouse != null ? (Vector2)mouse.position.ReadValue() : Vector2.zero;
         }
 
-        private void MoveToScreen(RectTransform rect, Vector2 screen)
-        {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(_overlay, screen, null, out var local);
-            rect.anchoredPosition = local + new Vector2(0f, FloatingLift);
-        }
     }
 }

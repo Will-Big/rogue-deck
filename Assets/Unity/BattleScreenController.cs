@@ -108,7 +108,7 @@ namespace FateWeaver.Unity
                 view.Bind(member.Name, asset != null ? asset.Color : PartyOwnerColor);
                 var target = SelectionTargetRef.PartyMember(member.Id);
                 view.BindTarget(member.Id, id => _selection.OnTargetClicked(
-                    SelectionTargetRef.PartyMember(id), null));
+                    SelectionTargetRef.PartyMember(id)));
                 _selection.RegisterUnitTarget(target, view);
                 _partyUnits.Add(member.Id, view);
             }
@@ -119,7 +119,7 @@ namespace FateWeaver.Unity
                 view.Bind(PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id), EnemyUnitTint);
                 var target = SelectionTargetRef.Enemy(enemy.Id);
                 view.BindTarget(enemy.Id, id => _selection.OnTargetClicked(
-                    SelectionTargetRef.Enemy(id), null));
+                    SelectionTargetRef.Enemy(id)));
                 _selection.RegisterUnitTarget(target, view);
                 _enemyUnits.Add(enemy.Id, view);
                 _enemyMaxHp.Add(enemy.Id, enemy.Hp);
@@ -159,43 +159,41 @@ namespace FateWeaver.Unity
             }
 
             var name = PlaytestKoreanText.CardName(def.Id, def.Name);
-            if (def.Category == CardCategory.Execution && PartyTargetRules.RequiresExplicitAllyTarget(def))
+            if (def.Category == CardCategory.Execution)
             {
-                var targets = CurrentValidTargets(SelectionTargetKind.PartyMember);
-                _selection.BeginTargetSelection(
-                    handIndex, SelectionTargetKind.PartyMember, 1, targets);
-                SetMessage(name + " — 살아 있는 아군을 선택하세요.");
+                if (!_session.TryPreviewExecutionPlacement(handIndex, out var placement))
+                {
+                    SetMessage("카드를 실행 순서에 배치할 수 없습니다.");
+                    return;
+                }
+
+                var presentation = PresentationFor(card)
+                    .WithExecutionOrder(placement.ExecutionOrder);
+                _selection.BeginPlacement(
+                    handIndex, presentation, placement.InsertionIndex);
+                SetMessage(name + " — 레일 실루엣을 클릭해 배치하세요.");
             }
             else
             {
                 int requiredTargets = CardTargetRules.RequiredRailTargets(def);
-                if (requiredTargets == 0)
+                if (def.Category != CardCategory.Intervention
+                    || requiredTargets < 1
+                    || requiredTargets > 2)
                 {
-                    if (!_session.TryPreviewExecutionPlacement(handIndex, out var placement))
-                    {
-                        SetMessage("카드를 실행 순서에 배치할 수 없습니다.");
-                        return;
-                    }
-
-                    var presentation = PresentationFor(card)
-                        .WithExecutionOrder(placement.ExecutionOrder);
-                    _selection.BeginPlacement(
-                        handIndex, presentation, placement.InsertionIndex);
-                    SetMessage(name + " — 실행 순서를 클릭해 배치하세요.");
+                    SetMessage("사용할 수 없는 조작 카드입니다.");
+                    return;
                 }
-                else
+
+                var targets = CurrentValidTargets(SelectionTargetKind.ExecutionCard);
+                if (targets.Count < requiredTargets)
                 {
-                    var targets = CurrentValidTargets(SelectionTargetKind.ExecutionCard);
-                    if (targets.Count < requiredTargets)
-                    {
-                        SetMessage("대상으로 삼을 카드가 실행 순서에 부족합니다.");
-                        return;
-                    }
-
-                    _selection.BeginTargetSelection(
-                        handIndex, SelectionTargetKind.ExecutionCard, requiredTargets, targets);
-                    SetMessage(name + " — 대상 " + requiredTargets + "개를 선택하세요.");
+                    SetMessage("대상으로 삼을 카드가 실행 순서에 부족합니다.");
+                    return;
                 }
+
+                _selection.BeginTargetSelection(
+                    handIndex, SelectionTargetKind.ExecutionCard, requiredTargets, targets);
+                SetMessage(name + " — 대상 " + requiredTargets + "개를 선택하세요.");
             }
 
             RefreshSelections();
@@ -214,8 +212,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            _selection.OnTargetClicked(
-                SelectionTargetRef.ExecutionCard(zoneIndex), PresentationFor(order[zoneIndex]));
+            _selection.OnTargetClicked(SelectionTargetRef.ExecutionCard(zoneIndex));
         }
 
         private void OnEmptyClicked()
@@ -226,6 +223,38 @@ namespace FateWeaver.Unity
                 SetMessage("선택 취소.");
                 RefreshSelections();
             }
+        }
+
+        private void OnHandHovered(int handIndex, bool hovering)
+        {
+            if (_session == null || _selection.SelectionActive)
+            {
+                return;
+            }
+
+            if (!hovering)
+            {
+                _selection.HidePlacementHover(handIndex);
+                return;
+            }
+
+            if (handIndex < 0 || handIndex >= _session.Hand.Count)
+            {
+                return;
+            }
+
+            var card = _session.Hand[handIndex];
+            if (card.Def.Category != CardCategory.Execution
+                || !_session.TryPreviewExecutionPlacement(handIndex, out var placement))
+            {
+                _selection.HidePlacementHover(handIndex);
+                return;
+            }
+
+            _selection.ShowPlacementHover(
+                handIndex,
+                PresentationFor(card).WithExecutionOrder(placement.ExecutionOrder),
+                placement.InsertionIndex);
         }
 
         private bool TryApplySelection(SelectionResult result)
@@ -239,22 +268,16 @@ namespace FateWeaver.Unity
             var def = _session.Hand[result.HandIndex].Def;
             if (def.Category == CardCategory.Execution)
             {
-                if (result.Targets.Count > 1
-                    || (result.Targets.Count == 1
-                        && result.Targets[0].Kind != SelectionTargetKind.PartyMember
-                        && result.Targets[0].Kind != SelectionTargetKind.Enemy))
+                if (result.Targets.Count != 0)
                 {
-                    SetMessage("대상이 쓰러졌거나 카드를 낼 수 없습니다.");
+                    SetMessage("실행 카드는 직접 대상을 선택하지 않습니다.");
                     return false;
                 }
 
-                string targetId = result.Targets.Count == 0
-                    ? null
-                    : result.Targets[0].EntityId;
                 bool played = _session.PlayExecutionCard(result.HandIndex);
                 SetMessage(played
                     ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
-                    : "대상이 쓰러졌거나 카드를 낼 수 없습니다.");
+                    : "운명력 또는 턴 상태로 카드를 배치할 수 없습니다.");
                 return played;
             }
 
@@ -406,7 +429,10 @@ namespace FateWeaver.Unity
 
         private void RefreshAll()
         {
-            _hand.SetCards(_session.Hand.Select(PresentationFor).ToList(), OnHandClicked);
+            _hand.SetCards(
+                _session.Hand.Select(PresentationFor).ToList(),
+                OnHandClicked,
+                OnHandHovered);
             _rail.SetCards(_session.CurrentOrder.Select(PresentationFor).ToList(), OnZoneClicked);
             RefreshUnits();
             RefreshSelections();

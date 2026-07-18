@@ -185,7 +185,6 @@ namespace FateWeaver.Tests.UnityEditMode
             SetField(_selection, "_rail", rail);
             SetField(_selection, "_dimLayer", dim);
             SetField(_selection, "_confirmButton", _confirmButton);
-            SetField(_selection, "_overlay", (RectTransform)overlay.transform);
             SetField(_selection, "_arrow", arrow);
             SetField(_controller, "_selection", _selection);
         }

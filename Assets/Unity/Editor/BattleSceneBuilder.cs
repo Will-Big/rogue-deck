@@ -180,8 +180,6 @@ namespace FateWeaver.Unity.Editor
             selectionSo.FindProperty("_rail").objectReferenceValue = rail;
             selectionSo.FindProperty("_dimLayer").objectReferenceValue = dimLayer.gameObject;
             selectionSo.FindProperty("_confirmButton").objectReferenceValue = confirmButton;
-            selectionSo.FindProperty("_overlay").objectReferenceValue = overlay;
-            selectionSo.FindProperty("_cardPrefab").objectReferenceValue = cardPrefab;
             selectionSo.FindProperty("_arrow").objectReferenceValue = targetingArrow;
             selectionSo.ApplyModifiedPropertiesWithoutUndo();
 
