@@ -1,32 +1,92 @@
 using System;
+using System.Collections.Generic;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
     public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random }
 
-    public enum EffectKind { Damage, ApplyStatus, GrantNextAttackBonus, NullifyNextReward, MoveFormation }
-
     public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevExecutedIsPlayerAttack, NextIsEnemyAttack, PrevExecutedIsEnemyAttack, NoPrecedingPlayerCard, NoFollowingEnemyCard }
 
-    public enum StatusKindRef { None, Stun, Vulnerable, Block, RewardNullified, Slow, Haste }
-
-    public enum InterventionKind { None, ChangeExecutionOrder, SwapExecutionOrder, Lock }
-
-    /// <summary>Flat, Inspector- and codegen-friendly description of one effect. Mapped to core EffectData.</summary>
+    /// <summary>Closed condition combinator (백로그 §10): the kind enum + central switch stay by design.</summary>
     [Serializable]
-    public struct EffectSpec
+    public struct ConditionSpec
     {
-        public EffectKind Kind;
-        public int EffectValue;
-        public ConditionKind Condition;
-        public int ConditionN;
+        public ConditionKind Kind;
+        public int N;
         public int SuccessEffectValue;
-        public StatusKindRef Status;
-        public StatusLifetimeKind Lifetime;
-        public int LifetimeCount;
-        public StatusApplyTarget Target;
-        public TargetSelectorRef Selector;
+
+        public Condition ToCondition()
+        {
+            switch (Kind)
+            {
+                case ConditionKind.FirstToTrigger: return new FirstToTrigger();
+                case ConditionKind.WithinNth: return new WithinNth(N);
+                case ConditionKind.BeforeNextEnemyAttack: return new BeforeNextEnemyAttack();
+                case ConditionKind.PrevExecutedIsPlayerAttack:
+                    return new PreviousExecutedCardIs(Side.Player, CardType.Attack);
+                case ConditionKind.PrevExecutedIsEnemyAttack:
+                    return new PreviousExecutedCardIs(Side.Enemy, CardType.Attack);
+                case ConditionKind.NextIsEnemyAttack:
+                    return new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack);
+                case ConditionKind.NoPrecedingPlayerCard:
+                    return new NoPrecedingCardOfSide(Side.Player);
+                case ConditionKind.NoFollowingEnemyCard:
+                    return new NoFollowingCardOfSide(Side.Enemy);
+                default: return null;
+            }
+        }
+    }
+
+    /// <summary>One authored effect. Each concrete spec owns its parameters (real types), its mapping
+    /// to core EffectData, its validation, and its codegen literal — adding a new effect touches no
+    /// central enum/switch (AGENTS.md rule 9). Registered explicitly in EffectSpecCatalog.</summary>
+    [Serializable]
+    public abstract class EffectSpec
+    {
+        public ConditionSpec Condition;
+
+        public abstract EffectKey Key { get; }
+        public abstract EffectData ToEffectData();
+
+        /// <summary>C# literal for codegen (SO → GeneratedCards.cs). Lives here so a new effect's
+        /// authoring+export stay in one class.</summary>
+        public abstract string ToLiteral();
+
+        public virtual IEnumerable<string> Validate(AuthoringContext context)
+        {
+            yield break;
+        }
+
+        protected EffectData ApplyCondition(EffectData effect)
+            => Condition.Kind == ConditionKind.None
+                ? effect
+                : effect with
+                {
+                    Condition = Condition.ToCondition(),
+                    SuccessEffectValue = Condition.SuccessEffectValue
+                };
+
+        protected string ConditionLiteral()
+            => "Condition = new ConditionSpec { Kind = ConditionKind." + Condition.Kind
+                + ", N = " + Condition.N
+                + ", SuccessEffectValue = " + Condition.SuccessEffectValue + " }";
+
+        protected static TargetSelector? ToSelector(TargetSelectorRef selector)
+        {
+            switch (selector)
+            {
+                case TargetSelectorRef.FrontMost: return TargetSelector.FrontMost;
+                case TargetSelectorRef.SecondFromFront: return TargetSelector.SecondFromFront;
+                case TargetSelectorRef.BackMost: return TargetSelector.BackMost;
+                case TargetSelectorRef.Random: return TargetSelector.Random;
+                default: return null;
+            }
+        }
+
+        protected static string Quote(string value)
+            => "\"" + (value ?? string.Empty).Replace("\"", "\\\"") + "\"";
     }
 }

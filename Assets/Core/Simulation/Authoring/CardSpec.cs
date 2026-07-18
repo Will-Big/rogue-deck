@@ -14,7 +14,7 @@ namespace FateWeaver.Simulation.Authoring
         public int EnergyCost;
         public int BaseExecutionOrder;
         public EffectSpec[] Effects;
-        public InterventionKind Intervention;
+        public InterventionKeyRef Intervention;
         public int InterventionEffectValue;
     }
 }

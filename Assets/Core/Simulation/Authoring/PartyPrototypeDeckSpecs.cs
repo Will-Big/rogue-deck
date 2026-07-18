@@ -28,22 +28,17 @@ namespace FateWeaver.Simulation.Authoring
             "[검증] 공격",
             CardType.Attack,
             AttackExecutionOrder,
-            new EffectSpec
-            {
-                Kind = EffectKind.Damage,
-                EffectValue = AttackDamage
-            });
+            new DamageSpec { Value = AttackDamage });
 
         public static CardSpec SelectedBlock() => ExecutionSpec(
             "fixture_selected_block",
             "[검증] 선택 방어",
             CardType.Defense,
             DefaultExecutionOrder,
-            new EffectSpec
+            new ApplyStatusSpec
             {
-                Kind = EffectKind.ApplyStatus,
-                EffectValue = BlockMagnitude,
-                Status = StatusKindRef.Block,
+                Status = StatusKeyRef.Of(StatusKeys.Block),
+                Value = BlockMagnitude,
                 Lifetime = StatusLifetimeKind.ThisTurn,
                 Target = StatusApplyTarget.Self
             });
@@ -53,11 +48,10 @@ namespace FateWeaver.Simulation.Authoring
             "[검증] 전체 방어",
             CardType.Defense,
             DefaultExecutionOrder,
-            new EffectSpec
+            new ApplyStatusSpec
             {
-                Kind = EffectKind.ApplyStatus,
-                EffectValue = BlockMagnitude,
-                Status = StatusKindRef.Block,
+                Status = StatusKeyRef.Of(StatusKeys.Block),
+                Value = BlockMagnitude,
                 Lifetime = StatusLifetimeKind.ThisTurn,
                 Target = StatusApplyTarget.AllPartyMembers
             });
@@ -67,11 +61,7 @@ namespace FateWeaver.Simulation.Authoring
             "[검증] 대형 이동",
             CardType.Skill,
             DefaultExecutionOrder,
-            new EffectSpec
-            {
-                Kind = EffectKind.MoveFormation,
-                EffectValue = MoveForwardDistance
-            });
+            new MoveFormationSpec { Value = MoveForwardDistance });
 
         private static CardSpec ExecutionSpec(
             string id,

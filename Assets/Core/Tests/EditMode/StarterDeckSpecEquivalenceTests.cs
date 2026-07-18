@@ -52,7 +52,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 ConditionKind.PrevExecutedIsEnemyAttack,
-                counter.Effects.Single().Condition);
+                counter.Effects.Single().Condition.Kind);
         }
 
         [Test]

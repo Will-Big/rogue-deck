@@ -1,15 +1,12 @@
 using System;
 using System.Linq;
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Conditions;
-using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
-using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
-    /// <summary>Pure mapping from authored CardSpec to the core CardDefinition. Single place that knows
-    /// how the flat authoring enums correspond to core keys / condition records / status / intervention actions.</summary>
+    /// <summary>Card-level assembly only. Effect mapping lives on each EffectSpec subclass
+    /// (no central effect switch — AGENTS.md rule 9).</summary>
     public static class CardSpecMapper
     {
         public static CardDefinition ToDefinition(CardSpec spec)
@@ -20,123 +17,19 @@ namespace FateWeaver.Simulation.Authoring
                 {
                     EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
-                    InterventionAction = new InterventionActionData(ToInterventionKey(spec.Intervention), spec.EnergyCost, spec.InterventionEffectValue)
+                    InterventionAction = new InterventionActionData(
+                        spec.Intervention.ToKey(), spec.EnergyCost, spec.InterventionEffectValue)
                 };
             }
 
-            var effects = (spec.Effects ?? Array.Empty<EffectSpec>()).Select(ToEffectData).ToArray();
+            var effects = (spec.Effects ?? Array.Empty<EffectSpec>())
+                .Select(e => e.ToEffectData())
+                .ToArray();
             return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseExecutionOrder, effects)
             {
                 EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution
             };
-        }
-
-        public static EffectData ToEffectData(EffectSpec e)
-        {
-            var key = ToEffectKey(e.Kind);
-            var hasCondition = e.Condition != ConditionKind.None;
-            EffectData effect;
-
-            if (e.Kind == EffectKind.ApplyStatus)
-            {
-                effect = new EffectData(key, e.EffectValue)
-                {
-                    Payload = new ApplyStatusPayload(
-                        ToStatusKey(e.Status),
-                        ToLifetime(e.Lifetime, e.LifetimeCount),
-                        e.Target),
-                    Condition = hasCondition ? ToCondition(e) : null,
-                    SuccessEffectValue = hasCondition ? e.SuccessEffectValue : (int?)null
-                };
-            }
-            else
-            {
-                effect = hasCondition
-                    ? EffectData.Conditional(key, e.EffectValue, ToCondition(e), e.SuccessEffectValue)
-                    : new EffectData(key, e.EffectValue);
-            }
-
-            return effect with { TargetSelector = ToTargetSelector(e.Selector) };
-        }
-
-        private static EffectKey ToEffectKey(EffectKind kind)
-        {
-            switch (kind)
-            {
-                case EffectKind.ApplyStatus: return EffectKeys.ApplyStatus;
-                case EffectKind.GrantNextAttackBonus: return EffectKeys.GrantNextPlayerAttackDamageBonus;
-                case EffectKind.NullifyNextReward: return EffectKeys.NullifyNextPlayerConditionReward;
-                case EffectKind.MoveFormation: return EffectKeys.MoveFormation;
-                default: return EffectKeys.Damage;
-            }
-        }
-
-        private static TargetSelector? ToTargetSelector(TargetSelectorRef selector)
-        {
-            switch (selector)
-            {
-                case TargetSelectorRef.FrontMost: return TargetSelector.FrontMost;
-                case TargetSelectorRef.SecondFromFront: return TargetSelector.SecondFromFront;
-                case TargetSelectorRef.BackMost: return TargetSelector.BackMost;
-                case TargetSelectorRef.Random: return TargetSelector.Random;
-                default: return null;
-            }
-        }
-
-        private static Condition ToCondition(EffectSpec e)
-        {
-            switch (e.Condition)
-            {
-                case ConditionKind.FirstToTrigger: return new FirstToTrigger();
-                case ConditionKind.WithinNth: return new WithinNth(e.ConditionN);
-                case ConditionKind.BeforeNextEnemyAttack: return new BeforeNextEnemyAttack();
-                case ConditionKind.PrevExecutedIsPlayerAttack:
-                    return new PreviousExecutedCardIs(Side.Player, CardType.Attack);
-                case ConditionKind.PrevExecutedIsEnemyAttack:
-                    return new PreviousExecutedCardIs(Side.Enemy, CardType.Attack);
-                case ConditionKind.NextIsEnemyAttack:
-                    return new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack);
-                case ConditionKind.NoPrecedingPlayerCard:
-                    return new NoPrecedingCardOfSide(Side.Player);
-                case ConditionKind.NoFollowingEnemyCard:
-                    return new NoFollowingCardOfSide(Side.Enemy);
-                default: return null;
-            }
-        }
-
-        private static StatusKey ToStatusKey(StatusKindRef s)
-        {
-            switch (s)
-            {
-                case StatusKindRef.Stun: return StatusKeys.Stun;
-                case StatusKindRef.Vulnerable: return StatusKeys.Vulnerable;
-                case StatusKindRef.RewardNullified: return StatusKeys.RewardNullified;
-                case StatusKindRef.Slow: return StatusKeys.Slow;
-                case StatusKindRef.Haste: return StatusKeys.Haste;
-                default: return StatusKeys.Block;
-            }
-        }
-
-        private static StatusLifetime ToLifetime(StatusLifetimeKind kind, int count)
-        {
-            switch (kind)
-            {
-                case StatusLifetimeKind.Permanent: return StatusLifetime.Permanent;
-                case StatusLifetimeKind.Turns: return StatusLifetime.Turns(count);
-                case StatusLifetimeKind.UntilConsumed: return StatusLifetime.UntilConsumed(count);
-                default: return StatusLifetime.ThisTurn;
-            }
-        }
-
-        private static InterventionActionKey ToInterventionKey(InterventionKind f)
-        {
-            switch (f)
-            {
-                case InterventionKind.SwapExecutionOrder: return InterventionActionKeys.SwapExecutionOrder;
-                case InterventionKind.Lock: return InterventionActionKeys.Lock;
-                default: return InterventionActionKeys.ChangeExecutionOrder;
-            }
         }
     }
 }
