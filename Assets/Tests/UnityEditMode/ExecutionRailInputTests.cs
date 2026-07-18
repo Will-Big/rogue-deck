@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DG.Tweening;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
@@ -14,6 +15,15 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class ExecutionRailInputTests
     {
+        private static readonly Color BlueOutline =
+            new Color(0.35f, 0.75f, 0.95f, 1f);
+
+        [TearDown]
+        public void ClearDotweenState()
+        {
+            DOTween.Clear(true);
+        }
+
         [Test]
         public void Disabling_input_disables_scroll_rect()
         {
@@ -142,6 +152,141 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        [Test]
+        public void Hover_preview_is_immediate_static_translucent_and_noninteractive()
+        {
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                var existing = Card("existing", order: 4, side: Side.Enemy);
+                var candidate = Card("candidate", order: 3, side: Side.Player);
+                rail.SetCards(new[] { existing, existing }, _ => { });
+
+                rail.ShowPlacementHover(candidate, 1);
+
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                Assert.IsTrue(preview.gameObject.activeSelf);
+                Assert.AreEqual(1, preview.transform.GetSiblingIndex());
+                Assert.AreEqual(Vector3.one, preview.transform.localScale);
+                Assert.AreEqual(0.5f, preview.GetComponent<CanvasGroup>().alpha);
+                Assert.IsFalse(Field<Button>(preview, "_button").interactable);
+                Assert.IsNull(Field<Tween>(rail, "_placementPreviewTween"));
+                Assert.AreEqual(BlueOutline, Field<Image>(preview, "_selectionOutline").color);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Rebuilding_cards_clears_active_placement_preview()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                var candidate = Card("candidate", 3, Side.Player);
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+                rail.ShowPlacementHover(candidate, 0);
+                rail.ArmPlacementPreview(() => { });
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                var tween = Field<Tween>(rail, "_placementPreviewTween");
+                Assert.IsTrue(preview.gameObject.activeSelf);
+
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+
+                Assert.IsFalse(preview.gameObject.activeSelf);
+                Assert.IsFalse(tween.IsActive());
+                Assert.AreEqual(Vector3.one, preview.transform.localScale);
+                Assert.IsNull(Field<Tween>(rail, "_placementPreviewTween"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Armed_preview_is_clickable_and_owns_a_yoyo_tween()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+                rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
+                int clicks = 0;
+
+                rail.ArmPlacementPreview(() => clicks++);
+
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                var tween = Field<Tween>(rail, "_placementPreviewTween");
+                Assert.IsTrue(Field<Button>(preview, "_button").interactable);
+                Assert.IsTrue(tween.IsActive());
+                Field<Button>(preview, "_button").onClick.Invoke();
+                Assert.AreEqual(1, clicks);
+
+                rail.ClearPlacementPreview();
+
+                Assert.IsFalse(preview.gameObject.activeSelf);
+                Assert.IsFalse(tween.IsActive());
+                Assert.AreEqual(Vector3.one, preview.transform.localScale);
+                Assert.IsNull(Field<Tween>(rail, "_placementPreviewTween"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Existing_rail_card_hover_still_opens_detail_while_preview_is_armed()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var fullPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>(
+                    "Assets/Unity/Prefabs/CardView.prefab");
+                Assert.IsNotNull(fullPrefab);
+                var miniPrefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(fullPrefab, miniPrefab, overlay);
+                rail.SetCards(new[] { Card("existing", 4, Side.Enemy) }, _ => { });
+                rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
+                rail.ArmPlacementPreview(() => { });
+                var existing = Field<List<RailCardView>>(rail, "_views")[0];
+
+                existing.OnPointerEnter(null);
+
+                var detail = Field<CardView>(rail, "_preview");
+                Assert.IsNotNull(detail);
+                Assert.IsTrue(detail.gameObject.activeSelf);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static T Child<T>(Transform parent, string name) where T : Component
         {
             var child = new GameObject(name, typeof(RectTransform), typeof(T));
@@ -156,10 +301,27 @@ namespace FateWeaver.Tests.UnityEditMode
             return (RectTransform)child.transform;
         }
 
+        private static CardPresentation Card(string id, int order, Side side)
+            => new CardPresentation(
+                id, id, order, 1, side, string.Empty, null, false);
+
+        private static void SimulateDotweenRuntimeInitializationForEditMode()
+        {
+            var initialized = typeof(DOTween).GetField(
+                "initialized", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(initialized);
+            initialized.SetValue(null, true);
+        }
+
         private static void SetField(object target, string name, object value)
         {
             target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(target, value);
         }
+
+        private static T Field<T>(object target, string name)
+            => (T)target.GetType()
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(target);
     }
 }

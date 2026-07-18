@@ -537,6 +537,8 @@ git commit -m "refactor(core): make execution placement targetless"
 **Files:**
 - Modify: `Assets/Unity/ExecutionRailView.cs`
 - Modify: `Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs`
+- Modify: `Assets/Unity/BattleScreenController.cs` (Task 3 staged integration: remove the deleted whole-rail confirmation registration and connect targetless execution-card hand clicks through `TryPreviewExecutionPlacement`, `WithExecutionOrder`, and the three-argument `BeginPlacement`)
+- Modify: `Assets/Unity/CardSelectionController.cs` (Task 3 staged integration: make `BeginPlacement` accept insertion index, show and arm the silhouette, and clear it during selection cleanup)
 
 **Interfaces:**
 - Consumes: `DG.Tweening.Tween`, `ShortcutExtensions.DOScale`, `Ease.InOutSine`, `LoopType.Yoyo`.
@@ -675,6 +677,8 @@ public void Existing_rail_card_hover_still_opens_detail_while_preview_is_armed()
 ```
 
 - [ ] **Step 4: Run focused Unity tests and verify RED**
+
+The three tests that arm a preview (`Rebuilding_cards_clears_active_placement_preview`, `Armed_preview_is_clickable_and_owns_a_yoyo_tween`, and `Existing_rail_card_hover_still_opens_detail_while_preview_is_armed`) must simulate DOTween's runtime initialization gate before creating a tween. Add a narrowly named reflection helper that asserts and sets the internal static `DOTween.initialized` field to `true`, then add `[TearDown]` cleanup using `DOTween.Clear(true)`. This is test-harness-only: in EditMode, DOTween's public auto-init intentionally does not initialize outside play mode, so `Tween.Kill()` otherwise no-ops and leaves an active tween; production runtime auto-init remains unchanged. Do not invoke the private settings-aware `Init` overload in EditMode: it creates a `DOTweenComponent` and `DontDestroyOnLoad` throws before `AddComponent` outside play mode.
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -815,6 +819,12 @@ private void StopPlacementPulse()
 
 Keep `ClearPlacementPreview()` as the first operation in `SetCards`. Remove the `_placementPreviewCard.HasValue` early return from normal `OnHover` so existing rail-card detail can coexist.
 
+Because this task removes the old public rail APIs and HEAD does not contain the prerequisite insertion-index integration, stage only the following self-contained Task 3 integration hunks here; do not take over Task 4's remaining target-click, emphasis, floating-card, ghost, or targeting-flow integration:
+
+- In `BattleScreenController.Start`, remove `_rail.SetRailClicked(_selection.OnRailAreaClicked);`. In its targetless execution-card hand-click branch, add `TryPreviewExecutionPlacement`, apply `WithExecutionOrder`, and call `BeginPlacement(handIndex, presentation, placement.InsertionIndex)`.
+- In `CardSelectionController.BeginPlacement`, use the three-argument signature and replace `_rail.SetPlacementPreview(card, insertionIndex);` with `_rail.ShowPlacementHover(card, insertionIndex);` followed by `_rail.ArmPlacementPreview(OnRailAreaClicked);`. Add `_rail.ClearPlacementPreview();` to `EndSelectionVisuals` so cancel and apply kill the armed tween.
+- In `ExecutionRailInputTests.cs`, do not stage the unrelated pre-existing `OnTargetClicked` signature hunk; it belongs to Task 4.
+
 - [ ] **Step 6: Run focused GREEN verification**
 
 ```bash
@@ -833,9 +843,17 @@ Expected: all `ExecutionRailInputTests` pass, no active tween warnings remain af
 
 ```bash
 git diff --check -- Assets/Unity/ExecutionRailView.cs \
-  Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs
+  Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs \
+  Assets/Unity/BattleScreenController.cs \
+  Assets/Unity/CardSelectionController.cs \
+  docs/superpowers/plans/2026-07-18-execution-card-placement-flow.md
 git add Assets/Unity/ExecutionRailView.cs \
-  Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs
+  docs/superpowers/plans/2026-07-18-execution-card-placement-flow.md
+git add -p Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs \
+  Assets/Unity/BattleScreenController.cs \
+  Assets/Unity/CardSelectionController.cs
+# Stage only the Task 3 tests and integration hunks above; leave target-click,
+# emphasis/floating/ghost, and the pre-existing test OnTargetClicked hunk for Task 4.
 git commit -m "feat(ui): animate selected execution preview"
 ```
 

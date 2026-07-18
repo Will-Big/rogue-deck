@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,29 +18,22 @@ namespace FateWeaver.Unity
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
         [SerializeField] private Image _backdrop;
-        [SerializeField] private Button _railClickButton;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
         private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.25f);
         private static readonly Color DropHintColor = new Color(0.95f, 0.72f, 0.25f, 0.14f);
+        private const float PlacementPreviewAlpha = 0.5f;
+        private const float PlacementPulseScale = 1.06f;
+        private const float PlacementPulseHalfDuration = 0.45f;
 
         private readonly List<RailCardView> _views = new List<RailCardView>();
         private CardView _preview;
-        private Action _onRailClicked;
-
-        private void Awake()
-        {
-            if (_railClickButton != null)
-            {
-                _railClickButton.onClick.AddListener(() => _onRailClicked?.Invoke());
-            }
-        }
-
-        public void SetRailClicked(Action onRailClicked)
-        {
-            _onRailClicked = onRailClicked;
-        }
+        private RailCardView _placementPreview;
+        private CanvasGroup _placementPreviewGroup;
+        private CardPresentation? _placementPreviewCard;
+        private int _placementPreviewIndex = -1;
+        private Tween _placementPreviewTween;
 
         public void SetDropHint(bool value)
         {
@@ -102,9 +96,6 @@ namespace FateWeaver.Unity
             viewport.gameObject.AddComponent<RectMask2D>();
             _backdrop = viewport.gameObject.AddComponent<Image>();
             _backdrop.color = BackdropColor;
-            _railClickButton = viewport.gameObject.AddComponent<Button>();
-            _railClickButton.targetGraphic = _backdrop;
-            _railClickButton.transition = Selectable.Transition.None;
 
             var content = BattleUiKit.Rect(viewport, "Content");
             content.anchorMin = new Vector2(0f, 0f);
@@ -135,6 +126,7 @@ namespace FateWeaver.Unity
 
         public void SetCards(IReadOnlyList<CardPresentation> cards, Action<int> onClick)
         {
+            ClearPlacementPreview();
             HidePreview();
             foreach (var view in _views)
             {
@@ -150,6 +142,46 @@ namespace FateWeaver.Unity
                 var data = cards[i];
                 view.Bind(data, () => onClick?.Invoke(captured), hovering => OnHover(view, data, hovering));
                 _views.Add(view);
+            }
+        }
+
+        public void ShowPlacementHover(CardPresentation card, int insertionIndex)
+        {
+            if (insertionIndex < 0 || insertionIndex > _views.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(insertionIndex));
+            }
+
+            _placementPreviewCard = card;
+            _placementPreviewIndex = insertionIndex;
+            EnsurePlacementPreview();
+            StopPlacementPulse();
+            BindPlacementPreview(null, interactable: false);
+            ShowPlacementPreview();
+            HidePreview();
+        }
+
+        public void ArmPlacementPreview(Action onClick)
+        {
+            if (!_placementPreviewCard.HasValue || _placementPreview == null)
+            {
+                throw new InvalidOperationException(
+                    "Placement hover preview must exist before it can be armed.");
+            }
+
+            BindPlacementPreview(onClick, interactable: true);
+            StartPlacementPulse();
+        }
+
+        public void ClearPlacementPreview()
+        {
+            StopPlacementPulse();
+            _placementPreviewCard = null;
+            _placementPreviewIndex = -1;
+            if (_placementPreview != null)
+            {
+                _placementPreview.SetInteractable(false);
+                _placementPreview.gameObject.SetActive(false);
             }
         }
 
@@ -214,6 +246,61 @@ namespace FateWeaver.Unity
             float maxX = _previewLayer.rect.width * 0.5f - PreviewSize.x * 0.5f - 8f;
             local.x = Mathf.Clamp(local.x, -maxX, maxX);
             ((RectTransform)_preview.transform).anchoredPosition = local;
+        }
+
+        private void EnsurePlacementPreview()
+        {
+            if (_placementPreview != null)
+            {
+                return;
+            }
+
+            _placementPreview = Instantiate(_cardPrefab, _content);
+            ((RectTransform)_placementPreview.transform).sizeDelta = CardSize;
+            _placementPreviewGroup = _placementPreview.gameObject.AddComponent<CanvasGroup>();
+            _placementPreviewGroup.alpha = PlacementPreviewAlpha;
+            _placementPreview.gameObject.SetActive(false);
+        }
+
+        private void BindPlacementPreview(Action onClick, bool interactable)
+        {
+            _placementPreview.Bind(_placementPreviewCard.Value, onClick, null);
+            _placementPreview.SetSelection(CardView.SelectionKind.Secondary);
+            _placementPreview.SetInteractable(interactable);
+            _placementPreviewGroup.interactable = interactable;
+            _placementPreviewGroup.blocksRaycasts = interactable;
+        }
+
+        private void ShowPlacementPreview()
+        {
+            _placementPreview.transform.SetSiblingIndex(_placementPreviewIndex);
+            _placementPreview.gameObject.SetActive(true);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
+        }
+
+        private void StartPlacementPulse()
+        {
+            StopPlacementPulse();
+            _placementPreviewTween = _placementPreview.transform
+                .DOScale(Vector3.one * PlacementPulseScale, PlacementPulseHalfDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetUpdate(true)
+                .SetLink(_placementPreview.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private void StopPlacementPulse()
+        {
+            if (_placementPreviewTween != null)
+            {
+                _placementPreviewTween.Kill();
+                _placementPreviewTween = null;
+            }
+
+            if (_placementPreview != null)
+            {
+                _placementPreview.transform.localScale = Vector3.one;
+            }
         }
 
         private void HidePreview()

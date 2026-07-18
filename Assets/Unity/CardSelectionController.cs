@@ -65,13 +65,16 @@ namespace FateWeaver.Unity
             _unitTargets.Clear();
         }
 
-        public void BeginPlacement(int handIndex, CardPresentation card)
+        public void BeginPlacement(
+            int handIndex, CardPresentation card, int insertionIndex)
         {
             EndSelectionVisuals();
             _machine.SelectCard(handIndex, SelectionTargetKind.None, 0);
             _visualHandIndex = handIndex;
             _hand.SetHoverSuppressed(true);
             _rail.SetDropHint(true);
+            _rail.ShowPlacementHover(card, insertionIndex);
+            _rail.ArmPlacementPreview(OnRailAreaClicked);
             _hand.SetGhost(handIndex, true);
             SpawnFloatingCard(card);
         }
@@ -307,6 +310,7 @@ namespace FateWeaver.Unity
             _hand.SetTargetSelection(-1, false);
             _hand.SetHoverSuppressed(false);
             _rail.SetDropHint(false);
+            _rail.ClearPlacementPreview();
             _rail.SetTargetSelection(false, _validTargets, _machine.PickedTargets);
             foreach (var view in _unitTargets.Values)
             {

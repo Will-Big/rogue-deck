@@ -57,7 +57,6 @@ namespace FateWeaver.Unity
             _emptyClickCatcher.onClick.AddListener(OnEmptyClicked);
             _dimClickCatcher.onClick.AddListener(OnEmptyClicked);
             _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
-            _rail.SetRailClicked(_selection.OnRailAreaClicked);
             StartSession();
         }
 
@@ -172,7 +171,16 @@ namespace FateWeaver.Unity
                 int requiredTargets = CardTargetRules.RequiredRailTargets(def);
                 if (requiredTargets == 0)
                 {
-                    _selection.BeginPlacement(handIndex, PresentationFor(card));
+                    if (!_session.TryPreviewExecutionPlacement(handIndex, out var placement))
+                    {
+                        SetMessage("카드를 실행 순서에 배치할 수 없습니다.");
+                        return;
+                    }
+
+                    var presentation = PresentationFor(card)
+                        .WithExecutionOrder(placement.ExecutionOrder);
+                    _selection.BeginPlacement(
+                        handIndex, presentation, placement.InsertionIndex);
                     SetMessage(name + " — 실행 순서를 클릭해 배치하세요.");
                 }
                 else
