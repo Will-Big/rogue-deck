@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Cards;
@@ -18,9 +19,22 @@ namespace FateWeaver.Core.Combat
 
         /// <summary>Ascending executionOrder, with player cards before enemy cards on ties.</summary>
         public IReadOnlyList<ExecutionCardInstance> ResolutionOrder()
-            => _cards
-                .OrderBy(c => c.ExecutionOrder)
-                .ThenBy(c => c.Def.Side == Side.Player ? 0 : 1)
-                .ToList();
+            => Ordered(_cards).ToList();
+
+        public int PreviewInsertionIndex(ExecutionCardInstance candidate)
+        {
+            if (candidate == null)
+            {
+                throw new ArgumentNullException(nameof(candidate));
+            }
+
+            return Ordered(_cards.Concat(new[] { candidate })).ToList().IndexOf(candidate);
+        }
+
+        private static IOrderedEnumerable<ExecutionCardInstance> Ordered(
+            IEnumerable<ExecutionCardInstance> cards)
+            => cards
+                .OrderBy(card => card.ExecutionOrder)
+                .ThenBy(card => card.Def.Side == Side.Player ? 0 : 1);
     }
 }

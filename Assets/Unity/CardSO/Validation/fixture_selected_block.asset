@@ -30,7 +30,7 @@ MonoBehaviour:
     Status: 3
     Lifetime: 1
     LifetimeCount: 0
-    Target: 2
+    Target: 0
     Selector: 0
   Intervention: 0
   InterventionEffectValue: 0

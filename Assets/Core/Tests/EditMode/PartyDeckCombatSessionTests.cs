@@ -181,52 +181,42 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Dead_or_missing_direct_target_rejects_play_without_mutation()
+        public void Session_rejects_player_execution_card_that_requires_direct_target()
         {
-            var session = Session(new[]
+            var direct = DirectBlock();
+
+            Assert.Throws<ArgumentException>(() => Session(new[]
             {
-                Loadout("a", new[] { DirectBlock() }),
+                Loadout("a", new[] { direct }),
                 Loadout("b")
-            }, new[] { EnemyStrike(damage: 0) });
-            session.State.Party.Single(member => member.Id == "b").Hp = 0;
-
-            var energy = session.FateEnergy;
-            var hand = session.Hand.ToArray();
-            var zone = session.CurrentOrder.ToArray();
-            var highestInstanceId = zone.Max(card => card.InstanceId);
-
-            Assert.IsFalse(session.PlayExecutionCard(0, "missing"));
-            Assert.IsFalse(session.PlayExecutionCard(0, "b"));
-            Assert.AreEqual(energy, session.FateEnergy);
-            CollectionAssert.AreEqual(hand, session.Hand);
-            CollectionAssert.AreEqual(zone, session.CurrentOrder);
-
-            session.State.Party.Single(member => member.Id == "b").Hp = 25;
-            Assert.IsTrue(session.PlayExecutionCard(0, "b"));
-            Assert.AreEqual(highestInstanceId + 1, session.CurrentOrder.Single(card => card.Def.Id == "direct_block").InstanceId);
+            }));
         }
 
         [Test]
-        public void Valid_target_can_be_placed_and_later_cancelled_if_target_dies()
+        public void Targetless_execution_play_spends_energy_and_places_owned_card()
         {
-            var session = Session(
-                new[]
-                {
-                    Loadout("a", new[] { DirectBlock() }),
-                    Loadout("b")
-                },
-                new[] { EnemyStrike(selector: TargetSelector.BackMost) });
-            session.State.Party.Single(member => member.Id == "b").SurviveCharges = 0;
+            var session = Session(new[]
+            {
+                Loadout("a", new[] { Execution("guard") })
+            }, new[] { EnemyStrike(damage: 0) });
+            int energyBefore = session.FateEnergy;
 
-            Assert.IsTrue(session.PlayExecutionCard(0, "b"));
-            var placed = session.CurrentOrder.Single(card => card.Def.Id == "direct_block");
-            Assert.AreEqual("b", placed.TargetId);
+            Assert.IsTrue(session.PlayExecutionCard(0));
 
-            var timeline = session.ResolveTurn();
+            var placed = session.CurrentOrder.Single(card => card.Def.Id == "guard");
+            Assert.AreEqual("a", placed.OwnerId);
+            Assert.IsNull(placed.TargetId);
+            Assert.AreEqual(energyBefore - placed.Def.EnergyCost, session.FateEnergy);
+        }
 
-            var cancelled = timeline.OfType<CardCancelled>().Single(e => e.CardId == "direct_block");
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, cancelled.Reason);
-            Assert.IsFalse(session.State.Party.Single(member => member.Id == "b").Statuses.Has(StatusKeys.Block));
+        [Test]
+        public void Legacy_session_also_rejects_direct_target_execution_definition()
+        {
+            Assert.Throws<ArgumentException>(() => new DeckCombatSession(
+                new[] { DirectBlock() },
+                playerHp: 30,
+                enemies: Array.Empty<Enemy>(),
+                enemyPolicy: new EnemyIntent(Array.Empty<IReadOnlyList<CardDefinition>>())));
         }
 
         [Test]
@@ -347,6 +337,105 @@ namespace FateWeaver.Tests
             var bCard = session.CurrentOrder.Single(card => card.Def.Id == "b_card");
             Assert.AreEqual("b", bCard.OwnerId);
             Assert.AreEqual(5, bCard.ExecutionOrder);
+        }
+
+        [Test]
+        public void Placement_preview_applies_owner_status_and_matches_real_position_without_mutation()
+        {
+            var session = Session(
+                new[] { Loadout("a", new[] { Execution("preview", order: 5) }) },
+                new[] { EnemyStrike(order: 4, damage: 0) });
+            session.State.Party.Single().Statuses.Add(
+                StatusKeys.Haste, StatusLifetime.Turns(2), magnitude: 3);
+            int energyBefore = session.FateEnergy;
+            var handBefore = session.Hand.ToArray();
+            var orderBefore = session.CurrentOrder.ToArray();
+            int highestInstanceId = orderBefore.Max(card => card.InstanceId);
+
+            Assert.IsTrue(session.TryPreviewExecutionPlacement(0, out var preview));
+
+            Assert.AreEqual(2, preview.ExecutionOrder);
+            Assert.AreEqual(0, preview.InsertionIndex);
+            Assert.AreEqual(energyBefore, session.FateEnergy);
+            CollectionAssert.AreEqual(handBefore, session.Hand);
+            CollectionAssert.AreEqual(orderBefore, session.CurrentOrder);
+
+            Assert.IsTrue(session.PlayExecutionCard(0));
+            var placed = session.CurrentOrder[preview.InsertionIndex];
+            Assert.AreEqual("preview", placed.Def.Id);
+            Assert.AreEqual(preview.ExecutionOrder, placed.ExecutionOrder);
+            Assert.AreEqual(highestInstanceId + 1, placed.InstanceId);
+        }
+
+        [Test]
+        public void Unaffordable_execution_card_still_returns_read_only_position_preview()
+        {
+            var session = Session(new[]
+            {
+                Loadout("a", new[] { Execution("costly", cost: 4, order: 3) })
+            }, new[] { EnemyStrike(order: 5, damage: 0) }, fateEnergyPerTurn: 3);
+            int energyBefore = session.FateEnergy;
+            var handBefore = session.Hand.ToArray();
+            var orderBefore = session.CurrentOrder.ToArray();
+
+            Assert.IsTrue(session.TryPreviewExecutionPlacement(0, out var preview));
+            Assert.AreEqual(3, preview.ExecutionOrder);
+            Assert.AreEqual(0, preview.InsertionIndex);
+            Assert.AreEqual(energyBefore, session.FateEnergy);
+            CollectionAssert.AreEqual(handBefore, session.Hand);
+            CollectionAssert.AreEqual(orderBefore, session.CurrentOrder);
+            Assert.IsFalse(session.PlayExecutionCard(0));
+        }
+
+        [Test]
+        public void Placement_preview_rejects_invalid_nonexecution_and_resolved_turn()
+        {
+            var invalidIndex = Session(new[]
+            {
+                Loadout("a", new[] { Execution("costly", cost: 4) })
+            }, fateEnergyPerTurn: 3);
+            Assert.IsFalse(invalidIndex.TryPreviewExecutionPlacement(-1, out _));
+
+            var intervention = new CardDefinition(
+                "intervention",
+                "intervention",
+                Side.Player,
+                CardType.Skill,
+                5,
+                Array.Empty<EffectData>())
+            {
+                Category = CardCategory.Intervention
+            };
+            var wrongCategory = Session(new[] { Loadout("a", new[] { intervention }) });
+            Assert.IsFalse(wrongCategory.TryPreviewExecutionPlacement(0, out _));
+
+            var resolved = Session(new[] { Loadout("a", new[] { Execution("late") }) });
+            resolved.ResolveTurn();
+            Assert.IsFalse(resolved.TryPreviewExecutionPlacement(0, out _));
+        }
+
+        [Test]
+        public void Placement_preview_does_not_advance_future_draw_rng()
+        {
+            var cards = Enumerable.Range(0, 8)
+                .Select(index => Execution("card_" + index))
+                .ToArray();
+            var previewed = Session(
+                new[] { Loadout("a", cards) },
+                new[] { EnemyStrike(damage: 0) }, seed: 17);
+            var control = Session(
+                new[] { Loadout("a", cards) },
+                new[] { EnemyStrike(damage: 0) }, seed: 17);
+
+            Assert.IsTrue(previewed.TryPreviewExecutionPlacement(0, out _));
+            previewed.ResolveTurn();
+            control.ResolveTurn();
+            Assert.IsTrue(previewed.BeginNextTurn());
+            Assert.IsTrue(control.BeginNextTurn());
+
+            CollectionAssert.AreEqual(
+                control.Hand.Select(card => card.Def.Id).ToArray(),
+                previewed.Hand.Select(card => card.Def.Id).ToArray());
         }
     }
 }

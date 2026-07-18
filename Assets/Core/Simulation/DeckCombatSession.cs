@@ -8,6 +8,18 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation
 {
+    public readonly struct ExecutionPlacementPreview
+    {
+        public int ExecutionOrder { get; }
+        public int InsertionIndex { get; }
+
+        public ExecutionPlacementPreview(int executionOrder, int insertionIndex)
+        {
+            ExecutionOrder = executionOrder;
+            InsertionIndex = insertionIndex;
+        }
+    }
+
     /// <summary>Drives the deck turn loop: draw a hand, spend fate energy to place execution cards onto the
     /// future zone and play intervention cards to reorder it, resolve, then begin the next turn. Pure C#.</summary>
     public sealed class DeckCombatSession
@@ -120,6 +132,7 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
+            ValidateBaseExecutionDefinitions(deckCards);
             _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
             _deck = new Deck(deckCards, seed);
             _enemyPolicy = enemyPolicy;
@@ -150,8 +163,34 @@ namespace FateWeaver.Simulation
         public IReadOnlyList<OwnedCard> DiscardPile => _deck.DiscardPile;
         public IReadOnlyList<OwnedCard> AllDeckCards => _allCards;
 
+        public bool TryPreviewExecutionPlacement(
+            int handIndex, out ExecutionPlacementPreview preview)
+        {
+            preview = default;
+            if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
+            {
+                return false;
+            }
+
+            var card = _deck.Hand[handIndex];
+            if (card.Def.Category != CardCategory.Execution)
+            {
+                return false;
+            }
+
+            int executionOrder = EffectiveExecutionOrderFor(card);
+            var candidate = new ExecutionCardInstance(card.Def)
+            {
+                OwnerId = card.OwnerId,
+                ExecutionOrder = executionOrder
+            };
+            preview = new ExecutionPlacementPreview(
+                executionOrder, _state.Zone.PreviewInsertionIndex(candidate));
+            return true;
+        }
+
         /// <summary>Place an execution card from the hand onto the future zone (spends its fate-energy cost).</summary>
-        public bool PlayExecutionCard(int handIndex, string targetId = null)
+        public bool PlayExecutionCard(int handIndex)
         {
             if (CurrentTurnResolved || handIndex < 0 || handIndex >= _deck.Hand.Count)
             {
@@ -165,44 +204,61 @@ namespace FateWeaver.Simulation
                 return false;
             }
 
-            if (PartyTargetRules.RequiresExplicitAllyTarget(def)
-                && !PartyTargetRules.IsValidExplicitAllyTarget(_state, targetId))
-            {
-                return false;
-            }
-
             _state.FateEnergy -= def.EnergyCost;
             var placed = new ExecutionCardInstance(def)
             {
                 InstanceId = _nextInstanceId++,
                 OwnerId = card.OwnerId,
-                TargetId = targetId
+                ExecutionOrder = EffectiveExecutionOrderFor(card)
             };
-            StatusBag ownerStatuses;
-            if (!_isPartyMode)
-            {
-                ownerStatuses = _state.PlayerStatuses;
-            }
-            else
-            {
-                ownerStatuses = null;
-                foreach (var member in _state.Party)
-                {
-                    if (member.IsAlive && member.Id == card.OwnerId)
-                    {
-                        ownerStatuses = member.Statuses;
-                        break;
-                    }
-                }
-            }
-
-            placed.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(
-                placed.ExecutionOrder,
-                ownerStatuses,
-                _statuses);
             _state.Zone.Add(placed);
             _deck.DiscardFromHand(handIndex);
             return true;
+        }
+
+        private int EffectiveExecutionOrderFor(OwnedCard card)
+            => StatusExecutionOrder.ExecutionOrderFor(
+                card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses);
+
+        private static void ValidateBaseExecutionDefinitions(IReadOnlyList<OwnedCard> cards)
+        {
+            if (cards == null)
+            {
+                throw new System.ArgumentException("Deck cards are required.");
+            }
+
+            foreach (var card in cards)
+            {
+                if (card == null || card.Def == null)
+                {
+                    throw new System.ArgumentException("Deck contains an invalid owned card.");
+                }
+
+                if (!PartyTargetRules.IsValidBaseExecutionDefinition(card.Def))
+                {
+                    throw new System.ArgumentException(
+                        "Player execution cards cannot require a directly selected target: "
+                        + card.Def.Id);
+                }
+            }
+        }
+
+        private StatusBag OwnerStatusesFor(OwnedCard card)
+        {
+            if (!_isPartyMode)
+            {
+                return _state.PlayerStatuses;
+            }
+
+            foreach (var member in _state.Party)
+            {
+                if (member.IsAlive && member.Id == card.OwnerId)
+                {
+                    return member.Statuses;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Play a intervention card from the hand, targeting card(s) by their index in CurrentOrder.

@@ -41,5 +41,36 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AreEqual(new[] { "faster_enemy", "player", "enemy" }, order);
         }
+
+        [TestCase(1, 0)]
+        [TestCase(3, 1)]
+        [TestCase(6, 2)]
+        public void Preview_insertion_uses_execution_order_without_mutating_zone(
+            int candidateOrder, int expectedIndex)
+        {
+            var zone = new FutureZone();
+            zone.Add(Card("fast", 2));
+            zone.Add(Card("slow", 5));
+            var before = zone.Cards.ToArray();
+
+            int index = zone.PreviewInsertionIndex(Card("candidate", candidateOrder));
+
+            Assert.AreEqual(expectedIndex, index);
+            CollectionAssert.AreEqual(before, zone.Cards);
+        }
+
+        [Test]
+        public void Preview_insertion_puts_new_player_after_player_ties_and_before_enemy_ties()
+        {
+            var zone = new FutureZone();
+            zone.Add(Card("enemy", 5, Side.Enemy));
+            zone.Add(Card("player", 5, Side.Player));
+
+            int index = zone.PreviewInsertionIndex(Card("candidate", 5, Side.Player));
+
+            Assert.AreEqual(1, index);
+            CollectionAssert.AreEqual(new[] { "player", "enemy" },
+                zone.ResolutionOrder().Select(card => card.Def.Id).ToArray());
+        }
     }
 }

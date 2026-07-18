@@ -45,7 +45,7 @@ namespace FateWeaver.Simulation.Authoring
                 EffectValue = BlockMagnitude,
                 Status = StatusKindRef.Block,
                 Lifetime = StatusLifetimeKind.ThisTurn,
-                Target = StatusApplyTarget.PartyMember
+                Target = StatusApplyTarget.Self
             });
 
         public static CardSpec AllBlock() => ExecutionSpec(

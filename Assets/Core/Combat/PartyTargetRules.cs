@@ -7,6 +7,18 @@ namespace FateWeaver.Core.Combat
     /// its target automatically (self, all party members, a position selector, or a random pick).</summary>
     public static class PartyTargetRules
     {
+        public static bool IsValidBaseExecutionDefinition(CardDefinition definition)
+        {
+            if (definition == null)
+            {
+                return false;
+            }
+
+            return definition.Side != Side.Player
+                || definition.Category != CardCategory.Execution
+                || !RequiresExplicitAllyTarget(definition);
+        }
+
         public static bool RequiresExplicitAllyTarget(CardDefinition definition)
         {
             foreach (var effect in definition.Effects)

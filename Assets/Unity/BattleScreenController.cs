@@ -243,7 +243,7 @@ namespace FateWeaver.Unity
                 string targetId = result.Targets.Count == 0
                     ? null
                     : result.Targets[0].EntityId;
-                bool played = _session.PlayExecutionCard(result.HandIndex, targetId);
+                bool played = _session.PlayExecutionCard(result.HandIndex);
                 SetMessage(played
                     ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
                     : "대상이 쓰러졌거나 카드를 낼 수 없습니다.");

@@ -37,7 +37,7 @@ namespace FateWeaver.Simulation
             EffectData.ApplyStatus(
                 StatusKeys.Block,
                 StatusLifetime.ThisTurn,
-                StatusApplyTarget.PartyMember,
+                StatusApplyTarget.Self,
                 BlockMagnitude));
 
         public static CardDefinition AllBlock() => ExecutionCard(

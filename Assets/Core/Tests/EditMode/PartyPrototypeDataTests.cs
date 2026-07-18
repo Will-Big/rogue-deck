@@ -61,15 +61,14 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Selected_block_requires_explicit_ally_target()
+        public void Owner_block_uses_self_without_direct_target_selection()
         {
-            var selectedBlock = PartyPrototypeDeck.Build()
+            var ownerBlock = PartyPrototypeDeck.Build()
                 .First(card => card.Id == "fixture_selected_block");
 
-            Assert.IsTrue(PartyTargetRules.RequiresExplicitAllyTarget(selectedBlock));
-            Assert.AreEqual(
-                StatusApplyTarget.PartyMember,
-                selectedBlock.Effects.Single().StatusTarget);
+            Assert.IsTrue(PartyTargetRules.IsValidBaseExecutionDefinition(ownerBlock));
+            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(ownerBlock));
+            Assert.AreEqual(StatusApplyTarget.Self, ownerBlock.Effects.Single().StatusTarget);
         }
 
         [Test]
