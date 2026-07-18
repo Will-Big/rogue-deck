@@ -48,6 +48,22 @@ namespace FateWeaver.Unity
             IsPartyOwned = isPartyOwned;
         }
 
+        public CardPresentation WithExecutionOrder(int executionOrder)
+            => new CardPresentation(
+                Id,
+                DisplayName,
+                executionOrder,
+                EnergyCost,
+                Side,
+                Description,
+                Art,
+                IsLocked,
+                StatusIcons,
+                Category,
+                OwnerDisplayName,
+                OwnerColor,
+                IsPartyOwned);
+
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
         /// the sprite by id (e.g. from the authored CardAsset.Art); null falls back to Resources lookup.</summary>
         public static CardPresentation From(

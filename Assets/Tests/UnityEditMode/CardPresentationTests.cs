@@ -71,6 +71,29 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void With_execution_order_changes_only_order()
+        {
+            var original = new CardPresentation(
+                "id", "name", 5, 2, Side.Player, "description", null, false,
+                new[] { CardStatusIcon.Lock }, CardCategory.Execution,
+                "owner", Color.cyan, true);
+
+            var changed = original.WithExecutionOrder(2);
+
+            Assert.AreEqual(2, changed.ExecutionOrder);
+            Assert.AreEqual(original.Id, changed.Id);
+            Assert.AreEqual(original.DisplayName, changed.DisplayName);
+            Assert.AreEqual(original.EnergyCost, changed.EnergyCost);
+            Assert.AreEqual(original.Side, changed.Side);
+            Assert.AreEqual(original.Description, changed.Description);
+            Assert.AreEqual(original.StatusIcons, changed.StatusIcons);
+            Assert.AreEqual(original.Category, changed.Category);
+            Assert.AreEqual(original.OwnerDisplayName, changed.OwnerDisplayName);
+            Assert.AreEqual(original.OwnerColor, changed.OwnerColor);
+            Assert.AreEqual(original.IsPartyOwned, changed.IsPartyOwned);
+        }
+
+        [Test]
         public void Formation_card_uses_the_registered_dynamic_description()
         {
             var presentation = CardPresentation.FromDefinition(
