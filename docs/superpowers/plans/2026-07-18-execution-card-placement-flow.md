@@ -19,6 +19,7 @@
 - 호버 실루엣은 정적이고 입력 불가이며, 손패 클릭 후에만 `1.0 ↔ 1.06`, 편도 `0.45`초, `Ease.InOutSine`, `LoopType.Yoyo`, `SetUpdate(true)` 펄스를 사용한다.
 - tween 종료 시 소유한 `Tween`만 kill하고 스케일을 `Vector3.one`으로 복원한다. `DOTween.KillAll()`은 금지한다.
 - DOTween은 공식 무료판 v1.3.030 배포본을 수정하지 않고 `Assets/Plugins/Demigiant`에 보존한다.
+- Unity 6000.5.2f1의 `-runTests` 명령에서는 Test Runner가 종료를 관리하므로 `-quit`을 붙이지 않는다. `-quit`은 테스트 결과 XML이 생성되기 전에 배치 모드를 종료할 수 있다.
 - 새 카드/레일 프리팹을 만들거나 씬·프리팹 YAML을 직접 수정하지 않는다.
 - 기존 사용자 변경인 `Assets/Scenes/FateWeaverBattle.unity`, `RailCardView.prefab`, `UnitView.prefab`, `KoreanTMP.asset`, `TargetingArrowView.prefab`은 스테이징하거나 덮어쓰지 않는다.
 - 새 규칙 로직은 Unity 없이 `dotnet test` 가능한 헤드리스 테스트를 먼저 작성한다.
@@ -99,8 +100,7 @@ Run:
   -runTests -testPlatform EditMode \
   -testFilter FateWeaver.Tests.UnityEditMode.DotweenDependencyTests \
   -testResults /private/tmp/dotween-dependency-red.xml \
-  -logFile /private/tmp/dotween-dependency-red.log \
-  -quit
+  -logFile /private/tmp/dotween-dependency-red.log
 ```
 
 Expected: compilation fails with `CS0246` for namespace `DG.Tweening`. If another Unity process owns the project, record that exact failure and use the generated Unity project compilation after the import for GREEN; do not claim Test Runner execution.
@@ -204,8 +204,7 @@ Run:
   -runTests -testPlatform EditMode \
   -testFilter FateWeaver.Tests.UnityEditMode.DotweenDependencyTests \
   -testResults /private/tmp/dotween-dependency-green.xml \
-  -logFile /private/tmp/dotween-dependency-green.log \
-  -quit
+  -logFile /private/tmp/dotween-dependency-green.log
 ```
 
 Expected: one test passes, zero failures, and the Unity log has no DOTween setup or missing-reference errors.
@@ -500,8 +499,7 @@ Expected: focused and full suites have zero failures; signature search returns n
   -runTests -testPlatform EditMode \
   -testFilter FateWeaver.Tests.UnityEditMode.CardPresentationTests \
   -testResults /private/tmp/targetless-core-unity-compile.xml \
-  -logFile /private/tmp/targetless-core-unity-compile.log \
-  -quit
+  -logFile /private/tmp/targetless-core-unity-compile.log
 ```
 
 Expected: Unity compilation succeeds and the focused test has zero failures. If an interactive editor owns the project, record that exact limitation and perform this compile check before Task 3.
@@ -685,8 +683,7 @@ public void Existing_rail_card_hover_still_opens_detail_while_preview_is_armed()
   -runTests -testPlatform EditMode \
   -testFilter FateWeaver.Tests.UnityEditMode.ExecutionRailInputTests \
   -testResults /private/tmp/execution-rail-states-red.xml \
-  -logFile /private/tmp/execution-rail-states-red.log \
-  -quit
+  -logFile /private/tmp/execution-rail-states-red.log
 ```
 
 Expected: compile failures for `ShowPlacementHover`, `ArmPlacementPreview`, and `_placementPreviewTween`.
@@ -827,8 +824,7 @@ Keep `ClearPlacementPreview()` as the first operation in `SetCards`. Remove the 
   -runTests -testPlatform EditMode \
   -testFilter FateWeaver.Tests.UnityEditMode.ExecutionRailInputTests \
   -testResults /private/tmp/execution-rail-states-green.xml \
-  -logFile /private/tmp/execution-rail-states-green.log \
-  -quit
+  -logFile /private/tmp/execution-rail-states-green.log
 ```
 
 Expected: all `ExecutionRailInputTests` pass, no active tween warnings remain after teardown, and no DOTween safe-mode errors appear.
@@ -1066,8 +1062,7 @@ Retain all existing single/multiple intervention target tests unchanged.
   -runTests -testPlatform EditMode \
   -testFilter "FateWeaver.Tests.UnityEditMode.HandFanHoverTests;FateWeaver.Tests.UnityEditMode.CardSelectionControllerTests" \
   -testResults /private/tmp/execution-placement-integration-red.xml \
-  -logFile /private/tmp/execution-placement-integration-red.log \
-  -quit
+  -logFile /private/tmp/execution-placement-integration-red.log
 ```
 
 Expected: compile failures for the three-argument `HandFanView.SetCards` and the new controller hover methods.
@@ -1401,15 +1396,13 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
   -runTests -testPlatform EditMode \
   -testFilter "FateWeaver.Tests.UnityEditMode.HandFanHoverTests;FateWeaver.Tests.UnityEditMode.CardSelectionControllerTests;FateWeaver.Tests.UnityEditMode.ExecutionRailInputTests" \
   -testResults /private/tmp/execution-placement-focused-green.xml \
-  -logFile /private/tmp/execution-placement-focused-green.log \
-  -quit
+  -logFile /private/tmp/execution-placement-focused-green.log
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
   -batchmode \
   -projectPath /Users/ish/Git/rogue-deck/.worktrees/card-selection-integration \
   -runTests -testPlatform EditMode \
   -testResults /private/tmp/execution-placement-full-editmode.xml \
-  -logFile /private/tmp/execution-placement-full-editmode.log \
-  -quit
+  -logFile /private/tmp/execution-placement-full-editmode.log
 ```
 
 Expected: headless, focused Unity, and full EditMode suites have zero failures; Unity logs have no leaked tween, missing DOTween assembly, or target-null errors.
