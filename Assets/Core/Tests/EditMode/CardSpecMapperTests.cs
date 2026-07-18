@@ -63,8 +63,8 @@ namespace FateWeaver.Tests
             Assert.AreEqual(EffectKeys.ApplyStatus, e.Key);
             Assert.AreEqual(2, e.EffectValue);
             Assert.AreEqual(7, e.SuccessEffectValue);
-            Assert.IsTrue(e.StatusKey.HasValue);
-            Assert.AreEqual(StatusKeys.Block, e.StatusKey.Value);
+            Assert.IsInstanceOf<ApplyStatusPayload>(e.Payload);
+            Assert.AreEqual(StatusKeys.Block, ((ApplyStatusPayload)e.Payload).Key);
             var adjacent = (AdjacentCardIs)e.Condition;
             Assert.AreEqual(AdjacentDirection.Next, adjacent.Direction);
             Assert.AreEqual(Side.Enemy, adjacent.Side);
@@ -92,12 +92,12 @@ namespace FateWeaver.Tests
             var slow = CardSpecMapper.ToEffectData(new EffectSpec {
                 Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Slow,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy });
-            Assert.AreEqual(StatusKeys.Slow, slow.StatusKey.Value);
+            Assert.AreEqual(StatusKeys.Slow, ((ApplyStatusPayload)slow.Payload).Key);
 
             var haste = CardSpecMapper.ToEffectData(new EffectSpec {
                 Kind = EffectKind.ApplyStatus, EffectValue = 3, Status = StatusKindRef.Haste,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self });
-            Assert.AreEqual(StatusKeys.Haste, haste.StatusKey.Value);
+            Assert.AreEqual(StatusKeys.Haste, ((ApplyStatusPayload)haste.Payload).Key);
         }
 
         [Test]
@@ -142,7 +142,9 @@ namespace FateWeaver.Tests
                 Target = StatusApplyTarget.AllPartyMembers
             });
 
-            Assert.AreEqual(StatusApplyTarget.AllPartyMembers, effect.StatusTarget);
+            Assert.AreEqual(
+                StatusApplyTarget.AllPartyMembers,
+                ((ApplyStatusPayload)effect.Payload).Target);
         }
 
         [Test]

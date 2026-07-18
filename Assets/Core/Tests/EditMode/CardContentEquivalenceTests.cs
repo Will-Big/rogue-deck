@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Effects;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
 using FateWeaver.Simulation.Generated;
@@ -40,12 +41,10 @@ namespace FateWeaver.Tests
             e.TargetSelector?.ToString() ?? "-",
             StatusSig(e));
 
-        // Task 2에서 payload 기반으로 교체된다 (형태만 바뀌고 출력 문자열은 동일해야 한다).
         private static string StatusSig(EffectData e)
-            => !e.StatusKey.HasValue
+            => !(e.Payload is ApplyStatusPayload p)
                 ? "-"
-                : e.StatusKey.Value + "/" + e.StatusLifetime.Value.Kind + ":" + e.StatusLifetime.Value.Count
-                    + "/" + e.StatusTarget;
+                : p.Key + "/" + p.Lifetime.Kind + ":" + p.Lifetime.Count + "/" + p.Target;
 
         private static List<string> Sigs(IEnumerable<CardDefinition> defs)
             => defs.Select(Sig).OrderBy(s => s).ToList();

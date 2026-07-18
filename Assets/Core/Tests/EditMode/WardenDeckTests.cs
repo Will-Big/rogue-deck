@@ -53,7 +53,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(EffectKeys.ApplyStatus, braceEffect.Key);
             Assert.AreEqual(3, braceEffect.EffectValue);
             Assert.AreEqual(6, braceEffect.SuccessEffectValue);
-            Assert.AreEqual(StatusKeys.Block, braceEffect.StatusKey.Value);
+            Assert.AreEqual(StatusKeys.Block, ((ApplyStatusPayload)braceEffect.Payload).Key);
             Assert.AreEqual(Side.Enemy, ((NoPrecedingCardOfSide)braceEffect.Condition).Side);
         }
 

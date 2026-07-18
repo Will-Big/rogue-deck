@@ -12,10 +12,8 @@ namespace FateWeaver.Core.Cards
         public Condition Condition { get; init; }
         public int? SuccessEffectValue { get; init; }
 
-        // Status application (read by the ApplyStatus effect handler). Magnitude rides on EffectValue.
-        public StatusKey? StatusKey { get; init; }
-        public StatusLifetime? StatusLifetime { get; init; }
-        public StatusApplyTarget StatusTarget { get; init; }
+        /// <summary>Effect-kind-specific parameters (null when the scalar is enough).</summary>
+        public IEffectPayload Payload { get; init; }
 
         // Position selector for enemy attacks against the player party formation. Null means
         // FrontMost (pre-party content has no selector, so this keeps single-enemy-attack compat).
@@ -39,9 +37,7 @@ namespace FateWeaver.Core.Cards
             int magnitude = 0)
             => new EffectData(EffectKeys.ApplyStatus, magnitude)
             {
-                StatusKey = statusKey,
-                StatusLifetime = lifetime,
-                StatusTarget = target
+                Payload = new ApplyStatusPayload(statusKey, lifetime, target)
             };
     }
 

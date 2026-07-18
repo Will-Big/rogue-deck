@@ -42,9 +42,10 @@ namespace FateWeaver.Simulation.Authoring
             {
                 effect = new EffectData(key, e.EffectValue)
                 {
-                    StatusKey = ToStatusKey(e.Status),
-                    StatusLifetime = ToLifetime(e.Lifetime, e.LifetimeCount),
-                    StatusTarget = e.Target,
+                    Payload = new ApplyStatusPayload(
+                        ToStatusKey(e.Status),
+                        ToLifetime(e.Lifetime, e.LifetimeCount),
+                        e.Target),
                     Condition = hasCondition ? ToCondition(e) : null,
                     SuccessEffectValue = hasCondition ? e.SuccessEffectValue : (int?)null
                 };

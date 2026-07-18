@@ -23,7 +23,8 @@ namespace FateWeaver.Core.Combat
         {
             foreach (var effect in definition.Effects)
             {
-                if (effect.Key == EffectKeys.ApplyStatus && effect.StatusTarget == StatusApplyTarget.PartyMember)
+                if (effect.Payload is ApplyStatusPayload payload
+                    && payload.Target == StatusApplyTarget.PartyMember)
                 {
                     return true;
                 }

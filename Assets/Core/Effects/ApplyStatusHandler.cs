@@ -18,7 +18,7 @@ namespace FateWeaver.Core.Effects
     /// the resolved EffectValue (e.g. block points). Target resolution is strict: when the effect's
     /// target cannot be resolved (dead/missing member, ambiguous ownerless Self, etc.) the card is
     /// cancelled (NoValidTarget) with no partial application and no front-of-formation fallback.</summary>
-    public sealed class ApplyStatusHandler : IEffectHandler
+    public sealed class ApplyStatusHandler : IEffectHandler, IEffectDataValidator
     {
         public EffectKey Key => EffectKeys.ApplyStatus;
 
@@ -29,30 +29,43 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var effect = ctx.Effect;
-            if (effect == null || effect.StatusKey == null || effect.StatusLifetime == null)
+            if (!(ctx.Effect?.Payload is ApplyStatusPayload payload))
             {
                 return;
             }
 
-            switch (effect.StatusTarget)
+            switch (payload.Target)
             {
                 case StatusApplyTarget.Self:
-                    ApplySelf(ctx, effect);
+                    ApplySelf(ctx, payload);
                     break;
                 case StatusApplyTarget.TargetEnemy:
-                    ApplyTargetEnemy(ctx, effect);
+                    ApplyTargetEnemy(ctx, payload);
                     break;
                 case StatusApplyTarget.PartyMember:
-                    ApplyPartyMember(ctx, effect);
+                    ApplyPartyMember(ctx, payload);
                     break;
                 case StatusApplyTarget.AllPartyMembers:
-                    ApplyAllPartyMembers(ctx, effect);
+                    ApplyAllPartyMembers(ctx, payload);
                     break;
             }
         }
 
-        private static void ApplySelf(EffectContext ctx, EffectData effect)
+        public System.Collections.Generic.IEnumerable<string> ValidateData(EffectData effect)
+        {
+            if (!(effect.Payload is ApplyStatusPayload payload))
+            {
+                yield return "apply_status effect requires an ApplyStatusPayload.";
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(payload.Key.Id))
+            {
+                yield return "apply_status payload requires a status key.";
+            }
+        }
+
+        private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)
         {
             if (ctx.Card.Def.Side == Side.Player)
             {
@@ -63,7 +76,7 @@ namespace FateWeaver.Core.Effects
                     return;
                 }
 
-                member.Statuses.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
+                member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
                 return;
             }
 
@@ -74,10 +87,10 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            enemy.Statuses.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
+            enemy.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
         }
 
-        private static void ApplyTargetEnemy(EffectContext ctx, EffectData effect)
+        private static void ApplyTargetEnemy(EffectContext ctx, ApplyStatusPayload payload)
         {
             var enemy = SelectTargetEnemy(ctx.State, ctx.Card.TargetId);
             if (enemy == null)
@@ -86,10 +99,10 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            enemy.Statuses.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
+            enemy.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
         }
 
-        private static void ApplyPartyMember(EffectContext ctx, EffectData effect)
+        private static void ApplyPartyMember(EffectContext ctx, ApplyStatusPayload payload)
         {
             var member = PartyTargeting.LivingById(ctx.State, ctx.Card.TargetId);
             if (member == null)
@@ -98,12 +111,12 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            member.Statuses.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
+            member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
         }
 
         /// <summary>Applies the status to every currently-living party member as an independent bag
         /// entry (a snapshot taken at resolution time, so mid-loop deaths can't change who's hit).</summary>
-        private static void ApplyAllPartyMembers(EffectContext ctx, EffectData effect)
+        private static void ApplyAllPartyMembers(EffectContext ctx, ApplyStatusPayload payload)
         {
             var living = new List<PartyMember>();
             foreach (var member in ctx.State.Party)
@@ -122,7 +135,7 @@ namespace FateWeaver.Core.Effects
 
             foreach (var member in living)
             {
-                member.Statuses.Add(effect.StatusKey.Value, effect.StatusLifetime.Value, ctx.EffectValue);
+                member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
             }
         }
 

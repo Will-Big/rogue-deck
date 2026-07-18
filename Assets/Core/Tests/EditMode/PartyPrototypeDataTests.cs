@@ -68,7 +68,9 @@ namespace FateWeaver.Tests
 
             Assert.IsTrue(PartyTargetRules.IsValidBaseExecutionDefinition(ownerBlock));
             Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(ownerBlock));
-            Assert.AreEqual(StatusApplyTarget.Self, ownerBlock.Effects.Single().StatusTarget);
+            Assert.AreEqual(
+                StatusApplyTarget.Self,
+                ((ApplyStatusPayload)ownerBlock.Effects.Single().Payload).Target);
         }
 
         [Test]
@@ -80,7 +82,7 @@ namespace FateWeaver.Tests
             Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(allBlock));
             Assert.AreEqual(
                 StatusApplyTarget.AllPartyMembers,
-                allBlock.Effects.Single().StatusTarget);
+                ((ApplyStatusPayload)allBlock.Effects.Single().Payload).Target);
         }
 
         [Test]

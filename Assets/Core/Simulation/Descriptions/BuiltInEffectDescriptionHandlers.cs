@@ -18,15 +18,15 @@ namespace FateWeaver.Simulation.Descriptions
 
         public string Describe(EffectData effect, int effectValue, DescriptionContext context)
         {
-            if (!effect.StatusKey.HasValue || !effect.StatusLifetime.HasValue)
+            if (!(effect.Payload is ApplyStatusPayload payload))
                 throw new ArgumentException(
-                    "Apply-status description requires a status key and lifetime.",
+                    "Apply-status description requires an ApplyStatusPayload.",
                     nameof(effect));
 
-            var suffix = context.LifetimeSuffix(effect.StatusLifetime.Value);
+            var suffix = context.LifetimeSuffix(payload.Lifetime);
             return context.TargetPrefix(effect)
-                + context.StatusTargetPrefix(effect.StatusTarget)
-                + context.Statuses.Resolve(effect.StatusKey.Value)
+                + context.StatusTargetPrefix(payload.Target)
+                + context.Statuses.Resolve(payload.Key)
                 + " " + effectValue
                 + (string.IsNullOrEmpty(suffix) ? string.Empty : " " + suffix);
         }

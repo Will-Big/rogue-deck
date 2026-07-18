@@ -69,13 +69,20 @@ namespace FateWeaver.Simulation.Descriptions
                             "Card effects cannot contain null entries.",
                             nameof(cards));
 
-                    effects.Resolve(effect.Key);
+                    var handler = effects.Resolve(effect.Key);
                     descriptions.Effects.Resolve(effect.Key);
 
-                    if (effect.StatusKey.HasValue)
+                    if (handler is IEffectDataValidator validator)
                     {
-                        statuses.Resolve(effect.StatusKey.Value);
-                        descriptions.Statuses.Resolve(effect.StatusKey.Value);
+                        foreach (var error in validator.ValidateData(effect))
+                            throw new ArgumentException(
+                                "Card '" + card.Id + "': " + error, nameof(cards));
+                    }
+
+                    if (effect.Payload is ApplyStatusPayload statusPayload)
+                    {
+                        statuses.Resolve(statusPayload.Key);
+                        descriptions.Statuses.Resolve(statusPayload.Key);
                     }
                 }
 

@@ -64,14 +64,12 @@ namespace FateWeaver.Simulation
             "cover", "엄호", Side.Player, CardType.Defense, DefaultExecutionOrder,
             new[]
             {
-                new EffectData(EffectKeys.ApplyStatus, 2)
-                {
-                    StatusKey = StatusKeys.Block,
-                    StatusLifetime = StatusLifetime.ThisTurn,
-                    StatusTarget = StatusApplyTarget.Self,
-                    Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessEffectValue = 7
-                }
+                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
+                    with
+                    {
+                        Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                        SuccessEffectValue = 7
+                    }
             })
             { EnergyCost = 1, Category = CardCategory.Execution };
 

@@ -73,14 +73,12 @@ namespace FateWeaver.Tests.EditMode
         public void Conditional_status_reuses_success_amount_for_the_success_fragment()
         {
             var card = Execution("cover",
-                new EffectData(EffectKeys.ApplyStatus, 2)
-                {
-                    StatusKey = StatusKeys.Block,
-                    StatusLifetime = StatusLifetime.ThisTurn,
-                    StatusTarget = StatusApplyTarget.Self,
-                    Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
-                    SuccessEffectValue = 7
-                });
+                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
+                    with
+                    {
+                        Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                        SuccessEffectValue = 7
+                    });
             Assert.AreEqual(
                 "방어 2. 바로 뒤가 적 공격이면 방어 7.",
                 DescriptionComposer.Describe(card, Korean));
