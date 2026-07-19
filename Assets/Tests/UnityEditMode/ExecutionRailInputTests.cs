@@ -315,6 +315,67 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Placement_flight_flips_to_the_mini_card_face_in_the_settle_segment()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+                rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
+                rail.ArmPlacementPreview(() => { });
+                var flight = ChildRect(overlay, "Flight");
+                flight.sizeDelta = new Vector2(170f, 238f);
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                flight.position = preview.transform.position + Vector3.down * 300f;
+
+                Assert.IsTrue(rail.StartPlacementFlight(flight, () => { }));
+
+                var miniFace = flight.GetComponentInChildren<RailCardView>(true);
+                Assert.IsNotNull(miniFace, "flight should carry a hidden mini card face");
+                Assert.IsFalse(miniFace.gameObject.activeSelf);
+
+                var sequence = Field<Sequence>(rail, "_placementFlightSequence");
+                float duration = Field<float>(rail, "_placementFlightDuration");
+                bool sawFrontFlip = false;
+                bool sawMiniFace = false;
+                for (int i = 1; i < 40; i++)
+                {
+                    sequence.Goto(duration * i / 40f, false);
+                    float yAngle = Mathf.DeltaAngle(0f, flight.localEulerAngles.y);
+                    if (!miniFace.gameObject.activeSelf && yAngle > 5f && yAngle < 90f)
+                    {
+                        sawFrontFlip = true;
+                    }
+
+                    if (miniFace.gameObject.activeSelf && yAngle < -5f)
+                    {
+                        sawMiniFace = true;
+                    }
+                }
+
+                Assert.IsTrue(sawFrontFlip, "front face should turn toward edge-on before the swap");
+                Assert.IsTrue(sawMiniFace, "mini face should unfold from -90 after the swap");
+
+                sequence.Complete();
+
+                Assert.IsTrue(miniFace.gameObject.activeSelf);
+                Assert.That(
+                    Mathf.Abs(Mathf.DeltaAngle(flight.eulerAngles.y, 0f)),
+                    Is.LessThan(0.01f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Existing_rail_card_hover_still_opens_detail_while_preview_is_armed()
         {
             SimulateDotweenRuntimeInitializationForEditMode();

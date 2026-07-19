@@ -224,6 +224,7 @@ namespace FateWeaver.Unity
                 new Vector2(targetLocal3.x, targetLocal3.y),
                 targetSize,
                 settings);
+            RailCardView miniFace = CreateFlightMiniFace(flight);
             Vector3 endScale = ScaleForTarget(flight, target, _previewLayer.lossyScale);
             float progress = 0f;
             bool completionSent = false;
@@ -248,8 +249,18 @@ namespace FateWeaver.Unity
                             path, value, _placementFlightCurveSplit);
                         flight.localPosition = new Vector3(
                             sample.Position.x, sample.Position.y, startLocal.z);
+                        float settleT = PlacementFlightPath.SettleProgress(
+                            value, _placementFlightCurveSplit);
+                        if (settleT >= PlacementFlightPath.FlipSwapProgress
+                            && !miniFace.gameObject.activeSelf)
+                        {
+                            miniFace.gameObject.SetActive(true);
+                        }
+
                         flight.localRotation = Quaternion.Euler(
-                            0f, 0f, sample.AngleDegrees);
+                            0f,
+                            PlacementFlightPath.FlipAngle(settleT),
+                            sample.AngleDegrees);
                     },
                     1f,
                     _placementFlightDuration)
@@ -426,6 +437,27 @@ namespace FateWeaver.Unity
                 target.rect.height * target.lossyScale.y /
                     (flight.rect.height * parentScale.y),
                 1f);
+
+        /// <summary>The mini card face shown after the flip passes edge-on. A child of the
+        /// flight rect, so ClearPlacementFlight destroys it with the flight visual.</summary>
+        private RailCardView CreateFlightMiniFace(RectTransform flight)
+        {
+            var face = Instantiate(_cardPrefab, flight);
+            var faceRect = (RectTransform)face.transform;
+            faceRect.anchorMin = Vector2.zero;
+            faceRect.anchorMax = Vector2.one;
+            faceRect.offsetMin = Vector2.zero;
+            faceRect.offsetMax = Vector2.zero;
+            face.Bind(_placementPreviewCard.Value, null, null);
+            face.SetInteractable(false);
+            foreach (var graphic in face.GetComponentsInChildren<Graphic>(true))
+            {
+                graphic.raycastTarget = false;
+            }
+
+            face.gameObject.SetActive(false);
+            return face;
+        }
 
         private static Vector2 SizeInLayer(
             RectTransform target,
