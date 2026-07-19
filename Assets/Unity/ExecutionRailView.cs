@@ -18,17 +18,17 @@ namespace FateWeaver.Unity
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
         [SerializeField] private Image _backdrop;
-        [SerializeField] private float _placementFlightDuration = 0.45f;
+        [SerializeField] private float _placementFlightDuration = 1f;
         [SerializeField, Range(0.1f, 0.95f)]
-        private float _placementFlightRiseRatio = 0.7f;
+        private float _placementFlightRiseRatio = 0.5f;
         [SerializeField, Min(0f)]
-        private float _placementFlightOvershootRatio = 0.9f;
+        private float _placementFlightOvershootRatio = 3f;
         [SerializeField, Min(0.1f)]
         private float _placementFlightApproachWidthRatio = 1.25f;
         [SerializeField, Range(0.05f, 0.45f)]
         private float _placementFlightApproachDropRatio = 0.3f;
         [SerializeField, Range(0.5f, 0.9f)]
-        private float _placementFlightCurveSplit = 0.72f;
+        private float _placementFlightCurveSplit = 0.8f;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
