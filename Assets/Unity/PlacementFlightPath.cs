@@ -142,6 +142,31 @@ namespace FateWeaver.Unity
                     settleT));
         }
 
+        public const float FlipSwapProgress = 0.5f;
+
+        /// <summary>0 on the first segment; normalized 0→1 across the settle segment,
+        /// using the same split clamp as Evaluate.</summary>
+        public static float SettleProgress(float progress, float segmentSplit)
+        {
+            float split = Mathf.Clamp(
+                segmentSplit, MinSegmentRatio, MaxSegmentRatio);
+            float clamped = Mathf.Clamp01(progress);
+            return clamped <= split
+                ? 0f
+                : (clamped - split) / (1f - split);
+        }
+
+        /// <summary>Y-axis flip: the front face turns 0→90° until FlipSwapProgress,
+        /// then the mini face unfolds -90°→0°. Both halves meet edge-on, so the swap
+        /// is invisible and the flight lands at exactly 0°.</summary>
+        public static float FlipAngle(float settleT)
+        {
+            float clamped = Mathf.Clamp01(settleT);
+            return clamped < FlipSwapProgress
+                ? clamped * 180f
+                : clamped * 180f - 180f;
+        }
+
         private static Vector2 Cubic(
             Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
         {

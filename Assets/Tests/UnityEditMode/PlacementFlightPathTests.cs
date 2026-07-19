@@ -64,5 +64,34 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual(new Vector2(0f, 100f), end.Position);
             Assert.That(Mathf.Abs(end.AngleDegrees), Is.LessThan(0.01f));
         }
+
+        [Test]
+        public void Flip_angle_rises_to_edge_on_then_unfolds_to_zero()
+        {
+            Assert.That(PlacementFlightPath.FlipAngle(0f), Is.EqualTo(0f).Within(0.001f));
+            Assert.That(PlacementFlightPath.FlipAngle(0.25f), Is.EqualTo(45f).Within(0.001f));
+            Assert.That(PlacementFlightPath.FlipAngle(0.4999f), Is.EqualTo(89.982f).Within(0.01f));
+            Assert.That(PlacementFlightPath.FlipAngle(0.5f), Is.EqualTo(-90f).Within(0.001f));
+            Assert.That(PlacementFlightPath.FlipAngle(0.75f), Is.EqualTo(-45f).Within(0.001f));
+            Assert.That(PlacementFlightPath.FlipAngle(1f), Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [Test]
+        public void Flip_angle_clamps_out_of_range_progress()
+        {
+            Assert.That(PlacementFlightPath.FlipAngle(-1f), Is.EqualTo(0f).Within(0.001f));
+            Assert.That(PlacementFlightPath.FlipAngle(2f), Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [Test]
+        public void Settle_progress_is_zero_on_the_first_segment_and_normalized_after()
+        {
+            Assert.That(PlacementFlightPath.SettleProgress(0f, Split), Is.EqualTo(0f).Within(0.001f));
+            Assert.That(PlacementFlightPath.SettleProgress(Split, Split), Is.EqualTo(0f).Within(0.001f));
+            Assert.That(
+                PlacementFlightPath.SettleProgress(Split + (1f - Split) * 0.5f, Split),
+                Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(PlacementFlightPath.SettleProgress(1f, Split), Is.EqualTo(1f).Within(0.001f));
+        }
     }
 }
