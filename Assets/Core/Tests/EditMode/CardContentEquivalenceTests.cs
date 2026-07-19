@@ -53,8 +53,8 @@ namespace FateWeaver.Tests
 
         private static readonly string[] GoldenStarterDeckHandCoded =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardIs { Side = Enemy, Type = Attack },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardIs { Direction = Next, Side = Enemy, Type = Attack },7,-,block/ThisTurn:0/Self",
+            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-2;",
@@ -67,8 +67,8 @@ namespace FateWeaver.Tests
 
         private static readonly string[] GoldenStarterDeckSpecs =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardIs { Side = Enemy, Type = Attack },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardIs { Direction = Next, Side = Enemy, Type = Attack },7,-,block/ThisTurn:0/Self",
+            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-1;",
@@ -81,8 +81,8 @@ namespace FateWeaver.Tests
 
         private static readonly string[] GoldenGeneratedStarterDeck =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardIs { Side = Enemy, Type = Attack },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardIs { Direction = Next, Side = Enemy, Type = Attack },7,-,block/ThisTurn:0/Self",
+            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-1;",

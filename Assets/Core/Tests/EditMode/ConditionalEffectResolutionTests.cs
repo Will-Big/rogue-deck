@@ -119,10 +119,10 @@ namespace FateWeaver.Tests
                     EffectData.Conditional(
                         EffectKeys.GrantNextPlayerAttackDamageBonus,
                         effectValue: 0,
-                        condition: new AdjacentCardIs(
+                        condition: new AdjacentCardHasEffect(
                             AdjacentDirection.Next,
                             Side.Player,
-                            CardType.Attack),
+                            EffectKeys.Damage),
                         successEffectValue: 6)
                 }));
             var chain = Card("chain_slash", Side.Player, 2,

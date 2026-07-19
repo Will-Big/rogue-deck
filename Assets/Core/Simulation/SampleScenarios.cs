@@ -145,10 +145,10 @@ namespace FateWeaver.Simulation
                             EffectData.Conditional(
                                 EffectKeys.GrantNextPlayerAttackDamageBonus,
                                 effectValue: 0,
-                                condition: new AdjacentCardIs(
+                                condition: new AdjacentCardHasEffect(
                                     AdjacentDirection.Next,
                                     Side.Player,
-                                    CardType.Attack),
+                                    EffectKeys.Damage),
                                 successEffectValue: 6)
                         }),
                     new ZoneCardSpec(
@@ -164,9 +164,7 @@ namespace FateWeaver.Simulation
                                 effectValue: 1,
                                 condition: new AllOf(new Condition[]
                                 {
-                                    new PreviousExecutedCardIs(
-                                        Side.Player,
-                                        CardType.Skill),
+                                    new PreviousExecutedCardIs(Side.Player),
                                     new WithinNth(3)
                                 }),
                                 successEffectValue: 6)

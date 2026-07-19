@@ -66,14 +66,18 @@ namespace FateWeaver.Simulation.Descriptions
                     return "첫 발동";
                 case WithinNth w:
                     return w.N + "번째 안";
-                case BeforeNextEnemyAttack _:
-                    return "다음 적 공격 전";
+                case BeforeNextEnemyDamageCard _:
+                    return "다음 적 피해 카드 전";
                 case SameTarget _:
                     return "같은 대상";
                 case AdjacentCardIs a:
                     return AdjacentStem(a);
+                case AdjacentCardHasEffect a:
+                    return AdjacentEffectStem(a);
                 case PreviousExecutedCardIs p:
                     return PreviousExecutedStem(p);
+                case PreviousExecutedCardHasEffect p:
+                    return PreviousExecutedEffectStem(p);
                 case AllOf all:
                     return JoinAll(all.Conditions);
                 default:
@@ -83,9 +87,15 @@ namespace FateWeaver.Simulation.Descriptions
 
         private static string AdjacentStem(AdjacentCardIs adjacent)
         {
-            var subject = adjacent.Type.HasValue
-                ? SideName(adjacent.Side) + " " + CardTypeName(adjacent.Type.Value)
-                : SideName(adjacent.Side) + " 카드";
+            var subject = SideName(adjacent.Side) + " 카드";
+            return adjacent.Direction == AdjacentDirection.Previous
+                ? "앞에 배치된 카드가 " + subject
+                : "바로 뒤가 " + subject;
+        }
+
+        private static string AdjacentEffectStem(AdjacentCardHasEffect adjacent)
+        {
+            var subject = SideName(adjacent.Side) + " " + EffectCardName(adjacent.EffectKey);
             return adjacent.Direction == AdjacentDirection.Previous
                 ? "앞에 배치된 카드가 " + subject
                 : "바로 뒤가 " + subject;
@@ -93,11 +103,13 @@ namespace FateWeaver.Simulation.Descriptions
 
         private static string PreviousExecutedStem(PreviousExecutedCardIs previous)
         {
-            var subject = previous.Type.HasValue
-                ? SideName(previous.Side) + " " + CardTypeName(previous.Type.Value)
-                : SideName(previous.Side) + " 카드";
+            var subject = SideName(previous.Side) + " 카드";
             return "직전에 실행한 카드가 " + subject;
         }
+
+        private static string PreviousExecutedEffectStem(PreviousExecutedCardHasEffect previous)
+            => "직전에 실행한 카드가 " + SideName(previous.Side) + " "
+                + EffectCardName(previous.EffectKey);
 
         private static string JoinAll(IReadOnlyList<Condition> children)
         {
@@ -109,14 +121,7 @@ namespace FateWeaver.Simulation.Descriptions
 
         private static string SideName(Side side) => side == Side.Player ? "플레이어" : "적";
 
-        private static string CardTypeName(CardType type)
-        {
-            switch (type)
-            {
-                case CardType.Attack: return "공격";
-                case CardType.Defense: return "방어";
-                default: return "스킬";
-            }
-        }
+        private static string EffectCardName(EffectKey key)
+            => key == EffectKeys.Damage ? "피해 카드" : key + " 효과 카드";
     }
 }

@@ -56,7 +56,7 @@ namespace FateWeaver.Simulation
             {
                 EffectData.Conditional(
                     EffectKeys.Damage, 4,
-                    new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), 9)
+                    new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), 9)
             })
             { EnergyCost = 2, Category = CardCategory.Execution };
 
@@ -67,7 +67,7 @@ namespace FateWeaver.Simulation
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
                     with
                     {
-                        Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                        Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                         SuccessEffectValue = 7
                     }
             })

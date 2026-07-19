@@ -3,11 +3,23 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
     public class ConditionEvaluatorTests
     {
+        private static ExecutionCardInstance Card(
+            string id,
+            Side side,
+            int executionOrder,
+            params EffectData[] effects)
+        {
+            var def = new CardDefinition(
+                id, id, side, CardType.Skill, executionOrder, effects);
+            return new ExecutionCardInstance(def);
+        }
+
         private static ExecutionCardInstance Card(
             string id,
             Side side,
@@ -18,6 +30,64 @@ namespace FateWeaver.Tests
             var def = new CardDefinition(id, id, side, type, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
             return new ExecutionCardInstance(def) { TargetId = targetId };
+        }
+
+        private static EffectData Block()
+            => EffectData.ApplyStatus(
+                StatusKeys.Block,
+                StatusLifetime.ThisTurn,
+                StatusApplyTarget.Self,
+                2);
+
+        [Test]
+        public void AdjacentCardHasEffect_matches_damage_in_a_composite_card_only()
+        {
+            var state = new CombatState();
+            var subject = Card("subject", Side.Player, 1, Block());
+            var hybrid = Card("hybrid", Side.Enemy, 2,
+                new EffectData(EffectKeys.Damage, 3), Block());
+            state.Zone.Add(subject);
+            state.Zone.Add(hybrid);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(
+                new AdjacentCardHasEffect(
+                    AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
+                subject,
+                ctx));
+        }
+
+        [Test]
+        public void PreviousExecutedCardHasEffect_rejects_a_block_only_card()
+        {
+            var state = new CombatState();
+            var blockOnly = Card("block", Side.Player, 1, Block());
+            var subject = Card("subject", Side.Player, 2,
+                new EffectData(EffectKeys.Damage, 1));
+            state.Zone.Add(blockOnly);
+            state.Zone.Add(subject);
+            var ctx = ResolutionContext.From(state);
+            ctx.MarkExecuted(blockOnly);
+
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(
+                new PreviousExecutedCardHasEffect(Side.Player, EffectKeys.Damage),
+                subject,
+                ctx));
+        }
+
+        [Test]
+        public void BeforeNextEnemyDamageCard_ignores_an_earlier_block_only_enemy_card()
+        {
+            var state = new CombatState();
+            var blockOnly = Card("block", Side.Enemy, 1, Block());
+            var subject = Card("subject", Side.Player, 2,
+                new EffectData(EffectKeys.Damage, 1));
+            state.Zone.Add(blockOnly);
+            state.Zone.Add(subject);
+            var ctx = ResolutionContext.From(state);
+
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(
+                new BeforeNextEnemyDamageCard(), subject, ctx));
         }
 
         [Test]
@@ -52,7 +122,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void AdjacentCardIs_matches_direction_side_and_type()
+        public void Side_only_conditions_match_the_requested_side()
         {
             var state = new CombatState();
             var setup = Card("setup", Side.Player, CardType.Skill, 1);
@@ -67,19 +137,19 @@ namespace FateWeaver.Tests
             Assert.AreEqual(
                 ConditionTier.Success,
                 ConditionEvaluator.Evaluate(
-                    new PreviousExecutedCardIs(Side.Player, CardType.Skill),
+                    new PreviousExecutedCardIs(Side.Player),
                     strike,
                     ctx));
             Assert.AreEqual(
                 ConditionTier.Basic,
                 ConditionEvaluator.Evaluate(
-                    new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Skill),
+                    new AdjacentCardIs(AdjacentDirection.Next, Side.Player),
                     strike,
                     ctx));
         }
 
         [Test]
-        public void BeforeNextEnemyAttack_returns_basic_when_an_enemy_attack_already_resolved()
+        public void BeforeNextEnemyDamageCard_returns_basic_when_an_enemy_damage_card_already_resolved()
         {
             var state = new CombatState();
             var enemy = Card("jab", Side.Enemy, CardType.Attack, 1);
@@ -88,8 +158,8 @@ namespace FateWeaver.Tests
             state.Zone.Add(enemy);
             var ctx = ResolutionContext.From(state);
 
-            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new BeforeNextEnemyAttack(), player, ctx));
-            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new BeforeNextEnemyAttack(), enemy, ctx));
+            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new BeforeNextEnemyDamageCard(), player, ctx));
+            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new BeforeNextEnemyDamageCard(), enemy, ctx));
         }
 
         [Test]
@@ -167,12 +237,12 @@ namespace FateWeaver.Tests
 
             var success = new AllOf(new Condition[]
             {
-                new PreviousExecutedCardIs(Side.Player, CardType.Skill),
+                new PreviousExecutedCardIs(Side.Player),
                 new WithinNth(3)
             });
             var basic = new AllOf(new Condition[]
             {
-                new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Skill),
+                new AdjacentCardIs(AdjacentDirection.Next, Side.Player),
                 new WithinNth(3)
             });
 

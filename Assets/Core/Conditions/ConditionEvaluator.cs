@@ -1,6 +1,7 @@
 using System;
-using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Core.Conditions
 {
@@ -33,17 +34,28 @@ namespace FateWeaver.Core.Conditions
                 var neighbor = ctx.CardAt(index + offset);
                 return neighbor != null
                     && neighbor.Def.Side == adjacent.Side
-                    && (!adjacent.Type.HasValue || neighbor.Def.Type == adjacent.Type.Value)
                         ? ConditionTier.Success
                         : ConditionTier.Basic;
             }
 
-            if (condition is BeforeNextEnemyAttack)
+            if (condition is AdjacentCardHasEffect adjacentEffect)
+            {
+                var offset = adjacentEffect.Direction == AdjacentDirection.Previous ? -1 : 1;
+                var neighbor = ctx.CardAt(index + offset);
+                return neighbor != null
+                    && neighbor.Def.Side == adjacentEffect.Side
+                    && neighbor.Def.HasEffect(adjacentEffect.EffectKey)
+                        ? ConditionTier.Success
+                        : ConditionTier.Basic;
+            }
+
+            if (condition is BeforeNextEnemyDamageCard)
             {
                 for (int i = 0; i < index; i++)
                 {
                     var earlier = ctx.Order[i];
-                    if (earlier.Def.Side == Side.Enemy && earlier.Def.Type == CardType.Attack)
+                    if (earlier.Def.Side == Side.Enemy
+                        && earlier.Def.HasEffect(EffectKeys.Damage))
                     {
                         return ConditionTier.Basic;
                     }
@@ -88,7 +100,16 @@ namespace FateWeaver.Core.Conditions
                 var last = ctx.LastExecutedCard;
                 return last != null
                     && last.Def.Side == previousExecuted.Side
-                    && (!previousExecuted.Type.HasValue || last.Def.Type == previousExecuted.Type.Value)
+                        ? ConditionTier.Success
+                        : ConditionTier.Basic;
+            }
+
+            if (condition is PreviousExecutedCardHasEffect previousEffect)
+            {
+                var last = ctx.LastExecutedCard;
+                return last != null
+                    && last.Def.Side == previousEffect.Side
+                    && last.Def.HasEffect(previousEffect.EffectKey)
                         ? ConditionTier.Success
                         : ConditionTier.Basic;
             }

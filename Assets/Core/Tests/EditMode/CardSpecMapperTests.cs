@@ -55,7 +55,7 @@ namespace FateWeaver.Tests
                 Effects = new EffectSpec[] { new ApplyStatusSpec { Value = 2,
                     Status = StatusKeyRef.Of(StatusKeys.Block),
                     Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
-                    Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyAttack, SuccessEffectValue = 7 } } }
+                    Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 7 } } }
             });
 
             var e = def.Effects[0];
@@ -64,7 +64,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(7, e.SuccessEffectValue);
             Assert.IsInstanceOf<ApplyStatusPayload>(e.Payload);
             Assert.AreEqual(StatusKeys.Block, ((ApplyStatusPayload)e.Payload).Key);
-            var adjacent = (AdjacentCardIs)e.Condition;
+            var adjacent = (AdjacentCardHasEffect)e.Condition;
             Assert.AreEqual(AdjacentDirection.Next, adjacent.Direction);
             Assert.AreEqual(Side.Enemy, adjacent.Side);
         }
@@ -159,11 +159,11 @@ namespace FateWeaver.Tests
         {
             var effect = new DamageSpec
             {
-                Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsPlayerAttack, SuccessEffectValue = 4 }
+                Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsPlayerDamageCard, SuccessEffectValue = 4 }
             }.ToEffectData();
 
             Assert.AreEqual(
-                new PreviousExecutedCardIs(Side.Player, CardType.Attack),
+                new PreviousExecutedCardHasEffect(Side.Player, EffectKeys.Damage),
                 effect.Condition);
         }
     }

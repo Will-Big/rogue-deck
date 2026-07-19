@@ -97,8 +97,8 @@ namespace FateWeaver.Simulation
                                         effectValue: 0,
                                         condition: new AllOf(new Condition[]
                                         {
-                                            new AdjacentCardIs(AdjacentDirection.Next, Side.Player, CardType.Attack),
-                                            new BeforeNextEnemyAttack()
+                                            new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Player, EffectKeys.Damage),
+                                            new BeforeNextEnemyDamageCard()
                                         }),
                                         successEffectValue: 6)
                                 }),
@@ -148,14 +148,14 @@ namespace FateWeaver.Simulation
                     EffectData.Conditional(
                         EffectKeys.Damage,
                         effectValue: 0,
-                        condition: new PreviousExecutedCardIs(Side.Enemy, CardType.Attack),
+                        condition: new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
                         successEffectValue: 7),
                     EffectData.Conditional(
                         EffectKeys.Damage,
                         effectValue: 0,
                         condition: new AllOf(new Condition[]
                         {
-                            new PreviousExecutedCardIs(Side.Enemy, CardType.Attack),
+                            new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
                             new WithinNth(3)
                         }),
                         successEffectValue: 2)

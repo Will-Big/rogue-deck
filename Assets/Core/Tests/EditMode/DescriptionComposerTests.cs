@@ -76,11 +76,11 @@ namespace FateWeaver.Tests.EditMode
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
                     with
                     {
-                        Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                        Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                         SuccessEffectValue = 7
                     });
             Assert.AreEqual(
-                "방어 2. 바로 뒤가 적 공격이면 방어 7.",
+                "방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -227,12 +227,12 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_counter_stance() =>
-            Assert.AreEqual("피해 4. 직전에 실행한 카드가 적 공격이면 피해 9.",
+            Assert.AreEqual("피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
                 DescriptionComposer.Describe(StarterDeck.Counter(), Korean));
 
         [Test]
         public void Korean_cover() =>
-            Assert.AreEqual("방어 2. 바로 뒤가 적 공격이면 방어 7.",
+            Assert.AreEqual("방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(StarterDeck.Cover(), Korean));
 
         [Test]
@@ -303,7 +303,7 @@ namespace FateWeaver.Tests.EditMode
                         EffectKeys.Damage, 1,
                         new AllOf(new Condition[]
                         {
-                            new PreviousExecutedCardIs(Side.Player, null),
+                            new PreviousExecutedCardIs(Side.Player),
                             new WithinNth(3)
                         }),
                         6)

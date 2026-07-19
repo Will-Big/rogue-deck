@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
             { OwnerId = "ally" };
             // C: succeeds only if the "previous executed card" is A (an enemy attack), i.e. B is skipped.
             var c = ConditionalCard("c_card", Side.Player, executionOrder: 3,
-                new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), baseDamage: 0, successDamage: 5);
+                new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), baseDamage: 0, successDamage: 5);
 
             state.Zone.Add(a);
             state.Zone.Add(b);
@@ -146,7 +146,7 @@ namespace FateWeaver.Tests
             // A's condition looks at the frozen next slot (B). B later gets cancelled by Stun, but
             // that must not retroactively change A's already-evaluated tier.
             var a = ConditionalCard("a_card", Side.Player, executionOrder: 1,
-                new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                 baseDamage: 1, successDamage: 9);
             var b = PlainCard("b_card", Side.Enemy, executionOrder: 2, damage: 3);
             b.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));

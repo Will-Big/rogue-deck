@@ -45,7 +45,7 @@ namespace FateWeaver.Simulation.Authoring
             Id = "counter_stance", Name = "반격", Side = Side.Player, Type = CardType.Attack,
             Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 7,
             Effects = new EffectSpec[] { new DamageSpec { Value = 4,
-                Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsEnemyAttack, SuccessEffectValue = 9 } } }
+                Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsEnemyDamageCard, SuccessEffectValue = 9 } } }
         };
 
         public static CardSpec Cover() => new CardSpec
@@ -55,7 +55,7 @@ namespace FateWeaver.Simulation.Authoring
             Effects = new EffectSpec[] { new ApplyStatusSpec {
                 Status = StatusKeyRef.Of(StatusKeys.Block), Value = 2,
                 Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
-                Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyAttack, SuccessEffectValue = 7 } } }
+                Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 7 } } }
         };
 
         public static CardSpec PullForward() => new CardSpec
