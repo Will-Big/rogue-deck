@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
@@ -30,6 +32,38 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(CardCategory.Intervention, card.Category);
             Assert.AreSame(action, card.InterventionAction);
+        }
+
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void HasEffect_derives_damage_capability_from_effect_composition(
+            bool hasDamage,
+            bool hasBlock)
+        {
+            var effects = new List<EffectData>();
+            if (hasDamage) effects.Add(new EffectData(EffectKeys.Damage, 3));
+            if (hasBlock)
+                effects.Add(EffectData.ApplyStatus(
+                    StatusKeys.Block,
+                    StatusLifetime.ThisTurn,
+                    StatusApplyTarget.Self,
+                    2));
+
+            var card = new CardDefinition(
+                "test", "test", Side.Player, CardType.Skill, 5, effects);
+
+            Assert.AreEqual(hasDamage, card.HasEffect(EffectKeys.Damage));
+        }
+
+        [Test]
+        public void HasEffect_rejects_an_empty_key()
+        {
+            var card = new CardDefinition(
+                "test", "test", Side.Player, CardType.Skill, 5,
+                Array.Empty<EffectData>());
+
+            Assert.Throws<ArgumentException>(() => card.HasEffect(default));
         }
     }
 }
