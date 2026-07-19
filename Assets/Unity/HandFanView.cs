@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Simulation.Presentation;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
@@ -10,6 +11,19 @@ namespace FateWeaver.Unity
     /// are layered on each prefab instance without changing the underlying card data.</summary>
     public sealed class HandFanView : MonoBehaviour
     {
+        public sealed class PlacementFlightVisual
+        {
+            internal PlacementFlightVisual(CardView card, CanvasGroup sourceGroup)
+            {
+                Card = card;
+                SourceGroup = sourceGroup;
+            }
+
+            public CardView Card { get; }
+            public RectTransform Rect => (RectTransform)Card.transform;
+            internal CanvasGroup SourceGroup { get; }
+        }
+
         [SerializeField] private CardView _cardPrefab;
 
         private const float Spacing = 150f;
@@ -68,6 +82,75 @@ namespace FateWeaver.Unity
             }
         }
 
+        public bool TryPreparePlacementFlight(
+            int index,
+            CardPresentation card,
+            RectTransform layer,
+            out PlacementFlightVisual visual)
+        {
+            visual = null;
+            if (index < 0 || index >= _views.Count || _cardPrefab == null || layer == null)
+            {
+                return false;
+            }
+
+            var source = (RectTransform)_views[index].transform;
+            var copy = Instantiate(_cardPrefab, layer);
+            copy.Bind(card, null);
+            copy.SetInteractable(false);
+            foreach (var graphic in copy.GetComponentsInChildren<Graphic>(true))
+            {
+                graphic.raycastTarget = false;
+            }
+
+            var rect = (RectTransform)copy.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = source.rect.size;
+            rect.SetPositionAndRotation(source.position, source.rotation);
+            rect.localScale = RelativeScale(source.lossyScale, layer.lossyScale);
+            copy.gameObject.SetActive(false);
+            visual = new PlacementFlightVisual(copy, _groups[index]);
+            return true;
+        }
+
+        public void ShowPlacementFlight(PlacementFlightVisual visual)
+        {
+            if (visual == null || visual.Card == null)
+            {
+                return;
+            }
+
+            visual.SourceGroup.alpha = 0f;
+            visual.Card.gameObject.SetActive(true);
+        }
+
+        public void ClearPlacementFlight(PlacementFlightVisual visual)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            if (visual.SourceGroup != null)
+            {
+                visual.SourceGroup.alpha = 1f;
+            }
+
+            if (visual.Card == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(visual.Card.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(visual.Card.gameObject);
+            }
+        }
+
         public bool TryGetCardScreenPoint(int index, out Vector2 screenPoint)
         {
             if (index < 0 || index >= _views.Count)
@@ -116,5 +199,11 @@ namespace FateWeaver.Unity
                 view.SetInteractable(value);
             }
         }
+
+        private static Vector3 RelativeScale(Vector3 worldScale, Vector3 parentScale)
+            => new Vector3(
+                parentScale.x == 0f ? worldScale.x : worldScale.x / parentScale.x,
+                parentScale.y == 0f ? worldScale.y : worldScale.y / parentScale.y,
+                parentScale.z == 0f ? worldScale.z : worldScale.z / parentScale.z);
     }
 }

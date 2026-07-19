@@ -102,6 +102,44 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        [Test]
+        public void Prepared_flight_reuses_card_prefab_and_stays_hidden_until_shown()
+        {
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            try
+            {
+                overlay.transform.SetParent(root.transform, false);
+                var cards = ThreeCards();
+                var hand = BuildHand(root, cards);
+                var source = root.GetComponentsInChildren<CardView>()[0];
+
+                Assert.IsTrue(hand.TryPreparePlacementFlight(
+                    0,
+                    cards[0],
+                    (RectTransform)overlay.transform,
+                    out var visual));
+                Assert.IsFalse(visual.Card.gameObject.activeSelf);
+                Assert.IsFalse(visual.Card.GetComponent<Button>().interactable);
+                Assert.IsTrue(visual.Card.GetComponentsInChildren<Graphic>(true)
+                    .All(graphic => !graphic.raycastTarget));
+
+                hand.ShowPlacementFlight(visual);
+
+                Assert.IsTrue(visual.Card.gameObject.activeSelf);
+                Assert.AreEqual(0f, source.GetComponent<CanvasGroup>().alpha);
+
+                hand.ClearPlacementFlight(visual);
+
+                Assert.AreEqual(1f, source.GetComponent<CanvasGroup>().alpha);
+                Assert.IsTrue(visual.Card == null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static HandFanView BuildHand(
             GameObject root,
             IReadOnlyList<CardPresentation> cards)

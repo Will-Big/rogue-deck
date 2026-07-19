@@ -18,6 +18,10 @@ namespace FateWeaver.Unity
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
         [SerializeField] private Image _backdrop;
+        [SerializeField] private float _placementFlightDuration = 0.45f;
+        [SerializeField] private float _placementFlightTiltDegrees = 12f;
+        [SerializeField, Range(0.1f, 0.9f)]
+        private float _placementFlightTiltRatio = 0.35f;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
@@ -34,6 +38,7 @@ namespace FateWeaver.Unity
         private CardPresentation? _placementPreviewCard;
         private int _placementPreviewIndex = -1;
         private Tween _placementPreviewTween;
+        private Sequence _placementFlightSequence;
 
         public void SetDropHint(bool value)
         {
@@ -173,13 +178,79 @@ namespace FateWeaver.Unity
             StartPlacementPulse();
         }
 
+        public bool TryGetPlacementFlightLayer(out RectTransform layer)
+        {
+            layer = _previewLayer;
+            return layer != null
+                && _placementPreview != null
+                && _placementPreview.gameObject.activeSelf;
+        }
+
+        public bool StartPlacementFlight(RectTransform flight, Action onComplete)
+        {
+            if (flight == null
+                || _placementPreview == null
+                || !_placementPreview.gameObject.activeSelf
+                || _previewLayer == null)
+            {
+                return false;
+            }
+
+            StopPlacementPulse();
+            StopPlacementFlight();
+            _placementPreview.SetInteractable(false);
+            _placementPreviewGroup.interactable = false;
+            _placementPreviewGroup.blocksRaycasts = false;
+            _placementPreviewGroup.alpha = 0f;
+
+            var target = (RectTransform)_placementPreview.transform;
+            float tiltTime = _placementFlightDuration * _placementFlightTiltRatio;
+            Vector3 targetEuler = target.eulerAngles;
+            Vector3 endScale = ScaleForTarget(flight, target, _previewLayer.lossyScale);
+            bool completionSent = false;
+            Action finish = () =>
+            {
+                if (completionSent)
+                {
+                    return;
+                }
+
+                completionSent = true;
+                _placementFlightSequence = null;
+                onComplete?.Invoke();
+            };
+
+            _placementFlightSequence = DOTween.Sequence()
+                .Append(flight.DOMove(target.position, _placementFlightDuration)
+                    .SetEase(Ease.InOutCubic))
+                .Join(flight.DOScale(endScale, _placementFlightDuration)
+                    .SetEase(Ease.InOutCubic))
+                .Insert(0f, flight.DORotate(
+                        targetEuler + new Vector3(0f, 0f, _placementFlightTiltDegrees),
+                        tiltTime)
+                    .SetEase(Ease.OutSine))
+                .Insert(tiltTime, flight.DORotate(
+                        targetEuler,
+                        _placementFlightDuration - tiltTime)
+                    .SetEase(Ease.InOutSine))
+                .SetUpdate(true)
+                .SetLink(flight.gameObject, LinkBehaviour.KillOnDestroy)
+                .OnComplete(() => finish())
+                .OnKill(() => finish());
+            return true;
+        }
+
         public void ClearPlacementPreview()
         {
+            StopPlacementFlight();
             StopPlacementPulse();
             _placementPreviewCard = null;
             _placementPreviewIndex = -1;
             if (_placementPreview != null)
             {
+                _placementPreviewGroup.alpha = PlacementPreviewAlpha;
+                _placementPreviewGroup.interactable = false;
+                _placementPreviewGroup.blocksRaycasts = false;
                 _placementPreview.SetInteractable(false);
                 _placementPreview.gameObject.SetActive(false);
             }
@@ -302,6 +373,28 @@ namespace FateWeaver.Unity
                 _placementPreview.transform.localScale = Vector3.one;
             }
         }
+
+        private void StopPlacementFlight()
+        {
+            if (_placementFlightSequence == null)
+            {
+                return;
+            }
+
+            _placementFlightSequence.Kill();
+            _placementFlightSequence = null;
+        }
+
+        private static Vector3 ScaleForTarget(
+            RectTransform flight,
+            RectTransform target,
+            Vector3 parentScale)
+            => new Vector3(
+                target.rect.width * target.lossyScale.x /
+                    (flight.rect.width * parentScale.x),
+                target.rect.height * target.lossyScale.y /
+                    (flight.rect.height * parentScale.y),
+                1f);
 
         private void HidePreview()
         {
