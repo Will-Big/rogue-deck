@@ -340,6 +340,18 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.IsNotNull(miniFace, "flight should carry a hidden mini card face");
                 Assert.IsFalse(miniFace.gameObject.activeSelf);
 
+                var faceRect = (RectTransform)miniFace.transform;
+                Assert.AreEqual(
+                    new Vector2(96f, 132f),
+                    faceRect.sizeDelta,
+                    "mini face must keep the rail card's native size so its frame border matches");
+                Assert.That(
+                    faceRect.rect.width * faceRect.localScale.x,
+                    Is.EqualTo(flight.rect.width).Within(0.01f));
+                Assert.That(
+                    faceRect.rect.height * faceRect.localScale.y,
+                    Is.EqualTo(flight.rect.height).Within(0.01f));
+
                 var sequence = Field<Sequence>(rail, "_placementFlightSequence");
                 float duration = Field<float>(rail, "_placementFlightDuration");
                 bool sawFrontFlip = false;

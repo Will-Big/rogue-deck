@@ -439,15 +439,20 @@ namespace FateWeaver.Unity
                 1f);
 
         /// <summary>The mini card face shown after the flip passes edge-on. A child of the
-        /// flight rect, so ClearPlacementFlight destroys it with the flight visual.</summary>
+        /// flight rect, so ClearPlacementFlight destroys it with the flight visual. Kept at the
+        /// rail card's native size and scaled up to cover the flight, so its frame border stays
+        /// proportional to the placed card it lands as.</summary>
         private RailCardView CreateFlightMiniFace(RectTransform flight)
         {
             var face = Instantiate(_cardPrefab, flight);
             var faceRect = (RectTransform)face.transform;
-            faceRect.anchorMin = Vector2.zero;
-            faceRect.anchorMax = Vector2.one;
-            faceRect.offsetMin = Vector2.zero;
-            faceRect.offsetMax = Vector2.zero;
+            faceRect.anchorMin = faceRect.anchorMax = new Vector2(0.5f, 0.5f);
+            faceRect.anchoredPosition = Vector2.zero;
+            faceRect.sizeDelta = CardSize;
+            faceRect.localScale = new Vector3(
+                flight.rect.width / CardSize.x,
+                flight.rect.height / CardSize.y,
+                1f);
             face.Bind(_placementPreviewCard.Value, null, null);
             face.SetInteractable(false);
             foreach (var graphic in face.GetComponentsInChildren<Graphic>(true))
