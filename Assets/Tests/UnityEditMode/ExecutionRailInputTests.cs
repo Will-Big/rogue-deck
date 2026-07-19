@@ -315,7 +315,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Placement_flight_flips_to_the_mini_card_face_in_the_settle_segment()
+        public void Placement_flight_flips_to_the_card_back_face_in_the_settle_segment()
         {
             SimulateDotweenRuntimeInitializationForEditMode();
             var root = new GameObject("Root", typeof(RectTransform));
@@ -329,54 +329,54 @@ namespace FateWeaver.Tests.UnityEditMode
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 rail.ArmPlacementPreview(() => { });
-                var flight = ChildRect(overlay, "Flight");
+                var cardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>(
+                    "Assets/Unity/Prefabs/CardView.prefab");
+                Assert.IsNotNull(cardPrefab);
+                var flightCard = Object.Instantiate(cardPrefab, overlay);
+                var flight = (RectTransform)flightCard.transform;
                 flight.sizeDelta = new Vector2(170f, 238f);
                 var preview = Field<RailCardView>(rail, "_placementPreview");
                 flight.position = preview.transform.position + Vector3.down * 300f;
 
                 Assert.IsTrue(rail.StartPlacementFlight(flight, () => { }));
 
-                var miniFace = flight.GetComponentInChildren<RailCardView>(true);
-                Assert.IsNotNull(miniFace, "flight should carry a hidden mini card face");
-                Assert.IsFalse(miniFace.gameObject.activeSelf);
+                var backFace = flight.GetComponentInChildren<CardBackView>(true);
+                Assert.IsNotNull(backFace, "flight should carry a hidden card back face");
+                Assert.IsFalse(backFace.gameObject.activeSelf);
 
-                var faceRect = (RectTransform)miniFace.transform;
-                Assert.AreEqual(
-                    new Vector2(96f, 132f),
-                    faceRect.sizeDelta,
-                    "mini face must keep the rail card's native size so its frame border matches");
+                var backRect = (RectTransform)backFace.transform;
                 Assert.That(
-                    faceRect.rect.width * faceRect.localScale.x,
+                    backRect.rect.width * backRect.localScale.x,
                     Is.EqualTo(flight.rect.width).Within(0.01f));
                 Assert.That(
-                    faceRect.rect.height * faceRect.localScale.y,
+                    backRect.rect.height * backRect.localScale.y,
                     Is.EqualTo(flight.rect.height).Within(0.01f));
 
                 var sequence = Field<Sequence>(rail, "_placementFlightSequence");
                 float duration = Field<float>(rail, "_placementFlightDuration");
                 bool sawFrontFlip = false;
-                bool sawMiniFace = false;
+                bool sawBackFace = false;
                 for (int i = 1; i < 40; i++)
                 {
                     sequence.Goto(duration * i / 40f, false);
                     float yAngle = Mathf.DeltaAngle(0f, flight.localEulerAngles.y);
-                    if (!miniFace.gameObject.activeSelf && yAngle > 5f && yAngle < 90f)
+                    if (!backFace.gameObject.activeSelf && yAngle > 5f && yAngle < 90f)
                     {
                         sawFrontFlip = true;
                     }
 
-                    if (miniFace.gameObject.activeSelf && yAngle < -5f)
+                    if (backFace.gameObject.activeSelf && yAngle < -5f)
                     {
-                        sawMiniFace = true;
+                        sawBackFace = true;
                     }
                 }
 
                 Assert.IsTrue(sawFrontFlip, "front face should turn toward edge-on before the swap");
-                Assert.IsTrue(sawMiniFace, "mini face should unfold from -90 after the swap");
+                Assert.IsTrue(sawBackFace, "card back should unfold from -90 after the swap");
 
                 sequence.Complete();
 
-                Assert.IsTrue(miniFace.gameObject.activeSelf);
+                Assert.IsTrue(backFace.gameObject.activeSelf);
                 Assert.That(
                     Mathf.Abs(Mathf.DeltaAngle(flight.eulerAngles.y, 0f)),
                     Is.LessThan(0.01f));

@@ -224,7 +224,8 @@ namespace FateWeaver.Unity
                 new Vector2(targetLocal3.x, targetLocal3.y),
                 targetSize,
                 settings);
-            RailCardView miniFace = CreateFlightMiniFace(flight);
+            var flightCard = flight.GetComponent<CardView>();
+            RectTransform backFace = flightCard != null ? flightCard.CreateBackFace() : null;
             Vector3 endScale = ScaleForTarget(flight, target, _previewLayer.lossyScale);
             float progress = 0f;
             bool completionSent = false;
@@ -251,10 +252,11 @@ namespace FateWeaver.Unity
                             sample.Position.x, sample.Position.y, startLocal.z);
                         float settleT = PlacementFlightPath.SettleProgress(
                             value, _placementFlightCurveSplit);
-                        if (settleT >= PlacementFlightPath.FlipSwapProgress
-                            && !miniFace.gameObject.activeSelf)
+                        if (backFace != null
+                            && settleT >= PlacementFlightPath.FlipSwapProgress
+                            && !backFace.gameObject.activeSelf)
                         {
-                            miniFace.gameObject.SetActive(true);
+                            backFace.gameObject.SetActive(true);
                         }
 
                         flight.localRotation = Quaternion.Euler(
@@ -437,32 +439,6 @@ namespace FateWeaver.Unity
                 target.rect.height * target.lossyScale.y /
                     (flight.rect.height * parentScale.y),
                 1f);
-
-        /// <summary>The mini card face shown after the flip passes edge-on. A child of the
-        /// flight rect, so ClearPlacementFlight destroys it with the flight visual. Kept at the
-        /// rail card's native size and scaled up to cover the flight, so its frame border stays
-        /// proportional to the placed card it lands as.</summary>
-        private RailCardView CreateFlightMiniFace(RectTransform flight)
-        {
-            var face = Instantiate(_cardPrefab, flight);
-            var faceRect = (RectTransform)face.transform;
-            faceRect.anchorMin = faceRect.anchorMax = new Vector2(0.5f, 0.5f);
-            faceRect.anchoredPosition = Vector2.zero;
-            faceRect.sizeDelta = CardSize;
-            faceRect.localScale = new Vector3(
-                flight.rect.width / CardSize.x,
-                flight.rect.height / CardSize.y,
-                1f);
-            face.Bind(_placementPreviewCard.Value, null, null);
-            face.SetInteractable(false);
-            foreach (var graphic in face.GetComponentsInChildren<Graphic>(true))
-            {
-                graphic.raycastTarget = false;
-            }
-
-            face.gameObject.SetActive(false);
-            return face;
-        }
 
         private static Vector2 SizeInLayer(
             RectTransform target,

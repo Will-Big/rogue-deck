@@ -31,6 +31,7 @@ namespace FateWeaver.Unity
         // Template for card status icons. The prefab places its parent row as the root's last child so icons draw above art.
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
+        [SerializeField] private RectTransform _backFacePrefab;
 
         private static readonly Color OutlinePrimary = new Color(0.95f, 0.72f, 0.25f, 1f);
         private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
@@ -118,6 +119,27 @@ namespace FateWeaver.Unity
                 ? OutlinePrimary
                 : OutlineSecondary;
             _selectionOutline.enabled = true;
+        }
+
+        /// <summary>Instantiates the serialized card back prefab as a hidden child scaled to
+        /// cover this card. The placement flight activates it when the flip passes edge-on.</summary>
+        public RectTransform CreateBackFace()
+        {
+            if (_backFacePrefab == null)
+            {
+                return null;
+            }
+
+            var rect = (RectTransform)transform;
+            var back = Instantiate(_backFacePrefab, rect);
+            back.anchorMin = back.anchorMax = new Vector2(0.5f, 0.5f);
+            back.anchoredPosition = Vector2.zero;
+            back.localScale = new Vector3(
+                rect.rect.width / back.rect.width,
+                rect.rect.height / back.rect.height,
+                1f);
+            back.gameObject.SetActive(false);
+            return back;
         }
 
         private void RefreshStatusIcons(IReadOnlyList<CardStatusIcon> icons)

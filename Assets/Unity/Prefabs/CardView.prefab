@@ -1591,3 +1591,4 @@ MonoBehaviour:
   _ownerChipText: {fileID: 8812318995408540104}
   _lockBadge: {fileID: 5919003312859038567}
   _button: {fileID: 4888029675168363856}
+  _backFacePrefab: {fileID: 2000000000000000001, guid: 518ca347ffba4d64ac0b768e36cffe45, type: 3}
