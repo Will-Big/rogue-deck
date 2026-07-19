@@ -32,6 +32,21 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Default_context_exposes_registered_status_keys_in_id_order()
+        {
+            var keys = AuthoringContext.Default().RegisteredStatusKeys;
+
+            Assert.That(keys, Is.EqualTo(new[] {
+                StatusKeys.Block,
+                StatusKeys.Haste,
+                StatusKeys.RewardNullified,
+                StatusKeys.Slow,
+                StatusKeys.Stun,
+                StatusKeys.Vulnerable
+            }));
+        }
+
+        [Test]
         public void Empty_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(

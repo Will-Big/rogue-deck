@@ -23,6 +23,9 @@ namespace FateWeaver.Simulation.Descriptions
 
         public bool Contains(StatusKey key) => _names.ContainsKey(key);
 
+        public bool TryResolve(StatusKey key, out string displayName)
+            => _names.TryGetValue(key, out displayName);
+
         public string Resolve(StatusKey key)
             => _names.TryGetValue(key, out var displayName)
                 ? displayName
