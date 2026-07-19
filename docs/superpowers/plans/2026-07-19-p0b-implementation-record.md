@@ -1,7 +1,7 @@
 # P0-B — 열린 카드 저작 구조 (구현 기록)
 
 - 작성일: 2026-07-19
-- 상태: 구현 완료 (헤드리스 검증 통과, Unity 컴파일·Play 검증은 사용자 확인 대기)
+- 상태: **완료 (2026-07-19)**
 - 원 백로그: [`2026-07-16-architecture-refactor-backlog.md`](2026-07-16-architecture-refactor-backlog.md) §4
 - 설계 문서: [`../specs/2026-07-19-open-card-authoring-design.md`](../specs/2026-07-19-open-card-authoring-design.md)
 - 선행 완료: P0-A RNG 단일화 (2026-07-18)
@@ -43,6 +43,7 @@ golden 시그니처로 고정해 회귀 감지만 확보했다. 이 결정으로
 - `b395583` feat(authoring): authoring-time validation walk for card specs (P0-B)
 - `92987e6` test(authoring): prove new-effect locality with sample heal package (P0-B)
 - `d38d329` feat(unity): SerializeReference effect authoring with catalog drawer (P0-B)
+- `e9e8933` chore(unity): sync authored card assets and metadata
 
 ## 완료 조건 검증 (설계 문서 §7 / 백로그 §4 대응)
 
@@ -54,9 +55,9 @@ golden 시그니처로 고정해 회귀 감지만 확보했다. 이 결정으로
       이관 전후 콘텐츠를 고정해 회귀 없음을 확인 (드리프트 3건은 위와 같이 P1-A로 별도 이관).
 - [x] 잘못된 키·필드·파라미터가 에디터/부팅 검증에서 실패 — Task 4(`b395583`)에서 카드 spec
       저작-시점 검증 워크을 추가, 부팅/에디터 검증 경로에서 실패하도록 구현.
-- [ ] 생성 파일과 런타임 SO가 동일 `CardDefinition`을 생성 — 코드·검증 경로상으로는 동일 스키마를
-      통해 생성되도록 구현했으나(Task 3/6), 실제 코드 생성 재실행과 SO 로드 결과의 동등성은 Unity
-      에디터 안에서만 확인 가능하다. **사용자의 GeneratedCards 재생성 및 diff 확인 대기.**
+- [x] 생성 파일과 런타임 SO가 동일 `CardDefinition`을 생성 — Unity 메뉴 `Generate Cards from SO`를
+      재실행한 뒤 `GeneratedCards.cs`에 diff가 없음을 확인했다. 생성 직후 헤드리스 307/307과 Unity EditMode
+      356/356이 통과했다.
 
 ## 워크트리 격리 사유
 
@@ -66,12 +67,11 @@ Task 2 완료 시점에 메인 체크아웃이 사용자의 별도 병렬 브랜
 정본 실행 기록은 이 워크트리의 `.superpowers/sdd/progress.md`에 있다. Unity 층(Task 6) 검증은
 사용자가 메인 체크아웃에서 이 브랜치를 병합·전환한 뒤에만 가능하므로 그때까지 보류되었다.
 
-## 사용자 검증 대기 항목
+## 최종 Unity·통합 검증
 
-- Unity 에디터에서 이 브랜치 컴파일 확인 (Task 6까지 컴파일러 대신 API/문법 수동 대조로 자가 검증만
-  수행함).
-- 시드 메뉴 4종 재실행 — 결과가 골든 시그니처·기존 동작과 일치하는지 확인.
-- `GeneratedCards` 재생성 후 SO 기반 `CardDefinition`과의 diff 확인 (완료 조건 마지막 항목).
-- 카드 저작 드로어에서 `[SerializeReference]` 카탈로그 선택 UI와 Play 동작 확인.
-- Task 1·4·5에서 추가된 신규 `.cs` 파일의 `.meta` 커밋 여부 확인 (에디터가 자동 생성하는 `.meta`는
-  에디터 세션에서만 생성 가능하여 이번 구현에는 포함되지 않음).
+- Unity 6000.5.2f1 컴파일 오류 없이 `Generate Cards from SO` 실행 완료.
+- 생성 후 `GeneratedCards.cs`와 작업 트리에 diff 없음.
+- 헤드리스 테스트 307/307 통과.
+- Unity EditMode 전체 테스트 356/356 통과(실패·스킵 0).
+- `[SerializeReference]` 카드 SO와 신규 `.meta`는 `e9e8933`에서 동기화 완료.
+- 사용자가 전투 Play 정상 동작을 확인함.
