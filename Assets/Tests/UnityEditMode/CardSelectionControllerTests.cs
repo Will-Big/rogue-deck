@@ -5,6 +5,7 @@ using DG.Tweening;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,9 @@ namespace FateWeaver.Tests.UnityEditMode
         private Button _confirmButton;
         private RectTransform _overlay;
         private TargetingArrowView _arrow;
+        private HandFanView _hand;
+        private ExecutionRailView _rail;
+        private int _onAppliedCalls;
         private readonly List<SelectionResult> _appliedResults = new List<SelectionResult>();
         private static readonly Color SelectedOutline =
             new Color(0.35f, 0.75f, 0.95f, 1f);
@@ -30,21 +34,34 @@ namespace FateWeaver.Tests.UnityEditMode
             _root = new GameObject("CardSelectionControllerTests", typeof(RectTransform));
             _root.SetActive(false);
 
-            var hand = Child("Hand").AddComponent<HandFanView>();
-            var rail = Child("Rail", typeof(RectTransform)).AddComponent<ExecutionRailView>();
+            var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(
+                "Assets/Unity/Prefabs/CardView.prefab");
+            Assert.IsNotNull(cardPrefab);
+            _hand = Child("Hand", typeof(RectTransform)).AddComponent<HandFanView>();
+            _hand.EditorBuild(cardPrefab);
+            _hand.SetCards(
+                new[]
+                {
+                    ExecutionPresentation(),
+                    ExecutionPresentation(),
+                    ExecutionPresentation()
+                },
+                _ => { },
+                (_, __) => { });
+            _rail = Child("Rail", typeof(RectTransform)).AddComponent<ExecutionRailView>();
             var dim = Child("Dim");
             _confirmButton = Child("Confirm").AddComponent<Button>();
             _overlay = (RectTransform)Child("Overlay", typeof(RectTransform)).transform;
             var railPrefab = RailCardView.EditorCreate(
                 (RectTransform)Child("RailPrefabRoot", typeof(RectTransform)).transform,
                 new Vector2(96f, 132f));
-            rail.EditorBuild(null, railPrefab, _overlay);
-            rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+            _rail.EditorBuild(null, railPrefab, _overlay);
+            _rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
             _arrow = TargetingArrowView.EditorCreate(_overlay);
             _controller = _root.AddComponent<CardSelectionController>();
 
-            SetField(_controller, "_hand", hand);
-            SetField(_controller, "_rail", rail);
+            SetField(_controller, "_hand", _hand);
+            SetField(_controller, "_rail", _rail);
             SetField(_controller, "_dimLayer", dim);
             SetField(_controller, "_confirmButton", _confirmButton);
             SetField(_controller, "_arrow", _arrow);
@@ -62,7 +79,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     return true;
                 },
                 _ => Array.Empty<SelectionTargetRef>(),
-                () => { });
+                () => _onAppliedCalls++);
         }
 
         [TearDown]
@@ -71,6 +88,7 @@ namespace FateWeaver.Tests.UnityEditMode
             DOTween.Clear(true);
             UnityEngine.Object.DestroyImmediate(_root);
             _appliedResults.Clear();
+            _onAppliedCalls = 0;
         }
 
         [Test]
@@ -207,21 +225,45 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Armed_silhouette_click_dispatches_targetless_placement_once()
+        public void Armed_silhouette_applies_once_and_refreshes_only_after_flight_lands()
         {
             var card = ExecutionPresentation();
             _controller.ShowPlacementHover(0, card, 0);
             _controller.BeginPlacement(0, card, 0);
-            var rail = Field<ExecutionRailView>(_controller, "_rail");
-            var preview = Field<RailCardView>(rail, "_placementPreview");
+            var preview = Field<RailCardView>(_rail, "_placementPreview");
+            var button = Field<Button>(preview, "_button");
 
-            Field<Button>(preview, "_button").onClick.Invoke();
+            button.onClick.Invoke();
+            button.onClick.Invoke();
 
             Assert.AreEqual(1, _appliedResults.Count);
-            Assert.IsTrue(_appliedResults[0].IsComplete);
-            Assert.AreEqual(0, _appliedResults[0].HandIndex);
-            CollectionAssert.IsEmpty(_appliedResults[0].Targets);
+            Assert.IsTrue(_controller.SelectionActive);
+            Assert.AreEqual(0, _onAppliedCalls);
+            Assert.IsFalse(button.interactable);
+            var sequence = Field<Sequence>(_rail, "_placementFlightSequence");
+            Assert.IsTrue(sequence.IsActive());
+
+            sequence.Complete();
+
             Assert.IsFalse(_controller.SelectionActive);
+            Assert.AreEqual(1, _onAppliedCalls);
+            Assert.IsNull(Field<Sequence>(_rail, "_placementFlightSequence"));
+        }
+
+        [Test]
+        public void Begin_placement_holds_the_hand_card_in_blue_hover_pose()
+        {
+            var card = ExecutionPresentation();
+            var source = Field<List<CardView>>(_hand, "_views")[0];
+
+            _controller.ShowPlacementHover(0, card, 0);
+            _controller.BeginPlacement(0, card, 0);
+
+            Assert.AreEqual(Quaternion.identity, source.transform.localRotation);
+            Assert.AreEqual(Vector3.one * 1.35f, source.transform.localScale);
+            Assert.AreEqual(
+                SelectedOutline,
+                Field<Image>(source, "_selectionOutline").color);
         }
 
         [Test]
@@ -260,7 +302,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     return false;
                 },
                 _ => Array.Empty<SelectionTargetRef>(),
-                () => { });
+                () => _onAppliedCalls++);
             _controller.ShowPlacementHover(0, ExecutionPresentation(), 0);
             _controller.BeginPlacement(0, ExecutionPresentation(), 0);
             var rail = Field<ExecutionRailView>(_controller, "_rail");
@@ -273,6 +315,11 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsFalse(_controller.SelectionActive);
             Assert.IsFalse(preview.gameObject.activeSelf);
             Assert.IsFalse(tween.IsActive());
+            Assert.IsNull(Field<Sequence>(_rail, "_placementFlightSequence"));
+            Assert.AreEqual(0, _onAppliedCalls);
+            Assert.AreEqual(
+                0,
+                _overlay.GetComponentsInChildren<CardView>(true).Length);
         }
 
         [Test]
