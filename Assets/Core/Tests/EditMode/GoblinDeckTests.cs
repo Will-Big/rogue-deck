@@ -31,7 +31,6 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual("crude_guard", guard.Id);
             Assert.AreEqual("조잡한 방어", guard.Name);
-            Assert.AreEqual(CardType.Defense, guard.Type);
             Assert.AreEqual(4, guard.BaseExecutionOrder);
             Assert.AreEqual(3, guard.Effects.Single().EffectValue);
             Assert.AreEqual(StatusKeys.Block, ((ApplyStatusPayload)guard.Effects.Single().Payload).Key);

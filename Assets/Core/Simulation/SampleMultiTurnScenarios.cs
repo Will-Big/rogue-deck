@@ -89,7 +89,7 @@ namespace FateWeaver.Simulation
                         {
                             EnemyAttack("goblin_jab", executionOrder: 1, damage: 1),
                             new ZoneCardSpec(
-                                "mark", "Mark", Side.Player, CardType.Skill, executionOrder: 2,
+                                "mark", "Mark", Side.Player, executionOrder: 2,
                                 effects: new[]
                                 {
                                     EffectData.Conditional(
@@ -103,7 +103,7 @@ namespace FateWeaver.Simulation
                                         successEffectValue: 6)
                                 }),
                             new ZoneCardSpec(
-                                "slash", "Slash", Side.Player, CardType.Attack, executionOrder: 3,
+                                "slash", "Slash", Side.Player, executionOrder: 3,
                                 effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                         },
                         interventionPlays: new[]
@@ -140,7 +140,7 @@ namespace FateWeaver.Simulation
 
         private static ZoneCardSpec CounterCard(string id, int executionOrder)
             => new ZoneCardSpec(
-                id, "Counter Stance", Side.Player, CardType.Defense, executionOrder,
+                id, "Counter Stance", Side.Player, executionOrder,
                 new[]
                 {
                     EffectData.ApplyStatus(
@@ -177,7 +177,7 @@ namespace FateWeaver.Simulation
                         fateEnergy: 3,
                         zoneCards: new[]
                         {
-                            new ZoneCardSpec("prep", "Prep", Side.Player, CardType.Skill, 1,
+                            new ZoneCardSpec("prep", "Prep", Side.Player, 1,
                                 new[] { new EffectData(EffectKeys.Damage, 1) }),
                             ChainSlashCard("chain", executionOrder: 2)
                         },
@@ -187,7 +187,7 @@ namespace FateWeaver.Simulation
 
         private static ZoneCardSpec ChainSlashCard(string id, int executionOrder)
             => new ZoneCardSpec(
-                id, "Chain Slash", Side.Player, CardType.Attack, executionOrder,
+                id, "Chain Slash", Side.Player, executionOrder,
                 new[]
                 {
                     new EffectData(EffectKeys.Damage, 1),
@@ -231,7 +231,6 @@ namespace FateWeaver.Simulation
                         "wrist_cut_t2",
                         "Wrist Cut",
                         Side.Enemy,
-                        CardType.Attack,
                         executionOrder: 1,
                         effects: new[]
                         {
@@ -253,7 +252,6 @@ namespace FateWeaver.Simulation
                 id,
                 "Quick Cut",
                 Side.Player,
-                CardType.Attack,
                 executionOrder,
                 new[]
                 {
@@ -269,7 +267,6 @@ namespace FateWeaver.Simulation
                 id,
                 id,
                 Side.Enemy,
-                CardType.Attack,
                 executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
     }

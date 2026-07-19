@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
     public class RandomMovesetPolicyTests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
-            id, id, Side.Enemy, CardType.Attack, 5, new[] { new EffectData(EffectKeys.Damage, 1) });
+            id, id, Side.Enemy, 5, new[] { new EffectData(EffectKeys.Damage, 1) });
 
         private static IReadOnlyList<CardDefinition> Catalog(params string[] ids) =>
             ids.Select(Card).ToArray();

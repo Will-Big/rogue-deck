@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
     public class LockCardTests
     {
         private static CardDefinition LockedJab() => new CardDefinition(
-            "locked_jab", "고정된 일격", Side.Enemy, CardType.Attack, 5,
+            "locked_jab", "고정된 일격", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
 
@@ -20,7 +20,7 @@ namespace FateWeaver.Tests
         {
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var session = new DeckCombatSession(
-                new[] { new CardDefinition("p", "p", Side.Player, CardType.Attack, 6,
+                new[] { new CardDefinition("p", "p", Side.Player, 6,
                     new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
                 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
@@ -32,7 +32,7 @@ namespace FateWeaver.Tests
         public void Fate_cannot_reorder_a_locked_card()
         {
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
-            var pull = new CardDefinition("pull", "앞당김", Side.Player, CardType.Skill, 0,
+            var pull = new CardDefinition("pull", "앞당김", Side.Player, 0,
                 System.Array.Empty<EffectData>())
                 { EnergyCost = 1, Category = CardCategory.Intervention,
                   InterventionAction = new FateWeaver.Core.Intervention.InterventionActionData(

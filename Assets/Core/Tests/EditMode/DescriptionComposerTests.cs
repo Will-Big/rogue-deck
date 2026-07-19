@@ -25,7 +25,7 @@ namespace FateWeaver.Tests.EditMode
             KoreanDescriptionCatalog.CreateDefault();
 
         private static CardDefinition Execution(string id, params EffectData[] effects)
-            => new CardDefinition(id, id, Side.Player, CardType.Attack, 5, effects)
+            => new CardDefinition(id, id, Side.Player, 5, effects)
                { Category = CardCategory.Execution };
 
         [Test]
@@ -95,7 +95,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Intervention_card_renders_the_intervention_action_and_ignores_effects()
         {
-            var card = new CardDefinition("pull_forward", "pull", Side.Player, CardType.Skill, 0,
+            var card = new CardDefinition("pull_forward", "pull", Side.Player, 0,
                 new EffectData[0])
             {
                 Category = CardCategory.Intervention,
@@ -119,7 +119,6 @@ namespace FateWeaver.Tests.EditMode
                 "null_effects",
                 "null_effects",
                 Side.Player,
-                CardType.Skill,
                 5,
                 null)
             {
@@ -275,7 +274,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_number_token_follows_data()
         {
-            var tuned = new CardDefinition("slash", "베기", Side.Player, CardType.Attack, 4,
+            var tuned = new CardDefinition("slash", "베기", Side.Player, 4,
                 new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Execution };
             Assert.AreEqual("피해 99.", DescriptionComposer.Describe(tuned, Korean));
         }
@@ -283,7 +282,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_slow_status_shows_turn_suffix()
         {
-            var card = new CardDefinition("slow_hex", "둔화 저주", Side.Player, CardType.Skill, 5,
+            var card = new CardDefinition("slow_hex", "둔화 저주", Side.Player, 5,
                 new[]
                 {
                     EffectData.ApplyStatus(StatusKeys.Slow, StatusLifetime.Turns(2),
@@ -296,7 +295,7 @@ namespace FateWeaver.Tests.EditMode
         public void Korean_allof_condition_joins_naturally()
         {
             // A single conditional effect (base 1, 6 on success when prev is a player card AND within the 3rd slot).
-            var card = new CardDefinition("chain", "연쇄 베기", Side.Player, CardType.Attack, 5,
+            var card = new CardDefinition("chain", "연쇄 베기", Side.Player, 5,
                 new[]
                 {
                     EffectData.Conditional(

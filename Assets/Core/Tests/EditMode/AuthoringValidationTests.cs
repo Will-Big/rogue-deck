@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     {
         private static CardSpec Execution(params EffectSpec[] effects) => new CardSpec
         {
-            Id = "t", Name = "t", Side = Side.Player, Type = CardType.Attack,
+            Id = "t", Name = "t", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = effects
         };
@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
         {
             var errors = AuthoringValidator.Validate(
                 new[] { new CardSpec {
-                    Id = "t", Name = "t", Side = Side.Player, Type = CardType.Skill,
+                    Id = "t", Name = "t", Side = Side.Player,
                     Category = CardCategory.Intervention, EnergyCost = 1,
                     Intervention = new InterventionKeyRef { Id = "no_such_action" } } },
                 AuthoringContext.Default());

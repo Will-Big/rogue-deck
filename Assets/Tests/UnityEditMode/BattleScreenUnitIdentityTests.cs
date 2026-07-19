@@ -225,7 +225,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var effect = new EffectData(EffectKeys.MoveFormation, distance);
             var definition = new CardDefinition(
-                "move", "move", side, CardType.Skill, 1, new[] { effect });
+                "move", "move", side, 1, new[] { effect });
             new MoveFormationHandler().Apply(new EffectContext
             {
                 Card = new ExecutionCardInstance(definition) { OwnerId = ownerId },

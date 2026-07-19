@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
             string targetId = null,
             int instanceId = -1)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
+            var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
             return new ExecutionCardInstance(def)
             {
@@ -133,7 +133,7 @@ namespace FateWeaver.Tests
 
             // Two effects on one card: first lands hero exactly on 1 HP (no charge spent), second
             // would be lethal and must spend the charge even though HP was already 1 going in.
-            var def = new CardDefinition("double_strike", "double_strike", Side.Enemy, CardType.Attack, 1,
+            var def = new CardDefinition("double_strike", "double_strike", Side.Enemy, 1,
                 new[]
                 {
                     new EffectData(EffectKeys.Damage, 4),
@@ -163,7 +163,6 @@ namespace FateWeaver.Tests
                 "kill_then_cancel",
                 "kill_then_cancel",
                 Side.Enemy,
-                CardType.Attack,
                 1,
                 new[]
                 {

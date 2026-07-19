@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
             int executionOrder,
             EffectData effect)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
             return new ExecutionCardInstance(def);
         }
 

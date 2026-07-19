@@ -24,7 +24,7 @@ namespace FateWeaver.Tests
             int executionOrder,
             EffectData effect)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
             return new ExecutionCardInstance(def);
         }
 
@@ -112,7 +112,6 @@ namespace FateWeaver.Tests
                 "mark_target",
                 "Mark Target",
                 Side.Player,
-                CardType.Skill,
                 1,
                 new[]
                 {
@@ -127,7 +126,6 @@ namespace FateWeaver.Tests
                 "block_only",
                 "Block Only",
                 Side.Player,
-                CardType.Defense,
                 2,
                 new[] { block }));
             var hybridEffects = new[]
@@ -139,7 +137,6 @@ namespace FateWeaver.Tests
                 "hybrid",
                 "Hybrid",
                 Side.Player,
-                CardType.Skill,
                 3,
                 hybridEffects));
             state.Zone.Add(mark);

@@ -46,7 +46,6 @@ namespace FateWeaver.Core.Cards
         string Id,
         string Name,
         Side Side,
-        CardType Type,
         int BaseExecutionOrder,
         IReadOnlyList<EffectData> Effects)
     {

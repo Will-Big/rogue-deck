@@ -25,14 +25,12 @@ namespace FateWeaver.Simulation
         public static CardDefinition Attack() => ExecutionCard(
             "fixture_attack",
             "[검증] 공격",
-            CardType.Attack,
             AttackExecutionOrder,
             new EffectData(EffectKeys.Damage, AttackDamage));
 
         public static CardDefinition SelectedBlock() => ExecutionCard(
             "fixture_selected_block",
             "[검증] 선택 방어",
-            CardType.Defense,
             StarterDeck.DefaultExecutionOrder,
             EffectData.ApplyStatus(
                 StatusKeys.Block,
@@ -43,7 +41,6 @@ namespace FateWeaver.Simulation
         public static CardDefinition AllBlock() => ExecutionCard(
             "fixture_all_block",
             "[검증] 전체 방어",
-            CardType.Defense,
             StarterDeck.DefaultExecutionOrder,
             EffectData.ApplyStatus(
                 StatusKeys.Block,
@@ -54,21 +51,18 @@ namespace FateWeaver.Simulation
         public static CardDefinition MoveForward() => ExecutionCard(
             "fixture_move_forward",
             "[검증] 대형 이동",
-            CardType.Skill,
             StarterDeck.DefaultExecutionOrder,
             new EffectData(EffectKeys.MoveFormation, MoveForwardDistance));
 
         private static CardDefinition ExecutionCard(
             string id,
             string name,
-            CardType type,
             int executionOrder,
             EffectData effect)
             => new CardDefinition(
                 id,
                 name,
                 Side.Player,
-                type,
                 executionOrder,
                 new[] { effect })
             {

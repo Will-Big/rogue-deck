@@ -18,14 +18,14 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec Slash() => new CardSpec
         {
-            Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
+            Id = "slash", Name = "베기", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
             Effects = new EffectSpec[] { new DamageSpec { Value = 4 } }
         };
 
         public static CardSpec Guard() => new CardSpec
         {
-            Id = "guard", Name = "막기", Side = Side.Player, Type = CardType.Defense,
+            Id = "guard", Name = "막기", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new EffectSpec[] { new ApplyStatusSpec {
                 Status = StatusKeyRef.Of(StatusKeys.Block), Value = 4,
@@ -34,7 +34,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec QuickCut() => new CardSpec
         {
-            Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
+            Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new EffectSpec[] { new DamageSpec { Value = 2,
                 Condition = new ConditionSpec { Kind = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 } } }
@@ -42,7 +42,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec Counter() => new CardSpec
         {
-            Id = "counter_stance", Name = "반격", Side = Side.Player, Type = CardType.Attack,
+            Id = "counter_stance", Name = "반격", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 7,
             Effects = new EffectSpec[] { new DamageSpec { Value = 4,
                 Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsEnemyDamageCard, SuccessEffectValue = 9 } } }
@@ -50,7 +50,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec Cover() => new CardSpec
         {
-            Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
+            Id = "cover", Name = "엄호", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new EffectSpec[] { new ApplyStatusSpec {
                 Status = StatusKeyRef.Of(StatusKeys.Block), Value = 2,
@@ -60,7 +60,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec PullForward() => new CardSpec
         {
-            Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
+            Id = "pull_forward", Name = "앞당김", Side = Side.Player,
             Category = CardCategory.Intervention, EnergyCost = 1,
             Intervention = InterventionKeyRef.Of(InterventionActionKeys.ChangeExecutionOrder),
             InterventionEffectValue = -1
@@ -68,7 +68,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec PushBack() => new CardSpec
         {
-            Id = "push_back", Name = "밀어내기", Side = Side.Player, Type = CardType.Skill,
+            Id = "push_back", Name = "밀어내기", Side = Side.Player,
             Category = CardCategory.Intervention, EnergyCost = 1,
             Intervention = InterventionKeyRef.Of(InterventionActionKeys.ChangeExecutionOrder),
             InterventionEffectValue = 1
@@ -76,7 +76,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec SwapPositions() => new CardSpec
         {
-            Id = "swap_positions", Name = "자리 교환", Side = Side.Player, Type = CardType.Skill,
+            Id = "swap_positions", Name = "자리 교환", Side = Side.Player,
             Category = CardCategory.Intervention, EnergyCost = 1,
             Intervention = InterventionKeyRef.Of(InterventionActionKeys.SwapExecutionOrder),
             InterventionEffectValue = 0
@@ -84,7 +84,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec SlowHex() => new CardSpec
         {
-            Id = "slow_hex", Name = "둔화", Side = Side.Player, Type = CardType.Skill,
+            Id = "slow_hex", Name = "둔화", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new EffectSpec[] { new ApplyStatusSpec {
                 Status = StatusKeyRef.Of(StatusKeys.Slow), Value = 3,
@@ -93,7 +93,7 @@ namespace FateWeaver.Simulation.Authoring
 
         public static CardSpec QuickenSelf() => new CardSpec
         {
-            Id = "quicken_self", Name = "가속", Side = Side.Player, Type = CardType.Skill,
+            Id = "quicken_self", Name = "가속", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
             Effects = new EffectSpec[] { new ApplyStatusSpec {
                 Status = StatusKeyRef.Of(StatusKeys.Haste), Value = 3,

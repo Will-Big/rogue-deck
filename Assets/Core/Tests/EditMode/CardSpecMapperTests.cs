@@ -15,7 +15,7 @@ namespace FateWeaver.Tests
         {
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
-                Id = "slash", Name = "베기", Side = Side.Player, Type = CardType.Attack,
+                Id = "slash", Name = "베기", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
                 Effects = new EffectSpec[] { new DamageSpec { Value = 3 } }
             });
@@ -33,7 +33,7 @@ namespace FateWeaver.Tests
         {
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
-                Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player, Type = CardType.Attack,
+                Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
                 Effects = new EffectSpec[] { new DamageSpec { Value = 2,
                     Condition = new ConditionSpec { Kind = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 } } }
@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         {
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
-                Id = "cover", Name = "엄호", Side = Side.Player, Type = CardType.Defense,
+                Id = "cover", Name = "엄호", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
                 Effects = new EffectSpec[] { new ApplyStatusSpec { Value = 2,
                     Status = StatusKeyRef.Of(StatusKeys.Block),
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
         {
             var def = CardSpecMapper.ToDefinition(new CardSpec
             {
-                Id = "pull_forward", Name = "앞당김", Side = Side.Player, Type = CardType.Skill,
+                Id = "pull_forward", Name = "앞당김", Side = Side.Player,
                 Category = CardCategory.Intervention, EnergyCost = 1,
                 Intervention = InterventionKeyRef.Of(InterventionActionKeys.ChangeExecutionOrder),
                 InterventionEffectValue = -2

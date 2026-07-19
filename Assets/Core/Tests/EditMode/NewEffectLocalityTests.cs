@@ -98,7 +98,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState { PlayerHp = 20 };
             var def = new CardDefinition(
-                "heal_touch", "치유의 손길", Side.Player, CardType.Attack, 1,
+                "heal_touch", "치유의 손길", Side.Player, 1,
                 new[] { new EffectData(HealKey, 5) });
             var card = new ExecutionCardInstance(def) { OwnerId = CombatState.LegacyPlayerId };
             state.Zone.Add(card);

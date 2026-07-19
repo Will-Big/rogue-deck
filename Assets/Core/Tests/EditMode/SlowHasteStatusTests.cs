@@ -71,11 +71,11 @@ namespace FateWeaver.Tests
         }
 
         private static CardDefinition PlayerStrike() => new CardDefinition(
-            "p_strike", "찌르기", Side.Player, CardType.Attack, 5,
+            "p_strike", "찌르기", Side.Player, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab() => new CardDefinition(
-            "e_jab", "적찌르기", Side.Enemy, CardType.Attack, 5,
+            "e_jab", "적찌르기", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]

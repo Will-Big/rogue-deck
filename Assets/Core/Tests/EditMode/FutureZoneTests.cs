@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     {
         private static ExecutionCardInstance Card(string id, int executionOrder, Side side = Side.Player)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
+            var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
             return new ExecutionCardInstance(def);
         }

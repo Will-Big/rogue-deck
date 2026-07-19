@@ -28,9 +28,9 @@ namespace FateWeaver.Tests
         [Test]
         public void Chain_does_not_re_trigger_after_an_enemy_card()
         {
-            var enemy = new ZoneCardSpec("enemy_jab", "enemy_jab", Side.Enemy, CardType.Attack, 1,
+            var enemy = new ZoneCardSpec("enemy_jab", "enemy_jab", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.Damage, 3) });
-            var chain = new ZoneCardSpec("chain", "Chain Slash", Side.Player, CardType.Attack, 2,
+            var chain = new ZoneCardSpec("chain", "Chain Slash", Side.Player, 2,
                 new[]
                 {
                     new EffectData(EffectKeys.Damage, 1),

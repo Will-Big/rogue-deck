@@ -20,17 +20,17 @@ namespace FateWeaver.Simulation
         public const int MaxCardsPerTurn = 2;
 
         public static CardDefinition Thrust() => new CardDefinition(
-            "goblin_jab", "찌르기", Side.Enemy, CardType.Attack, 6,
+            "goblin_jab", "찌르기", Side.Enemy, 6,
             new[] { new EffectData(EffectKeys.Damage, 4) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition CrudeGuard() => new CardDefinition(
-            "crude_guard", "조잡한 방어", Side.Enemy, CardType.Defense, 4,
+            "crude_guard", "조잡한 방어", Side.Enemy, 4,
             new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition SlyJab() => new CardDefinition(
-            "sly_jab", "약삭빠른 찌르기", Side.Enemy, CardType.Attack, 3,
+            "sly_jab", "약삭빠른 찌르기", Side.Enemy, 3,
             new[] { EffectData.Conditional(EffectKeys.Damage, 3, new NoPrecedingCardOfSide(Side.Player), 6) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 

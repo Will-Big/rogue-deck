@@ -12,7 +12,7 @@ namespace FateWeaver.Tests
     public class OwnedCardDeckTests
     {
         private static CardDefinition Card(string id, Side side = Side.Player) => new CardDefinition(
-            id, id, side, CardType.Attack, 5,
+            id, id, side, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
         {
             Category = CardCategory.Execution,

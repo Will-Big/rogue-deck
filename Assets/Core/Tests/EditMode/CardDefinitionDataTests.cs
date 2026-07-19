@@ -5,16 +5,29 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation;
+using FateWeaver.Simulation.Authoring;
 
 namespace FateWeaver.Tests
 {
     public class CardDefinitionDataTests
     {
         [Test]
+        public void CardType_is_absent_from_core_and_authoring_schemas()
+        {
+            var assembly = typeof(CardDefinition).Assembly;
+            var removedTypeName = "FateWeaver.Core.Cards.Card" + "Type";
+            Assert.IsNull(assembly.GetType(removedTypeName));
+            Assert.IsNull(typeof(CardDefinition).GetProperty("Type"));
+            Assert.IsNull(typeof(CardSpec).GetField("Type"));
+            Assert.IsNull(typeof(ZoneCardSpec).GetProperty("Type"));
+        }
+
+        [Test]
         public void Execution_card_defaults_to_execution_category()
         {
             var card = new CardDefinition(
-                "slash", "베기", Side.Player, CardType.Attack, 5,
+                "slash", "베기", Side.Player, 5,
                 new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 1 };
 
             Assert.AreEqual(CardCategory.Execution, card.Category);
@@ -27,7 +40,7 @@ namespace FateWeaver.Tests
         {
             var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var card = new CardDefinition(
-                "pull", "앞당김", Side.Player, CardType.Skill, 0, Array.Empty<EffectData>())
+                "pull", "앞당김", Side.Player, 0, Array.Empty<EffectData>())
                 { EnergyCost = 1, Category = CardCategory.Intervention, InterventionAction = action };
 
             Assert.AreEqual(CardCategory.Intervention, card.Category);
@@ -51,7 +64,7 @@ namespace FateWeaver.Tests
                     2));
 
             var card = new CardDefinition(
-                "test", "test", Side.Player, CardType.Skill, 5, effects);
+                "test", "test", Side.Player, 5, effects);
 
             Assert.AreEqual(hasDamage, card.HasEffect(EffectKeys.Damage));
         }
@@ -60,7 +73,7 @@ namespace FateWeaver.Tests
         public void HasEffect_rejects_an_empty_key()
         {
             var card = new CardDefinition(
-                "test", "test", Side.Player, CardType.Skill, 5,
+                "test", "test", Side.Player, 5,
                 Array.Empty<EffectData>());
 
             Assert.Throws<ArgumentException>(() => card.HasEffect(default));

@@ -22,7 +22,6 @@ namespace FateWeaver.Tests
                 id,
                 id,
                 Side.Player,
-                CardType.Skill,
                 order,
                 effects ?? Array.Empty<EffectData>())
             {
@@ -52,7 +51,6 @@ namespace FateWeaver.Tests
                 id,
                 id,
                 Side.Enemy,
-                CardType.Attack,
                 order,
                 new[] { new EffectData(EffectKeys.Damage, damage) { TargetSelector = selector } })
             {
@@ -248,7 +246,6 @@ namespace FateWeaver.Tests
                 "kill_then_cancel",
                 "kill_then_cancel",
                 Side.Enemy,
-                CardType.Attack,
                 1,
                 new[]
                 {
@@ -400,7 +397,6 @@ namespace FateWeaver.Tests
                 "intervention",
                 "intervention",
                 Side.Player,
-                CardType.Skill,
                 5,
                 Array.Empty<EffectData>())
             {

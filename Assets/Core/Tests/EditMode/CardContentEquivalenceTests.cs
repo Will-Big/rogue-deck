@@ -27,7 +27,7 @@ namespace FateWeaver.Tests
     public class CardContentEquivalenceTests
     {
         internal static string Sig(CardDefinition d) => string.Join(";",
-            d.Id, d.Name, d.Side, d.Type, d.Category, d.EnergyCost, d.BaseExecutionOrder,
+            d.Id, d.Name, d.Side, d.Category, d.EnergyCost, d.BaseExecutionOrder,
             d.InterventionAction == null
                 ? "-"
                 : d.InterventionAction.Key + ":" + d.InterventionAction.InterventionCost
@@ -53,64 +53,64 @@ namespace FateWeaver.Tests
 
         private static readonly string[] GoldenStarterDeckHandCoded =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-2;",
-            "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-2;",
-            "quick_cut;찰나의 베기;Player;Attack;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Skill;Intervention;1;0;swap_execution_order:1:0;"
+            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-2;",
+            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-2;",
+            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
         };
 
         private static readonly string[] GoldenStarterDeckSpecs =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;밀어내기;Player;Skill;Intervention;1;0;change_execution_order:1:1;",
-            "quick_cut;찰나의 베기;Player;Attack;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Skill;Intervention;1;0;swap_execution_order:1:0;"
+            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
+            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
+            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
         };
 
         private static readonly string[] GoldenGeneratedStarterDeck =
         {
-            "counter_stance;반격;Player;Attack;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Defense;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;밀어내기;Player;Skill;Intervention;1;0;change_execution_order:1:1;",
-            "quick_cut;찰나의 베기;Player;Attack;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Skill;Intervention;1;0;swap_execution_order:1:0;"
+            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
+            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
+            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
+            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
         };
 
         private static readonly string[] GoldenPartyPrototypeHandCoded =
         {
-            "fixture_all_block;[검증] 전체 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/AllPartyMembers",
-            "fixture_attack;[검증] 공격;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "fixture_attack;[검증] 공격;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "fixture_move_forward;[검증] 대형 이동;Player;Skill;Execution;1;5;-;move_formation,-1,-,-,-,-",
-            "fixture_selected_block;[검증] 선택 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "fixture_selected_block;[검증] 선택 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self"
+            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/AllPartyMembers",
+            "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "fixture_move_forward;[검증] 대형 이동;Player;Execution;1;5;-;move_formation,-1,-,-,-,-",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self"
         };
 
         private static readonly string[] GoldenPartyPrototypeSpecs =
         {
-            "fixture_all_block;[검증] 전체 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/AllPartyMembers",
-            "fixture_attack;[검증] 공격;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "fixture_attack;[검증] 공격;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
-            "fixture_move_forward;[검증] 대형 이동;Player;Skill;Execution;1;5;-;move_formation,-1,-,-,-,-",
-            "fixture_selected_block;[검증] 선택 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "fixture_selected_block;[검증] 선택 방어;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self"
+            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/AllPartyMembers",
+            "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,-",
+            "fixture_move_forward;[검증] 대형 이동;Player;Execution;1;5;-;move_formation,-1,-,-,-,-",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self"
         };
 
         // --- golden pinning tests ---------------------------------------------------------

@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
             KoreanDescriptionCatalog.CreateDefault();
 
         private static CardDefinition Execution(params EffectData[] effects) =>
-            new CardDefinition("party_test", "파티 테스트", Side.Player, CardType.Skill, 0, effects)
+            new CardDefinition("party_test", "파티 테스트", Side.Player, 0, effects)
             {
                 Category = CardCategory.Execution
             };

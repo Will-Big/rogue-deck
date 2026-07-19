@@ -27,7 +27,7 @@ namespace FateWeaver.Tests
 
         private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
+            var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
             return new ExecutionCardInstance(def);
         }

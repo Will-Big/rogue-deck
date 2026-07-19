@@ -12,7 +12,7 @@ namespace FateWeaver.Tests.UnityEditMode
     public class CardPresentationTests
     {
         private static CardDefinition EnemyCard() => new CardDefinition(
-            "locked_jab", "잠긴 일격", Side.Enemy, CardType.Attack, 5,
+            "locked_jab", "잠긴 일격", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
@@ -38,7 +38,7 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Hand_and_rail_presentations_preserve_the_same_owner_metadata()
         {
             var definition = new CardDefinition(
-                "owned_guard", "소유 방어", Side.Player, CardType.Defense, 5,
+                "owned_guard", "소유 방어", Side.Player, 5,
                 new[] { new EffectData(EffectKeys.Damage, 0) });
             var instance = new ExecutionCardInstance(definition);
             var ownerColor = new Color(0.35f, 0.65f, 0.95f, 1f);
@@ -60,7 +60,7 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Party_owned_presentation_uses_localized_party_owner_name()
         {
             var definition = new CardDefinition(
-                "party_guard", "공용 방어", Side.Player, CardType.Defense, 5,
+                "party_guard", "공용 방어", Side.Player, 5,
                 new[] { new EffectData(EffectKeys.Damage, 0) });
 
             var presentation = CardPresentation.FromDefinition(
