@@ -88,7 +88,7 @@ namespace FateWeaver.Unity
                 _groups[i].alpha = !active || i == selectedIndex ? 1f : 0.35f;
                 _views[i].SetInteractable(!active);
                 _views[i].SetSelection(active && i == selectedIndex
-                    ? CardView.SelectionKind.Primary
+                    ? CardView.SelectionKind.Secondary
                     : CardView.SelectionKind.None);
             }
         }

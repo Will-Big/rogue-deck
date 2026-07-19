@@ -63,8 +63,9 @@ namespace FateWeaver.Unity
             _machine.SelectCard(handIndex, SelectionTargetKind.None, 0);
             _visualHandIndex = handIndex;
             _hoverHandIndex = -1;
+            _hand.SetHeld(handIndex, true);
             _hand.SetHoverSuppressed(true);
-            _hand.SetSelection(handIndex, CardView.SelectionKind.Primary);
+            _hand.SetSelection(handIndex, CardView.SelectionKind.Secondary);
             _rail.SetDropHint(true);
             _rail.ShowPlacementHover(card, insertionIndex);
             _rail.ArmPlacementPreview(OnPlacementPreviewClicked);
@@ -123,8 +124,8 @@ namespace FateWeaver.Unity
                 }
             }
 
-            _hand.SetHoverSuppressed(true);
             _hand.SetHeld(handIndex, true);
+            _hand.SetHoverSuppressed(true);
             _dimLayer.SetActive(true);
             RefreshTargetVisuals();
             _arrow.Show(SelectedCardScreen(), MouseScreen());
