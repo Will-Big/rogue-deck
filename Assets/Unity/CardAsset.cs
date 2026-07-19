@@ -22,9 +22,8 @@ namespace FateWeaver.Unity
         public int BaseExecutionOrder = 5;
         public Sprite Art;
         [TextArea] public string Description;
-        public EffectSpec[] Effects = Array.Empty<EffectSpec>();
-        [FormerlySerializedAs("Fate")]
-        public InterventionKind Intervention;
+        [SerializeReference] public EffectSpec[] Effects = Array.Empty<EffectSpec>();
+        public InterventionKeyRef Intervention;
         [FormerlySerializedAs("InterventionAmount")]
         [FormerlySerializedAs("FateAmount")]
         public int InterventionEffectValue;

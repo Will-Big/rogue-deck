@@ -91,8 +91,16 @@ namespace FateWeaver.Unity.Editor
                 return;
             }
 
+            var specs = deck.ToSpecs();
+            var errors = AuthoringValidator.Validate(specs, AuthoringContext.Default());
+            if (errors.Count > 0)
+            {
+                Debug.LogError("Card validation failed:\n" + string.Join("\n", errors));
+                return;
+            }
+
             Directory.CreateDirectory("Assets/Core/Simulation/Generated");
-            File.WriteAllText(GeneratedPath, Emit(deck.ToSpecs()), new UTF8Encoding(false));
+            File.WriteAllText(GeneratedPath, Emit(specs), new UTF8Encoding(false));
             AssetDatabase.Refresh();
             Debug.Log("Generated " + GeneratedPath);
         }
@@ -232,6 +240,7 @@ namespace FateWeaver.Unity.Editor
             card.EnergyCost = def.EnergyCost;
             card.BaseExecutionOrder = def.BaseExecutionOrder;
             card.Effects = System.Array.Empty<EffectSpec>();
+            card.Intervention = default;
         }
 
         private static IEnumerable<CardSpec> DistinctById(IReadOnlyList<CardSpec> specs, out Dictionary<string, int> counts)
@@ -289,7 +298,10 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Category = CardCategory.").Append(s.Category).Append(", ");
             sb.Append("EnergyCost = ").Append(s.EnergyCost).Append(", ");
             sb.Append("BaseExecutionOrder = ").Append(s.BaseExecutionOrder).Append(", ");
-            sb.Append("Intervention = InterventionKind.").Append(s.Intervention).Append(", ");
+            if (!s.Intervention.IsEmpty)
+            {
+                sb.Append("Intervention = new InterventionKeyRef { Id = ").Append(Quote(s.Intervention.Id)).Append(" }, ");
+            }
             sb.Append("InterventionEffectValue = ").Append(s.InterventionEffectValue).Append(", ");
             sb.Append("Effects = new EffectSpec[] { ");
             var effects = s.Effects ?? System.Array.Empty<EffectSpec>();
@@ -304,19 +316,7 @@ namespace FateWeaver.Unity.Editor
 
         private static string EmitEffect(EffectSpec e)
         {
-            var sb = new StringBuilder();
-            sb.Append("new EffectSpec { ");
-            sb.Append("Kind = EffectKind.").Append(e.Kind).Append(", ");
-            sb.Append("EffectValue = ").Append(e.EffectValue).Append(", ");
-            sb.Append("Condition = ConditionKind.").Append(e.Condition).Append(", ");
-            sb.Append("ConditionN = ").Append(e.ConditionN).Append(", ");
-            sb.Append("SuccessEffectValue = ").Append(e.SuccessEffectValue).Append(", ");
-            sb.Append("Status = StatusKindRef.").Append(e.Status).Append(", ");
-            sb.Append("Lifetime = StatusLifetimeKind.").Append(e.Lifetime).Append(", ");
-            sb.Append("LifetimeCount = ").Append(e.LifetimeCount).Append(", ");
-            sb.Append("Selector = TargetSelectorRef.").Append(e.Selector).Append(", ");
-            sb.Append("Target = StatusApplyTarget.").Append(e.Target).Append(" }");
-            return sb.ToString();
+            return e.ToLiteral();
         }
 
         private static string Quote(string value) => "\"" + (value ?? string.Empty).Replace("\"", "\\\"") + "\"";
