@@ -131,3 +131,22 @@ rg -n '^  Type:' Assets/Unity/CardSO --glob '*.asset'
 - 따라서 현재 상태는 **구현 완료, 머지 후 사용자 Play 검증 대기**이며 Play 검증 완료로 표시하지 않는다.
 - Task 5 RED는 계획의 reflection assertion 실패가 아니라 선행 Task 4 스키마 제거로 인한 예상 가능한 `CS0246`
   컴파일 실패였다. 영구 reflection 회귀 테스트는 GREEN에서 실행되어 통과했다.
+
+## 2026-07-20 — Status key dropdown follow-up
+
+`StatusKeyRef.Id`는 계속 직렬화 스키마로 남아 있으며, 등록된 런타임 상태가 Inspector 드롭다운을 구동한다.
+알 수 없는 값은 `Unknown: <key>`로 표시되고, 계속 `AuthoringValidator`를 실패시키며, repaint 중에는 절대 다시
+기록되지 않는다. 전투 규칙은 변경하지 않았고, 보류 중인 사용자 Play 검증 게이트도 변경하지 않았다.
+
+### 후속 검증
+
+- Guard 저작 YAML은 `Status:` 다음에 `Id: block`이 오는 구조를 유지한다
+  (`Assets/Unity/CardSO/Player/guard.asset:38-39`).
+- 2026-07-20 전체 헤드리스 회귀 명령의 첫 샌드박스 시도는 테스트 호스트의
+  `System.Net.Sockets.SocketException (13): Permission denied`로 중단되어 종료 1이었다. 동일 명령을 승인된
+  환경에서 재시도한 결과는 **316/316 통과, 실패 0, 스킵 0, 종료 0**이었다.
+- 2026-07-20 전체 Unity EditMode 명령은 일반 및 승인 재시도 모두 다른 Unity 인스턴스가 이 프로젝트를 열고 있다는
+  fatal 오류로 컴파일 전에 중단되어 종료 1이었다. 따라서 Unity EditMode 전체 통과를 주장하지 않는다.
+- `git diff master...HEAD --check`는
+  `docs/superpowers/plans/2026-07-20-status-key-dropdown-authoring.md:410: new blank line at EOF.`를 보고했다.
+  이 기존 브랜치 차이는 이 후속 기록에서 변경하지 않았다.
