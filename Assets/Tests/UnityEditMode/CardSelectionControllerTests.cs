@@ -261,9 +261,9 @@ namespace FateWeaver.Tests.UnityEditMode
 
             Assert.AreEqual(Quaternion.identity, source.transform.localRotation);
             Assert.AreEqual(Vector3.one * 1.35f, source.transform.localScale);
-            Assert.AreEqual(
-                SelectedOutline,
-                Field<Image>(source, "_selectionOutline").color);
+            var outline = Field<Outline>(source, "_selectionOutline");
+            Assert.IsTrue(outline.enabled);
+            Assert.AreEqual(SelectedOutline, outline.effectColor);
         }
 
         [Test]
