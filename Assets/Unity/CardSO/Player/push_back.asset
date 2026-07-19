@@ -13,14 +13,18 @@ MonoBehaviour:
   m_Name: push_back
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardAsset
   Id: push_back
-  DisplayName: "\uBBF8\uB8F8"
+  DisplayName: "\uBC00\uC5B4\uB0B4\uAE30"
   Side: 0
   Type: 1
   Category: 1
   EnergyCost: 1
   BaseExecutionOrder: 0
-  Art: {fileID: 5409132075344508697, guid: 3122fba242e1e0b4cb3a0202157899af, type: 3}
+  Art: {fileID: 0}
   Description: 
   Effects: []
-  Intervention: 1
+  Intervention:
+    Id: change_execution_order
   InterventionEffectValue: 1
+  references:
+    version: 2
+    RefIds: []

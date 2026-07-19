@@ -22,15 +22,18 @@ MonoBehaviour:
   Art: {fileID: 0}
   Description: 
   Effects:
-  - Kind: 4
-    EffectValue: -1
-    Condition: 0
-    ConditionN: 0
-    SuccessEffectValue: 0
-    Status: 0
-    Lifetime: 0
-    LifetimeCount: 0
-    Target: 0
-    Selector: 0
-  Intervention: 0
+  - rid: 9096977016729108486
+  Intervention:
+    Id:
   InterventionEffectValue: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 9096977016729108486
+      type: {class: MoveFormationSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+        Value: -1

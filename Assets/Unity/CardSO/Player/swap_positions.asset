@@ -19,8 +19,12 @@ MonoBehaviour:
   Category: 1
   EnergyCost: 1
   BaseExecutionOrder: 0
-  Art: {fileID: 2625405463799650937, guid: 51cee223f81c76f4ab432627dcf93473, type: 3}
+  Art: {fileID: 0}
   Description: 
   Effects: []
-  Intervention: 2
+  Intervention:
+    Id: swap_execution_order
   InterventionEffectValue: 0
+  references:
+    version: 2
+    RefIds: []

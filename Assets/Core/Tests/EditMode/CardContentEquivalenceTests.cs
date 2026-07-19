@@ -16,8 +16,8 @@ namespace FateWeaver.Tests
     ///
     /// Known cross-path divergences, intentionally NOT reconciled here (scheduled for P1-A cleanup):
     /// - pull_forward intervention effectValue: hand-coded StarterDeck has -2, specs/generated have -1.
-    /// - push_back: absent from the hand-coded StarterDeck; present in specs ("밀어내기") and
-    ///   generated ("미룸") with drifted names.
+    /// - push_back: absent from the hand-coded StarterDeck; present in specs and generated
+    ///   as "밀어내기".
     /// Because of these, only the party prototype pair (currently equivalent) keeps a cross-path
     /// oracle test; the starter paths are each pinned against their own golden.
     ///
@@ -86,7 +86,7 @@ namespace FateWeaver.Tests
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Defense;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "pull_forward;앞당김;Player;Skill;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;미룸;Player;Skill;Intervention;1;0;change_execution_order:1:1;",
+            "push_back;밀어내기;Player;Skill;Intervention;1;0;change_execution_order:1:1;",
             "quick_cut;찰나의 베기;Player;Attack;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
             "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",
             "slash;베기;Player;Attack;Execution;1;4;-;damage,4,-,-,-,-",

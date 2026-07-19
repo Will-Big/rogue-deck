@@ -22,15 +22,24 @@ MonoBehaviour:
   Art: {fileID: 0}
   Description: 
   Effects:
-  - Kind: 1
-    EffectValue: 4
-    Condition: 0
-    ConditionN: 0
-    SuccessEffectValue: 0
-    Status: 3
-    Lifetime: 1
-    LifetimeCount: 0
-    Target: 3
-    Selector: 0
-  Intervention: 0
+  - rid: 9096977016729108487
+  Intervention:
+    Id:
   InterventionEffectValue: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 9096977016729108487
+      type: {class: ApplyStatusSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+        Status:
+          Id: block
+        Value: 4
+        Lifetime: 1
+        LifetimeCount: 0
+        Target: 3
+        Selector: 0

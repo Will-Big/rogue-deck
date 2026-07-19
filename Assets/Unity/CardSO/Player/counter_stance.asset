@@ -19,17 +19,22 @@ MonoBehaviour:
   Category: 0
   EnergyCost: 2
   BaseExecutionOrder: 7
-  Art: {fileID: -3675728350085826683, guid: 39e101a6eefaccf43ac5e1eba435a63f, type: 3}
+  Art: {fileID: 0}
   Description: 
   Effects:
-  - Kind: 0
-    EffectValue: 4
-    Condition: 6
-    ConditionN: 0
-    SuccessEffectValue: 9
-    Status: 0
-    Lifetime: 0
-    LifetimeCount: 0
-    Target: 0
-  Intervention: 0
+  - rid: 9096977016729108483
+  Intervention:
+    Id:
   InterventionEffectValue: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 9096977016729108483
+      type: {class: DamageSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 6
+          N: 0
+          SuccessEffectValue: 9
+        Value: 4
+        Selector: 0
