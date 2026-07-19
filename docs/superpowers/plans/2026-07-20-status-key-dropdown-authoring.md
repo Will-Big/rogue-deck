@@ -407,4 +407,3 @@ Expected: Guard still serializes Status.Id: block; whitespace check is clean; on
     git log --oneline master..HEAD
 
 Expected: worktree is clean; the branch contains the follow-up commits and remains unmerged until the user approves merge after direct Unity validation.
-

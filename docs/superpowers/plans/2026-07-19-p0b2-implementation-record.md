@@ -150,3 +150,12 @@ rg -n '^  Type:' Assets/Unity/CardSO --glob '*.asset'
 - `git diff master...HEAD --check`는
   `docs/superpowers/plans/2026-07-20-status-key-dropdown-authoring.md:410: new blank line at EOF.`를 보고했다.
   이 기존 브랜치 차이는 이 후속 기록에서 변경하지 않았다.
+
+### 2026-07-20 최종 Unity EditMode 재검증
+
+- Unity 6000 Popup overload 수정 뒤, 남아 있던 batchmode 및 License Client 프로세스를 재설정한 후 전체
+  EditMode를 다시 실행했다.
+- `/private/tmp/status-key-dropdown-editmode-final.xml`은 **369 통과, 실패 0, 스킵 0**의 성공한 전체 EditMode
+  실행을 기록하며, `StatusKeyDropdownOptionsTests`의 세 테스트도 모두 통과했다.
+- 앞선 Unity 실행 차단 기록은 당시의 실행 환경 증거로 그대로 유지한다. 이 성공 결과는 2026-07-20 최종 재실행의
+  결과다.
