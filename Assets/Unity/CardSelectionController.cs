@@ -28,6 +28,9 @@ namespace FateWeaver.Unity
         private int _visualHandIndex = -1;
         private int _hoverHandIndex = -1;
         private SelectionTargetKind _targetKind = SelectionTargetKind.None;
+        private CardPresentation? _placementCard;
+        private HandFanView.PlacementFlightVisual _placementFlight;
+        private bool _placementCompleting;
 
         public bool SelectionActive => _machine.Phase != SelectionPhase.Idle;
 
@@ -59,12 +62,19 @@ namespace FateWeaver.Unity
         public void BeginPlacement(
             int handIndex, CardPresentation card, int insertionIndex)
         {
+            if (_placementCompleting)
+            {
+                return;
+            }
+
             EndSelectionVisuals();
             _machine.SelectCard(handIndex, SelectionTargetKind.None, 0);
+            _placementCard = card;
             _visualHandIndex = handIndex;
             _hoverHandIndex = -1;
+            _hand.SetHeld(handIndex, true);
             _hand.SetHoverSuppressed(true);
-            _hand.SetSelection(handIndex, CardView.SelectionKind.Primary);
+            _hand.SetSelection(handIndex, CardView.SelectionKind.Secondary);
             _rail.SetDropHint(true);
             _rail.ShowPlacementHover(card, insertionIndex);
             _rail.ArmPlacementPreview(OnPlacementPreviewClicked);
@@ -99,6 +109,11 @@ namespace FateWeaver.Unity
             int requiredTargets,
             IReadOnlyList<SelectionTargetRef> candidates)
         {
+            if (_placementCompleting)
+            {
+                return;
+            }
+
             if (targetKind == SelectionTargetKind.None)
             {
                 throw new ArgumentException("Explicit target selection requires a target kind.",
@@ -123,8 +138,8 @@ namespace FateWeaver.Unity
                 }
             }
 
-            _hand.SetHoverSuppressed(true);
             _hand.SetHeld(handIndex, true);
+            _hand.SetHoverSuppressed(true);
             _dimLayer.SetActive(true);
             RefreshTargetVisuals();
             _arrow.Show(SelectedCardScreen(), MouseScreen());
@@ -132,7 +147,8 @@ namespace FateWeaver.Unity
 
         public void OnTargetClicked(SelectionTargetRef target)
         {
-            if (!SelectionActive
+            if (_placementCompleting
+                || !SelectionActive
                 || target.Kind != _targetKind
                 || !_validTargets.Contains(target))
             {
@@ -146,18 +162,82 @@ namespace FateWeaver.Unity
 
         public void CancelSelection()
         {
+            if (_placementCompleting)
+            {
+                return;
+            }
+
             _machine.Cancel();
             EndSelectionVisuals();
         }
 
         private void OnConfirmClicked()
         {
+            if (_placementCompleting)
+            {
+                return;
+            }
+
             TryDispatch(_machine.Confirm());
         }
 
         private void OnPlacementPreviewClicked()
         {
-            TryDispatch(_machine.ClickApplyArea());
+            if (_placementCompleting || !_placementCard.HasValue)
+            {
+                return;
+            }
+
+            if (!_rail.TryGetPlacementFlightLayer(out var layer)
+                || !_hand.TryPreparePlacementFlight(
+                    _visualHandIndex,
+                    _placementCard.Value,
+                    layer,
+                    out _placementFlight))
+            {
+                CancelSelection();
+                return;
+            }
+
+            _placementCompleting = true;
+            var result = _machine.ClickApplyArea();
+            bool applied = result.IsComplete && _tryApply != null && _tryApply(result);
+            if (!applied)
+            {
+                AbortPlacementCompletion();
+                _machine.Cancel();
+                EndSelectionVisuals();
+                return;
+            }
+
+            _hand.SetInputEnabled(false);
+            _hand.ShowPlacementFlight(_placementFlight);
+            if (!_rail.StartPlacementFlight(
+                _placementFlight.Rect,
+                CompletePlacementFlight))
+            {
+                CompletePlacementFlight();
+            }
+        }
+
+        private void AbortPlacementCompletion()
+        {
+            _hand.ClearPlacementFlight(_placementFlight);
+            _placementFlight = null;
+            _placementCompleting = false;
+        }
+
+        private void CompletePlacementFlight()
+        {
+            if (!_placementCompleting)
+            {
+                return;
+            }
+
+            _machine.CommitSucceeded();
+            AbortPlacementCompletion();
+            EndSelectionVisuals();
+            _onApplied?.Invoke();
         }
 
         private void TryDispatch(SelectionResult result)
@@ -276,6 +356,11 @@ namespace FateWeaver.Unity
 
             _validTargets.Clear();
             _targetKind = SelectionTargetKind.None;
+            _hand.ClearPlacementFlight(_placementFlight);
+            _placementFlight = null;
+            _placementCard = null;
+            _placementCompleting = false;
+            _hand.SetInputEnabled(true);
         }
 
         private static Vector2 MouseScreen()

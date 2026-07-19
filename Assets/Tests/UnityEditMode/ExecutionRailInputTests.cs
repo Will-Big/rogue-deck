@@ -255,6 +255,50 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Placement_flight_hides_silhouette_and_settles_at_its_pose()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+                rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
+                rail.ArmPlacementPreview(() => { });
+                var flight = ChildRect(overlay, "Flight");
+                flight.sizeDelta = new Vector2(170f, 238f);
+                bool completed = false;
+
+                Assert.IsTrue(rail.StartPlacementFlight(
+                    flight, () => completed = true));
+
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                var sequence = Field<Sequence>(rail, "_placementFlightSequence");
+                Assert.AreEqual(0f, preview.GetComponent<CanvasGroup>().alpha);
+                Assert.IsFalse(Field<Button>(preview, "_button").interactable);
+                Assert.IsTrue(sequence.IsActive());
+
+                sequence.Complete();
+
+                Assert.IsTrue(completed);
+                Assert.That(Vector3.Distance(
+                    flight.position, preview.transform.position), Is.LessThan(0.01f));
+                Assert.That(Mathf.Abs(Mathf.DeltaAngle(
+                    flight.eulerAngles.z, preview.transform.eulerAngles.z)),
+                    Is.LessThan(0.01f));
+                Assert.IsNull(Field<Sequence>(rail, "_placementFlightSequence"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Existing_rail_card_hover_still_opens_detail_while_preview_is_armed()
         {
             SimulateDotweenRuntimeInitializationForEditMode();
