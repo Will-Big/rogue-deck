@@ -22,13 +22,13 @@ namespace FateWeaver.Unity
         [SerializeField, Range(0.1f, 0.95f)]
         private float _placementFlightRiseRatio = 0.5f;
         [SerializeField, Min(0f)]
-        private float _placementFlightOvershootRatio = 3f;
+        private float _placementFlightOvershootRatio = 1f;
         [SerializeField, Min(0.1f)]
-        private float _placementFlightApproachWidthRatio = 1.25f;
+        private float _placementFlightApproachWidthRatio = 1.5f;
         [SerializeField, Range(0.05f, 0.45f)]
         private float _placementFlightApproachDropRatio = 0.3f;
         [SerializeField, Range(0.5f, 0.9f)]
-        private float _placementFlightCurveSplit = 0.8f;
+        private float _placementFlightCurveSplit = 0.85f;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
