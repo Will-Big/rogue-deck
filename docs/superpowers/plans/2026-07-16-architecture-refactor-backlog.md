@@ -64,6 +64,8 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 4. P0-B — 열린 카드 저작 구조
 
+- 상태: **구현 완료 — 사용자 Unity 검증 대기 (2026-07-19)** — 구현 기록: [`2026-07-19-p0b-implementation-record.md`](2026-07-19-p0b-implementation-record.md)
+
 ### 문제
 
 `EffectKind`, `StatusKindRef`, `InterventionKind` enum과 `CardSpecMapper` 중앙 switch가 코어의 타입 안전 키 기반 열린
