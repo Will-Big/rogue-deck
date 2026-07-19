@@ -93,7 +93,7 @@ namespace FateWeaver.Simulation
                                 effects: new[]
                                 {
                                     EffectData.Conditional(
-                                        EffectKeys.GrantNextPlayerAttackDamageBonus,
+                                        EffectKeys.GrantNextPlayerDamageCardBonus,
                                         effectValue: 0,
                                         condition: new AllOf(new Condition[]
                                         {

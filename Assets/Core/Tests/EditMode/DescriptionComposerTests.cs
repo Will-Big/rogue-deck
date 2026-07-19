@@ -85,10 +85,10 @@ namespace FateWeaver.Tests.EditMode
         }
 
         [Test]
-        public void Grant_next_attack_bonus_renders_its_amount()
+        public void Grant_next_damage_card_bonus_renders_its_amount()
         {
-            var card = Execution("mark", new EffectData(EffectKeys.GrantNextPlayerAttackDamageBonus, 6));
-            Assert.AreEqual("다음 플레이어 공격 피해 +6.",
+            var card = Execution("mark", new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 6));
+            Assert.AreEqual("다음 플레이어 피해 카드가 주는 피해 +6.",
                 DescriptionComposer.Describe(card, Korean));
         }
 

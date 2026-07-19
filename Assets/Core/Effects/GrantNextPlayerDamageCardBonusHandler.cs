@@ -2,9 +2,9 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Core.Effects
 {
-    public sealed class GrantNextPlayerAttackDamageBonusHandler : IEffectHandler
+    public sealed class GrantNextPlayerDamageCardBonusHandler : IEffectHandler
     {
-        public EffectKey Key => EffectKeys.GrantNextPlayerAttackDamageBonus;
+        public EffectKey Key => EffectKeys.GrantNextPlayerDamageCardBonus;
 
         public void Apply(EffectContext ctx)
         {
@@ -12,7 +12,8 @@ namespace FateWeaver.Core.Effects
             for (int i = currentIndex + 1; i < ctx.ResolutionContext.Order.Count; i++)
             {
                 var card = ctx.ResolutionContext.Order[i];
-                if (card.Def.Side == Side.Player && card.Def.Type == CardType.Attack)
+                if (card.Def.Side == Side.Player
+                    && card.Def.HasEffect(EffectKeys.Damage))
                 {
                     card.AddPendingDamageBonus(ctx.EffectValue);
                     ctx.TargetId = card.Def.Id;
