@@ -29,7 +29,7 @@ namespace FateWeaver.Unity.Editor
                 {
                     selectedIndex = EditorGUI.Popup(
                         position,
-                        label,
+                        label.text,
                         model.SelectedIndex,
                         labels);
                 }
