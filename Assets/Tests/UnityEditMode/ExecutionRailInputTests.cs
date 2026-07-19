@@ -273,14 +273,24 @@ namespace FateWeaver.Tests.UnityEditMode
                 flight.sizeDelta = new Vector2(170f, 238f);
                 bool completed = false;
 
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                flight.position = preview.transform.position + Vector3.down * 300f;
+                Vector3 startPosition = flight.position;
+                Vector3 targetPosition = preview.transform.position;
+
                 Assert.IsTrue(rail.StartPlacementFlight(
                     flight, () => completed = true));
 
-                var preview = Field<RailCardView>(rail, "_placementPreview");
                 var sequence = Field<Sequence>(rail, "_placementFlightSequence");
                 Assert.AreEqual(0f, preview.GetComponent<CanvasGroup>().alpha);
                 Assert.IsFalse(Field<Button>(preview, "_button").interactable);
                 Assert.IsTrue(sequence.IsActive());
+
+                float duration = Field<float>(rail, "_placementFlightDuration");
+                sequence.Goto(duration * 0.35f, false);
+                Vector3 straightPoint = Vector3.Lerp(startPosition, targetPosition, 0.35f);
+                Assert.That(Mathf.Abs(flight.position.x - straightPoint.x), Is.GreaterThan(5f));
+                Assert.That(Mathf.Abs(Mathf.DeltaAngle(flight.eulerAngles.z, 0f)), Is.GreaterThan(5f));
 
                 sequence.Complete();
 
@@ -289,6 +299,12 @@ namespace FateWeaver.Tests.UnityEditMode
                     flight.position, preview.transform.position), Is.LessThan(0.01f));
                 Assert.That(Mathf.Abs(Mathf.DeltaAngle(
                     flight.eulerAngles.z, preview.transform.eulerAngles.z)),
+                    Is.LessThan(0.01f));
+                var targetRect = (RectTransform)preview.transform;
+                Assert.That(
+                    Mathf.Abs(
+                        flight.rect.width * flight.lossyScale.x
+                        - targetRect.rect.width * targetRect.lossyScale.x),
                     Is.LessThan(0.01f));
                 Assert.IsNull(Field<Sequence>(rail, "_placementFlightSequence"));
             }
