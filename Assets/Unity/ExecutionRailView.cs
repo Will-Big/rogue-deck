@@ -225,7 +225,12 @@ namespace FateWeaver.Unity
                 targetSize,
                 settings);
             var flightCard = flight.GetComponent<CardView>();
-            RectTransform backFace = flightCard != null ? flightCard.CreateBackFace() : null;
+            if (flightCard != null)
+            {
+                flightCard.ShowBackFace(false);
+            }
+
+            bool backShown = false;
             Vector3 endScale = ScaleForTarget(flight, target, _previewLayer.lossyScale);
             float progress = 0f;
             bool completionSent = false;
@@ -252,11 +257,12 @@ namespace FateWeaver.Unity
                             sample.Position.x, sample.Position.y, startLocal.z);
                         float settleT = PlacementFlightPath.SettleProgress(
                             value, _placementFlightCurveSplit);
-                        if (backFace != null
-                            && settleT >= PlacementFlightPath.FlipSwapProgress
-                            && !backFace.gameObject.activeSelf)
+                        if (flightCard != null
+                            && !backShown
+                            && settleT >= PlacementFlightPath.FlipSwapProgress)
                         {
-                            backFace.gameObject.SetActive(true);
+                            backShown = true;
+                            flightCard.ShowBackFace(true);
                         }
 
                         flight.localRotation = Quaternion.Euler(

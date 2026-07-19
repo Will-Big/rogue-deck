@@ -150,6 +150,35 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Bound_card_hides_its_back_and_binds_the_fallback_art()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                BuildHand(root, ThreeCards());
+                var card = root.GetComponentsInChildren<CardView>()[0];
+                var back = card.GetComponentInChildren<CardBackView>(true);
+
+                Assert.IsNotNull(back, "CardView.prefab should carry a CardBack child");
+                Assert.IsFalse(back.gameObject.activeSelf);
+                Assert.IsFalse(Field<Image>(back, "_art").enabled);
+                var fallback = Field<Image>(back, "_artFallback");
+                Assert.IsTrue(fallback.enabled);
+                Assert.AreEqual(new Color(0.22f, 0.28f, 0.36f, 1f), fallback.color);
+
+                card.ShowBackFace(true);
+                Assert.IsTrue(back.gameObject.activeSelf);
+
+                card.ShowBackFace(false);
+                Assert.IsFalse(back.gameObject.activeSelf);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Prepared_flight_reuses_card_prefab_and_stays_hidden_until_shown()
         {
             var root = new GameObject("Root", typeof(RectTransform));

@@ -338,18 +338,19 @@ namespace FateWeaver.Tests.UnityEditMode
                 var preview = Field<RailCardView>(rail, "_placementPreview");
                 flight.position = preview.transform.position + Vector3.down * 300f;
 
-                Assert.IsTrue(rail.StartPlacementFlight(flight, () => { }));
-
                 var backFace = flight.GetComponentInChildren<CardBackView>(true);
-                Assert.IsNotNull(backFace, "flight should carry a hidden card back face");
+                Assert.IsNotNull(backFace, "the card prefab should carry a hidden card back");
                 Assert.IsFalse(backFace.gameObject.activeSelf);
 
+                Assert.IsTrue(rail.StartPlacementFlight(flight, () => { }));
+
+                Assert.IsFalse(backFace.gameObject.activeSelf);
                 var backRect = (RectTransform)backFace.transform;
                 Assert.That(
-                    backRect.rect.width * backRect.localScale.x,
+                    backRect.rect.width,
                     Is.EqualTo(flight.rect.width).Within(0.01f));
                 Assert.That(
-                    backRect.rect.height * backRect.localScale.y,
+                    backRect.rect.height,
                     Is.EqualTo(flight.rect.height).Within(0.01f));
 
                 var sequence = Field<Sequence>(rail, "_placementFlightSequence");

@@ -31,7 +31,7 @@ namespace FateWeaver.Unity
         // Template for card status icons. The prefab places its parent row as the root's last child so icons draw above art.
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
-        [SerializeField] private RectTransform _backFacePrefab;
+        [SerializeField] private CardBackView _backFace;
 
         private static readonly Color OutlinePrimary = new Color(0.95f, 0.72f, 0.25f, 1f);
         private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
@@ -89,6 +89,14 @@ namespace FateWeaver.Unity
             RefreshStatusIcons(data.StatusIcons);
             RefreshOwnerChip(data);
 
+            if (_backFace != null)
+            {
+                _backFace.Bind(
+                    data.Art,
+                    data.Side == Side.Enemy ? EnemyTint : PlayerTint);
+                _backFace.gameObject.SetActive(false);
+            }
+
             _button.onClick.RemoveAllListeners();
             if (onClick != null)
             {
@@ -121,25 +129,14 @@ namespace FateWeaver.Unity
             _selectionOutline.enabled = true;
         }
 
-        /// <summary>Instantiates the serialized card back prefab as a hidden child scaled to
-        /// cover this card. The placement flight activates it when the flip passes edge-on.</summary>
-        public RectTransform CreateBackFace()
+        /// <summary>Toggles the built-in card back child. The placement flight shows it when
+        /// the flip passes edge-on.</summary>
+        public void ShowBackFace(bool value)
         {
-            if (_backFacePrefab == null)
+            if (_backFace != null)
             {
-                return null;
+                _backFace.gameObject.SetActive(value);
             }
-
-            var rect = (RectTransform)transform;
-            var back = Instantiate(_backFacePrefab, rect);
-            back.anchorMin = back.anchorMax = new Vector2(0.5f, 0.5f);
-            back.anchoredPosition = Vector2.zero;
-            back.localScale = new Vector3(
-                rect.rect.width / back.rect.width,
-                rect.rect.height / back.rect.height,
-                1f);
-            back.gameObject.SetActive(false);
-            return back;
         }
 
         private void RefreshStatusIcons(IReadOnlyList<CardStatusIcon> icons)
