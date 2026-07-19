@@ -16,6 +16,8 @@ namespace FateWeaver.Tests.UnityEditMode
     {
         private static readonly Color BlueOutline =
             new Color(0.35f, 0.75f, 0.95f, 1f);
+        private static readonly Color GoldOutline =
+            new Color(0.95f, 0.72f, 0.25f, 1f);
 
         [Test]
         public void Hand_card_reports_its_index_on_hover_enter_and_exit()
@@ -82,7 +84,32 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Target_selected_hand_card_uses_blue_outline()
+        public void Target_selected_hand_card_uses_only_the_blue_frame_outline()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildHand(root, ThreeCards());
+                var selected = root.GetComponentsInChildren<CardView>()[0];
+                var frame = selected.GetComponent<Image>();
+                Color originalFrameColor = frame.color;
+
+                hand.SetTargetSelection(0, true);
+
+                var outline = Field<Outline>(selected, "_selectionOutline");
+                Assert.AreSame(selected.gameObject, outline.gameObject);
+                Assert.IsTrue(outline.enabled);
+                Assert.AreEqual(BlueOutline, outline.effectColor);
+                Assert.AreEqual(originalFrameColor, frame.color);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Primary_selection_uses_the_gold_frame_outline()
         {
             var root = new GameObject("Hand", typeof(RectTransform));
             try
@@ -90,11 +117,31 @@ namespace FateWeaver.Tests.UnityEditMode
                 var hand = BuildHand(root, ThreeCards());
                 var selected = root.GetComponentsInChildren<CardView>()[0];
 
-                hand.SetTargetSelection(0, true);
+                hand.SetSelection(0, CardView.SelectionKind.Primary);
 
-                Assert.AreEqual(
-                    BlueOutline,
-                    Field<Image>(selected, "_selectionOutline").color);
+                var outline = Field<Outline>(selected, "_selectionOutline");
+                Assert.IsTrue(outline.enabled);
+                Assert.AreEqual(GoldOutline, outline.effectColor);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Clearing_card_selection_disables_the_frame_outline()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildHand(root, ThreeCards());
+                var selected = root.GetComponentsInChildren<CardView>()[0];
+
+                hand.SetSelection(0, CardView.SelectionKind.Secondary);
+                hand.SetSelection(-1, CardView.SelectionKind.None);
+
+                Assert.IsFalse(Field<Outline>(selected, "_selectionOutline").enabled);
             }
             finally
             {

@@ -24,7 +24,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _executionOrderText;
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _descriptionText;
-        [SerializeField] private Image _selectionOutline;
+        [SerializeField] private Outline _selectionOutline;
         [SerializeField] private GameObject _ownerChip;
         [SerializeField] private Image _ownerChipBackground;
         [SerializeField] private TMP_Text _ownerChipText;
@@ -32,7 +32,6 @@ namespace FateWeaver.Unity
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
 
-        private static readonly Color OutlineNone = new Color(0f, 0f, 0f, 0f);
         private static readonly Color OutlinePrimary = new Color(0.95f, 0.72f, 0.25f, 1f);
         private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
         private static readonly Color EnemyTint = new Color(0.45f, 0.18f, 0.18f, 1f);
@@ -109,10 +108,16 @@ namespace FateWeaver.Unity
 
         public void SetSelection(SelectionKind kind)
         {
-            _selectionOutline.color =
-                kind == SelectionKind.Primary ? OutlinePrimary :
-                kind == SelectionKind.Secondary ? OutlineSecondary :
-                OutlineNone;
+            if (kind == SelectionKind.None)
+            {
+                _selectionOutline.enabled = false;
+                return;
+            }
+
+            _selectionOutline.effectColor = kind == SelectionKind.Primary
+                ? OutlinePrimary
+                : OutlineSecondary;
+            _selectionOutline.enabled = true;
         }
 
         private void RefreshStatusIcons(IReadOnlyList<CardStatusIcon> icons)
@@ -227,7 +232,6 @@ namespace FateWeaver.Unity
             LayoutTopRight(TextRect(_executionOrderText), 20f, 19f, 32f, 28f, scale);
             LayoutStatusRow(scale);
             LayoutOwnerChip(scale);
-            LayoutSelectionOutline(scale);
             ScaleText(scale);
         }
 
@@ -391,21 +395,6 @@ namespace FateWeaver.Unity
             rect.pivot = new Vector2(0f, 0f);
             rect.anchoredPosition = new Vector2(18f * scale, 17f * scale);
             rect.sizeDelta = new Vector2(84f * scale, 24f * scale);
-        }
-
-        private void LayoutSelectionOutline(float scale)
-        {
-            if (_selectionOutline == null)
-            {
-                return;
-            }
-
-            var rect = _selectionOutline.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(6f * scale, 6f * scale);
         }
 
         private void ScaleText(float scale)
