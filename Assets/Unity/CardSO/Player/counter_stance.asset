@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: counter_stance
   DisplayName: "\uBC18\uACA9"
   Side: 0
-  Type: 0
   Category: 0
   EnergyCost: 2
   BaseExecutionOrder: 7

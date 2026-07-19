@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: fixture_all_block
   DisplayName: "[\uAC80\uC99D] \uC804\uCCB4 \uBC29\uC5B4"
   Side: 0
-  Type: 2
   Category: 0
   EnergyCost: 1
   BaseExecutionOrder: 5

@@ -219,7 +219,6 @@ namespace FateWeaver.Unity.Editor
             card.Id = spec.Id;
             card.DisplayName = spec.Name;
             card.Side = spec.Side;
-            card.Type = spec.Type;
             card.Category = spec.Category;
             card.EnergyCost = spec.EnergyCost;
             card.BaseExecutionOrder = spec.BaseExecutionOrder;
@@ -235,7 +234,6 @@ namespace FateWeaver.Unity.Editor
             card.Id = def.Id;
             card.DisplayName = def.Name;
             card.Side = def.Side;
-            card.Type = def.Type;
             card.Category = def.Category;
             card.EnergyCost = def.EnergyCost;
             card.BaseExecutionOrder = def.BaseExecutionOrder;
@@ -294,7 +292,6 @@ namespace FateWeaver.Unity.Editor
             sb.Append("Id = ").Append(Quote(s.Id)).Append(", ");
             sb.Append("Name = ").Append(Quote(s.Name)).Append(", ");
             sb.Append("Side = Side.").Append(s.Side).Append(", ");
-            sb.Append("Type = CardType.").Append(s.Type).Append(", ");
             sb.Append("Category = CardCategory.").Append(s.Category).Append(", ");
             sb.Append("EnergyCost = ").Append(s.EnergyCost).Append(", ");
             sb.Append("BaseExecutionOrder = ").Append(s.BaseExecutionOrder).Append(", ");

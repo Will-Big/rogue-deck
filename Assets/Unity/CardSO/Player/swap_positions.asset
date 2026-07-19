@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: swap_positions
   DisplayName: "\uC790\uB9AC \uAD50\uD658"
   Side: 0
-  Type: 1
   Category: 1
   EnergyCost: 1
   BaseExecutionOrder: 0

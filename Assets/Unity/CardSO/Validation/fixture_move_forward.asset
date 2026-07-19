@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: fixture_move_forward
   DisplayName: "[\uAC80\uC99D] \uB300\uD615 \uC774\uB3D9"
   Side: 0
-  Type: 1
   Category: 0
   EnergyCost: 1
   BaseExecutionOrder: 5
