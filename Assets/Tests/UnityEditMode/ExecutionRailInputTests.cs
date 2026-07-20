@@ -273,14 +273,24 @@ namespace FateWeaver.Tests.UnityEditMode
                 flight.sizeDelta = new Vector2(170f, 238f);
                 bool completed = false;
 
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                flight.position = preview.transform.position + Vector3.down * 300f;
+                Vector3 startPosition = flight.position;
+                Vector3 targetPosition = preview.transform.position;
+
                 Assert.IsTrue(rail.StartPlacementFlight(
                     flight, () => completed = true));
 
-                var preview = Field<RailCardView>(rail, "_placementPreview");
                 var sequence = Field<Sequence>(rail, "_placementFlightSequence");
                 Assert.AreEqual(0f, preview.GetComponent<CanvasGroup>().alpha);
                 Assert.IsFalse(Field<Button>(preview, "_button").interactable);
                 Assert.IsTrue(sequence.IsActive());
+
+                float duration = Field<float>(rail, "_placementFlightDuration");
+                sequence.Goto(duration * 0.35f, false);
+                Vector3 straightPoint = Vector3.Lerp(startPosition, targetPosition, 0.35f);
+                Assert.That(Mathf.Abs(flight.position.x - straightPoint.x), Is.GreaterThan(5f));
+                Assert.That(Mathf.Abs(Mathf.DeltaAngle(flight.eulerAngles.z, 0f)), Is.GreaterThan(5f));
 
                 sequence.Complete();
 
@@ -290,7 +300,87 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.That(Mathf.Abs(Mathf.DeltaAngle(
                     flight.eulerAngles.z, preview.transform.eulerAngles.z)),
                     Is.LessThan(0.01f));
+                var targetRect = (RectTransform)preview.transform;
+                Assert.That(
+                    Mathf.Abs(
+                        flight.rect.width * flight.lossyScale.x
+                        - targetRect.rect.width * targetRect.lossyScale.x),
+                    Is.LessThan(0.01f));
                 Assert.IsNull(Field<Sequence>(rail, "_placementFlightSequence"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Placement_flight_flips_to_the_card_back_face_in_the_settle_segment()
+        {
+            SimulateDotweenRuntimeInitializationForEditMode();
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = ChildRect(root.transform, "Overlay");
+            try
+            {
+                var prefab = RailCardView.EditorCreate(
+                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(null, prefab, overlay);
+                rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
+                rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
+                rail.ArmPlacementPreview(() => { });
+                var cardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>(
+                    "Assets/Unity/Prefabs/CardView.prefab");
+                Assert.IsNotNull(cardPrefab);
+                var flightCard = Object.Instantiate(cardPrefab, overlay);
+                var flight = (RectTransform)flightCard.transform;
+                flight.sizeDelta = new Vector2(170f, 238f);
+                var preview = Field<RailCardView>(rail, "_placementPreview");
+                flight.position = preview.transform.position + Vector3.down * 300f;
+
+                var backFace = flight.GetComponentInChildren<CardBackView>(true);
+                Assert.IsNotNull(backFace, "the card prefab should carry a hidden card back");
+                Assert.IsFalse(backFace.gameObject.activeSelf);
+
+                Assert.IsTrue(rail.StartPlacementFlight(flight, () => { }));
+
+                Assert.IsFalse(backFace.gameObject.activeSelf);
+                var backRect = (RectTransform)backFace.transform;
+                Assert.That(
+                    backRect.rect.width,
+                    Is.EqualTo(flight.rect.width).Within(0.01f));
+                Assert.That(
+                    backRect.rect.height,
+                    Is.EqualTo(flight.rect.height).Within(0.01f));
+
+                var sequence = Field<Sequence>(rail, "_placementFlightSequence");
+                float duration = Field<float>(rail, "_placementFlightDuration");
+                bool sawFrontFlip = false;
+                bool sawBackFace = false;
+                for (int i = 1; i < 40; i++)
+                {
+                    sequence.Goto(duration * i / 40f, false);
+                    float yAngle = Mathf.DeltaAngle(0f, flight.localEulerAngles.y);
+                    if (!backFace.gameObject.activeSelf && yAngle > 5f && yAngle < 90f)
+                    {
+                        sawFrontFlip = true;
+                    }
+
+                    if (backFace.gameObject.activeSelf && yAngle < -5f)
+                    {
+                        sawBackFace = true;
+                    }
+                }
+
+                Assert.IsTrue(sawFrontFlip, "front face should turn toward edge-on before the swap");
+                Assert.IsTrue(sawBackFace, "card back should unfold from -90 after the swap");
+
+                sequence.Complete();
+
+                Assert.IsTrue(backFace.gameObject.activeSelf);
+                Assert.That(
+                    Mathf.Abs(Mathf.DeltaAngle(flight.eulerAngles.y, 0f)),
+                    Is.LessThan(0.01f));
             }
             finally
             {

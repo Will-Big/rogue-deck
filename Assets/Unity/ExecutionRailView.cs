@@ -18,10 +18,17 @@ namespace FateWeaver.Unity
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
         [SerializeField] private Image _backdrop;
-        [SerializeField] private float _placementFlightDuration = 0.45f;
-        [SerializeField] private float _placementFlightTiltDegrees = 12f;
-        [SerializeField, Range(0.1f, 0.9f)]
-        private float _placementFlightTiltRatio = 0.35f;
+        [SerializeField] private float _placementFlightDuration = 1f;
+        [SerializeField, Range(0.1f, 0.95f)]
+        private float _placementFlightRiseRatio = 0.5f;
+        [SerializeField, Min(0f)]
+        private float _placementFlightOvershootRatio = 1f;
+        [SerializeField, Min(0.1f)]
+        private float _placementFlightApproachWidthRatio = 1.5f;
+        [SerializeField, Range(0.05f, 0.45f)]
+        private float _placementFlightApproachDropRatio = 0.3f;
+        [SerializeField, Range(0.5f, 0.9f)]
+        private float _placementFlightCurveSplit = 0.85f;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
         private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
@@ -204,9 +211,28 @@ namespace FateWeaver.Unity
             _placementPreviewGroup.alpha = 0f;
 
             var target = (RectTransform)_placementPreview.transform;
-            float tiltTime = _placementFlightDuration * _placementFlightTiltRatio;
-            Vector3 targetEuler = target.eulerAngles;
+            Vector3 startLocal = flight.localPosition;
+            Vector3 targetLocal3 = _previewLayer.InverseTransformPoint(target.position);
+            Vector2 targetSize = SizeInLayer(target, _previewLayer);
+            var settings = new PlacementFlightPath.Settings(
+                _placementFlightRiseRatio,
+                _placementFlightOvershootRatio,
+                _placementFlightApproachWidthRatio,
+                _placementFlightApproachDropRatio);
+            var path = PlacementFlightPath.Create(
+                new Vector2(startLocal.x, startLocal.y),
+                new Vector2(targetLocal3.x, targetLocal3.y),
+                targetSize,
+                settings);
+            var flightCard = flight.GetComponent<CardView>();
+            if (flightCard != null)
+            {
+                flightCard.ShowBackFace(false);
+            }
+
+            bool backShown = false;
             Vector3 endScale = ScaleForTarget(flight, target, _previewLayer.lossyScale);
+            float progress = 0f;
             bool completionSent = false;
             Action finish = () =>
             {
@@ -220,19 +246,43 @@ namespace FateWeaver.Unity
                 onComplete?.Invoke();
             };
 
+            var movement = DOTween.To(
+                    () => progress,
+                    value =>
+                    {
+                        progress = value;
+                        var sample = PlacementFlightPath.Evaluate(
+                            path, value, _placementFlightCurveSplit);
+                        flight.localPosition = new Vector3(
+                            sample.Position.x, sample.Position.y, startLocal.z);
+                        float settleT = PlacementFlightPath.SettleProgress(
+                            value, _placementFlightCurveSplit);
+                        if (flightCard != null
+                            && !backShown
+                            && settleT >= PlacementFlightPath.FlipSwapProgress)
+                        {
+                            backShown = true;
+                            flightCard.ShowBackFace(true);
+                        }
+
+                        flight.localRotation = Quaternion.Euler(
+                            0f,
+                            PlacementFlightPath.FlipAngle(settleT),
+                            sample.AngleDegrees);
+                    },
+                    1f,
+                    _placementFlightDuration)
+                .SetEase(Ease.InOutCubic);
+
             _placementFlightSequence = DOTween.Sequence()
-                .Append(flight.DOMove(target.position, _placementFlightDuration)
-                    .SetEase(Ease.InOutCubic))
+                .Append(movement)
                 .Join(flight.DOScale(endScale, _placementFlightDuration)
                     .SetEase(Ease.InOutCubic))
-                .Insert(0f, flight.DORotate(
-                        targetEuler + new Vector3(0f, 0f, _placementFlightTiltDegrees),
-                        tiltTime)
-                    .SetEase(Ease.OutSine))
-                .Insert(tiltTime, flight.DORotate(
-                        targetEuler,
-                        _placementFlightDuration - tiltTime)
-                    .SetEase(Ease.InOutSine))
+                .AppendCallback(() =>
+                {
+                    flight.SetPositionAndRotation(target.position, target.rotation);
+                    flight.localScale = endScale;
+                })
                 .SetUpdate(true)
                 .SetLink(flight.gameObject, LinkBehaviour.KillOnDestroy)
                 .OnComplete(() => finish())
@@ -395,6 +445,19 @@ namespace FateWeaver.Unity
                 target.rect.height * target.lossyScale.y /
                     (flight.rect.height * parentScale.y),
                 1f);
+
+        private static Vector2 SizeInLayer(
+            RectTransform target,
+            RectTransform layer)
+        {
+            var corners = new Vector3[4];
+            target.GetWorldCorners(corners);
+            Vector3 bottomLeft = layer.InverseTransformPoint(corners[0]);
+            Vector3 topRight = layer.InverseTransformPoint(corners[2]);
+            return new Vector2(
+                Mathf.Abs(topRight.x - bottomLeft.x),
+                Mathf.Abs(topRight.y - bottomLeft.y));
+        }
 
         private void HidePreview()
         {
