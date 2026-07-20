@@ -40,7 +40,7 @@ namespace FateWeaver.Tests
             int successDamage,
             string targetId = null)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
+            var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { EffectData.Conditional(EffectKeys.Damage, baseDamage, condition, successDamage) });
             return new ExecutionCardInstance(def) { TargetId = targetId };
         }
@@ -48,7 +48,7 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance PlainCard(
             string id, Side side, int executionOrder, int damage, string targetId = null)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder,
+            var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
             return new ExecutionCardInstance(def) { TargetId = targetId };
         }
@@ -65,12 +65,12 @@ namespace FateWeaver.Tests
             var a = PlainCard("a_strike", Side.Enemy, executionOrder: 1, damage: 10);
             // B: owned by ally -> cancelled (OwnerDied) once A kills ally; never actually executes.
             var b = new ExecutionCardInstance(new CardDefinition(
-                "b_card", "b_card", Side.Player, CardType.Attack, 2,
+                "b_card", "b_card", Side.Player, 2,
                 new[] { new EffectData(EffectKeys.Damage, 1) }))
             { OwnerId = "ally" };
             // C: succeeds only if the "previous executed card" is A (an enemy attack), i.e. B is skipped.
             var c = ConditionalCard("c_card", Side.Player, executionOrder: 3,
-                new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), baseDamage: 0, successDamage: 5);
+                new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), baseDamage: 0, successDamage: 5);
 
             state.Zone.Add(a);
             state.Zone.Add(b);
@@ -146,7 +146,7 @@ namespace FateWeaver.Tests
             // A's condition looks at the frozen next slot (B). B later gets cancelled by Stun, but
             // that must not retroactively change A's already-evaluated tier.
             var a = ConditionalCard("a_card", Side.Player, executionOrder: 1,
-                new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                 baseDamage: 1, successDamage: 9);
             var b = PlainCard("b_card", Side.Enemy, executionOrder: 2, damage: 3);
             b.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));

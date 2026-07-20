@@ -13,15 +13,15 @@ namespace FateWeaver.Tests
     public class StatusContentTests
     {
         private static ZoneCardSpec Strike(string id, int executionOrder, int damage)
-            => new ZoneCardSpec(id, id, Side.Player, CardType.Attack, executionOrder,
+            => new ZoneCardSpec(id, id, Side.Player, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
         private static ZoneCardSpec EnemyHit(string id, int executionOrder, int damage)
-            => new ZoneCardSpec(id, id, Side.Enemy, CardType.Attack, executionOrder,
+            => new ZoneCardSpec(id, id, Side.Enemy, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
         private static ZoneCardSpec Guard(string id, int executionOrder, int block)
-            => new ZoneCardSpec(id, id, Side.Player, CardType.Defense, executionOrder,
+            => new ZoneCardSpec(id, id, Side.Player, executionOrder,
                 new[]
                 {
                     EffectData.ApplyStatus(
@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
                 {
                     new TurnScript(3, new[]
                     {
-                        new ZoneCardSpec("expose", "Expose", Side.Player, CardType.Skill, 1, expose),
+                        new ZoneCardSpec("expose", "Expose", Side.Player, 1, expose),
                         Strike("strike1", 2, 4)
                     }, new InterventionPlaySpec[0]),
                     new TurnScript(3, new[] { Strike("strike2", 1, 4) }, new InterventionPlaySpec[0]),

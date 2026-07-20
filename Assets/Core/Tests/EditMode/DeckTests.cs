@@ -9,7 +9,7 @@ namespace FateWeaver.Tests
     public class DeckTests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
-            id, id, Side.Player, CardType.Attack, 5,
+            id, id, Side.Player, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 1 };
 
         [Test]

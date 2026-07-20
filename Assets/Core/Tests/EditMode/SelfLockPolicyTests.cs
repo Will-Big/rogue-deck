@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
     public class SelfLockPolicyTests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
-            id, id, Side.Enemy, CardType.Attack, 5, new[] { new EffectData(EffectKeys.Damage, 1) })
+            id, id, Side.Enemy, 5, new[] { new EffectData(EffectKeys.Damage, 1) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         private static EnemyIntent Intent(params IReadOnlyList<CardDefinition>[] turns) => new EnemyIntent(turns);

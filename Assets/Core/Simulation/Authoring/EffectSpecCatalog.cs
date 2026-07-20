@@ -28,7 +28,7 @@ namespace FateWeaver.Simulation.Authoring
         {
             new EffectSpecInfo("피해", typeof(DamageSpec), () => new DamageSpec()),
             new EffectSpecInfo("상태 부여", typeof(ApplyStatusSpec), () => new ApplyStatusSpec()),
-            new EffectSpecInfo("다음 공격 강화", typeof(GrantNextAttackBonusSpec), () => new GrantNextAttackBonusSpec()),
+            new EffectSpecInfo("다음 피해 카드 강화", typeof(GrantNextDamageCardBonusSpec), () => new GrantNextDamageCardBonusSpec()),
             new EffectSpecInfo("다음 보상 무효화", typeof(NullifyNextRewardSpec), () => new NullifyNextRewardSpec()),
             new EffectSpecInfo("대형 이동", typeof(MoveFormationSpec), () => new MoveFormationSpec())
         };

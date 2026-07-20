@@ -51,7 +51,7 @@ namespace FateWeaver.Tests
             var counter = StarterDeckSpecs.Build().Single(s => s.Id == "counter_stance");
 
             Assert.AreEqual(
-                ConditionKind.PrevExecutedIsEnemyAttack,
+                ConditionKind.PrevExecutedIsEnemyDamageCard,
                 counter.Effects.Single().Condition.Kind);
         }
 

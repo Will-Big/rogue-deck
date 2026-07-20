@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: fixture_attack
   DisplayName: "[\uAC80\uC99D] \uACF5\uACA9"
   Side: 0
-  Type: 0
   Category: 0
   EnergyCost: 1
   BaseExecutionOrder: 4

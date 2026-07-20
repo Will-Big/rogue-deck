@@ -69,7 +69,6 @@ namespace FateWeaver.Simulation
         public string Id { get; }
         public string Name { get; }
         public Side Side { get; }
-        public CardType Type { get; }
         public int ExecutionOrder { get; }
         public IReadOnlyList<EffectData> Effects { get; }
 
@@ -77,14 +76,12 @@ namespace FateWeaver.Simulation
             string id,
             string name,
             Side side,
-            CardType type,
             int executionOrder,
             IReadOnlyList<EffectData> effects)
         {
             Id = id;
             Name = name;
             Side = side;
-            Type = type;
             ExecutionOrder = executionOrder;
             Effects = effects;
         }

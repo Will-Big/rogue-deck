@@ -13,7 +13,7 @@ namespace FateWeaver.Simulation.Authoring
         {
             if (spec.Category == CardCategory.Intervention)
             {
-                return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, 0, Array.Empty<EffectData>())
+                return new CardDefinition(spec.Id, spec.Name, spec.Side, 0, Array.Empty<EffectData>())
                 {
                     EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
@@ -25,7 +25,7 @@ namespace FateWeaver.Simulation.Authoring
             var effects = (spec.Effects ?? Array.Empty<EffectSpec>())
                 .Select(e => e.ToEffectData())
                 .ToArray();
-            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.Type, spec.BaseExecutionOrder, effects)
+            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.BaseExecutionOrder, effects)
             {
                 EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution

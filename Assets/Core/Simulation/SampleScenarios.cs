@@ -41,14 +41,12 @@ namespace FateWeaver.Simulation
                         "enemy_jab",
                         "Enemy Jab",
                         Side.Enemy,
-                        CardType.Attack,
                         executionOrder: 1,
                         effects: new[] { new EffectData(EffectKeys.Damage, 1) }),
                     new ZoneCardSpec(
                         "quick_cut",
                         "Quick Cut",
                         Side.Player,
-                        CardType.Attack,
                         executionOrder: 2,
                         effects: new[]
                         {
@@ -82,7 +80,6 @@ namespace FateWeaver.Simulation
                         "quick_cut",
                         "Quick Cut",
                         Side.Player,
-                        CardType.Attack,
                         executionOrder: 1,
                         effects: new[]
                         {
@@ -96,7 +93,6 @@ namespace FateWeaver.Simulation
                         "wrist_cut",
                         "Wrist Cut",
                         Side.Enemy,
-                        CardType.Attack,
                         executionOrder: 2,
                         effects: new[]
                         {
@@ -127,7 +123,6 @@ namespace FateWeaver.Simulation
                         "wrist_cut",
                         "Wrist Cut",
                         Side.Enemy,
-                        CardType.Attack,
                         executionOrder: 3,
                         effects: new[]
                         {
@@ -138,24 +133,22 @@ namespace FateWeaver.Simulation
                         "mark_target",
                         "Mark Target",
                         Side.Player,
-                        CardType.Skill,
                         executionOrder: 4,
                         effects: new[]
                         {
                             EffectData.Conditional(
-                                EffectKeys.GrantNextPlayerAttackDamageBonus,
+                                EffectKeys.GrantNextPlayerDamageCardBonus,
                                 effectValue: 0,
-                                condition: new AdjacentCardIs(
+                                condition: new AdjacentCardHasEffect(
                                     AdjacentDirection.Next,
                                     Side.Player,
-                                    CardType.Attack),
+                                    EffectKeys.Damage),
                                 successEffectValue: 6)
                         }),
                     new ZoneCardSpec(
                         "chain_slash",
                         "Chain Slash",
                         Side.Player,
-                        CardType.Attack,
                         executionOrder: 4,
                         effects: new[]
                         {
@@ -164,9 +157,7 @@ namespace FateWeaver.Simulation
                                 effectValue: 1,
                                 condition: new AllOf(new Condition[]
                                 {
-                                    new PreviousExecutedCardIs(
-                                        Side.Player,
-                                        CardType.Skill),
+                                    new PreviousExecutedCardIs(Side.Player),
                                     new WithinNth(3)
                                 }),
                                 successEffectValue: 6)
@@ -175,7 +166,6 @@ namespace FateWeaver.Simulation
                         "gap_exposure",
                         "Gap Exposure",
                         Side.Enemy,
-                        CardType.Attack,
                         executionOrder: 6,
                         effects: new[] { new EffectData(EffectKeys.Damage, 2) })
                 },

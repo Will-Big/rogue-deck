@@ -116,7 +116,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(expected.Id, actual.Id);
             Assert.AreEqual(expected.Name, actual.Name);
             Assert.AreEqual(expected.Side, actual.Side);
-            Assert.AreEqual(expected.Type, actual.Type);
             Assert.AreEqual(expected.Category, actual.Category);
             Assert.AreEqual(expected.EnergyCost, actual.EnergyCost);
             Assert.AreEqual(expected.BaseExecutionOrder, actual.BaseExecutionOrder);

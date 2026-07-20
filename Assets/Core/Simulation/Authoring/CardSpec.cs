@@ -9,7 +9,6 @@ namespace FateWeaver.Simulation.Authoring
         public string Id;
         public string Name;
         public Side Side;
-        public CardType Type;
         public CardCategory Category;
         public int EnergyCost;
         public int BaseExecutionOrder;

@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: goblin_jab
   DisplayName: "\uCC0C\uB974\uAE30"
   Side: 1
-  Type: 0
   Category: 0
   EnergyCost: 0
   BaseExecutionOrder: 6

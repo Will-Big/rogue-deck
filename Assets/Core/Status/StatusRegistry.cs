@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FateWeaver.Core.Status
 {
@@ -6,6 +8,9 @@ namespace FateWeaver.Core.Status
     public sealed class StatusRegistry
     {
         private readonly Dictionary<StatusKey, IStatusBehavior> _behaviors = new();
+
+        public IReadOnlyList<StatusKey> RegisteredKeys
+            => _behaviors.Keys.OrderBy(key => key.Id, StringComparer.Ordinal).ToArray();
 
         public void Register(IStatusBehavior behavior) => _behaviors[behavior.Key] = behavior;
 

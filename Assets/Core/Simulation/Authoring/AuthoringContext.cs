@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
@@ -27,6 +28,7 @@ namespace FateWeaver.Simulation.Authoring
                 CombatRegistries.Statuses(),
                 CombatRegistries.InterventionActions());
 
+        public IReadOnlyList<StatusKey> RegisteredStatusKeys => _statuses.RegisteredKeys;
         public bool HasStatus(StatusKey key) => _statuses.TryResolve(key, out _);
         public bool HasEffect(EffectKey key) => _effects.Contains(key);
         public bool HasIntervention(InterventionActionKey key) => _interventions.Contains(key);

@@ -79,7 +79,6 @@ namespace FateWeaver.Simulation
                     card.Id,
                     card.Name,
                     card.Side,
-                    card.Type,
                     card.ExecutionOrder,
                     card.Effects);
                 var instance = new ExecutionCardInstance(definition);

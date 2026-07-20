@@ -8,7 +8,7 @@ namespace FateWeaver.Simulation.Authoring
 {
     public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random }
 
-    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyAttack, PrevExecutedIsPlayerAttack, NextIsEnemyAttack, PrevExecutedIsEnemyAttack, NoPrecedingPlayerCard, NoFollowingEnemyCard }
+    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard }
 
     /// <summary>Closed condition combinator (백로그 §10): the kind enum + central switch stay by design.</summary>
     [Serializable]
@@ -24,13 +24,13 @@ namespace FateWeaver.Simulation.Authoring
             {
                 case ConditionKind.FirstToTrigger: return new FirstToTrigger();
                 case ConditionKind.WithinNth: return new WithinNth(N);
-                case ConditionKind.BeforeNextEnemyAttack: return new BeforeNextEnemyAttack();
-                case ConditionKind.PrevExecutedIsPlayerAttack:
-                    return new PreviousExecutedCardIs(Side.Player, CardType.Attack);
-                case ConditionKind.PrevExecutedIsEnemyAttack:
-                    return new PreviousExecutedCardIs(Side.Enemy, CardType.Attack);
-                case ConditionKind.NextIsEnemyAttack:
-                    return new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack);
+                case ConditionKind.BeforeNextEnemyDamageCard: return new BeforeNextEnemyDamageCard();
+                case ConditionKind.PrevExecutedIsPlayerDamageCard:
+                    return new PreviousExecutedCardHasEffect(Side.Player, EffectKeys.Damage);
+                case ConditionKind.PrevExecutedIsEnemyDamageCard:
+                    return new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage);
+                case ConditionKind.NextIsEnemyDamageCard:
+                    return new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage);
                 case ConditionKind.NoPrecedingPlayerCard:
                     return new NoPrecedingCardOfSide(Side.Player);
                 case ConditionKind.NoFollowingEnemyCard:

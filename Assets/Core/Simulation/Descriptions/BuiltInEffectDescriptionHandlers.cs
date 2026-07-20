@@ -41,13 +41,13 @@ namespace FateWeaver.Simulation.Descriptions
             => context.TargetPrefix(effect) + "다음 플레이어 조건 보상을 무효화";
     }
 
-    public sealed class GrantNextPlayerAttackDamageBonusDescriptionHandler
+    public sealed class GrantNextPlayerDamageCardBonusDescriptionHandler
         : IEffectDescriptionHandler
     {
-        public EffectKey Key => EffectKeys.GrantNextPlayerAttackDamageBonus;
+        public EffectKey Key => EffectKeys.GrantNextPlayerDamageCardBonus;
 
         public string Describe(EffectData effect, int effectValue, DescriptionContext context)
-            => context.TargetPrefix(effect) + "다음 플레이어 공격 피해 +" + effectValue;
+            => context.TargetPrefix(effect) + "다음 플레이어 피해 카드가 주는 피해 +" + effectValue;
     }
 
     public sealed class MoveFormationDescriptionHandler : IEffectDescriptionHandler

@@ -26,14 +26,12 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec Attack() => ExecutionSpec(
             "fixture_attack",
             "[검증] 공격",
-            CardType.Attack,
             AttackExecutionOrder,
             new DamageSpec { Value = AttackDamage });
 
         public static CardSpec SelectedBlock() => ExecutionSpec(
             "fixture_selected_block",
             "[검증] 선택 방어",
-            CardType.Defense,
             DefaultExecutionOrder,
             new ApplyStatusSpec
             {
@@ -46,7 +44,6 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec AllBlock() => ExecutionSpec(
             "fixture_all_block",
             "[검증] 전체 방어",
-            CardType.Defense,
             DefaultExecutionOrder,
             new ApplyStatusSpec
             {
@@ -59,14 +56,12 @@ namespace FateWeaver.Simulation.Authoring
         public static CardSpec MoveForward() => ExecutionSpec(
             "fixture_move_forward",
             "[검증] 대형 이동",
-            CardType.Skill,
             DefaultExecutionOrder,
             new MoveFormationSpec { Value = MoveForwardDistance });
 
         private static CardSpec ExecutionSpec(
             string id,
             string name,
-            CardType type,
             int executionOrder,
             EffectSpec effect)
             => new CardSpec
@@ -74,7 +69,6 @@ namespace FateWeaver.Simulation.Authoring
                 Id = id,
                 Name = name,
                 Side = Side.Player,
-                Type = type,
                 Category = CardCategory.Execution,
                 EnergyCost = DefaultEnergyCost,
                 BaseExecutionOrder = executionOrder,

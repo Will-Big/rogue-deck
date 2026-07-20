@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
             KoreanDescriptionCatalog.CreateDefault();
 
         private static CardDefinition Execution(params EffectData[] effects) =>
-            new CardDefinition("party_test", "파티 테스트", Side.Player, CardType.Skill, 0, effects)
+            new CardDefinition("party_test", "파티 테스트", Side.Player, 0, effects)
             {
                 Category = CardCategory.Execution
             };
@@ -50,11 +50,11 @@ namespace FateWeaver.Tests
             var card = Execution(EffectData.Conditional(
                 EffectKeys.Damage,
                 1,
-                new PreviousExecutedCardIs(Side.Enemy, CardType.Attack),
+                new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
                 2));
 
             Assert.AreEqual(
-                "피해 1. 직전에 실행한 카드가 적 공격이면 피해 2.",
+                "피해 1. 직전에 실행한 카드가 적 피해 카드이면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -64,11 +64,11 @@ namespace FateWeaver.Tests
             var card = Execution(EffectData.Conditional(
                 EffectKeys.Damage,
                 1,
-                new AdjacentCardIs(AdjacentDirection.Previous, Side.Player, CardType.Attack),
+                new AdjacentCardHasEffect(AdjacentDirection.Previous, Side.Player, EffectKeys.Damage),
                 2));
 
             Assert.AreEqual(
-                "피해 1. 앞에 배치된 카드가 플레이어 공격이면 피해 2.",
+                "피해 1. 앞에 배치된 카드가 플레이어 피해 카드이면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 

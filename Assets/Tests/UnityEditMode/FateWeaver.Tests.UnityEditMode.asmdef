@@ -7,6 +7,7 @@
         "FateWeaver.Core",
         "FateWeaver.Simulation",
         "FateWeaver.Unity",
+        "FateWeaver.Unity.Editor",
         "Unity.TextMeshPro",
         "DOTween.Modules"
     ],

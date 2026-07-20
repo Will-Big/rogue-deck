@@ -10,11 +10,11 @@ namespace FateWeaver.Tests
     public class MultiTurnRunnerTests
     {
         private static ZoneCardSpec Strike(string id, int damage, int executionOrder = 1)
-            => new ZoneCardSpec(id, id, Side.Player, CardType.Attack, executionOrder,
+            => new ZoneCardSpec(id, id, Side.Player, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
         private static ZoneCardSpec EnemyHit(string id, int damage, int executionOrder = 1)
-            => new ZoneCardSpec(id, id, Side.Enemy, CardType.Attack, executionOrder,
+            => new ZoneCardSpec(id, id, Side.Enemy, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) });
 
         private static TurnScript Turn(params ZoneCardSpec[] cards)

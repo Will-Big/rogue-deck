@@ -16,27 +16,27 @@ namespace FateWeaver.Simulation
         public const int CardsPerTurn = 2;
 
         public static CardDefinition Swing() => new CardDefinition(
-            "warden_swing", "휘두르기", Side.Enemy, CardType.Attack, 5,
+            "warden_swing", "휘두르기", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition Smash() => new CardDefinition(
-            "warden_smash", "내려치기", Side.Enemy, CardType.Attack, 5,
+            "warden_smash", "내려치기", Side.Enemy, 5,
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new NoFollowingCardOfSide(Side.Enemy), 7) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition Uppercut() => new CardDefinition(
-            "warden_uppercut", "올려치기", Side.Enemy, CardType.Attack, 4,
+            "warden_uppercut", "올려치기", Side.Enemy, 4,
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new NoPrecedingCardOfSide(Side.Enemy), 7) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition Block() => new CardDefinition(
-            "warden_block", "막기", Side.Enemy, CardType.Defense, 4,
+            "warden_block", "막기", Side.Enemy, 4,
             new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition Brace() => new CardDefinition(
-            "warden_brace", "버티기", Side.Enemy, CardType.Defense, 4,
+            "warden_brace", "버티기", Side.Enemy, 4,
             new[]
             {
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3)

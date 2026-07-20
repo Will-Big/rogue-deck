@@ -46,10 +46,23 @@ namespace FateWeaver.Core.Cards
         string Id,
         string Name,
         Side Side,
-        CardType Type,
         int BaseExecutionOrder,
         IReadOnlyList<EffectData> Effects)
     {
+        public bool HasEffect(EffectKey key)
+        {
+            if (string.IsNullOrEmpty(key.Id))
+                throw new System.ArgumentException("Effect key must not be empty.", nameof(key));
+
+            foreach (var effect in Effects)
+            {
+                if (effect.Key == key)
+                    return true;
+            }
+
+            return false;
+        }
+
         /// <summary>Energy cost to play this card.</summary>
         public int EnergyCost { get; init; }
 

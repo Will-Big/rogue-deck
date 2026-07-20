@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     {
         private static CardSpec Execution(params EffectSpec[] effects) => new CardSpec
         {
-            Id = "t", Name = "t", Side = Side.Player, Type = CardType.Attack,
+            Id = "t", Name = "t", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = effects
         };
@@ -32,6 +32,21 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Default_context_exposes_registered_status_keys_in_id_order()
+        {
+            var keys = AuthoringContext.Default().RegisteredStatusKeys;
+
+            Assert.That(keys, Is.EqualTo(new[] {
+                StatusKeys.Block,
+                StatusKeys.Haste,
+                StatusKeys.RewardNullified,
+                StatusKeys.Slow,
+                StatusKeys.Stun,
+                StatusKeys.Vulnerable
+            }));
+        }
+
+        [Test]
         public void Empty_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(
@@ -45,7 +60,7 @@ namespace FateWeaver.Tests
         {
             var errors = AuthoringValidator.Validate(
                 new[] { new CardSpec {
-                    Id = "t", Name = "t", Side = Side.Player, Type = CardType.Skill,
+                    Id = "t", Name = "t", Side = Side.Player,
                     Category = CardCategory.Intervention, EnergyCost = 1,
                     Intervention = new InterventionKeyRef { Id = "no_such_action" } } },
                 AuthoringContext.Default());

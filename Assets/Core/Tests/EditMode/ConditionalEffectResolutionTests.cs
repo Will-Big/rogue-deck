@@ -24,7 +24,7 @@ namespace FateWeaver.Tests
             int executionOrder,
             EffectData effect)
         {
-            var def = new CardDefinition(id, id, side, CardType.Attack, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
             return new ExecutionCardInstance(def);
         }
 
@@ -104,7 +104,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Mark_success_adds_one_time_damage_bonus_to_the_next_player_attack()
+        public void Mark_success_skips_block_only_card_and_bonuses_next_damage_card()
         {
             var state = new CombatState { PlayerHp = 30 };
             state.Enemies.Add(new Enemy("goblin", 20));
@@ -112,30 +112,44 @@ namespace FateWeaver.Tests
                 "mark_target",
                 "Mark Target",
                 Side.Player,
-                CardType.Skill,
                 1,
                 new[]
                 {
-                    EffectData.Conditional(
-                        EffectKeys.GrantNextPlayerAttackDamageBonus,
-                        effectValue: 0,
-                        condition: new AdjacentCardIs(
-                            AdjacentDirection.Next,
-                            Side.Player,
-                            CardType.Attack),
-                        successEffectValue: 6)
+                    new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 6)
                 }));
-            var chain = Card("chain_slash", Side.Player, 2,
-                new EffectData(EffectKeys.Damage, 1));
+            var block = EffectData.ApplyStatus(
+                StatusKeys.Block,
+                StatusLifetime.ThisTurn,
+                StatusApplyTarget.TargetEnemy,
+                2);
+            var blockOnly = new ExecutionCardInstance(new CardDefinition(
+                "block_only",
+                "Block Only",
+                Side.Player,
+                2,
+                new[] { block }));
+            var hybridEffects = new[]
+            {
+                new EffectData(EffectKeys.Damage, 1),
+                block
+            };
+            var hybrid = new ExecutionCardInstance(new CardDefinition(
+                "hybrid",
+                "Hybrid",
+                Side.Player,
+                3,
+                hybridEffects));
             state.Zone.Add(mark);
-            state.Zone.Add(chain);
+            state.Zone.Add(blockOnly);
+            state.Zone.Add(hybrid);
             var registry = Registry();
-            registry.Register(new GrantNextPlayerAttackDamageBonusHandler());
+            registry.Register(new ApplyStatusHandler());
+            registry.Register(new GrantNextPlayerDamageCardBonusHandler());
 
             var events = new TurnResolver(registry).Resolve(state, 0);
 
-            Assert.AreEqual(ConditionTier.Success, ((CardResolved)events[1]).ConditionTier);
-            Assert.AreEqual(7, ((CardResolved)events[2]).DamageDealt);
+            Assert.AreEqual(0, ((CardResolved)events[2]).DamageDealt);
+            Assert.AreEqual(7, ((CardResolved)events[3]).DamageDealt);
             Assert.AreEqual(13, state.Enemies[0].Hp);
         }
     }

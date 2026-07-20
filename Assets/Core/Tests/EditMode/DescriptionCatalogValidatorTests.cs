@@ -35,7 +35,6 @@ namespace FateWeaver.Tests.EditMode
                 "unknown",
                 "unknown",
                 Side.Player,
-                CardType.Skill,
                 5,
                 new[] { new EffectData(new EffectKey("unknown_effect"), 1) })
                 { Category = CardCategory.Execution };
@@ -53,7 +52,6 @@ namespace FateWeaver.Tests.EditMode
                 "unknown_status",
                 "unknown",
                 Side.Player,
-                CardType.Skill,
                 5,
                 new[]
                 {
@@ -78,7 +76,6 @@ namespace FateWeaver.Tests.EditMode
                 "invalid_intervention",
                 "invalid",
                 Side.Player,
-                CardType.Skill,
                 0,
                 new EffectData[0])
                 { Category = CardCategory.Intervention };

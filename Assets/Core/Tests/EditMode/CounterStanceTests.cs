@@ -29,21 +29,21 @@ namespace FateWeaver.Tests
         [Test]
         public void Counter_does_nothing_without_a_preceding_enemy_attack()
         {
-            var counter = new ZoneCardSpec("counter", "Counter Stance", Side.Player, CardType.Defense, 1,
+            var counter = new ZoneCardSpec("counter", "Counter Stance", Side.Player, 1,
                 new[]
                 {
                     EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
                     EffectData.Conditional(EffectKeys.Damage, 0,
-                        new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), 7),
+                        new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), 7),
                     EffectData.Conditional(EffectKeys.Damage, 0,
                         new AllOf(new Condition[]
                         {
-                            new PreviousExecutedCardIs(Side.Enemy, CardType.Attack),
+                            new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
                             new WithinNth(3)
                         }), 2)
                 });
-            var enemy = new ZoneCardSpec("goblin_jab", "goblin_jab", Side.Enemy, CardType.Attack, 2,
+            var enemy = new ZoneCardSpec("goblin_jab", "goblin_jab", Side.Enemy, 2,
                 new[] { new EffectData(EffectKeys.Damage, 3) });
 
             var scenario = new MultiTurnScenario("no-trigger", 30,

@@ -17,7 +17,6 @@ namespace FateWeaver.Tests
             string id,
             string name,
             Side side,
-            CardType type,
             int executionOrder,
             EffectData effect,
             string ownerId)
@@ -25,7 +24,6 @@ namespace FateWeaver.Tests
                 id,
                 name,
                 side,
-                type,
                 executionOrder,
                 new[] { effect }))
             {
@@ -39,7 +37,6 @@ namespace FateWeaver.Tests
                 "validation_move",
                 "[검증] 대형 이동",
                 side,
-                CardType.Skill,
                 executionOrder: 1,
                 effect,
                 ownerId);
@@ -136,7 +133,6 @@ namespace FateWeaver.Tests
                 "validation_move_formation",
                 "[검증] 대형 이동",
                 Side.Player,
-                CardType.Skill,
                 executionOrder: 2,
                 new EffectData(EffectKeys.MoveFormation, -1),
                 ownerId: memberB.Id);
@@ -144,7 +140,6 @@ namespace FateWeaver.Tests
                 "validation_frontmost_attack",
                 "[검증] 전열 공격",
                 Side.Enemy,
-                CardType.Attack,
                 executionOrder: 5,
                 new EffectData(EffectKeys.Damage, AttackDamage)
                 {
@@ -185,7 +180,6 @@ namespace FateWeaver.Tests
                 "validation_invalid_player_move",
                 "[검증] 무효 플레이어 이동",
                 Side.Player,
-                CardType.Skill,
                 executionOrder: 1,
                 effect,
                 ownerId);
@@ -222,7 +216,6 @@ namespace FateWeaver.Tests
                 "validation_invalid_enemy_move",
                 "[검증] 무효 적 이동",
                 Side.Enemy,
-                CardType.Skill,
                 executionOrder: 1,
                 effect,
                 ownerId);

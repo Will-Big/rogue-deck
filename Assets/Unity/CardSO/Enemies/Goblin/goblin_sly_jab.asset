@@ -15,7 +15,6 @@ MonoBehaviour:
   Id: sly_jab
   DisplayName: "\uC57D\uC0AD\uBE60\uB978 \uCC0C\uB974\uAE30"
   Side: 1
-  Type: 0
   Category: 0
   EnergyCost: 0
   BaseExecutionOrder: 3

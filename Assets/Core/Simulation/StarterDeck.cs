@@ -33,12 +33,12 @@ namespace FateWeaver.Simulation
         // --- execution cards ---------------------------------------------------
 
         public static CardDefinition Slash() => new CardDefinition(
-            "slash", "베기", Side.Player, CardType.Attack, 4,
+            "slash", "베기", Side.Player, 4,
             new[] { new EffectData(EffectKeys.Damage, 4) })
             { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition Guard() => new CardDefinition(
-            "guard", "막기", Side.Player, CardType.Defense, DefaultExecutionOrder,
+            "guard", "막기", Side.Player, DefaultExecutionOrder,
             new[]
             {
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4)
@@ -46,28 +46,28 @@ namespace FateWeaver.Simulation
             { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition QuickCut() => new CardDefinition(
-            "quick_cut", "찰나의 베기", Side.Player, CardType.Attack, DefaultExecutionOrder,
+            "quick_cut", "찰나의 베기", Side.Player, DefaultExecutionOrder,
             new[] { EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8) })
             { EnergyCost = 1, Category = CardCategory.Execution };
 
         public static CardDefinition Counter() => new CardDefinition(
-            "counter_stance", "반격", Side.Player, CardType.Attack, 7,
+            "counter_stance", "반격", Side.Player, 7,
             new[]
             {
                 EffectData.Conditional(
                     EffectKeys.Damage, 4,
-                    new PreviousExecutedCardIs(Side.Enemy, CardType.Attack), 9)
+                    new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), 9)
             })
             { EnergyCost = 2, Category = CardCategory.Execution };
 
         public static CardDefinition Cover() => new CardDefinition(
-            "cover", "엄호", Side.Player, CardType.Defense, DefaultExecutionOrder,
+            "cover", "엄호", Side.Player, DefaultExecutionOrder,
             new[]
             {
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
                     with
                     {
-                        Condition = new AdjacentCardIs(AdjacentDirection.Next, Side.Enemy, CardType.Attack),
+                        Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                         SuccessEffectValue = 7
                     }
             })
@@ -84,13 +84,13 @@ namespace FateWeaver.Simulation
             new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0));
 
         private static CardDefinition InterventionCard(string id, string name, int interventionCost, InterventionActionData action) =>
-            new CardDefinition(id, name, Side.Player, CardType.Skill, 0, Array.Empty<EffectData>())
+            new CardDefinition(id, name, Side.Player, 0, Array.Empty<EffectData>())
             { EnergyCost = interventionCost, Category = CardCategory.Intervention, InterventionAction = action };
 
         // --- helper for enemy intent ---------------------------------------
 
         public static CardDefinition EnemyAttack(string id, string name, int executionOrder, int damage) =>
-            new CardDefinition(id, name, Side.Enemy, CardType.Attack, executionOrder,
+            new CardDefinition(id, name, Side.Enemy, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, damage) })
                 { EnergyCost = 0, Category = CardCategory.Execution };
     }

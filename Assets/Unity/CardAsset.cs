@@ -14,7 +14,6 @@ namespace FateWeaver.Unity
         public string Id;
         public string DisplayName;
         public Side Side;
-        public CardType Type;
         public CardCategory Category;
         [FormerlySerializedAs("Cost")]
         public int EnergyCost = 1;
@@ -33,7 +32,6 @@ namespace FateWeaver.Unity
             Id = Id,
             Name = DisplayName,
             Side = Side,
-            Type = Type,
             Category = Category,
             EnergyCost = EnergyCost,
             BaseExecutionOrder = BaseExecutionOrder,
