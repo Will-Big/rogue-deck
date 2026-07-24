@@ -79,7 +79,7 @@ Run one `git mv` for each:
 2026-07-20-status-key-dropdown-authoring-design.md
 ```
 
-Source: `docs/superpowers/specs/<name>`  
+Source: `docs/superpowers/specs/<name>`
 Destination: `docs/superpowers/archive/specs/<name>`
 
 Expected: `archive/specs` contains 15 Markdown files.
