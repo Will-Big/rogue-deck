@@ -1,8 +1,10 @@
 # Fate Weaver 전투 코어 — 밸런스 검증 프로토타입 설계 (스펙)
 
 - 작성일: 2026-06-18
+- 문서 유형: `architecture`
+- 주 도메인: `combat-core`
 - 원천 문서: [`Fate_Weaver_card_balance_principles_v2.md`](../../../Fate_Weaver_card_balance_principles_v2.md) (카드 밸런스/설계 원칙)
-- 상태: 설계 확정, 구현 계획서 작성 대기
+- 상태: `current` — 구현된 전투 코어의 아키텍처 기준
 
 ---
 

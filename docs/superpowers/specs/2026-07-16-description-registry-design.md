@@ -1,8 +1,10 @@
 # Fate Weaver — 카드 설명 핸들러 레지스트리 설계
 
 - 작성일: 2026-07-16
-- 상태: 구현 완료 — 헤드리스 검증 완료, Unity 검증 대기
-- 선행 설계: [기존 동적 카드 설명 설계](2026-06-26-card-descriptions-design.md)
+- 문서 유형: `architecture`
+- 주 도메인: `card-description`
+- 상태: `current` — 구현된 카드 설명 확장 구조
+- 선행 설계: [기존 동적 카드 설명 설계](../archive/specs/2026-06-26-card-descriptions-design.md)
 
 ## 1. 배경
 

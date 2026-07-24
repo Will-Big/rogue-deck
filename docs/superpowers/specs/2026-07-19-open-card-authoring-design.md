@@ -1,7 +1,9 @@
 # P0-B — 열린 카드 저작 구조 설계
 
 - 작성일: 2026-07-19
-- 상태: 설계 승인 (구현 계획 대기)
+- 문서 유형: `architecture`
+- 주 도메인: `card-authoring`
+- 상태: `current` — 구현된 열린 카드 효과 저작 구조
 - 원 백로그: [`../plans/2026-07-16-architecture-refactor-backlog.md`](../plans/2026-07-16-architecture-refactor-backlog.md) §4
 - 선행 완료: P0-A RNG 단일화 (2026-07-18)
 

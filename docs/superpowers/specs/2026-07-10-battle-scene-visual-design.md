@@ -1,9 +1,13 @@
 # 전투 화면 시각 개편 — 설계
 
 - 작성일: 2026-07-10
-- 상태: 사용자 승인된 설계. 다음 단계는 `writing-plans`.
+- 문서 유형: `ux-reference`
+- 주 도메인: `battle-scene`
+- 상태: `current` — 구현된 전투 화면의 상위 구도와 표현 방향
 - 원천 흐름: `superpowers:brainstorming` (와이어프레임 시안 3종 → 구도 C 수정안 확정 → 연출/입력 규칙 확정)
-- 관련: [`deck-playtest-ui-design`](2026-06-23-deck-playtest-ui-design.md), [`ugui-card-ui-design`](2026-06-22-ugui-card-ui-design.md), 아트 방향 탐색 `art_style_prompts_2026-07-07/prompt_v2/README.md`
+- 과거 설계: [`deck-playtest-ui-design`](../archive/specs/2026-06-23-deck-playtest-ui-design.md),
+  [`ugui-card-ui-design`](../archive/specs/2026-06-22-ugui-card-ui-design.md)
+- 아트 방향 탐색: `art_style_prompts_2026-07-07/prompt_v2/README.md`
 
 ---
 

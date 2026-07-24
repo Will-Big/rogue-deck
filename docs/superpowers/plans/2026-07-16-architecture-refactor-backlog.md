@@ -1,7 +1,9 @@
 # Fate Weaver — 확장성·하드코딩 후속 리팩토링 백로그
 
 - 작성일: 2026-07-16
-- 상태: 후속 설계/구현 대기
+- 문서 유형: `active-roadmap`
+- 주 도메인: `architecture`
+- 상태: `active` — P0-C, P1, P2 후속 설계·구현 대기
 - 현재 범위에서 분리된 작업: 저작 구조, 효과 기반 카드 성질 합성, 대상 선택 메타데이터, RNG 통합,
   SO 단일 원본화, Unity 프리팹화
 
@@ -46,7 +48,8 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 3. P0-A — 전투 RNG를 CombatState로 단일화
 
-- 상태: **완료 (2026-07-18)** — 구현 기록: [`2026-07-18-p0a-rng-unification.md`](2026-07-18-p0a-rng-unification.md)
+- 상태: **완료 (2026-07-18)** — 구현 기록:
+  [`2026-07-18-p0a-rng-unification.md`](../archive/plans/2026-07-18-p0a-rng-unification.md)
 
 ### 문제
 
@@ -70,7 +73,8 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 4. P0-B — 열린 카드 저작 구조
 
-- 상태: **완료 (2026-07-19)** — 구현 기록: [`2026-07-19-p0b-implementation-record.md`](2026-07-19-p0b-implementation-record.md)
+- 상태: **완료 (2026-07-19)** — 구현 기록:
+  [`2026-07-19-p0b-implementation-record.md`](../archive/plans/2026-07-19-p0b-implementation-record.md)
 - 최종 검증: SO 재생성 diff 없음, 헤드리스 307/307, Unity EditMode 356/356, 사용자 Play 확인
 
 ### 문제
@@ -106,7 +110,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ## 4.1 P0-B2 — `CardType` 제거와 효과 기반 카드 성질 합성
 
 - 상태: **구현 완료, 머지 후 사용자 Play 검증 대기 (2026-07-20)** — 구현 기록:
-  [`2026-07-19-p0b2-implementation-record.md`](2026-07-19-p0b2-implementation-record.md)
+  [`2026-07-19-p0b2-implementation-record.md`](../archive/plans/2026-07-19-p0b2-implementation-record.md)
 - 우선순위: **P0** — 복합 효과 카드 확장을 직접 왜곡하므로 P0-C와 새 콘텐츠 확대 전에 해결
 
 ### 문제
