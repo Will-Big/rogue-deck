@@ -40,7 +40,7 @@ namespace FateWeaver.Tests
                 Guard("guard", 1, block: 5),
                 EnemyHit("goblin_hit", 2, 4)));
 
-            Assert.AreEqual(30, result.FinalState.PlayerHp); // 5 block absorbs the whole 4 hit
+            Assert.AreEqual(30, result.FinalState.Party[0].Hp); // 5 block absorbs the whole 4 hit
         }
 
         [Test]
@@ -51,7 +51,7 @@ namespace FateWeaver.Tests
                 Guard("guard", 1, block: 5),
                 EnemyHit("goblin_hit", 2, 7)));
 
-            Assert.AreEqual(28, result.FinalState.PlayerHp); // 5 absorbed, 2 through
+            Assert.AreEqual(28, result.FinalState.Party[0].Hp); // 5 absorbed, 2 through
         }
 
         [Test]

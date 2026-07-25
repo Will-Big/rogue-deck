@@ -96,16 +96,17 @@ namespace FateWeaver.Tests
         [Test]
         public void Heal_card_restores_owner_party_member_hp_through_turn_resolver()
         {
-            var state = new CombatState { PlayerHp = 20 };
+            var state = new CombatState();
+            state.AddSoloPlayer(20);
             var def = new CardDefinition(
                 "heal_touch", "치유의 손길", Side.Player, 1,
                 new[] { new EffectData(HealKey, 5) });
-            var card = new ExecutionCardInstance(def) { OwnerId = CombatState.LegacyPlayerId };
+            var card = new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId };
             state.Zone.Add(card);
 
             new TurnResolver(EffectRegistry()).Resolve(state, 0);
 
-            Assert.AreEqual(25, state.PlayerHp);
+            Assert.AreEqual(25, state.Party[0].Hp);
         }
     }
 }

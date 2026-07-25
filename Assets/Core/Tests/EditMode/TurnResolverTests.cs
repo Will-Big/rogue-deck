@@ -26,7 +26,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Resolves_in_executionOrder_order_and_emits_timeline()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             // player card has higher executionOrder (2) than enemy card (1) => enemy resolves first
             state.Zone.Add(Card("strike", Side.Player, 2, 5));
@@ -34,7 +35,7 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, turnIndex: 0);
 
-            Assert.AreEqual(27, state.PlayerHp);     // took 3
+            Assert.AreEqual(27, state.Party[0].Hp);  // took 3
             Assert.AreEqual(7, state.Enemies[0].Hp); // took 5
 
             Assert.IsInstanceOf<TurnStarted>(events[0]);
@@ -50,7 +51,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Reports_win_when_all_enemies_dead()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 4));
             state.Zone.Add(Card("strike", Side.Player, 1, 5));
 
@@ -62,20 +64,22 @@ namespace FateWeaver.Tests
         [Test]
         public void Reports_lose_when_player_dead()
         {
-            var state = new CombatState { PlayerHp = 3 };
+            var state = new CombatState();
+            state.AddSoloPlayer(3);
             state.Enemies.Add(new Enemy("goblin", 12));
             state.Zone.Add(Card("jab", Side.Enemy, 1, 5)); // 5 >= 3 player HP
 
             var events = new TurnResolver(Registry()).Resolve(state, turnIndex: 0);
 
-            Assert.LessOrEqual(state.PlayerHp, 0);
+            Assert.LessOrEqual(state.Party[0].Hp, 0);
             Assert.AreEqual(Outcome.Lose, ((TurnEnded)events[^1]).Outcome);
         }
 
         [Test]
         public void Empty_zone_still_brackets_turn()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
 
             var events = new TurnResolver(Registry()).Resolve(state, turnIndex: 0);
@@ -91,7 +95,8 @@ namespace FateWeaver.Tests
         {
             CombatState Build()
             {
-                var s = new CombatState { PlayerHp = 30 };
+                var s = new CombatState();
+                s.AddSoloPlayer(30);
                 s.Enemies.Add(new Enemy("goblin", 12));
                 s.Zone.Add(Card("strike", Side.Player, 2, 5));
                 s.Zone.Add(Card("jab", Side.Enemy, 1, 3));

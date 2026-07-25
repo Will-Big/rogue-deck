@@ -89,7 +89,8 @@ namespace FateWeaver.Tests
         {
             // --- NoValidTarget case ---
             {
-                var state = new CombatState { PlayerHp = 30 };
+                var state = new CombatState();
+                state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
                 var a = PlainCard("a_hit", Side.Player, executionOrder: 1, damage: 2);
@@ -113,7 +114,8 @@ namespace FateWeaver.Tests
 
             // --- StatusIntercepted case ---
             {
-                var state = new CombatState { PlayerHp = 30 };
+                var state = new CombatState();
+                state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
                 var a = PlainCard("a_hit2", Side.Player, executionOrder: 1, damage: 2);
@@ -140,7 +142,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Next_adjacent_condition_keeps_existing_frozen_order_semantics()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 
             // A's condition looks at the frozen next slot (B). B later gets cancelled by Stun, but
@@ -167,7 +170,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Same_target_uses_last_executed_player_card()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblinA", 100));
 
             var a = PlainCard("a_mark", Side.Player, executionOrder: 1, damage: 1, targetId: "goblinA");
@@ -193,7 +197,8 @@ namespace FateWeaver.Tests
         [Test]
         public void No_preceding_ignores_cancelled_cards_but_no_following_keeps_frozen_future_slots()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 
             var q = ConditionalCard("q_card", Side.Player, executionOrder: 1,

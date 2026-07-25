@@ -22,7 +22,8 @@ namespace FateWeaver.Simulation
 
         public MultiTurnResult Run(MultiTurnScenario scenario)
         {
-            var state = new CombatState { PlayerHp = scenario.PlayerHp };
+            var state = new CombatState();
+            state.AddSoloPlayer(scenario.PlayerHp);
             foreach (var enemy in scenario.Enemies)
             {
                 state.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));

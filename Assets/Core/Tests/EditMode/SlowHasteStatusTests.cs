@@ -100,14 +100,14 @@ namespace FateWeaver.Tests
         {
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
-            session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
             session.PlayExecutionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
             Assert.AreEqual(2, strike.ExecutionOrder); // base 5 - haste 3
         }
 
         [Test]
-        public void Legacy_owned_card_constructor_applies_player_haste_to_arbitrary_owner_id()
+        public void Owned_card_with_owner_id_not_matching_any_party_member_gets_no_status_bonus()
         {
             var session = new DeckCombatSession(
                 new[] { new OwnedCard(PlayerStrike(), "warrior") },
@@ -117,12 +117,15 @@ namespace FateWeaver.Tests
                 fateEnergyPerTurn: 3,
                 handSize: 5,
                 seed: 1);
-            session.State.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+            // OwnerStatusesFor now matches by party member Id symmetrically in solo and party mode
+            // (Task 4); "warrior" matches no member of the solo party (whose only member is
+            // CombatState.SoloPlayerId), so the solo player's haste never reaches this card.
+            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
 
             Assert.IsTrue(session.PlayExecutionCard(0));
 
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
-            Assert.AreEqual(2, strike.ExecutionOrder);
+            Assert.AreEqual(5, strike.ExecutionOrder); // base order unmodified: no matching owner statuses
         }
 
         [Test]

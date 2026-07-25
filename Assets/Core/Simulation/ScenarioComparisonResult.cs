@@ -16,7 +16,7 @@ namespace FateWeaver.Simulation
             Manipulated = manipulated;
         }
 
-        public int PlayerHpDelta => Manipulated.FinalState.PlayerHp - Baseline.FinalState.PlayerHp;
+        public int PlayerHpDelta => Manipulated.FinalState.Party[0].Hp - Baseline.FinalState.Party[0].Hp;
 
         public int EnemyHpDelta(string enemyId)
             => FindEnemyHp(Manipulated, enemyId) - FindEnemyHp(Baseline, enemyId);

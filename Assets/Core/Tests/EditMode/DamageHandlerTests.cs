@@ -17,7 +17,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_damage_hits_first_enemy()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, EffectValue = 5 };
 
@@ -31,7 +32,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_damage_honors_card_target_id()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("a", 10));
             state.Enemies.Add(new Enemy("b", 10));
             var card = Card(Side.Player, 4);
@@ -48,13 +50,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_damage_hits_player()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, EffectValue = 4 };
 
             new DamageHandler().Apply(ctx);
 
-            Assert.AreEqual(26, state.PlayerHp);
+            Assert.AreEqual(26, state.Party[0].Hp);
             Assert.AreEqual(4, ctx.DamageDealt);
             Assert.AreEqual("player", ctx.TargetId);
         }

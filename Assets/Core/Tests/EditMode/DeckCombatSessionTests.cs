@@ -92,9 +92,20 @@ namespace FateWeaver.Tests
             var session = NewSession(new[] { StarterDeck.Cover() }, Goblin(6, 3));
             session.PlayExecutionCard(HandIndex(session, "cover"));
 
-            int hpBefore = session.State.PlayerHp;
+            int hpBefore = session.State.Party[0].Hp;
             session.ResolveTurn();
-            Assert.AreEqual(hpBefore, session.State.PlayerHp); // block 7 fully absorbs the 3 damage
+            Assert.AreEqual(hpBefore, session.State.Party[0].Hp); // block 7 fully absorbs the 3 damage
+        }
+
+        [Test]
+        public void Solo_session_player_is_an_explicit_party_member()
+        {
+            var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
+
+            Assert.AreEqual(1, session.State.Party.Count);
+            Assert.AreEqual(CombatState.SoloPlayerId, session.State.Party[0].Id);
+            Assert.AreEqual(30, session.State.Party[0].Hp);
+            Assert.AreEqual(30, session.State.Party[0].MaxHp);
         }
 
         [Test]

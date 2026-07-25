@@ -254,9 +254,9 @@ namespace FateWeaver.Unity
         {
             var sb = new StringBuilder();
             sb.Append("턴 ").Append(_session.TurnIndex + 1)
-              .Append("    플레이어 HP: ").Append(_session.State.PlayerHp)
+              .Append("    플레이어 HP: ").Append(_session.State.Party[0].Hp)
               .Append("    운명력: ").Append(_session.FateEnergy)
-              .Append("    ").Append(StatusText(_session.State.PlayerStatuses));
+              .Append("    ").Append(StatusText(_session.State.Party[0].Statuses));
             foreach (var enemy in _session.State.Enemies)
             {
                 var name = PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id);

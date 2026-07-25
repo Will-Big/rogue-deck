@@ -61,7 +61,8 @@ namespace FateWeaver.Tests
         [Test]
         public void ChangeExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
-            var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
+            var state = new CombatState { FateEnergy = 3 };
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
             var player = Card(
@@ -122,7 +123,8 @@ namespace FateWeaver.Tests
         [Test]
         public void SwapExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
-            var state = new CombatState { PlayerHp = 30, FateEnergy = 3 };
+            var state = new CombatState { FateEnergy = 3 };
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
             var player = Card(
@@ -217,11 +219,11 @@ namespace FateWeaver.Tests
         {
             var clone = new CombatState
             {
-                PlayerHp = source.PlayerHp,
                 FateEnergy = source.FateEnergy,
                 FateEnergyPerTurn = source.FateEnergyPerTurn,
                 RngSeed = source.RngSeed
             };
+            clone.AddSoloPlayer(source.Party[0].Hp);
 
             foreach (var enemy in source.Enemies)
             {

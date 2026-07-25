@@ -9,7 +9,7 @@ namespace FateWeaver.Simulation
         public MultiTurnResult Manipulated { get; }
 
         public int PlayerHpDelta
-            => Manipulated.FinalState.PlayerHp - Baseline.FinalState.PlayerHp;
+            => Manipulated.FinalState.Party[0].Hp - Baseline.FinalState.Party[0].Hp;
 
         public MultiTurnComparisonResult(
             MultiTurnScenario scenario,

@@ -142,23 +142,23 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Party_owned_execution_self_effect_cancels_as_no_valid_target()
+        public void Single_party_member_self_effect_resolves_without_an_owner_id()
         {
             var state = new CombatState();
-            state.Party.Clear();
-            var hero = new PartyMember("hero", "Hero", maxHp: 10); // not the legacy "player" id
+            var hero = new PartyMember("hero", "Hero", maxHp: 10); // not the solo "player" id
             state.Party.Add(hero);
             state.Enemies.Add(new Enemy("goblin", 20));
 
             var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 4);
             var card = Card("guard", Side.Player, effect);
-            // OwnerId left null: an execution card owned by the party as a whole has no defined Self target.
+            // OwnerId left null: with only one party member, Self resolves unambiguously — symmetric
+            // with Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners below.
             var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
 
             new ApplyStatusHandler().Apply(ctx);
 
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
-            Assert.IsFalse(hero.Statuses.Has(StatusKeys.Block));
+            Assert.IsNull(card.CancellationReason);
+            Assert.IsTrue(hero.Statuses.Has(StatusKeys.Block));
         }
 
         // --- AllPartyMembers independence + per-member damage folding ----------------------------

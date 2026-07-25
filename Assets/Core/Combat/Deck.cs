@@ -94,7 +94,7 @@ namespace FateWeaver.Core.Combat
         {
             foreach (var card in cards)
             {
-                yield return new OwnedCard(card, CombatState.LegacyPlayerId);
+                yield return new OwnedCard(card, CombatState.SoloPlayerId);
             }
         }
 

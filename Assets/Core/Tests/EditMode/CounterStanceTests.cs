@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(9, Resolved(result, "counter").DamageDealt); // 7 + 2 (within 3rd)
             Assert.AreEqual(91, result.FinalState.Enemies[0].Hp);        // 100 - 9
-            Assert.AreEqual(27, result.FinalState.PlayerHp);             // took the 3 hit
+            Assert.AreEqual(27, result.FinalState.Party[0].Hp);          // took the 3 hit
         }
 
         [Test]

@@ -118,7 +118,7 @@ namespace FateWeaver.Tests
         {
             var deck = new Deck(new[] { Card("legacy") }, new Random(1));
 
-            Assert.AreEqual(CombatState.LegacyPlayerId, deck.DrawPile.Single().OwnerId);
+            Assert.AreEqual(CombatState.SoloPlayerId, deck.DrawPile.Single().OwnerId);
         }
 
         private static IEnemyTurnPolicy EnemyPolicy(CardDefinition enemyCard)
