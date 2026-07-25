@@ -14,12 +14,8 @@ namespace FateWeaver.Tests
     /// current card content is pinned as sorted golden signature lists. Signatures are shape-agnostic
     /// so the payload migration (Task 2) keeps passing as long as content is unchanged.
     ///
-    /// Known cross-path divergences, intentionally NOT reconciled here (scheduled for P1-A cleanup):
-    /// - pull_forward intervention effectValue: hand-coded StarterDeck has -2, specs/generated have -1.
-    /// - push_back: absent from the hand-coded StarterDeck; present in specs and generated
-    ///   as "밀어내기".
-    /// Because of these, only the party prototype pair (currently equivalent) keeps a cross-path
-    /// oracle test; the starter paths are each pinned against their own golden.
+    /// All three starter paths (hand-coded, specs, generated) are content-equivalent and pinned by
+    /// cross-path oracle tests, so a future divergence fails instead of being documented.
     ///
     /// When you change card content INTENTIONALLY, update the matching golden array in the same
     /// commit. If a golden test fails and you did not mean to change content, the migration broke
@@ -57,8 +53,8 @@ namespace FateWeaver.Tests
             "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
             "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-2;",
-            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-2;",
+            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
+            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
             "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
             "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
             "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
@@ -148,5 +144,17 @@ namespace FateWeaver.Tests
             => CollectionAssert.AreEqual(
                 Sigs(PartyPrototypeDeck.Build()),
                 Sigs(PartyPrototypeDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
+
+        [Test]
+        public void Starter_specs_match_handcoded_deck()
+            => CollectionAssert.AreEqual(
+                Sigs(StarterDeck.Build()),
+                Sigs(StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
+
+        [Test]
+        public void Generated_starter_deck_matches_handcoded_deck()
+            => CollectionAssert.AreEqual(
+                Sigs(StarterDeck.Build()),
+                Sigs(GeneratedCards.StarterDeck().Select(CardSpecMapper.ToDefinition)));
     }
 }

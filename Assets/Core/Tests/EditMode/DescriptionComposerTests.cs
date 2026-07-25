@@ -236,8 +236,13 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_pull_forward() =>
-            Assert.AreEqual("한 카드의 실행 순서 -2.",
+            Assert.AreEqual("한 카드의 실행 순서 -1.",
                 DescriptionComposer.Describe(StarterDeck.PullForward(), Korean));
+
+        [Test]
+        public void Korean_push_back() =>
+            Assert.AreEqual("한 카드의 실행 순서 +1.",
+                DescriptionComposer.Describe(StarterDeck.PushBack(), Korean));
 
         [Test]
         public void Korean_swap_positions() =>

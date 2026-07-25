@@ -26,7 +26,8 @@ namespace FateWeaver.Tests
             Assert.AreEqual(1, cards.Count(c => c.Id == "counter_stance"));
             Assert.AreEqual(0, cards.Count(c => c.Id == "heavy_strike"));
             Assert.AreEqual(1, cards.Count(c => c.Id == "cover"));
-            Assert.AreEqual(2, cards.Count(c => c.Id == "pull_forward"));
+            Assert.AreEqual(1, cards.Count(c => c.Id == "pull_forward"));
+            Assert.AreEqual(1, cards.Count(c => c.Id == "push_back"));
             Assert.AreEqual(1, cards.Count(c => c.Id == "swap_positions"));
         }
 

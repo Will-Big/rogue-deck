@@ -25,7 +25,7 @@ namespace FateWeaver.Simulation
             cards.Add(Counter());
             cards.Add(Cover());
             cards.Add(PullForward());
-            cards.Add(PullForward());
+            cards.Add(PushBack());
             cards.Add(SwapPositions());
             return cards;
         }
@@ -77,7 +77,11 @@ namespace FateWeaver.Simulation
 
         public static CardDefinition PullForward() => InterventionCard(
             "pull_forward", "앞당김", interventionCost: 1,
-            new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2));
+            new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -1));
+
+        public static CardDefinition PushBack() => InterventionCard(
+            "push_back", "밀어내기", interventionCost: 1,
+            new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 1));
 
         public static CardDefinition SwapPositions() => InterventionCard(
             "swap_positions", "자리 교환", interventionCost: 1,
