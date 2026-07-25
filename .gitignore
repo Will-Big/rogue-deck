@@ -97,3 +97,8 @@ Tests/Headless/obj/
 # The source Pretendard TTF (OFL) lives in Assets/FateWeaver/Unity/Fonts/ and IS committed.
 # ============================================
 /Assets/FateWeaver/Unity/Resources/Fonts/
+
+# ============================================
+# macOS Finder metadata
+# ============================================
+.DS_Store
