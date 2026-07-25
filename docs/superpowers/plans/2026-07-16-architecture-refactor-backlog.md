@@ -1,6 +1,7 @@
 # Fate Weaver — 확장성·하드코딩 후속 리팩토링 백로그
 
 - 작성일: 2026-07-16
+- 개정일: 2026-07-25 — 전투 시스템 전면 점검 결과를 §11로 반영
 - 문서 유형: `active-roadmap`
 - 주 도메인: `architecture`
 - 상태: `active` — P0-C, P1, P2 후속 설계·구현 대기
@@ -292,3 +293,65 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 - 각 작업은 기존 콘텐츠의 동작 등가성 테스트를 먼저 확보한다.
 - Unity asset 변경은 순수 headless 검증과 사용자 Play 검증을 분리해 기록한다.
 - 외부 패키지나 reflection 기반 자동 등록은 사전 승인 없이 도입하지 않는다.
+
+## 12. 2026-07-25 점검에서 추가된 항목
+
+전투 시스템 전면 점검(코어·Unity·저작 파이프라인)에서 확인했으나 기존 P0~P2 항목에 포함되지 않던
+구조 문제다. 정합성 결함 4건은 별도 계획
+[`2026-07-25-combat-consistency-cleanup.md`](2026-07-25-combat-consistency-cleanup.md)에서 처리하며,
+아래는 그 범위 밖으로 남은 항목이다.
+
+### 12.1 P0급 — 확장을 직접 막거나 조용히 실패하는 구조
+
+**조건 축의 침묵 실패.** 조건을 하나 추가하려면 서로 연결되지 않은 세 곳을 고쳐야 한다:
+`ConditionEvaluator`(평가), `KoreanDescriptionGrammar.ConditionStem`(설명),
+`ConditionSpec.ToCondition`(저작 변환). 뒤 두 곳의 `default`가 각각 빈 문자열과 `null`을 조용히
+반환하고, `DescriptionCatalogValidator`는 효과·상태·개입 키만 검증하며 `effect.Condition`을 보지 않는다.
+문법을 빠뜨리면 카드 설명이 어간 없이 렌더링되고, 저작 변환을 빠뜨리면 조건이 사라진 카드가 예외 없이
+생성된다. §10이 조건을 "의도적으로 닫힌 분기"로 두는 판단 자체는 유효하나, 침묵 실패는 별개 문제이므로
+최소한 부팅·저작 검증이 조건을 확인해야 한다.
+
+**P2의 선행 조건 — 코어 이벤트 확충.** `ResolutionEvent`는 `TurnStarted`, `CardResolved`,
+`CardCancelled`, `PartyMemberDied`, `DeathsDoorSurvived`, `TurnEnded` 6종뿐이다. HP 변화, 상태 부여,
+상태 만료, 대형 이동 이벤트가 없어 **타임라인만 재생하는 UI는 방어 아이콘이나 둔화 디버프를 그릴 수
+없다.** §9 P2는 컨트롤러 리팩터로 서술되어 있으나 실제로는 코어 이벤트 확충이 선행되어야 하며,
+그 전에는 UI가 mutable state를 읽는 것이 강제된 선택이다.
+
+### 12.2 P1급 — 레지스트리 원칙과 튜닝 규칙 위반
+
+**`reward_nullified` 특수 처리.** 여섯 상태 중 이것만 `TurnResolver`가 상태 키를 직접 조회하고,
+대응하는 `RewardSuppressionBehavior`는 훅을 하나도 오버라이드하지 않은 빈 클래스다. 나머지 다섯은
+모두 `IStatusBehavior`를 경유한다. `ModifyConditionTier` 훅을 추가하면 이 특수 분기와 빈 클래스가 함께
+사라진다.
+
+**`VulnerableBehavior` 하드코딩.** `(damage * 3) / 2`로 50%를 고정하고 자신의 `Magnitude`를 무시한다.
+형제 상태 넷(`Block`, `Slow`, `Haste`)은 모두 `Magnitude`를 읽는다. 규칙 8 위반이고 "취약 2"를 표현할 수
+없다.
+
+**비용 이중 원본.** `CardDefinition.EnergyCost`와 `InterventionActionData.InterventionCost`가 별개
+필드이고, 개입 플레이 경로는 전자를 아예 읽지 않는다. 현재는 `CardSpecMapper`가 둘 다 같은 값으로
+채워 우연히 일치하므로, SO 저작자가 한쪽만 수정하면 표시 비용과 실제 차감 비용이 어긋난다.
+
+**`DeckCombatSession` 모드 분리.** 505줄 한 클래스가 `_isPartyMode` 불리언으로 솔로·파티 두 모드를
+겸한다. 파티 생성자는 `playerHp: 0`, `handSize: 0`을 죽은 플레이스홀더로 넘기고, 파티 덱 조립·검증
+92줄이 턴 루프 드라이버 안에 있다. 정합성 정리에서 레거시 shim을 제거하면 분기 하나가 줄어들지만
+구조 분리는 남는다.
+
+### 12.3 P2급 — 중복과 확장 제약
+
+**적 대상 선택 중복.** `DamageHandler.SelectEnemy`와 `ApplyStatusHandler.SelectTargetEnemy`가 주석까지
+동일하다. 파티 쪽에는 `PartyTargeting`이 있으나 적 쪽에 대응 모듈이 없어, 새 적 대상 효과마다
+fallback 정책을 복사해 재구현하게 된다.
+
+**단일 적 가정.** 턴 루프가 텔레그래프 카드를 항상 `Enemies[0]`에 귀속시키고 0번 적의 둔화·가속만
+실행 순서에 반영한다. `IEnemyTurnPolicy.CardsForTurn`이 소유자 없는 `CardDefinition`을 반환하므로
+다중 적 조우를 표현하려면 이 인터페이스부터 바뀌어야 한다.
+
+**러너 배선 중복.** `ZoneCardSpec`으로 미래 영역을 만드는 코드가 네 러너에 복사되어 있고(모두
+`InstanceId`·`OwnerId`를 설정하지 않는다), `OutcomeOf(timeline)`은 세 곳에 그대로 중복된다.
+
+### 12.4 콘텐츠 블로커
+
+**독 상태 미구현.** `poison` 상태 키도, `PoisonBehavior`도, 덱 루프 설계가 명시한 "행동 턴 종료 시 발동
+후 1 증가"의 훅 지점도 없다. 캐릭터·카드풀 설계가 독을 아키타입 축으로 두고 있으므로, 해당 카드풀을
+구현하려면 이 상태와 훅이 먼저 필요하다.
