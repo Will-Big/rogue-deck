@@ -7,7 +7,7 @@
 - 작성일: 2026-07-25
 - 문서 유형: `plan`
 - 주 도메인: `combat-core`, `unity-presentation`
-- 상태: `active` — 구현 대기
+- 상태: `archived` — 2026-07-25 완료
 - 선행 점검: 2026-07-25 전투 시스템 리팩토링 점검 (코어·Unity·저작 파이프라인 3개 영역)
 
 ## 1. 목적
@@ -145,13 +145,25 @@ shim은 `Party[0]`에 대한 순수한 별칭이었다. 그 결과 제거는 분
 
 테스트 17개 파일 약 40곳이 `state.PlayerHp` → `state.Party[0].Hp`로 바뀐다.
 
-#### 의도된 동작 변화 1건
+#### 의도된 동작 변화
 
-현재 솔로 플레이어는 `MaxHp = 0`, `Hp = playerHp`라는 모순된 상태다(`PartyMember` 생성자가
-`Hp = maxHp`로 두는데 shim이 `Hp`만 덮어썼기 때문). 제거 후에는 `MaxHp = Hp = playerHp`가 된다.
+태스크 4의 코드 리뷰에서, 아래 다섯 가지가 의도된 동작 변화로 확인되었다. 모두 현재 프로덕션
+콘텐츠에서는 무해하다.
 
-회복 효과가 아직 없으므로 현재 규칙 결과는 동일해야 한다. **이는 가정이 아니라 테스트로 확인할 사항이며,
-결정론 타임라인 비교가 그 근거가 된다.**
+1. 솔로 플레이어의 `MaxHp`가 `0`에서 `playerHp`로 바뀐다. 규칙 로직 중 `MaxHp`를 읽는 곳이 없어
+   무해하다.
+2. `OwnerStatusesFor`가 소유자 id로 매칭하므로, 솔로 모드에서 `OwnerId`가 파티 멤버와 일치하지
+   않는 카드는 더 이상 솔로 플레이어의 상태를 상속받지 않는다. 프로덕션 솔로 경로는 항상
+   `SoloPlayerId`를 찍으므로 무해하다.
+3. 같은 이유로 솔로 모드에서도 `member.IsAlive` 조건이 적용된다. 죽은 솔로 플레이어는 카드를 낼 수
+   없으므로 도달 불가하다.
+4. `ResolvePlayerSelf`가 `Party.Count == 1`로 단순화되어, **1인 파티의 소유자 없는 Self 카드가 취소
+   대신 해결된다.** 현재 프로덕션 파티는 2인이라 도달 불가하지만, `PartyTuning.MinPartySize`가 1이고
+   파티 공유 카드(`OwnerId = null`)를 만드는 경로가 존재하므로 **1인 파티나 파티 공유 카드를
+   도입하면 살아난다.** 그때 재검토할 것.
+5. `new CombatState()`가 빈 파티를 만들므로, 시나리오 리포트 등에서 `Party[0]`를 읽던 자리는 파티가
+   비어 있으면 `0`을 조용히 반환하는 대신 예외를 던진다. 모든 프로덕션 경로가 즉시 멤버를 추가하므로
+   무해하며, 조용한 오답보다 낫다.
 
 ## 4. 작업 순서
 
@@ -182,6 +194,9 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 Unity 검증은 저장소 규칙 17을 따른다. 컴파일과 자동화 검증을 위한 `-batchmode` EditMode 테스트는
 이 워크트리에서 실행하되, 씬·프리팹·ScriptableObject 저작과 Play 검증은 하지 않는다. 로그는
 `/private/tmp`에 남긴다.
+
+**실행 결과 (2026-07-25, 태스크 5 종료 시점):** 헤드리스 스위트 328/328 통과, Unity EditMode
+배치 테스트 386/386 통과, 컴파일 에러 0건 (로그 `/private/tmp/fw-editmode.log`).
 
 ## 6. 완료 조건
 

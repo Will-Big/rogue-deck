@@ -76,6 +76,10 @@
 - [P0-B2 구현 기록](plans/2026-07-19-p0b2-implementation-record.md)
 - [상태 키 드롭다운 저작](plans/2026-07-20-status-key-dropdown-authoring.md)
 
+### 전투 시스템 정합성 정리
+
+- [전투 시스템 정합성 정리 (설계 + 구현 계획)](plans/2026-07-25-combat-consistency-cleanup.md)
+
 ### 과거 런 원 사이클
 
 - [런 계획 인덱스](plans/2026-07-20-run-cycle-plan-index.md)
