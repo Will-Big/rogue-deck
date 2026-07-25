@@ -345,8 +345,9 @@ namespace FateWeaver.Unity
             }
         }
 
+        // Card face art comes only from authored CardAsset.Art (GUID reference, move-safe).
         private Sprite ArtFor(string id)
-            => _artById.TryGetValue(id, out var sprite) ? sprite : PlaytestCardArt.Sprite(id);
+            => _artById.TryGetValue(id, out var sprite) ? sprite : null;
 
         private CardPresentation PresentationFor(OwnedCard card)
         {

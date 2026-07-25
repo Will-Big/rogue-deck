@@ -63,11 +63,11 @@ namespace FateWeaver.Tests
         [Test]
         public void Quick_cut_pulled_to_the_front_lands_the_first_strike_bonus()
         {
-            // Enemy at executionOrder 4 acts before the player's cards (base 5) by default.
-            var session = NewSession(new[] { StarterDeck.QuickCut(), StarterDeck.PullForward() }, Goblin(4, 3));
+            // Enemy at executionOrder 5 acts after the player's cards (base 5) by default.
+            var session = NewSession(new[] { StarterDeck.QuickCut(), StarterDeck.PullForward() }, Goblin(5, 3));
             session.PlayExecutionCard(HandIndex(session, "quick_cut")); // placed at executionOrder 5
 
-            // pull_forward (-2) on quick_cut -> executionOrder 3 -> now first.
+            // pull_forward (-1) on quick_cut -> executionOrder 4 -> now first.
             var quickIndex = ZoneIndex(session, "quick_cut");
             Assert.IsTrue(session.PlayInterventionCard(HandIndex(session, "pull_forward"), quickIndex));
 
@@ -92,9 +92,20 @@ namespace FateWeaver.Tests
             var session = NewSession(new[] { StarterDeck.Cover() }, Goblin(6, 3));
             session.PlayExecutionCard(HandIndex(session, "cover"));
 
-            int hpBefore = session.State.PlayerHp;
+            int hpBefore = session.State.Party[0].Hp;
             session.ResolveTurn();
-            Assert.AreEqual(hpBefore, session.State.PlayerHp); // block 7 fully absorbs the 3 damage
+            Assert.AreEqual(hpBefore, session.State.Party[0].Hp); // block 7 fully absorbs the 3 damage
+        }
+
+        [Test]
+        public void Solo_session_player_is_an_explicit_party_member()
+        {
+            var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
+
+            Assert.AreEqual(1, session.State.Party.Count);
+            Assert.AreEqual(CombatState.SoloPlayerId, session.State.Party[0].Id);
+            Assert.AreEqual(30, session.State.Party[0].Hp);
+            Assert.AreEqual(30, session.State.Party[0].MaxHp);
         }
 
         [Test]

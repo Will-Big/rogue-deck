@@ -36,7 +36,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(2, result.Turns.Count);
             Assert.AreEqual(10, result.FinalState.Enemies[0].Hp);
-            Assert.AreEqual(27, result.FinalState.PlayerHp);
+            Assert.AreEqual(27, result.FinalState.Party[0].Hp);
             Assert.AreEqual(Outcome.Ongoing, result.Outcome);
         }
 

@@ -139,9 +139,8 @@ namespace FateWeaver.Core.Effects
             }
         }
 
-        /// <summary>Player-side Self: the card's OwnerId party member if alive; with no OwnerId, only the
-        /// pre-party legacy single-player shim falls back to the sole party member. Any other ownerless
-        /// case (multi-party, or a single non-legacy party member) is undefined and cancels.</summary>
+        /// <summary>Player-side Self: the card's OwnerId party member if alive; with no OwnerId, only a
+        /// single party member resolves unambiguously. Two or more ownerless members cancel instead.</summary>
         private static PartyMember ResolvePlayerSelf(CombatState state, string ownerId)
         {
             if (!string.IsNullOrEmpty(ownerId))
@@ -149,7 +148,7 @@ namespace FateWeaver.Core.Effects
                 return PartyTargeting.LivingById(state, ownerId);
             }
 
-            if (state.Party.Count == 1 && state.Party[0].Id == CombatState.LegacyPlayerId)
+            if (state.Party.Count == 1)
             {
                 return state.Party[0];
             }

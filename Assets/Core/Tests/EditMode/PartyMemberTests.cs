@@ -45,7 +45,6 @@ namespace FateWeaver.Tests
         public void Outcome_is_ongoing_while_any_party_member_lives()
         {
             var state = new CombatState();
-            state.Party.Clear();
             state.Party.Add(new PartyMember("a", "A", maxHp: 10));
             state.Party.Add(new PartyMember("b", "B", maxHp: 10));
             state.Enemies.Add(new Enemy("goblin", 12));
@@ -79,7 +78,6 @@ namespace FateWeaver.Tests
         public void End_of_turn_clears_this_turn_statuses_for_every_party_member()
         {
             var state = new CombatState();
-            state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 10);
             var b = new PartyMember("b", "B", maxHp: 10);
             a.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, magnitude: 4);
@@ -95,20 +93,20 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Legacy_player_shim_keeps_existing_single_player_tests()
+        public void AddSoloPlayer_creates_the_solo_party_member()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
 
             Assert.AreEqual(1, state.Party.Count);
-            Assert.AreEqual(CombatState.LegacyPlayerId, state.Party[0].Id);
+            Assert.AreEqual(CombatState.SoloPlayerId, state.Party[0].Id);
             Assert.AreEqual(30, state.Party[0].Hp);
-            Assert.AreEqual(30, state.PlayerHp);
-            Assert.AreSame(state.Party[0].Statuses, state.PlayerStatuses);
+            Assert.AreEqual(30, state.Party[0].MaxHp);
 
-            state.PlayerStatuses.Add(StatusKeys.Haste, StatusLifetime.Turns(1));
+            state.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(1));
             Assert.IsTrue(state.Party[0].Statuses.Has(StatusKeys.Haste));
 
-            state.PlayerHp -= 10;
+            state.Party[0].Hp -= 10;
             Assert.AreEqual(20, state.Party[0].Hp);
         }
     }

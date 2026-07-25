@@ -196,9 +196,9 @@ namespace FateWeaver.Unity
             }
         }
 
-        // Authored CardAsset.Art (GUID, move-safe) first; Resources path only as a last-resort fallback.
+        // Card face art comes only from authored CardAsset.Art (GUID reference, move-safe).
         private Sprite ArtFor(string id)
-            => _artById.TryGetValue(id, out var sprite) ? sprite : PlaytestCardArt.Sprite(id);
+            => _artById.TryGetValue(id, out var sprite) ? sprite : null;
 
         // --- render ---
 
@@ -254,9 +254,9 @@ namespace FateWeaver.Unity
         {
             var sb = new StringBuilder();
             sb.Append("턴 ").Append(_session.TurnIndex + 1)
-              .Append("    플레이어 HP: ").Append(_session.State.PlayerHp)
+              .Append("    플레이어 HP: ").Append(_session.State.Party[0].Hp)
               .Append("    운명력: ").Append(_session.FateEnergy)
-              .Append("    ").Append(StatusText(_session.State.PlayerStatuses));
+              .Append("    ").Append(StatusText(_session.State.Party[0].Statuses));
             foreach (var enemy in _session.State.Enemies)
             {
                 var name = PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id);

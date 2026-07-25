@@ -46,11 +46,8 @@ namespace FateWeaver.Simulation
             ScenarioDefinition scenario,
             out Dictionary<string, ExecutionCardInstance> cardsById)
         {
-            var state = new CombatState
-            {
-                PlayerHp = scenario.PlayerHp,
-                FateEnergy = scenario.FateEnergy
-            };
+            var state = new CombatState { FateEnergy = scenario.FateEnergy };
+            state.AddSoloPlayer(scenario.PlayerHp);
 
             foreach (var enemy in scenario.Enemies)
             {

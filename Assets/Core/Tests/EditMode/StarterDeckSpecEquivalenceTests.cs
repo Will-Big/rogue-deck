@@ -84,9 +84,9 @@ namespace FateWeaver.Tests
                 new[] { Def("cover") }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "cover"));
-            int hp = session.State.PlayerHp;
+            int hp = session.State.Party[0].Hp;
             session.ResolveTurn();
-            Assert.AreEqual(hp, session.State.PlayerHp);
+            Assert.AreEqual(hp, session.State.Party[0].Hp);
         }
     }
 }

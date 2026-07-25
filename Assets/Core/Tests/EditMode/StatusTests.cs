@@ -67,7 +67,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_turns_based_modifies_hit_without_being_consumed()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
             state.Enemies.Add(enemy);
@@ -84,7 +85,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_until_consumed_applies_once_then_is_gone()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.UntilConsumed(1));
             state.Enemies.Add(enemy);
@@ -101,7 +103,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Stun_until_consumed_nullifies_one_resolution_then_is_gone()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var card = Card("strike", Side.Player, 1, 5);
             card.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));
@@ -118,7 +121,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Without_status_registry_incoming_damage_is_unmodified()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 20);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(1));
             state.Enemies.Add(enemy);

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
@@ -8,21 +7,12 @@ namespace FateWeaver.Core.Combat
     /// Party and Enemies are two independent side formations; index 0 is each side's front.</summary>
     public sealed class CombatState
     {
-        /// <summary>Id of the single legacy party member that PlayerHp/PlayerStatuses delegate to.
-        /// Only the pre-party single-player shim below may reference this id; party-mode code must
-        /// read/write CombatState.Party directly instead.</summary>
-        public const string LegacyPlayerId = "player";
-        private const string LegacyPlayerName = "Player";
-        private const int LegacyPlayerDefaultMaxHp = 0;
+        /// <summary>Id of the single party member that solo (non-party) combats use. Also the OwnerId
+        /// stamped on solo deck cards, so deck ownership and party membership agree.</summary>
+        public const string SoloPlayerId = "player";
+        private const string SoloPlayerName = "Player";
 
-        private readonly PartyMember _legacyPlayer;
         private Random _rng;
-
-        public CombatState()
-        {
-            _legacyPlayer = new PartyMember(LegacyPlayerId, LegacyPlayerName, LegacyPlayerDefaultMaxHp);
-            Party.Add(_legacyPlayer);
-        }
 
         /// <summary>Independent party formation; index 0 is the party's front.</summary>
         public List<PartyMember> Party { get; } = new();
@@ -39,14 +29,12 @@ namespace FateWeaver.Core.Combat
         /// elsewhere). Lazily created from RngSeed so RngSeed can still be assigned via object initializer.</summary>
         public Random Rng => _rng ??= new Random(RngSeed);
 
-        // --- Legacy single-player shim: delegates to the first party member (LegacyPlayerId). Keeps
-        // pre-party single-player code/tests working untouched. New party-mode code must not use this. ---
-        public int PlayerHp
+        /// <summary>Adds the solo-mode party member. Party mode adds its own members instead.</summary>
+        public PartyMember AddSoloPlayer(int hp)
         {
-            get => _legacyPlayer.Hp;
-            set => _legacyPlayer.Hp = value;
+            var member = new PartyMember(SoloPlayerId, SoloPlayerName, hp);
+            Party.Add(member);
+            return member;
         }
-
-        public StatusBag PlayerStatuses => _legacyPlayer.Statuses;
     }
 }

@@ -114,11 +114,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Legacy_definition_deck_assigns_legacy_player_owner()
+        public void Definition_deck_assigns_solo_player_owner()
         {
             var deck = new Deck(new[] { Card("legacy") }, new Random(1));
 
-            Assert.AreEqual(CombatState.LegacyPlayerId, deck.DrawPile.Single().OwnerId);
+            Assert.AreEqual(CombatState.SoloPlayerId, deck.DrawPile.Single().OwnerId);
         }
 
         private static IEnemyTurnPolicy EnemyPolicy(CardDefinition enemyCard)

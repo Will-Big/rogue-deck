@@ -74,7 +74,7 @@ namespace FateWeaver.Simulation
         private static void AppendFinalState(StringBuilder sb, ScenarioResult result)
         {
             sb.AppendLine("## Final State");
-            sb.AppendLine("- Player HP: " + result.FinalState.PlayerHp);
+            sb.AppendLine("- Player HP: " + result.FinalState.Party[0].Hp);
             foreach (var enemy in result.FinalState.Enemies)
             {
                 sb.AppendLine("- " + enemy.Id + " HP: " + enemy.Hp);

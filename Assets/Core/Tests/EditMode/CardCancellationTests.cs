@@ -74,7 +74,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Cancelled_card_emits_no_card_resolved_event()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             // No enemies -> the player card's target can never resolve.
             var strike = Card("strike", Side.Player, executionOrder: 1, damage: 4);
             state.Zone.Add(strike);
@@ -89,7 +90,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Card_cancelled_event_contains_instance_owner_and_reason()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             var card = Card("sealed_blade", Side.Player, executionOrder: 1, damage: 4, ownerId: "warrior", instanceId: 42);
             // Pre-cancelled before resolution starts (step 6, part 1 of the death-sweep order).
             card.CancellationReason = CardCancellationReason.StatusIntercepted;
@@ -204,7 +206,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Duplicate_card_ids_are_distinguished_by_instance_id()
         {
-            var state = new CombatState { PlayerHp = 30 };
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 
             var first = Card("slash", Side.Player, executionOrder: 1, damage: 3, instanceId: 10);

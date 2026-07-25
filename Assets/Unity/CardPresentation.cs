@@ -65,7 +65,7 @@ namespace FateWeaver.Unity
                 IsPartyOwned);
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
-        /// the sprite by id (e.g. from the authored CardAsset.Art); null falls back to Resources lookup.</summary>
+        /// the sprite by id (e.g. from the authored CardAsset.Art).</summary>
         public static CardPresentation From(
             ExecutionCardInstance card,
             Func<string, Sprite> art = null,
@@ -114,9 +114,9 @@ namespace FateWeaver.Unity
                 isPartyOwned);
         }
 
-        // A resolver (GUID-backed CardAsset.Art) wins; with none supplied we fall back to the Resources path.
+        // Card face art comes only from the authored resolver (GUID-backed CardAsset.Art); no id→path fallback.
         private static Sprite ResolveArt(string id, Func<string, Sprite> art)
-            => art != null ? art(id) : PlaytestCardArt.Sprite(id);
+            => art != null ? art(id) : null;
 
         private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ExecutionCardInstance card)
             => card.IsLocked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>();

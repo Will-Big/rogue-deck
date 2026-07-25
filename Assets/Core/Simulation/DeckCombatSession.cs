@@ -46,7 +46,7 @@ namespace FateWeaver.Simulation
             int handSize = 5,
             int seed = 0)
             : this(
-                WithLegacyOwner(deckCards), playerHp, enemies, enemyPolicy,
+                WithSoloOwner(deckCards), playerHp, enemies, enemyPolicy,
                 fateEnergyPerTurn, handSize, seed)
         {
         }
@@ -112,7 +112,6 @@ namespace FateWeaver.Simulation
             _isPartyMode = party != null;
             if (_isPartyMode)
             {
-                _state.Party.Clear();
                 foreach (var loadout in party)
                 {
                     _state.Party.Add(new PartyMember(
@@ -124,7 +123,7 @@ namespace FateWeaver.Simulation
             }
             else
             {
-                _state.PlayerHp = playerHp;
+                _state.AddSoloPlayer(playerHp);
             }
 
             foreach (var enemy in enemies)
@@ -245,11 +244,6 @@ namespace FateWeaver.Simulation
 
         private StatusBag OwnerStatusesFor(OwnedCard card)
         {
-            if (!_isPartyMode)
-            {
-                return _state.PlayerStatuses;
-            }
-
             foreach (var member in _state.Party)
             {
                 if (member.IsAlive && member.Id == card.OwnerId)
@@ -478,12 +472,12 @@ namespace FateWeaver.Simulation
             }
         }
 
-        private static IReadOnlyList<OwnedCard> WithLegacyOwner(IReadOnlyList<CardDefinition> cards)
+        private static IReadOnlyList<OwnedCard> WithSoloOwner(IReadOnlyList<CardDefinition> cards)
         {
             var owned = new List<OwnedCard>(cards.Count);
             foreach (var card in cards)
             {
-                owned.Add(new OwnedCard(card, CombatState.LegacyPlayerId));
+                owned.Add(new OwnedCard(card, CombatState.SoloPlayerId));
             }
 
             return owned;
