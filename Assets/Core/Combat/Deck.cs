@@ -18,7 +18,7 @@ namespace FateWeaver.Core.Combat
         private readonly ReadOnlyCollection<OwnedCard> _discardView;
 
         public Deck(IEnumerable<CardDefinition> cards, Random rng)
-            : this(WithLegacyOwner(cards), rng)
+            : this(WithSoloOwner(cards), rng)
         {
         }
 
@@ -90,7 +90,7 @@ namespace FateWeaver.Core.Combat
             _hand.RemoveAll(card => card.OwnerId != null && card.OwnerId == ownerId);
         }
 
-        private static IEnumerable<OwnedCard> WithLegacyOwner(IEnumerable<CardDefinition> cards)
+        private static IEnumerable<OwnedCard> WithSoloOwner(IEnumerable<CardDefinition> cards)
         {
             foreach (var card in cards)
             {

@@ -143,7 +143,8 @@ X만큼 피해를 주고 독 수치를 1 증가시키는 상태다.
 | 찰나의 베기 | 실행(공격) | 1 | 피해 2, 첫 발동이면 8 | 1 | Damage + FirstToTrigger 🟢 |
 | 강타 | 실행(공격) | 2 | 피해 5, 바로 앞이 아군 공격이면 +5 (총 10) | 1 | Damage + AdjacentCardIs 🟢 |
 | 엄호 | 실행(방어) | 1 | 방어 2, 바로 뒤가 적 공격이면 +5 (총 7) | 1 | ApplyStatus(Block) + 조건부 🟡 |
-| 앞당김 | 개입 | 1 | 한 카드 실행 순서 −2 | 2 | ChangeExecutionOrder 🟢 |
+| 앞당김 | 개입 | 1 | 한 카드 실행 순서 −1 | 1 | ChangeExecutionOrder 🟢 |
+| 밀어내기 | 개입 | 1 | 한 카드 실행 순서 +1 | 1 | ChangeExecutionOrder 🟢 |
 | 자리 교환 | 개입 | 1 | 두 카드 실행 순서 교환 | 1 | SwapExecutionOrder 🟢 |
 
 🟡 **엄호**만 작은 엔진 확장이 필요: **조건부 ApplyStatus**(기본 방어 2 + 조건 충족 시 방어 5). 현재 조건부 효과

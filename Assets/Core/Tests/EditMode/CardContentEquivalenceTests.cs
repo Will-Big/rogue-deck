@@ -137,7 +137,7 @@ namespace FateWeaver.Tests
                 GoldenPartyPrototypeSpecs,
                 Sigs(PartyPrototypeDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
 
-        // --- cross-path oracle (only pair that is currently equivalent) --------------------
+        // --- cross-path oracles (pin all three equivalent starter paths) -------------------
 
         [Test]
         public void Party_prototype_specs_match_handcoded_deck()

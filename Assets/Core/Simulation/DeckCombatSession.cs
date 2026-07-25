@@ -46,7 +46,7 @@ namespace FateWeaver.Simulation
             int handSize = 5,
             int seed = 0)
             : this(
-                WithLegacyOwner(deckCards), playerHp, enemies, enemyPolicy,
+                WithSoloOwner(deckCards), playerHp, enemies, enemyPolicy,
                 fateEnergyPerTurn, handSize, seed)
         {
         }
@@ -472,7 +472,7 @@ namespace FateWeaver.Simulation
             }
         }
 
-        private static IReadOnlyList<OwnedCard> WithLegacyOwner(IReadOnlyList<CardDefinition> cards)
+        private static IReadOnlyList<OwnedCard> WithSoloOwner(IReadOnlyList<CardDefinition> cards)
         {
             var owned = new List<OwnedCard>(cards.Count);
             foreach (var card in cards)

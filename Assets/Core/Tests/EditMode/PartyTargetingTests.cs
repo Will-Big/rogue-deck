@@ -152,7 +152,7 @@ namespace FateWeaver.Tests
             var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 4);
             var card = Card("guard", Side.Player, effect);
             // OwnerId left null: with only one party member, Self resolves unambiguously — symmetric
-            // with Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners below.
+            // with Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners above.
             var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
 
             new ApplyStatusHandler().Apply(ctx);
