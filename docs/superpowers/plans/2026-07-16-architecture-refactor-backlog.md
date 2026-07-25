@@ -298,7 +298,7 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 
 전투 시스템 전면 점검(코어·Unity·저작 파이프라인)에서 확인했으나 기존 P0~P2 항목에 포함되지 않던
 구조 문제다. 정합성 결함 4건은 별도 계획
-[`2026-07-25-combat-consistency-cleanup.md`](2026-07-25-combat-consistency-cleanup.md)에서 처리하며,
+[`2026-07-25-combat-consistency-cleanup.md`](../archive/plans/2026-07-25-combat-consistency-cleanup.md)에서 처리하며,
 아래는 그 범위 밖으로 남은 항목이다.
 
 ### 12.1 P0급 — 확장을 직접 막거나 조용히 실패하는 구조
