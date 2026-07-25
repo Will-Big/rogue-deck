@@ -196,9 +196,9 @@ namespace FateWeaver.Unity
             }
         }
 
-        // Authored CardAsset.Art (GUID, move-safe) first; Resources path only as a last-resort fallback.
+        // Card face art comes only from authored CardAsset.Art (GUID reference, move-safe).
         private Sprite ArtFor(string id)
-            => _artById.TryGetValue(id, out var sprite) ? sprite : PlaytestCardArt.Sprite(id);
+            => _artById.TryGetValue(id, out var sprite) ? sprite : null;
 
         // --- render ---
 
