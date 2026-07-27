@@ -520,7 +520,7 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 1;
+    const SCHEMA_VERSION = 2;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
@@ -534,6 +534,7 @@
         targets: { ally: "none", enemy: "none" },
         abilities: { ally: [], enemy: [], none: [] },
         notes: "",
+        completionStatus: "incomplete",
         createdAt: "",
         updatedAt: "",
       };
@@ -577,6 +578,7 @@
           none: textLines(input.abilities?.none),
         },
         notes: String(input.notes ?? "").trim(),
+        completionStatus: input.completionStatus === "complete" ? "complete" : "incomplete",
         createdAt: String(input.createdAt ?? ""),
         updatedAt: String(input.updatedAt ?? ""),
       };
@@ -693,10 +695,13 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (saved.schemaVersion !== SCHEMA_VERSION) {
+      if (saved.schemaVersion !== 1 && saved.schemaVersion !== SCHEMA_VERSION) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
-      const cards = (saved.cards ?? []).map(normalizeCard);
+      const cards = (saved.cards ?? []).map((card) => normalizeCard({
+        ...card,
+        completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
+      }));
       const ids = new Set(cards.map((card) => card.id));
       return {
         schemaVersion: SCHEMA_VERSION,
@@ -761,6 +766,63 @@
       return (state.cards ?? []).find((card) => card.id === id) ?? null;
     }
 
+    function uniqueCardName(cards, requestedName) {
+      const base = String(requestedName ?? "").trim() || "새 카드";
+      const names = new Set((cards ?? []).map((card) => String(card.name)));
+      if (!names.has(base)) return base;
+      let suffix = 2;
+      while (names.has(`${base} (${suffix})`)) suffix += 1;
+      return `${base} (${suffix})`;
+    }
+
+    function createCard(state, options = {}) {
+      const now = options.now ?? new Date().toISOString();
+      const card = normalizeCard({
+        id: options.id || `card-${Date.now().toString(36)}`,
+        name: uniqueCardName(state.cards, options.name || "새 카드"),
+        completionStatus: "incomplete",
+        createdAt: now,
+        updatedAt: now,
+      });
+      return {
+        ...state,
+        cards: [...(state.cards ?? []), card],
+        activeCardId: card.id,
+      };
+    }
+
+    function editCard(state, id, patch = {}) {
+      const cards = (state.cards ?? []).map((card) => {
+        if (card.id !== id) return card;
+        return normalizeCard({
+          ...card,
+          ...patch,
+          targets: patch.targets ?? card.targets,
+          abilities: patch.abilities ?? card.abilities,
+          completionStatus: "incomplete",
+        });
+      });
+      return {
+        ...state,
+        cards,
+        exportSelection: (state.exportSelection ?? []).filter((selectedId) => selectedId !== id),
+      };
+    }
+
+    function completeCard(state, id, options = {}) {
+      const card = (state.cards ?? []).find((candidate) => candidate.id === id);
+      if (!card) throw new Error("완성할 카드를 찾을 수 없습니다.");
+      const validation = validateCard(card);
+      if (validation.errors.length) throw new Error(validation.errors[0]);
+      const now = options.now ?? new Date().toISOString();
+      return {
+        ...state,
+        cards: state.cards.map((candidate) => candidate.id === id
+          ? normalizeCard({ ...candidate, completionStatus: "complete", updatedAt: now })
+          : candidate),
+      };
+    }
+
     function saveDraft(state, options = {}) {
       const draft = normalizeCard(state.draft ?? emptyCard());
       const validation = validateCard(draft);
@@ -812,19 +874,22 @@
       };
     }
 
-    function duplicateCard(state, id) {
+    function duplicateCard(state, id, options = {}) {
       const source = (state.cards ?? []).find((card) => card.id === id);
       if (!source) return state;
+      const now = options.now ?? new Date().toISOString();
+      const duplicate = normalizeCard({
+        ...source,
+        id: options.id || `card-${Date.now().toString(36)}`,
+        name: uniqueCardName(state.cards, `${source.name} 복사본`),
+        completionStatus: "incomplete",
+        createdAt: now,
+        updatedAt: now,
+      });
       return {
         ...state,
-        activeCardId: "",
-        draft: normalizeCard({
-          ...source,
-          id: "",
-          name: `${source.name} 복사본`,
-          createdAt: "",
-          updatedAt: "",
-        }),
+        cards: [...state.cards, duplicate],
+        activeCardId: duplicate.id,
       };
     }
 
@@ -877,6 +942,10 @@
       readStoreSession,
       isDirty,
       cardsForExport,
+      uniqueCardName,
+      createCard,
+      editCard,
+      completeCard,
       saveDraft,
       persistDraft,
       navigationStatus,

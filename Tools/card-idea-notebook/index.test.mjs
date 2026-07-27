@@ -154,7 +154,7 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(storage.writeCount, 1);
 
   const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 1);
+  assert.equal(saved.schemaVersion, 2);
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
 
@@ -263,7 +263,7 @@ test("reports dirty navigation and discards back to the saved card", () => {
   assert.equal(core.navigationStatus(discarded), "clean");
 });
 
-test("duplicates and deletes cards without mutating the source", () => {
+test("duplicates into the list and deletes cards without mutating the source", () => {
   const core = loadCore();
   const saved = core.normalizeCard({
     id: "a",
@@ -279,10 +279,15 @@ test("duplicates and deletes cards without mutating the source", () => {
     exportSelection: ["a"],
   };
 
-  const duplicated = core.duplicateCard(state, "a");
-  assert.equal(duplicated.cards.length, 1);
-  assert.equal(duplicated.draft.name, "원본 복사본");
-  assert.equal(duplicated.draft.id, "");
+  const duplicated = core.duplicateCard(state, "a", {
+    id: "b",
+    now: "2026-07-27T11:00:00.000Z",
+  });
+  assert.equal(duplicated.cards.length, 2);
+  assert.equal(duplicated.cards[1].name, "원본 복사본");
+  assert.equal(duplicated.cards[1].id, "b");
+  assert.equal(duplicated.cards[1].completionStatus, "incomplete");
+  assert.equal(duplicated.activeCardId, "b");
   assert.deepEqual([...saved.tags], ["독"]);
 
   const deleted = core.deleteCard(state, "a");
@@ -376,4 +381,77 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
     /기존 저장 데이터를 보호하기 위해 저장을 중단했습니다/,
   );
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
+});
+
+test("migrates schema 1 cards to complete schema 2 cards", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 1,
+      cards: [{ id: "a", name: "기존 카드" }],
+      activeCardId: "a",
+      searchQuery: "",
+      exportSelection: ["a"],
+    }),
+  });
+
+  const state = core.readStore(storage);
+  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.cards[0].completionStatus, "complete");
+});
+
+test("creates uniquely named incomplete cards directly in the list", () => {
+  const core = loadCore();
+  const first = core.createCard(core.initialState(), {
+    id: "a",
+    now: "2026-07-27T00:00:00.000Z",
+  });
+  const second = core.createCard(first, {
+    id: "b",
+    now: "2026-07-27T00:01:00.000Z",
+  });
+
+  assert.deepEqual([...first.cards.map((card) => card.name)], ["새 카드"]);
+  assert.deepEqual([...second.cards.map((card) => card.name)], ["새 카드", "새 카드 (2)"]);
+  assert.equal(second.cards[1].completionStatus, "incomplete");
+  assert.equal(second.activeCardId, "b");
+});
+
+test("editing a complete card makes it incomplete and unselects it", () => {
+  const core = loadCore();
+  const complete = core.normalizeCard({
+    id: "a",
+    name: "완성 카드",
+    completionStatus: "complete",
+  });
+  const state = {
+    ...core.initialState(),
+    cards: [complete],
+    activeCardId: "a",
+    exportSelection: ["a"],
+  };
+
+  const edited = core.editCard(state, "a", { notes: "수정됨" });
+  assert.equal(edited.cards[0].notes, "수정됨");
+  assert.equal(edited.cards[0].completionStatus, "incomplete");
+  assert.deepEqual([...edited.exportSelection], []);
+});
+
+test("completes a valid card and rejects an empty card name", () => {
+  const core = loadCore();
+  const valid = core.createCard(core.initialState(), {
+    id: "a",
+    now: "2026-07-27T00:00:00.000Z",
+  });
+  const completed = core.completeCard(valid, "a", {
+    now: "2026-07-27T00:02:00.000Z",
+  });
+  assert.equal(completed.cards[0].completionStatus, "complete");
+  assert.equal(completed.cards[0].updatedAt, "2026-07-27T00:02:00.000Z");
+
+  const emptyName = core.editCard(completed, "a", { name: "" });
+  assert.throws(
+    () => core.completeCard(emptyName, "a"),
+    /카드 이름을 입력하세요/,
+  );
 });
