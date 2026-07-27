@@ -225,19 +225,19 @@ git commit -m "refactor(tools): share card selection actions"
 - Consumes: Task 1 `selection`, `bulkSelection`, `deletionIds`, `deleteCards`, and `exportStatus`.
 - Produces: non-overlapping library grid, shared checkboxes, transactional bulk-delete dialog, incomplete-export toast, browser-verified final tool.
 
-- [ ] **Step 1: Implement the library grid and shared checkbox rendering**
+- [x] **Step 1: Implement the library grid and shared checkbox rendering**
 
 Make `.library-pane` a grid with `grid-template-rows: minmax(0, 1fr) auto`; set its `.pane-scroll` to `min-height: 0`; remove absolute positioning from `.library-actions`; and reduce `.card-list` bottom padding to ordinary list spacing. Rename visible and accessible copy from export selection to shared selection, enable every card checkbox, bind it to `state.selection`, and compute the bulk checkbox against all card IDs.
 
-- [ ] **Step 2: Connect transactional bulk deletion**
+- [x] **Step 2: Connect transactional bulk deletion**
 
 At confirmation time, capture `core.deletionIds(state)` instead of one active ID. Render one-card copy with its name and multi-card copy as `선택한 N장의 카드를 삭제합니다. 삭제한 카드는 복구할 수 없습니다.` On confirmation, call `core.deleteCards(state, pendingDeleteCardIds)`, write the entire next state before replacing in-memory state, then close and render. Keep the dialog open and current memory unchanged if storage fails.
 
-- [ ] **Step 3: Connect guarded export**
+- [x] **Step 3: Connect guarded export**
 
 Call `core.exportStatus(state)` before creating a Blob. When it returns an error, show its message and create no download. When ready, `cardsForExport` returns exactly the selected complete cards.
 
-- [ ] **Step 4: Run automated verification**
+- [x] **Step 4: Run automated verification**
 
 Run:
 
@@ -249,7 +249,7 @@ git diff --check
 
 Expected: all Node tests PASS, both scripts parse, and no whitespace errors exist.
 
-- [ ] **Step 5: Run browser smoke verification**
+- [x] **Step 5: Run browser smoke verification**
 
 Serve the worktree on loopback and verify:
 
@@ -262,11 +262,11 @@ Serve the worktree on loopback and verify:
 7. Completing all selected cards permits Markdown export.
 8. Reload preserves shared selection and console logs contain no errors.
 
-- [ ] **Step 6: Mark the design implemented and archive the plan**
+- [x] **Step 6: Mark the design implemented and archive the plan**
 
 Change the spec status to `current — 공용 선택·일괄 삭제·목록 레이아웃 구현 완료`. Remove this plan from active plans, add it to the archive's external card authoring tool section, move it to `archive/plans/`, and mark every plan checkbox complete.
 
-- [ ] **Step 7: Run final verification**
+- [x] **Step 7: Run final verification**
 
 Run:
 
@@ -278,9 +278,17 @@ git status --short
 
 Expected: all tests pass, no whitespace errors, and only intended documentation/archive changes remain.
 
-- [ ] **Step 8: Commit Task 2**
+- [x] **Step 8: Commit Task 2**
 
 ```bash
 git add Tools/card-idea-notebook/index.html docs/superpowers
 git commit -m "feat(tools): add shared card actions"
 ```
+
+## Implementation Result
+
+- 저장 스키마를 3으로 올리고 완성·미완성 카드를 함께 다루는 `selection[]`으로 선택 상태를 통합했다.
+- 카드 목록과 하단 작업 버튼을 별도 그리드 행으로 분리해 목록의 마지막 카드까지 가림 없이 스크롤되도록 했다.
+- 선택 카드가 있으면 해당 카드만 일괄 삭제하고, 선택이 없으면 현재 카드를 삭제하는 동작을 구현했다.
+- 선택에 미완성 카드가 하나라도 있으면 Markdown 내보내기 전체를 차단하고 안내 문구를 표시하도록 했다.
+- Node 테스트 31개, 스크립트 구문 검사, 공백 검사, 실제 브라우저의 스크롤·선택·삭제·내보내기·새로고침 보존 검증을 통과했다.

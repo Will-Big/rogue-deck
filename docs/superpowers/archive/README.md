@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-07-27
+- 개정일: 2026-07-28
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -97,3 +97,4 @@
 
 - [카드 아이디어 노트 구현](plans/2026-07-27-card-idea-notebook.md)
 - [카드 아이디어 노트 V2](plans/2026-07-27-card-idea-notebook-v2.md)
+- [카드 노트 공용 선택](plans/2026-07-28-card-notebook-shared-selection.md)

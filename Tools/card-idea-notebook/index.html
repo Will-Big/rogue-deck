@@ -158,7 +158,7 @@
     }
 
     .library-tools { padding: 14px 14px 10px; }
-    .card-list { display: grid; gap: 7px; padding: 0 10px 100px; }
+    .card-list { display: grid; gap: 7px; padding: 0 10px 10px; }
 
     .card-row {
       display: grid;
@@ -172,7 +172,7 @@
 
     .card-row.active { border-color: #8b7645; background: #29281f; }
     .card-row:hover { border-color: var(--line-strong); }
-    .export-check { width: 15px; margin: 0 0 0 9px; accent-color: var(--gold); }
+    .selection-check { width: 15px; margin: 0 0 0 9px; accent-color: var(--gold); }
     .card-select {
       min-width: 0;
       border: 0;
@@ -204,10 +204,6 @@
     .bulk-select input { width: 15px; margin: 0; accent-color: var(--gold); }
 
     .library-actions {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
@@ -215,7 +211,14 @@
       border-top: 1px solid var(--line);
       background: rgba(25, 27, 24, .97);
     }
-    .library-pane { position: relative; }
+    .library-pane {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+    .library-pane > .pane-scroll {
+      min-height: 0;
+      height: auto;
+    }
     .library-actions .wide-action { grid-column: 1 / -1; }
 
     .editor-content { display: grid; gap: 20px; padding: 18px 20px 80px; }
@@ -373,7 +376,7 @@
           </label>
           <label class="bulk-select">
             <input id="select-all" type="checkbox">
-            완성 카드 전체 체크
+            전체 체크
           </label>
         </div>
         <div class="card-list" id="card-list"></div>
@@ -1171,7 +1174,7 @@
     let storageWritable = true;
     let persistFailed = false;
     let toastTimer = 0;
-    let pendingDeleteCardId = "";
+    let pendingDeleteCardIds = [];
 
     function showToast(message) {
       window.clearTimeout(toastTimer);
@@ -1289,16 +1292,15 @@
 
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.className = "export-check";
-      checkbox.checked = state.exportSelection.includes(card.id);
-      checkbox.disabled = card.completionStatus !== "complete";
-      checkbox.title = checkbox.disabled ? "미완성 카드는 내보낼 수 없습니다." : "Markdown 내보내기에 포함";
-      checkbox.setAttribute("aria-label", `${card.name} 내보내기 선택`);
+      checkbox.className = "selection-check";
+      checkbox.checked = state.selection.includes(card.id);
+      checkbox.title = "삭제 또는 Markdown 내보내기에 사용할 카드 선택";
+      checkbox.setAttribute("aria-label", `${card.name} 선택`);
       checkbox.addEventListener("change", () => {
-        const selected = new Set(state.exportSelection);
+        const selected = new Set(state.selection);
         if (checkbox.checked) selected.add(card.id);
         else selected.delete(card.id);
-        persistRegular({ ...state, exportSelection: [...selected] });
+        persistRegular({ ...state, selection: [...selected] });
         renderList();
       });
 
@@ -1357,14 +1359,12 @@
 
       const current = activeCard();
       elements.duplicateCard.disabled = !current;
-      elements.deleteCard.disabled = !current;
-      const completeIds = state.cards
-        .filter((card) => card.completionStatus === "complete")
-        .map((card) => card.id);
-      const selectedCount = completeIds.filter((id) => state.exportSelection.includes(id)).length;
-      elements.selectAll.disabled = completeIds.length === 0;
-      elements.selectAll.checked = completeIds.length > 0 && selectedCount === completeIds.length;
-      elements.selectAll.indeterminate = selectedCount > 0 && selectedCount < completeIds.length;
+      elements.deleteCard.disabled = core.deletionIds(state).length === 0;
+      const cardIds = state.cards.map((card) => card.id);
+      const selectedCount = cardIds.filter((id) => state.selection.includes(id)).length;
+      elements.selectAll.disabled = cardIds.length === 0;
+      elements.selectAll.checked = cardIds.length > 0 && selectedCount === cardIds.length;
+      elements.selectAll.indeterminate = selectedCount > 0 && selectedCount < cardIds.length;
     }
 
     function renderAll() {
@@ -1440,17 +1440,23 @@
     }
 
     function confirmDelete() {
-      const card = activeCard();
-      if (!card) return;
-      pendingDeleteCardId = card.id;
-      elements.deleteMessage.textContent = `“${card.name || "이름 없는 카드"}”을 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
+      const ids = core.deletionIds(state);
+      if (!ids.length) return;
+      pendingDeleteCardIds = [...ids];
+      if (ids.length === 1) {
+        const card = state.cards.find((candidate) => candidate.id === ids[0]);
+        elements.deleteMessage.textContent = `“${card?.name || "이름 없는 카드"}”을 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
+      } else {
+        elements.deleteMessage.textContent = `선택한 ${ids.length}장의 카드를 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
+      }
       elements.deleteDialog.showModal();
     }
 
     function deleteCurrent() {
-      const card = state.cards.find((candidate) => candidate.id === pendingDeleteCardId);
-      if (!card) {
-        pendingDeleteCardId = "";
+      const ids = pendingDeleteCardIds.filter((id) =>
+        state.cards.some((card) => card.id === id));
+      if (!ids.length) {
+        pendingDeleteCardIds = [];
         elements.deleteDialog.close();
         showToast("삭제할 카드를 찾을 수 없습니다.");
         return;
@@ -1459,17 +1465,14 @@
         if (!storageWritable) {
           throw new Error("기존 저장 데이터를 보호하기 위해 삭제를 중단했습니다.");
         }
-        let nextState = core.deleteCard(state, card.id);
-        if (!nextState.activeCardId && nextState.cards.length) {
-          nextState = { ...nextState, activeCardId: nextState.cards[0].id };
-        }
+        const nextState = core.deleteCards(state, ids);
         core.writeStore(localStorage, nextState);
         state = nextState;
         persistFailed = false;
-        pendingDeleteCardId = "";
+        pendingDeleteCardIds = [];
         elements.deleteDialog.close();
         renderAll();
-        showToast("카드를 삭제했습니다.");
+        showToast(ids.length === 1 ? "카드를 삭제했습니다." : `${ids.length}장의 카드를 삭제했습니다.`);
       } catch (error) {
         showToast(error instanceof Error ? error.message : "카드를 삭제하지 못했습니다.");
       }
@@ -1588,7 +1591,7 @@
     elements.deleteDialog.addEventListener("click", (event) => {
       const action = event.target.closest("[data-delete-action]")?.dataset.deleteAction;
       if (action === "cancel") {
-        pendingDeleteCardId = "";
+        pendingDeleteCardIds = [];
         elements.deleteDialog.close();
       }
       if (action === "confirm") deleteCurrent();
