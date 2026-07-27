@@ -51,6 +51,7 @@
 |---|---|---|---|
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위, 실행 시 대상 고정, 대상 칸과 진영별 본문 | 카드 대상·설명·프레임 설계 |
+| [카드 아이디어 노트](specs/2026-07-27-card-idea-notebook-design.md) | `current` | 외부 카드 초안 편집, 명시적 로컬 저장, AI용 Markdown 내보내기 | 카드 아이디어 도구 구현·변경 |
 
 ### 문서 관리
 
