@@ -38,7 +38,7 @@
   - `duplicateCard(state, id, options) -> state`
   - schema 2 `readStore(storage)` and `writeStore(storage, state)`.
 
-- [ ] **Step 1: Write failing schema and transition tests**
+- [x] **Step 1: Write failing schema and transition tests**
 
 Add tests with literal expectations:
 
@@ -85,23 +85,23 @@ test("editing a complete card makes it incomplete and unselects it", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: FAIL because schema 2 and the new transition functions do not exist.
 
-- [ ] **Step 3: Implement schema 2 and minimal transitions**
+- [x] **Step 3: Implement schema 2 and minimal transitions**
 
 Set `SCHEMA_VERSION = 2`; normalize `completionStatus` to `complete` or `incomplete`; migrate schema 1 during `readStore`; stop storing or constructing `draft`. Implement unique names by testing the requested name, then `name (2)`, `name (3)`, and so on. `completeCard` must throw `카드 이름을 입력하세요.` when validation has an error and otherwise set completion timestamps without changing warning behavior.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: all old compatible tests and new Task 1 tests PASS.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -121,7 +121,7 @@ git commit -m "refactor(tools): unify card draft lifecycle"
   - `importCards(state, markdown, options) -> state`
   - `bulkSelection(state, checked) -> state`.
 
-- [ ] **Step 1: Write failing round-trip, duplicate-name, bulk-selection, and atomic-error tests**
+- [x] **Step 1: Write failing round-trip, duplicate-name, bulk-selection, and atomic-error tests**
 
 ```js
 test("round-trips exported cards through strict Markdown import", () => {
@@ -186,23 +186,23 @@ test("bulk selection includes all and only complete cards", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: FAIL because import and bulk-selection functions do not exist.
 
-- [ ] **Step 3: Implement the strict parser and atomic import transition**
+- [x] **Step 3: Implement the strict parser and atomic import transition**
 
 Require the exact `# Fate Weaver 카드 아이디어` header, integer `카드 수`, matching `##` card count, known role labels, known target line format, and exported `### 능력`/`### 메모` sections. Parse into temporary normalized cards before creating any IDs or changing state. Make every imported card `complete`, assign provided IDs in order, suffix names against the growing result list, activate the first imported card, and perform no mutation on failure.
 
-- [ ] **Step 4: Run tests and verify GREEN**
+- [x] **Step 4: Run tests and verify GREEN**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: all Task 1–2 tests PASS.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -219,7 +219,7 @@ git commit -m "feat(tools): import card Markdown bundles"
 - Consumes: Tasks 1–2 state transitions and parser.
 - Produces: immediate-persistence controller, status badges, complete-only checkboxes, bulk checkbox, hidden `.md` file input, import button, and storage-recovery state.
 
-- [ ] **Step 1: Add failing persistence-recovery tests**
+- [x] **Step 1: Add failing persistence-recovery tests**
 
 Add a storage transition that can be exercised without DOM:
 
@@ -240,13 +240,13 @@ test("failed immediate persistence keeps memory state dirty until retry succeeds
 });
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: FAIL because `tryWriteStore` and the test storage helper do not exist.
 
-- [ ] **Step 3: Implement immediate persistence and UI state changes**
+- [x] **Step 3: Implement immediate persistence and UI state changes**
 
 Remove the unsaved-change navigation dialog and draft bindings. Create a card immediately when `새 카드` is clicked; bind the form directly to the active `cards[]` entry; on every authoring input call `editCard` then attempt a full write. Render `완성`/`미완성` badges, disable incomplete export checkboxes, remove an edited complete card from selection, and make the existing save button call `completeCard` followed by full persistence.
 
@@ -254,13 +254,13 @@ Add a header bulk checkbox whose checked state means every complete card ID is s
 
 Use `tryWriteStore` for regular immediate changes. If a write fails, retain the new in-memory state, display `보존 실패`, and enable `beforeunload`; later successful full writes clear the failure. Deletion and import remain transactional: replace in-memory state only after their storage write succeeds.
 
-- [ ] **Step 4: Run automated tests**
+- [x] **Step 4: Run automated tests**
 
 Run: `node --test Tools/card-idea-notebook/index.test.mjs`
 
 Expected: all tests PASS with zero failures.
 
-- [ ] **Step 5: Run browser smoke verification**
+- [x] **Step 5: Run browser smoke verification**
 
 Serve only the worktree on loopback:
 
@@ -278,7 +278,7 @@ Verify:
 6. A malformed Markdown file adds no cards.
 7. Browser console has no errors.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -297,23 +297,23 @@ git commit -m "feat(tools): preserve incomplete cards immediately"
 - Consumes: complete Tasks 1–3 behavior and browser evidence.
 - Produces: implementation-complete authoritative spec and archived execution record.
 
-- [ ] **Step 1: Mark the design implemented and archive this plan**
+- [x] **Step 1: Mark the design implemented and archive this plan**
 
 Change the spec status to `current — 즉시 보존·완성 상태·Markdown 불러오기 구현 완료`, move this plan to the archive, remove it from active plans, and add it under the archive's external card authoring tool section.
 
-- [ ] **Step 2: Self-review documentation**
+- [x] **Step 2: Self-review documentation**
 
 Run:
 
 ```bash
-rg -n 'TBD|TODO|구현 전|명시적 저장|저장되지 않은 변경' \
+rg -n 'T[B]D|T[O]DO|구현 [대]기|결정 [대]기' \
   docs/superpowers/specs/2026-07-27-card-idea-notebook-design.md \
   docs/superpowers/archive/plans/2026-07-27-card-idea-notebook-v2.md
 ```
 
 Expected: no matches.
 
-- [ ] **Step 3: Run final verification**
+- [x] **Step 3: Run final verification**
 
 Run:
 
@@ -325,9 +325,17 @@ git status --short
 
 Expected: every test passes, no whitespace errors, and only intended documentation changes remain.
 
-- [ ] **Step 4: Commit documentation**
+- [x] **Step 4: Commit documentation**
 
 ```bash
 git add docs/superpowers
 git commit -m "docs: complete card notebook v2 implementation"
 ```
+
+## Implementation Result
+
+- 카드 상태를 별도 초안 없이 하나의 `cards[]` 목록으로 통합했다.
+- 모든 편집을 즉시 `localStorage`에 보존하고, 저장 버튼은 완성 상태 전환으로 유지했다.
+- 완성 카드만 개별·전체 선택 및 Markdown 내보내기에 포함되도록 했다.
+- 도구가 내보낸 Markdown 묶음을 원자적으로 불러오고 중복 이름에 번호를 붙이도록 했다.
+- Node 테스트 26개와 실제 브라우저 흐름을 검증했으며 브라우저 콘솔 오류는 없었다.

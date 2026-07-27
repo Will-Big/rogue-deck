@@ -96,3 +96,4 @@
 ### 외부 카드 저작 도구
 
 - [카드 아이디어 노트 구현](plans/2026-07-27-card-idea-notebook.md)
+- [카드 아이디어 노트 V2](plans/2026-07-27-card-idea-notebook-v2.md)
