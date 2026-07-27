@@ -6,7 +6,7 @@
 - 하위 유형: `static-web-tool`, `markdown-export`, `local-draft`
 - 관련 규칙:
   [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)
-- 상태: `current` — 설계 승인, 구현 전
+- 상태: `current` — 단일 HTML 도구 구현 완료
 - 범위: 게임 데이터와 분리된 카드 초안 편집, 브라우저 로컬 저장, AI 전달용 Markdown 내보내기
 
 ## 1. 목적
@@ -31,9 +31,10 @@ ScriptableObject와 직접 연결하지 않는다. 카드 능력은 구현 가�
 
 ## 2. 기술 형태
 
-도구는 `tools/card-idea-notebook/` 아래의 정적 웹 페이지로 만든다.
+도구는 `Tools/card-idea-notebook/index.html` 하나로 완결되는 정적 웹 페이지다.
 
 - HTML, CSS, vanilla JavaScript만 사용한다.
+- 마크업, 스타일, 동작 코드를 모두 `index.html` 안에 포함한다.
 - 외부 프레임워크와 패키지를 추가하지 않는다.
 - 빌드 과정과 서버를 요구하지 않는다.
 - 브라우저에서 `index.html`을 직접 열어 사용할 수 있어야 한다.
@@ -42,6 +43,9 @@ ScriptableObject와 직접 연결하지 않는다. 카드 능력은 구현 가�
 
 브라우저 로컬 저장은 다른 브라우저나 기기와 동기화되지 않는다. Markdown 내보내기는 백업이자 AI 전달
 경계이며, 도구가 저장소나 Unity 프로젝트 파일을 직접 수정하지 않는다.
+
+구현 동작은 같은 디렉터리의 `index.test.mjs`에서 Node 기본 테스트 러너로 검증한다. 테스트 파일은
+개발 검증용이며 사용자는 `index.html`만 열면 된다.
 
 ## 3. 화면 구조
 

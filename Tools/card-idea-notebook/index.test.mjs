@@ -203,3 +203,119 @@ test("export uses saved cards rather than the unsaved draft", () => {
 
   assert.equal(core.cardsForExport(state)[0].name, "저장본");
 });
+
+test("saves a new draft explicitly and updates an existing saved card", () => {
+  const core = loadCore();
+  const initial = {
+    ...core.initialState(),
+    draft: core.normalizeCard({ name: "새 카드", role: "unknown" }),
+  };
+  const created = core.saveDraft(initial, {
+    now: "2026-07-27T10:00:00.000Z",
+    id: "card-a",
+  });
+
+  assert.equal(created.cards.length, 1);
+  assert.equal(created.cards[0].id, "card-a");
+  assert.equal(created.activeCardId, "card-a");
+  assert.equal(core.isDirty(created.cards[0], created.draft), false);
+
+  const edited = {
+    ...created,
+    draft: { ...created.draft, name: "수정 카드" },
+  };
+  const updated = core.saveDraft(edited, { now: "2026-07-27T11:00:00.000Z" });
+  assert.equal(updated.cards.length, 1);
+  assert.equal(updated.cards[0].name, "수정 카드");
+  assert.equal(updated.cards[0].createdAt, "2026-07-27T10:00:00.000Z");
+  assert.equal(updated.cards[0].updatedAt, "2026-07-27T11:00:00.000Z");
+});
+
+test("reports dirty navigation and discards back to the saved card", () => {
+  const core = loadCore();
+  const saved = core.normalizeCard({ id: "a", name: "저장 카드" });
+  const state = {
+    ...core.initialState(),
+    cards: [saved],
+    activeCardId: "a",
+    draft: { ...saved, name: "미저장 카드" },
+  };
+
+  assert.equal(core.navigationStatus(state), "dirty");
+  const discarded = core.discardDraft(state);
+  assert.equal(discarded.draft.name, "저장 카드");
+  assert.equal(core.navigationStatus(discarded), "clean");
+});
+
+test("duplicates and deletes cards without mutating the source", () => {
+  const core = loadCore();
+  const saved = core.normalizeCard({
+    id: "a",
+    name: "원본",
+    tags: ["독"],
+    createdAt: "2026-07-27T10:00:00.000Z",
+  });
+  const state = {
+    ...core.initialState(),
+    cards: [saved],
+    activeCardId: "a",
+    draft: saved,
+    exportSelection: ["a"],
+  };
+
+  const duplicated = core.duplicateCard(state, "a");
+  assert.equal(duplicated.cards.length, 1);
+  assert.equal(duplicated.draft.name, "원본 복사본");
+  assert.equal(duplicated.draft.id, "");
+  assert.deepEqual([...saved.tags], ["독"]);
+
+  const deleted = core.deleteCard(state, "a");
+  assert.equal(deleted.cards.length, 0);
+  assert.deepEqual([...deleted.exportSelection], []);
+  assert.equal(deleted.activeCardId, "");
+});
+
+test("searches saved cards by name or tag", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({ id: "a", name: "맹독 찌르기", tags: ["독", "공격"] }),
+      core.normalizeCard({ id: "b", name: "철벽", tags: ["방어"] }),
+    ],
+  };
+
+  assert.deepEqual(core.filteredCards(state.cards, "맹독").map((card) => card.id), ["a"]);
+  assert.deepEqual(core.filteredCards(state.cards, "방어").map((card) => card.id), ["b"]);
+  assert.equal(core.filteredCards(state.cards, "").length, 2);
+});
+
+test("blocks export without selection and requires saving a selected dirty card", () => {
+  const core = loadCore();
+  const saved = core.normalizeCard({ id: "a", name: "저장 카드" });
+  const base = {
+    ...core.initialState(),
+    cards: [saved],
+    activeCardId: "a",
+    draft: saved,
+  };
+
+  assert.deepEqual(
+    { ...core.exportStatus(base) },
+    { kind: "error", message: "내보낼 저장 카드를 선택하세요." },
+  );
+
+  const selectedDirty = {
+    ...base,
+    exportSelection: ["a"],
+    draft: { ...saved, name: "미저장 카드" },
+  };
+  assert.deepEqual(
+    { ...core.exportStatus(selectedDirty) },
+    { kind: "dirty" },
+  );
+  assert.deepEqual(
+    { ...core.exportStatus({ ...selectedDirty, draft: saved }) },
+    { kind: "ready" },
+  );
+});
