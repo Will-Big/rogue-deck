@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fate Weaver 카드 아이디어 노트</title>
+</head>
+<body>
+  <main>
+    <h1>Fate Weaver 카드 아이디어 노트</h1>
+  </main>
+
+  <script data-card-idea-core>
+  (() => {
+    "use strict";
+
+    const ROLE_LABELS = Object.freeze({
+      unknown: "미정",
+      execution: "실행",
+      intervention: "조작",
+    });
+
+    const TARGETS = Object.freeze({
+      none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
+      frontOne: Object.freeze({ label: "앞 하나", ally: "━━━━◆", enemy: "◆━━━━" }),
+      frontTwo: Object.freeze({ label: "앞 둘", ally: "━━━◆◆", enemy: "◆◆━━━" }),
+      backOne: Object.freeze({ label: "뒤 하나", ally: "◆━━━━", enemy: "━━━━◆" }),
+      backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
+      all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
+    });
+
+    function emptyCard() {
+      return {
+        id: "",
+        name: "",
+        role: "unknown",
+        cost: "",
+        executionOrder: "",
+        tags: [],
+        targets: { ally: "none", enemy: "none" },
+        abilities: { ally: [], enemy: [], none: [] },
+        notes: "",
+        createdAt: "",
+        updatedAt: "",
+      };
+    }
+
+    function textLines(value) {
+      const values = Array.isArray(value) ? value : String(value ?? "").split(/\r?\n/);
+      return values.map((line) => String(line).trim()).filter(Boolean);
+    }
+
+    function tagList(value) {
+      const values = Array.isArray(value) ? value : String(value ?? "").split(/[,\n]/);
+      return [...new Set(values.map((tag) => String(tag).trim()).filter(Boolean))];
+    }
+
+    function validRole(value) {
+      return Object.hasOwn(ROLE_LABELS, value) ? value : "unknown";
+    }
+
+    function validTarget(value) {
+      return Object.hasOwn(TARGETS, value) ? value : "none";
+    }
+
+    function normalizeCard(input = {}) {
+      const base = emptyCard();
+      return {
+        ...base,
+        id: String(input.id ?? "").trim(),
+        name: String(input.name ?? "").trim(),
+        role: validRole(input.role),
+        cost: String(input.cost ?? "").trim(),
+        executionOrder: String(input.executionOrder ?? "").trim(),
+        tags: tagList(input.tags),
+        targets: {
+          ally: validTarget(input.targets?.ally),
+          enemy: validTarget(input.targets?.enemy),
+        },
+        abilities: {
+          ally: textLines(input.abilities?.ally),
+          enemy: textLines(input.abilities?.enemy),
+          none: textLines(input.abilities?.none),
+        },
+        notes: String(input.notes ?? "").trim(),
+        createdAt: String(input.createdAt ?? ""),
+        updatedAt: String(input.updatedAt ?? ""),
+      };
+    }
+
+    function validateCard(input) {
+      const card = normalizeCard(input);
+      const errors = [];
+      const warnings = [];
+
+      if (!card.name) errors.push("카드 이름을 입력하세요.");
+      if (!card.cost) warnings.push("비용이 미정입니다.");
+      if (card.role === "execution" && !card.executionOrder) {
+        warnings.push("실행 카드의 실행순서가 미정입니다.");
+      }
+      if (card.abilities.ally.length && card.targets.ally === "none") {
+        warnings.push("아군 능력은 있지만 아군 위치 범위가 없습니다.");
+      }
+      if (card.targets.ally !== "none" && !card.abilities.ally.length) {
+        warnings.push("아군 위치 범위는 있지만 아군 능력이 없습니다.");
+      }
+      if (card.abilities.enemy.length && card.targets.enemy === "none") {
+        warnings.push("적군 능력은 있지만 적군 위치 범위가 없습니다.");
+      }
+      if (card.targets.enemy !== "none" && !card.abilities.enemy.length) {
+        warnings.push("적군 위치 범위는 있지만 적군 능력이 없습니다.");
+      }
+
+      return { errors, warnings };
+    }
+
+    function targetSummary(input) {
+      const card = normalizeCard(input);
+      const ally = TARGETS[card.targets.ally];
+      const enemy = TARGETS[card.targets.enemy];
+      const parts = [];
+
+      if (card.targets.ally !== "none") {
+        parts.push(`아군 ${ally.label} \`${ally.ally}\``);
+      }
+      if (card.targets.enemy !== "none") {
+        parts.push(`\`${enemy.enemy}\` 적군 ${enemy.label}`);
+      }
+      return parts.length ? parts.join(" │ ") : "없음";
+    }
+
+    function cardMarkdown(input) {
+      const card = normalizeCard(input);
+      const lines = [
+        `## ${card.name || "이름 없는 카드"}`,
+        "",
+        `- 역할: ${ROLE_LABELS[card.role]}`,
+      ];
+
+      if (card.cost) lines.push(`- 비용: ${card.cost}`);
+      if (card.role === "execution" && card.executionOrder) {
+        lines.push(`- 실행순서: ${card.executionOrder}`);
+      }
+      if (card.tags.length) lines.push(`- 태그: ${card.tags.join(", ")}`);
+      lines.push(`- 대상: ${targetSummary(card)}`);
+
+      const abilityLines = [
+        ...card.abilities.enemy.map((line) => `- [적군] ${line}`),
+        ...card.abilities.ally.map((line) => `- [아군] ${line}`),
+        ...card.abilities.none.map((line) => `- ${line}`),
+      ];
+      if (abilityLines.length) {
+        lines.push("", "### 능력", "", ...abilityLines);
+      }
+      if (card.notes) {
+        lines.push("", "### 메모", "", card.notes);
+      }
+      return `${lines.join("\n").trim()}\n`;
+    }
+
+    function bundleMarkdown(inputs, date = new Date().toISOString().slice(0, 10)) {
+      const cards = inputs.map(normalizeCard);
+      const header = [
+        "# Fate Weaver 카드 아이디어",
+        "",
+        `- 생성일: ${date}`,
+        `- 카드 수: ${cards.length}`,
+        "- 대상 규칙: `docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md`",
+      ].join("\n");
+      return `${header}\n\n${cards.map(cardMarkdown).join("\n").trim()}\n`;
+    }
+
+    globalThis.CardIdeaNotebook = Object.freeze({
+      ROLE_LABELS,
+      TARGETS,
+      emptyCard,
+      normalizeCard,
+      validateCard,
+      targetSummary,
+      cardMarkdown,
+      bundleMarkdown,
+    });
+  })();
+  </script>
+</body>
+</html>
