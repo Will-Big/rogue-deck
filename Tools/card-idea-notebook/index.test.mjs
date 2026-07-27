@@ -208,16 +208,26 @@ test("treats a role-only new card as an unsaved change", () => {
   assert.equal(core.navigationStatus(state), "dirty");
 });
 
-test("export uses saved cards rather than the unsaved draft", () => {
+test("export includes selected complete cards and excludes incomplete cards", () => {
   const core = loadCore();
   const state = {
     ...core.initialState(),
-    cards: [core.normalizeCard({ id: "a", name: "저장본" })],
-    draft: core.normalizeCard({ id: "a", name: "미저장본" }),
-    exportSelection: ["a"],
+    cards: [
+      core.normalizeCard({
+        id: "a",
+        name: "완성본",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "b",
+        name: "미완성본",
+        completionStatus: "incomplete",
+      }),
+    ],
+    exportSelection: ["a", "b"],
   };
 
-  assert.equal(core.cardsForExport(state)[0].name, "저장본");
+  assert.deepEqual([...core.cardsForExport(state).map((card) => card.name)], ["완성본"]);
 });
 
 test("saves a new draft explicitly and updates an existing saved card", () => {
@@ -311,14 +321,17 @@ test("searches saved cards by name or tag", () => {
   assert.equal(core.filteredCards(state.cards, "").length, 2);
 });
 
-test("blocks export without selection and requires saving a selected dirty card", () => {
+test("blocks export without selection and allows a selected complete card", () => {
   const core = loadCore();
-  const saved = core.normalizeCard({ id: "a", name: "저장 카드" });
+  const saved = core.normalizeCard({
+    id: "a",
+    name: "저장 카드",
+    completionStatus: "complete",
+  });
   const base = {
     ...core.initialState(),
     cards: [saved],
     activeCardId: "a",
-    draft: saved,
   };
 
   assert.deepEqual(
@@ -326,19 +339,11 @@ test("blocks export without selection and requires saving a selected dirty card"
     { kind: "error", message: "내보낼 저장 카드를 선택하세요." },
   );
 
-  const selectedDirty = {
+  const selected = {
     ...base,
     exportSelection: ["a"],
-    draft: { ...saved, name: "미저장 카드" },
   };
-  assert.deepEqual(
-    { ...core.exportStatus(selectedDirty) },
-    { kind: "dirty" },
-  );
-  assert.deepEqual(
-    { ...core.exportStatus({ ...selectedDirty, draft: saved }) },
-    { kind: "ready" },
-  );
+  assert.deepEqual({ ...core.exportStatus(selected) }, { kind: "ready" });
 });
 
 test("keeps the draft dirty when browser storage rejects a save", () => {
@@ -454,4 +459,105 @@ test("completes a valid card and rejects an empty card name", () => {
     () => core.completeCard(emptyName, "a"),
     /카드 이름을 입력하세요/,
   );
+});
+
+test("round-trips exported cards through strict Markdown import", () => {
+  const core = loadCore();
+  const source = [
+    core.normalizeCard({
+      name: "맹독 호위",
+      role: "execution",
+      cost: "1",
+      executionOrder: "4",
+      tags: ["독", "방어"],
+      targets: { ally: "backOne", enemy: "frontTwo" },
+      abilities: {
+        ally: ["방어 4."],
+        enemy: ["독 2."],
+        none: ["카드 1장 뽑기."],
+      },
+      notes: "왕복 확인",
+      completionStatus: "complete",
+    }),
+  ];
+
+  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].name, "맹독 호위");
+  assert.deepEqual([...parsed[0].tags], ["독", "방어"]);
+  assert.deepEqual([...parsed[0].abilities.enemy], ["독 2."]);
+  assert.equal(parsed[0].targets.ally, "backOne");
+  assert.equal(parsed[0].targets.enemy, "frontTwo");
+  assert.equal(parsed[0].completionStatus, "complete");
+});
+
+test("imports duplicate names as new numbered cards", () => {
+  const core = loadCore();
+  const existing = core.normalizeCard({
+    id: "a",
+    name: "맹독 호위",
+    completionStatus: "complete",
+  });
+  const markdown = core.bundleMarkdown([
+    core.normalizeCard({ name: "맹독 호위", completionStatus: "complete" }),
+    core.normalizeCard({ name: "맹독 호위", completionStatus: "complete" }),
+  ], "2026-07-27");
+
+  const imported = core.importCards(
+    { ...core.initialState(), cards: [existing] },
+    markdown,
+    { ids: ["b", "c"], now: "2026-07-27T01:00:00.000Z" },
+  );
+  assert.deepEqual([...imported.cards.map((card) => card.name)], [
+    "맹독 호위",
+    "맹독 호위 (2)",
+    "맹독 호위 (3)",
+  ]);
+  assert.equal(imported.activeCardId, "b");
+  assert.equal(imported.cards[2].completionStatus, "complete");
+});
+
+test("rejects a malformed bundle without changing existing state", () => {
+  const core = loadCore();
+  const existing = core.normalizeCard({
+    id: "a",
+    name: "보존 카드",
+    completionStatus: "complete",
+  });
+  const state = { ...core.initialState(), cards: [existing] };
+
+  assert.throws(
+    () => core.importCards(state, "# 잘못된 파일"),
+    /불러올 수 없는 Markdown/,
+  );
+  assert.deepEqual([...state.cards.map((card) => card.name)], ["보존 카드"]);
+});
+
+test("rejects a bundle whose declared card count is wrong", () => {
+  const core = loadCore();
+  const markdown = core.bundleMarkdown([
+    core.normalizeCard({ name: "한 장", completionStatus: "complete" }),
+  ], "2026-07-27").replace("- 카드 수: 1", "- 카드 수: 2");
+
+  assert.throws(
+    () => core.parseBundleMarkdown(markdown),
+    /카드 수가 일치하지 않습니다/,
+  );
+});
+
+test("bulk selection includes all and only complete cards", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
+      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
+    ],
+  };
+
+  assert.deepEqual([...core.bulkSelection(state, true).exportSelection], ["a"]);
+  assert.deepEqual([...core.bulkSelection({
+    ...state,
+    exportSelection: ["a"],
+  }, false).exportSelection], []);
 });
