@@ -348,6 +348,26 @@ test("creates uniquely named incomplete cards directly in the list", () => {
   assert.equal(second.activeCardId, "b");
 });
 
+test("keeps generated card IDs unique when an ID source collides", () => {
+  const core = loadCore();
+  const first = core.createCard(core.initialState(), { id: "card" });
+  const second = core.createCard(first, { id: "card" });
+  const duplicated = core.duplicateCard(second, "card", { id: "card" });
+  const markdown = core.bundleMarkdown([
+    core.normalizeCard({ name: "가져온 카드", completionStatus: "complete" }),
+    core.normalizeCard({ name: "가져온 카드 둘", completionStatus: "complete" }),
+  ], "2026-07-27");
+  const imported = core.importCards(duplicated, markdown, { ids: ["card", "card"] });
+
+  assert.deepEqual([...imported.cards.map((card) => card.id)], [
+    "card",
+    "card-2",
+    "card-3",
+    "card-4",
+    "card-5",
+  ]);
+});
+
 test("editing a complete card makes it incomplete and unselects it", () => {
   const core = loadCore();
   const complete = core.normalizeCard({
@@ -415,6 +435,40 @@ test("round-trips exported cards through strict Markdown import", () => {
   assert.equal(parsed[0].targets.ally, "backOne");
   assert.equal(parsed[0].targets.enemy, "frontTwo");
   assert.equal(parsed[0].completionStatus, "complete");
+});
+
+test("round-trips note lines that resemble card headings", () => {
+  const core = loadCore();
+  const notes = "첫 줄\n## 새 카드처럼 보이는 메모\n\\## 백슬래시가 있는 메모";
+  const source = [
+    core.normalizeCard({
+      name: "메모 카드",
+      role: "unknown",
+      notes,
+      completionStatus: "complete",
+    }),
+  ];
+
+  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
+  assert.equal(parsed[0].notes, notes);
+});
+
+test("round-trips targetless abilities that resemble faction markers", () => {
+  const core = loadCore();
+  const targetless = ["[적군] 표식에 관한 설명.", "[아군] 표식에 관한 설명.", "\\[적군] 원문"];
+  const source = [
+    core.normalizeCard({
+      name: "표식 설명",
+      role: "unknown",
+      abilities: { none: targetless },
+      completionStatus: "complete",
+    }),
+  ];
+
+  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
+  assert.deepEqual([...parsed[0].abilities.none], targetless);
+  assert.deepEqual([...parsed[0].abilities.enemy], []);
+  assert.deepEqual([...parsed[0].abilities.ally], []);
 });
 
 test("imports duplicate names as new numbered cards", () => {

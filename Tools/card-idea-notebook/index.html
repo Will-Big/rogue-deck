@@ -629,6 +629,46 @@
       return parts.length ? parts.join(" │ ") : "없음";
     }
 
+    function encodeNoteMarkdown(notes) {
+      return String(notes ?? "")
+        .split("\n")
+        .map((line) => line.startsWith("\\") || line.startsWith("## ") ? `\\${line}` : line)
+        .join("\n");
+    }
+
+    function decodeNoteMarkdown(notes) {
+      return String(notes ?? "")
+        .split("\n")
+        .map((line) => {
+          if (line.startsWith("\\\\") || line.startsWith("\\## ")) return line.slice(1);
+          return line;
+        })
+        .join("\n");
+    }
+
+    function encodeTargetlessAbility(line) {
+      const text = String(line);
+      if (
+        text.startsWith("\\")
+        || text.startsWith("[적군] ")
+        || text.startsWith("[아군] ")
+      ) {
+        return `\\${text}`;
+      }
+      return text;
+    }
+
+    function decodeTargetlessAbility(line) {
+      if (
+        line.startsWith("\\\\")
+        || line.startsWith("\\[적군] ")
+        || line.startsWith("\\[아군] ")
+      ) {
+        return line.slice(1);
+      }
+      return line;
+    }
+
     function cardMarkdown(input) {
       const card = normalizeCard(input);
       const lines = [
@@ -647,13 +687,13 @@
       const abilityLines = [
         ...card.abilities.enemy.map((line) => `- [적군] ${line}`),
         ...card.abilities.ally.map((line) => `- [아군] ${line}`),
-        ...card.abilities.none.map((line) => `- ${line}`),
+        ...card.abilities.none.map((line) => `- ${encodeTargetlessAbility(line)}`),
       ];
       if (abilityLines.length) {
         lines.push("", "### 능력", "", ...abilityLines);
       }
       if (card.notes) {
-        lines.push("", "### 메모", "", card.notes);
+        lines.push("", "### 메모", "", encodeNoteMarkdown(card.notes));
       }
       return `${lines.join("\n").trim()}\n`;
     }
@@ -752,10 +792,10 @@
         const ability = line.slice(2);
         if (ability.startsWith("[적군] ")) input.abilities.enemy.push(ability.slice(5));
         else if (ability.startsWith("[아군] ")) input.abilities.ally.push(ability.slice(5));
-        else input.abilities.none.push(ability);
+        else input.abilities.none.push(decodeTargetlessAbility(ability));
       }
 
-      input.notes = notes.join("\n").trim();
+      input.notes = decodeNoteMarkdown(notes.join("\n").trim());
       if (!input.role) throw markdownImportError(`${input.name}의 역할이 없습니다.`);
       if (!input.targets) throw markdownImportError(`${input.name}의 대상이 없습니다.`);
       if (input.executionOrder && input.role !== "execution") {
@@ -878,6 +918,15 @@
         .map(normalizeCard);
     }
 
+    function uniqueCardId(cards, requestedId) {
+      const base = String(requestedId ?? "").trim() || `card-${Date.now().toString(36)}`;
+      const ids = new Set((cards ?? []).map((card) => String(card.id)));
+      if (!ids.has(base)) return base;
+      let suffix = 2;
+      while (ids.has(`${base}-${suffix}`)) suffix += 1;
+      return `${base}-${suffix}`;
+    }
+
     function uniqueCardName(cards, requestedName) {
       const base = String(requestedName ?? "").trim() || "새 카드";
       const names = new Set((cards ?? []).map((card) => String(card.name)));
@@ -890,7 +939,7 @@
     function createCard(state, options = {}) {
       const now = options.now ?? new Date().toISOString();
       const card = normalizeCard({
-        id: options.id || `card-${Date.now().toString(36)}`,
+        id: uniqueCardId(state.cards, options.id),
         name: uniqueCardName(state.cards, options.name || "새 카드"),
         completionStatus: "incomplete",
         createdAt: now,
@@ -942,7 +991,7 @@
       const imported = parsed.map((card, index) => {
         const added = normalizeCard({
           ...card,
-          id: options.ids?.[index] || `card-${Date.now().toString(36)}-${index}`,
+          id: uniqueCardId(cards, options.ids?.[index] || `card-${Date.now().toString(36)}-${index}`),
           name: uniqueCardName(cards, card.name),
           completionStatus: "complete",
           createdAt: now,
@@ -975,7 +1024,7 @@
       const now = options.now ?? new Date().toISOString();
       const duplicate = normalizeCard({
         ...source,
-        id: options.id || `card-${Date.now().toString(36)}`,
+        id: uniqueCardId(state.cards, options.id),
         name: uniqueCardName(state.cards, `${source.name} 복사본`),
         completionStatus: "incomplete",
         createdAt: now,
@@ -1094,6 +1143,7 @@
     let storageWritable = true;
     let persistFailed = false;
     let toastTimer = 0;
+    let pendingDeleteCardId = "";
 
     function showToast(message) {
       window.clearTimeout(toastTimer);
@@ -1347,10 +1397,12 @@
         const completed = core.completeCard(state, card.id, {
           now: new Date().toISOString(),
         });
-        persistRegular(completed);
+        const persisted = persistRegular(completed);
         renderAll();
-        showToast("카드를 완성 상태로 저장했습니다.");
-        return true;
+        showToast(persisted
+          ? "카드를 완성 상태로 저장했습니다."
+          : "완성 상태로 전환했지만 브라우저 보존에 실패했습니다.");
+        return persisted;
       } catch (error) {
         renderDerived();
         showToast(error instanceof Error ? error.message : "카드를 완성하지 못했습니다.");
@@ -1362,13 +1414,19 @@
     function confirmDelete() {
       const card = activeCard();
       if (!card) return;
+      pendingDeleteCardId = card.id;
       elements.deleteMessage.textContent = `“${card.name || "이름 없는 카드"}”을 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
       elements.deleteDialog.showModal();
     }
 
     function deleteCurrent() {
-      const card = activeCard();
-      if (!card) return;
+      const card = state.cards.find((candidate) => candidate.id === pendingDeleteCardId);
+      if (!card) {
+        pendingDeleteCardId = "";
+        elements.deleteDialog.close();
+        showToast("삭제할 카드를 찾을 수 없습니다.");
+        return;
+      }
       try {
         if (!storageWritable) {
           throw new Error("기존 저장 데이터를 보호하기 위해 삭제를 중단했습니다.");
@@ -1380,6 +1438,7 @@
         core.writeStore(localStorage, nextState);
         state = nextState;
         persistFailed = false;
+        pendingDeleteCardId = "";
         elements.deleteDialog.close();
         renderAll();
         showToast("카드를 삭제했습니다.");
@@ -1500,7 +1559,10 @@
     });
     elements.deleteDialog.addEventListener("click", (event) => {
       const action = event.target.closest("[data-delete-action]")?.dataset.deleteAction;
-      if (action === "cancel") elements.deleteDialog.close();
+      if (action === "cancel") {
+        pendingDeleteCardId = "";
+        elements.deleteDialog.close();
+      }
       if (action === "confirm") deleteCurrent();
     });
     window.addEventListener("keydown", (event) => {
