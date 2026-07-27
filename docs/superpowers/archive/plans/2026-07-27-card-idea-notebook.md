@@ -1,7 +1,7 @@
 # Card Idea Notebook Implementation Plan
 
 - **Status:** Completed 2026-07-27
-- **Result:** `Tools/card-idea-notebook/index.html` 단일 파일 도구와 14개 자동화 테스트를 완성했다.
+- **Result:** `Tools/card-idea-notebook/index.html` 단일 파일 도구와 17개 자동화 테스트를 완성했다.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 

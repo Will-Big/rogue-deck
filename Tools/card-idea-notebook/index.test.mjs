@@ -137,6 +137,12 @@ class MemoryStorage {
   }
 }
 
+class ThrowingStorage extends MemoryStorage {
+  setItem() {
+    throw new Error("quota exceeded");
+  }
+}
+
 test("writes local storage only through the explicit store operation", () => {
   const core = loadCore();
   const storage = new MemoryStorage();
@@ -190,6 +196,16 @@ test("detects an unsaved semantic card change", () => {
 
   assert.equal(core.isDirty(saved, unchangedDraft), false);
   assert.equal(core.isDirty(saved, changedDraft), true);
+});
+
+test("treats a role-only new card as an unsaved change", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    draft: core.normalizeCard({ role: "intervention" }),
+  };
+
+  assert.equal(core.navigationStatus(state), "dirty");
 });
 
 test("export uses saved cards rather than the unsaved draft", () => {
@@ -318,4 +334,46 @@ test("blocks export without selection and requires saving a selected dirty card"
     { ...core.exportStatus({ ...selectedDirty, draft: saved }) },
     { kind: "ready" },
   );
+});
+
+test("keeps the draft dirty when browser storage rejects a save", () => {
+  const core = loadCore();
+  const storage = new ThrowingStorage();
+  const state = {
+    ...core.initialState(),
+    draft: core.normalizeCard({ name: "보존할 초안" }),
+  };
+
+  assert.throws(
+    () => core.persistDraft(storage, state, { id: "card-a" }),
+    /quota exceeded/,
+  );
+  assert.equal(state.cards.length, 0);
+  assert.equal(state.draft.name, "보존할 초안");
+  assert.equal(core.navigationStatus(state), "dirty");
+});
+
+test("blocks writes after rejecting unreadable or future storage data", () => {
+  const core = loadCore();
+  const raw = JSON.stringify({
+    schemaVersion: 99,
+    cards: [{ id: "future-card", name: "미래 카드" }],
+  });
+  const storage = new MemoryStorage({ [core.STORAGE_KEY]: raw });
+  const session = core.readStoreSession(storage);
+  const draftState = {
+    ...session.state,
+    draft: core.normalizeCard({ name: "새 초안" }),
+  };
+
+  assert.equal(session.writable, false);
+  assert.match(session.error, /지원하지 않는 저장 데이터 버전/);
+  assert.throws(
+    () => core.persistDraft(storage, draftState, {
+      id: "card-a",
+      writable: session.writable,
+    }),
+    /기존 저장 데이터를 보호하기 위해 저장을 중단했습니다/,
+  );
+  assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });

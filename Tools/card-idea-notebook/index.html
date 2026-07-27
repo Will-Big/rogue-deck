@@ -708,6 +708,22 @@
       };
     }
 
+    function readStoreSession(storage) {
+      try {
+        return {
+          state: readStore(storage),
+          writable: true,
+          error: "",
+        };
+      } catch (error) {
+        return {
+          state: initialState(),
+          writable: false,
+          error: error instanceof Error ? error.message : "저장 데이터를 읽지 못했습니다.",
+        };
+      }
+    }
+
     function semanticCard(input) {
       const card = normalizeCard(input);
       return {
@@ -721,6 +737,7 @@
       if (!draft) return false;
       if (!saved) return Boolean(
         draft.name
+        || draft.role !== "unknown"
         || draft.cost
         || draft.executionOrder
         || draft.tags?.length
@@ -771,6 +788,15 @@
         activeCardId: id,
         draft: normalizeCard(saved),
       };
+    }
+
+    function persistDraft(storage, state, options = {}) {
+      if (options.writable === false) {
+        throw new Error("기존 저장 데이터를 보호하기 위해 저장을 중단했습니다.");
+      }
+      const nextState = saveDraft(state, options);
+      writeStore(storage, nextState);
+      return nextState;
     }
 
     function navigationStatus(state) {
@@ -848,9 +874,11 @@
       initialState,
       writeStore,
       readStore,
+      readStoreSession,
       isDirty,
       cardsForExport,
       saveDraft,
+      persistDraft,
       navigationStatus,
       discardDraft,
       duplicateCard,
@@ -903,6 +931,7 @@
     };
 
     let state;
+    let storageWritable = true;
     let pendingNavigation = null;
     let toastTimer = 0;
 
@@ -949,6 +978,12 @@
         ...result.errors.map((message) => ({ kind: "error", message })),
         ...result.warnings.map((message) => ({ kind: "warning", message })),
       ];
+      if (!storageWritable) {
+        messages.unshift({
+          kind: "error",
+          message: "기존 저장 데이터를 읽을 수 없어 보호 중입니다. 이 세션에서는 저장할 수 없습니다.",
+        });
+      }
       if (!messages.length) {
         messages.push({ kind: "ok", message: "저장할 수 있는 상태입니다." });
       }
@@ -1012,6 +1047,7 @@
         if (checkbox.checked) selected.add(card.id);
         else selected.delete(card.id);
         state.exportSelection = [...selected];
+        persistUiState();
       });
 
       const select = document.createElement("button");
@@ -1080,12 +1116,14 @@
       if (!card) return;
       state.activeCardId = id;
       state.draft = core.normalizeCard(card);
+      persistUiState();
       renderAll();
     }
 
     function newCard() {
       state.activeCardId = "";
       state.draft = core.emptyCard();
+      persistUiState();
       renderAll();
       elements.name.focus();
     }
@@ -1110,14 +1148,23 @@
       return `card-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
     }
 
+    function persistUiState() {
+      if (!storageWritable) return;
+      try {
+        core.writeStore(localStorage, state);
+      } catch {
+        elements.storageStatus.textContent = "브라우저 로컬 저장 · UI 상태 저장 실패";
+      }
+    }
+
     function saveCurrent() {
       state.draft = draftFromForm();
       try {
-        state = core.saveDraft(state, {
+        state = core.persistDraft(localStorage, state, {
           id: generatedId(),
           now: new Date().toISOString(),
+          writable: storageWritable,
         });
-        core.writeStore(localStorage, state);
         elements.storageStatus.textContent = "브라우저 로컬 저장 · 방금 저장됨";
         renderAll();
         showToast("카드를 브라우저에 저장했습니다.");
@@ -1140,11 +1187,19 @@
     function deleteCurrent() {
       const card = currentSavedCard();
       if (!card) return;
-      state = core.deleteCard(state, card.id);
-      core.writeStore(localStorage, state);
-      elements.deleteDialog.close();
-      renderAll();
-      showToast("카드를 삭제했습니다.");
+      try {
+        if (!storageWritable) {
+          throw new Error("기존 저장 데이터를 보호하기 위해 삭제를 중단했습니다.");
+        }
+        const nextState = core.deleteCard(state, card.id);
+        core.writeStore(localStorage, nextState);
+        state = nextState;
+        elements.deleteDialog.close();
+        renderAll();
+        showToast("카드를 삭제했습니다.");
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "카드를 삭제하지 못했습니다.");
+      }
     }
 
     function downloadSelectedCards() {
@@ -1185,12 +1240,12 @@
       }
     }
 
-    try {
-      state = core.readStore(localStorage);
-    } catch (error) {
-      state = core.initialState();
+    const storageSession = core.readStoreSession(localStorage);
+    state = storageSession.state;
+    storageWritable = storageSession.writable;
+    if (!storageWritable) {
       elements.storageStatus.textContent = "저장 데이터를 읽지 못함 · 새 세션";
-      window.setTimeout(() => showToast(error instanceof Error ? error.message : "저장 데이터를 읽지 못했습니다."), 0);
+      window.setTimeout(() => showToast(storageSession.error), 0);
     }
 
     const initialCard = state.cards.find((card) => card.id === state.activeCardId) ?? state.cards[0] ?? null;
@@ -1210,6 +1265,7 @@
     elements.newCard.addEventListener("click", () => guardNavigation(newCard));
     elements.duplicateCard.addEventListener("click", () => guardNavigation(() => {
       state = core.duplicateCard(state, state.activeCardId);
+      persistUiState();
       renderAll();
       elements.name.focus();
     }));
@@ -1219,6 +1275,7 @@
       state.searchQuery = elements.search.value;
       renderList();
     });
+    elements.search.addEventListener("change", persistUiState);
     elements.form.addEventListener("input", () => {
       state.draft = draftFromForm();
       renderDerived();
