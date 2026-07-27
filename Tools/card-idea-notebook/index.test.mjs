@@ -137,9 +137,15 @@ class MemoryStorage {
   }
 }
 
-class ThrowingStorage extends MemoryStorage {
-  setItem() {
-    throw new Error("quota exceeded");
+class ToggleStorage extends MemoryStorage {
+  constructor(initial = {}) {
+    super(initial);
+    this.failWrites = false;
+  }
+
+  setItem(key, value) {
+    if (this.failWrites) throw new Error("storage unavailable");
+    super.setItem(key, value);
   }
 }
 
@@ -158,12 +164,17 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
 
-test("round-trips the current schema and rejects an unknown schema", () => {
+test("round-trips the current schema, pruning incomplete selections, and rejects an unknown schema", () => {
   const core = loadCore();
   const storage = new MemoryStorage();
   const state = {
     ...core.initialState(),
-    cards: [core.normalizeCard({ id: "a", name: "보존 카드", tags: ["독"] })],
+    cards: [core.normalizeCard({
+      id: "a",
+      name: "보존 카드",
+      tags: ["독"],
+      completionStatus: "complete",
+    })],
     activeCardId: "a",
     searchQuery: "독",
     exportSelection: ["a"],
@@ -177,35 +188,22 @@ test("round-trips the current schema and rejects an unknown schema", () => {
   assert.equal(loaded.searchQuery, "독");
   assert.deepEqual([...loaded.exportSelection], ["a"]);
 
+  const incomplete = core.editCard(state, "a", { notes: "수정됨" });
+  core.writeStore(storage, { ...incomplete, exportSelection: ["a"] });
+  assert.deepEqual([...core.readStore(storage).exportSelection], []);
+
   storage.setItem(core.STORAGE_KEY, JSON.stringify({ schemaVersion: 99, cards: [] }));
   assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
 });
 
-test("detects an unsaved semantic card change", () => {
+test("keeps every card in one list without a separate draft state", () => {
   const core = loadCore();
-  const saved = core.normalizeCard({
-    id: "a",
-    name: "저장본",
-    updatedAt: "2026-07-27T00:00:00.000Z",
-  });
-  const unchangedDraft = {
-    ...saved,
-    updatedAt: "2026-07-28T00:00:00.000Z",
-  };
-  const changedDraft = { ...saved, name: "미저장본" };
+  const state = core.initialState();
 
-  assert.equal(core.isDirty(saved, unchangedDraft), false);
-  assert.equal(core.isDirty(saved, changedDraft), true);
-});
-
-test("treats a role-only new card as an unsaved change", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    draft: core.normalizeCard({ role: "intervention" }),
-  };
-
-  assert.equal(core.navigationStatus(state), "dirty");
+  assert.equal(Object.hasOwn(state, "draft"), false);
+  const created = core.createCard(state, { id: "a" });
+  assert.equal(Object.hasOwn(created, "draft"), false);
+  assert.equal(created.cards.length, 1);
 });
 
 test("export includes selected complete cards and excludes incomplete cards", () => {
@@ -230,49 +228,6 @@ test("export includes selected complete cards and excludes incomplete cards", ()
   assert.deepEqual([...core.cardsForExport(state).map((card) => card.name)], ["완성본"]);
 });
 
-test("saves a new draft explicitly and updates an existing saved card", () => {
-  const core = loadCore();
-  const initial = {
-    ...core.initialState(),
-    draft: core.normalizeCard({ name: "새 카드", role: "unknown" }),
-  };
-  const created = core.saveDraft(initial, {
-    now: "2026-07-27T10:00:00.000Z",
-    id: "card-a",
-  });
-
-  assert.equal(created.cards.length, 1);
-  assert.equal(created.cards[0].id, "card-a");
-  assert.equal(created.activeCardId, "card-a");
-  assert.equal(core.isDirty(created.cards[0], created.draft), false);
-
-  const edited = {
-    ...created,
-    draft: { ...created.draft, name: "수정 카드" },
-  };
-  const updated = core.saveDraft(edited, { now: "2026-07-27T11:00:00.000Z" });
-  assert.equal(updated.cards.length, 1);
-  assert.equal(updated.cards[0].name, "수정 카드");
-  assert.equal(updated.cards[0].createdAt, "2026-07-27T10:00:00.000Z");
-  assert.equal(updated.cards[0].updatedAt, "2026-07-27T11:00:00.000Z");
-});
-
-test("reports dirty navigation and discards back to the saved card", () => {
-  const core = loadCore();
-  const saved = core.normalizeCard({ id: "a", name: "저장 카드" });
-  const state = {
-    ...core.initialState(),
-    cards: [saved],
-    activeCardId: "a",
-    draft: { ...saved, name: "미저장 카드" },
-  };
-
-  assert.equal(core.navigationStatus(state), "dirty");
-  const discarded = core.discardDraft(state);
-  assert.equal(discarded.draft.name, "저장 카드");
-  assert.equal(core.navigationStatus(discarded), "clean");
-});
-
 test("duplicates into the list and deletes cards without mutating the source", () => {
   const core = loadCore();
   const saved = core.normalizeCard({
@@ -285,7 +240,6 @@ test("duplicates into the list and deletes cards without mutating the source", (
     ...core.initialState(),
     cards: [saved],
     activeCardId: "a",
-    draft: saved,
     exportSelection: ["a"],
   };
 
@@ -336,7 +290,7 @@ test("blocks export without selection and allows a selected complete card", () =
 
   assert.deepEqual(
     { ...core.exportStatus(base) },
-    { kind: "error", message: "내보낼 저장 카드를 선택하세요." },
+    { kind: "error", message: "내보낼 완성 카드를 선택하세요." },
   );
 
   const selected = {
@@ -344,23 +298,6 @@ test("blocks export without selection and allows a selected complete card", () =
     exportSelection: ["a"],
   };
   assert.deepEqual({ ...core.exportStatus(selected) }, { kind: "ready" });
-});
-
-test("keeps the draft dirty when browser storage rejects a save", () => {
-  const core = loadCore();
-  const storage = new ThrowingStorage();
-  const state = {
-    ...core.initialState(),
-    draft: core.normalizeCard({ name: "보존할 초안" }),
-  };
-
-  assert.throws(
-    () => core.persistDraft(storage, state, { id: "card-a" }),
-    /quota exceeded/,
-  );
-  assert.equal(state.cards.length, 0);
-  assert.equal(state.draft.name, "보존할 초안");
-  assert.equal(core.navigationStatus(state), "dirty");
 });
 
 test("blocks writes after rejecting unreadable or future storage data", () => {
@@ -371,20 +308,9 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
   });
   const storage = new MemoryStorage({ [core.STORAGE_KEY]: raw });
   const session = core.readStoreSession(storage);
-  const draftState = {
-    ...session.state,
-    draft: core.normalizeCard({ name: "새 초안" }),
-  };
-
   assert.equal(session.writable, false);
   assert.match(session.error, /지원하지 않는 저장 데이터 버전/);
-  assert.throws(
-    () => core.persistDraft(storage, draftState, {
-      id: "card-a",
-      writable: session.writable,
-    }),
-    /기존 저장 데이터를 보호하기 위해 저장을 중단했습니다/,
-  );
+  assert.equal(session.state.cards.length, 0);
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });
 
@@ -560,4 +486,27 @@ test("bulk selection includes all and only complete cards", () => {
     ...state,
     exportSelection: ["a"],
   }, false).exportSelection], []);
+});
+
+test("failed immediate persistence keeps memory state until retry succeeds", () => {
+  const core = loadCore();
+  const storage = new ToggleStorage();
+  const state = core.createCard(core.initialState(), {
+    id: "a",
+    now: "2026-07-27T00:00:00.000Z",
+  });
+
+  storage.failWrites = true;
+  const failed = core.tryWriteStore(storage, state);
+  assert.equal(failed.persistFailed, true);
+  assert.equal(failed.state.cards[0].name, "새 카드");
+  assert.equal(storage.getItem(core.STORAGE_KEY), null);
+
+  storage.failWrites = false;
+  const recovered = core.tryWriteStore(storage, failed.state);
+  assert.equal(recovered.persistFailed, false);
+  assert.equal(
+    JSON.parse(storage.getItem(core.STORAGE_KEY)).cards[0].name,
+    "새 카드",
+  );
 });

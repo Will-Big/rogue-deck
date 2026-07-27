@@ -183,14 +183,25 @@
     .card-select:hover:not(:disabled) { border-color: transparent; background: transparent; }
     .card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
     .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: var(--muted); font-size: 11px; }
-    .tag, .role-pill {
+    .tag, .role-pill, .completion-pill {
       padding: 2px 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: #171916;
     }
+    .completion-pill.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
+    .completion-pill.incomplete { color: #f6dca7; border-color: #705c32; background: #30291c; }
     .warning-dot { color: var(--warning); }
     .empty-list { padding: 28px 18px; color: var(--muted); text-align: center; line-height: 1.7; font-size: 13px; }
+    .bulk-select {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .bulk-select input { width: 15px; margin: 0; accent-color: var(--gold); }
 
     .library-actions {
       position: absolute;
@@ -205,20 +216,19 @@
       background: rgba(25, 27, 24, .97);
     }
     .library-pane { position: relative; }
-    .library-actions .export { grid-column: 1 / -1; }
+    .library-actions .wide-action { grid-column: 1 / -1; }
 
     .editor-content { display: grid; gap: 20px; padding: 18px 20px 80px; }
-    .dirty-badge {
-      display: none;
+    .completion-badge {
+      display: inline-flex;
       padding: 5px 8px;
-      border: 1px solid #705c32;
+      border: 1px solid var(--line-strong);
       border-radius: 999px;
-      color: #f0c86d;
-      background: #352e1e;
       font-size: 11px;
       font-weight: 750;
     }
-    .dirty-badge.visible { display: inline-flex; }
+    .completion-badge.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
+    .completion-badge.incomplete { color: #f0c86d; border-color: #705c32; background: #352e1e; }
     .editor-heading { display: flex; align-items: center; gap: 9px; }
     .form-section {
       display: grid;
@@ -343,11 +353,11 @@
         <p class="subtitle">아이디어를 정리하고 AI 저작용 Markdown으로 내보냅니다.</p>
       </div>
     </div>
-    <p class="header-status" id="storage-status">브라우저 로컬 저장 · 명시적 저장</p>
+    <p class="header-status" id="storage-status">브라우저 로컬 저장 · 즉시 보존</p>
   </header>
 
   <main class="workspace">
-    <aside class="pane library-pane" aria-label="저장된 카드">
+    <aside class="pane library-pane" aria-label="카드 목록">
       <div class="pane-scroll">
         <div class="pane-header">
           <div class="pane-title">
@@ -361,13 +371,19 @@
             카드 검색
             <input id="search" type="search" placeholder="이름 또는 태그">
           </label>
+          <label class="bulk-select">
+            <input id="select-all" type="checkbox">
+            완성 카드 전체 체크
+          </label>
         </div>
         <div class="card-list" id="card-list"></div>
       </div>
       <div class="library-actions">
         <button type="button" id="duplicate-card">복제</button>
         <button type="button" class="danger" id="delete-card">삭제</button>
-        <button type="button" class="primary export" id="export-markdown">AI용 Markdown 내보내기</button>
+        <button type="button" class="wide-action" id="import-markdown">Markdown 불러오기</button>
+        <input id="import-file" type="file" accept=".md,text/markdown,text/plain" hidden>
+        <button type="button" class="primary wide-action" id="export-markdown">AI용 Markdown 내보내기</button>
       </div>
     </aside>
 
@@ -375,8 +391,8 @@
       <div class="pane-scroll">
         <div class="pane-header">
           <div class="editor-heading">
-            <strong id="editor-title">새 카드</strong>
-            <span class="dirty-badge" id="dirty-badge">저장되지 않은 변경</span>
+            <strong id="editor-title">선택된 카드 없음</strong>
+            <span class="completion-badge incomplete" id="completion-badge">미완성</span>
           </div>
           <button type="button" class="primary" id="save-card">저장</button>
         </div>
@@ -476,18 +492,6 @@
       </div>
     </aside>
   </main>
-
-  <dialog id="unsaved-dialog">
-    <div class="dialog-body">
-      <h2>저장하지 않은 변경이 있습니다</h2>
-      <p>현재 카드의 변경을 저장한 뒤 계속하거나, 변경을 버리거나, 작업을 취소할 수 있습니다.</p>
-    </div>
-    <div class="dialog-actions">
-      <button type="button" class="ghost" data-unsaved-action="cancel">취소</button>
-      <button type="button" data-unsaved-action="discard">변경 버리기</button>
-      <button type="button" class="primary" data-unsaved-action="save">저장 후 계속</button>
-    </div>
-  </dialog>
 
   <dialog id="delete-dialog">
     <div class="dialog-body">
@@ -795,7 +799,6 @@
         activeCardId: "",
         searchQuery: "",
         exportSelection: [],
-        draft: null,
       };
     }
 
@@ -825,13 +828,17 @@
         completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
       }));
       const ids = new Set(cards.map((card) => card.id));
+      const completeIds = new Set(
+        cards.filter((card) => card.completionStatus === "complete").map((card) => card.id),
+      );
       return {
         schemaVersion: SCHEMA_VERSION,
         cards,
         activeCardId: ids.has(saved.activeCardId) ? saved.activeCardId : "",
         searchQuery: String(saved.searchQuery ?? ""),
-        exportSelection: (saved.exportSelection ?? []).map(String).filter((id) => ids.has(id)),
-        draft: null,
+        exportSelection: (saved.exportSelection ?? [])
+          .map(String)
+          .filter((id) => completeIds.has(id)),
       };
     }
 
@@ -851,31 +858,17 @@
       }
     }
 
-    function semanticCard(input) {
-      const card = normalizeCard(input);
-      return {
-        ...card,
-        createdAt: "",
-        updatedAt: "",
-      };
-    }
-
-    function isDirty(saved, draft) {
-      if (!draft) return false;
-      if (!saved) return Boolean(
-        draft.name
-        || draft.role !== "unknown"
-        || draft.cost
-        || draft.executionOrder
-        || draft.tags?.length
-        || draft.targets?.ally !== "none"
-        || draft.targets?.enemy !== "none"
-        || draft.abilities?.ally?.length
-        || draft.abilities?.enemy?.length
-        || draft.abilities?.none?.length
-        || draft.notes
-      );
-      return JSON.stringify(semanticCard(saved)) !== JSON.stringify(semanticCard(draft));
+    function tryWriteStore(storage, state) {
+      try {
+        writeStore(storage, state);
+        return { state, persistFailed: false, error: "" };
+      } catch (error) {
+        return {
+          state,
+          persistFailed: true,
+          error: error instanceof Error ? error.message : "저장소 쓰기에 실패했습니다.",
+        };
+      }
     }
 
     function cardsForExport(state) {
@@ -883,11 +876,6 @@
       return (state.cards ?? [])
         .filter((card) => card.completionStatus === "complete" && selected.has(String(card.id)))
         .map(normalizeCard);
-    }
-
-    function savedCardForDraft(state) {
-      const id = state.activeCardId || state.draft?.id;
-      return (state.cards ?? []).find((card) => card.id === id) ?? null;
     }
 
     function uniqueCardName(cards, requestedName) {
@@ -981,57 +969,6 @@
       };
     }
 
-    function saveDraft(state, options = {}) {
-      const draft = normalizeCard(state.draft ?? emptyCard());
-      const validation = validateCard(draft);
-      if (validation.errors.length) {
-        throw new Error(validation.errors[0]);
-      }
-
-      const existing = savedCardForDraft(state);
-      const now = options.now ?? new Date().toISOString();
-      const id = existing?.id || draft.id || options.id || `card-${Date.now().toString(36)}`;
-      const saved = normalizeCard({
-        ...draft,
-        id,
-        createdAt: existing?.createdAt || draft.createdAt || now,
-        updatedAt: now,
-      });
-      const cards = [...(state.cards ?? [])];
-      const index = cards.findIndex((card) => card.id === id);
-      if (index >= 0) cards[index] = saved;
-      else cards.push(saved);
-
-      return {
-        ...state,
-        cards,
-        activeCardId: id,
-        draft: normalizeCard(saved),
-      };
-    }
-
-    function persistDraft(storage, state, options = {}) {
-      if (options.writable === false) {
-        throw new Error("기존 저장 데이터를 보호하기 위해 저장을 중단했습니다.");
-      }
-      const nextState = saveDraft(state, options);
-      writeStore(storage, nextState);
-      return nextState;
-    }
-
-    function navigationStatus(state) {
-      return isDirty(savedCardForDraft(state), state.draft) ? "dirty" : "clean";
-    }
-
-    function discardDraft(state) {
-      const saved = savedCardForDraft(state);
-      return {
-        ...state,
-        activeCardId: saved?.id ?? "",
-        draft: saved ? normalizeCard(saved) : emptyCard(),
-      };
-    }
-
     function duplicateCard(state, id, options = {}) {
       const source = (state.cards ?? []).find((card) => card.id === id);
       if (!source) return state;
@@ -1057,7 +994,6 @@
         ...state,
         cards: (state.cards ?? []).filter((card) => card.id !== id),
         activeCardId: deletingActive ? "" : state.activeCardId,
-        draft: deletingActive ? emptyCard() : state.draft,
         exportSelection: (state.exportSelection ?? []).filter((selectedId) => selectedId !== id),
       };
     }
@@ -1074,7 +1010,7 @@
     function exportStatus(state) {
       const cards = cardsForExport(state);
       if (!cards.length) {
-        return { kind: "error", message: "내보낼 저장 카드를 선택하세요." };
+        return { kind: "error", message: "내보낼 완성 카드를 선택하세요." };
       }
       return { kind: "ready" };
     }
@@ -1095,7 +1031,7 @@
       writeStore,
       readStore,
       readStoreSession,
-      isDirty,
+      tryWriteStore,
       cardsForExport,
       uniqueCardName,
       createCard,
@@ -1103,10 +1039,6 @@
       completeCard,
       importCards,
       bulkSelection,
-      saveDraft,
-      persistDraft,
-      navigationStatus,
-      discardDraft,
       duplicateCard,
       deleteCard,
       filteredCards,
@@ -1125,13 +1057,16 @@
       cardCount: byId("card-count"),
       cardList: byId("card-list"),
       search: byId("search"),
+      selectAll: byId("select-all"),
       newCard: byId("new-card"),
       duplicateCard: byId("duplicate-card"),
       deleteCard: byId("delete-card"),
+      importMarkdown: byId("import-markdown"),
+      importFile: byId("import-file"),
       exportMarkdown: byId("export-markdown"),
       saveCard: byId("save-card"),
       editorTitle: byId("editor-title"),
-      dirtyBadge: byId("dirty-badge"),
+      completionBadge: byId("completion-badge"),
       form: byId("card-form"),
       validation: byId("validation"),
       name: byId("card-name"),
@@ -1150,7 +1085,6 @@
       noneAbilities: byId("none-abilities"),
       notes: byId("card-notes"),
       markdownPreview: byId("markdown-preview"),
-      unsavedDialog: byId("unsaved-dialog"),
       deleteDialog: byId("delete-dialog"),
       deleteMessage: byId("delete-message"),
       toast: byId("toast"),
@@ -1158,7 +1092,7 @@
 
     let state;
     let storageWritable = true;
-    let pendingNavigation = null;
+    let persistFailed = false;
     let toastTimer = 0;
 
     function showToast(message) {
@@ -1168,10 +1102,10 @@
       toastTimer = window.setTimeout(() => elements.toast.classList.remove("visible"), 2600);
     }
 
-    function draftFromForm() {
+    function cardFromForm() {
+      const current = activeCard() ?? core.emptyCard();
       return core.normalizeCard({
-        ...state.draft,
-        id: state.draft?.id ?? state.activeCardId,
+        ...current,
         name: elements.name.value,
         role: elements.role.value,
         cost: elements.cost.value,
@@ -1190,24 +1124,28 @@
       });
     }
 
-    function currentSavedCard() {
+    function activeCard() {
       return state.cards.find((card) => card.id === state.activeCardId) ?? null;
     }
 
-    function isCurrentDirty() {
-      return core.navigationStatus(state) === "dirty";
-    }
-
     function renderValidation() {
-      const result = core.validateCard(state.draft);
-      const messages = [
-        ...result.errors.map((message) => ({ kind: "error", message })),
-        ...result.warnings.map((message) => ({ kind: "warning", message })),
-      ];
+      const card = activeCard();
+      const result = card ? core.validateCard(card) : { errors: [], warnings: [] };
+      const messages = card
+        ? [
+          ...result.errors.map((message) => ({ kind: "error", message })),
+          ...result.warnings.map((message) => ({ kind: "warning", message })),
+        ]
+        : [{ kind: "warning", message: "새 카드를 만들거나 목록에서 카드를 선택하세요." }];
       if (!storageWritable) {
         messages.unshift({
           kind: "error",
           message: "기존 저장 데이터를 읽을 수 없어 보호 중입니다. 이 세션에서는 저장할 수 없습니다.",
+        });
+      } else if (persistFailed) {
+        messages.unshift({
+          kind: "error",
+          message: "브라우저 보존에 실패했습니다. 다음 변경에서 전체 상태 저장을 다시 시도합니다.",
         });
       }
       if (!messages.length) {
@@ -1223,26 +1161,32 @@
     }
 
     function renderTargets() {
-      const ally = core.TARGETS[state.draft.targets.ally];
-      const enemy = core.TARGETS[state.draft.targets.enemy];
+      const card = activeCard() ?? core.emptyCard();
+      const ally = core.TARGETS[card.targets.ally];
+      const enemy = core.TARGETS[card.targets.enemy];
       elements.allyGlyph.textContent = ally.ally || "없음";
       elements.enemyGlyph.textContent = enemy.enemy || "없음";
-      elements.targetSummary.textContent = core.targetSummary(state.draft).replaceAll("`", "");
+      elements.targetSummary.textContent = core.targetSummary(card).replaceAll("`", "");
     }
 
     function renderDerived() {
-      const dirty = isCurrentDirty();
-      elements.dirtyBadge.classList.toggle("visible", dirty);
-      elements.editorTitle.textContent = state.draft.name || (state.activeCardId ? "이름 없는 카드" : "새 카드");
-      elements.executionOrderField.classList.toggle("hidden", state.draft.role !== "execution");
-      elements.markdownPreview.textContent = core.cardMarkdown(state.draft);
+      const card = activeCard();
+      const status = card?.completionStatus ?? "incomplete";
+      elements.editorTitle.textContent = card?.name || "선택된 카드 없음";
+      elements.completionBadge.textContent = status === "complete" ? "완성" : "미완성";
+      elements.completionBadge.className = `completion-badge ${status}`;
+      elements.completionBadge.classList.toggle("hidden", !card);
+      elements.executionOrderField.classList.toggle("hidden", card?.role !== "execution");
+      elements.markdownPreview.textContent = card ? core.cardMarkdown(card) : "";
+      elements.saveCard.disabled = !card;
       renderTargets();
       renderValidation();
+      renderStorageStatus();
     }
 
     function renderForm() {
-      const card = core.normalizeCard(state.draft ?? core.emptyCard());
-      state.draft = card;
+      const card = core.normalizeCard(activeCard() ?? core.emptyCard());
+      const disabled = !activeCard();
       elements.name.value = card.name;
       elements.role.value = card.role;
       elements.cost.value = card.cost;
@@ -1254,6 +1198,9 @@
       elements.allyAbilities.value = card.abilities.ally.join("\n");
       elements.noneAbilities.value = card.abilities.none.join("\n");
       elements.notes.value = card.notes;
+      for (const control of elements.form.querySelectorAll("input, select, textarea")) {
+        control.disabled = disabled;
+      }
       renderDerived();
     }
 
@@ -1266,20 +1213,21 @@
       checkbox.type = "checkbox";
       checkbox.className = "export-check";
       checkbox.checked = state.exportSelection.includes(card.id);
-      checkbox.title = "Markdown 내보내기에 포함";
+      checkbox.disabled = card.completionStatus !== "complete";
+      checkbox.title = checkbox.disabled ? "미완성 카드는 내보낼 수 없습니다." : "Markdown 내보내기에 포함";
       checkbox.setAttribute("aria-label", `${card.name} 내보내기 선택`);
       checkbox.addEventListener("change", () => {
         const selected = new Set(state.exportSelection);
         if (checkbox.checked) selected.add(card.id);
         else selected.delete(card.id);
-        state.exportSelection = [...selected];
-        persistUiState();
+        persistRegular({ ...state, exportSelection: [...selected] });
+        renderList();
       });
 
       const select = document.createElement("button");
       select.type = "button";
       select.className = "card-select";
-      select.addEventListener("click", () => guardNavigation(() => openSavedCard(card.id)));
+      select.addEventListener("click", () => openCard(card.id));
 
       const name = document.createElement("div");
       name.className = "card-name";
@@ -1290,7 +1238,10 @@
       const role = document.createElement("span");
       role.className = "role-pill";
       role.textContent = core.ROLE_LABELS[card.role];
-      meta.append(role);
+      const completion = document.createElement("span");
+      completion.className = `completion-pill ${card.completionStatus}`;
+      completion.textContent = card.completionStatus === "complete" ? "완성" : "미완성";
+      meta.append(role, completion);
       for (const tagText of card.tags.slice(0, 3)) {
         const tag = document.createElement("span");
         tag.className = "tag";
@@ -1319,16 +1270,23 @@
         empty.className = "empty-list";
         empty.textContent = state.cards.length
           ? "검색 조건에 맞는 카드가 없습니다."
-          : "아직 저장된 카드가 없습니다.\n새 카드를 만들어 아이디어를 기록하세요.";
+          : "아직 카드가 없습니다.\n새 카드를 만들어 아이디어를 기록하세요.";
         empty.style.whiteSpace = "pre-line";
         elements.cardList.append(empty);
       } else {
         elements.cardList.append(...cards.map(cardRow));
       }
 
-      const hasSavedCard = Boolean(currentSavedCard());
-      elements.duplicateCard.disabled = !hasSavedCard;
-      elements.deleteCard.disabled = !hasSavedCard;
+      const current = activeCard();
+      elements.duplicateCard.disabled = !current;
+      elements.deleteCard.disabled = !current;
+      const completeIds = state.cards
+        .filter((card) => card.completionStatus === "complete")
+        .map((card) => card.id);
+      const selectedCount = completeIds.filter((id) => state.exportSelection.includes(id)).length;
+      elements.selectAll.disabled = completeIds.length === 0;
+      elements.selectAll.checked = completeIds.length > 0 && selectedCount === completeIds.length;
+      elements.selectAll.indeterminate = selectedCount > 0 && selectedCount < completeIds.length;
     }
 
     function renderAll() {
@@ -1337,36 +1295,20 @@
       renderForm();
     }
 
-    function openSavedCard(id) {
+    function openCard(id) {
       const card = state.cards.find((candidate) => candidate.id === id);
       if (!card) return;
-      state.activeCardId = id;
-      state.draft = core.normalizeCard(card);
-      persistUiState();
+      persistRegular({ ...state, activeCardId: id });
       renderAll();
     }
 
     function newCard() {
-      state.activeCardId = "";
-      state.draft = core.emptyCard();
-      persistUiState();
+      persistRegular(core.createCard(state, {
+        id: generatedId(),
+        now: new Date().toISOString(),
+      }));
       renderAll();
       elements.name.focus();
-    }
-
-    function guardNavigation(action) {
-      if (!isCurrentDirty()) {
-        action();
-        return;
-      }
-      pendingNavigation = action;
-      elements.unsavedDialog.showModal();
-    }
-
-    function finishPendingNavigation() {
-      const action = pendingNavigation;
-      pendingNavigation = null;
-      if (action) action();
     }
 
     function generatedId() {
@@ -1374,52 +1316,70 @@
       return `card-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
     }
 
-    function persistUiState() {
-      if (!storageWritable) return;
-      try {
-        core.writeStore(localStorage, state);
-      } catch {
-        elements.storageStatus.textContent = "브라우저 로컬 저장 · UI 상태 저장 실패";
+    function renderStorageStatus() {
+      if (!storageWritable) {
+        elements.storageStatus.textContent = "저장 데이터 읽기 실패 · 기존 데이터 보호 중";
+      } else if (persistFailed) {
+        elements.storageStatus.textContent = "보존 실패 · 다음 변경에서 재시도";
+      } else {
+        elements.storageStatus.textContent = "브라우저 로컬 저장 · 즉시 보존";
       }
     }
 
+    function persistRegular(nextState) {
+      state = nextState;
+      if (!storageWritable) {
+        persistFailed = true;
+        renderStorageStatus();
+        return false;
+      }
+      const result = core.tryWriteStore(localStorage, state);
+      persistFailed = result.persistFailed;
+      if (persistFailed) showToast(`보존 실패: ${result.error}`);
+      renderStorageStatus();
+      return !persistFailed;
+    }
+
     function saveCurrent() {
-      state.draft = draftFromForm();
+      const card = activeCard();
+      if (!card) return false;
       try {
-        state = core.persistDraft(localStorage, state, {
-          id: generatedId(),
+        const completed = core.completeCard(state, card.id, {
           now: new Date().toISOString(),
-          writable: storageWritable,
         });
-        elements.storageStatus.textContent = "브라우저 로컬 저장 · 방금 저장됨";
+        persistRegular(completed);
         renderAll();
-        showToast("카드를 브라우저에 저장했습니다.");
+        showToast("카드를 완성 상태로 저장했습니다.");
         return true;
       } catch (error) {
         renderDerived();
-        showToast(error instanceof Error ? error.message : "카드를 저장하지 못했습니다.");
+        showToast(error instanceof Error ? error.message : "카드를 완성하지 못했습니다.");
         elements.name.focus();
         return false;
       }
     }
 
     function confirmDelete() {
-      const card = currentSavedCard();
+      const card = activeCard();
       if (!card) return;
       elements.deleteMessage.textContent = `“${card.name || "이름 없는 카드"}”을 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
       elements.deleteDialog.showModal();
     }
 
     function deleteCurrent() {
-      const card = currentSavedCard();
+      const card = activeCard();
       if (!card) return;
       try {
         if (!storageWritable) {
           throw new Error("기존 저장 데이터를 보호하기 위해 삭제를 중단했습니다.");
         }
-        const nextState = core.deleteCard(state, card.id);
+        let nextState = core.deleteCard(state, card.id);
+        if (!nextState.activeCardId && nextState.cards.length) {
+          nextState = { ...nextState, activeCardId: nextState.cards[0].id };
+        }
         core.writeStore(localStorage, nextState);
         state = nextState;
+        persistFailed = false;
         elements.deleteDialog.close();
         renderAll();
         showToast("카드를 삭제했습니다.");
@@ -1441,7 +1401,7 @@
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      showToast(`${cards.length}장의 저장본을 Markdown으로 내보냈습니다.`);
+      showToast(`${cards.length}장의 완성 카드를 Markdown으로 내보냈습니다.`);
     }
 
     function exportMarkdown() {
@@ -1450,11 +1410,31 @@
         showToast(status.message);
         return;
       }
-      if (status.kind === "dirty") {
-        const shouldSave = window.confirm("선택한 현재 카드에 저장하지 않은 변경이 있습니다. 저장한 뒤 내보낼까요?");
-        if (!shouldSave || !saveCurrent()) return;
-      }
       downloadSelectedCards();
+    }
+
+    async function importMarkdownFile(file) {
+      if (!file) return;
+      try {
+        if (!storageWritable) {
+          throw new Error("기존 저장 데이터를 보호하기 위해 불러오기를 중단했습니다.");
+        }
+        const markdown = await file.text();
+        const parsed = core.parseBundleMarkdown(markdown);
+        const nextState = core.importCards(state, markdown, {
+          ids: parsed.map(() => generatedId()),
+          now: new Date().toISOString(),
+        });
+        core.writeStore(localStorage, nextState);
+        state = nextState;
+        persistFailed = false;
+        renderAll();
+        showToast(`${parsed.length}장의 카드를 불러왔습니다.`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Markdown을 불러오지 못했습니다.");
+      } finally {
+        elements.importFile.value = "";
+      }
     }
 
     for (const [value, target] of Object.entries(core.TARGETS)) {
@@ -1470,17 +1450,12 @@
     state = storageSession.state;
     storageWritable = storageSession.writable;
     if (!storageWritable) {
-      elements.storageStatus.textContent = "저장 데이터를 읽지 못함 · 새 세션";
       window.setTimeout(() => showToast(storageSession.error), 0);
     }
 
     const initialCard = state.cards.find((card) => card.id === state.activeCardId) ?? state.cards[0] ?? null;
     if (initialCard) {
       state.activeCardId = initialCard.id;
-      state.draft = core.normalizeCard(initialCard);
-    } else {
-      state.activeCardId = "";
-      state.draft = core.emptyCard();
     }
 
     elements.form.addEventListener("submit", (event) => {
@@ -1488,46 +1463,40 @@
       saveCurrent();
     });
     elements.saveCard.addEventListener("click", saveCurrent);
-    elements.newCard.addEventListener("click", () => guardNavigation(newCard));
-    elements.duplicateCard.addEventListener("click", () => guardNavigation(() => {
-      state = core.duplicateCard(state, state.activeCardId);
-      persistUiState();
+    elements.newCard.addEventListener("click", newCard);
+    elements.duplicateCard.addEventListener("click", () => {
+      persistRegular(core.duplicateCard(state, state.activeCardId, {
+        id: generatedId(),
+        now: new Date().toISOString(),
+      }));
       renderAll();
       elements.name.focus();
-    }));
-    elements.deleteCard.addEventListener("click", () => guardNavigation(confirmDelete));
-    elements.exportMarkdown.addEventListener("click", exportMarkdown);
-    elements.search.addEventListener("input", () => {
-      state.searchQuery = elements.search.value;
+    });
+    elements.deleteCard.addEventListener("click", confirmDelete);
+    elements.selectAll.addEventListener("change", () => {
+      persistRegular(core.bulkSelection(state, elements.selectAll.checked));
       renderList();
     });
-    elements.search.addEventListener("change", persistUiState);
+    elements.importMarkdown.addEventListener("click", () => elements.importFile.click());
+    elements.importFile.addEventListener("change", () => importMarkdownFile(elements.importFile.files?.[0]));
+    elements.exportMarkdown.addEventListener("click", exportMarkdown);
+    elements.search.addEventListener("input", () => {
+      persistRegular({ ...state, searchQuery: elements.search.value });
+      renderList();
+    });
     elements.form.addEventListener("input", () => {
-      state.draft = draftFromForm();
+      const card = activeCard();
+      if (!card) return;
+      persistRegular(core.editCard(state, card.id, cardFromForm()));
+      renderList();
       renderDerived();
     });
     elements.form.addEventListener("change", () => {
-      state.draft = draftFromForm();
+      const card = activeCard();
+      if (!card) return;
+      persistRegular(core.editCard(state, card.id, cardFromForm()));
+      renderList();
       renderDerived();
-    });
-
-    elements.unsavedDialog.addEventListener("click", (event) => {
-      const action = event.target.closest("[data-unsaved-action]")?.dataset.unsavedAction;
-      if (!action) return;
-      if (action === "cancel") {
-        pendingNavigation = null;
-        elements.unsavedDialog.close();
-      } else if (action === "discard") {
-        state = core.discardDraft(state);
-        elements.unsavedDialog.close();
-        finishPendingNavigation();
-      } else if (action === "save" && saveCurrent()) {
-        elements.unsavedDialog.close();
-        finishPendingNavigation();
-      }
-    });
-    elements.unsavedDialog.addEventListener("cancel", () => {
-      pendingNavigation = null;
     });
     elements.deleteDialog.addEventListener("click", (event) => {
       const action = event.target.closest("[data-delete-action]")?.dataset.deleteAction;
@@ -1541,7 +1510,7 @@
       }
     });
     window.addEventListener("beforeunload", (event) => {
-      if (!isCurrentDirty()) return;
+      if (!persistFailed) return;
       event.preventDefault();
       event.returnValue = "";
     });
