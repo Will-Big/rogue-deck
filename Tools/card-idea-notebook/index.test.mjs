@@ -120,3 +120,86 @@ test("builds one AI handoff Markdown file from multiple cards", () => {
   assert.match(markdown, /## 첫 카드/);
   assert.match(markdown, /## 둘째 카드/);
 });
+
+class MemoryStorage {
+  constructor(initial = {}) {
+    this.values = new Map(Object.entries(initial));
+    this.writeCount = 0;
+  }
+
+  getItem(key) {
+    return this.values.has(key) ? this.values.get(key) : null;
+  }
+
+  setItem(key, value) {
+    this.writeCount += 1;
+    this.values.set(key, String(value));
+  }
+}
+
+test("writes local storage only through the explicit store operation", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage();
+  const state = core.initialState();
+  state.cards.push(core.normalizeCard({ id: "a", name: "저장할 카드" }));
+
+  assert.equal(storage.writeCount, 0);
+  core.writeStore(storage, state);
+  assert.equal(storage.writeCount, 1);
+
+  const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
+  assert.equal(saved.schemaVersion, 1);
+  assert.equal(saved.cards[0].name, "저장할 카드");
+});
+
+test("round-trips the current schema and rejects an unknown schema", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage();
+  const state = {
+    ...core.initialState(),
+    cards: [core.normalizeCard({ id: "a", name: "보존 카드", tags: ["독"] })],
+    activeCardId: "a",
+    searchQuery: "독",
+    exportSelection: ["a"],
+  };
+  core.writeStore(storage, state);
+
+  const loaded = core.readStore(storage);
+  assert.equal(loaded.cards[0].name, "보존 카드");
+  assert.deepEqual([...loaded.cards[0].tags], ["독"]);
+  assert.equal(loaded.activeCardId, "a");
+  assert.equal(loaded.searchQuery, "독");
+  assert.deepEqual([...loaded.exportSelection], ["a"]);
+
+  storage.setItem(core.STORAGE_KEY, JSON.stringify({ schemaVersion: 99, cards: [] }));
+  assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
+});
+
+test("detects an unsaved semantic card change", () => {
+  const core = loadCore();
+  const saved = core.normalizeCard({
+    id: "a",
+    name: "저장본",
+    updatedAt: "2026-07-27T00:00:00.000Z",
+  });
+  const unchangedDraft = {
+    ...saved,
+    updatedAt: "2026-07-28T00:00:00.000Z",
+  };
+  const changedDraft = { ...saved, name: "미저장본" };
+
+  assert.equal(core.isDirty(saved, unchangedDraft), false);
+  assert.equal(core.isDirty(saved, changedDraft), true);
+});
+
+test("export uses saved cards rather than the unsaved draft", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [core.normalizeCard({ id: "a", name: "저장본" })],
+    draft: core.normalizeCard({ id: "a", name: "미저장본" }),
+    exportSelection: ["a"],
+  };
+
+  assert.equal(core.cardsForExport(state)[0].name, "저장본");
+});

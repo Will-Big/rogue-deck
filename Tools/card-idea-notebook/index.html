@@ -28,6 +28,8 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
+    const SCHEMA_VERSION = 1;
+    const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
       return {
@@ -170,15 +172,97 @@
       return `${header}\n\n${cards.map(cardMarkdown).join("\n").trim()}\n`;
     }
 
+    function initialState() {
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        cards: [],
+        activeCardId: "",
+        searchQuery: "",
+        exportSelection: [],
+        draft: null,
+      };
+    }
+
+    function writeStore(storage, input) {
+      const state = input ?? initialState();
+      const saved = {
+        schemaVersion: SCHEMA_VERSION,
+        cards: (state.cards ?? []).map(normalizeCard),
+        activeCardId: String(state.activeCardId ?? ""),
+        searchQuery: String(state.searchQuery ?? ""),
+        exportSelection: [...new Set((state.exportSelection ?? []).map(String))],
+      };
+      storage.setItem(STORAGE_KEY, JSON.stringify(saved));
+      return saved;
+    }
+
+    function readStore(storage) {
+      const raw = storage.getItem(STORAGE_KEY);
+      if (!raw) return initialState();
+
+      const saved = JSON.parse(raw);
+      if (saved.schemaVersion !== SCHEMA_VERSION) {
+        throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
+      }
+      const cards = (saved.cards ?? []).map(normalizeCard);
+      const ids = new Set(cards.map((card) => card.id));
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        cards,
+        activeCardId: ids.has(saved.activeCardId) ? saved.activeCardId : "",
+        searchQuery: String(saved.searchQuery ?? ""),
+        exportSelection: (saved.exportSelection ?? []).map(String).filter((id) => ids.has(id)),
+        draft: null,
+      };
+    }
+
+    function semanticCard(input) {
+      const card = normalizeCard(input);
+      return {
+        ...card,
+        createdAt: "",
+        updatedAt: "",
+      };
+    }
+
+    function isDirty(saved, draft) {
+      if (!draft) return false;
+      if (!saved) return Boolean(
+        draft.name
+        || draft.cost
+        || draft.executionOrder
+        || draft.tags?.length
+        || draft.targets?.ally !== "none"
+        || draft.targets?.enemy !== "none"
+        || draft.abilities?.ally?.length
+        || draft.abilities?.enemy?.length
+        || draft.abilities?.none?.length
+        || draft.notes
+      );
+      return JSON.stringify(semanticCard(saved)) !== JSON.stringify(semanticCard(draft));
+    }
+
+    function cardsForExport(state) {
+      const selected = new Set((state.exportSelection ?? []).map(String));
+      return (state.cards ?? []).filter((card) => selected.has(String(card.id))).map(normalizeCard);
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       ROLE_LABELS,
       TARGETS,
+      SCHEMA_VERSION,
+      STORAGE_KEY,
       emptyCard,
       normalizeCard,
       validateCard,
       targetSummary,
       cardMarkdown,
       bundleMarkdown,
+      initialState,
+      writeStore,
+      readStore,
+      isDirty,
+      cardsForExport,
     });
   })();
   </script>
