@@ -160,11 +160,11 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(storage.writeCount, 1);
 
   const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 2);
+  assert.equal(saved.schemaVersion, 3);
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
 
-test("round-trips the current schema, pruning incomplete selections, and rejects an unknown schema", () => {
+test("round-trips the current schema with shared selection and rejects an unknown schema", () => {
   const core = loadCore();
   const storage = new MemoryStorage();
   const state = {
@@ -177,7 +177,7 @@ test("round-trips the current schema, pruning incomplete selections, and rejects
     })],
     activeCardId: "a",
     searchQuery: "독",
-    exportSelection: ["a"],
+    selection: ["a"],
   };
   core.writeStore(storage, state);
 
@@ -186,11 +186,11 @@ test("round-trips the current schema, pruning incomplete selections, and rejects
   assert.deepEqual([...loaded.cards[0].tags], ["독"]);
   assert.equal(loaded.activeCardId, "a");
   assert.equal(loaded.searchQuery, "독");
-  assert.deepEqual([...loaded.exportSelection], ["a"]);
+  assert.deepEqual([...loaded.selection], ["a"]);
 
   const incomplete = core.editCard(state, "a", { notes: "수정됨" });
-  core.writeStore(storage, { ...incomplete, exportSelection: ["a"] });
-  assert.deepEqual([...core.readStore(storage).exportSelection], []);
+  core.writeStore(storage, incomplete);
+  assert.deepEqual([...core.readStore(storage).selection], ["a"]);
 
   storage.setItem(core.STORAGE_KEY, JSON.stringify({ schemaVersion: 99, cards: [] }));
   assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
@@ -206,7 +206,7 @@ test("keeps every card in one list without a separate draft state", () => {
   assert.equal(created.cards.length, 1);
 });
 
-test("export includes selected complete cards and excludes incomplete cards", () => {
+test("export includes every selected card when all selected cards are complete", () => {
   const core = loadCore();
   const state = {
     ...core.initialState(),
@@ -222,7 +222,7 @@ test("export includes selected complete cards and excludes incomplete cards", ()
         completionStatus: "incomplete",
       }),
     ],
-    exportSelection: ["a", "b"],
+    selection: ["a"],
   };
 
   assert.deepEqual([...core.cardsForExport(state).map((card) => card.name)], ["완성본"]);
@@ -240,7 +240,7 @@ test("duplicates into the list and deletes cards without mutating the source", (
     ...core.initialState(),
     cards: [saved],
     activeCardId: "a",
-    exportSelection: ["a"],
+    selection: ["a"],
   };
 
   const duplicated = core.duplicateCard(state, "a", {
@@ -256,7 +256,7 @@ test("duplicates into the list and deletes cards without mutating the source", (
 
   const deleted = core.deleteCard(state, "a");
   assert.equal(deleted.cards.length, 0);
-  assert.deepEqual([...deleted.exportSelection], []);
+  assert.deepEqual([...deleted.selection], []);
   assert.equal(deleted.activeCardId, "");
 });
 
@@ -290,12 +290,12 @@ test("blocks export without selection and allows a selected complete card", () =
 
   assert.deepEqual(
     { ...core.exportStatus(base) },
-    { kind: "error", message: "내보낼 완성 카드를 선택하세요." },
+    { kind: "error", message: "내보낼 카드를 선택하세요." },
   );
 
   const selected = {
     ...base,
-    exportSelection: ["a"],
+    selection: ["a"],
   };
   assert.deepEqual({ ...core.exportStatus(selected) }, { kind: "ready" });
 });
@@ -314,7 +314,7 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });
 
-test("migrates schema 1 cards to complete schema 2 cards", () => {
+test("migrates schema 1 cards to complete schema 3 cards", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -327,8 +327,120 @@ test("migrates schema 1 cards to complete schema 2 cards", () => {
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.schemaVersion, 3);
   assert.equal(state.cards[0].completionStatus, "complete");
+  assert.deepEqual([...state.selection], ["a"]);
+});
+
+test("migrates schema 2 export selection into schema 3 shared selection", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 2,
+      cards: [
+        { id: "a", name: "완성", completionStatus: "complete" },
+        { id: "b", name: "미완성", completionStatus: "incomplete" },
+      ],
+      activeCardId: "b",
+      searchQuery: "",
+      exportSelection: ["a", "b"],
+    }),
+  });
+
+  const state = core.readStore(storage);
+  assert.equal(state.schemaVersion, 3);
+  assert.deepEqual([...state.selection], ["a", "b"]);
+});
+
+test("editing a selected complete card keeps it selected while making it incomplete", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [core.normalizeCard({
+      id: "a",
+      name: "카드",
+      completionStatus: "complete",
+    })],
+    selection: ["a"],
+  };
+
+  const edited = core.editCard(state, "a", { notes: "수정" });
+  assert.equal(edited.cards[0].completionStatus, "incomplete");
+  assert.deepEqual([...edited.selection], ["a"]);
+});
+
+test("bulk selection includes complete and incomplete cards", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
+      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
+    ],
+  };
+
+  assert.deepEqual([...core.bulkSelection(state, true).selection], ["a", "b"]);
+  assert.deepEqual([...core.bulkSelection(state, false).selection], []);
+});
+
+test("chooses selected cards for deletion and falls back to the active card", () => {
+  const core = loadCore();
+  const base = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({ id: "a", name: "첫 카드" }),
+      core.normalizeCard({ id: "b", name: "둘째 카드" }),
+      core.normalizeCard({ id: "c", name: "셋째 카드" }),
+    ],
+    activeCardId: "b",
+  };
+
+  assert.deepEqual([...core.deletionIds({ ...base, selection: ["a", "c"] })], ["a", "c"]);
+  assert.deepEqual([...core.deletionIds(base)], ["b"]);
+});
+
+test("bulk deletion preserves an unselected active card and selects a fallback when active is deleted", () => {
+  const core = loadCore();
+  const cards = [
+    core.normalizeCard({ id: "a", name: "첫 카드" }),
+    core.normalizeCard({ id: "b", name: "둘째 카드" }),
+    core.normalizeCard({ id: "c", name: "셋째 카드" }),
+  ];
+  const kept = core.deleteCards({
+    ...core.initialState(),
+    cards,
+    activeCardId: "b",
+    selection: ["a", "c"],
+  }, ["a", "c"]);
+  assert.equal(kept.activeCardId, "b");
+  assert.deepEqual([...kept.cards.map((card) => card.id)], ["b"]);
+
+  const fallback = core.deleteCards({
+    ...core.initialState(),
+    cards,
+    activeCardId: "b",
+    selection: ["b", "c"],
+  }, ["b", "c"]);
+  assert.equal(fallback.activeCardId, "a");
+  assert.deepEqual([...fallback.selection], []);
+});
+
+test("blocks all export when selection contains an incomplete card", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
+      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
+    ],
+    selection: ["a", "b"],
+  };
+
+  assert.deepEqual({ ...core.exportStatus(state) }, {
+    kind: "error",
+    message: "미완성 카드는 내보낼 수 없습니다. 먼저 완성 상태로 저장하거나 선택을 해제하세요.",
+  });
+  assert.deepEqual([...core.cardsForExport(state)], []);
 });
 
 test("creates uniquely named incomplete cards directly in the list", () => {
@@ -368,7 +480,7 @@ test("keeps generated card IDs unique when an ID source collides", () => {
   ]);
 });
 
-test("editing a complete card makes it incomplete and unselects it", () => {
+test("editing a complete card makes it incomplete and keeps it selected", () => {
   const core = loadCore();
   const complete = core.normalizeCard({
     id: "a",
@@ -379,13 +491,13 @@ test("editing a complete card makes it incomplete and unselects it", () => {
     ...core.initialState(),
     cards: [complete],
     activeCardId: "a",
-    exportSelection: ["a"],
+    selection: ["a"],
   };
 
   const edited = core.editCard(state, "a", { notes: "수정됨" });
   assert.equal(edited.cards[0].notes, "수정됨");
   assert.equal(edited.cards[0].completionStatus, "incomplete");
-  assert.deepEqual([...edited.exportSelection], []);
+  assert.deepEqual([...edited.selection], ["a"]);
 });
 
 test("completes a valid card and rejects an empty card name", () => {
@@ -523,23 +635,6 @@ test("rejects a bundle whose declared card count is wrong", () => {
     () => core.parseBundleMarkdown(markdown),
     /카드 수가 일치하지 않습니다/,
   );
-});
-
-test("bulk selection includes all and only complete cards", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
-      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
-    ],
-  };
-
-  assert.deepEqual([...core.bulkSelection(state, true).exportSelection], ["a"]);
-  assert.deepEqual([...core.bulkSelection({
-    ...state,
-    exportSelection: ["a"],
-  }, false).exportSelection], []);
 });
 
 test("failed immediate persistence keeps memory state until retry succeeds", () => {

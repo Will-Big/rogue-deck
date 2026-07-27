@@ -38,7 +38,7 @@
   - `exportStatus(state) -> { kind: "ready" } | { kind: "error", message: string }`
   - `cardsForExport(state) -> Card[]`.
 
-- [ ] **Step 1: Write failing schema migration and shared-selection tests**
+- [x] **Step 1: Write failing schema migration and shared-selection tests**
 
 Add literal tests:
 
@@ -91,7 +91,7 @@ test("bulk selection includes complete and incomplete cards", () => {
 });
 ```
 
-- [ ] **Step 2: Run Task 1 migration tests and verify RED**
+- [x] **Step 2: Run Task 1 migration tests and verify RED**
 
 Run:
 
@@ -101,11 +101,11 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: FAIL because the current schema is 2 and state still uses `exportSelection`.
 
-- [ ] **Step 3: Implement schema 3 and shared selection**
+- [x] **Step 3: Implement schema 3 and shared selection**
 
 Set `SCHEMA_VERSION = 3`. Make `initialState()` return `selection: []`; make `writeStore` serialize only existing card IDs from `selection`; make `readStore` accept schemas 1, 2, and 3. For schemas 1 and 2, read `exportSelection`; for schema 3, read `selection`. Preserve selected complete and incomplete IDs that still exist. Remove the edit-time selection removal.
 
-- [ ] **Step 4: Run Task 1 migration tests and verify GREEN**
+- [x] **Step 4: Run Task 1 migration tests and verify GREEN**
 
 Run:
 
@@ -115,7 +115,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: all schema and selection tests PASS.
 
-- [ ] **Step 5: Write failing deletion and guarded-export tests**
+- [x] **Step 5: Write failing deletion and guarded-export tests**
 
 Add:
 
@@ -181,7 +181,7 @@ test("blocks all export when selection contains an incomplete card", () => {
 });
 ```
 
-- [ ] **Step 6: Run deletion and export tests and verify RED**
+- [x] **Step 6: Run deletion and export tests and verify RED**
 
 Run:
 
@@ -191,11 +191,11 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: FAIL because `deletionIds`, `deleteCards`, and incomplete-selection export blocking do not exist.
 
-- [ ] **Step 7: Implement pure deletion and guarded export**
+- [x] **Step 7: Implement pure deletion and guarded export**
 
 Implement `selectedCards` in list order. `deletionIds` returns selected existing IDs when non-empty, otherwise the active ID when it exists. `deleteCards` removes all requested IDs, removes those IDs from selection, preserves an unselected active card, and otherwise activates the first remaining card. `exportStatus` reports no selection first, then the exact incomplete warning, and only then returns ready. `cardsForExport` returns an empty list unless export status is ready.
 
-- [ ] **Step 8: Run the complete Node suite and verify GREEN**
+- [x] **Step 8: Run the complete Node suite and verify GREEN**
 
 Run:
 
@@ -205,7 +205,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: all tests PASS with zero failures.
 
-- [ ] **Step 9: Commit Task 1**
+- [x] **Step 9: Commit Task 1**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs

@@ -524,7 +524,7 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 2;
+    const SCHEMA_VERSION = 3;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
@@ -838,18 +838,20 @@
         cards: [],
         activeCardId: "",
         searchQuery: "",
-        exportSelection: [],
+        selection: [],
       };
     }
 
     function writeStore(storage, input) {
       const state = input ?? initialState();
+      const ids = new Set((state.cards ?? []).map((card) => String(card.id)));
       const saved = {
         schemaVersion: SCHEMA_VERSION,
         cards: (state.cards ?? []).map(normalizeCard),
         activeCardId: String(state.activeCardId ?? ""),
         searchQuery: String(state.searchQuery ?? ""),
-        exportSelection: [...new Set((state.exportSelection ?? []).map(String))],
+        selection: [...new Set((state.selection ?? []).map(String))]
+          .filter((id) => ids.has(id)),
       };
       storage.setItem(STORAGE_KEY, JSON.stringify(saved));
       return saved;
@@ -860,7 +862,7 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (saved.schemaVersion !== 1 && saved.schemaVersion !== SCHEMA_VERSION) {
+      if (![1, 2, SCHEMA_VERSION].includes(saved.schemaVersion)) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
       const cards = (saved.cards ?? []).map((card) => normalizeCard({
@@ -868,17 +870,17 @@
         completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
       }));
       const ids = new Set(cards.map((card) => card.id));
-      const completeIds = new Set(
-        cards.filter((card) => card.completionStatus === "complete").map((card) => card.id),
-      );
+      const savedSelection = saved.schemaVersion === SCHEMA_VERSION
+        ? saved.selection
+        : saved.exportSelection;
       return {
         schemaVersion: SCHEMA_VERSION,
         cards,
         activeCardId: ids.has(saved.activeCardId) ? saved.activeCardId : "",
         searchQuery: String(saved.searchQuery ?? ""),
-        exportSelection: (saved.exportSelection ?? [])
+        selection: (savedSelection ?? [])
           .map(String)
-          .filter((id) => completeIds.has(id)),
+          .filter((id) => ids.has(id)),
       };
     }
 
@@ -911,11 +913,15 @@
       }
     }
 
-    function cardsForExport(state) {
-      const selected = new Set((state.exportSelection ?? []).map(String));
+    function selectedCards(state) {
+      const selected = new Set((state.selection ?? []).map(String));
       return (state.cards ?? [])
-        .filter((card) => card.completionStatus === "complete" && selected.has(String(card.id)))
+        .filter((card) => selected.has(String(card.id)))
         .map(normalizeCard);
+    }
+
+    function cardsForExport(state) {
+      return exportStatus(state).kind === "ready" ? selectedCards(state) : [];
     }
 
     function uniqueCardId(cards, requestedId) {
@@ -966,7 +972,6 @@
       return {
         ...state,
         cards,
-        exportSelection: (state.exportSelection ?? []).filter((selectedId) => selectedId !== id),
       };
     }
 
@@ -1010,10 +1015,8 @@
     function bulkSelection(state, checked) {
       return {
         ...state,
-        exportSelection: checked
-          ? (state.cards ?? [])
-            .filter((card) => card.completionStatus === "complete")
-            .map((card) => card.id)
+        selection: checked
+          ? (state.cards ?? []).map((card) => card.id)
           : [],
       };
     }
@@ -1037,14 +1040,30 @@
       };
     }
 
-    function deleteCard(state, id) {
-      const deletingActive = state.activeCardId === id;
+    function deletionIds(state) {
+      const selectedIds = selectedCards(state).map((card) => card.id);
+      if (selectedIds.length) return selectedIds;
+      return (state.cards ?? []).some((card) => card.id === state.activeCardId)
+        ? [state.activeCardId]
+        : [];
+    }
+
+    function deleteCards(state, ids) {
+      const deleting = new Set((ids ?? []).map(String));
+      const cards = (state.cards ?? []).filter((card) => !deleting.has(card.id));
+      const activeCardId = cards.some((card) => card.id === state.activeCardId)
+        ? state.activeCardId
+        : cards[0]?.id ?? "";
       return {
         ...state,
-        cards: (state.cards ?? []).filter((card) => card.id !== id),
-        activeCardId: deletingActive ? "" : state.activeCardId,
-        exportSelection: (state.exportSelection ?? []).filter((selectedId) => selectedId !== id),
+        cards,
+        activeCardId,
+        selection: (state.selection ?? []).filter((id) => !deleting.has(id)),
       };
+    }
+
+    function deleteCard(state, id) {
+      return deleteCards(state, [id]);
     }
 
     function filteredCards(cards, query) {
@@ -1057,9 +1076,15 @@
     }
 
     function exportStatus(state) {
-      const cards = cardsForExport(state);
+      const cards = selectedCards(state);
       if (!cards.length) {
-        return { kind: "error", message: "내보낼 완성 카드를 선택하세요." };
+        return { kind: "error", message: "내보낼 카드를 선택하세요." };
+      }
+      if (cards.some((card) => card.completionStatus !== "complete")) {
+        return {
+          kind: "error",
+          message: "미완성 카드는 내보낼 수 없습니다. 먼저 완성 상태로 저장하거나 선택을 해제하세요.",
+        };
       }
       return { kind: "ready" };
     }
@@ -1081,6 +1106,7 @@
       readStore,
       readStoreSession,
       tryWriteStore,
+      selectedCards,
       cardsForExport,
       uniqueCardName,
       createCard,
@@ -1089,6 +1115,8 @@
       importCards,
       bulkSelection,
       duplicateCard,
+      deletionIds,
+      deleteCards,
       deleteCard,
       filteredCards,
       exportStatus,
