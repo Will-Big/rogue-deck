@@ -1,10 +1,12 @@
 # Fate Weaver — 카드 설명 핸들러 레지스트리 설계
 
 - 작성일: 2026-07-16
+- 개정일: 2026-07-27
 - 문서 유형: `architecture`
 - 주 도메인: `card-description`
 - 상태: `current` — 구현된 카드 설명 확장 구조
 - 선행 설계: [기존 동적 카드 설명 설계](../archive/specs/2026-06-26-card-descriptions-design.md)
+- 후속 표현 규칙: [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)
 
 ## 1. 배경
 
@@ -123,6 +125,11 @@ public interface IInterventionDescriptionHandler
 - `StatusName(StatusKey)`
 - `StatusTarget(StatusApplyTarget)`
 - `LifetimeSuffix(StatusLifetime)`
+
+`TargetPrefix`와 `StatusTarget`은 현재 구현된 설명 조합 경계다. 위치 대상 UI로 이행한 뒤에는 유닛의
+진영과 위치 범위를 본문 접두사로 만들지 않는다. 설명 핸들러는 능력 문구만 만들고, 진영 문양과 위치
+범위는 [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)의 대상 칸과
+능력 묶음이 담당한다. 레지스트리 확장 구조와 자동 설명 원칙은 그대로 유지한다.
 
 `EffectDescriptionRegistry`, `InterventionDescriptionRegistry`, `StatusDescriptionRegistry`는 다음 계약을 가진다.
 
