@@ -407,7 +407,7 @@
         <button type="button" id="duplicate-card">복제</button>
         <button type="button" class="danger" id="delete-card">삭제</button>
         <button type="button" class="wide-action" id="import-markdown">Markdown 불러오기</button>
-        <input id="import-file" type="file" accept=".md,text/markdown,text/plain" hidden>
+        <input id="import-file" type="file" accept=".md,text/markdown" hidden>
         <button type="button" class="primary wide-action" id="export-markdown">AI용 Markdown 내보내기</button>
       </div>
     </aside>
@@ -975,6 +975,10 @@
       return /\.md$/i.test(base) ? base : `${base}.md`;
     }
 
+    function isMarkdownFileName(input) {
+      return /\.md$/i.test(String(input ?? "").trim());
+    }
+
     function uniqueCardId(cards, requestedId) {
       const base = String(requestedId ?? "").trim() || `card-${Date.now().toString(36)}`;
       const ids = new Set((cards ?? []).map((card) => String(card.id)));
@@ -1173,6 +1177,7 @@
       selectedCards,
       cardsForExport,
       downloadFileName,
+      isMarkdownFileName,
       uniqueCardName,
       createCard,
       editCard,
@@ -1637,6 +1642,9 @@
     async function importMarkdownFile(file) {
       if (!file) return;
       try {
+        if (!core.isMarkdownFileName(file.name)) {
+          throw new Error("Markdown(.md) 파일만 불러올 수 있습니다.");
+        }
         if (!storageWritable) {
           throw new Error("기존 저장 데이터를 보호하기 위해 불러오기를 중단했습니다.");
         }

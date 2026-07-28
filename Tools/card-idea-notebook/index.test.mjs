@@ -228,6 +228,14 @@ test("normalizes Markdown download names and permits an empty name", () => {
   );
 });
 
+test("accepts only Markdown file names for import", () => {
+  const core = loadCore();
+  assert.equal(core.isMarkdownFileName("카드풀.md"), true);
+  assert.equal(core.isMarkdownFileName("카드풀.MD"), true);
+  assert.equal(core.isMarkdownFileName("카드풀.txt"), false);
+  assert.equal(core.isMarkdownFileName("카드풀"), false);
+});
+
 test("keeps every card in one list without a separate draft state", () => {
   const core = loadCore();
   const state = core.initialState();
