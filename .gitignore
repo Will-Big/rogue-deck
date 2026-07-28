@@ -99,6 +99,14 @@ Tests/Headless/obj/
 /Assets/FateWeaver/Unity/Resources/Fonts/
 
 # ============================================
+# Graphify knowledge graph (graphify-out/)
+# graph.json / GRAPH_REPORT.md / graph.html are committed for reuse across
+# sessions and worktrees; the .graphify_* intermediates hold machine-local
+# state (absolute interpreter paths etc.) and must stay untracked.
+# ============================================
+/graphify-out/.graphify_*
+
+# ============================================
 # macOS Finder metadata
 # ============================================
 .DS_Store
