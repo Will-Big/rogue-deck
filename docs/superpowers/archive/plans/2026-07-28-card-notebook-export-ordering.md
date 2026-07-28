@@ -33,7 +33,7 @@
   - schema 4 state field `exportFileName: string`
   - `downloadFileName(input: string, date: string) -> string`.
 
-- [ ] **Step 1: Write failing schema 4 and filename tests**
+- [x] **Step 1: Write failing schema 4 and filename tests**
 
 Add literal behavior tests:
 
@@ -73,7 +73,7 @@ test("normalizes Markdown download names and permits an empty name", () => {
 
 Update existing schema assertions from `3` to `4` and require schema 1 and 2 migrations to end at 4.
 
-- [ ] **Step 2: Run Task 1 tests and verify RED**
+- [x] **Step 2: Run Task 1 tests and verify RED**
 
 Run:
 
@@ -83,7 +83,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: FAIL because the current schema is 3, schema 3 reads `exportSelection`, and `downloadFileName` is undefined.
 
-- [ ] **Step 3: Implement schema 4 and filename normalization**
+- [x] **Step 3: Implement schema 4 and filename normalization**
 
 Set `SCHEMA_VERSION = 4`. Add `exportFileName: ""` to `initialState`, serialize it as a string in `writeStore`, and return it from `readStore`. Accept schemas 1, 2, 3, and 4. Read shared selection from `saved.selection` for schema 3 and 4, otherwise migrate `saved.exportSelection`.
 
@@ -97,7 +97,7 @@ function downloadFileName(input, date) {
 }
 ```
 
-- [ ] **Step 4: Run Task 1 tests and verify GREEN**
+- [x] **Step 4: Run Task 1 tests and verify GREEN**
 
 Run:
 
@@ -107,7 +107,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: every schema and filename test passes with zero failures.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -124,7 +124,7 @@ git commit -m "feat(tools): persist card export filenames"
 - Consumes: schema 4 state and existing `cardsForExport(state)`.
 - Produces: `reorderCards(state, draggedId, targetId, placement: "before" | "after") -> state`.
 
-- [ ] **Step 1: Write failing insertion and preservation tests**
+- [x] **Step 1: Write failing insertion and preservation tests**
 
 Add:
 
@@ -173,7 +173,7 @@ test("exports selected cards in the reordered list order", () => {
 });
 ```
 
-- [ ] **Step 2: Run Task 2 tests and verify RED**
+- [x] **Step 2: Run Task 2 tests and verify RED**
 
 Run:
 
@@ -183,7 +183,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: FAIL with `core.reorderCards is not a function`.
 
-- [ ] **Step 3: Implement immutable insertion**
+- [x] **Step 3: Implement immutable insertion**
 
 Add and export:
 
@@ -204,7 +204,7 @@ function reorderCards(state, draggedId, targetId, placement) {
 
 The returned state changes only `cards`. Unknown IDs, the same ID, and invalid placement return the original state object.
 
-- [ ] **Step 4: Run Task 2 tests and verify GREEN**
+- [x] **Step 4: Run Task 2 tests and verify GREEN**
 
 Run:
 
@@ -214,7 +214,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: all tests pass and the new export-order assertion returns `["c", "a"]`.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -230,11 +230,11 @@ git commit -m "feat(tools): reorder card notebook cards"
 - Consumes: Task 1 `exportFileName`, `downloadFileName`; Task 2 `reorderCards`.
 - Produces: persistent lower filename input, one-off native export dialog, dedicated drag handles, drop indicators, search-time drag disabling.
 
-- [ ] **Step 1: Run a browser RED smoke check**
+- [x] **Step 1: Run a browser RED smoke check**
 
 Serve the worktree on loopback and inspect the current page. Verify the old UI has no `기본 파일명` textbox, no export-name dialog, and no `순서 변경` drag handles. This establishes the visible behavior is absent before production UI changes.
 
-- [ ] **Step 2: Add filename controls and dialog markup**
+- [x] **Step 2: Add filename controls and dialog markup**
 
 Add a wide lower action-bar label:
 
@@ -268,7 +268,7 @@ Add a native dialog after the delete dialog:
 
 Style the lower field without absolute positioning so the separate action row remains non-overlapping.
 
-- [ ] **Step 3: Connect persistent and one-off filenames**
+- [x] **Step 3: Connect persistent and one-off filenames**
 
 Register `exportFileName`, `exportDialog`, `exportForm`, and `exportDialogName` in `elements`. Render `state.exportFileName` into the lower field. On lower-field input, persist `{ ...state, exportFileName: elements.exportFileName.value }` without editing any card.
 
@@ -280,7 +280,7 @@ anchor.download = core.downloadFileName(fileName, date);
 
 Keep `exportStatus` as the first gate. Only after it returns ready, copy `state.exportFileName` into the dialog, open it, focus it, and select its contents. The form submit downloads using the dialog value and closes the dialog. The cancel button closes it. Native `Escape` cancellation requires no state mutation.
 
-- [ ] **Step 4: Add drag handle markup, styles, and controller events**
+- [x] **Step 4: Add drag handle markup, styles, and controller events**
 
 Change the card row grid to `24px 24px minmax(0, 1fr)`. Create a `button` handle with `type="button"`, text `⠿`, and accessible name `${card.name} 순서 변경`. Its `draggable` value is `!state.searchQuery.trim()`, and its title is `검색 중에는 순서를 변경할 수 없습니다.` while disabled.
 
@@ -294,7 +294,7 @@ renderList();
 
 On `dragend` and after every drop, clear all transient classes. Do not make the checkbox or card-open button draggable. Do nothing if search is non-empty, the IDs are equal, or an ID is missing.
 
-- [ ] **Step 5: Run automated verification**
+- [x] **Step 5: Run automated verification**
 
 Run:
 
@@ -306,7 +306,7 @@ git diff --check
 
 Expected: all Node tests pass, both scripts parse, and no whitespace errors exist.
 
-- [ ] **Step 6: Run browser GREEN smoke verification**
+- [x] **Step 6: Run browser GREEN smoke verification**
 
 Verify in the real browser:
 
@@ -320,7 +320,7 @@ Verify in the real browser:
 8. A non-empty search disables every handle and displays the exact explanation.
 9. Browser console error logs are empty.
 
-- [ ] **Step 7: Commit Task 3**
+- [x] **Step 7: Commit Task 3**
 
 ```bash
 git add Tools/card-idea-notebook/index.html
@@ -339,15 +339,15 @@ git commit -m "feat(tools): add card export and ordering controls"
 - Consumes: the verified schema 4 and UI behavior from Tasks 1–3.
 - Produces: an implemented current spec, archived plan record, clean reviewed feature branch.
 
-- [ ] **Step 1: Mark the design implemented and archive this plan**
+- [x] **Step 1: Mark the design implemented and archive this plan**
 
 Change the spec status to `current — 기본 파일명·드래그 순서 구현 완료`. Remove this plan from active plans, add `[카드 노트 파일명과 순서](plans/2026-07-28-card-notebook-export-ordering.md)` to the archive's external card authoring section, move the plan to `archive/plans/`, mark every checkbox complete, and append an `Implementation Result` section listing the exact verification evidence.
 
-- [ ] **Step 2: Request independent code review**
+- [x] **Step 2: Request independent code review**
 
 Use `superpowers:requesting-code-review` against the implementation branch. The reviewer must check schema migration, filename persistence boundaries, empty filename fallback, drag insertion direction, active/selection preservation, filtered-search disabling, browser event cleanup, and documentation lifecycle. Fix every Critical or Important finding through a new failing test where behavior changes.
 
-- [ ] **Step 3: Run final verification**
+- [x] **Step 3: Run final verification**
 
 Run:
 
@@ -360,9 +360,19 @@ git status --short
 
 Expected: all tests pass, exactly two scripts parse, no whitespace errors exist, and only intended implementation/archive changes are present before the final commit.
 
-- [ ] **Step 4: Commit Task 4**
+- [x] **Step 4: Commit Task 4**
 
 ```bash
 git add docs/superpowers
 git commit -m "docs: complete card export ordering implementation"
 ```
+
+## Implementation Result
+
+- 저장 스키마를 4로 올리고 스키마 1~3의 카드·선택·활성 카드·검색어·목록 순서를 보존하면서 `exportFileName`을 추가했다.
+- 하단 기본 파일명은 즉시 보존하고, 내보내기 대화상자의 수정값은 한 번의 다운로드에만 사용하도록 분리했다.
+- 빈 이름의 날짜 폴백과 대소문자 구분 없는 `.md` 확장자 처리를 순수 함수로 검증했다.
+- 카드 손잡이의 앞·뒤 삽입은 `cards[]`만 재배열하고 활성 카드와 공용 선택을 유지하며 Markdown 묶음 순서에도 반영한다.
+- `.md` 파일만 불러오도록 파일 선택 필터와 실제 파일명 검증을 함께 적용했다.
+- Node 테스트 36개, HTML 스크립트 2개 구문 검사, 공백 검사와 브라우저의 파일명 보존·일회성 대화상자·빈 이름 내보내기·검색 중 손잡이 비활성화·레이아웃 비중첩·콘솔 무오류를 확인했다.
+- 인앱 브라우저의 좌표 드래그는 별도 일반 `draggable` 진단 요소에도 HTML drag-and-drop 이벤트를 발생시키지 않아 실제 포인터 드롭 합성은 자동화하지 못했다. 드래그 요소의 활성·비활성 속성과 앞·뒤 재배열 상태 변환은 각각 브라우저 및 Node 테스트로 검증했다.

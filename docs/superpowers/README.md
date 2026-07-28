@@ -64,7 +64,6 @@
 | 문서 | 상태 | 범위 |
 |---|---|---|
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P0-C 대상 선택 메타데이터, P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목 |
-| [카드 노트 파일명과 순서](plans/2026-07-28-card-notebook-export-ordering.md) | `active` | 기본·일회성 Markdown 파일명, 스키마 4, 드래그 카드 순서와 내보내기 순서 |
 
 ## 재설계가 필요한 영역
 

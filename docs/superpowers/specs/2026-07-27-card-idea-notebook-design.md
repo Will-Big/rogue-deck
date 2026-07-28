@@ -7,7 +7,7 @@
 - 하위 유형: `static-web-tool`, `markdown-import-export`, `auto-preserved-draft`
 - 관련 규칙:
   [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)
-- 상태: `current` — 기본 파일명·드래그 순서 개정 승인, 구현 전
+- 상태: `current` — 기본 파일명·드래그 순서 구현 완료
 - 범위: 게임 데이터와 분리된 카드 초안 편집, 브라우저 즉시 보존, 완성 상태 관리,
   공용 카드 선택·일괄 삭제, 카드 순서 저작, AI 전달용 Markdown 불러오기·내보내기
 

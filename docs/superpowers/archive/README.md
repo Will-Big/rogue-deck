@@ -98,3 +98,4 @@
 - [카드 아이디어 노트 구현](plans/2026-07-27-card-idea-notebook.md)
 - [카드 아이디어 노트 V2](plans/2026-07-27-card-idea-notebook-v2.md)
 - [카드 노트 공용 선택](plans/2026-07-28-card-notebook-shared-selection.md)
+- [카드 노트 파일명과 순서](plans/2026-07-28-card-notebook-export-ordering.md)
