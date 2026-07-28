@@ -804,6 +804,75 @@ test("round-trips exported cards through strict Markdown import", () => {
   assert.equal(parsed[0].completionStatus, "complete");
 });
 
+test("emits and round-trips ally and enemy faction metadata", () => {
+  const core = loadCore();
+  const ally = core.normalizeCard({
+    name: "아군 실행",
+    faction: "ally",
+    cost: "1",
+    role: "execution",
+    executionOrder: "4",
+    completionStatus: "complete",
+  });
+  const enemy = core.normalizeCard({
+    name: "적군 실행",
+    faction: "enemy",
+    executionOrder: "2",
+    completionStatus: "complete",
+  });
+
+  assert.match(
+    core.cardMarkdown(ally),
+    /- 진영: 아군\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
+  );
+  assert.match(
+    core.cardMarkdown(enemy),
+    /- 진영: 적군\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
+  );
+
+  const parsed = core.parseBundleMarkdown(
+    core.bundleMarkdown([ally, enemy], "2026-07-28"),
+  );
+  assert.deepEqual(
+    [...parsed.map((card) => ({
+      faction: card.faction,
+      cost: card.cost,
+      role: card.role,
+      completionStatus: card.completionStatus,
+    }))],
+    [
+      { faction: "ally", cost: "1", role: "execution", completionStatus: "complete" },
+      { faction: "enemy", cost: "", role: "execution", completionStatus: "complete" },
+    ],
+  );
+});
+
+test("imports legacy Markdown without faction as an ally draft", () => {
+  const core = loadCore();
+  const legacy = `# Fate Weaver 카드 아이디어
+
+- 생성일: 2026-07-27
+- 카드 수: 1
+- 대상 규칙: \`docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md\`
+
+## 구형 초안
+
+- 역할: 미정
+- 대상: 없음
+`;
+
+  const parsed = core.parseBundleMarkdown(legacy);
+  assert.equal(parsed[0].faction, "ally");
+  assert.equal(parsed[0].completionStatus, "incomplete");
+
+  const imported = core.importCards(core.initialState(), legacy, {
+    ids: ["legacy"],
+    now: "2026-07-28T00:00:00.000Z",
+  });
+  assert.equal(imported.cards[0].faction, "ally");
+  assert.equal(imported.cards[0].completionStatus, "incomplete");
+});
+
 test("round-trips note lines that resemble card headings", () => {
   const core = loadCore();
   const notes = "첫 줄\n## 새 카드처럼 보이는 메모\n\\## 백슬래시가 있는 메모";
@@ -861,7 +930,7 @@ test("imports duplicate names as new numbered cards", () => {
     "맹독 호위 (3)",
   ]);
   assert.equal(imported.activeCardId, "b");
-  assert.equal(imported.cards[2].completionStatus, "complete");
+  assert.equal(imported.cards[2].completionStatus, "incomplete");
 });
 
 test("rejects a malformed bundle without changing existing state", () => {
