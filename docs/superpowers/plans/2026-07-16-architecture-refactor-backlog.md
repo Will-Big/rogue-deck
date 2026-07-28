@@ -155,6 +155,14 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 5. P0-C — 대상 선택 메타데이터와 입력 흐름 일반화
 
+- 상태: **설계 확정 (2026-07-28)** — 권위 문서:
+  [`2026-07-28-p0c-targeting-metadata-design.md`](../specs/2026-07-28-p0c-targeting-metadata-design.md).
+  설계 과정에서 두 가지 정책이 확정되어 원 목표 구조를 좁혔다: 실행 카드는 플레이 시 대상을
+  고르지 않으며(대상은 저작 데이터로 명시), 아군·적 등 새 대상 종류는 개입 카드 설계가 확정될 때
+  `TargetKind` 값 추가로 진행한다. 아래 원문 중 "아군 1명"·"적 1명" 요구사항 예시는 그 시점의
+  범위다. 후속: `ExecutionCardInstance.TargetId`(읽는 곳 4, 제품에서 쓰는 곳 0)는 개입 설계 확정
+  시 채우거나 제거한다.
+
 ### 문제
 
 `PartyTargetRules`는 `ApplyStatus + PartyMember`를 직접 비교하고, Unity 컨트롤러는

@@ -27,6 +27,7 @@
 | [전투 코어 설계](specs/2026-06-18-fate-weaver-core-design.md) | `current` | 순수 C# 코어 경계, 결정론, 이벤트 출력 | 새 규칙·효과·상태·시뮬레이션 구현 |
 | [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 효과·상태·개입 설명 핸들러 확장 | 새 카드 능력의 자동 설명 추가 |
 | [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | ScriptableObject 효과 저작과 코어 변환 | 새 효과·상태·개입 저작 타입 추가 |
+| [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 대상 요구의 선언·질의·검증 경로 | 새 대상형 개입 액션·대상 종류 추가 |
 
 ### 전투와 파티 규칙
 
