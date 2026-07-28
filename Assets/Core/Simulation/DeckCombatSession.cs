@@ -298,10 +298,16 @@ namespace FateWeaver.Simulation
             }
 
             var target = order[targetZoneIndex];
+            var targeting = _interventionActions.Resolve(def.InterventionAction.Key).Targeting;
             ExecutionCardInstance secondary = null;
             if (secondaryZoneIndex >= 0)
             {
                 if (secondaryZoneIndex >= order.Count)
+                {
+                    return false;
+                }
+
+                if (!targeting.AllowDuplicates && secondaryZoneIndex == targetZoneIndex)
                 {
                     return false;
                 }

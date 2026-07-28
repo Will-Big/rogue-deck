@@ -160,6 +160,27 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Swap_with_the_same_target_twice_is_rejected_without_spending_anything()
+        {
+            var session = NewSession(
+                new[] { StarterDeck.QuickCut(), StarterDeck.SwapPositions() }, Goblin(5, 3));
+            session.PlayExecutionCard(HandIndex(session, "quick_cut"));
+            int energyBefore = session.FateEnergy;
+            int handBefore = session.Hand.Count;
+            var orderBefore = session.CurrentOrder.Select(c => c.InstanceId).ToArray();
+            int quickIndex = ZoneIndex(session, "quick_cut");
+
+            bool played = session.PlayInterventionCard(
+                HandIndex(session, "swap_positions"), quickIndex, quickIndex);
+
+            Assert.IsFalse(played);
+            Assert.AreEqual(energyBefore, session.FateEnergy);
+            Assert.AreEqual(handBefore, session.Hand.Count);
+            CollectionAssert.AreEqual(orderBefore,
+                session.CurrentOrder.Select(c => c.InstanceId).ToArray());
+        }
+
+        [Test]
         public void Describe_targeting_answers_none_for_out_of_range_indexes()
         {
             var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
