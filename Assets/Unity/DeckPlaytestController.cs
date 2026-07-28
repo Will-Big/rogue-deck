@@ -4,7 +4,6 @@ using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
@@ -128,8 +127,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            var def = _session.Hand[_armedInterventionHandIndex].Def;
-            var needsTwo = def.InterventionAction != null && def.InterventionAction.Key == InterventionActionKeys.SwapExecutionOrder;
+            var needsTwo = _session.DescribeTargeting(_armedInterventionHandIndex).Count == 2;
 
             if (needsTwo && _firstSwapZoneIndex < 0)
             {

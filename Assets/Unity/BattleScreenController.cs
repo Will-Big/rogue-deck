@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
 using FateWeaver.Simulation.Presentation;
@@ -175,25 +176,23 @@ namespace FateWeaver.Unity
             }
             else
             {
-                int requiredTargets = CardTargetRules.RequiredRailTargets(def);
-                if (def.Category != CardCategory.Intervention
-                    || requiredTargets < 1
-                    || requiredTargets > 2)
+                var req = _session.DescribeTargeting(handIndex);
+                if (req.Kind != TargetKind.RailCard)
                 {
                     SetMessage("사용할 수 없는 조작 카드입니다.");
                     return;
                 }
 
                 var targets = CurrentValidTargets(SelectionTargetKind.ExecutionCard);
-                if (targets.Count < requiredTargets)
+                if (targets.Count < req.Count)
                 {
                     SetMessage("대상으로 삼을 카드가 실행 순서에 부족합니다.");
                     return;
                 }
 
                 _selection.BeginTargetSelection(
-                    handIndex, SelectionTargetKind.ExecutionCard, requiredTargets, targets);
-                SetMessage(name + " — 대상 " + requiredTargets + "개를 선택하세요.");
+                    handIndex, SelectionTargetKind.ExecutionCard, req.Count, targets);
+                SetMessage(name + " — 대상 " + req.Count + "개를 선택하세요.");
             }
 
             RefreshSelections();
@@ -281,18 +280,16 @@ namespace FateWeaver.Unity
                 return played;
             }
 
-            int requiredTargets = CardTargetRules.RequiredRailTargets(def);
-            if (def.Category != CardCategory.Intervention
-                || requiredTargets < 1
-                || requiredTargets > 2
-                || result.Targets.Count != requiredTargets
+            var req = _session.DescribeTargeting(result.HandIndex);
+            if (req.Kind != TargetKind.RailCard
+                || result.Targets.Count != req.Count
                 || result.Targets.Any(target => target.Kind != SelectionTargetKind.ExecutionCard))
             {
                 SetMessage("대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
                 return false;
             }
 
-            int secondaryTarget = requiredTargets == 2 ? result.Targets[1].Index : -1;
+            int secondaryTarget = req.Count == 2 ? result.Targets[1].Index : -1;
             bool interventionPlayed = _session.PlayInterventionCard(
                 result.HandIndex, result.Targets[0].Index, secondaryTarget);
             SetMessage(interventionPlayed
