@@ -527,7 +527,7 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 3;
+    const SCHEMA_VERSION = 4;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
@@ -842,6 +842,7 @@
         activeCardId: "",
         searchQuery: "",
         selection: [],
+        exportFileName: "",
       };
     }
 
@@ -855,6 +856,7 @@
         searchQuery: String(state.searchQuery ?? ""),
         selection: [...new Set((state.selection ?? []).map(String))]
           .filter((id) => ids.has(id)),
+        exportFileName: String(state.exportFileName ?? ""),
       };
       storage.setItem(STORAGE_KEY, JSON.stringify(saved));
       return saved;
@@ -865,7 +867,7 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (![1, 2, SCHEMA_VERSION].includes(saved.schemaVersion)) {
+      if (![1, 2, 3, SCHEMA_VERSION].includes(saved.schemaVersion)) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
       const cards = (saved.cards ?? []).map((card) => normalizeCard({
@@ -873,7 +875,7 @@
         completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
       }));
       const ids = new Set(cards.map((card) => card.id));
-      const savedSelection = saved.schemaVersion === SCHEMA_VERSION
+      const savedSelection = saved.schemaVersion >= 3
         ? saved.selection
         : saved.exportSelection;
       return {
@@ -884,6 +886,7 @@
         selection: (savedSelection ?? [])
           .map(String)
           .filter((id) => ids.has(id)),
+        exportFileName: String(saved.exportFileName ?? ""),
       };
     }
 
@@ -925,6 +928,12 @@
 
     function cardsForExport(state) {
       return exportStatus(state).kind === "ready" ? selectedCards(state) : [];
+    }
+
+    function downloadFileName(input, date) {
+      const name = String(input ?? "").trim();
+      const base = name || `fate-weaver-card-ideas-${date}`;
+      return /\.md$/i.test(base) ? base : `${base}.md`;
     }
 
     function uniqueCardId(cards, requestedId) {
@@ -1111,6 +1120,7 @@
       tryWriteStore,
       selectedCards,
       cardsForExport,
+      downloadFileName,
       uniqueCardName,
       createCard,
       editCard,

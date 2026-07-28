@@ -160,7 +160,7 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(storage.writeCount, 1);
 
   const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 3);
+  assert.equal(saved.schemaVersion, 4);
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
 
@@ -194,6 +194,38 @@ test("round-trips the current schema with shared selection and rejects an unknow
 
   storage.setItem(core.STORAGE_KEY, JSON.stringify({ schemaVersion: 99, cards: [] }));
   assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
+});
+
+test("migrates schema 3 and round-trips the schema 4 default export file name", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 3,
+      cards: [{ id: "a", name: "기존 카드", completionStatus: "complete" }],
+      activeCardId: "a",
+      searchQuery: "",
+      selection: ["a"],
+    }),
+  });
+
+  const migrated = core.readStore(storage);
+  assert.equal(migrated.schemaVersion, 4);
+  assert.equal(migrated.exportFileName, "");
+  assert.deepEqual([...migrated.selection], ["a"]);
+
+  core.writeStore(storage, { ...migrated, exportFileName: "독 카드풀" });
+  assert.equal(core.readStore(storage).exportFileName, "독 카드풀");
+});
+
+test("normalizes Markdown download names and permits an empty name", () => {
+  const core = loadCore();
+  assert.equal(core.downloadFileName(" 독 카드풀 ", "2026-07-28"), "독 카드풀.md");
+  assert.equal(core.downloadFileName("독 카드풀.MD", "2026-07-28"), "독 카드풀.MD");
+  assert.equal(core.downloadFileName("독 카드풀.txt", "2026-07-28"), "독 카드풀.txt.md");
+  assert.equal(
+    core.downloadFileName("   ", "2026-07-28"),
+    "fate-weaver-card-ideas-2026-07-28.md",
+  );
 });
 
 test("keeps every card in one list without a separate draft state", () => {
@@ -314,7 +346,7 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });
 
-test("migrates schema 1 cards to complete schema 3 cards", () => {
+test("migrates schema 1 cards to complete schema 4 cards", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -327,12 +359,12 @@ test("migrates schema 1 cards to complete schema 3 cards", () => {
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 3);
+  assert.equal(state.schemaVersion, 4);
   assert.equal(state.cards[0].completionStatus, "complete");
   assert.deepEqual([...state.selection], ["a"]);
 });
 
-test("migrates schema 2 export selection into schema 3 shared selection", () => {
+test("migrates schema 2 export selection into schema 4 shared selection", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -348,7 +380,7 @@ test("migrates schema 2 export selection into schema 3 shared selection", () => 
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 3);
+  assert.equal(state.schemaVersion, 4);
   assert.deepEqual([...state.selection], ["a", "b"]);
 });
 
