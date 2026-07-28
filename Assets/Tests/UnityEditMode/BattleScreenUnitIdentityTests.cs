@@ -72,7 +72,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Party_movement_preserves_each_views_identity_content_click_target_and_targetability()
+        public void Party_movement_preserves_each_views_identity_and_content()
         {
             var memberA = Party("a");
             var memberB = Party("b");
@@ -83,10 +83,9 @@ namespace FateWeaver.Tests.UnityEditMode
             memberA.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 1);
             memberB.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 2);
             memberC.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 3);
-            BeginPartyTargeting();
             Invoke(_controller, "RefreshUnits");
             Invoke(_controller, "RefreshSelections");
-            var before = PartyViews().ToDictionary(MemberId, Snapshot);
+            var before = PartySnapshots();
 
             ApplyMove(Side.Player, memberC.Id, -99);
             Invoke(_controller, "RefreshUnits");
@@ -113,7 +112,7 @@ namespace FateWeaver.Tests.UnityEditMode
             enemyB.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 2);
             enemyC.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 3);
             Invoke(_controller, "RefreshUnits");
-            var before = EnemyViews().ToDictionary(MemberId, Snapshot);
+            var before = EnemySnapshots();
 
             ApplyMove(Side.Enemy, enemyA.Id, 99);
             Invoke(_controller, "RefreshUnits");
@@ -124,30 +123,6 @@ namespace FateWeaver.Tests.UnityEditMode
             CollectionAssert.AreEqual(
                 new[] { "enemy_b", "enemy_c", "enemy_a" },
                 _session.State.Enemies.Select(enemy => enemy.Id).ToArray());
-        }
-
-        [Test]
-        public void Party_unit_button_completes_common_single_target_selection_without_confirm()
-        {
-            var completed = new List<SelectionResult>();
-            _selection.Initialize(
-                result =>
-                {
-                    completed.Add(result);
-                    return true;
-                },
-                _ => Array.Empty<SelectionTargetRef>(),
-                () => { });
-            var target = SelectionTargetRef.PartyMember("b");
-
-            _selection.BeginTargetSelection(
-                0, SelectionTargetKind.PartyMember, 1, new[] { target });
-            GetField<Button>(ViewById(_partyRow, "b"), "_targetButton").onClick.Invoke();
-
-            Assert.AreEqual(1, completed.Count);
-            Assert.IsTrue(completed[0].IsComplete);
-            Assert.AreEqual("b", completed[0].Targets.Single().EntityId);
-            Assert.IsFalse(_confirmButton.gameObject.activeSelf);
         }
 
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
@@ -209,18 +184,6 @@ namespace FateWeaver.Tests.UnityEditMode
             return button;
         }
 
-        private void BeginPartyTargeting()
-        {
-            _selection.BeginTargetSelection(
-                0,
-                SelectionTargetKind.PartyMember,
-                1,
-                _session.State.Party
-                    .Where(member => member.IsAlive)
-                    .Select(member => SelectionTargetRef.PartyMember(member.Id))
-                    .ToList());
-        }
-
         private void ApplyMove(Side side, string ownerId, int distance)
         {
             var effect = new EffectData(EffectKeys.MoveFormation, distance);
@@ -237,20 +200,24 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private PartyMember Party(string id) => _session.State.Party.Single(member => member.Id == id);
         private Enemy Enemy(string id) => _session.State.Enemies.Single(enemy => enemy.Id == id);
-        private IEnumerable<UnitView> PartyViews() => _partyRow.GetComponentsInChildren<UnitView>(true);
-        private IEnumerable<UnitView> EnemyViews() => _enemyRow.GetComponentsInChildren<UnitView>(true);
 
-        private static UnitView ViewById(RectTransform row, string id)
-            => row.GetComponentsInChildren<UnitView>(true).Single(view => MemberId(view) == id);
+        private Dictionary<string, ViewSnapshot> PartySnapshots()
+            => GetField<Dictionary<string, UnitView>>(_controller, "_partyUnits")
+                .ToDictionary(pair => pair.Key, pair => Snapshot(pair.Value));
 
-        private static string MemberId(UnitView view) => GetField<string>(view, "_memberId");
+        private Dictionary<string, ViewSnapshot> EnemySnapshots()
+            => GetField<Dictionary<string, UnitView>>(_controller, "_enemyUnits")
+                .ToDictionary(pair => pair.Key, pair => Snapshot(pair.Value));
+
+        private UnitView ViewById(RectTransform row, string id)
+            => row == _partyRow
+                ? GetField<Dictionary<string, UnitView>>(_controller, "_partyUnits")[id]
+                : GetField<Dictionary<string, UnitView>>(_controller, "_enemyUnits")[id];
 
         private static ViewSnapshot Snapshot(UnitView view) => new ViewSnapshot(
             Text(view, "_nameText"),
-            MemberId(view),
             Text(view, "_hpText"),
-            Text(view, "_statusText"),
-            GetField<Button>(view, "_targetButton").interactable);
+            Text(view, "_statusText"));
 
         private static string Text(UnitView view, string fieldName)
         {
@@ -262,10 +229,8 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var current = Snapshot(after);
             Assert.AreEqual(before.Name, current.Name);
-            Assert.AreEqual(before.ClickMemberId, current.ClickMemberId);
             Assert.AreEqual(before.Hp, current.Hp);
             Assert.AreEqual(before.Status, current.Status);
-            Assert.AreEqual(before.Targetable, current.Targetable);
             Assert.AreEqual(expectedSibling, after.transform.GetSiblingIndex());
         }
 
@@ -283,20 +248,16 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private sealed class ViewSnapshot
         {
-            public ViewSnapshot(string name, string clickMemberId, string hp, string status, bool targetable)
+            public ViewSnapshot(string name, string hp, string status)
             {
                 Name = name;
-                ClickMemberId = clickMemberId;
                 Hp = hp;
                 Status = status;
-                Targetable = targetable;
             }
 
             public string Name { get; }
-            public string ClickMemberId { get; }
             public string Hp { get; }
             public string Status { get; }
-            public bool Targetable { get; }
         }
     }
 }

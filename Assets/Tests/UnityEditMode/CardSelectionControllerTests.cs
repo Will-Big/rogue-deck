@@ -24,8 +24,6 @@ namespace FateWeaver.Tests.UnityEditMode
         private readonly List<SelectionResult> _appliedResults = new List<SelectionResult>();
         private static readonly Color SelectedOutline =
             new Color(0.35f, 0.75f, 0.95f, 1f);
-        private static readonly Color CandidateOutline =
-            new Color(0.95f, 0.72f, 0.25f, 1f);
 
         [SetUp]
         public void SetUp()
@@ -94,9 +92,9 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Single_target_shows_arrow_never_shows_confirm_and_dispatches_on_click()
         {
-            var target = SelectionTargetRef.PartyMember("member-a");
+            var target = SelectionTargetRef.ExecutionCard(0);
             _controller.BeginTargetSelection(
-                0, SelectionTargetKind.PartyMember, 1, new[] { target });
+                0, SelectionTargetKind.ExecutionCard, 1, new[] { target });
 
             Assert.IsTrue(_arrow.gameObject.activeSelf);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
@@ -129,45 +127,28 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Selected_target_click_restores_candidate_and_hides_confirm()
         {
-            var first = SelectionTargetRef.PartyMember("member-a");
-            var second = SelectionTargetRef.PartyMember("member-b");
-            var firstView = UnitView.EditorCreate(
-                (RectTransform)_root.transform, new Vector2(180f, 250f));
-            var secondView = UnitView.EditorCreate(
-                (RectTransform)_root.transform, new Vector2(180f, 250f));
-            _controller.RegisterUnitTarget(first, firstView);
-            _controller.RegisterUnitTarget(second, secondView);
+            var first = SelectionTargetRef.ExecutionCard(0);
+            var second = SelectionTargetRef.ExecutionCard(1);
             _controller.BeginTargetSelection(
-                0, SelectionTargetKind.PartyMember, 2, new[] { first, second });
+                0, SelectionTargetKind.ExecutionCard, 2, new[] { first, second });
 
             _controller.OnTargetClicked(first);
             _controller.OnTargetClicked(second);
             Assert.IsTrue(_confirmButton.gameObject.activeSelf);
-            Assert.AreEqual(SelectedOutline, Highlight(firstView).color);
-            Assert.AreEqual(SelectedOutline, Highlight(secondView).color);
 
             _controller.OnTargetClicked(first);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
-            Assert.AreEqual(CandidateOutline, Highlight(firstView).color);
-            Assert.AreEqual(SelectedOutline, Highlight(secondView).color);
 
             _controller.OnTargetClicked(first);
             Assert.IsTrue(_confirmButton.gameObject.activeSelf);
-            Assert.AreEqual(SelectedOutline, Highlight(firstView).color);
         }
 
         [Test]
         public void Rejected_result_removes_stale_pick_and_keeps_selection_active()
         {
-            var first = SelectionTargetRef.PartyMember("member-a");
-            var second = SelectionTargetRef.PartyMember("member-b");
-            var third = SelectionTargetRef.PartyMember("member-c");
-            var firstView = UnitView.EditorCreate(
-                (RectTransform)_root.transform, new Vector2(180f, 250f));
-            var secondView = UnitView.EditorCreate(
-                (RectTransform)_root.transform, new Vector2(180f, 250f));
-            _controller.RegisterUnitTarget(first, firstView);
-            _controller.RegisterUnitTarget(second, secondView);
+            var first = SelectionTargetRef.ExecutionCard(0);
+            var second = SelectionTargetRef.ExecutionCard(1);
+            var third = SelectionTargetRef.ExecutionCard(2);
             _controller.Initialize(
                 result =>
                 {
@@ -178,28 +159,23 @@ namespace FateWeaver.Tests.UnityEditMode
                 () => { });
 
             _controller.BeginTargetSelection(
-                0, SelectionTargetKind.PartyMember, 2, new[] { first, second, third });
+                0, SelectionTargetKind.ExecutionCard, 2, new[] { first, second, third });
             _controller.OnTargetClicked(first);
             _controller.OnTargetClicked(second);
             _confirmButton.onClick.Invoke();
 
             Assert.AreEqual(1, _appliedResults.Count);
             Assert.IsTrue(_controller.SelectionActive);
-            var firstDim = Field<GameObject>(firstView, "_targetDim");
-            var secondHighlight = Highlight(secondView);
-            Assert.IsTrue(firstDim.activeSelf);
-            Assert.IsTrue(secondHighlight.gameObject.activeSelf);
-            Assert.AreEqual(SelectedOutline, secondHighlight.color);
             Assert.IsFalse(_confirmButton.gameObject.activeSelf);
         }
 
         [Test]
         public void Target_click_does_not_create_center_emphasis_card()
         {
-            var target = SelectionTargetRef.PartyMember("member-a");
+            var target = SelectionTargetRef.ExecutionCard(0);
             int childCountBefore = _overlay.childCount;
             _controller.BeginTargetSelection(
-                0, SelectionTargetKind.PartyMember, 1, new[] { target });
+                0, SelectionTargetKind.ExecutionCard, 1, new[] { target });
 
             _controller.OnTargetClicked(target);
 
@@ -359,9 +335,6 @@ namespace FateWeaver.Tests.UnityEditMode
             => (T)target.GetType()
                 .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(target);
-
-        private static Image Highlight(UnitView view)
-            => Field<GameObject>(view, "_targetHighlight").GetComponent<Image>();
 
         private static void SetField(object target, string name, object value)
         {

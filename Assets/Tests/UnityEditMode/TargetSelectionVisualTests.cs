@@ -38,33 +38,6 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Unit_target_state_uses_gold_for_candidate_and_blue_for_selected()
-        {
-            var root = new GameObject("Root", typeof(RectTransform));
-            try
-            {
-                var view = UnitView.EditorCreate(
-                    (RectTransform)root.transform, new Vector2(180f, 250f));
-                var highlightField = typeof(UnitView)
-                    .GetField("_targetHighlight", BindingFlags.Instance | BindingFlags.NonPublic);
-                Assert.AreEqual(typeof(GameObject), highlightField.FieldType);
-                var highlightObject = (GameObject)highlightField.GetValue(view);
-                var highlight = highlightObject.GetComponent<Image>();
-
-                view.SetTargetSelection(true, true, false);
-                Assert.AreEqual(CandidateOutline, highlight.color);
-
-                view.SetTargetSelection(true, true, true);
-                Assert.AreEqual(SelectedOutline, highlight.color);
-                Assert.IsNull(view.transform.Find("TargetOrderBadge"));
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-            }
-        }
-
-        [Test]
         public void Rail_target_state_uses_blue_for_picks_and_dims_noncandidates()
         {
             var root = new GameObject("Root", typeof(RectTransform));

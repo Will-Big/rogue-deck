@@ -2,33 +2,26 @@ using System;
 
 namespace FateWeaver.Simulation.Presentation
 {
-    public enum SelectionTargetKind { None, ExecutionCard, PartyMember, Enemy }
+    // Unit kinds (party member, enemy...) return here when the intervention card design
+    // adds unit targets — see the 2026-07-28 P0-C targeting spec, §2 policy 2.
+    public enum SelectionTargetKind { None, ExecutionCard }
 
     public readonly struct SelectionTargetRef : IEquatable<SelectionTargetRef>
     {
         public SelectionTargetKind Kind { get; }
         public int Index { get; }
-        public string EntityId { get; }
 
-        private SelectionTargetRef(SelectionTargetKind kind, int index, string entityId)
+        private SelectionTargetRef(SelectionTargetKind kind, int index)
         {
             Kind = kind;
             Index = index;
-            EntityId = entityId;
         }
 
         public static SelectionTargetRef ExecutionCard(int index)
-            => new SelectionTargetRef(SelectionTargetKind.ExecutionCard, index, null);
-
-        public static SelectionTargetRef PartyMember(string id)
-            => new SelectionTargetRef(SelectionTargetKind.PartyMember, -1, id);
-
-        public static SelectionTargetRef Enemy(string id)
-            => new SelectionTargetRef(SelectionTargetKind.Enemy, -1, id);
+            => new SelectionTargetRef(SelectionTargetKind.ExecutionCard, index);
 
         public bool Equals(SelectionTargetRef other)
-            => Kind == other.Kind && Index == other.Index
-                && string.Equals(EntityId, other.EntityId, StringComparison.Ordinal);
+            => Kind == other.Kind && Index == other.Index;
 
         public override bool Equals(object obj)
             => obj is SelectionTargetRef other && Equals(other);
@@ -37,8 +30,7 @@ namespace FateWeaver.Simulation.Presentation
         {
             unchecked
             {
-                int hash = ((int)Kind * 397) ^ Index;
-                return (hash * 397) ^ (EntityId == null ? 0 : EntityId.GetHashCode());
+                return ((int)Kind * 397) ^ Index;
             }
         }
     }

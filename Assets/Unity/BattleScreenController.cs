@@ -95,7 +95,6 @@ namespace FateWeaver.Unity
 
         private void SpawnUnits()
         {
-            _selection.ClearUnitTargets();
             foreach (Transform child in _playerUnitsRow) Destroy(child.gameObject);
             foreach (Transform child in _enemyUnitsRow) Destroy(child.gameObject);
             _partyUnits.Clear();
@@ -107,10 +106,6 @@ namespace FateWeaver.Unity
                 var view = Instantiate(_unitPrefab, _playerUnitsRow);
                 var asset = CharacterFor(member.Id);
                 view.Bind(member.Name, asset != null ? asset.Color : PartyOwnerColor);
-                var target = SelectionTargetRef.PartyMember(member.Id);
-                view.BindTarget(member.Id, id => _selection.OnTargetClicked(
-                    SelectionTargetRef.PartyMember(id)));
-                _selection.RegisterUnitTarget(target, view);
                 _partyUnits.Add(member.Id, view);
             }
 
@@ -118,10 +113,6 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_unitPrefab, _enemyUnitsRow);
                 view.Bind(PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id), EnemyUnitTint);
-                var target = SelectionTargetRef.Enemy(enemy.Id);
-                view.BindTarget(enemy.Id, id => _selection.OnTargetClicked(
-                    SelectionTargetRef.Enemy(id)));
-                _selection.RegisterUnitTarget(target, view);
                 _enemyUnits.Add(enemy.Id, view);
                 _enemyMaxHp.Add(enemy.Id, enemy.Hp);
             }
@@ -406,16 +397,6 @@ namespace FateWeaver.Unity
 
             switch (kind)
             {
-                case SelectionTargetKind.PartyMember:
-                    return _session.State.Party
-                        .Where(member => member.IsAlive)
-                        .Select(member => SelectionTargetRef.PartyMember(member.Id))
-                        .ToList();
-                case SelectionTargetKind.Enemy:
-                    return _session.State.Enemies
-                        .Where(enemy => enemy.Hp > 0)
-                        .Select(enemy => SelectionTargetRef.Enemy(enemy.Id))
-                        .ToList();
                 case SelectionTargetKind.ExecutionCard:
                     return Enumerable.Range(0, _session.CurrentOrder.Count)
                         .Select(SelectionTargetRef.ExecutionCard)

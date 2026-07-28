@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Status;
 using TMPro;
@@ -17,19 +16,11 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _hpText;
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _statusText;
-        [SerializeField] private GameObject _targetHighlight;
-        [SerializeField] private GameObject _targetDim;
-        [SerializeField] private Button _targetButton;
 
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
         private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
-        private static readonly Color TargetCandidate =
-            new Color(0.95f, 0.72f, 0.25f, 1f);
-        private static readonly Color TargetSelected =
-            new Color(0.35f, 0.75f, 0.95f, 1f);
 
         private Color _aliveTint = Color.white;
-        private string _memberId;
 
         public void Bind(string displayName, Color portraitTint)
         {
@@ -47,25 +38,6 @@ namespace FateWeaver.Unity
             _hpFill.offsetMax = Vector2.zero;
             _hpText.text = Mathf.Max(0, current) + " / " + max;
             _portrait.color = current > 0 ? _aliveTint : DeadTint;
-            if (current <= 0)
-            {
-                SetTargetable(false);
-            }
-        }
-
-        public void BindTarget(string memberId, Action<string> onClick)
-        {
-            _memberId = memberId;
-            if (_targetButton == null)
-            {
-                return;
-            }
-
-            _targetButton.onClick.RemoveAllListeners();
-            if (onClick != null)
-            {
-                _targetButton.onClick.AddListener(() => onClick(_memberId));
-            }
         }
 
         public void SetStatuses(IReadOnlyList<StatusInstance> statuses)
@@ -89,20 +61,6 @@ namespace FateWeaver.Unity
             _statusText.text = string.Join(" · ", parts);
         }
 
-        public void SetTargetable(bool value)
-        {
-            SetTargetSelection(value, value, false);
-        }
-
-        public void SetTargetSelection(bool active, bool candidate, bool selected)
-        {
-            _targetDim.SetActive(active && !candidate);
-            _targetHighlight.SetActive(active && candidate);
-            _targetHighlight.GetComponent<Image>().color =
-                selected ? TargetSelected : TargetCandidate;
-            _targetButton.interactable = active && candidate;
-        }
-
         /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
         public static UnitView EditorCreate(RectTransform parent, Vector2 size)
         {
@@ -114,15 +72,9 @@ namespace FateWeaver.Unity
 
             var view = root.gameObject.AddComponent<UnitView>();
 
-            var targetHighlight = BattleUiKit.Image(root, "TargetHighlight", new Color(0.95f, 0.72f, 0.25f, 0.9f));
-            BattleUiKit.Anchor(targetHighlight.rectTransform, -0.02f, 0.26f, 1.02f, 1.02f);
-            targetHighlight.raycastTarget = false;
-
             var portrait = BattleUiKit.Image(root, "Portrait", Color.white);
             BattleUiKit.Anchor(portrait.rectTransform, 0f, 0.28f, 1f, 1f);
-            portrait.raycastTarget = true;
-            var targetButton = root.gameObject.AddComponent<Button>();
-            targetButton.targetGraphic = portrait;
+            portrait.raycastTarget = false;
 
             var hpBack = BattleUiKit.Image(root, "HpBack", new Color(0f, 0f, 0f, 0.55f));
             BattleUiKit.Anchor(hpBack.rectTransform, 0.05f, 0.16f, 0.95f, 0.26f);
@@ -141,20 +93,11 @@ namespace FateWeaver.Unity
             var statusText = BattleUiKit.Text(root, "Statuses", 13f, TextAlignmentOptions.Center);
             BattleUiKit.Anchor(statusText.rectTransform, 0f, 0.10f, 1f, 0.16f);
 
-            var targetDim = BattleUiKit.Image(root, "TargetDim", new Color(0f, 0f, 0f, 0.55f));
-            BattleUiKit.Stretch(targetDim.rectTransform);
-            targetDim.raycastTarget = false;
-
             view._portrait = portrait;
             view._hpFill = hpFill.rectTransform;
             view._hpText = hpText;
             view._nameText = nameText;
             view._statusText = statusText;
-            view._targetHighlight = targetHighlight.gameObject;
-            view._targetDim = targetDim.gameObject;
-            view._targetButton = targetButton;
-            targetDim.gameObject.SetActive(false);
-            view.SetTargetable(false);
             return view;
         }
     }

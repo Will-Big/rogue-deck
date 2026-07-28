@@ -39,11 +39,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Single_party_target_completes_without_confirmation()
+        public void Single_target_completes_without_confirmation()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
-            var target = SelectionTargetRef.PartyMember("member-b");
+            machine.SelectCard(1, SelectionTargetKind.ExecutionCard, 1);
+            var target = SelectionTargetRef.ExecutionCard(1);
 
             var result = machine.ClickTarget(target);
 
@@ -57,9 +57,9 @@ namespace FateWeaver.Tests
         public void Pending_single_target_completion_ignores_another_target()
         {
             var machine = new CardSelectionMachine();
-            var first = SelectionTargetRef.PartyMember("member-a");
-            var second = SelectionTargetRef.PartyMember("member-b");
-            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+            var first = SelectionTargetRef.ExecutionCard(0);
+            var second = SelectionTargetRef.ExecutionCard(1);
+            machine.SelectCard(1, SelectionTargetKind.ExecutionCard, 1);
 
             Assert.IsTrue(machine.ClickTarget(first).IsComplete);
 
@@ -67,18 +67,6 @@ namespace FateWeaver.Tests
 
             Assert.IsFalse(result.IsComplete);
             CollectionAssert.AreEqual(new[] { first }, machine.PickedTargets);
-        }
-
-        [Test]
-        public void Target_from_wrong_domain_is_ignored()
-        {
-            var machine = new CardSelectionMachine();
-            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
-
-            var result = machine.ClickTarget(SelectionTargetRef.ExecutionCard(0));
-
-            Assert.IsFalse(result.IsComplete);
-            Assert.AreEqual(0, machine.PickedTargets.Count);
         }
 
         [Test]
@@ -164,9 +152,9 @@ namespace FateWeaver.Tests
         public void Rejected_single_target_completion_clears_pick_and_allows_another_target()
         {
             var machine = new CardSelectionMachine();
-            var first = SelectionTargetRef.PartyMember("member-a");
-            var second = SelectionTargetRef.PartyMember("member-b");
-            machine.SelectCard(1, SelectionTargetKind.PartyMember, 1);
+            var first = SelectionTargetRef.ExecutionCard(0);
+            var second = SelectionTargetRef.ExecutionCard(1);
+            machine.SelectCard(1, SelectionTargetKind.ExecutionCard, 1);
             machine.ClickTarget(first);
 
             machine.RejectCompletion(new[] { first, second });
@@ -181,8 +169,8 @@ namespace FateWeaver.Tests
         public void Successful_completion_is_the_only_operation_that_returns_to_idle()
         {
             var machine = new CardSelectionMachine();
-            machine.SelectCard(2, SelectionTargetKind.PartyMember, 1);
-            machine.ClickTarget(SelectionTargetRef.PartyMember("member-a"));
+            machine.SelectCard(2, SelectionTargetKind.ExecutionCard, 1);
+            machine.ClickTarget(SelectionTargetRef.ExecutionCard(0));
 
             machine.CommitSucceeded();
 
@@ -211,7 +199,7 @@ namespace FateWeaver.Tests
             machine.SelectCard(0, SelectionTargetKind.ExecutionCard, 2);
             machine.ClickTarget(SelectionTargetRef.ExecutionCard(1));
 
-            machine.SelectCard(3, SelectionTargetKind.PartyMember, 1);
+            machine.SelectCard(3, SelectionTargetKind.ExecutionCard, 1);
 
             Assert.AreEqual(SelectionPhase.PickSingleTarget, machine.Phase);
             Assert.AreEqual(0, machine.PickedTargets.Count);
