@@ -9,7 +9,7 @@
   [파티 기반 전투](2026-07-15-party-foundation-design.md),
   [카드 설명 레지스트리](2026-07-16-description-registry-design.md),
   [플레이어 캐릭터 및 카드풀](2026-07-20-character-card-pools-design.md)
-- 상태: `current` — 위치 대상·자신 대상 규칙과 카드 표기 확정, 자신 대상 구현 전
+- 상태: `current` — 위치 대상·자신 대상 규칙과 카드 표기 확정, 카드 노트 반영
 - 범위: 유닛 대상 범위, 실행 시 대상 확정, 카드 프레임 대상 칸, 능력 본문의 진영 구분
 
 ## 1. 목적

@@ -147,6 +147,7 @@
     }
 
     .pane-title { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+    .editor-actions { display: flex; align-items: center; gap: 8px; }
     .count {
       min-width: 25px;
       padding: 2px 7px;
@@ -199,12 +200,14 @@
     .card-select:hover:not(:disabled) { border-color: transparent; background: transparent; }
     .card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
     .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: var(--muted); font-size: 11px; }
-    .tag, .role-pill, .completion-pill {
+    .tag, .faction-pill, .role-pill, .completion-pill {
       padding: 2px 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: #171916;
     }
+    .faction-pill.ally { color: #b9d7f0; border-color: #405f75; background: #1b2831; }
+    .faction-pill.enemy { color: #efb6b0; border-color: #74423e; background: #311f1d; }
     .completion-pill.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
     .completion-pill.incomplete { color: #f6dca7; border-color: #705c32; background: #30291c; }
     .warning-dot { color: var(--warning); }
@@ -408,7 +411,7 @@
         <button type="button" class="danger" id="delete-card">삭제</button>
         <button type="button" class="wide-action" id="import-markdown">Markdown 불러오기</button>
         <input id="import-file" type="file" accept=".md,text/markdown" hidden>
-        <button type="button" class="primary wide-action" id="export-markdown">AI용 Markdown 내보내기</button>
+        <button type="button" class="primary wide-action" id="export-markdown">Markdown 내보내기</button>
       </div>
     </aside>
 
@@ -419,7 +422,10 @@
             <strong id="editor-title">선택된 카드 없음</strong>
             <span class="completion-badge incomplete" id="completion-badge">미완성</span>
           </div>
-          <button type="button" class="primary" id="save-card">저장</button>
+          <div class="editor-actions">
+            <button type="button" id="save-card">저장</button>
+            <button type="button" class="primary" id="save-all-cards">전체 저장</button>
+          </div>
         </div>
 
         <form class="editor-content" id="card-form">
@@ -433,16 +439,23 @@
                 <input id="card-name" name="name" type="text" placeholder="카드 이름" autocomplete="off">
               </label>
               <label>
+                진영
+                <select id="card-faction" name="faction">
+                  <option value="ally">아군</option>
+                  <option value="enemy">적군</option>
+                </select>
+              </label>
+              <label>
+                비용
+                <input id="card-cost" name="cost" type="number" min="0" step="1" placeholder="미정">
+              </label>
+              <label>
                 역할
                 <select id="card-role" name="role">
                   <option value="unknown">미정</option>
                   <option value="execution">실행</option>
                   <option value="intervention">조작</option>
                 </select>
-              </label>
-              <label>
-                비용
-                <input id="card-cost" name="cost" type="number" min="0" step="1" placeholder="미정">
               </label>
               <label id="execution-order-field">
                 실행순서
@@ -557,22 +570,28 @@
       execution: "실행",
       intervention: "조작",
     });
+    const FACTION_LABELS = Object.freeze({
+      ally: "아군",
+      enemy: "적군",
+    });
 
     const TARGETS = Object.freeze({
       none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
+      self: Object.freeze({ label: "자신", ally: "◎", enemy: "◎" }),
       frontOne: Object.freeze({ label: "앞 하나", ally: "━━━━◆", enemy: "◆━━━━" }),
       frontTwo: Object.freeze({ label: "앞 둘", ally: "━━━◆◆", enemy: "◆◆━━━" }),
       backOne: Object.freeze({ label: "뒤 하나", ally: "◆━━━━", enemy: "━━━━◆" }),
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 4;
+    const SCHEMA_VERSION = 5;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
       return {
         id: "",
         name: "",
+        faction: "ally",
         role: "unknown",
         cost: "",
         executionOrder: "",
@@ -600,18 +619,24 @@
       return Object.hasOwn(ROLE_LABELS, value) ? value : "unknown";
     }
 
+    function validFaction(value) {
+      return Object.hasOwn(FACTION_LABELS, value) ? value : "ally";
+    }
+
     function validTarget(value) {
       return Object.hasOwn(TARGETS, value) ? value : "none";
     }
 
     function normalizeCard(input = {}) {
       const base = emptyCard();
+      const faction = validFaction(input.faction);
       return {
         ...base,
         id: String(input.id ?? "").trim(),
         name: String(input.name ?? "").trim(),
-        role: validRole(input.role),
-        cost: String(input.cost ?? "").trim(),
+        faction,
+        role: faction === "enemy" ? "execution" : validRole(input.role),
+        cost: faction === "enemy" ? "" : String(input.cost ?? "").trim(),
         executionOrder: String(input.executionOrder ?? "").trim(),
         tags: tagList(input.tags),
         targets: {
@@ -630,15 +655,25 @@
       };
     }
 
+    function changeCardFaction(input, faction) {
+      const card = normalizeCard(input);
+      const nextFaction = validFaction(faction);
+      if (card.faction === nextFaction) return card;
+      return normalizeCard({
+        ...card,
+        faction: nextFaction,
+        role: nextFaction === "ally" ? "unknown" : "execution",
+        cost: "",
+      });
+    }
+
     function validateCard(input) {
       const card = normalizeCard(input);
       const errors = [];
       const warnings = [];
 
-      if (!card.name) errors.push("카드 이름을 입력하세요.");
-      if (!card.cost) warnings.push("비용이 미정입니다.");
-      if (card.role === "execution" && !card.executionOrder) {
-        warnings.push("실행 카드의 실행순서가 미정입니다.");
+      if (card.targets.ally === "self" && card.targets.enemy === "self") {
+        errors.push("아군과 적군에 자신을 동시에 지정할 수 없습니다.");
       }
       if (card.abilities.ally.length && card.targets.ally === "none") {
         warnings.push("아군 능력은 있지만 아군 위치 범위가 없습니다.");
@@ -654,6 +689,27 @@
       }
 
       return { errors, warnings };
+    }
+
+    function isIntegerText(value) {
+      return /^-?\d+$/.test(String(value ?? "").trim());
+    }
+
+    function isNonNegativeIntegerText(value) {
+      return /^\d+$/.test(String(value ?? "").trim());
+    }
+
+    function isCardComplete(input) {
+      const card = normalizeCard(input);
+      if (validateCard(card).errors.length || !card.name) return false;
+      if (
+        card.faction === "ally"
+        && (!isNonNegativeIntegerText(card.cost) || card.role === "unknown")
+      ) {
+        return false;
+      }
+      if (card.role === "execution" && !isIntegerText(card.executionOrder)) return false;
+      return true;
     }
 
     function targetSummary(input) {
@@ -716,10 +772,12 @@
       const lines = [
         `## ${card.name || "이름 없는 카드"}`,
         "",
-        `- 역할: ${ROLE_LABELS[card.role]}`,
+        `- 진영: ${FACTION_LABELS[card.faction]}`,
       ];
 
-      if (card.cost) lines.push(`- 비용: ${card.cost}`);
+      if (card.faction === "enemy") lines.push("- 비용: 없음");
+      else if (card.cost) lines.push(`- 비용: ${card.cost}`);
+      lines.push(`- 역할: ${ROLE_LABELS[card.role]}`);
       if (card.role === "execution" && card.executionOrder) {
         lines.push(`- 실행순서: ${card.executionOrder}`);
       }
@@ -774,6 +832,7 @@
       }
       const input = {
         name: heading.slice(3).trim(),
+        faction: "ally",
         role: "",
         cost: "",
         executionOrder: "",
@@ -811,7 +870,11 @@
           }
           const key = line.slice(2, separator);
           const value = line.slice(separator + 2);
-          if (key === "역할") {
+          if (key === "진영") {
+            input.faction = Object.keys(FACTION_LABELS)
+              .find((faction) => FACTION_LABELS[faction] === value) ?? "";
+            if (!input.faction) throw markdownImportError(`알 수 없는 진영: ${value}`);
+          } else if (key === "역할") {
             input.role = Object.keys(ROLE_LABELS).find((role) => ROLE_LABELS[role] === value) ?? "";
             if (!input.role) throw markdownImportError(`알 수 없는 역할: ${value}`);
           } else if (key === "비용") {
@@ -840,13 +903,27 @@
       input.notes = decodeNoteMarkdown(notes.join("\n").trim());
       if (!input.role) throw markdownImportError(`${input.name}의 역할이 없습니다.`);
       if (!input.targets) throw markdownImportError(`${input.name}의 대상이 없습니다.`);
+      if (input.faction === "enemy") {
+        if (input.cost !== "없음") {
+          throw markdownImportError(`${input.name}의 적군 비용은 없음이어야 합니다.`);
+        }
+        if (input.role !== "execution") {
+          throw markdownImportError(`${input.name}의 적군 역할은 실행이어야 합니다.`);
+        }
+        input.cost = "";
+      } else if (input.cost === "없음") {
+        throw markdownImportError(`${input.name}의 아군 비용을 확인하세요.`);
+      }
       if (input.executionOrder && input.role !== "execution") {
         throw markdownImportError(`${input.name}의 실행순서가 역할과 맞지 않습니다.`);
       }
       const card = normalizeCard(input);
       const validation = validateCard(card);
       if (validation.errors.length) throw markdownImportError(validation.errors[0]);
-      return card;
+      return normalizeCard({
+        ...card,
+        completionStatus: isCardComplete(card) ? "complete" : "incomplete",
+      });
     }
 
     function parseBundleMarkdown(markdown) {
@@ -906,13 +983,22 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (![1, 2, 3, SCHEMA_VERSION].includes(saved.schemaVersion)) {
+      if (![1, 2, 3, 4, SCHEMA_VERSION].includes(saved.schemaVersion)) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
-      const cards = (saved.cards ?? []).map((card) => normalizeCard({
-        ...card,
-        completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
-      }));
+      const isLegacy = saved.schemaVersion < SCHEMA_VERSION;
+      const cards = (saved.cards ?? []).map((card) => {
+        const normalized = normalizeCard({
+          ...card,
+          faction: isLegacy ? "ally" : card.faction,
+        });
+        return isLegacy
+          ? normalizeCard({
+            ...normalized,
+            completionStatus: isCardComplete(normalized) ? "complete" : "incomplete",
+          })
+          : normalized;
+      });
       const ids = new Set(cards.map((card) => card.id));
       const savedSelection = saved.schemaVersion >= 3
         ? saved.selection
@@ -1030,17 +1116,37 @@
       };
     }
 
-    function completeCard(state, id, options = {}) {
+    function saveCard(state, id, options = {}) {
       const card = (state.cards ?? []).find((candidate) => candidate.id === id);
-      if (!card) throw new Error("완성할 카드를 찾을 수 없습니다.");
+      if (!card) throw new Error("저장할 카드를 찾을 수 없습니다.");
       const validation = validateCard(card);
       if (validation.errors.length) throw new Error(validation.errors[0]);
       const now = options.now ?? new Date().toISOString();
       return {
         ...state,
         cards: state.cards.map((candidate) => candidate.id === id
-          ? normalizeCard({ ...candidate, completionStatus: "complete", updatedAt: now })
+          ? normalizeCard({
+            ...candidate,
+            completionStatus: isCardComplete(candidate) ? "complete" : "incomplete",
+            updatedAt: now,
+          })
           : candidate),
+      };
+    }
+
+    function saveAllCards(state, options = {}) {
+      const now = options.now ?? new Date().toISOString();
+      for (const card of state.cards ?? []) {
+        const validation = validateCard(card);
+        if (validation.errors.length) throw new Error(validation.errors[0]);
+      }
+      return {
+        ...state,
+        cards: (state.cards ?? []).map((card) => normalizeCard({
+          ...card,
+          completionStatus: isCardComplete(card) ? "complete" : "incomplete",
+          updatedAt: now,
+        })),
       };
     }
 
@@ -1053,7 +1159,7 @@
           ...card,
           id: uniqueCardId(cards, options.ids?.[index] || `card-${Date.now().toString(36)}-${index}`),
           name: uniqueCardName(cards, card.name),
-          completionStatus: "complete",
+          completionStatus: card.completionStatus,
           createdAt: now,
           updatedAt: now,
         });
@@ -1159,12 +1265,15 @@
 
     globalThis.CardIdeaNotebook = Object.freeze({
       ROLE_LABELS,
+      FACTION_LABELS,
       TARGETS,
       SCHEMA_VERSION,
       STORAGE_KEY,
       emptyCard,
       normalizeCard,
+      changeCardFaction,
       validateCard,
+      isCardComplete,
       targetSummary,
       cardMarkdown,
       bundleMarkdown,
@@ -1181,7 +1290,8 @@
       uniqueCardName,
       createCard,
       editCard,
-      completeCard,
+      saveCard,
+      saveAllCards,
       importCards,
       bulkSelection,
       reorderCards,
@@ -1217,11 +1327,13 @@
       exportForm: byId("export-form"),
       exportDialogName: byId("export-dialog-name"),
       saveCard: byId("save-card"),
+      saveAllCards: byId("save-all-cards"),
       editorTitle: byId("editor-title"),
       completionBadge: byId("completion-badge"),
       form: byId("card-form"),
       validation: byId("validation"),
       name: byId("card-name"),
+      faction: byId("card-faction"),
       role: byId("card-role"),
       cost: byId("card-cost"),
       executionOrderField: byId("execution-order-field"),
@@ -1261,6 +1373,7 @@
       return core.normalizeCard({
         ...current,
         name: elements.name.value,
+        faction: elements.faction.value,
         role: elements.role.value,
         cost: elements.cost.value,
         executionOrder: elements.executionOrder.value,
@@ -1333,6 +1446,7 @@
       elements.executionOrderField.classList.toggle("hidden", card?.role !== "execution");
       elements.markdownPreview.textContent = card ? core.cardMarkdown(card) : "";
       elements.saveCard.disabled = !card;
+      elements.saveAllCards.disabled = state.cards.length === 0;
       renderTargets();
       renderValidation();
       renderStorageStatus();
@@ -1341,9 +1455,13 @@
     function renderForm() {
       const card = core.normalizeCard(activeCard() ?? core.emptyCard());
       const disabled = !activeCard();
+      const isEnemy = card.faction === "enemy";
       elements.name.value = card.name;
+      elements.faction.value = card.faction;
       elements.role.value = card.role;
-      elements.cost.value = card.cost;
+      elements.cost.type = isEnemy ? "text" : "number";
+      elements.cost.value = isEnemy ? "없음" : card.cost;
+      elements.cost.placeholder = isEnemy ? "" : "미정";
       elements.executionOrder.value = card.executionOrder;
       elements.tags.value = card.tags.join(", ");
       elements.allyTarget.value = card.targets.ally;
@@ -1355,6 +1473,8 @@
       for (const control of elements.form.querySelectorAll("input, select, textarea")) {
         control.disabled = disabled;
       }
+      elements.cost.disabled = disabled || isEnemy;
+      elements.role.disabled = disabled || isEnemy;
       renderDerived();
     }
 
@@ -1422,13 +1542,16 @@
 
       const meta = document.createElement("div");
       meta.className = "card-meta";
+      const faction = document.createElement("span");
+      faction.className = `faction-pill ${card.faction}`;
+      faction.textContent = core.FACTION_LABELS[card.faction];
       const role = document.createElement("span");
       role.className = "role-pill";
       role.textContent = core.ROLE_LABELS[card.role];
       const completion = document.createElement("span");
       completion.className = `completion-pill ${card.completionStatus}`;
       completion.textContent = card.completionStatus === "complete" ? "완성" : "미완성";
-      meta.append(role, completion);
+      meta.append(faction, role, completion);
       for (const tagText of card.tags.slice(0, 3)) {
         const tag = document.createElement("span");
         tag.className = "tag";
@@ -1555,19 +1678,42 @@
       const card = activeCard();
       if (!card) return false;
       try {
-        const completed = core.completeCard(state, card.id, {
+        const savedState = core.saveCard(state, card.id, {
           now: new Date().toISOString(),
         });
-        const persisted = persistRegular(completed);
+        const persisted = persistRegular(savedState);
+        const savedCard = savedState.cards.find((candidate) => candidate.id === card.id);
+        const statusLabel = savedCard?.completionStatus === "complete" ? "완성" : "미완성";
         renderAll();
         showToast(persisted
-          ? "카드를 완성 상태로 저장했습니다."
-          : "완성 상태로 전환했지만 브라우저 보존에 실패했습니다.");
+          ? `카드를 ${statusLabel} 상태로 저장했습니다.`
+          : `${statusLabel} 상태로 판정했지만 브라우저 보존에 실패했습니다.`);
         return persisted;
       } catch (error) {
         renderDerived();
-        showToast(error instanceof Error ? error.message : "카드를 완성하지 못했습니다.");
-        elements.name.focus();
+        showToast(error instanceof Error ? error.message : "카드를 저장하지 못했습니다.");
+        return false;
+      }
+    }
+
+    function saveAll() {
+      if (!state.cards.length) return false;
+      try {
+        const savedState = core.saveAllCards(state, {
+          now: new Date().toISOString(),
+        });
+        const completeCount = savedState.cards
+          .filter((card) => card.completionStatus === "complete").length;
+        const incompleteCount = savedState.cards.length - completeCount;
+        const persisted = persistRegular(savedState);
+        renderAll();
+        showToast(persisted
+          ? `전체 저장: 완성 ${completeCount}장, 미완성 ${incompleteCount}장`
+          : "전체 상태를 판정했지만 브라우저 보존에 실패했습니다.");
+        return persisted;
+      } catch (error) {
+        renderAll();
+        showToast(error instanceof Error ? error.message : "전체 카드를 저장하지 못했습니다.");
         return false;
       }
     }
@@ -1692,6 +1838,7 @@
       saveCurrent();
     });
     elements.saveCard.addEventListener("click", saveCurrent);
+    elements.saveAllCards.addEventListener("click", saveAll);
     elements.newCard.addEventListener("click", newCard);
     elements.duplicateCard.addEventListener("click", () => {
       persistRegular(core.duplicateCard(state, state.activeCardId, {
@@ -1726,17 +1873,24 @@
       persistRegular({ ...state, searchQuery: elements.search.value });
       renderList();
     });
-    elements.form.addEventListener("input", () => {
+    elements.form.addEventListener("input", (event) => {
       const card = activeCard();
-      if (!card) return;
+      if (!card || event.target === elements.faction) return;
       persistRegular(core.editCard(state, card.id, cardFromForm()));
       renderList();
       renderDerived();
     });
-    elements.form.addEventListener("change", () => {
+    elements.form.addEventListener("change", (event) => {
       const card = activeCard();
       if (!card) return;
-      persistRegular(core.editCard(state, card.id, cardFromForm()));
+      const nextCard = event.target === elements.faction
+        ? core.changeCardFaction(card, elements.faction.value)
+        : cardFromForm();
+      persistRegular(core.editCard(state, card.id, nextCard));
+      if (event.target === elements.faction) {
+        renderAll();
+        return;
+      }
       renderList();
       renderDerived();
     });
@@ -1751,7 +1905,8 @@
     window.addEventListener("keydown", (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "s") {
         event.preventDefault();
-        saveCurrent();
+        if (event.shiftKey) saveAll();
+        else saveCurrent();
       }
     });
     window.addEventListener("beforeunload", (event) => {

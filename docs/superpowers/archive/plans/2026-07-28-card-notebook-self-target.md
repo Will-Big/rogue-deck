@@ -24,6 +24,7 @@
 ### Task 1: Self Target Core and Markdown Round Trip
 
 **Files:**
+- Modify: `Tools/card-idea-notebook/index.test.mjs`
 - Modify: `Tools/card-idea-notebook/index.html`
 
 **Interfaces:**
@@ -33,7 +34,7 @@
   - blocking validation message `아군과 적군에 자신을 동시에 지정할 수 없습니다.`
   - strict Markdown forms `아군 자신 \`◎\`` and `\`◎\` 적군 자신`.
 
-- [ ] **Step 1: Write failing self-marker and validation tests**
+- [x] **Step 1: Write failing self-marker and validation tests**
 
 Add these tests after the existing facing-range test:
 
@@ -81,7 +82,7 @@ test("renders self for either faction and rejects two self targets", () => {
 });
 ```
 
-- [ ] **Step 2: Write failing strict Markdown round-trip tests**
+- [x] **Step 2: Write failing strict Markdown round-trip tests**
 
 Add:
 
@@ -129,7 +130,7 @@ test("round-trips ally and enemy self targets through strict Markdown", () => {
 });
 ```
 
-- [ ] **Step 3: Run Task 1 tests and verify RED**
+- [x] **Step 3: Run Task 1 tests and verify RED**
 
 Run:
 
@@ -139,7 +140,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: the self-marker test fails because `self` normalizes to `none`, the round-trip assertion returns `none`, and the two-self validation error is absent.
 
-- [ ] **Step 4: Implement the self target and cross-field validation**
+- [x] **Step 4: Implement the self target and cross-field validation**
 
 Add `self` to `TARGETS` immediately after `none`:
 
@@ -157,7 +158,7 @@ if (card.targets.ally === "self" && card.targets.enemy === "self") {
 
 Do not special-case selector rendering or Markdown parsing. Both selectors are populated from `TARGETS`, `targetSummary` reads the faction-specific glyph, and `parseTargetMarkdown` enumerates the same registry.
 
-- [ ] **Step 5: Run Task 1 tests and verify GREEN**
+- [x] **Step 5: Run Task 1 tests and verify GREEN**
 
 Run:
 
@@ -167,7 +168,7 @@ node --test Tools/card-idea-notebook/index.test.mjs
 
 Expected: all existing tests plus the two new tests pass; ally and enemy self markers round-trip as `self`, and completion rejects the two-self card.
 
-- [ ] **Step 6: Commit Task 1**
+- [x] **Step 6: Commit Task 1**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -177,18 +178,17 @@ git commit -m "feat(tools): add self card targets"
 ### Task 2: Export Button Copy and Browser Behavior
 
 **Files:**
-- Modify: `Tools/card-idea-notebook/index.test.mjs`
 - Modify: `Tools/card-idea-notebook/index.html`
 
 **Interfaces:**
 - Consumes: Task 1 `TARGETS.self` and the existing target `<select>` population loop.
 - Produces: visible export button copy `Markdown 내보내기`; ally and enemy selector options whose value is `self` and label is `자신`.
 
-- [ ] **Step 1: Run a browser RED copy check**
+- [x] **Step 1: Run a browser RED copy check**
 
 Open `Tools/card-idea-notebook/index.html` in the in-app browser. Expected: the lower action button visibly reads `AI용 Markdown 내보내기`, proving the requested copy is absent. Do not add a source-text assertion for human-facing prose.
 
-- [ ] **Step 2: Change the visible button copy**
+- [x] **Step 2: Change the visible button copy**
 
 Replace:
 
@@ -204,7 +204,7 @@ with:
 
 Keep the element ID and every event listener unchanged.
 
-- [ ] **Step 3: Run automated verification**
+- [x] **Step 3: Run automated verification**
 
 Run:
 
@@ -216,7 +216,7 @@ git diff --check
 
 Expected: every Node test passes, exactly two inline scripts parse, and no whitespace errors exist.
 
-- [ ] **Step 4: Run browser GREEN smoke verification**
+- [x] **Step 4: Run browser GREEN smoke verification**
 
 Open `Tools/card-idea-notebook/index.html` in the in-app browser and verify:
 
@@ -230,7 +230,7 @@ Open `Tools/card-idea-notebook/index.html` in the in-app browser and verify:
 8. Existing front/back/all markers and the export dialog still behave as before.
 9. Browser console error logs are empty.
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add Tools/card-idea-notebook/index.html
@@ -250,7 +250,7 @@ git commit -m "refactor(tools): rename Markdown export button"
 - Consumes: verified Task 1 core behavior and Task 2 browser behavior.
 - Produces: current implemented tool documentation, archived implementation record, and a clean reviewed feature branch.
 
-- [ ] **Step 1: Mark the tool implementation complete and archive this plan**
+- [x] **Step 1: Mark the tool implementation complete and archive this plan**
 
 Change the position-targeting spec status to:
 
@@ -266,7 +266,7 @@ current — 자신 대상 `◎`와 Markdown 내보내기 명칭 구현 완료
 
 In `docs/superpowers/README.md`, keep the current spec entries but update their authority text to mention five position ranges plus `자신` and generic Markdown import/export. Remove this plan from the active-plan table. Add the archived plan link under the external card-authoring section of `docs/superpowers/archive/README.md`, move the plan to `archive/plans/`, mark every checkbox complete, and append an `Implementation Result` section with the exact test count and browser evidence.
 
-- [ ] **Step 2: Request independent code review**
+- [x] **Step 2: Request independent code review**
 
 Use `superpowers:requesting-code-review`. The reviewer must check:
 
@@ -279,7 +279,7 @@ Use `superpowers:requesting-code-review`. The reviewer must check:
 
 Fix every Critical or Important finding with a failing regression test when behavior changes.
 
-- [ ] **Step 3: Run final verification**
+- [x] **Step 3: Run final verification**
 
 Run:
 
@@ -292,7 +292,7 @@ git status --short
 
 Expected: all Node tests pass, exactly two inline scripts parse, no whitespace errors exist, and only the intended documentation/archive changes remain before the final documentation commit.
 
-- [ ] **Step 4: Commit Task 3**
+- [x] **Step 4: Commit Task 3**
 
 ```bash
 git add docs/superpowers/README.md \
@@ -303,3 +303,13 @@ git add docs/superpowers/README.md \
   docs/superpowers/archive/plans/2026-07-28-card-notebook-self-target.md
 git commit -m "docs: complete card self target implementation"
 ```
+
+## Implementation Result
+
+- 아군과 적군 위치 범위에 `자신`을 추가하고 양 진영 모두 `◎`로 표시했다.
+- 한 카드가 아군과 적군을 동시에 `자신`으로 지정하면 완성 저장과 strict Markdown 불러오기를 차단한다.
+- 저장 스키마 `4`를 유지하면서 아군·적군 `자신` 대상의 strict Markdown 왕복을 지원한다.
+- 기존 버튼 ID와 동작을 유지한 채 표시 문구를 `Markdown 내보내기`로 변경했다.
+- Node 테스트 38개가 모두 통과했고, HTML의 inline script 2개가 모두 구문 검사를 통과했다.
+- 브라우저에서 양 진영의 `자신` 선택·`◎` 표시·새로고침 후 보존, 동시 `자신` 경고와 미완성 유지,
+  변경된 버튼 문구, 빈 콘솔 오류 로그를 확인했다.
