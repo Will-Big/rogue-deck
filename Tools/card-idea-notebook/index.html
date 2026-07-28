@@ -147,6 +147,7 @@
     }
 
     .pane-title { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+    .editor-actions { display: flex; align-items: center; gap: 8px; }
     .count {
       min-width: 25px;
       padding: 2px 7px;
@@ -199,12 +200,14 @@
     .card-select:hover:not(:disabled) { border-color: transparent; background: transparent; }
     .card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
     .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: var(--muted); font-size: 11px; }
-    .tag, .role-pill, .completion-pill {
+    .tag, .faction-pill, .role-pill, .completion-pill {
       padding: 2px 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: #171916;
     }
+    .faction-pill.ally { color: #b9d7f0; border-color: #405f75; background: #1b2831; }
+    .faction-pill.enemy { color: #efb6b0; border-color: #74423e; background: #311f1d; }
     .completion-pill.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
     .completion-pill.incomplete { color: #f6dca7; border-color: #705c32; background: #30291c; }
     .warning-dot { color: var(--warning); }
@@ -419,7 +422,10 @@
             <strong id="editor-title">선택된 카드 없음</strong>
             <span class="completion-badge incomplete" id="completion-badge">미완성</span>
           </div>
-          <button type="button" class="primary" id="save-card">저장</button>
+          <div class="editor-actions">
+            <button type="button" id="save-card">저장</button>
+            <button type="button" class="primary" id="save-all-cards">전체 저장</button>
+          </div>
         </div>
 
         <form class="editor-content" id="card-form">
@@ -433,16 +439,23 @@
                 <input id="card-name" name="name" type="text" placeholder="카드 이름" autocomplete="off">
               </label>
               <label>
+                진영
+                <select id="card-faction" name="faction">
+                  <option value="ally">아군</option>
+                  <option value="enemy">적군</option>
+                </select>
+              </label>
+              <label>
+                비용
+                <input id="card-cost" name="cost" type="number" min="0" step="1" placeholder="미정">
+              </label>
+              <label>
                 역할
                 <select id="card-role" name="role">
                   <option value="unknown">미정</option>
                   <option value="execution">실행</option>
                   <option value="intervention">조작</option>
                 </select>
-              </label>
-              <label>
-                비용
-                <input id="card-cost" name="cost" type="number" min="0" step="1" placeholder="미정">
               </label>
               <label id="execution-order-field">
                 실행순서
@@ -640,6 +653,18 @@
         createdAt: String(input.createdAt ?? ""),
         updatedAt: String(input.updatedAt ?? ""),
       };
+    }
+
+    function changeCardFaction(input, faction) {
+      const card = normalizeCard(input);
+      const nextFaction = validFaction(faction);
+      if (card.faction === nextFaction) return card;
+      return normalizeCard({
+        ...card,
+        faction: nextFaction,
+        role: nextFaction === "ally" ? "unknown" : "execution",
+        cost: "",
+      });
     }
 
     function validateCard(input) {
@@ -1233,6 +1258,7 @@
       STORAGE_KEY,
       emptyCard,
       normalizeCard,
+      changeCardFaction,
       validateCard,
       isCardComplete,
       targetSummary,
@@ -1288,11 +1314,13 @@
       exportForm: byId("export-form"),
       exportDialogName: byId("export-dialog-name"),
       saveCard: byId("save-card"),
+      saveAllCards: byId("save-all-cards"),
       editorTitle: byId("editor-title"),
       completionBadge: byId("completion-badge"),
       form: byId("card-form"),
       validation: byId("validation"),
       name: byId("card-name"),
+      faction: byId("card-faction"),
       role: byId("card-role"),
       cost: byId("card-cost"),
       executionOrderField: byId("execution-order-field"),
@@ -1332,6 +1360,7 @@
       return core.normalizeCard({
         ...current,
         name: elements.name.value,
+        faction: elements.faction.value,
         role: elements.role.value,
         cost: elements.cost.value,
         executionOrder: elements.executionOrder.value,
@@ -1404,6 +1433,7 @@
       elements.executionOrderField.classList.toggle("hidden", card?.role !== "execution");
       elements.markdownPreview.textContent = card ? core.cardMarkdown(card) : "";
       elements.saveCard.disabled = !card;
+      elements.saveAllCards.disabled = state.cards.length === 0;
       renderTargets();
       renderValidation();
       renderStorageStatus();
@@ -1412,9 +1442,13 @@
     function renderForm() {
       const card = core.normalizeCard(activeCard() ?? core.emptyCard());
       const disabled = !activeCard();
+      const isEnemy = card.faction === "enemy";
       elements.name.value = card.name;
+      elements.faction.value = card.faction;
       elements.role.value = card.role;
-      elements.cost.value = card.cost;
+      elements.cost.type = isEnemy ? "text" : "number";
+      elements.cost.value = isEnemy ? "없음" : card.cost;
+      elements.cost.placeholder = isEnemy ? "" : "미정";
       elements.executionOrder.value = card.executionOrder;
       elements.tags.value = card.tags.join(", ");
       elements.allyTarget.value = card.targets.ally;
@@ -1426,6 +1460,8 @@
       for (const control of elements.form.querySelectorAll("input, select, textarea")) {
         control.disabled = disabled;
       }
+      elements.cost.disabled = disabled || isEnemy;
+      elements.role.disabled = disabled || isEnemy;
       renderDerived();
     }
 
@@ -1493,13 +1529,16 @@
 
       const meta = document.createElement("div");
       meta.className = "card-meta";
+      const faction = document.createElement("span");
+      faction.className = `faction-pill ${card.faction}`;
+      faction.textContent = core.FACTION_LABELS[card.faction];
       const role = document.createElement("span");
       role.className = "role-pill";
       role.textContent = core.ROLE_LABELS[card.role];
       const completion = document.createElement("span");
       completion.className = `completion-pill ${card.completionStatus}`;
       completion.textContent = card.completionStatus === "complete" ? "완성" : "미완성";
-      meta.append(role, completion);
+      meta.append(faction, role, completion);
       for (const tagText of card.tags.slice(0, 3)) {
         const tag = document.createElement("span");
         tag.className = "tag";
@@ -1626,19 +1665,42 @@
       const card = activeCard();
       if (!card) return false;
       try {
-        const completed = core.completeCard(state, card.id, {
+        const savedState = core.saveCard(state, card.id, {
           now: new Date().toISOString(),
         });
-        const persisted = persistRegular(completed);
+        const persisted = persistRegular(savedState);
+        const savedCard = savedState.cards.find((candidate) => candidate.id === card.id);
+        const statusLabel = savedCard?.completionStatus === "complete" ? "완성" : "미완성";
         renderAll();
         showToast(persisted
-          ? "카드를 완성 상태로 저장했습니다."
-          : "완성 상태로 전환했지만 브라우저 보존에 실패했습니다.");
+          ? `카드를 ${statusLabel} 상태로 저장했습니다.`
+          : `${statusLabel} 상태로 판정했지만 브라우저 보존에 실패했습니다.`);
         return persisted;
       } catch (error) {
         renderDerived();
-        showToast(error instanceof Error ? error.message : "카드를 완성하지 못했습니다.");
-        elements.name.focus();
+        showToast(error instanceof Error ? error.message : "카드를 저장하지 못했습니다.");
+        return false;
+      }
+    }
+
+    function saveAll() {
+      if (!state.cards.length) return false;
+      try {
+        const savedState = core.saveAllCards(state, {
+          now: new Date().toISOString(),
+        });
+        const completeCount = savedState.cards
+          .filter((card) => card.completionStatus === "complete").length;
+        const incompleteCount = savedState.cards.length - completeCount;
+        const persisted = persistRegular(savedState);
+        renderAll();
+        showToast(persisted
+          ? `전체 저장: 완성 ${completeCount}장, 미완성 ${incompleteCount}장`
+          : "전체 상태를 판정했지만 브라우저 보존에 실패했습니다.");
+        return persisted;
+      } catch (error) {
+        renderAll();
+        showToast(error instanceof Error ? error.message : "전체 카드를 저장하지 못했습니다.");
         return false;
       }
     }
@@ -1763,6 +1825,7 @@
       saveCurrent();
     });
     elements.saveCard.addEventListener("click", saveCurrent);
+    elements.saveAllCards.addEventListener("click", saveAll);
     elements.newCard.addEventListener("click", newCard);
     elements.duplicateCard.addEventListener("click", () => {
       persistRegular(core.duplicateCard(state, state.activeCardId, {
@@ -1797,17 +1860,24 @@
       persistRegular({ ...state, searchQuery: elements.search.value });
       renderList();
     });
-    elements.form.addEventListener("input", () => {
+    elements.form.addEventListener("input", (event) => {
       const card = activeCard();
-      if (!card) return;
+      if (!card || event.target === elements.faction) return;
       persistRegular(core.editCard(state, card.id, cardFromForm()));
       renderList();
       renderDerived();
     });
-    elements.form.addEventListener("change", () => {
+    elements.form.addEventListener("change", (event) => {
       const card = activeCard();
       if (!card) return;
-      persistRegular(core.editCard(state, card.id, cardFromForm()));
+      const nextCard = event.target === elements.faction
+        ? core.changeCardFaction(card, elements.faction.value)
+        : cardFromForm();
+      persistRegular(core.editCard(state, card.id, nextCard));
+      if (event.target === elements.faction) {
+        renderAll();
+        return;
+      }
       renderList();
       renderDerived();
     });
@@ -1822,7 +1892,8 @@
     window.addEventListener("keydown", (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "s") {
         event.preventDefault();
-        saveCurrent();
+        if (event.shiftKey) saveAll();
+        else saveCurrent();
       }
     });
     window.addEventListener("beforeunload", (event) => {

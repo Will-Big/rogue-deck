@@ -87,6 +87,33 @@ test("normalizes card factions and derives completion from core information", ()
   assert.equal(core.isCardComplete(completeEnemy), true);
 });
 
+test("resets ally-only fields when changing card faction", () => {
+  const core = loadCore();
+  const ally = core.normalizeCard({
+    name: "전환 카드",
+    faction: "ally",
+    role: "intervention",
+    cost: "2",
+    notes: "유지할 메모",
+  });
+  const enemy = core.changeCardFaction(ally, "enemy");
+  const allyAgain = core.changeCardFaction(enemy, "ally");
+
+  assert.deepEqual(
+    { faction: enemy.faction, role: enemy.role, cost: enemy.cost, notes: enemy.notes },
+    { faction: "enemy", role: "execution", cost: "", notes: "유지할 메모" },
+  );
+  assert.deepEqual(
+    {
+      faction: allyAgain.faction,
+      role: allyAgain.role,
+      cost: allyAgain.cost,
+      notes: allyAgain.notes,
+    },
+    { faction: "ally", role: "unknown", cost: "", notes: "유지할 메모" },
+  );
+});
+
 test("saves one or every card without forcing incomplete cards complete", () => {
   const core = loadCore();
   const state = {
