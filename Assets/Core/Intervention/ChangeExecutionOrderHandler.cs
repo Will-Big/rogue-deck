@@ -4,6 +4,8 @@ namespace FateWeaver.Core.Intervention
     {
         public InterventionActionKey Key => InterventionActionKeys.ChangeExecutionOrder;
 
+        public TargetingRequirement Targeting => TargetingRequirement.RailCards(1);
+
         public bool CanApply(InterventionPlayContext ctx)
             => ctx != null
                 && ctx.State != null

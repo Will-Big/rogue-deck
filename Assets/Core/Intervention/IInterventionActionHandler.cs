@@ -15,6 +15,11 @@ namespace FateWeaver.Core.Intervention
     public interface IInterventionActionHandler
     {
         InterventionActionKey Key { get; }
+
+        /// <summary>Target demand the UI must satisfy before play. Single source of truth —
+        /// mirrors what CanApply checks (e.g. swap requires Target and SecondaryTarget).</summary>
+        TargetingRequirement Targeting { get; }
+
         bool CanApply(InterventionPlayContext ctx);
         void Apply(InterventionPlayContext ctx);
     }
