@@ -29,6 +29,7 @@ namespace FateWeaver.Simulation
         private readonly IEnemyTurnPolicy _enemyPolicy;
         private readonly TurnResolver _resolver;
         private readonly InterventionPlayResolver _interventionResolver;
+        private readonly InterventionActionRegistry _interventionActions;
         private readonly StatusRegistry _statuses;
         private readonly int _handSize;
         private readonly PartyTuning _partyTuning;
@@ -139,7 +140,8 @@ namespace FateWeaver.Simulation
             _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
             _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
-            _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
+            _interventionActions = CombatRegistries.InterventionActions();
+            _interventionResolver = new InterventionPlayResolver(_interventionActions);
 
             BeginTurn(0);
         }
@@ -253,6 +255,25 @@ namespace FateWeaver.Simulation
             }
 
             return null;
+        }
+
+        /// <summary>Answers what the player must pick before playing this hand card.
+        /// Execution cards never require explicit targets (targets are authored via
+        /// StatusApplyTarget / TargetSelector and resolved by the core).</summary>
+        public TargetingRequirement DescribeTargeting(int handIndex)
+        {
+            if (handIndex < 0 || handIndex >= _deck.Hand.Count)
+            {
+                return TargetingRequirement.None;
+            }
+
+            var def = _deck.Hand[handIndex].Def;
+            if (def.Category != CardCategory.Intervention || def.InterventionAction == null)
+            {
+                return TargetingRequirement.None;
+            }
+
+            return _interventionActions.Resolve(def.InterventionAction.Key).Targeting;
         }
 
         /// <summary>Play a intervention card from the hand, targeting card(s) by their index in CurrentOrder.

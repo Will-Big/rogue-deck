@@ -4,6 +4,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
@@ -125,6 +126,47 @@ namespace FateWeaver.Tests
         }
 
         // --- helpers ---
+
+        [Test]
+        public void Describe_targeting_answers_none_for_execution_cards()
+        {
+            var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
+
+            Assert.AreEqual(TargetKind.None,
+                session.DescribeTargeting(HandIndex(session, "slash")).Kind);
+        }
+
+        [Test]
+        public void Describe_targeting_answers_one_rail_card_for_pull_forward()
+        {
+            var session = NewSession(new[] { StarterDeck.PullForward() }, Goblin(4, 3));
+
+            var req = session.DescribeTargeting(HandIndex(session, "pull_forward"));
+
+            Assert.AreEqual(TargetKind.RailCard, req.Kind);
+            Assert.AreEqual(1, req.Count);
+        }
+
+        [Test]
+        public void Describe_targeting_answers_two_rail_cards_for_swap()
+        {
+            var session = NewSession(new[] { StarterDeck.SwapPositions() }, Goblin(4, 3));
+
+            var req = session.DescribeTargeting(HandIndex(session, "swap_positions"));
+
+            Assert.AreEqual(TargetKind.RailCard, req.Kind);
+            Assert.AreEqual(2, req.Count);
+            Assert.IsFalse(req.AllowDuplicates);
+        }
+
+        [Test]
+        public void Describe_targeting_answers_none_for_out_of_range_indexes()
+        {
+            var session = NewSession(new[] { StarterDeck.Slash() }, Goblin(4, 3));
+
+            Assert.AreEqual(TargetKind.None, session.DescribeTargeting(-1).Kind);
+            Assert.AreEqual(TargetKind.None, session.DescribeTargeting(99).Kind);
+        }
 
         private static DeckCombatSession NewSession(
             IReadOnlyList<CardDefinition> deck, EnemyIntent intent)
