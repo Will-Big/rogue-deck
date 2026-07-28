@@ -691,11 +691,24 @@
       return { errors, warnings };
     }
 
+    function isIntegerText(value) {
+      return /^-?\d+$/.test(String(value ?? "").trim());
+    }
+
+    function isNonNegativeIntegerText(value) {
+      return /^\d+$/.test(String(value ?? "").trim());
+    }
+
     function isCardComplete(input) {
       const card = normalizeCard(input);
       if (validateCard(card).errors.length || !card.name) return false;
-      if (card.faction === "ally" && (!card.cost || card.role === "unknown")) return false;
-      if (card.role === "execution" && !card.executionOrder) return false;
+      if (
+        card.faction === "ally"
+        && (!isNonNegativeIntegerText(card.cost) || card.role === "unknown")
+      ) {
+        return false;
+      }
+      if (card.role === "execution" && !isIntegerText(card.executionOrder)) return false;
       return true;
     }
 

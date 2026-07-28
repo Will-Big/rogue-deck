@@ -87,6 +87,31 @@ test("normalizes card factions and derives completion from core information", ()
   assert.equal(core.isCardComplete(completeEnemy), true);
 });
 
+test("requires integer cost and execution order values for completion", () => {
+  const core = loadCore();
+  const ally = {
+    name: "아군 수치",
+    faction: "ally",
+    role: "intervention",
+  };
+  const enemy = {
+    name: "적군 수치",
+    faction: "enemy",
+  };
+
+  assert.equal(core.isCardComplete({ ...ally, cost: "0" }), true);
+  assert.equal(core.isCardComplete({ ...ally, cost: "" }), false);
+  assert.equal(core.isCardComplete({ ...ally, cost: "abc" }), false);
+  assert.equal(core.isCardComplete({ ...ally, cost: "1.5" }), false);
+  assert.equal(core.isCardComplete({ ...ally, cost: "-1" }), false);
+
+  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "0" }), true);
+  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "-1" }), true);
+  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "" }), false);
+  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "abc" }), false);
+  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "1.5" }), false);
+});
+
 test("resets ally-only fields when changing card faction", () => {
   const core = loadCore();
   const ally = core.normalizeCard({
@@ -406,6 +431,90 @@ test("migrates schema 3 and round-trips the schema 5 default export file name", 
 
   core.writeStore(storage, { ...migrated, exportFileName: "독 카드풀" });
   assert.equal(core.readStore(storage).exportFileName, "독 카드풀");
+});
+
+test("migrates schema 4 cards to allies while preserving collection state", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 4,
+      cards: [
+        {
+          id: "first",
+          name: "기존 조작",
+          role: "intervention",
+          cost: "1",
+          completionStatus: "complete",
+        },
+        {
+          id: "second",
+          name: "기존 초안",
+          role: "unknown",
+          completionStatus: "complete",
+        },
+      ],
+      activeCardId: "second",
+      searchQuery: "기존",
+      selection: ["first", "second"],
+      exportFileName: "기존 카드",
+    }),
+  });
+
+  const migrated = core.readStore(storage);
+  assert.deepEqual([...migrated.cards.map((card) => card.id)], ["first", "second"]);
+  assert.deepEqual([...migrated.cards.map((card) => card.faction)], ["ally", "ally"]);
+  assert.deepEqual(
+    [...migrated.cards.map((card) => card.completionStatus)],
+    ["complete", "incomplete"],
+  );
+  assert.equal(migrated.activeCardId, "second");
+  assert.equal(migrated.searchQuery, "기존");
+  assert.deepEqual([...migrated.selection], ["first", "second"]);
+  assert.equal(migrated.exportFileName, "기존 카드");
+});
+
+test("round-trips ally and enemy cards through schema 5 storage", () => {
+  const core = loadCore();
+  const storage = new MemoryStorage();
+  const state = {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({
+        id: "ally",
+        name: "아군 카드",
+        faction: "ally",
+        role: "intervention",
+        cost: "2",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "enemy",
+        name: "적군 카드",
+        faction: "enemy",
+        executionOrder: "3",
+        completionStatus: "complete",
+      }),
+    ],
+    activeCardId: "enemy",
+    selection: ["enemy"],
+  };
+
+  core.writeStore(storage, state);
+  const loaded = core.readStore(storage);
+  assert.deepEqual(
+    [...loaded.cards.map((card) => ({
+      faction: card.faction,
+      role: card.role,
+      cost: card.cost,
+      completionStatus: card.completionStatus,
+    }))],
+    [
+      { faction: "ally", role: "intervention", cost: "2", completionStatus: "complete" },
+      { faction: "enemy", role: "execution", cost: "", completionStatus: "complete" },
+    ],
+  );
+  assert.equal(loaded.activeCardId, "enemy");
+  assert.deepEqual([...loaded.selection], ["enemy"]);
 });
 
 test("normalizes Markdown download names and permits an empty name", () => {
