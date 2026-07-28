@@ -1,5 +1,15 @@
 # P0-C 대상 선택 메타데이터 구현 계획
 
+- 상태: `archived` — **구현 완료 (2026-07-28)**
+- 결과: 헤드리스 333/333, Unity EditMode 389/389 통과. 완료 조건 전부 충족
+  (Unity 키 비교 0곳, CardTargetRules 삭제, 핸들러 3종 Targeting 선언, 중복 스왑 거부 회귀,
+  유닛 대상 표면 삭제).
+- 계획 대비 이탈 1건: Task 5와 6을 한 커밋(cbe48e3)으로 합쳤다. 분리하면 Task 5 시점에
+  `CardSelectionControllerTests`가 삭제된 표면을 참조해 Unity 테스트 어셈블리 컴파일이 깨진다 —
+  Unity EditMode 검증을 Task 5 끝에 배치한 원 계획의 순서 결함.
+- 병합 후 사용자 확인 항목: Play 검증, UnitView 프리팹의 TargetHighlight/TargetDim 자식과
+  직렬화 참조 잔재 정리(코드는 참조하지 않으므로 무해).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 개입 핸들러가 대상 요구를 선언하고, 세션이 질의를 제공하고, UI는 키 해석 없이 집행하며, 코어가 최종 유효성을 판정한다. 도달 불가 유닛 대상 UI는 삭제한다.
