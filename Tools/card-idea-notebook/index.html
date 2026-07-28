@@ -557,6 +557,10 @@
       execution: "실행",
       intervention: "조작",
     });
+    const FACTION_LABELS = Object.freeze({
+      ally: "아군",
+      enemy: "적군",
+    });
 
     const TARGETS = Object.freeze({
       none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
@@ -567,13 +571,14 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 4;
+    const SCHEMA_VERSION = 5;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
       return {
         id: "",
         name: "",
+        faction: "ally",
         role: "unknown",
         cost: "",
         executionOrder: "",
@@ -601,18 +606,24 @@
       return Object.hasOwn(ROLE_LABELS, value) ? value : "unknown";
     }
 
+    function validFaction(value) {
+      return Object.hasOwn(FACTION_LABELS, value) ? value : "ally";
+    }
+
     function validTarget(value) {
       return Object.hasOwn(TARGETS, value) ? value : "none";
     }
 
     function normalizeCard(input = {}) {
       const base = emptyCard();
+      const faction = validFaction(input.faction);
       return {
         ...base,
         id: String(input.id ?? "").trim(),
         name: String(input.name ?? "").trim(),
-        role: validRole(input.role),
-        cost: String(input.cost ?? "").trim(),
+        faction,
+        role: faction === "enemy" ? "execution" : validRole(input.role),
+        cost: faction === "enemy" ? "" : String(input.cost ?? "").trim(),
         executionOrder: String(input.executionOrder ?? "").trim(),
         tags: tagList(input.tags),
         targets: {
@@ -636,13 +647,8 @@
       const errors = [];
       const warnings = [];
 
-      if (!card.name) errors.push("카드 이름을 입력하세요.");
       if (card.targets.ally === "self" && card.targets.enemy === "self") {
         errors.push("아군과 적군에 자신을 동시에 지정할 수 없습니다.");
-      }
-      if (!card.cost) warnings.push("비용이 미정입니다.");
-      if (card.role === "execution" && !card.executionOrder) {
-        warnings.push("실행 카드의 실행순서가 미정입니다.");
       }
       if (card.abilities.ally.length && card.targets.ally === "none") {
         warnings.push("아군 능력은 있지만 아군 위치 범위가 없습니다.");
@@ -658,6 +664,14 @@
       }
 
       return { errors, warnings };
+    }
+
+    function isCardComplete(input) {
+      const card = normalizeCard(input);
+      if (validateCard(card).errors.length || !card.name) return false;
+      if (card.faction === "ally" && (!card.cost || card.role === "unknown")) return false;
+      if (card.role === "execution" && !card.executionOrder) return false;
+      return true;
     }
 
     function targetSummary(input) {
@@ -910,13 +924,22 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (![1, 2, 3, SCHEMA_VERSION].includes(saved.schemaVersion)) {
+      if (![1, 2, 3, 4, SCHEMA_VERSION].includes(saved.schemaVersion)) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
-      const cards = (saved.cards ?? []).map((card) => normalizeCard({
-        ...card,
-        completionStatus: saved.schemaVersion === 1 ? "complete" : card.completionStatus,
-      }));
+      const isLegacy = saved.schemaVersion < SCHEMA_VERSION;
+      const cards = (saved.cards ?? []).map((card) => {
+        const normalized = normalizeCard({
+          ...card,
+          faction: isLegacy ? "ally" : card.faction,
+        });
+        return isLegacy
+          ? normalizeCard({
+            ...normalized,
+            completionStatus: isCardComplete(normalized) ? "complete" : "incomplete",
+          })
+          : normalized;
+      });
       const ids = new Set(cards.map((card) => card.id));
       const savedSelection = saved.schemaVersion >= 3
         ? saved.selection
@@ -1034,17 +1057,37 @@
       };
     }
 
-    function completeCard(state, id, options = {}) {
+    function saveCard(state, id, options = {}) {
       const card = (state.cards ?? []).find((candidate) => candidate.id === id);
-      if (!card) throw new Error("완성할 카드를 찾을 수 없습니다.");
+      if (!card) throw new Error("저장할 카드를 찾을 수 없습니다.");
       const validation = validateCard(card);
       if (validation.errors.length) throw new Error(validation.errors[0]);
       const now = options.now ?? new Date().toISOString();
       return {
         ...state,
         cards: state.cards.map((candidate) => candidate.id === id
-          ? normalizeCard({ ...candidate, completionStatus: "complete", updatedAt: now })
+          ? normalizeCard({
+            ...candidate,
+            completionStatus: isCardComplete(candidate) ? "complete" : "incomplete",
+            updatedAt: now,
+          })
           : candidate),
+      };
+    }
+
+    function saveAllCards(state, options = {}) {
+      const now = options.now ?? new Date().toISOString();
+      for (const card of state.cards ?? []) {
+        const validation = validateCard(card);
+        if (validation.errors.length) throw new Error(validation.errors[0]);
+      }
+      return {
+        ...state,
+        cards: (state.cards ?? []).map((card) => normalizeCard({
+          ...card,
+          completionStatus: isCardComplete(card) ? "complete" : "incomplete",
+          updatedAt: now,
+        })),
       };
     }
 
@@ -1163,12 +1206,14 @@
 
     globalThis.CardIdeaNotebook = Object.freeze({
       ROLE_LABELS,
+      FACTION_LABELS,
       TARGETS,
       SCHEMA_VERSION,
       STORAGE_KEY,
       emptyCard,
       normalizeCard,
       validateCard,
+      isCardComplete,
       targetSummary,
       cardMarkdown,
       bundleMarkdown,
@@ -1185,7 +1230,8 @@
       uniqueCardName,
       createCard,
       editCard,
-      completeCard,
+      saveCard,
+      saveAllCards,
       importCards,
       bulkSelection,
       reorderCards,
