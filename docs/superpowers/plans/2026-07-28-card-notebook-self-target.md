@@ -24,7 +24,6 @@
 ### Task 1: Self Target Core and Markdown Round Trip
 
 **Files:**
-- Modify: `Tools/card-idea-notebook/index.test.mjs`
 - Modify: `Tools/card-idea-notebook/index.html`
 
 **Interfaces:**
@@ -185,34 +184,11 @@ git commit -m "feat(tools): add self card targets"
 - Consumes: Task 1 `TARGETS.self` and the existing target `<select>` population loop.
 - Produces: visible export button copy `Markdown 내보내기`; ally and enemy selector options whose value is `self` and label is `자신`.
 
-- [ ] **Step 1: Write a failing static copy test**
+- [ ] **Step 1: Run a browser RED copy check**
 
-Add:
+Open `Tools/card-idea-notebook/index.html` in the in-app browser. Expected: the lower action button visibly reads `AI용 Markdown 내보내기`, proving the requested copy is absent. Do not add a source-text assertion for human-facing prose.
 
-```js
-test("uses the generic Markdown export button copy", () => {
-  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
-  assert.match(
-    html,
-    /id="export-markdown">Markdown 내보내기<\/button>/,
-  );
-  assert.equal(html.includes("AI용 Markdown 내보내기"), false);
-});
-```
-
-- [ ] **Step 2: Run the copy test and verify RED**
-
-Run:
-
-```bash
-node --test \
-  --test-name-pattern="uses the generic Markdown export button copy" \
-  Tools/card-idea-notebook/index.test.mjs
-```
-
-Expected: FAIL because the current button still contains `AI용 Markdown 내보내기`.
-
-- [ ] **Step 3: Change the visible button copy**
+- [ ] **Step 2: Change the visible button copy**
 
 Replace:
 
@@ -228,7 +204,7 @@ with:
 
 Keep the element ID and every event listener unchanged.
 
-- [ ] **Step 4: Run automated verification**
+- [ ] **Step 3: Run automated verification**
 
 Run:
 
@@ -240,7 +216,7 @@ git diff --check
 
 Expected: every Node test passes, exactly two inline scripts parse, and no whitespace errors exist.
 
-- [ ] **Step 5: Run browser smoke verification**
+- [ ] **Step 4: Run browser GREEN smoke verification**
 
 Open `Tools/card-idea-notebook/index.html` in the in-app browser and verify:
 
@@ -254,10 +230,10 @@ Open `Tools/card-idea-notebook/index.html` in the in-app browser and verify:
 8. Existing front/back/all markers and the export dialog still behave as before.
 9. Browser console error logs are empty.
 
-- [ ] **Step 6: Commit Task 2**
+- [ ] **Step 5: Commit Task 2**
 
 ```bash
-git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
+git add Tools/card-idea-notebook/index.html
 git commit -m "refactor(tools): rename Markdown export button"
 ```
 
