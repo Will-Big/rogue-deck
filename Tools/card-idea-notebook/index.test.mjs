@@ -415,6 +415,49 @@ test("bulk selection includes complete and incomplete cards", () => {
   assert.deepEqual([...core.bulkSelection(state, false).selection], []);
 });
 
+test("inserts a dragged card before or after a target without changing selection or active card", () => {
+  const core = loadCore();
+  const cards = ["a", "b", "c", "d"].map((id) => core.normalizeCard({
+    id,
+    name: id,
+    completionStatus: "complete",
+  }));
+  const state = {
+    ...core.initialState(),
+    cards,
+    activeCardId: "b",
+    selection: ["a", "c"],
+  };
+
+  const after = core.reorderCards(state, "a", "c", "after");
+  assert.deepEqual([...after.cards.map((card) => card.id)], ["b", "c", "a", "d"]);
+  assert.equal(after.activeCardId, "b");
+  assert.deepEqual([...after.selection], ["a", "c"]);
+
+  const before = core.reorderCards(state, "d", "b", "before");
+  assert.deepEqual([...before.cards.map((card) => card.id)], ["a", "d", "b", "c"]);
+  assert.strictEqual(core.reorderCards(state, "b", "b", "before"), state);
+});
+
+test("exports selected cards in the reordered list order", () => {
+  const core = loadCore();
+  const state = {
+    ...core.initialState(),
+    cards: ["a", "b", "c"].map((id) => core.normalizeCard({
+      id,
+      name: id,
+      completionStatus: "complete",
+    })),
+    selection: ["a", "c"],
+  };
+
+  const reordered = core.reorderCards(state, "c", "a", "before");
+  assert.deepEqual(
+    [...core.cardsForExport(reordered).map((card) => card.id)],
+    ["c", "a"],
+  );
+});
+
 test("chooses selected cards for deletion and falls back to the active card", () => {
   const core = loadCore();
   const base = {

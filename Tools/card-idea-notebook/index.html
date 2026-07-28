@@ -1033,6 +1033,19 @@
       };
     }
 
+    function reorderCards(state, draggedId, targetId, placement) {
+      const cards = [...(state.cards ?? [])];
+      if (draggedId === targetId || !["before", "after"].includes(placement)) return state;
+      const draggedIndex = cards.findIndex((card) => card.id === draggedId);
+      const originalTargetIndex = cards.findIndex((card) => card.id === targetId);
+      if (draggedIndex < 0 || originalTargetIndex < 0) return state;
+
+      const [dragged] = cards.splice(draggedIndex, 1);
+      const targetIndex = cards.findIndex((card) => card.id === targetId);
+      cards.splice(placement === "after" ? targetIndex + 1 : targetIndex, 0, dragged);
+      return { ...state, cards };
+    }
+
     function duplicateCard(state, id, options = {}) {
       const source = (state.cards ?? []).find((card) => card.id === id);
       if (!source) return state;
@@ -1127,6 +1140,7 @@
       completeCard,
       importCards,
       bulkSelection,
+      reorderCards,
       duplicateCard,
       deletionIds,
       deleteCards,
