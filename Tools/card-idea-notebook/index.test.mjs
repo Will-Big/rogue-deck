@@ -69,6 +69,90 @@ test("renders facing ally and enemy ranges in Markdown", () => {
   assert.match(markdown, /- 카드 1장 뽑기\./);
 });
 
+test("renders self for either faction and rejects two self targets", () => {
+  const core = loadCore();
+  const allySelf = core.normalizeCard({
+    name: "자기 방어",
+    targets: { ally: "self", enemy: "frontOne" },
+    abilities: { ally: ["방어 4."], enemy: ["피해 2."] },
+  });
+  const enemySelf = core.normalizeCard({
+    name: "적의 태세",
+    targets: { ally: "backOne", enemy: "self" },
+    abilities: { ally: ["약화 1."], enemy: ["방어 4."] },
+  });
+  const twoSelf = core.normalizeCard({
+    name: "잘못된 카드",
+    targets: { ally: "self", enemy: "self" },
+    abilities: { ally: ["방어 1."], enemy: ["방어 1."] },
+  });
+
+  assert.equal(core.TARGETS.self.label, "자신");
+  assert.equal(
+    core.targetSummary(allySelf),
+    "아군 자신 `◎` │ `◆━━━━` 적군 앞 하나",
+  );
+  assert.equal(
+    core.targetSummary(enemySelf),
+    "아군 뒤 하나 `◆━━━━` │ `◎` 적군 자신",
+  );
+  assert.deepEqual([...core.validateCard(twoSelf).errors], [
+    "아군과 적군에 자신을 동시에 지정할 수 없습니다.",
+  ]);
+
+  const state = {
+    ...core.initialState(),
+    cards: [{ ...twoSelf, id: "two-self" }],
+    activeCardId: "two-self",
+  };
+  assert.throws(
+    () => core.completeCard(state, "two-self"),
+    /아군과 적군에 자신을 동시에 지정할 수 없습니다/,
+  );
+});
+
+test("round-trips ally and enemy self targets through strict Markdown", () => {
+  const core = loadCore();
+  const source = [
+    core.normalizeCard({
+      name: "계승자의 방어",
+      role: "execution",
+      targets: { ally: "self", enemy: "frontOne" },
+      abilities: { ally: ["방어 4."], enemy: ["피해 2."] },
+      completionStatus: "complete",
+    }),
+    core.normalizeCard({
+      name: "적의 자기 강화",
+      role: "execution",
+      targets: { ally: "backOne", enemy: "self" },
+      abilities: { ally: ["약화 1."], enemy: ["공격 3."] },
+      completionStatus: "complete",
+    }),
+  ];
+
+  const parsed = core.parseBundleMarkdown(
+    core.bundleMarkdown(source, "2026-07-28"),
+  );
+  assert.deepEqual(
+    [...parsed.map((card) => [card.targets.ally, card.targets.enemy])],
+    [["self", "frontOne"], ["backOne", "self"]],
+  );
+
+  const invalid = core.bundleMarkdown([
+    core.normalizeCard({
+      name: "양쪽 자신",
+      role: "execution",
+      targets: { ally: "self", enemy: "self" },
+      abilities: { ally: ["방어 1."], enemy: ["방어 1."] },
+      completionStatus: "complete",
+    }),
+  ], "2026-07-28");
+  assert.throws(
+    () => core.parseBundleMarkdown(invalid),
+    /아군과 적군에 자신을 동시에 지정할 수 없습니다/,
+  );
+});
+
 test("omits blank optional metadata and empty sections", () => {
   const core = loadCore();
   const markdown = core.cardMarkdown(core.normalizeCard({

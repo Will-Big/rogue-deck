@@ -560,6 +560,7 @@
 
     const TARGETS = Object.freeze({
       none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
+      self: Object.freeze({ label: "자신", ally: "◎", enemy: "◎" }),
       frontOne: Object.freeze({ label: "앞 하나", ally: "━━━━◆", enemy: "◆━━━━" }),
       frontTwo: Object.freeze({ label: "앞 둘", ally: "━━━◆◆", enemy: "◆◆━━━" }),
       backOne: Object.freeze({ label: "뒤 하나", ally: "◆━━━━", enemy: "━━━━◆" }),
@@ -636,6 +637,9 @@
       const warnings = [];
 
       if (!card.name) errors.push("카드 이름을 입력하세요.");
+      if (card.targets.ally === "self" && card.targets.enemy === "self") {
+        errors.push("아군과 적군에 자신을 동시에 지정할 수 없습니다.");
+      }
       if (!card.cost) warnings.push("비용이 미정입니다.");
       if (card.role === "execution" && !card.executionOrder) {
         warnings.push("실행 카드의 실행순서가 미정입니다.");
