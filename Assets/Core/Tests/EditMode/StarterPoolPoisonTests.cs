@@ -160,14 +160,15 @@ namespace FateWeaver.Tests
         public void Posthumous_spread_marks_the_target_for_on_death_transfer()
         {
             var state = NewState(new Enemy("victim", 2), new Enemy("next", 20));
-            Place(state, StarterPoolSpecs.PosthumousSpread());  // 피해 1 + 독 1 + 전염
-            Place(state, StarterPoolSpecs.VanguardSlash());     // 피해 5 → 처치
+            Place(state, StarterPoolSpecs.PosthumousSpread());  // 순서 4, 먼저 → 피해 1 + 독 1 + 전염
+            Place(state, StarterPoolSpecs.DelayedStrike());     // 순서 5, 나중 → 피해 5 → 처치
 
             var events = Resolve(state);
 
             Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "victim"));
             var transfer = events.OfType<StatusTransferred>().Single();
             Assert.AreEqual("next", transfer.ToHolderId);
+            Assert.AreEqual(1, transfer.Magnitude);
             // 이전받은 독 1이 턴 종료 발동 → next는 19, 독 2.
             Assert.AreEqual(19, state.Enemies[1].Hp);
         }

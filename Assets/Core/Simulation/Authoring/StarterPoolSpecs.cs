@@ -334,7 +334,7 @@ namespace FateWeaver.Simulation.Authoring
             return new CardSpec
             {
                 Id = "posthumous_spread", Name = "사후 전염", Side = Side.Player,
-                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 2,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
                 Effects = new EffectSpec[]
                 {
                     new DamageSpec { Value = 1 },
