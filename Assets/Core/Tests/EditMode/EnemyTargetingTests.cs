@@ -66,6 +66,29 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Enemy_all_selector_damages_every_living_party_member_and_sums_damage_dealt()
+        {
+            var state = new CombatState();
+            state.Party.Add(new PartyMember("a", "A", 10));
+            state.Party.Add(new PartyMember("b", "B", 10));
+            var dead = new PartyMember("c", "C", 10);
+            dead.Hp = 0; // 생존 대형에서 제외
+            state.Party.Add(dead);
+            state.Enemies.Add(new Enemy("goblin", 10));
+
+            var def = new CardDefinition("goblin_sweep", "고블린 휩쓸기", Side.Enemy, 4,
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.All } });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "goblin" });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(7, state.Party[0].Hp); // a: 10 - 3
+            Assert.AreEqual(7, state.Party[1].Hp); // b: 10 - 3
+            Assert.AreEqual(0, state.Party[2].Hp); // dead member untouched
+            Assert.AreEqual(6, events.OfType<CardResolved>().Single().DamageDealt);
+        }
+
+        [Test]
         public void Apply_status_with_selector_targets_back_enemy()
         {
             var state = TwoEnemies();
