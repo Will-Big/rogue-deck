@@ -1190,9 +1190,9 @@
     "semantic_hash": "25b00c65b224547938909c92f0fa9186"
   },
   "Assets/Unity/CardAsset.cs": {
-    "mtime": 1784533032.0250125,
-    "ast_hash": "6fcfdf762fa4f32433112b16cbc2b512",
-    "semantic_hash": "6fcfdf762fa4f32433112b16cbc2b512"
+    "mtime": 1785348034.5835857,
+    "ast_hash": "c597ae49633668624697eba27d3b3277",
+    "semantic_hash": ""
   },
   "Assets/Unity/CardBackView.cs": {
     "mtime": 1784484410.2205198,
@@ -1240,9 +1240,9 @@
     "semantic_hash": "5764f6598a22ae6dfcd2fcdfd2a5c162"
   },
   "Assets/Unity/Editor/CardCodeGenerator.cs": {
-    "mtime": 1784533032.0360732,
-    "ast_hash": "8a5f3e66751f1a8408b793ba7b19a773",
-    "semantic_hash": "8a5f3e66751f1a8408b793ba7b19a773"
+    "mtime": 1785348034.5849023,
+    "ast_hash": "2870e6c050fdc523bcd9ba2c90c14396",
+    "semantic_hash": ""
   },
   "Assets/Unity/Editor/EffectSpecDrawer.cs": {
     "mtime": 1784450435.8713264,
@@ -1355,9 +1355,9 @@
     "semantic_hash": "0906faa2ab69cb1d8e7f4d1b28a77163"
   },
   "AGENTS.md": {
-    "mtime": 1784882127.8555634,
-    "ast_hash": "f2c682b3fdbe26598ad725e671b3e7c5",
-    "semantic_hash": "f2c682b3fdbe26598ad725e671b3e7c5"
+    "mtime": 1785326897.881978,
+    "ast_hash": "dcc3125839bc8a2a3baa1adb7b84df4f",
+    "semantic_hash": ""
   },
   "Assets/Plugins/Demigiant/DOTween/readme.txt": {
     "mtime": 1784399561.7354593,
@@ -1390,9 +1390,9 @@
     "semantic_hash": "f2a14a7b07084d788ac97c0f28fcbcb3"
   },
   "Assets/Unity/PLAYTEST.md": {
-    "mtime": 1784484410.2231898,
-    "ast_hash": "a613ec5fd1dbcc30a7900f88627dbe52",
-    "semantic_hash": "a613ec5fd1dbcc30a7900f88627dbe52"
+    "mtime": 1785348034.5858366,
+    "ast_hash": "52b70e6d897dab6698b4ed8f5ba5d542",
+    "semantic_hash": ""
   },
   "CLAUDE.md": {
     "mtime": 1784174641.5598812,
@@ -1430,14 +1430,14 @@
     "semantic_hash": "1687b219b99c675e2ef6792224d36358"
   },
   "docs/superpowers/README.md": {
-    "mtime": 1785321908.4512756,
-    "ast_hash": "eccf51302d50956ce3d42d50a50e81d8",
-    "semantic_hash": "eccf51302d50956ce3d42d50a50e81d8"
+    "mtime": 1785348034.58669,
+    "ast_hash": "3f9e1728584b407e7ffdeedb078a39ba",
+    "semantic_hash": ""
   },
   "docs/superpowers/archive/README.md": {
-    "mtime": 1785321910.8614678,
-    "ast_hash": "6fae83063e6dddc7bc1cbd8ce8f5fdd8",
-    "semantic_hash": "6fae83063e6dddc7bc1cbd8ce8f5fdd8"
+    "mtime": 1785348034.587864,
+    "ast_hash": "8810a71538eb43cfae9477c8669200bc",
+    "semantic_hash": ""
   },
   "docs/superpowers/archive/plans/2026-06-18-fate-weaver-core-foundation.md": {
     "mtime": 1784882127.8563905,
@@ -1998,5 +1998,45 @@
     "mtime": 1783393166.9744911,
     "ast_hash": "8396d732183f3724c286d4c21d347116",
     "semantic_hash": "8396d732183f3724c286d4c21d347116"
+  },
+  "Assets/Tests/UnityEditMode/CardAssetAuthoringTests.cs": {
+    "mtime": 1785348034.5802708,
+    "ast_hash": "c7cc93fb198ac7a82a8015794b7d80b0",
+    "semantic_hash": ""
+  },
+  "Assets/Tests/UnityEditMode/CardCodeGeneratorTests.cs": {
+    "mtime": 1785348034.5810935,
+    "ast_hash": "94ec0d7d38b7ee425494bdcb0f31edbd",
+    "semantic_hash": ""
+  },
+  "Assets/Tests/UnityEditMode/CardPoolAssetTests.cs": {
+    "mtime": 1785348034.5818112,
+    "ast_hash": "002ac5638846b5b07fe7db0022620fe2",
+    "semantic_hash": ""
+  },
+  "Assets/Tests/UnityEditMode/StarterPoolSeederTests.cs": {
+    "mtime": 1785348034.5824168,
+    "ast_hash": "012eec99e9cab8b12840f9aa9e1da63d",
+    "semantic_hash": ""
+  },
+  "Assets/Unity/CardGrade.cs": {
+    "mtime": 1785348034.5837102,
+    "ast_hash": "1e6105f6b55aa16d2edfd734024e5681",
+    "semantic_hash": ""
+  },
+  "Assets/Unity/CardPoolAsset.cs": {
+    "mtime": 1785348034.5840507,
+    "ast_hash": "28c4a6699a17e7f491d4d396985da460",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/archive/plans/2026-07-30-starter-pool-so-authoring.md": {
+    "mtime": 1785348034.5905607,
+    "ast_hash": "80c9bd2cb8786dd3bc1a0dc9e793327a",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-29-starter-pool-so-authoring-design.md": {
+    "mtime": 1785348034.5909007,
+    "ast_hash": "424da8794fbd87e93fec4f78735eddc5",
+    "semantic_hash": ""
   }
 }
