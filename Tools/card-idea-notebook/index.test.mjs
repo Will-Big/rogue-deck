@@ -25,6 +25,16 @@ function loadCore() {
   return context.CardIdeaNotebook;
 }
 
+test("exposes every card grade in the authoring form", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="card-grade"/);
+  assert.match(html, /data-card-field="grade"/);
+  for (const label of ["없음", "일반", "고급", "희귀", "기타"]) {
+    assert.match(html, new RegExp(`>${label}<\\/option>`));
+  }
+});
+
 test("normalizes free text fields without inventing card decisions", () => {
   const core = loadCore();
   const card = core.normalizeCard({
@@ -1442,6 +1452,23 @@ test("rejects an unknown Markdown grade", () => {
   assert.throws(
     () => core.parseBundleMarkdown(markdown),
     /알 수 없는 등급: 전설/,
+  );
+});
+
+test("rejects a non-none enemy Markdown grade", () => {
+  const core = loadCore();
+  const source = core.normalizeCard({
+    name: "적군 등급 오류",
+    faction: "enemy",
+    executionOrder: "1",
+    completionStatus: "complete",
+  });
+  const markdown = core.bundleMarkdown([source], "2026-07-29")
+    .replace("- 등급: 없음", "- 등급: 고급");
+
+  assert.throws(
+    () => core.parseBundleMarkdown(markdown),
+    /적군 등급은 없음이어야 합니다/,
   );
 });
 

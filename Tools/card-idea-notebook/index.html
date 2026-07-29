@@ -172,6 +172,7 @@
     }
 
     .card-row.active { border-color: #8b7645; background: #29281f; }
+    .card-row.selected:not(.active) { border-color: #5e573f; background: #25261f; }
     .card-row:hover { border-color: var(--line-strong); }
     .card-row.dragging { opacity: .46; }
     .card-row.drop-before { box-shadow: 0 -3px 0 var(--gold); }
@@ -200,7 +201,7 @@
     .card-select:hover:not(:disabled) { border-color: transparent; background: transparent; }
     .card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
     .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: var(--muted); font-size: 11px; }
-    .tag, .faction-pill, .role-pill, .completion-pill {
+    .tag, .faction-pill, .grade-pill, .role-pill, .completion-pill {
       padding: 2px 6px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -208,6 +209,7 @@
     }
     .faction-pill.ally { color: #b9d7f0; border-color: #405f75; background: #1b2831; }
     .faction-pill.enemy { color: #efb6b0; border-color: #74423e; background: #311f1d; }
+    .grade-pill { color: #ead8aa; border-color: #645738; background: #2a261a; }
     .completion-pill.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
     .completion-pill.incomplete { color: #f6dca7; border-color: #705c32; background: #30291c; }
     .warning-dot { color: var(--warning); }
@@ -436,22 +438,32 @@
             <div class="form-grid">
               <label class="wide">
                 카드 이름
-                <input id="card-name" name="name" type="text" placeholder="카드 이름" autocomplete="off">
+                <input id="card-name" name="name" data-card-field="name" type="text" placeholder="카드 이름" autocomplete="off">
               </label>
               <label>
                 진영
-                <select id="card-faction" name="faction">
+                <select id="card-faction" name="faction" data-card-field="faction">
                   <option value="ally">아군</option>
                   <option value="enemy">적군</option>
                 </select>
               </label>
               <label>
+                등급
+                <select id="card-grade" name="grade" data-card-field="grade">
+                  <option value="none">없음</option>
+                  <option value="common">일반</option>
+                  <option value="advanced">고급</option>
+                  <option value="rare">희귀</option>
+                  <option value="other">기타</option>
+                </select>
+              </label>
+              <label>
                 비용
-                <input id="card-cost" name="cost" type="number" min="0" step="1" placeholder="미정">
+                <input id="card-cost" name="cost" data-card-field="cost" type="number" min="0" step="1" placeholder="미정">
               </label>
               <label>
                 역할
-                <select id="card-role" name="role">
+                <select id="card-role" name="role" data-card-field="role">
                   <option value="unknown">미정</option>
                   <option value="execution">실행</option>
                   <option value="intervention">조작</option>
@@ -459,11 +471,11 @@
               </label>
               <label id="execution-order-field">
                 실행순서
-                <input id="execution-order" name="executionOrder" type="number" step="1" placeholder="미정">
+                <input id="execution-order" name="executionOrder" data-card-field="executionOrder" type="number" step="1" placeholder="미정">
               </label>
               <label class="wide">
                 태그
-                <input id="card-tags" name="tags" type="text" placeholder="독, 성장, 방어">
+                <input id="card-tags" name="tags" data-card-field="tags" type="text" placeholder="독, 성장, 방어">
               </label>
             </div>
           </section>
@@ -476,7 +488,7 @@
                   <span class="ally-text">◆ 아군</span>
                   <span>전열 → 중앙</span>
                 </div>
-                <select id="ally-target" aria-label="아군 위치 범위"></select>
+                <select id="ally-target" data-card-field="targets.ally" aria-label="아군 위치 범위"></select>
                 <output class="target-glyph ally-text" id="ally-glyph">없음</output>
               </div>
               <div class="target-box">
@@ -484,7 +496,7 @@
                   <span>중앙 ← 전열</span>
                   <span class="enemy-text">적군 ◆</span>
                 </div>
-                <select id="enemy-target" aria-label="적군 위치 범위"></select>
+                <select id="enemy-target" data-card-field="targets.enemy" aria-label="적군 위치 범위"></select>
                 <output class="target-glyph enemy-text" id="enemy-glyph">없음</output>
               </div>
             </div>
@@ -495,15 +507,15 @@
             <h3>능력 문장</h3>
             <label>
               <span class="enemy-text">적군 능력</span>
-              <textarea id="enemy-abilities" placeholder="한 줄에 능력 하나씩 입력"></textarea>
+              <textarea id="enemy-abilities" data-card-field="abilities.enemy" placeholder="한 줄에 능력 하나씩 입력"></textarea>
             </label>
             <label>
               <span class="ally-text">아군 능력</span>
-              <textarea id="ally-abilities" placeholder="한 줄에 능력 하나씩 입력"></textarea>
+              <textarea id="ally-abilities" data-card-field="abilities.ally" placeholder="한 줄에 능력 하나씩 입력"></textarea>
             </label>
             <label>
               대상 없는 능력
-              <textarea id="none-abilities" placeholder="드로우, 운명력 등 위치 대상이 없는 능력"></textarea>
+              <textarea id="none-abilities" data-card-field="abilities.none" placeholder="드로우, 운명력 등 위치 대상이 없는 능력"></textarea>
             </label>
           </section>
 
@@ -511,7 +523,7 @@
             <h3>설계 메모</h3>
             <label>
               자유 메모
-              <textarea id="card-notes" placeholder="설계 의도, 미정 수치, 연계 후보와 고민"></textarea>
+              <textarea id="card-notes" data-card-field="notes" placeholder="설계 의도, 미정 수치, 연계 후보와 고민"></textarea>
             </label>
           </section>
         </form>
@@ -924,6 +936,9 @@
       if (!input.role) throw markdownImportError(`${input.name}의 역할이 없습니다.`);
       if (!input.targets) throw markdownImportError(`${input.name}의 대상이 없습니다.`);
       if (input.faction === "enemy") {
+        if (input.grade !== "none") {
+          throw markdownImportError(`${input.name}의 적군 등급은 없음이어야 합니다.`);
+        }
         if (input.cost !== "없음") {
           throw markdownImportError(`${input.name}의 적군 비용은 없음이어야 합니다.`);
         }
@@ -1524,6 +1539,7 @@
       validation: byId("validation"),
       name: byId("card-name"),
       faction: byId("card-faction"),
+      grade: byId("card-grade"),
       role: byId("card-role"),
       cost: byId("card-cost"),
       executionOrderField: byId("execution-order-field"),
@@ -1550,6 +1566,7 @@
     let toastTimer = 0;
     let pendingDeleteCardIds = [];
     let draggedCardId = "";
+    let selectionAnchorId = "";
 
     function showToast(message) {
       window.clearTimeout(toastTimer);
@@ -1558,31 +1575,30 @@
       toastTimer = window.setTimeout(() => elements.toast.classList.remove("visible"), 2600);
     }
 
-    function cardFromForm() {
-      const current = activeCard() ?? core.emptyCard();
-      return core.normalizeCard({
-        ...current,
-        name: elements.name.value,
-        faction: elements.faction.value,
-        role: elements.role.value,
-        cost: elements.cost.value,
-        executionOrder: elements.executionOrder.value,
-        tags: elements.tags.value,
-        targets: {
-          ally: elements.allyTarget.value,
-          enemy: elements.enemyTarget.value,
-        },
-        abilities: {
-          ally: elements.allyAbilities.value,
-          enemy: elements.enemyAbilities.value,
-          none: elements.noneAbilities.value,
-        },
-        notes: elements.notes.value,
-      });
-    }
-
     function activeCard() {
       return state.cards.find((card) => card.id === state.activeCardId) ?? null;
+    }
+
+    function fieldControls() {
+      return new Map([
+        ["name", elements.name],
+        ["faction", elements.faction],
+        ["grade", elements.grade],
+        ["cost", elements.cost],
+        ["role", elements.role],
+        ["executionOrder", elements.executionOrder],
+        ["tags", elements.tags],
+        ["targets.ally", elements.allyTarget],
+        ["targets.enemy", elements.enemyTarget],
+        ["abilities.enemy", elements.enemyAbilities],
+        ["abilities.ally", elements.allyAbilities],
+        ["abilities.none", elements.noneAbilities],
+        ["notes", elements.notes],
+      ]);
+    }
+
+    function editTargets() {
+      return core.editTargetCards(state);
     }
 
     function renderValidation() {
@@ -1618,22 +1634,36 @@
     }
 
     function renderTargets() {
-      const card = activeCard() ?? core.emptyCard();
-      const ally = core.TARGETS[card.targets.ally];
-      const enemy = core.TARGETS[card.targets.enemy];
-      elements.allyGlyph.textContent = ally.ally || "없음";
-      elements.enemyGlyph.textContent = enemy.enemy || "없음";
-      elements.targetSummary.textContent = core.targetSummary(card).replaceAll("`", "");
+      const ally = core.fieldAggregate(state, "targets.ally");
+      const enemy = core.fieldAggregate(state, "targets.enemy");
+      elements.allyGlyph.textContent = ally.kind === "mixed"
+        ? "혼합"
+        : core.TARGETS[ally.value]?.ally || "없음";
+      elements.enemyGlyph.textContent = enemy.kind === "mixed"
+        ? "혼합"
+        : core.TARGETS[enemy.value]?.enemy || "없음";
+      elements.targetSummary.textContent = ally.kind === "mixed" || enemy.kind === "mixed"
+        ? "혼합 대상"
+        : core.targetSummary({
+          targets: {
+            ally: ally.value || "none",
+            enemy: enemy.value || "none",
+          },
+        }).replaceAll("`", "");
     }
 
     function renderDerived() {
       const card = activeCard();
       const status = card?.completionStatus ?? "incomplete";
-      elements.editorTitle.textContent = card?.name || "선택된 카드 없음";
+      const selectedCount = core.selectedCards(state).length;
+      elements.editorTitle.textContent = selectedCount > 1
+        ? `${selectedCount}장 선택`
+        : card?.name || "선택된 카드 없음";
       elements.completionBadge.textContent = status === "complete" ? "완성" : "미완성";
       elements.completionBadge.className = `completion-badge ${status}`;
       elements.completionBadge.classList.toggle("hidden", !card);
-      elements.executionOrderField.classList.toggle("hidden", card?.role !== "execution");
+      const executionOrder = core.fieldAggregate(state, "executionOrder");
+      elements.executionOrderField.classList.toggle("hidden", executionOrder.applicableCount === 0);
       elements.markdownPreview.textContent = card ? core.cardMarkdown(card) : "";
       elements.saveCard.disabled = !card;
       elements.saveAllCards.disabled = state.cards.length === 0;
@@ -1642,29 +1672,54 @@
       renderStorageStatus();
     }
 
+    function removeMixedOption(control) {
+      control.querySelector('option[data-mixed="true"]')?.remove();
+    }
+
+    function showMixedOption(control) {
+      removeMixedOption(control);
+      const option = document.createElement("option");
+      option.value = "__mixed";
+      option.textContent = "혼합";
+      option.disabled = true;
+      option.dataset.mixed = "true";
+      control.append(option);
+      control.value = "__mixed";
+    }
+
     function renderForm() {
-      const card = core.normalizeCard(activeCard() ?? core.emptyCard());
-      const disabled = !activeCard();
-      const isEnemy = card.faction === "enemy";
-      elements.name.value = card.name;
-      elements.faction.value = card.faction;
-      elements.role.value = card.role;
-      elements.cost.type = isEnemy ? "text" : "number";
-      elements.cost.value = isEnemy ? "없음" : card.cost;
-      elements.cost.placeholder = isEnemy ? "" : "미정";
-      elements.executionOrder.value = card.executionOrder;
-      elements.tags.value = card.tags.join(", ");
-      elements.allyTarget.value = card.targets.ally;
-      elements.enemyTarget.value = card.targets.enemy;
-      elements.enemyAbilities.value = card.abilities.enemy.join("\n");
-      elements.allyAbilities.value = card.abilities.ally.join("\n");
-      elements.noneAbilities.value = card.abilities.none.join("\n");
-      elements.notes.value = card.notes;
-      for (const control of elements.form.querySelectorAll("input, select, textarea")) {
-        control.disabled = disabled;
+      const targets = editTargets();
+      const hasTargets = targets.length > 0;
+      const allEnemies = hasTargets && targets.every((card) => card.faction === "enemy");
+      elements.cost.type = allEnemies ? "text" : "number";
+      for (const [field, control] of fieldControls()) {
+        const aggregate = core.fieldAggregate(state, field);
+        const isSelect = control.tagName === "SELECT";
+        if (isSelect) removeMixedOption(control);
+
+        if (aggregate.kind === "mixed") {
+          if (isSelect) showMixedOption(control);
+          else {
+            control.value = "";
+            control.placeholder = "혼합 값";
+          }
+        } else if (aggregate.kind === "common") {
+          control.value = aggregate.value;
+          if (!isSelect) control.placeholder = control.dataset.defaultPlaceholder ?? "";
+        } else if (allEnemies && field === "grade") {
+          control.value = "none";
+        } else if (allEnemies && field === "cost") {
+          control.value = "없음";
+        } else if (allEnemies && field === "role") {
+          control.value = "execution";
+        } else {
+          control.value = "";
+          if (!isSelect) control.placeholder = control.dataset.defaultPlaceholder ?? "";
+        }
+        control.disabled = !hasTargets || aggregate.applicableCount === 0;
       }
-      elements.cost.disabled = disabled || isEnemy;
-      elements.role.disabled = disabled || isEnemy;
+
+      if (allEnemies) elements.cost.placeholder = "";
       renderDerived();
     }
 
@@ -1677,7 +1732,11 @@
     function cardRow(card) {
       const validation = core.validateCard(card);
       const row = document.createElement("div");
-      row.className = `card-row${card.id === state.activeCardId ? " active" : ""}`;
+      row.className = [
+        "card-row",
+        card.id === state.activeCardId ? "active" : "",
+        state.selection.includes(card.id) ? "selected" : "",
+      ].filter(Boolean).join(" ");
 
       const dragDisabled = Boolean(state.searchQuery.trim());
       const handle = document.createElement("button");
@@ -1711,20 +1770,17 @@
       checkbox.type = "checkbox";
       checkbox.className = "selection-check";
       checkbox.checked = state.selection.includes(card.id);
-      checkbox.title = "삭제 또는 Markdown 내보내기에 사용할 카드 선택";
+      checkbox.title = "삭제, Markdown 내보내기 또는 다중 편집에 사용할 카드 선택";
       checkbox.setAttribute("aria-label", `${card.name} 선택`);
-      checkbox.addEventListener("change", () => {
-        const selected = new Set(state.selection);
-        if (checkbox.checked) selected.add(card.id);
-        else selected.delete(card.id);
-        persistRegular({ ...state, selection: [...selected] });
-        renderList();
+      checkbox.addEventListener("click", (event) => {
+        event.preventDefault();
+        selectFromEvent(card.id, event, "toggle");
       });
 
       const select = document.createElement("button");
       select.type = "button";
       select.className = "card-select";
-      select.addEventListener("click", () => openCard(card.id));
+      select.addEventListener("click", (event) => selectFromEvent(card.id, event, "replace"));
 
       const name = document.createElement("div");
       name.className = "card-name";
@@ -1735,13 +1791,16 @@
       const faction = document.createElement("span");
       faction.className = `faction-pill ${card.faction}`;
       faction.textContent = core.FACTION_LABELS[card.faction];
+      const grade = document.createElement("span");
+      grade.className = "grade-pill";
+      grade.textContent = core.GRADE_LABELS[card.grade];
       const role = document.createElement("span");
       role.className = "role-pill";
       role.textContent = core.ROLE_LABELS[card.role];
       const completion = document.createElement("span");
       completion.className = `completion-pill ${card.completionStatus}`;
       completion.textContent = card.completionStatus === "complete" ? "완성" : "미완성";
-      meta.append(faction, role, completion);
+      meta.append(faction, grade, role, completion);
       for (const tagText of card.tags.slice(0, 3)) {
         const tag = document.createElement("span");
         tag.className = "tag";
@@ -1819,10 +1878,17 @@
       renderForm();
     }
 
-    function openCard(id) {
-      const card = state.cards.find((candidate) => candidate.id === id);
-      if (!card) return;
-      persistRegular({ ...state, activeCardId: id });
+    function selectFromEvent(id, event, plainMode) {
+      const mode = event.shiftKey
+        ? "range"
+        : event.ctrlKey || event.metaKey
+          ? "toggle"
+          : plainMode;
+      const visibleIds = core.filteredCards(state.cards, state.searchQuery)
+        .map((card) => card.id);
+      const result = core.selectCard(state, visibleIds, id, mode, selectionAnchorId);
+      selectionAnchorId = result.anchorId;
+      persistRegular(result.state);
       renderAll();
     }
 
@@ -1831,6 +1897,7 @@
         id: generatedId(),
         now: new Date().toISOString(),
       }));
+      selectionAnchorId = state.activeCardId;
       renderAll();
       elements.name.focus();
     }
@@ -1937,6 +2004,7 @@
         const nextState = core.deleteCards(state, ids);
         core.writeStore(localStorage, nextState);
         state = nextState;
+        selectionAnchorId = state.activeCardId;
         persistFailed = false;
         pendingDeleteCardIds = [];
         elements.deleteDialog.close();
@@ -1992,6 +2060,7 @@
         });
         core.writeStore(localStorage, nextState);
         state = nextState;
+        selectionAnchorId = state.activeCardId;
         persistFailed = false;
         renderAll();
         showToast(`${parsed.length}장의 카드를 불러왔습니다.`);
@@ -2010,6 +2079,9 @@
         select.append(option);
       }
     }
+    for (const control of elements.form.querySelectorAll("input, textarea")) {
+      control.dataset.defaultPlaceholder = control.placeholder;
+    }
 
     const storageSession = core.readStoreSession(localStorage);
     state = storageSession.state;
@@ -2022,6 +2094,7 @@
     if (initialCard) {
       state.activeCardId = initialCard.id;
     }
+    selectionAnchorId = state.activeCardId;
 
     elements.form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -2035,13 +2108,14 @@
         id: generatedId(),
         now: new Date().toISOString(),
       }));
+      selectionAnchorId = state.activeCardId;
       renderAll();
       elements.name.focus();
     });
     elements.deleteCard.addEventListener("click", confirmDelete);
     elements.selectAll.addEventListener("change", () => {
       persistRegular(core.bulkSelection(state, elements.selectAll.checked));
-      renderList();
+      renderAll();
     });
     elements.importMarkdown.addEventListener("click", () => elements.importFile.click());
     elements.importFile.addEventListener("change", () => importMarkdownFile(elements.importFile.files?.[0]));
@@ -2063,26 +2137,27 @@
       persistRegular({ ...state, searchQuery: elements.search.value });
       renderList();
     });
+    function applyFormField(control, renderWholeForm) {
+      const field = control.dataset.cardField;
+      if (!field || control.disabled || control.value === "__mixed") return;
+      const nextState = core.editSelectedField(state, field, control.value);
+      if (nextState === state) return;
+      persistRegular(nextState);
+      if (renderWholeForm) renderAll();
+      else {
+        renderList();
+        renderDerived();
+      }
+    }
     elements.form.addEventListener("input", (event) => {
-      const card = activeCard();
-      if (!card || event.target === elements.faction) return;
-      persistRegular(core.editCard(state, card.id, cardFromForm()));
-      renderList();
-      renderDerived();
+      const control = event.target.closest("[data-card-field]");
+      if (!control || control.tagName === "SELECT") return;
+      applyFormField(control, false);
     });
     elements.form.addEventListener("change", (event) => {
-      const card = activeCard();
-      if (!card) return;
-      const nextCard = event.target === elements.faction
-        ? core.changeCardFaction(card, elements.faction.value)
-        : cardFromForm();
-      persistRegular(core.editCard(state, card.id, nextCard));
-      if (event.target === elements.faction) {
-        renderAll();
-        return;
-      }
-      renderList();
-      renderDerived();
+      const control = event.target.closest("[data-card-field]");
+      if (!control) return;
+      applyFormField(control, control.tagName === "SELECT");
     });
     elements.deleteDialog.addEventListener("click", (event) => {
       const action = event.target.closest("[data-delete-action]")?.dataset.deleteAction;
