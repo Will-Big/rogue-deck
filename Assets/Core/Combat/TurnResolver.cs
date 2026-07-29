@@ -90,6 +90,7 @@ namespace FateWeaver.Core.Combat
                 _effects.Resolve(effect.Key).Apply(ctx);
                 totalDamage += ctx.DamageDealt;
                 if (ctx.TargetId != null) targetId = ctx.TargetId;
+                pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록
 
                 CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
                 CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
