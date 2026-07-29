@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Authoring;
 using UnityEngine;
@@ -26,6 +27,15 @@ namespace FateWeaver.Unity
         [FormerlySerializedAs("InterventionAmount")]
         [FormerlySerializedAs("FateAmount")]
         public int InterventionEffectValue;
+        [SerializeField] private InterventionTargetSideRef _interventionTargetSide;
+        [SerializeField] private bool _interventionRequireAdjacent;
+        [SerializeField] private CardGrade _grade = CardGrade.None;
+        [SerializeField] private string[] _tags = Array.Empty<string>();
+
+        public InterventionTargetSideRef InterventionTargetSide => _interventionTargetSide;
+        public bool InterventionRequireAdjacent => _interventionRequireAdjacent;
+        public CardGrade Grade => _grade;
+        public IReadOnlyList<string> Tags => _tags ?? Array.Empty<string>();
 
         public CardSpec ToSpec() => new CardSpec
         {
@@ -37,7 +47,9 @@ namespace FateWeaver.Unity
             BaseExecutionOrder = BaseExecutionOrder,
             Effects = Effects,
             Intervention = Intervention,
-            InterventionEffectValue = InterventionEffectValue
+            InterventionEffectValue = InterventionEffectValue,
+            InterventionTargetSide = _interventionTargetSide,
+            InterventionRequireAdjacent = _interventionRequireAdjacent
         };
     }
 }
