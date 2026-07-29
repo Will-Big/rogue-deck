@@ -15,7 +15,11 @@ namespace FateWeaver.Core.Intervention
                 && ctx.Intervention.Key == Key
                 && !ctx.Target.IsLocked
                 && !ctx.SecondaryTarget.IsLocked
-                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost;
+                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost
+                && (ctx.Intervention.TargetSide == null
+                    || (ctx.Target.Def.Side == ctx.Intervention.TargetSide
+                        && ctx.SecondaryTarget.Def.Side == ctx.Intervention.TargetSide))
+                && AreAdjacentIfRequired(ctx);
 
         public void Apply(InterventionPlayContext ctx)
         {
@@ -30,6 +34,34 @@ namespace FateWeaver.Core.Intervention
             var executionOrder = ctx.Target.ExecutionOrder;
             ctx.Target.ExecutionOrder = ctx.SecondaryTarget.ExecutionOrder;
             ctx.SecondaryTarget.ExecutionOrder = executionOrder;
+        }
+
+        private static bool AreAdjacentIfRequired(InterventionPlayContext ctx)
+        {
+            if (!ctx.Intervention.RequireAdjacentTargets)
+            {
+                return true;
+            }
+
+            var order = ctx.State.Zone.ResolutionOrder();
+            var first = IndexOf(order, ctx.Target);
+            var second = IndexOf(order, ctx.SecondaryTarget);
+            return first >= 0 && second >= 0 && (first - second == 1 || second - first == 1);
+        }
+
+        private static int IndexOf(
+            System.Collections.Generic.IReadOnlyList<Combat.ExecutionCardInstance> order,
+            Combat.ExecutionCardInstance card)
+        {
+            for (int i = 0; i < order.Count; i++)
+            {
+                if (ReferenceEquals(order[i], card))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

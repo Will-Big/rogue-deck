@@ -13,7 +13,9 @@ namespace FateWeaver.Core.Intervention
                 && ctx.Intervention != null
                 && ctx.Intervention.Key == Key
                 && !ctx.Target.IsLocked
-                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost;
+                && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost
+                && (ctx.Intervention.TargetSide == null
+                    || ctx.Target.Def.Side == ctx.Intervention.TargetSide);
 
         public void Apply(InterventionPlayContext ctx)
         {

@@ -18,7 +18,8 @@ namespace FateWeaver.Simulation.Authoring
                     EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
                     InterventionAction = new InterventionActionData(
-                        spec.Intervention.ToKey(), spec.EnergyCost, spec.InterventionEffectValue)
+                        spec.Intervention.ToKey(), spec.EnergyCost, spec.InterventionEffectValue,
+                        ToTargetSide(spec.InterventionTargetSide), spec.InterventionRequireAdjacent)
                 };
             }
 
@@ -30,6 +31,16 @@ namespace FateWeaver.Simulation.Authoring
                 EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution
             };
+        }
+
+        private static Side? ToTargetSide(InterventionTargetSideRef side)
+        {
+            switch (side)
+            {
+                case InterventionTargetSideRef.Player: return Side.Player;
+                case InterventionTargetSideRef.Enemy: return Side.Enemy;
+                default: return null;
+            }
         }
     }
 }

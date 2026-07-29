@@ -15,5 +15,10 @@ namespace FateWeaver.Simulation.Authoring
         public EffectSpec[] Effects;
         public InterventionKeyRef Intervention;
         public int InterventionEffectValue;
+        public InterventionTargetSideRef InterventionTargetSide;
+        public bool InterventionRequireAdjacent;
     }
+
+    /// <summary>개입 대상 진영 제한. Any=제한 없음, Player=재촉류, Enemy=유예류.</summary>
+    public enum InterventionTargetSideRef { Any, Player, Enemy }
 }
