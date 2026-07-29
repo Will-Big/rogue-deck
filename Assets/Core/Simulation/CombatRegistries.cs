@@ -18,6 +18,7 @@ namespace FateWeaver.Simulation
             effects.Register(new MoveFormationHandler());
             effects.Register(new ConsumeStatusHandler());
             effects.Register(new TriggerStatusHandler());
+            effects.Register(new GrantNextTurnFateHandler());
             return effects;
         }
 

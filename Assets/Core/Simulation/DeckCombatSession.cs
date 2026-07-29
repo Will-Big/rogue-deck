@@ -385,7 +385,8 @@ namespace FateWeaver.Simulation
                 _state.Zone.Add(inst);
             }
 
-            _state.FateEnergy = _state.FateEnergyPerTurn;
+            _state.FateEnergy = _state.FateEnergyPerTurn + _state.PendingNextTurnFateEnergy;
+            _state.PendingNextTurnFateEnergy = 0;
             var drawCount = _partyTuning == null
                 ? _handSize
                 : _partyTuning.DrawFor(LivingPartyCount());
