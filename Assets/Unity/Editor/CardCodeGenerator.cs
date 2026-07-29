@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation;
@@ -18,12 +20,41 @@ namespace FateWeaver.Unity.Editor
         private const string PlayerCardFolder = CardFolder + "/Player";
         public const string EnemyCardFolder = CardFolder + "/Enemies";
         private const string DeckAssetPath = PlayerCardFolder + "/StarterDeck.asset";
+        private const string StarterPoolCardFolder = PlayerCardFolder + "/StarterPool";
+        private const string StarterPoolAssetPath = PlayerCardFolder + "/StarterPool.asset";
         private const string ValidationCardFolder = CardFolder + "/Validation";
         private const string ValidationDeckPath = ValidationCardFolder + "/PartyPrototypeDeck.asset";
         private const string CharacterFolder = "Assets/Unity/CharacterSO";
         private const string MemberAPath = CharacterFolder + "/member_a.asset";
         private const string MemberBPath = CharacterFolder + "/member_b.asset";
         private const string GeneratedPath = "Assets/Core/Simulation/Generated/GeneratedCards.cs";
+
+        private static readonly IReadOnlyDictionary<string, string[]> StarterPoolTags =
+            new Dictionary<string, string[]>
+            {
+                ["vanguard_slash"] = new[] { "시작", "공격" },
+                ["parry_strike"] = new[] { "시작", "방어" },
+                ["hasten"] = new[] { "시작", "실행력" },
+                ["probing_strike"] = new[] { "시작", "공격" },
+                ["quick_cover"] = new[] { "시작", "방어" },
+                ["delay"] = new[] { "시작", "실행력" },
+                ["delayed_strike"] = new[] { "시작", "공격" },
+                ["early_guard"] = new[] { "시작", "방어" },
+                ["crossover"] = new[] { "시작", "실행력" },
+                ["riposte"] = new[] { "시작", "공격", "조건" },
+                ["foresight"] = new[] { "시작", "방어", "조건" },
+                ["breather"] = new[] { "시작", "실행력" },
+                ["venom_thrust"] = new[] { "시작", "독", "성장형" },
+                ["last_drop"] = new[] { "시작", "독", "성장형", "조건" },
+                ["spore_veil"] = new[] { "시작", "독", "성장형", "방어" },
+                ["spread_culture"] = new[] { "시작", "독", "성장형", "광역" },
+                ["toxic_reclaim"] = new[] { "시작", "독", "소비형", "방어" },
+                ["condensed_burst"] = new[] { "시작", "독", "소비형", "공격" },
+                ["distill"] = new[] { "시작", "독", "소비형", "운명력" },
+                ["early_onset"] = new[] { "시작", "독", "변이형", "발동" },
+                ["stable_culture"] = new[] { "시작", "독", "변이형", "성장" },
+                ["posthumous_spread"] = new[] { "시작", "독", "변이형", "이전" }
+            };
 
         [MenuItem("Fate Weaver/Seed Starter Card Assets")]
         public static void SeedStarter()
@@ -47,6 +78,86 @@ namespace FateWeaver.Unity.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Seeded starter CardAssets + DeckAsset under " + CardFolder);
+        }
+
+        [MenuItem("Fate Weaver/Seed Starter Pool Assets")]
+        public static void SeedStarterPool()
+        {
+            var errors = SeedStarterPoolAssets(StarterPoolCardFolder, StarterPoolAssetPath);
+            if (errors.Count > 0)
+            {
+                Debug.LogError("Starter pool seed validation failed:\n" + string.Join("\n", errors));
+                return;
+            }
+
+            Debug.Log("Seeded missing starter-pool CardAssets and refreshed " + StarterPoolAssetPath);
+        }
+
+        /// <summary>
+        /// Creates only missing starter-pool cards, then creates or refreshes the pool references.
+        /// Existing CardAssets are never modified. Custom paths keep EditMode tests isolated.
+        /// </summary>
+        public static IReadOnlyList<string> SeedStarterPoolAssets(string cardFolder, string poolPath)
+        {
+            Directory.CreateDirectory(cardFolder);
+            var specs = StarterPoolSpecs.Build();
+            var cards = new List<CardAsset>(specs.Count);
+            var newCards = new List<(CardAsset Card, string Path)>();
+
+            foreach (var spec in specs)
+            {
+                var path = cardFolder + "/" + spec.Id + ".asset";
+                var card = AssetDatabase.LoadAssetAtPath<CardAsset>(path);
+                if (card == null)
+                {
+                    card = ScriptableObject.CreateInstance<CardAsset>();
+                    Apply(card, spec);
+                    ApplyMetadata(card, CardGrade.Common, StarterPoolTags[spec.Id]);
+                    newCards.Add((card, path));
+                }
+
+                cards.Add(card);
+            }
+
+            var candidate = ScriptableObject.CreateInstance<CardPoolAsset>();
+            ApplyPool(candidate, "starter_pool", cards);
+            var errors = candidate.Validate().ToArray();
+            UnityEngine.Object.DestroyImmediate(candidate);
+            if (errors.Length > 0)
+            {
+                foreach (var entry in newCards)
+                {
+                    UnityEngine.Object.DestroyImmediate(entry.Card);
+                }
+
+                return errors;
+            }
+
+            foreach (var entry in newCards)
+            {
+                AssetDatabase.CreateAsset(entry.Card, entry.Path);
+            }
+
+            var pool = AssetDatabase.LoadAssetAtPath<CardPoolAsset>(poolPath);
+            bool newPool = pool == null;
+            if (newPool)
+            {
+                pool = ScriptableObject.CreateInstance<CardPoolAsset>();
+            }
+
+            ApplyPool(pool, "starter_pool", cards);
+            if (newPool)
+            {
+                AssetDatabase.CreateAsset(pool, poolPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(pool);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return Array.Empty<string>();
         }
 
         /// <summary>Seeds one CardAsset per enemy card (art/display source only — rules stay in GoblinDeck).
@@ -225,6 +336,40 @@ namespace FateWeaver.Unity.Editor
             card.Effects = spec.Effects ?? System.Array.Empty<EffectSpec>();
             card.Intervention = spec.Intervention;
             card.InterventionEffectValue = spec.InterventionEffectValue;
+            var serialized = new SerializedObject(card);
+            serialized.FindProperty("_interventionTargetSide").enumValueIndex =
+                (int)spec.InterventionTargetSide;
+            serialized.FindProperty("_interventionRequireAdjacent").boolValue =
+                spec.InterventionRequireAdjacent;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ApplyMetadata(CardAsset card, CardGrade grade, IReadOnlyList<string> tags)
+        {
+            var serialized = new SerializedObject(card);
+            serialized.FindProperty("_grade").enumValueIndex = (int)grade;
+            var serializedTags = serialized.FindProperty("_tags");
+            serializedTags.arraySize = tags.Count;
+            for (int i = 0; i < tags.Count; i++)
+            {
+                serializedTags.GetArrayElementAtIndex(i).stringValue = tags[i];
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ApplyPool(CardPoolAsset pool, string id, IReadOnlyList<CardAsset> cards)
+        {
+            var serialized = new SerializedObject(pool);
+            serialized.FindProperty("_id").stringValue = id;
+            var serializedCards = serialized.FindProperty("_cards");
+            serializedCards.arraySize = cards.Count;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                serializedCards.GetArrayElementAtIndex(i).objectReferenceValue = cards[i];
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // Enemy CardAssets mirror the pure GoblinDeck definition for id/display, but carry no rules
