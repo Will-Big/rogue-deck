@@ -65,6 +65,7 @@
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
+| [시작 카드 풀 SO 저작 구현](plans/2026-07-30-starter-pool-so-authoring.md) | `active` | CardAsset 규칙·메타데이터, CardPoolAsset, 22장 시더와 선택적 헤드리스 export |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목 |
 
 ## 재설계가 필요한 영역
