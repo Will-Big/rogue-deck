@@ -87,6 +87,52 @@ test("normalizes card factions and derives completion from core information", ()
   assert.equal(core.isCardComplete(completeEnemy), true);
 });
 
+test("normalizes grades and resets grade with faction transitions", () => {
+  const core = loadCore();
+
+  assert.equal(core.emptyCard().grade, "common");
+  assert.equal(core.normalizeCard({ faction: "ally", grade: "rare" }).grade, "rare");
+  assert.equal(core.normalizeCard({ faction: "enemy", grade: "rare" }).grade, "none");
+  assert.equal(core.normalizeCard({ faction: "ally", grade: "invalid" }).grade, "common");
+
+  const enemy = core.changeCardFaction({
+    faction: "ally",
+    grade: "advanced",
+    role: "intervention",
+    cost: "2",
+  }, "enemy");
+  assert.deepEqual(
+    {
+      faction: enemy.faction,
+      grade: enemy.grade,
+      role: enemy.role,
+      cost: enemy.cost,
+    },
+    {
+      faction: "enemy",
+      grade: "none",
+      role: "execution",
+      cost: "",
+    },
+  );
+
+  const allyAgain = core.changeCardFaction(enemy, "ally");
+  assert.deepEqual(
+    {
+      faction: allyAgain.faction,
+      grade: allyAgain.grade,
+      role: allyAgain.role,
+      cost: allyAgain.cost,
+    },
+    {
+      faction: "ally",
+      grade: "common",
+      role: "unknown",
+      cost: "",
+    },
+  );
+});
+
 test("requires integer cost and execution order values for completion", () => {
   const core = loadCore();
   const ally = {
@@ -373,7 +419,7 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(storage.writeCount, 1);
 
   const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 5);
+  assert.equal(saved.schemaVersion, 6);
   assert.equal(saved.cards[0].faction, "ally");
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
@@ -386,6 +432,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
     cards: [core.normalizeCard({
       id: "a",
       name: "보존 카드",
+      grade: "rare",
       tags: ["독"],
       completionStatus: "complete",
     })],
@@ -397,6 +444,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
 
   const loaded = core.readStore(storage);
   assert.equal(loaded.cards[0].name, "보존 카드");
+  assert.equal(loaded.cards[0].grade, "rare");
   assert.deepEqual([...loaded.cards[0].tags], ["독"]);
   assert.equal(loaded.activeCardId, "a");
   assert.equal(loaded.searchQuery, "독");
@@ -410,7 +458,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
   assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
 });
 
-test("migrates schema 3 and round-trips the schema 5 default export file name", () => {
+test("migrates schema 3 and round-trips the schema 6 default export file name", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -423,8 +471,9 @@ test("migrates schema 3 and round-trips the schema 5 default export file name", 
   });
 
   const migrated = core.readStore(storage);
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.equal(migrated.cards[0].faction, "ally");
+  assert.equal(migrated.cards[0].grade, "none");
   assert.equal(migrated.cards[0].completionStatus, "incomplete");
   assert.equal(migrated.exportFileName, "");
   assert.deepEqual([...migrated.selection], ["a"]);
@@ -473,44 +522,63 @@ test("migrates schema 4 cards to allies while preserving collection state", () =
   assert.equal(migrated.exportFileName, "기존 카드");
 });
 
-test("round-trips ally and enemy cards through schema 5 storage", () => {
+test("migrates every schema 5 card to no grade while preserving faction state", () => {
   const core = loadCore();
-  const storage = new MemoryStorage();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({
-        id: "ally",
-        name: "아군 카드",
-        faction: "ally",
-        role: "intervention",
-        cost: "2",
-        completionStatus: "complete",
-      }),
-      core.normalizeCard({
-        id: "enemy",
-        name: "적군 카드",
-        faction: "enemy",
-        executionOrder: "3",
-        completionStatus: "complete",
-      }),
-    ],
-    activeCardId: "enemy",
-    selection: ["enemy"],
-  };
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 5,
+      cards: [
+        {
+          id: "ally",
+          name: "아군 카드",
+          faction: "ally",
+          grade: "rare",
+          role: "intervention",
+          cost: "2",
+          completionStatus: "complete",
+        },
+        {
+          id: "enemy",
+          name: "적군 카드",
+          faction: "enemy",
+          grade: "advanced",
+          role: "execution",
+          cost: "",
+          executionOrder: "3",
+          completionStatus: "complete",
+        },
+      ],
+      activeCardId: "enemy",
+      searchQuery: "",
+      selection: ["enemy"],
+      exportFileName: "",
+    }),
+  });
 
-  core.writeStore(storage, state);
   const loaded = core.readStore(storage);
   assert.deepEqual(
     [...loaded.cards.map((card) => ({
       faction: card.faction,
+      grade: card.grade,
       role: card.role,
       cost: card.cost,
       completionStatus: card.completionStatus,
     }))],
     [
-      { faction: "ally", role: "intervention", cost: "2", completionStatus: "complete" },
-      { faction: "enemy", role: "execution", cost: "", completionStatus: "complete" },
+      {
+        faction: "ally",
+        grade: "none",
+        role: "intervention",
+        cost: "2",
+        completionStatus: "complete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "complete",
+      },
     ],
   );
   assert.equal(loaded.activeCardId, "enemy");
@@ -654,7 +722,7 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });
 
-test("migrates schema 1 cards to incomplete schema 5 ally cards", () => {
+test("migrates schema 1 cards to incomplete schema 6 ally cards", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -667,13 +735,14 @@ test("migrates schema 1 cards to incomplete schema 5 ally cards", () => {
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 5);
+  assert.equal(state.schemaVersion, 6);
   assert.equal(state.cards[0].faction, "ally");
+  assert.equal(state.cards[0].grade, "none");
   assert.equal(state.cards[0].completionStatus, "incomplete");
   assert.deepEqual([...state.selection], ["a"]);
 });
 
-test("migrates schema 2 export selection into schema 5 shared selection", () => {
+test("migrates schema 2 export selection into schema 6 shared selection", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -689,8 +758,9 @@ test("migrates schema 2 export selection into schema 5 shared selection", () => 
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 5);
+  assert.equal(state.schemaVersion, 6);
   assert.deepEqual([...state.cards.map((card) => card.faction)], ["ally", "ally"]);
+  assert.deepEqual([...state.cards.map((card) => card.grade)], ["none", "none"]);
   assert.deepEqual(
     [...state.cards.map((card) => card.completionStatus)],
     ["incomplete", "incomplete"],
@@ -940,11 +1010,12 @@ test("round-trips exported cards through strict Markdown import", () => {
   assert.equal(parsed[0].completionStatus, "complete");
 });
 
-test("emits and round-trips ally and enemy faction metadata", () => {
+test("emits and round-trips ally and enemy faction and grade metadata", () => {
   const core = loadCore();
   const ally = core.normalizeCard({
     name: "아군 실행",
     faction: "ally",
+    grade: "rare",
     cost: "1",
     role: "execution",
     executionOrder: "4",
@@ -959,11 +1030,11 @@ test("emits and round-trips ally and enemy faction metadata", () => {
 
   assert.match(
     core.cardMarkdown(ally),
-    /- 진영: 아군\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
+    /- 진영: 아군\n- 등급: 희귀\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
   );
   assert.match(
     core.cardMarkdown(enemy),
-    /- 진영: 적군\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
+    /- 진영: 적군\n- 등급: 없음\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
   );
 
   const parsed = core.parseBundleMarkdown(
@@ -972,13 +1043,26 @@ test("emits and round-trips ally and enemy faction metadata", () => {
   assert.deepEqual(
     [...parsed.map((card) => ({
       faction: card.faction,
+      grade: card.grade,
       cost: card.cost,
       role: card.role,
       completionStatus: card.completionStatus,
     }))],
     [
-      { faction: "ally", cost: "1", role: "execution", completionStatus: "complete" },
-      { faction: "enemy", cost: "", role: "execution", completionStatus: "complete" },
+      {
+        faction: "ally",
+        grade: "rare",
+        cost: "1",
+        role: "execution",
+        completionStatus: "complete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        cost: "",
+        role: "execution",
+        completionStatus: "complete",
+      },
     ],
   );
 });
@@ -999,6 +1083,7 @@ test("imports legacy Markdown without faction as an ally draft", () => {
 
   const parsed = core.parseBundleMarkdown(legacy);
   assert.equal(parsed[0].faction, "ally");
+  assert.equal(parsed[0].grade, "none");
   assert.equal(parsed[0].completionStatus, "incomplete");
 
   const imported = core.importCards(core.initialState(), legacy, {
@@ -1006,7 +1091,27 @@ test("imports legacy Markdown without faction as an ally draft", () => {
     now: "2026-07-28T00:00:00.000Z",
   });
   assert.equal(imported.cards[0].faction, "ally");
+  assert.equal(imported.cards[0].grade, "none");
   assert.equal(imported.cards[0].completionStatus, "incomplete");
+});
+
+test("rejects an unknown Markdown grade", () => {
+  const core = loadCore();
+  const source = core.normalizeCard({
+    name: "등급 오류",
+    faction: "ally",
+    grade: "common",
+    role: "intervention",
+    cost: "1",
+    completionStatus: "complete",
+  });
+  const markdown = core.bundleMarkdown([source], "2026-07-29")
+    .replace("- 진영: 아군", "- 진영: 아군\n- 등급: 전설");
+
+  assert.throws(
+    () => core.parseBundleMarkdown(markdown),
+    /알 수 없는 등급: 전설/,
+  );
 });
 
 test("round-trips note lines that resemble card headings", () => {

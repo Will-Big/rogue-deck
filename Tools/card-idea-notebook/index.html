@@ -574,6 +574,13 @@
       ally: "아군",
       enemy: "적군",
     });
+    const GRADE_LABELS = Object.freeze({
+      none: "없음",
+      common: "일반",
+      advanced: "고급",
+      rare: "희귀",
+      other: "기타",
+    });
 
     const TARGETS = Object.freeze({
       none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
@@ -584,7 +591,7 @@
       backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
       all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
     });
-    const SCHEMA_VERSION = 5;
+    const SCHEMA_VERSION = 6;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
 
     function emptyCard() {
@@ -592,6 +599,7 @@
         id: "",
         name: "",
         faction: "ally",
+        grade: "common",
         role: "unknown",
         cost: "",
         executionOrder: "",
@@ -623,6 +631,10 @@
       return Object.hasOwn(FACTION_LABELS, value) ? value : "ally";
     }
 
+    function validGrade(value) {
+      return Object.hasOwn(GRADE_LABELS, value) ? value : "common";
+    }
+
     function validTarget(value) {
       return Object.hasOwn(TARGETS, value) ? value : "none";
     }
@@ -635,6 +647,7 @@
         id: String(input.id ?? "").trim(),
         name: String(input.name ?? "").trim(),
         faction,
+        grade: faction === "enemy" ? "none" : validGrade(input.grade),
         role: faction === "enemy" ? "execution" : validRole(input.role),
         cost: faction === "enemy" ? "" : String(input.cost ?? "").trim(),
         executionOrder: String(input.executionOrder ?? "").trim(),
@@ -662,6 +675,7 @@
       return normalizeCard({
         ...card,
         faction: nextFaction,
+        grade: nextFaction === "ally" ? "common" : "none",
         role: nextFaction === "ally" ? "unknown" : "execution",
         cost: "",
       });
@@ -773,6 +787,7 @@
         `## ${card.name || "이름 없는 카드"}`,
         "",
         `- 진영: ${FACTION_LABELS[card.faction]}`,
+        `- 등급: ${GRADE_LABELS[card.grade]}`,
       ];
 
       if (card.faction === "enemy") lines.push("- 비용: 없음");
@@ -833,6 +848,7 @@
       const input = {
         name: heading.slice(3).trim(),
         faction: "ally",
+        grade: "none",
         role: "",
         cost: "",
         executionOrder: "",
@@ -874,6 +890,10 @@
             input.faction = Object.keys(FACTION_LABELS)
               .find((faction) => FACTION_LABELS[faction] === value) ?? "";
             if (!input.faction) throw markdownImportError(`알 수 없는 진영: ${value}`);
+          } else if (key === "등급") {
+            input.grade = Object.keys(GRADE_LABELS)
+              .find((grade) => GRADE_LABELS[grade] === value) ?? "";
+            if (!input.grade) throw markdownImportError(`알 수 없는 등급: ${value}`);
           } else if (key === "역할") {
             input.role = Object.keys(ROLE_LABELS).find((role) => ROLE_LABELS[role] === value) ?? "";
             if (!input.role) throw markdownImportError(`알 수 없는 역할: ${value}`);
@@ -983,16 +1003,18 @@
       if (!raw) return initialState();
 
       const saved = JSON.parse(raw);
-      if (![1, 2, 3, 4, SCHEMA_VERSION].includes(saved.schemaVersion)) {
+      if (![1, 2, 3, 4, 5, SCHEMA_VERSION].includes(saved.schemaVersion)) {
         throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
       }
-      const isLegacy = saved.schemaVersion < SCHEMA_VERSION;
+      const needsFactionMigration = saved.schemaVersion <= 4;
+      const needsGradeMigration = saved.schemaVersion <= 5;
       const cards = (saved.cards ?? []).map((card) => {
         const normalized = normalizeCard({
           ...card,
-          faction: isLegacy ? "ally" : card.faction,
+          faction: needsFactionMigration ? "ally" : card.faction,
+          grade: needsGradeMigration ? "none" : card.grade,
         });
-        return isLegacy
+        return needsFactionMigration
           ? normalizeCard({
             ...normalized,
             completionStatus: isCardComplete(normalized) ? "complete" : "incomplete",
@@ -1266,6 +1288,7 @@
     globalThis.CardIdeaNotebook = Object.freeze({
       ROLE_LABELS,
       FACTION_LABELS,
+      GRADE_LABELS,
       TARGETS,
       SCHEMA_VERSION,
       STORAGE_KEY,
