@@ -660,6 +660,7 @@ test("duplicates into the list and deletes cards without mutating the source", (
   assert.equal(duplicated.cards[1].id, "b");
   assert.equal(duplicated.cards[1].completionStatus, "incomplete");
   assert.equal(duplicated.activeCardId, "b");
+  assert.deepEqual([...duplicated.selection], ["b"]);
   assert.deepEqual([...saved.tags], ["독"]);
 
   const deleted = core.deleteCard(state, "a");
@@ -799,6 +800,89 @@ test("bulk selection includes complete and incomplete cards", () => {
   assert.deepEqual([...core.bulkSelection(state, false).selection], []);
 });
 
+test("selects one card, toggles individuals, and replaces selection with a visible range", () => {
+  const core = loadCore();
+  const cards = ["a", "b", "c", "d", "e"]
+    .map((id) => core.normalizeCard({ id, name: id }));
+  const state = {
+    ...core.initialState(),
+    cards,
+    activeCardId: "a",
+    selection: ["a"],
+  };
+
+  const replaced = core.selectCard(
+    state,
+    ["a", "b", "c", "d", "e"],
+    "b",
+    "replace",
+    "a",
+  );
+  assert.deepEqual([...replaced.state.selection], ["b"]);
+  assert.equal(replaced.state.activeCardId, "b");
+  assert.equal(replaced.anchorId, "b");
+
+  const toggled = core.selectCard(
+    replaced.state,
+    ["a", "b", "c", "d", "e"],
+    "d",
+    "toggle",
+    replaced.anchorId,
+  );
+  assert.deepEqual([...toggled.state.selection], ["b", "d"]);
+  assert.equal(toggled.state.activeCardId, "d");
+  assert.equal(toggled.anchorId, "d");
+
+  const ranged = core.selectCard(
+    toggled.state,
+    ["b", "d", "e"],
+    "e",
+    "range",
+    "b",
+  );
+  assert.deepEqual([...ranged.state.selection], ["b", "d", "e"]);
+  assert.equal(ranged.state.activeCardId, "e");
+  assert.equal(ranged.anchorId, "b");
+
+  const reversed = core.selectCard(
+    ranged.state,
+    ["b", "d", "e"],
+    "b",
+    "range",
+    "e",
+  );
+  assert.deepEqual([...reversed.state.selection], ["b", "d", "e"]);
+
+  const fallback = core.selectCard(
+    { ...ranged.state, activeCardId: "d" },
+    ["b", "d", "e"],
+    "b",
+    "range",
+    "missing",
+  );
+  assert.deepEqual([...fallback.state.selection], ["b", "d"]);
+
+  const removedActive = core.selectCard(
+    { ...state, activeCardId: "d", selection: ["b", "d"] },
+    ["a", "b", "c", "d", "e"],
+    "d",
+    "toggle",
+    "d",
+  );
+  assert.deepEqual([...removedActive.state.selection], ["b"]);
+  assert.equal(removedActive.state.activeCardId, "b");
+
+  const emptied = core.selectCard(
+    removedActive.state,
+    ["a", "b", "c", "d", "e"],
+    "b",
+    "toggle",
+    removedActive.anchorId,
+  );
+  assert.deepEqual([...emptied.state.selection], []);
+  assert.equal(emptied.state.activeCardId, "b");
+});
+
 test("inserts a dragged card before or after a target without changing selection or active card", () => {
   const core = loadCore();
   const cards = ["a", "b", "c", "d"].map((id) => core.normalizeCard({
@@ -917,6 +1001,7 @@ test("creates uniquely named incomplete cards directly in the list", () => {
   assert.deepEqual([...second.cards.map((card) => card.name)], ["새 카드", "새 카드 (2)"]);
   assert.equal(second.cards[1].completionStatus, "incomplete");
   assert.equal(second.activeCardId, "b");
+  assert.deepEqual([...second.selection], ["b"]);
 });
 
 test("keeps generated card IDs unique when an ID source collides", () => {
@@ -1171,6 +1256,7 @@ test("imports duplicate names as new numbered cards", () => {
     "맹독 호위 (3)",
   ]);
   assert.equal(imported.activeCardId, "b");
+  assert.deepEqual([...imported.selection], ["b"]);
   assert.equal(imported.cards[2].completionStatus, "incomplete");
 });
 
