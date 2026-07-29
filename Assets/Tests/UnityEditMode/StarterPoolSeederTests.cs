@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FateWeaver.Simulation.Authoring;
 using FateWeaver.Unity;
@@ -11,6 +12,8 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class StarterPoolSeederTests
     {
+        private const string TempRoot = "Assets/Tests/Temp";
+
         private string _root;
         private string _cardFolder;
         private string _poolPath;
@@ -45,7 +48,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [SetUp]
         public void SetUp()
         {
-            _root = $"Assets/Tests/Temp/StarterPoolSeeder-{Guid.NewGuid():N}";
+            _root = $"{TempRoot}/StarterPoolSeeder-{Guid.NewGuid():N}";
             _cardFolder = _root + "/Cards";
             _poolPath = _root + "/StarterPool.asset";
         }
@@ -54,6 +57,12 @@ namespace FateWeaver.Tests.UnityEditMode
         public void TearDown()
         {
             AssetDatabase.DeleteAsset(_root);
+            if (Directory.Exists(TempRoot) &&
+                Directory.GetFileSystemEntries(TempRoot).Length == 0)
+            {
+                AssetDatabase.DeleteAsset(TempRoot);
+            }
+
             AssetDatabase.Refresh();
         }
 
@@ -107,6 +116,75 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual("인스펙터에서 조정한 설명", card.Description);
             Assert.AreEqual(CardGrade.Rare, card.Grade);
             CollectionAssert.AreEqual(new[] { "수동태그" }, card.Tags);
+        }
+
+        [Test]
+        public void Seed_rejects_a_wrong_type_asset_without_creating_any_cards()
+        {
+            Directory.CreateDirectory(_cardFolder);
+            AssetDatabase.Refresh();
+            var occupiedPath = _cardFolder + "/vanguard_slash.asset";
+            var wrongType = UnityEngine.ScriptableObject.CreateInstance<CardPoolAsset>();
+            AssetDatabase.CreateAsset(wrongType, occupiedPath);
+
+            var errors = CardCodeGenerator.SeedStarterPoolAssets(_cardFolder, _poolPath);
+
+            Assert.That(errors.Any(error => error.Contains("wrong asset type")));
+            Assert.AreSame(wrongType, AssetDatabase.LoadMainAssetAtPath(occupiedPath));
+            CollectionAssert.AreEqual(
+                new[] { "vanguard_slash.asset" },
+                Directory.GetFiles(_cardFolder, "*.asset")
+                    .Select(Path.GetFileName)
+                    .ToArray());
+            Assert.IsNull(AssetDatabase.LoadMainAssetAtPath(_poolPath));
+        }
+
+        [Test]
+        public void Seed_rejects_a_wrong_type_pool_path_without_creating_any_cards()
+        {
+            Directory.CreateDirectory(_root);
+            AssetDatabase.Refresh();
+            var wrongType = UnityEngine.ScriptableObject.CreateInstance<CardAsset>();
+            AssetDatabase.CreateAsset(wrongType, _poolPath);
+
+            var errors = CardCodeGenerator.SeedStarterPoolAssets(_cardFolder, _poolPath);
+
+            Assert.That(errors.Any(error => error.Contains("wrong asset type")));
+            Assert.AreSame(wrongType, AssetDatabase.LoadMainAssetAtPath(_poolPath));
+            Assert.IsFalse(Directory.Exists(_cardFolder));
+        }
+
+        [Test]
+        public void Seed_rejects_an_invalid_pool_extension_without_creating_cards()
+        {
+            var invalidPoolPath = _root + "/StarterPool.txt";
+
+            var errors =
+                CardCodeGenerator.SeedStarterPoolAssets(_cardFolder, invalidPoolPath);
+
+            Assert.That(errors.Any(error => error.Contains("must use the .asset extension")));
+            CollectionAssert.IsEmpty(
+                Directory.Exists(_cardFolder)
+                    ? Directory.GetFiles(_cardFolder, "*.asset")
+                    : Array.Empty<string>());
+            Assert.IsNull(AssetDatabase.LoadMainAssetAtPath(invalidPoolPath));
+        }
+
+        [Test]
+        public void Reseed_rejects_a_card_whose_id_no_longer_matches_its_path()
+        {
+            CollectionAssert.IsEmpty(
+                CardCodeGenerator.SeedStarterPoolAssets(_cardFolder, _poolPath));
+            var card = AssetDatabase.LoadAssetAtPath<CardAsset>(
+                _cardFolder + "/vanguard_slash.asset");
+            card.Id = "renamed_card";
+            EditorUtility.SetDirty(card);
+            AssetDatabase.SaveAssets();
+
+            var errors = CardCodeGenerator.SeedStarterPoolAssets(_cardFolder, _poolPath);
+
+            Assert.That(errors.Any(error => error.Contains("expected card id")));
+            Assert.AreEqual("renamed_card", card.Id);
         }
 
         private static void AssertInterventionConstraints(CardPoolAsset pool)

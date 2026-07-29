@@ -19,6 +19,7 @@ namespace FateWeaver.Unity.Editor
         private const string CardFolder = "Assets/Unity/CardSO";
         private const string PlayerCardFolder = CardFolder + "/Player";
         public const string EnemyCardFolder = CardFolder + "/Enemies";
+        private const string StarterPoolId = "starter_pool";
         private const string DeckAssetPath = PlayerCardFolder + "/StarterDeck.asset";
         private const string StarterPoolCardFolder = PlayerCardFolder + "/StarterPool";
         private const string StarterPoolAssetPath = PlayerCardFolder + "/StarterPool.asset";
@@ -99,8 +100,13 @@ namespace FateWeaver.Unity.Editor
         /// </summary>
         public static IReadOnlyList<string> SeedStarterPoolAssets(string cardFolder, string poolPath)
         {
-            Directory.CreateDirectory(cardFolder);
             var specs = StarterPoolSpecs.Build();
+            var preflightErrors = ValidateStarterPoolPaths(cardFolder, poolPath, specs);
+            if (preflightErrors.Count > 0)
+            {
+                return preflightErrors;
+            }
+
             var cards = new List<CardAsset>(specs.Count);
             var newCards = new List<(CardAsset Card, string Path)>();
 
@@ -120,8 +126,8 @@ namespace FateWeaver.Unity.Editor
             }
 
             var candidate = ScriptableObject.CreateInstance<CardPoolAsset>();
-            ApplyPool(candidate, "starter_pool", cards);
-            var errors = candidate.Validate().ToArray();
+            ApplyPool(candidate, StarterPoolId, cards);
+            var errors = ValidateStarterPoolAsset(candidate).ToArray();
             UnityEngine.Object.DestroyImmediate(candidate);
             if (errors.Length > 0)
             {
@@ -133,31 +139,198 @@ namespace FateWeaver.Unity.Editor
                 return errors;
             }
 
-            foreach (var entry in newCards)
-            {
-                AssetDatabase.CreateAsset(entry.Card, entry.Path);
-            }
-
             var pool = AssetDatabase.LoadAssetAtPath<CardPoolAsset>(poolPath);
             bool newPool = pool == null;
+            string previousPoolId = null;
+            CardAsset[] previousPoolCards = null;
             if (newPool)
             {
                 pool = ScriptableObject.CreateInstance<CardPoolAsset>();
             }
-
-            ApplyPool(pool, "starter_pool", cards);
-            if (newPool)
-            {
-                AssetDatabase.CreateAsset(pool, poolPath);
-            }
             else
             {
-                EditorUtility.SetDirty(pool);
+                previousPoolId = pool.Id;
+                previousPoolCards = pool.Cards.ToArray();
             }
 
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return Array.Empty<string>();
+            var createdCardPaths = new List<string>();
+            bool createdPool = false;
+            try
+            {
+                Directory.CreateDirectory(cardFolder);
+                var poolFolder = Path.GetDirectoryName(poolPath);
+                if (!string.IsNullOrEmpty(poolFolder))
+                {
+                    Directory.CreateDirectory(poolFolder);
+                }
+
+                foreach (var entry in newCards)
+                {
+                    createdCardPaths.Add(entry.Path);
+                    AssetDatabase.CreateAsset(entry.Card, entry.Path);
+                    if (AssetDatabase.LoadAssetAtPath<CardAsset>(entry.Path) != entry.Card)
+                    {
+                        throw new InvalidOperationException(
+                            "Failed to create starter-pool card asset at " + entry.Path);
+                    }
+                }
+
+                ApplyPool(pool, StarterPoolId, cards);
+                if (newPool)
+                {
+                    createdPool = true;
+                    AssetDatabase.CreateAsset(pool, poolPath);
+                    if (AssetDatabase.LoadAssetAtPath<CardPoolAsset>(poolPath) != pool)
+                    {
+                        throw new InvalidOperationException(
+                            "Failed to create starter-pool asset at " + poolPath);
+                    }
+                }
+                else
+                {
+                    EditorUtility.SetDirty(pool);
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                return Array.Empty<string>();
+            }
+            catch (Exception exception)
+            {
+                if (!newPool)
+                {
+                    ApplyPool(pool, previousPoolId, previousPoolCards);
+                    EditorUtility.SetDirty(pool);
+                }
+
+                if (createdPool)
+                {
+                    AssetDatabase.DeleteAsset(poolPath);
+                }
+                else if (newPool && pool != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(pool);
+                }
+
+                for (int i = createdCardPaths.Count - 1; i >= 0; i--)
+                {
+                    AssetDatabase.DeleteAsset(createdCardPaths[i]);
+                }
+
+                foreach (var entry in newCards)
+                {
+                    if (entry.Card != null && !AssetDatabase.Contains(entry.Card))
+                    {
+                        UnityEngine.Object.DestroyImmediate(entry.Card);
+                    }
+                }
+
+                try
+                {
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+                catch (Exception rollbackException)
+                {
+                    return new[]
+                    {
+                        $"Starter pool seed failed: {exception.Message}",
+                        $"Starter pool rollback failed: {rollbackException.Message}"
+                    };
+                }
+
+                return new[] { $"Starter pool seed failed: {exception.Message}" };
+            }
+        }
+
+        private static IReadOnlyList<string> ValidateStarterPoolPaths(
+            string cardFolder,
+            string poolPath,
+            IReadOnlyList<CardSpec> specs)
+        {
+            var errors = new List<string>();
+            if (!string.Equals(
+                    Path.GetExtension(poolPath),
+                    ".asset",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(
+                    $"Starter-pool path '{poolPath}' must use the .asset extension.");
+            }
+
+            foreach (var spec in specs)
+            {
+                var path = cardFolder + "/" + spec.Id + ".asset";
+                var existing = AssetDatabase.LoadMainAssetAtPath(path);
+                if (existing != null && !(existing is CardAsset))
+                {
+                    errors.Add(
+                        $"Starter-pool path '{path}' has wrong asset type " +
+                        $"'{existing.GetType().Name}'; expected CardAsset.");
+                    continue;
+                }
+
+                if (existing is CardAsset card &&
+                    !string.Equals(card.Id, spec.Id, StringComparison.Ordinal))
+                {
+                    errors.Add(
+                        $"Starter-pool path '{path}' has card id '{card.Id}'; " +
+                        $"expected card id '{spec.Id}'.");
+                }
+            }
+
+            var existingPool = AssetDatabase.LoadMainAssetAtPath(poolPath);
+            if (existingPool != null && !(existingPool is CardPoolAsset))
+            {
+                errors.Add(
+                    $"Starter-pool path '{poolPath}' has wrong asset type " +
+                    $"'{existingPool.GetType().Name}'; expected CardPoolAsset.");
+            }
+
+            return errors;
+        }
+
+        public static IReadOnlyList<string> ValidateStarterPoolAsset(CardPoolAsset pool)
+        {
+            if (pool == null)
+            {
+                return new[] { "Starter pool asset is missing." };
+            }
+
+            var errors = new List<string>(pool.Validate());
+            if (!string.Equals(pool.Id, StarterPoolId, StringComparison.Ordinal))
+            {
+                errors.Add(
+                    $"Starter pool id must be '{StarterPoolId}', but was '{pool.Id}'.");
+            }
+
+            var expectedIds = StarterPoolSpecs.Build()
+                .Select(spec => spec.Id)
+                .ToArray();
+            if (pool.Cards.Count != expectedIds.Length)
+            {
+                errors.Add(
+                    $"Starter pool must contain exactly {expectedIds.Length} cards, " +
+                    $"but contained {pool.Cards.Count}.");
+            }
+
+            var expected = new HashSet<string>(expectedIds, StringComparer.Ordinal);
+            var actual = new HashSet<string>(
+                pool.Cards
+                    .Where(card => card != null && !string.IsNullOrWhiteSpace(card.Id))
+                    .Select(card => card.Id),
+                StringComparer.Ordinal);
+            foreach (var missingId in expected.Where(id => !actual.Contains(id)))
+            {
+                errors.Add($"Starter pool is missing expected card id '{missingId}'.");
+            }
+
+            foreach (var unexpectedId in actual.Where(id => !expected.Contains(id)))
+            {
+                errors.Add($"Starter pool contains unexpected card id '{unexpectedId}'.");
+            }
+
+            return errors;
         }
 
         /// <summary>Seeds one CardAsset per enemy card (art/display source only — rules stay in GoblinDeck).
@@ -220,7 +393,7 @@ namespace FateWeaver.Unity.Editor
             }
             else
             {
-                var poolErrors = pool.Validate();
+                var poolErrors = ValidateStarterPoolAsset(pool);
                 if (poolErrors.Count > 0)
                 {
                     Debug.LogError(
