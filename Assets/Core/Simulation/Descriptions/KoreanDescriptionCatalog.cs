@@ -36,6 +36,9 @@ namespace FateWeaver.Simulation.Descriptions
             statuses.Register(StatusKeys.Stun, "기절");
             statuses.Register(StatusKeys.Vulnerable, "취약");
             statuses.Register(StatusKeys.RewardNullified, "조건 보상 무효");
+            statuses.Register(StatusKeys.Poison, "독");
+            statuses.Register(StatusKeys.PoisonDormant, "독 잠복");
+            statuses.Register(StatusKeys.PoisonStasis, "독 안정");
 
             var effects = new EffectDescriptionRegistry();
             effects.Register(new DamageDescriptionHandler());

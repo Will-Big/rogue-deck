@@ -39,6 +39,9 @@ namespace FateWeaver.Tests
             Assert.That(keys, Is.EqualTo(new[] {
                 StatusKeys.Block,
                 StatusKeys.Haste,
+                StatusKeys.Poison,
+                StatusKeys.PoisonDormant,
+                StatusKeys.PoisonStasis,
                 StatusKeys.RewardNullified,
                 StatusKeys.Slow,
                 StatusKeys.Stun,
