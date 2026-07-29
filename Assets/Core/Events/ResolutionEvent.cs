@@ -50,6 +50,9 @@ namespace FateWeaver.Core.Events
     /// <summary>A party member spent one SurviveCharges charge to steady at 1 HP instead of dying.</summary>
     public sealed record DeathsDoorSurvived(string MemberId) : ResolutionEvent;
 
+    /// <summary>An enemy's HP reached zero or below (from card effects or a status tick).</summary>
+    public sealed record EnemyDied(string EnemyId) : ResolutionEvent;
+
     /// <summary>상태 행동의 턴 종료 틱이 보유자에게 발동했다 (예: 독 피해). Damage는 이번 틱이 준
     /// 피해, Magnitude는 틱 이후의 상태 수치다.</summary>
     public sealed record StatusTicked(

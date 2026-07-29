@@ -71,6 +71,7 @@ namespace FateWeaver.Core.Combat
                 }
 
                 var beforeSnapshot = SnapshotParty(state);
+                var enemiesBefore = SnapshotEnemies(state);
 
                 var ctx = new EffectContext
                 {
@@ -86,6 +87,7 @@ namespace FateWeaver.Core.Combat
                 if (ctx.TargetId != null) targetId = ctx.TargetId;
 
                 CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
+                CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
 
                 // Step 6 (part 2): once an effect records NoValidTarget, the card is cancelled and
                 // its remaining effects must not run (enforced centrally here, not per-handler).
@@ -139,8 +141,9 @@ namespace FateWeaver.Core.Combat
         }
 
         /// <summary>Diffs the party against a pre-effect snapshot and appends DeathsDoorSurvived /
-        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.</summary>
-        private static void CollectDeathSweepEvents(
+        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.
+        /// A newly-dead member also gets OnHolderDied dispatched on every status it carried.</summary>
+        private void CollectDeathSweepEvents(
             CombatState state,
             Dictionary<string, (bool IsAlive, int SurviveCharges)> before,
             List<ResolutionEvent> pending)
@@ -156,6 +159,58 @@ namespace FateWeaver.Core.Combat
                 else if (prior.IsAlive && !member.IsAlive)
                 {
                     pending.Add(new PartyMemberDied(member.Id));
+                    DispatchHolderDied(state, member.Statuses, member.Id, pending);
+                }
+            }
+        }
+
+        private static Dictionary<string, bool> SnapshotEnemies(CombatState state)
+        {
+            var snapshot = new Dictionary<string, bool>();
+            foreach (var enemy in state.Enemies)
+            {
+                snapshot[enemy.Id] = enemy.Hp > 0;
+            }
+
+            return snapshot;
+        }
+
+        /// <summary>Diffs enemies against a pre-effect snapshot; a newly-dead enemy emits EnemyDied and
+        /// dispatches OnHolderDied on every status it carried.</summary>
+        private void CollectEnemyDeathEvents(
+            CombatState state, Dictionary<string, bool> before, List<ResolutionEvent> pending)
+        {
+            foreach (var enemy in state.Enemies)
+            {
+                if (before.TryGetValue(enemy.Id, out var wasAlive) && wasAlive && enemy.Hp <= 0)
+                {
+                    pending.Add(new EnemyDied(enemy.Id));
+                    DispatchHolderDied(state, enemy.Statuses, enemy.Id, pending);
+                }
+            }
+        }
+
+        private void DispatchHolderDied(
+            CombatState state, StatusBag bag, string holderId, List<ResolutionEvent> events)
+        {
+            if (_statuses == null)
+            {
+                return;
+            }
+
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (_statuses.TryResolve(status.Key, out var behavior))
+                {
+                    behavior.OnHolderDied(new StatusDeathContext
+                    {
+                        Instance = status,
+                        HolderBag = bag,
+                        HolderId = holderId,
+                        State = state,
+                        Events = events
+                    });
                 }
             }
         }
@@ -203,7 +258,13 @@ namespace FateWeaver.Core.Combat
 
         private void EndOfTurnMaintenance(CombatState state, List<ResolutionEvent> events)
         {
+            var partyBefore = SnapshotParty(state);
+            var enemiesBefore = SnapshotEnemies(state);
+
             RunTurnEndTicks(state, events);
+
+            CollectDeathSweepEvents(state, partyBefore, events);
+            CollectEnemyDeathEvents(state, enemiesBefore, events);
 
             foreach (var member in state.Party)
             {
