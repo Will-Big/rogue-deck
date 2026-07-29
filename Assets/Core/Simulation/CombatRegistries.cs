@@ -31,6 +31,7 @@ namespace FateWeaver.Simulation
             statuses.Register(new PoisonBehavior(growthPerTurn: 1));
             statuses.Register(new PoisonDormantBehavior());
             statuses.Register(new PoisonStasisBehavior());
+            statuses.Register(new ContagionBehavior());
             return statuses;
         }
 
