@@ -19,8 +19,11 @@ namespace FateWeaver.Core.Cards
         /// <summary>Effect-kind-specific parameters (null when the scalar is enough).</summary>
         public IEffectPayload Payload { get; init; }
 
-        // Position selector for enemy attacks against the player party formation. Null means
-        // FrontMost (pre-party content has no selector, so this keeps single-enemy-attack compat).
+        // Position selector for an effect's target(s): drives enemy attacks against the player party
+        // formation, player cards' positional (or All) targeting of the living enemy formation, and
+        // PartyBySelector's positional ally targeting. Null means the handler's legacy default
+        // (FrontMost for enemy attacks; explicit-id-else-first-enemy for pre-selector player content) —
+        // this keeps old single-target content compatible without an authored selector.
         public TargetSelector? TargetSelector { get; init; }
 
         public static EffectData Conditional(

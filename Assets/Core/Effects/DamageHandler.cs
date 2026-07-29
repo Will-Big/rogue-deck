@@ -5,11 +5,13 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Player cards hit their target enemy (by id, else the first enemy); enemy cards hit a
-    /// party member chosen by the effect's TargetSelector (null defaults to FrontMost, for pre-party
-    /// compat). Incoming damage is folded through the target's entity-scoped statuses (e.g. Vulnerable,
-    /// Block) when a StatusRegistry is present; with no registry it applies raw. If no target can be
-    /// resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
+    /// <summary>Player cards hit an enemy target resolved by the effect's TargetSelector (position in
+    /// the living formation, or All for every living enemy); with no selector, falls back to the
+    /// legacy path (explicit id, else the raw first enemy) for pre-selector content. Enemy cards hit a
+    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontMost,
+    /// for pre-party compat). Incoming damage is folded through the target's entity-scoped statuses
+    /// (e.g. Vulnerable, Block) when a StatusRegistry is present; with no registry it applies raw. If no
+    /// target can be resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
@@ -26,6 +28,11 @@ namespace FateWeaver.Core.Effects
             {
                 if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
                 {
+                    // Deliberate rule: a pending damage bonus (GrantNextPlayerDamageCardBonus) raises
+                    // the CARD's damage value, not a fixed pool split across targets — so with an
+                    // All-target card it applies to EVERY target independently ("다음 플레이어 피해
+                    // 카드가 주는 피해 +X" reads per hit dealt, not a one-time budget). E.g. +3 bonus
+                    // on a base-2 All-target card deals 5 to each enemy, not 2 to one and 3 total spread.
                     var targets = EnemyTargeting.SelectAll(ctx.State);
                     if (targets.Count == 0)
                     {
