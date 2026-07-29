@@ -28,5 +28,8 @@ namespace FateWeaver.Core.Effects
             new EffectKey("grant_next_player_damage_card_bonus");
         public static readonly EffectKey ApplyStatus = new EffectKey("apply_status");
         public static readonly EffectKey MoveFormation = new EffectKey("move_formation");
+        public static readonly EffectKey ConsumeStatus = new EffectKey("consume_status");
+        public static readonly EffectKey TriggerStatus = new EffectKey("trigger_status");       // Task 8
+        public static readonly EffectKey GrantNextTurnFate = new EffectKey("grant_next_turn_fate"); // Task 9
     }
 }

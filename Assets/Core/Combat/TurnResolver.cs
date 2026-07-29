@@ -70,6 +70,11 @@ namespace FateWeaver.Core.Combat
                     strongestTier = tier;
                 }
 
+                if (effect.SkipOnBasic && effect.Condition != null && tier == ConditionTier.Basic)
+                {
+                    continue;
+                }
+
                 var beforeSnapshot = SnapshotParty(state);
                 var enemiesBefore = SnapshotEnemies(state);
 

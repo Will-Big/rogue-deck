@@ -49,4 +49,8 @@ namespace FateWeaver.Core.Conditions
     public sealed record NoFollowingCardOfSide(Side Side) : Condition;
 
     public sealed record AllOf(IReadOnlyList<Condition> Conditions) : Condition;
+
+    /// <summary>Success when this card has already consumed at least N magnitude of a status earlier in
+    /// its own resolution (consume_status가 기록한 ExecutionCardInstance.ConsumedStatusAmount 기준).</summary>
+    public sealed record ConsumedStatusAtLeast(int N) : Condition;
 }

@@ -16,6 +16,7 @@ namespace FateWeaver.Simulation
             effects.Register(new GrantNextPlayerDamageCardBonusHandler());
             effects.Register(new ApplyStatusHandler());
             effects.Register(new MoveFormationHandler());
+            effects.Register(new ConsumeStatusHandler());
             return effects;
         }
 

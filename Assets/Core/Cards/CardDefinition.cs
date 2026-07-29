@@ -12,6 +12,10 @@ namespace FateWeaver.Core.Cards
         public Condition Condition { get; init; }
         public int? SuccessEffectValue { get; init; }
 
+        /// <summary>조건이 Basic으로 떨어지면 이 효과를 통째로 건너뛴다 — '~했다면 X' 문법
+        /// (기본 발동 없음, 성공 시에만 발동). Condition이 null이면 무의미.</summary>
+        public bool SkipOnBasic { get; init; }
+
         /// <summary>Effect-kind-specific parameters (null when the scalar is enough).</summary>
         public IEffectPayload Payload { get; init; }
 
