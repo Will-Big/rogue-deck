@@ -103,8 +103,11 @@ Tests/Headless/obj/
 # graph.json / GRAPH_REPORT.md / graph.html are committed for reuse across
 # sessions and worktrees; the .graphify_* intermediates hold machine-local
 # state (absolute interpreter paths etc.) and must stay untracked.
+# cache/ is the extraction cache: large and full of absolute paths, so it is
+# machine-local too and is rebuilt on demand.
 # ============================================
 /graphify-out/.graphify_*
+/graphify-out/cache/
 
 # ============================================
 # macOS Finder metadata
