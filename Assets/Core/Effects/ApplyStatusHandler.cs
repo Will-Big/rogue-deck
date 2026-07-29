@@ -8,10 +8,11 @@ namespace FateWeaver.Core.Effects
     /// <summary>Where an ApplyStatus effect puts the status, from the acting card's perspective.</summary>
     public enum StatusApplyTarget
     {
-        Self,            // the card's own side entity: player card -> its OwnerId party member; enemy card -> itself
-        TargetEnemy,     // the card's target enemy (by TargetId, else the first enemy)
-        PartyMember,     // an explicitly chosen living party member (by TargetId)
-        AllPartyMembers  // every living party member, applied as independent per-member instances
+        Self,             // the card's own side entity: player card -> its OwnerId party member; enemy card -> itself
+        TargetEnemy,      // the card's target enemy (by TargetId, else the first enemy; or by TargetSelector)
+        PartyMember,      // an explicitly chosen living party member (by TargetId)
+        AllPartyMembers,  // every living party member, applied as independent per-member instances
+        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontMost
     }
 
     /// <summary>Applies a status (key + lifetime + magnitude) to one or more holders. Magnitude rides on
@@ -48,6 +49,9 @@ namespace FateWeaver.Core.Effects
                 case StatusApplyTarget.AllPartyMembers:
                     ApplyAllPartyMembers(ctx, payload);
                     break;
+                case StatusApplyTarget.PartyBySelector:
+                    ApplyPartyBySelector(ctx, payload);
+                    break;
             }
         }
 
@@ -65,6 +69,22 @@ namespace FateWeaver.Core.Effects
             }
         }
 
+        /// <summary>Stacking-aware status application: when the key's behavior declares
+        /// StacksMagnitude (e.g. Block), an existing instance's Magnitude is added to rather than
+        /// replaced; otherwise falls back to the legacy replace semantics.</summary>
+        private static void ApplyTo(EffectContext ctx, ApplyStatusPayload payload, StatusBag bag)
+        {
+            if (ctx.StatusRegistry != null
+                && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior)
+                && behavior.StacksMagnitude)
+            {
+                bag.Stack(payload.Key, payload.Lifetime, ctx.EffectValue);
+                return;
+            }
+
+            bag.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+        }
+
         private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)
         {
             if (ctx.Card.Def.Side == Side.Player)
@@ -76,7 +96,7 @@ namespace FateWeaver.Core.Effects
                     return;
                 }
 
-                member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+                ApplyTo(ctx, payload, member.Statuses);
                 return;
             }
 
@@ -87,19 +107,38 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            enemy.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+            ApplyTo(ctx, payload, enemy.Statuses);
         }
 
         private static void ApplyTargetEnemy(EffectContext ctx, ApplyStatusPayload payload)
         {
-            var enemy = SelectTargetEnemy(ctx.State, ctx.Card.TargetId);
+            if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
+            {
+                var targets = EnemyTargeting.SelectAll(ctx.State);
+                if (targets.Count == 0)
+                {
+                    ctx.Cancel(CardCancellationReason.NoValidTarget);
+                    return;
+                }
+
+                foreach (var each in targets)
+                {
+                    ApplyTo(ctx, payload, each.Statuses);
+                }
+
+                return;
+            }
+
+            var enemy = ctx.Effect?.TargetSelector is Cards.TargetSelector selector
+                ? EnemyTargeting.Select(ctx.State, selector)
+                : EnemyTargeting.ByIdOrFront(ctx.State, ctx.Card.TargetId);
             if (enemy == null)
             {
                 ctx.Cancel(CardCancellationReason.NoValidTarget);
                 return;
             }
 
-            enemy.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+            ApplyTo(ctx, payload, enemy.Statuses);
         }
 
         private static void ApplyPartyMember(EffectContext ctx, ApplyStatusPayload payload)
@@ -111,7 +150,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+            ApplyTo(ctx, payload, member.Statuses);
         }
 
         /// <summary>Applies the status to every currently-living party member as an independent bag
@@ -135,8 +174,23 @@ namespace FateWeaver.Core.Effects
 
             foreach (var member in living)
             {
-                member.Statuses.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+                ApplyTo(ctx, payload, member.Statuses);
             }
+        }
+
+        /// <summary>아군 위치 범위: effect.TargetSelector(기본 FrontMost)로 생존 파티 대형에서 확정된
+        /// 한 명에게 적용한다.</summary>
+        private static void ApplyPartyBySelector(EffectContext ctx, ApplyStatusPayload payload)
+        {
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            var member = PartyTargeting.Select(ctx.State, selector);
+            if (member == null)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+                return;
+            }
+
+            ApplyTo(ctx, payload, member.Statuses);
         }
 
         /// <summary>Player-side Self: the card's OwnerId party member if alive; with no OwnerId, only a
@@ -180,26 +234,6 @@ namespace FateWeaver.Core.Effects
             }
 
             return null;
-        }
-
-        /// <summary>Picks the card's target enemy by id, else the first enemy. An explicit id that no
-        /// longer matches any enemy resolves to no target rather than falling back to the front.</summary>
-        private static Enemy SelectTargetEnemy(CombatState state, string targetId)
-        {
-            if (!string.IsNullOrEmpty(targetId))
-            {
-                foreach (var enemy in state.Enemies)
-                {
-                    if (enemy.Id == targetId)
-                    {
-                        return enemy;
-                    }
-                }
-
-                return null;
-            }
-
-            return state.Enemies.Count > 0 ? state.Enemies[0] : null;
         }
     }
 }

@@ -6,7 +6,7 @@ using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Simulation.Authoring
 {
-    public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random }
+    public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random, All }
 
     public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard }
 
@@ -82,6 +82,7 @@ namespace FateWeaver.Simulation.Authoring
                 case TargetSelectorRef.SecondFromFront: return TargetSelector.SecondFromFront;
                 case TargetSelectorRef.BackMost: return TargetSelector.BackMost;
                 case TargetSelectorRef.Random: return TargetSelector.Random;
+                case TargetSelectorRef.All: return TargetSelector.All;
                 default: return null;
             }
         }
