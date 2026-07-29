@@ -883,6 +883,252 @@ test("selects one card, toggles individuals, and replaces selection with a visib
   assert.equal(emptied.state.activeCardId, "b");
 });
 
+function multiEditState(core) {
+  return {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({
+        id: "ally-a",
+        name: "아군 실행",
+        faction: "ally",
+        grade: "common",
+        role: "execution",
+        cost: "1",
+        executionOrder: "2",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "첫 메모",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "ally-b",
+        name: "아군 조작",
+        faction: "ally",
+        grade: "rare",
+        role: "intervention",
+        cost: "2",
+        executionOrder: "9",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "둘째 메모",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "enemy",
+        name: "적 실행",
+        faction: "enemy",
+        grade: "rare",
+        executionOrder: "4",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "셋째 메모",
+        completionStatus: "complete",
+      }),
+    ],
+    activeCardId: "ally-a",
+    selection: ["ally-a", "ally-b", "enemy"],
+  };
+}
+
+test("aggregates only cards that can edit each field", () => {
+  const core = loadCore();
+  const state = multiEditState(core);
+
+  assert.deepEqual(
+    [...core.editTargetCards(state).map((card) => card.id)],
+    ["ally-a", "ally-b", "enemy"],
+  );
+  assert.deepEqual(
+    [...core.editTargetCards({
+      ...state,
+      activeCardId: "ally-b",
+      selection: [],
+    }).map((card) => card.id)],
+    ["ally-b"],
+  );
+  assert.deepEqual({ ...core.fieldAggregate(state, "grade") }, {
+    kind: "mixed",
+    value: "",
+    applicableCount: 2,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "tags") }, {
+    kind: "common",
+    value: "독",
+    applicableCount: 3,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "abilities.enemy") }, {
+    kind: "common",
+    value: "피해",
+    applicableCount: 3,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "executionOrder") }, {
+    kind: "mixed",
+    value: "",
+    applicableCount: 2,
+  });
+  assert.deepEqual({
+    ...core.fieldAggregate({
+      ...state,
+      activeCardId: "enemy",
+      selection: ["enemy"],
+    }, "grade"),
+  }, {
+    kind: "empty",
+    value: "",
+    applicableCount: 0,
+  });
+  assert.deepEqual({
+    ...core.fieldAggregate({
+      ...state,
+      activeCardId: "ally-b",
+      selection: [],
+    }, "grade"),
+  }, {
+    kind: "common",
+    value: "rare",
+    applicableCount: 1,
+  });
+});
+
+test("bulk edits only compatible selected cards and preserves unchanged cards", () => {
+  const core = loadCore();
+  const state = multiEditState(core);
+
+  const graded = core.editSelectedField(state, "grade", "rare");
+  assert.deepEqual(
+    [...graded.cards.map((card) => [card.grade, card.completionStatus])],
+    [
+      ["rare", "incomplete"],
+      ["rare", "complete"],
+      ["none", "complete"],
+    ],
+  );
+
+  const renamed = core.editSelectedField(state, "name", "같은 이름");
+  assert.deepEqual([...renamed.cards.map((card) => card.name)], [
+    "같은 이름",
+    "같은 이름",
+    "같은 이름",
+  ]);
+
+  const factionChanged = core.editSelectedField(state, "faction", "enemy");
+  assert.deepEqual(
+    [...factionChanged.cards.map((card) => ({
+      faction: card.faction,
+      grade: card.grade,
+      role: card.role,
+      cost: card.cost,
+      completionStatus: card.completionStatus,
+    }))],
+    [
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "incomplete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "incomplete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "complete",
+      },
+    ],
+  );
+
+  const reordered = core.editSelectedField(state, "executionOrder", "7");
+  assert.deepEqual(
+    [...reordered.cards.map((card) => [card.executionOrder, card.completionStatus])],
+    [
+      ["7", "incomplete"],
+      ["9", "complete"],
+      ["7", "incomplete"],
+    ],
+  );
+
+  const recosted = core.editSelectedField(state, "cost", "5");
+  assert.deepEqual(
+    [...recosted.cards.map((card) => [card.cost, card.completionStatus])],
+    [
+      ["5", "incomplete"],
+      ["5", "incomplete"],
+      ["", "complete"],
+    ],
+  );
+
+  const rerolled = core.editSelectedField(state, "role", "intervention");
+  assert.deepEqual(
+    [...rerolled.cards.map((card) => [card.role, card.completionStatus])],
+    [
+      ["intervention", "incomplete"],
+      ["intervention", "complete"],
+      ["execution", "complete"],
+    ],
+  );
+
+  const retargeted = core.editSelectedField(state, "targets.ally", "backTwo");
+  assert.deepEqual(
+    [...retargeted.cards.map((card) => [card.targets.ally, card.targets.enemy])],
+    [
+      ["backTwo", "frontOne"],
+      ["backTwo", "frontOne"],
+      ["backTwo", "frontOne"],
+    ],
+  );
+
+  const retagged = core.editSelectedField(state, "tags", "독, 소비");
+  assert.deepEqual(
+    [...retagged.cards.map((card) => [...card.tags])],
+    [
+      ["독", "소비"],
+      ["독", "소비"],
+      ["독", "소비"],
+    ],
+  );
+
+  const reworded = core.editSelectedField(
+    state,
+    "abilities.none",
+    "운명력을 얻는다.\n카드를 뽑는다.",
+  );
+  assert.deepEqual(
+    [...reworded.cards.map((card) => ({
+      none: [...card.abilities.none],
+      enemy: [...card.abilities.enemy],
+    }))],
+    [
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+    ],
+  );
+
+  assert.equal(core.editSelectedField(state, "tags", "독"), state);
+
+  const activeOnly = core.editSelectedField({
+    ...state,
+    activeCardId: "ally-b",
+    selection: [],
+  }, "notes", "활성 카드만");
+  assert.deepEqual([...activeOnly.cards.map((card) => card.notes)], [
+    "첫 메모",
+    "활성 카드만",
+    "셋째 메모",
+  ]);
+});
+
 test("inserts a dragged card before or after a target without changing selection or active card", () => {
   const core = loadCore();
   const cards = ["a", "b", "c", "d"].map((id) => core.normalizeCard({

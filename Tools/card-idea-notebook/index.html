@@ -1139,6 +1139,106 @@
       };
     }
 
+    const ALL_CARD_FIELDS = new Set([
+      "name",
+      "faction",
+      "tags",
+      "targets.ally",
+      "targets.enemy",
+      "abilities.ally",
+      "abilities.enemy",
+      "abilities.none",
+      "notes",
+    ]);
+    const ALLY_CARD_FIELDS = new Set(["grade", "cost", "role"]);
+
+    function editTargetCards(state) {
+      const cards = state.cards ?? [];
+      const selected = new Set((state.selection ?? []).map(String));
+      const selectedTargets = cards.filter((card) => selected.has(String(card.id)));
+      if (selectedTargets.length) return selectedTargets.map(normalizeCard);
+      const active = cards.find((card) => card.id === state.activeCardId);
+      return active ? [normalizeCard(active)] : [];
+    }
+
+    function isFieldApplicable(input, field) {
+      const card = normalizeCard(input);
+      if (ALL_CARD_FIELDS.has(field)) return true;
+      if (ALLY_CARD_FIELDS.has(field)) return card.faction === "ally";
+      if (field === "executionOrder") return card.role === "execution";
+      return false;
+    }
+
+    function cardFieldValue(input, field) {
+      const card = normalizeCard(input);
+      if (field === "tags") return card.tags.join(", ");
+      if (field.startsWith("targets.")) return card.targets[field.slice("targets.".length)];
+      if (field.startsWith("abilities.")) {
+        return card.abilities[field.slice("abilities.".length)].join("\n");
+      }
+      return String(card[field] ?? "");
+    }
+
+    function fieldAggregate(state, field) {
+      const cards = editTargetCards(state)
+        .filter((card) => isFieldApplicable(card, field));
+      if (!cards.length) {
+        return { kind: "empty", value: "", applicableCount: 0 };
+      }
+      const values = cards.map((card) => cardFieldValue(card, field));
+      const common = values.every((value) => value === values[0]);
+      return {
+        kind: common ? "common" : "mixed",
+        value: common ? values[0] : "",
+        applicableCount: cards.length,
+      };
+    }
+
+    function editCardField(input, field, value) {
+      const card = normalizeCard(input);
+      if (field === "faction") return changeCardFaction(card, value);
+      if (field === "name") return normalizeCard({ ...card, name: value });
+      if (field === "grade") return normalizeCard({ ...card, grade: value });
+      if (field === "cost") return normalizeCard({ ...card, cost: value });
+      if (field === "role") return normalizeCard({ ...card, role: value });
+      if (field === "executionOrder") {
+        return normalizeCard({ ...card, executionOrder: value });
+      }
+      if (field === "tags") return normalizeCard({ ...card, tags: value });
+      if (field === "notes") return normalizeCard({ ...card, notes: value });
+      if (field.startsWith("targets.")) {
+        const targetFaction = field.slice("targets.".length);
+        return normalizeCard({
+          ...card,
+          targets: { ...card.targets, [targetFaction]: value },
+        });
+      }
+      if (field.startsWith("abilities.")) {
+        const abilityFaction = field.slice("abilities.".length);
+        return normalizeCard({
+          ...card,
+          abilities: { ...card.abilities, [abilityFaction]: value },
+        });
+      }
+      return card;
+    }
+
+    function editSelectedField(state, field, value) {
+      const targetIds = new Set(editTargetCards(state).map((card) => card.id));
+      let changed = false;
+      const cards = (state.cards ?? []).map((card) => {
+        if (!targetIds.has(card.id) || !isFieldApplicable(card, field)) return card;
+        const nextCard = editCardField(card, field, value);
+        if (cardFieldValue(nextCard, field) === cardFieldValue(card, field)) return card;
+        changed = true;
+        return normalizeCard({
+          ...nextCard,
+          completionStatus: "incomplete",
+        });
+      });
+      return changed ? { ...state, cards } : state;
+    }
+
     function saveCard(state, id, options = {}) {
       const card = (state.cards ?? []).find((candidate) => candidate.id === id);
       if (!card) throw new Error("저장할 카드를 찾을 수 없습니다.");
@@ -1375,6 +1475,10 @@
       uniqueCardName,
       createCard,
       editCard,
+      editTargetCards,
+      isFieldApplicable,
+      fieldAggregate,
+      editSelectedField,
       saveCard,
       saveAllCards,
       importCards,
