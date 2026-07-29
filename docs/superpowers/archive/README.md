@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-07-28
+- 개정일: 2026-07-29
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -105,3 +105,4 @@
 - [카드 노트 파일명과 순서](plans/2026-07-28-card-notebook-export-ordering.md)
 - [카드 노트 자신 대상](plans/2026-07-28-card-notebook-self-target.md)
 - [카드 노트 진영과 명시적 저장](plans/2026-07-28-card-notebook-faction-save.md)
+- [카드 노트 등급과 다중 편집](plans/2026-07-29-card-notebook-grade-bulk-edit.md)

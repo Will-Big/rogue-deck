@@ -25,6 +25,16 @@ function loadCore() {
   return context.CardIdeaNotebook;
 }
 
+test("exposes every card grade in the authoring form", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="card-grade"/);
+  assert.match(html, /data-card-field="grade"/);
+  for (const label of ["없음", "일반", "고급", "희귀", "기타"]) {
+    assert.match(html, new RegExp(`>${label}<\\/option>`));
+  }
+});
+
 test("normalizes free text fields without inventing card decisions", () => {
   const core = loadCore();
   const card = core.normalizeCard({
@@ -85,6 +95,52 @@ test("normalizes card factions and derives completion from core information", ()
   assert.equal(core.isCardComplete(completeAlly), true);
   assert.equal(core.isCardComplete(enemyWithoutOrder), false);
   assert.equal(core.isCardComplete(completeEnemy), true);
+});
+
+test("normalizes grades and resets grade with faction transitions", () => {
+  const core = loadCore();
+
+  assert.equal(core.emptyCard().grade, "common");
+  assert.equal(core.normalizeCard({ faction: "ally", grade: "rare" }).grade, "rare");
+  assert.equal(core.normalizeCard({ faction: "enemy", grade: "rare" }).grade, "none");
+  assert.equal(core.normalizeCard({ faction: "ally", grade: "invalid" }).grade, "common");
+
+  const enemy = core.changeCardFaction({
+    faction: "ally",
+    grade: "advanced",
+    role: "intervention",
+    cost: "2",
+  }, "enemy");
+  assert.deepEqual(
+    {
+      faction: enemy.faction,
+      grade: enemy.grade,
+      role: enemy.role,
+      cost: enemy.cost,
+    },
+    {
+      faction: "enemy",
+      grade: "none",
+      role: "execution",
+      cost: "",
+    },
+  );
+
+  const allyAgain = core.changeCardFaction(enemy, "ally");
+  assert.deepEqual(
+    {
+      faction: allyAgain.faction,
+      grade: allyAgain.grade,
+      role: allyAgain.role,
+      cost: allyAgain.cost,
+    },
+    {
+      faction: "ally",
+      grade: "common",
+      role: "unknown",
+      cost: "",
+    },
+  );
 });
 
 test("requires integer cost and execution order values for completion", () => {
@@ -373,7 +429,7 @@ test("writes local storage only through the explicit store operation", () => {
   assert.equal(storage.writeCount, 1);
 
   const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 5);
+  assert.equal(saved.schemaVersion, 6);
   assert.equal(saved.cards[0].faction, "ally");
   assert.equal(saved.cards[0].name, "저장할 카드");
 });
@@ -386,6 +442,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
     cards: [core.normalizeCard({
       id: "a",
       name: "보존 카드",
+      grade: "rare",
       tags: ["독"],
       completionStatus: "complete",
     })],
@@ -397,6 +454,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
 
   const loaded = core.readStore(storage);
   assert.equal(loaded.cards[0].name, "보존 카드");
+  assert.equal(loaded.cards[0].grade, "rare");
   assert.deepEqual([...loaded.cards[0].tags], ["독"]);
   assert.equal(loaded.activeCardId, "a");
   assert.equal(loaded.searchQuery, "독");
@@ -410,7 +468,7 @@ test("round-trips the current schema with shared selection and rejects an unknow
   assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
 });
 
-test("migrates schema 3 and round-trips the schema 5 default export file name", () => {
+test("migrates schema 3 and round-trips the schema 6 default export file name", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -423,8 +481,9 @@ test("migrates schema 3 and round-trips the schema 5 default export file name", 
   });
 
   const migrated = core.readStore(storage);
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.equal(migrated.cards[0].faction, "ally");
+  assert.equal(migrated.cards[0].grade, "none");
   assert.equal(migrated.cards[0].completionStatus, "incomplete");
   assert.equal(migrated.exportFileName, "");
   assert.deepEqual([...migrated.selection], ["a"]);
@@ -473,48 +532,102 @@ test("migrates schema 4 cards to allies while preserving collection state", () =
   assert.equal(migrated.exportFileName, "기존 카드");
 });
 
-test("round-trips ally and enemy cards through schema 5 storage", () => {
+test("migrates every schema 5 card to no grade while preserving faction state", () => {
   const core = loadCore();
-  const storage = new MemoryStorage();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({
-        id: "ally",
-        name: "아군 카드",
-        faction: "ally",
-        role: "intervention",
-        cost: "2",
-        completionStatus: "complete",
-      }),
-      core.normalizeCard({
-        id: "enemy",
-        name: "적군 카드",
-        faction: "enemy",
-        executionOrder: "3",
-        completionStatus: "complete",
-      }),
-    ],
-    activeCardId: "enemy",
-    selection: ["enemy"],
-  };
+  const storage = new MemoryStorage({
+    [core.STORAGE_KEY]: JSON.stringify({
+      schemaVersion: 5,
+      cards: [
+        {
+          id: "ally",
+          name: "아군 카드",
+          faction: "ally",
+          grade: "rare",
+          role: "intervention",
+          cost: "2",
+          completionStatus: "complete",
+        },
+        {
+          id: "enemy",
+          name: "적군 카드",
+          faction: "enemy",
+          grade: "advanced",
+          role: "execution",
+          cost: "",
+          executionOrder: "3",
+          completionStatus: "complete",
+        },
+      ],
+      activeCardId: "enemy",
+      searchQuery: "",
+      selection: ["enemy"],
+      exportFileName: "",
+    }),
+  });
 
-  core.writeStore(storage, state);
   const loaded = core.readStore(storage);
   assert.deepEqual(
     [...loaded.cards.map((card) => ({
       faction: card.faction,
+      grade: card.grade,
       role: card.role,
       cost: card.cost,
       completionStatus: card.completionStatus,
     }))],
     [
-      { faction: "ally", role: "intervention", cost: "2", completionStatus: "complete" },
-      { faction: "enemy", role: "execution", cost: "", completionStatus: "complete" },
+      {
+        faction: "ally",
+        grade: "none",
+        role: "intervention",
+        cost: "2",
+        completionStatus: "complete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "complete",
+      },
     ],
   );
   assert.equal(loaded.activeCardId, "enemy");
   assert.deepEqual([...loaded.selection], ["enemy"]);
+});
+
+test("aligns the active card with a preserved selection when loading storage", () => {
+  const core = loadCore();
+
+  for (const schemaVersion of [5, 6]) {
+    const storage = new MemoryStorage({
+      [core.STORAGE_KEY]: JSON.stringify({
+        schemaVersion,
+        cards: [
+          {
+            id: "a",
+            name: "선택 카드",
+            faction: "ally",
+            grade: schemaVersion === 6 ? "rare" : undefined,
+          },
+          {
+            id: "b",
+            name: "과거 활성 카드",
+            faction: "ally",
+            grade: schemaVersion === 6 ? "advanced" : undefined,
+          },
+        ],
+        activeCardId: "b",
+        searchQuery: "",
+        selection: ["a"],
+        exportFileName: "",
+      }),
+    });
+
+    const loaded = core.readStore(storage);
+    assert.deepEqual([...loaded.selection], ["a"]);
+    assert.equal(loaded.activeCardId, "a");
+    assert.equal(core.editTargetCards(loaded)[0].id, "a");
+  }
 });
 
 test("normalizes Markdown download names and permits an empty name", () => {
@@ -592,6 +705,7 @@ test("duplicates into the list and deletes cards without mutating the source", (
   assert.equal(duplicated.cards[1].id, "b");
   assert.equal(duplicated.cards[1].completionStatus, "incomplete");
   assert.equal(duplicated.activeCardId, "b");
+  assert.deepEqual([...duplicated.selection], ["b"]);
   assert.deepEqual([...saved.tags], ["독"]);
 
   const deleted = core.deleteCard(state, "a");
@@ -654,7 +768,7 @@ test("blocks writes after rejecting unreadable or future storage data", () => {
   assert.equal(storage.getItem(core.STORAGE_KEY), raw);
 });
 
-test("migrates schema 1 cards to incomplete schema 5 ally cards", () => {
+test("migrates schema 1 cards to incomplete schema 6 ally cards", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -667,13 +781,14 @@ test("migrates schema 1 cards to incomplete schema 5 ally cards", () => {
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 5);
+  assert.equal(state.schemaVersion, 6);
   assert.equal(state.cards[0].faction, "ally");
+  assert.equal(state.cards[0].grade, "none");
   assert.equal(state.cards[0].completionStatus, "incomplete");
   assert.deepEqual([...state.selection], ["a"]);
 });
 
-test("migrates schema 2 export selection into schema 5 shared selection", () => {
+test("migrates schema 2 export selection into schema 6 shared selection", () => {
   const core = loadCore();
   const storage = new MemoryStorage({
     [core.STORAGE_KEY]: JSON.stringify({
@@ -689,8 +804,9 @@ test("migrates schema 2 export selection into schema 5 shared selection", () => 
   });
 
   const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 5);
+  assert.equal(state.schemaVersion, 6);
   assert.deepEqual([...state.cards.map((card) => card.faction)], ["ally", "ally"]);
+  assert.deepEqual([...state.cards.map((card) => card.grade)], ["none", "none"]);
   assert.deepEqual(
     [...state.cards.map((card) => card.completionStatus)],
     ["incomplete", "incomplete"],
@@ -727,6 +843,335 @@ test("bulk selection includes complete and incomplete cards", () => {
 
   assert.deepEqual([...core.bulkSelection(state, true).selection], ["a", "b"]);
   assert.deepEqual([...core.bulkSelection(state, false).selection], []);
+});
+
+test("selects one card, toggles individuals, and replaces selection with a visible range", () => {
+  const core = loadCore();
+  const cards = ["a", "b", "c", "d", "e"]
+    .map((id) => core.normalizeCard({ id, name: id }));
+  const state = {
+    ...core.initialState(),
+    cards,
+    activeCardId: "a",
+    selection: ["a"],
+  };
+
+  const replaced = core.selectCard(
+    state,
+    ["a", "b", "c", "d", "e"],
+    "b",
+    "replace",
+    "a",
+  );
+  assert.deepEqual([...replaced.state.selection], ["b"]);
+  assert.equal(replaced.state.activeCardId, "b");
+  assert.equal(replaced.anchorId, "b");
+
+  const toggled = core.selectCard(
+    replaced.state,
+    ["a", "b", "c", "d", "e"],
+    "d",
+    "toggle",
+    replaced.anchorId,
+  );
+  assert.deepEqual([...toggled.state.selection], ["b", "d"]);
+  assert.equal(toggled.state.activeCardId, "d");
+  assert.equal(toggled.anchorId, "d");
+
+  const ranged = core.selectCard(
+    toggled.state,
+    ["b", "d", "e"],
+    "e",
+    "range",
+    "b",
+  );
+  assert.deepEqual([...ranged.state.selection], ["b", "d", "e"]);
+  assert.equal(ranged.state.activeCardId, "e");
+  assert.equal(ranged.anchorId, "b");
+
+  const reversed = core.selectCard(
+    ranged.state,
+    ["b", "d", "e"],
+    "b",
+    "range",
+    "e",
+  );
+  assert.deepEqual([...reversed.state.selection], ["b", "d", "e"]);
+
+  const fallback = core.selectCard(
+    { ...ranged.state, activeCardId: "d" },
+    ["b", "d", "e"],
+    "b",
+    "range",
+    "missing",
+  );
+  assert.deepEqual([...fallback.state.selection], ["b", "d"]);
+
+  const removedActive = core.selectCard(
+    { ...state, activeCardId: "d", selection: ["b", "d"] },
+    ["a", "b", "c", "d", "e"],
+    "d",
+    "toggle",
+    "d",
+  );
+  assert.deepEqual([...removedActive.state.selection], ["b"]);
+  assert.equal(removedActive.state.activeCardId, "b");
+
+  const emptied = core.selectCard(
+    removedActive.state,
+    ["a", "b", "c", "d", "e"],
+    "b",
+    "toggle",
+    removedActive.anchorId,
+  );
+  assert.deepEqual([...emptied.state.selection], []);
+  assert.equal(emptied.state.activeCardId, "b");
+});
+
+function multiEditState(core) {
+  return {
+    ...core.initialState(),
+    cards: [
+      core.normalizeCard({
+        id: "ally-a",
+        name: "아군 실행",
+        faction: "ally",
+        grade: "common",
+        role: "execution",
+        cost: "1",
+        executionOrder: "2",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "첫 메모",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "ally-b",
+        name: "아군 조작",
+        faction: "ally",
+        grade: "rare",
+        role: "intervention",
+        cost: "2",
+        executionOrder: "9",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "둘째 메모",
+        completionStatus: "complete",
+      }),
+      core.normalizeCard({
+        id: "enemy",
+        name: "적 실행",
+        faction: "enemy",
+        grade: "rare",
+        executionOrder: "4",
+        tags: ["독"],
+        targets: { ally: "frontOne", enemy: "frontOne" },
+        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
+        notes: "셋째 메모",
+        completionStatus: "complete",
+      }),
+    ],
+    activeCardId: "ally-a",
+    selection: ["ally-a", "ally-b", "enemy"],
+  };
+}
+
+test("aggregates only cards that can edit each field", () => {
+  const core = loadCore();
+  const state = multiEditState(core);
+
+  assert.deepEqual(
+    [...core.editTargetCards(state).map((card) => card.id)],
+    ["ally-a", "ally-b", "enemy"],
+  );
+  assert.deepEqual(
+    [...core.editTargetCards({
+      ...state,
+      activeCardId: "ally-b",
+      selection: [],
+    }).map((card) => card.id)],
+    ["ally-b"],
+  );
+  assert.deepEqual({ ...core.fieldAggregate(state, "grade") }, {
+    kind: "mixed",
+    value: "",
+    applicableCount: 2,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "tags") }, {
+    kind: "common",
+    value: "독",
+    applicableCount: 3,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "abilities.enemy") }, {
+    kind: "common",
+    value: "피해",
+    applicableCount: 3,
+  });
+  assert.deepEqual({ ...core.fieldAggregate(state, "executionOrder") }, {
+    kind: "mixed",
+    value: "",
+    applicableCount: 2,
+  });
+  assert.deepEqual({
+    ...core.fieldAggregate({
+      ...state,
+      activeCardId: "enemy",
+      selection: ["enemy"],
+    }, "grade"),
+  }, {
+    kind: "empty",
+    value: "",
+    applicableCount: 0,
+  });
+  assert.deepEqual({
+    ...core.fieldAggregate({
+      ...state,
+      activeCardId: "ally-b",
+      selection: [],
+    }, "grade"),
+  }, {
+    kind: "common",
+    value: "rare",
+    applicableCount: 1,
+  });
+});
+
+test("bulk edits only compatible selected cards and preserves unchanged cards", () => {
+  const core = loadCore();
+  const state = multiEditState(core);
+
+  const graded = core.editSelectedField(state, "grade", "rare");
+  assert.deepEqual(
+    [...graded.cards.map((card) => [card.grade, card.completionStatus])],
+    [
+      ["rare", "incomplete"],
+      ["rare", "complete"],
+      ["none", "complete"],
+    ],
+  );
+
+  const renamed = core.editSelectedField(state, "name", "같은 이름");
+  assert.deepEqual([...renamed.cards.map((card) => card.name)], [
+    "같은 이름",
+    "같은 이름",
+    "같은 이름",
+  ]);
+
+  const factionChanged = core.editSelectedField(state, "faction", "enemy");
+  assert.deepEqual(
+    [...factionChanged.cards.map((card) => ({
+      faction: card.faction,
+      grade: card.grade,
+      role: card.role,
+      cost: card.cost,
+      completionStatus: card.completionStatus,
+    }))],
+    [
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "incomplete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "incomplete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        role: "execution",
+        cost: "",
+        completionStatus: "complete",
+      },
+    ],
+  );
+
+  const reordered = core.editSelectedField(state, "executionOrder", "7");
+  assert.deepEqual(
+    [...reordered.cards.map((card) => [card.executionOrder, card.completionStatus])],
+    [
+      ["7", "incomplete"],
+      ["9", "complete"],
+      ["7", "incomplete"],
+    ],
+  );
+
+  const recosted = core.editSelectedField(state, "cost", "5");
+  assert.deepEqual(
+    [...recosted.cards.map((card) => [card.cost, card.completionStatus])],
+    [
+      ["5", "incomplete"],
+      ["5", "incomplete"],
+      ["", "complete"],
+    ],
+  );
+
+  const rerolled = core.editSelectedField(state, "role", "intervention");
+  assert.deepEqual(
+    [...rerolled.cards.map((card) => [card.role, card.completionStatus])],
+    [
+      ["intervention", "incomplete"],
+      ["intervention", "complete"],
+      ["execution", "complete"],
+    ],
+  );
+
+  const retargeted = core.editSelectedField(state, "targets.ally", "backTwo");
+  assert.deepEqual(
+    [...retargeted.cards.map((card) => [card.targets.ally, card.targets.enemy])],
+    [
+      ["backTwo", "frontOne"],
+      ["backTwo", "frontOne"],
+      ["backTwo", "frontOne"],
+    ],
+  );
+
+  const retagged = core.editSelectedField(state, "tags", "독, 소비");
+  assert.deepEqual(
+    [...retagged.cards.map((card) => [...card.tags])],
+    [
+      ["독", "소비"],
+      ["독", "소비"],
+      ["독", "소비"],
+    ],
+  );
+
+  const reworded = core.editSelectedField(
+    state,
+    "abilities.none",
+    "운명력을 얻는다.\n카드를 뽑는다.",
+  );
+  assert.deepEqual(
+    [...reworded.cards.map((card) => ({
+      none: [...card.abilities.none],
+      enemy: [...card.abilities.enemy],
+    }))],
+    [
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
+    ],
+  );
+
+  assert.equal(core.editSelectedField(state, "tags", "독"), state);
+
+  const activeOnly = core.editSelectedField({
+    ...state,
+    activeCardId: "ally-b",
+    selection: [],
+  }, "notes", "활성 카드만");
+  assert.deepEqual([...activeOnly.cards.map((card) => card.notes)], [
+    "첫 메모",
+    "활성 카드만",
+    "셋째 메모",
+  ]);
 });
 
 test("inserts a dragged card before or after a target without changing selection or active card", () => {
@@ -847,6 +1292,7 @@ test("creates uniquely named incomplete cards directly in the list", () => {
   assert.deepEqual([...second.cards.map((card) => card.name)], ["새 카드", "새 카드 (2)"]);
   assert.equal(second.cards[1].completionStatus, "incomplete");
   assert.equal(second.activeCardId, "b");
+  assert.deepEqual([...second.selection], ["b"]);
 });
 
 test("keeps generated card IDs unique when an ID source collides", () => {
@@ -940,11 +1386,12 @@ test("round-trips exported cards through strict Markdown import", () => {
   assert.equal(parsed[0].completionStatus, "complete");
 });
 
-test("emits and round-trips ally and enemy faction metadata", () => {
+test("emits and round-trips ally and enemy faction and grade metadata", () => {
   const core = loadCore();
   const ally = core.normalizeCard({
     name: "아군 실행",
     faction: "ally",
+    grade: "rare",
     cost: "1",
     role: "execution",
     executionOrder: "4",
@@ -959,11 +1406,11 @@ test("emits and round-trips ally and enemy faction metadata", () => {
 
   assert.match(
     core.cardMarkdown(ally),
-    /- 진영: 아군\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
+    /- 진영: 아군\n- 등급: 희귀\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
   );
   assert.match(
     core.cardMarkdown(enemy),
-    /- 진영: 적군\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
+    /- 진영: 적군\n- 등급: 없음\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
   );
 
   const parsed = core.parseBundleMarkdown(
@@ -972,13 +1419,26 @@ test("emits and round-trips ally and enemy faction metadata", () => {
   assert.deepEqual(
     [...parsed.map((card) => ({
       faction: card.faction,
+      grade: card.grade,
       cost: card.cost,
       role: card.role,
       completionStatus: card.completionStatus,
     }))],
     [
-      { faction: "ally", cost: "1", role: "execution", completionStatus: "complete" },
-      { faction: "enemy", cost: "", role: "execution", completionStatus: "complete" },
+      {
+        faction: "ally",
+        grade: "rare",
+        cost: "1",
+        role: "execution",
+        completionStatus: "complete",
+      },
+      {
+        faction: "enemy",
+        grade: "none",
+        cost: "",
+        role: "execution",
+        completionStatus: "complete",
+      },
     ],
   );
 });
@@ -999,6 +1459,7 @@ test("imports legacy Markdown without faction as an ally draft", () => {
 
   const parsed = core.parseBundleMarkdown(legacy);
   assert.equal(parsed[0].faction, "ally");
+  assert.equal(parsed[0].grade, "none");
   assert.equal(parsed[0].completionStatus, "incomplete");
 
   const imported = core.importCards(core.initialState(), legacy, {
@@ -1006,7 +1467,44 @@ test("imports legacy Markdown without faction as an ally draft", () => {
     now: "2026-07-28T00:00:00.000Z",
   });
   assert.equal(imported.cards[0].faction, "ally");
+  assert.equal(imported.cards[0].grade, "none");
   assert.equal(imported.cards[0].completionStatus, "incomplete");
+});
+
+test("rejects an unknown Markdown grade", () => {
+  const core = loadCore();
+  const source = core.normalizeCard({
+    name: "등급 오류",
+    faction: "ally",
+    grade: "common",
+    role: "intervention",
+    cost: "1",
+    completionStatus: "complete",
+  });
+  const markdown = core.bundleMarkdown([source], "2026-07-29")
+    .replace("- 진영: 아군", "- 진영: 아군\n- 등급: 전설");
+
+  assert.throws(
+    () => core.parseBundleMarkdown(markdown),
+    /알 수 없는 등급: 전설/,
+  );
+});
+
+test("rejects a non-none enemy Markdown grade", () => {
+  const core = loadCore();
+  const source = core.normalizeCard({
+    name: "적군 등급 오류",
+    faction: "enemy",
+    executionOrder: "1",
+    completionStatus: "complete",
+  });
+  const markdown = core.bundleMarkdown([source], "2026-07-29")
+    .replace("- 등급: 없음", "- 등급: 고급");
+
+  assert.throws(
+    () => core.parseBundleMarkdown(markdown),
+    /적군 등급은 없음이어야 합니다/,
+  );
 });
 
 test("round-trips note lines that resemble card headings", () => {
@@ -1066,6 +1564,7 @@ test("imports duplicate names as new numbered cards", () => {
     "맹독 호위 (3)",
   ]);
   assert.equal(imported.activeCardId, "b");
+  assert.deepEqual([...imported.selection], ["b"]);
   assert.equal(imported.cards[2].completionStatus, "incomplete");
 });
 
