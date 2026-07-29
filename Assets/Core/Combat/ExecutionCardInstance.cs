@@ -34,6 +34,12 @@ namespace FateWeaver.Core.Combat
             ExecutionOrder = def.BaseExecutionOrder;
         }
 
+        /// <summary>이 카드의 해석 중 consume_status가 실제로 소비한 누적 수치.
+        /// ConsumedStatusAtLeast 조건이 읽는다.</summary>
+        public int ConsumedStatusAmount { get; private set; }
+
+        internal void RecordConsumedStatus(int amount) => ConsumedStatusAmount += amount;
+
         internal void AddPendingDamageBonus(int amount)
             => _pendingDamageBonus += amount;
 

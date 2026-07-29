@@ -126,6 +126,13 @@ namespace FateWeaver.Core.Conditions
                         : ConditionTier.Basic;
             }
 
+            if (condition is ConsumedStatusAtLeast consumedAtLeast)
+            {
+                return card.ConsumedStatusAmount >= consumedAtLeast.N
+                    ? ConditionTier.Success
+                    : ConditionTier.Basic;
+            }
+
             if (condition is AllOf allOf)
             {
                 var tier = ConditionTier.Success;

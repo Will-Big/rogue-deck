@@ -23,6 +23,9 @@ namespace FateWeaver.Core.Combat
         public FutureZone Zone { get; } = new();
         public int FateEnergy { get; set; }
         public int FateEnergyPerTurn { get; set; }
+        /// <summary>다음 플레이어 사용 턴의 운명력 리필에 더해지는 1회성 적립분 (grant_next_turn_fate).
+        /// 리필 시점에 합산 후 0으로 소거된다.</summary>
+        public int PendingNextTurnFateEnergy { get; set; }
         public int RngSeed { get; set; }
 
         /// <summary>Seeded RNG shared by all combat rule logic (AGENTS.md rule 7: no ad-hoc `new Random()`

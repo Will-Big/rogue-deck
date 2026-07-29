@@ -59,12 +59,25 @@ namespace FateWeaver.Simulation.Descriptions
         {
             var handler = catalog.Effects.Resolve(effect.Key);
             var sb = new StringBuilder();
-            sb.Append(Fragment(handler, effect, effect.EffectValue, catalog.Context)).Append('.');
+
+            // SkipOnBasic effects never fire on the basic tier ('~했다면 X' — no unconditional
+            // baseline), so the basic fragment is omitted entirely; only the condition + success
+            // sentence renders. Without this, the basic and success fragments both print with
+            // identical wording (e.g. "방어 4. 소비했다면 방어 4.").
+            var skipBasic = effect.SkipOnBasic && effect.Condition != null && effect.SuccessEffectValue.HasValue;
+            if (!skipBasic)
+            {
+                sb.Append(Fragment(handler, effect, effect.EffectValue, catalog.Context)).Append('.');
+            }
 
             if (effect.Condition != null && effect.SuccessEffectValue.HasValue)
             {
-                sb.Append(' ')
-                  .Append(catalog.Context.Condition(effect.Condition))
+                if (sb.Length > 0)
+                {
+                    sb.Append(' ');
+                }
+
+                sb.Append(catalog.Context.Condition(effect.Condition))
                   .Append(' ')
                   .Append(Fragment(
                       handler,

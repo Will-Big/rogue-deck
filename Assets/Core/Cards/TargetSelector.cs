@@ -8,6 +8,10 @@ namespace FateWeaver.Core.Cards
         FrontMost,
         SecondFromFront,
         BackMost,
-        Random
+        Random,
+
+        /// <summary>생존 유닛 전부, 다중 대상 효과 전용 (단일 대상 EnemyTargeting.Select/PartyTargeting.Select는
+        /// null을 반환한다 — 호출자가 SelectAll류를 대신 써야 한다).</summary>
+        All
     }
 }

@@ -30,7 +30,10 @@ namespace FateWeaver.Simulation.Authoring
             new EffectSpecInfo("상태 부여", typeof(ApplyStatusSpec), () => new ApplyStatusSpec()),
             new EffectSpecInfo("다음 피해 카드 강화", typeof(GrantNextDamageCardBonusSpec), () => new GrantNextDamageCardBonusSpec()),
             new EffectSpecInfo("다음 보상 무효화", typeof(NullifyNextRewardSpec), () => new NullifyNextRewardSpec()),
-            new EffectSpecInfo("대형 이동", typeof(MoveFormationSpec), () => new MoveFormationSpec())
+            new EffectSpecInfo("대형 이동", typeof(MoveFormationSpec), () => new MoveFormationSpec()),
+            new EffectSpecInfo("상태 소비", typeof(ConsumeStatusSpec), () => new ConsumeStatusSpec()),
+            new EffectSpecInfo("상태 즉시 발동", typeof(TriggerStatusSpec), () => new TriggerStatusSpec()),
+            new EffectSpecInfo("다음 턴 운명력", typeof(GrantNextTurnFateSpec), () => new GrantNextTurnFateSpec())
         };
     }
 }

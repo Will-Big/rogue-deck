@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Conditions;
@@ -32,7 +33,7 @@ namespace FateWeaver.Core.Combat
                 ResolveCard(state, resolutionContext, card, events);
             }
 
-            EndOfTurnMaintenance(state);
+            EndOfTurnMaintenance(state, events);
             events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
             return events;
         }
@@ -69,7 +70,13 @@ namespace FateWeaver.Core.Combat
                     strongestTier = tier;
                 }
 
+                if (effect.SkipOnBasic && effect.Condition != null && tier == ConditionTier.Basic)
+                {
+                    continue;
+                }
+
                 var beforeSnapshot = SnapshotParty(state);
+                var enemiesBefore = SnapshotEnemies(state);
 
                 var ctx = new EffectContext
                 {
@@ -83,8 +90,10 @@ namespace FateWeaver.Core.Combat
                 _effects.Resolve(effect.Key).Apply(ctx);
                 totalDamage += ctx.DamageDealt;
                 if (ctx.TargetId != null) targetId = ctx.TargetId;
+                pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록
 
                 CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
+                CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
 
                 // Step 6 (part 2): once an effect records NoValidTarget, the card is cancelled and
                 // its remaining effects must not run (enforced centrally here, not per-handler).
@@ -138,8 +147,9 @@ namespace FateWeaver.Core.Combat
         }
 
         /// <summary>Diffs the party against a pre-effect snapshot and appends DeathsDoorSurvived /
-        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.</summary>
-        private static void CollectDeathSweepEvents(
+        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.
+        /// A newly-dead member also gets OnHolderDied dispatched on every status it carried.</summary>
+        private void CollectDeathSweepEvents(
             CombatState state,
             Dictionary<string, (bool IsAlive, int SurviveCharges)> before,
             List<ResolutionEvent> pending)
@@ -155,6 +165,58 @@ namespace FateWeaver.Core.Combat
                 else if (prior.IsAlive && !member.IsAlive)
                 {
                     pending.Add(new PartyMemberDied(member.Id));
+                    DispatchHolderDied(state, member.Statuses, member.Id, pending);
+                }
+            }
+        }
+
+        private static Dictionary<string, bool> SnapshotEnemies(CombatState state)
+        {
+            var snapshot = new Dictionary<string, bool>();
+            foreach (var enemy in state.Enemies)
+            {
+                snapshot[enemy.Id] = enemy.Hp > 0;
+            }
+
+            return snapshot;
+        }
+
+        /// <summary>Diffs enemies against a pre-effect snapshot; a newly-dead enemy emits EnemyDied and
+        /// dispatches OnHolderDied on every status it carried.</summary>
+        private void CollectEnemyDeathEvents(
+            CombatState state, Dictionary<string, bool> before, List<ResolutionEvent> pending)
+        {
+            foreach (var enemy in state.Enemies)
+            {
+                if (before.TryGetValue(enemy.Id, out var wasAlive) && wasAlive && enemy.Hp <= 0)
+                {
+                    pending.Add(new EnemyDied(enemy.Id));
+                    DispatchHolderDied(state, enemy.Statuses, enemy.Id, pending);
+                }
+            }
+        }
+
+        private void DispatchHolderDied(
+            CombatState state, StatusBag bag, string holderId, List<ResolutionEvent> events)
+        {
+            if (_statuses == null)
+            {
+                return;
+            }
+
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (_statuses.TryResolve(status.Key, out var behavior))
+                {
+                    behavior.OnHolderDied(new StatusDeathContext
+                    {
+                        Instance = status,
+                        HolderBag = bag,
+                        HolderId = holderId,
+                        State = state,
+                        Events = events
+                    });
                 }
             }
         }
@@ -200,8 +262,16 @@ namespace FateWeaver.Core.Combat
             return false;
         }
 
-        private static void EndOfTurnMaintenance(CombatState state)
+        private void EndOfTurnMaintenance(CombatState state, List<ResolutionEvent> events)
         {
+            var partyBefore = SnapshotParty(state);
+            var enemiesBefore = SnapshotEnemies(state);
+
+            RunTurnEndTicks(state, events);
+
+            CollectDeathSweepEvents(state, partyBefore, events);
+            CollectEnemyDeathEvents(state, enemiesBefore, events);
+
             foreach (var member in state.Party)
             {
                 member.Statuses.EndOfTurn();
@@ -210,6 +280,51 @@ namespace FateWeaver.Core.Combat
             foreach (var enemy in state.Enemies)
             {
                 enemy.Statuses.EndOfTurn();
+            }
+        }
+
+        /// <summary>행동 턴 종료 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
+        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2).</summary>
+        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events)
+        {
+            if (_statuses == null)
+            {
+                return;
+            }
+
+            foreach (var member in state.Party)
+            {
+                if (!member.IsAlive) continue;
+                var target = member;
+                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events);
+            }
+
+            foreach (var enemy in state.Enemies)
+            {
+                if (enemy.Hp <= 0) continue;
+                var target = enemy;
+                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events);
+            }
+        }
+
+        private void TickHolder(
+            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events)
+        {
+            // Snapshot: a hook may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (_statuses.TryResolve(status.Key, out var behavior))
+                {
+                    behavior.OnTurnEnd(new StatusTickContext
+                    {
+                        Instance = status,
+                        HolderBag = bag,
+                        HolderId = holderId,
+                        DealDamage = dealDamage,
+                        Events = events
+                    });
+                }
             }
         }
 

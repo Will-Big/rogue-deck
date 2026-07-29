@@ -36,6 +36,10 @@ namespace FateWeaver.Simulation.Descriptions
             statuses.Register(StatusKeys.Stun, "기절");
             statuses.Register(StatusKeys.Vulnerable, "취약");
             statuses.Register(StatusKeys.RewardNullified, "조건 보상 무효");
+            statuses.Register(StatusKeys.Poison, "독");
+            statuses.Register(StatusKeys.PoisonDormant, "독 잠복");
+            statuses.Register(StatusKeys.PoisonStasis, "독 안정");
+            statuses.Register(StatusKeys.Contagion, "전염");
 
             var effects = new EffectDescriptionRegistry();
             effects.Register(new DamageDescriptionHandler());
@@ -43,6 +47,9 @@ namespace FateWeaver.Simulation.Descriptions
             effects.Register(new NullifyNextPlayerConditionRewardDescriptionHandler());
             effects.Register(new GrantNextPlayerDamageCardBonusDescriptionHandler());
             effects.Register(new MoveFormationDescriptionHandler());
+            effects.Register(new ConsumeStatusDescriptionHandler());
+            effects.Register(new TriggerStatusDescriptionHandler());
+            effects.Register(new GrantNextTurnFateDescriptionHandler());
 
             var interventions = new InterventionDescriptionRegistry();
             interventions.Register(new ChangeExecutionOrderDescriptionHandler());

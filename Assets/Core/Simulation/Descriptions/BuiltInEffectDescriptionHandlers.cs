@@ -67,4 +67,45 @@ namespace FateWeaver.Simulation.Descriptions
                 + distance + "칸 이동";
         }
     }
+
+    public sealed class ConsumeStatusDescriptionHandler : IEffectDescriptionHandler
+    {
+        public EffectKey Key => EffectKeys.ConsumeStatus;
+
+        public string Describe(EffectData effect, int effectValue, DescriptionContext context)
+        {
+            if (!(effect.Payload is ConsumeStatusPayload payload))
+                throw new ArgumentException(
+                    "Consume-status description requires a ConsumeStatusPayload.", nameof(effect));
+
+            var text = context.TargetPrefix(effect)
+                + context.Statuses.Resolve(payload.Key) + " 최대 " + payload.MaxAmount + " 소비";
+            return payload.DamageBonusPerConsumed > 0
+                ? text + " (소비 1당 피해 +" + payload.DamageBonusPerConsumed + ")"
+                : text;
+        }
+    }
+
+    public sealed class TriggerStatusDescriptionHandler : IEffectDescriptionHandler
+    {
+        public EffectKey Key => EffectKeys.TriggerStatus;
+
+        public string Describe(EffectData effect, int effectValue, DescriptionContext context)
+        {
+            if (!(effect.Payload is TriggerStatusPayload payload))
+                throw new ArgumentException(
+                    "Trigger-status description requires a TriggerStatusPayload.", nameof(effect));
+
+            return context.TargetPrefix(effect)
+                + context.Statuses.Resolve(payload.Key) + " 즉시 발동 (이번 턴 종료에는 발동하지 않음)";
+        }
+    }
+
+    public sealed class GrantNextTurnFateDescriptionHandler : IEffectDescriptionHandler
+    {
+        public EffectKey Key => EffectKeys.GrantNextTurnFate;
+
+        public string Describe(EffectData effect, int effectValue, DescriptionContext context)
+            => "다음 사용 턴에 운명력 " + effectValue + " 획득";
+    }
 }

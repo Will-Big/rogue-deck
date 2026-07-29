@@ -15,6 +15,7 @@ namespace FateWeaver.Simulation.Descriptions
                 case TargetSelector.FrontMost: return "가장 앞의 대상에게";
                 case TargetSelector.SecondFromFront: return "전열에서 두 번째 대상에게";
                 case TargetSelector.BackMost: return "가장 뒤의 대상에게";
+                case TargetSelector.All: return "모두에게";
                 default: return "무작위 대상에게";
             }
         }
@@ -27,6 +28,8 @@ namespace FateWeaver.Simulation.Descriptions
                     return "이전에 실행한 " + SideName(n.Side) + " 카드가 없으면";
                 case NoFollowingCardOfSide n:
                     return "뒤에 배치된 " + SideName(n.Side) + " 카드가 없으면";
+                case ConsumedStatusAtLeast _:
+                    return "소비했다면";
                 case AllOf all:
                     return JoinAll(all.Conditions) + "이면";
                 default:
@@ -41,6 +44,7 @@ namespace FateWeaver.Simulation.Descriptions
                 case StatusApplyTarget.TargetEnemy: return "적 ";
                 case StatusApplyTarget.PartyMember: return "선택한 아군에게 ";
                 case StatusApplyTarget.AllPartyMembers: return "모든 아군에게 ";
+                case StatusApplyTarget.PartyBySelector: return "아군 ";
                 default: return string.Empty;
             }
         }

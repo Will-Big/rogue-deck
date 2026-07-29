@@ -6,6 +6,7 @@ namespace FateWeaver.Core.Status
     {
         public override StatusKey Key => StatusKeys.Block;
         public override StatusScope Scope => StatusScope.Entity;
+        public override bool StacksMagnitude => true;
 
         public override int ModifyIncomingDamage(int damage, StatusContext ctx)
         {

@@ -27,5 +27,9 @@ namespace FateWeaver.Core.Status
         public static readonly StatusKey Block = new StatusKey("block");
         public static readonly StatusKey Slow = new StatusKey("slow");
         public static readonly StatusKey Haste = new StatusKey("haste");
+        public static readonly StatusKey Poison = new StatusKey("poison");
+        public static readonly StatusKey PoisonDormant = new StatusKey("poison_dormant");
+        public static readonly StatusKey PoisonStasis = new StatusKey("poison_stasis");
+        public static readonly StatusKey Contagion = new StatusKey("contagion");
     }
 }

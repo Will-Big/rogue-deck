@@ -67,6 +67,22 @@ namespace FateWeaver.Core.Status
             }
         }
 
+        /// <summary>수치 합산 적용: 같은 키가 있으면 Magnitude만 더하고(최초 적용의 수명 유지),
+        /// 없으면 새로 추가한다. StacksMagnitude를 선언한 상태(방어·독)에 사용한다.</summary>
+        public StatusInstance Stack(StatusKey key, StatusLifetime lifetime, int magnitude)
+        {
+            var existing = Get(key);
+            if (existing != null)
+            {
+                existing.Magnitude += magnitude;
+                return existing;
+            }
+
+            var created = new StatusInstance(key, lifetime, magnitude);
+            _statuses.Add(created);
+            return created;
+        }
+
         /// <summary>End-of-turn maintenance: drop ThisTurn statuses; tick down Turns statuses (remove at 0).</summary>
         public void EndOfTurn()
         {

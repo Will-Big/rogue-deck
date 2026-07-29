@@ -16,6 +16,9 @@ namespace FateWeaver.Simulation
             effects.Register(new GrantNextPlayerDamageCardBonusHandler());
             effects.Register(new ApplyStatusHandler());
             effects.Register(new MoveFormationHandler());
+            effects.Register(new ConsumeStatusHandler());
+            effects.Register(new TriggerStatusHandler());
+            effects.Register(new GrantNextTurnFateHandler());
             return effects;
         }
 
@@ -28,6 +31,10 @@ namespace FateWeaver.Simulation
             statuses.Register(new BlockBehavior());
             statuses.Register(new SlowBehavior());
             statuses.Register(new HasteBehavior());
+            statuses.Register(new PoisonBehavior(growthPerTurn: 1));
+            statuses.Register(new PoisonDormantBehavior());
+            statuses.Register(new PoisonStasisBehavior());
+            statuses.Register(new ContagionBehavior());
             return statuses;
         }
 

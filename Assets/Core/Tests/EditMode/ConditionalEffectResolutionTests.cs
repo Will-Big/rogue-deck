@@ -157,5 +157,46 @@ namespace FateWeaver.Tests
             Assert.AreEqual(7, ((CardResolved)events[3]).DamageDealt);
             Assert.AreEqual(13, state.Enemies[0].Hp);
         }
+
+        [Test]
+        public void Pending_damage_bonus_applies_per_target_on_an_all_target_damage_card()
+        {
+            // Pinning test for the deliberate rule (DamageHandler.Apply, All branch): a pending
+            // damage-card bonus raises the CARD's damage value, so with TargetSelector.All it applies
+            // to every target independently, not as a one-time pool split across hits.
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("a", 20));
+            state.Enemies.Add(new Enemy("b", 20));
+            var mark = new ExecutionCardInstance(new CardDefinition(
+                "mark_target",
+                "Mark Target",
+                Side.Player,
+                1,
+                new[]
+                {
+                    new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 3)
+                }));
+            var sweep = new ExecutionCardInstance(new CardDefinition(
+                "sweep",
+                "Sweep",
+                Side.Player,
+                2,
+                new[]
+                {
+                    new EffectData(EffectKeys.Damage, 2) { TargetSelector = TargetSelector.All }
+                }));
+            state.Zone.Add(mark);
+            state.Zone.Add(sweep);
+            var registry = Registry();
+            registry.Register(new GrantNextPlayerDamageCardBonusHandler());
+
+            var events = new TurnResolver(registry).Resolve(state, 0);
+
+            Assert.AreEqual(15, state.Enemies[0].Hp); // 20 - (2 + 3)
+            Assert.AreEqual(15, state.Enemies[1].Hp); // 20 - (2 + 3), same bonus applied again
+            var resolved = (CardResolved)events[2];
+            Assert.AreEqual(10, resolved.DamageDealt); // 5 + 5
+        }
     }
 }
