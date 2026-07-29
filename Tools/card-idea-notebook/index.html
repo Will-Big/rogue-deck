@@ -1040,14 +1040,19 @@
       const savedSelection = saved.schemaVersion >= 3
         ? saved.selection
         : saved.exportSelection;
+      const selection = (savedSelection ?? [])
+        .map(String)
+        .filter((id) => ids.has(id));
+      const savedActiveCardId = ids.has(saved.activeCardId) ? saved.activeCardId : "";
+      const activeCardId = selection.length && !selection.includes(savedActiveCardId)
+        ? cards.find((card) => selection.includes(card.id))?.id ?? ""
+        : savedActiveCardId;
       return {
         schemaVersion: SCHEMA_VERSION,
         cards,
-        activeCardId: ids.has(saved.activeCardId) ? saved.activeCardId : "",
+        activeCardId,
         searchQuery: String(saved.searchQuery ?? ""),
-        selection: (savedSelection ?? [])
-          .map(String)
-          .filter((id) => ids.has(id)),
+        selection,
         exportFileName: String(saved.exportFileName ?? ""),
       };
     }

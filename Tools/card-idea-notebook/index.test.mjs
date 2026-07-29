@@ -595,6 +595,41 @@ test("migrates every schema 5 card to no grade while preserving faction state", 
   assert.deepEqual([...loaded.selection], ["enemy"]);
 });
 
+test("aligns the active card with a preserved selection when loading storage", () => {
+  const core = loadCore();
+
+  for (const schemaVersion of [5, 6]) {
+    const storage = new MemoryStorage({
+      [core.STORAGE_KEY]: JSON.stringify({
+        schemaVersion,
+        cards: [
+          {
+            id: "a",
+            name: "선택 카드",
+            faction: "ally",
+            grade: schemaVersion === 6 ? "rare" : undefined,
+          },
+          {
+            id: "b",
+            name: "과거 활성 카드",
+            faction: "ally",
+            grade: schemaVersion === 6 ? "advanced" : undefined,
+          },
+        ],
+        activeCardId: "b",
+        searchQuery: "",
+        selection: ["a"],
+        exportFileName: "",
+      }),
+    });
+
+    const loaded = core.readStore(storage);
+    assert.deepEqual([...loaded.selection], ["a"]);
+    assert.equal(loaded.activeCardId, "a");
+    assert.equal(core.editTargetCards(loaded)[0].id, "a");
+  }
+});
+
 test("normalizes Markdown download names and permits an empty name", () => {
   const core = loadCore();
   assert.equal(core.downloadFileName(" 독 카드풀 ", "2026-07-28"), "독 카드풀.md");
