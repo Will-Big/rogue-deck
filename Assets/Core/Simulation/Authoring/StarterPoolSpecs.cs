@@ -21,14 +21,16 @@ namespace FateWeaver.Simulation.Authoring
         private static ApplyStatusSpec PoisonApply(int value) => new ApplyStatusSpec
         {
             Status = StatusKeyRef.Of(StatusKeys.Poison), Value = value,
-            Lifetime = StatusLifetimeKind.Permanent, Target = StatusApplyTarget.TargetEnemy
+            Lifetime = StatusLifetimeKind.Permanent, Target = StatusApplyTarget.TargetEnemy,
+            Selector = TargetSelectorRef.FrontMost
         };
 
         public static CardSpec VanguardSlash() => new CardSpec
         {
             Id = "vanguard_slash", Name = "선봉 베기", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 3,
-            Effects = new EffectSpec[] { new DamageSpec { Value = 5 } }
+            Effects = new EffectSpec[]
+                { new DamageSpec { Value = 5, Selector = TargetSelectorRef.FrontMost } }
         };
 
         public static CardSpec ParryStrike() => new CardSpec
@@ -37,7 +39,7 @@ namespace FateWeaver.Simulation.Authoring
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
             Effects = new EffectSpec[]
             {
-                new DamageSpec { Value = 1 },
+                new DamageSpec { Value = 1, Selector = TargetSelectorRef.FrontMost },
                 new ApplyStatusSpec
                 {
                     Status = StatusKeyRef.Of(StatusKeys.Block), Value = 3,
@@ -61,7 +63,7 @@ namespace FateWeaver.Simulation.Authoring
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
             Effects = new EffectSpec[]
             {
-                new DamageSpec { Value = 4 },
+                new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontMost },
                 new ApplyStatusSpec
                 {
                     Status = StatusKeyRef.Of(StatusKeys.Block), Value = 1,
@@ -98,7 +100,8 @@ namespace FateWeaver.Simulation.Authoring
         {
             Id = "delayed_strike", Name = "늦춘 일격", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
-            Effects = new EffectSpec[] { new DamageSpec { Value = 5 } }
+            Effects = new EffectSpec[]
+                { new DamageSpec { Value = 5, Selector = TargetSelectorRef.FrontMost } }
         };
 
         public static CardSpec EarlyGuard() => new CardSpec
@@ -131,7 +134,7 @@ namespace FateWeaver.Simulation.Authoring
             {
                 new DamageSpec
                 {
-                    Value = 3,
+                    Value = 3, Selector = TargetSelectorRef.FrontMost,
                     Condition = new ConditionSpec
                     {
                         Kind = ConditionKind.PrevExecutedIsEnemyDamageCard, SuccessEffectValue = 7
@@ -171,7 +174,8 @@ namespace FateWeaver.Simulation.Authoring
         {
             Id = "venom_thrust", Name = "맹독 찌르기", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
-            Effects = new EffectSpec[] { new DamageSpec { Value = 2 }, PoisonApply(1) }
+            Effects = new EffectSpec[]
+                { new DamageSpec { Value = 2, Selector = TargetSelectorRef.FrontMost }, PoisonApply(1) }
         };
 
         public static CardSpec LastDrop()
@@ -240,7 +244,8 @@ namespace FateWeaver.Simulation.Authoring
                 {
                     new ConsumeStatusSpec
                     {
-                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1
+                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1,
+                        Selector = TargetSelectorRef.FrontMost
                     },
                     PoisonApply(1),
                     block
@@ -256,9 +261,10 @@ namespace FateWeaver.Simulation.Authoring
             {
                 new ConsumeStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 3, DamageBonusPerConsumed = 2
+                    Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 3, DamageBonusPerConsumed = 2,
+                    Selector = TargetSelectorRef.FrontMost
                 },
-                new DamageSpec { Value = 2 },
+                new DamageSpec { Value = 2, Selector = TargetSelectorRef.FrontMost },
                 PoisonApply(1)
             }
         };
@@ -282,7 +288,8 @@ namespace FateWeaver.Simulation.Authoring
                 {
                     new ConsumeStatusSpec
                     {
-                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1
+                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1,
+                        Selector = TargetSelectorRef.FrontMost
                     },
                     PoisonApply(1),
                     fate
@@ -300,7 +307,8 @@ namespace FateWeaver.Simulation.Authoring
                 new TriggerStatusSpec
                 {
                     Status = StatusKeyRef.Of(StatusKeys.Poison),
-                    SuppressMarker = StatusKeyRef.Of(StatusKeys.PoisonDormant)
+                    SuppressMarker = StatusKeyRef.Of(StatusKeys.PoisonDormant),
+                    Selector = TargetSelectorRef.FrontMost
                 }
             }
         };
@@ -329,7 +337,7 @@ namespace FateWeaver.Simulation.Authoring
             {
                 Status = StatusKeyRef.Of(StatusKeys.Contagion), Value = 0,
                 Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2,
-                Target = StatusApplyTarget.TargetEnemy
+                Target = StatusApplyTarget.TargetEnemy, Selector = TargetSelectorRef.FrontMost
             };
             return new CardSpec
             {
@@ -337,7 +345,7 @@ namespace FateWeaver.Simulation.Authoring
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
                 Effects = new EffectSpec[]
                 {
-                    new DamageSpec { Value = 1 },
+                    new DamageSpec { Value = 1, Selector = TargetSelectorRef.FrontMost },
                     PoisonApply(1),
                     contagion
                 }
