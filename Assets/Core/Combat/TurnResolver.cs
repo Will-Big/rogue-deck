@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Conditions;
@@ -32,7 +33,7 @@ namespace FateWeaver.Core.Combat
                 ResolveCard(state, resolutionContext, card, events);
             }
 
-            EndOfTurnMaintenance(state);
+            EndOfTurnMaintenance(state, events);
             events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
             return events;
         }
@@ -200,8 +201,10 @@ namespace FateWeaver.Core.Combat
             return false;
         }
 
-        private static void EndOfTurnMaintenance(CombatState state)
+        private void EndOfTurnMaintenance(CombatState state, List<ResolutionEvent> events)
         {
+            RunTurnEndTicks(state, events);
+
             foreach (var member in state.Party)
             {
                 member.Statuses.EndOfTurn();
@@ -210,6 +213,51 @@ namespace FateWeaver.Core.Combat
             foreach (var enemy in state.Enemies)
             {
                 enemy.Statuses.EndOfTurn();
+            }
+        }
+
+        /// <summary>행동 턴 종료 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
+        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2).</summary>
+        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events)
+        {
+            if (_statuses == null)
+            {
+                return;
+            }
+
+            foreach (var member in state.Party)
+            {
+                if (!member.IsAlive) continue;
+                var target = member;
+                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events);
+            }
+
+            foreach (var enemy in state.Enemies)
+            {
+                if (enemy.Hp <= 0) continue;
+                var target = enemy;
+                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events);
+            }
+        }
+
+        private void TickHolder(
+            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events)
+        {
+            // Snapshot: a hook may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (_statuses.TryResolve(status.Key, out var behavior))
+                {
+                    behavior.OnTurnEnd(new StatusTickContext
+                    {
+                        Instance = status,
+                        HolderBag = bag,
+                        HolderId = holderId,
+                        DealDamage = dealDamage,
+                        Events = events
+                    });
+                }
             }
         }
 
