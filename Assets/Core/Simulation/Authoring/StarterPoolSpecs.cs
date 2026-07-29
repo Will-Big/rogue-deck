@@ -13,8 +13,15 @@ namespace FateWeaver.Simulation.Authoring
         public static IReadOnlyList<CardSpec> Build() => new List<CardSpec>
         {
             VanguardSlash(), ParryStrike(), Hasten(), ProbingStrike(), QuickCover(), Delay(),
-            DelayedStrike(), EarlyGuard(), Crossover(), Riposte(), Foresight(), Breather()
-            // Task 13: 독 카드 10장이 여기 추가된다.
+            DelayedStrike(), EarlyGuard(), Crossover(), Riposte(), Foresight(), Breather(),
+            VenomThrust(), LastDrop(), SporeVeil(), SpreadCulture(), ToxicReclaim(),
+            CondensedBurst(), Distill(), EarlyOnset(), StableCulture(), PosthumousSpread()
+        };
+
+        private static ApplyStatusSpec PoisonApply(int value) => new ApplyStatusSpec
+        {
+            Status = StatusKeyRef.Of(StatusKeys.Poison), Value = value,
+            Lifetime = StatusLifetimeKind.Permanent, Target = StatusApplyTarget.TargetEnemy
         };
 
         public static CardSpec VanguardSlash() => new CardSpec
@@ -159,5 +166,182 @@ namespace FateWeaver.Simulation.Authoring
             InterventionEffectValue = 1,
             InterventionTargetSide = InterventionTargetSideRef.Player
         };
+
+        public static CardSpec VenomThrust() => new CardSpec
+        {
+            Id = "venom_thrust", Name = "맹독 찌르기", Side = Side.Player,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 4,
+            Effects = new EffectSpec[] { new DamageSpec { Value = 2 }, PoisonApply(1) }
+        };
+
+        public static CardSpec LastDrop()
+        {
+            var poison = PoisonApply(1);
+            poison.Condition = new ConditionSpec
+            {
+                Kind = ConditionKind.NoFollowingPlayerCard, SuccessEffectValue = 2
+            };
+            return new CardSpec
+            {
+                Id = "last_drop", Name = "마지막 한 방울", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 7,
+                Effects = new EffectSpec[] { poison }
+            };
+        }
+
+        public static CardSpec SporeVeil() => new CardSpec
+        {
+            Id = "spore_veil", Name = "포자막", Side = Side.Player,
+            Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+            Effects = new EffectSpec[]
+            {
+                PoisonApply(1),
+                new ApplyStatusSpec
+                {
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 2,
+                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self
+                }
+            }
+        };
+
+        public static CardSpec SpreadCulture()
+        {
+            var poison = PoisonApply(1);
+            poison.Selector = TargetSelectorRef.All;
+            return new CardSpec
+            {
+                Id = "spread_culture", Name = "확산 배양", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 6,
+                Effects = new EffectSpec[]
+                {
+                    new DamageSpec { Value = 2, Selector = TargetSelectorRef.All },
+                    poison
+                }
+            };
+        }
+
+        public static CardSpec ToxicReclaim()
+        {
+            var block = new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.Block), Value = 4,
+                Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
+                Condition = new ConditionSpec
+                {
+                    Kind = ConditionKind.ConsumedStatusAtLeast, N = 1,
+                    SuccessEffectValue = 4, SkipOnBasic = true
+                }
+            };
+            return new CardSpec
+            {
+                Id = "toxic_reclaim", Name = "독성 환원", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+                Effects = new EffectSpec[]
+                {
+                    new ConsumeStatusSpec
+                    {
+                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1
+                    },
+                    PoisonApply(1),
+                    block
+                }
+            };
+        }
+
+        public static CardSpec CondensedBurst() => new CardSpec
+        {
+            Id = "condensed_burst", Name = "응축 파열", Side = Side.Player,
+            Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 6,
+            Effects = new EffectSpec[]
+            {
+                new ConsumeStatusSpec
+                {
+                    Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 3, DamageBonusPerConsumed = 2
+                },
+                new DamageSpec { Value = 2 },
+                PoisonApply(1)
+            }
+        };
+
+        public static CardSpec Distill()
+        {
+            var fate = new GrantNextTurnFateSpec
+            {
+                Value = 1,
+                Condition = new ConditionSpec
+                {
+                    Kind = ConditionKind.ConsumedStatusAtLeast, N = 1,
+                    SuccessEffectValue = 1, SkipOnBasic = true
+                }
+            };
+            return new CardSpec
+            {
+                Id = "distill", Name = "증류", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+                Effects = new EffectSpec[]
+                {
+                    new ConsumeStatusSpec
+                    {
+                        Status = StatusKeyRef.Of(StatusKeys.Poison), MaxAmount = 1
+                    },
+                    PoisonApply(1),
+                    fate
+                }
+            };
+        }
+
+        public static CardSpec EarlyOnset() => new CardSpec
+        {
+            Id = "early_onset", Name = "조기 발병", Side = Side.Player,
+            Category = CardCategory.Execution, EnergyCost = 2, BaseExecutionOrder = 3,
+            Effects = new EffectSpec[]
+            {
+                PoisonApply(1),
+                new TriggerStatusSpec
+                {
+                    Status = StatusKeyRef.Of(StatusKeys.Poison),
+                    SuppressMarker = StatusKeyRef.Of(StatusKeys.PoisonDormant)
+                }
+            }
+        };
+
+        public static CardSpec StableCulture()
+        {
+            var poison = PoisonApply(2);
+            poison.Selector = TargetSelectorRef.BackMost;
+            var stasis = new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.PoisonStasis), Value = 0,
+                Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.TargetEnemy,
+                Selector = TargetSelectorRef.BackMost
+            };
+            return new CardSpec
+            {
+                Id = "stable_culture", Name = "안정 배양", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
+                Effects = new EffectSpec[] { poison, stasis }
+            };
+        }
+
+        public static CardSpec PosthumousSpread()
+        {
+            var contagion = new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.Contagion), Value = 0,
+                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2,
+                Target = StatusApplyTarget.TargetEnemy
+            };
+            return new CardSpec
+            {
+                Id = "posthumous_spread", Name = "사후 전염", Side = Side.Player,
+                Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 2,
+                Effects = new EffectSpec[]
+                {
+                    new DamageSpec { Value = 1 },
+                    PoisonApply(1),
+                    contagion
+                }
+            };
+        }
     }
 }
