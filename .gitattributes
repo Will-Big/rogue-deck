@@ -40,3 +40,4 @@
 *.a         binary
 *.aseprite  binary
 *.ase       binary
+graphify-out/graph.json merge=graphify

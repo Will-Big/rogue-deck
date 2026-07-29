@@ -100,14 +100,24 @@ Tests/Headless/obj/
 
 # ============================================
 # Graphify knowledge graph (graphify-out/)
-# graph.json / GRAPH_REPORT.md / graph.html are committed for reuse across
-# sessions and worktrees; the .graphify_* intermediates hold machine-local
-# state (absolute interpreter paths etc.) and must stay untracked.
-# cache/ is the extraction cache: large and full of absolute paths, so it is
-# machine-local too and is rebuilt on demand.
+# graph.json / GRAPH_REPORT.md are committed so every worktree starts with the
+# map; the post-commit hook keeps them current in the main checkout, and the
+# registered merge driver union-merges graph.json so branches never conflict.
+#
+# Untracked, and why:
+#   .graphify_*    machine-local intermediates (absolute interpreter paths)
+#   cache/ast/     6.5MB, absolute paths, free to regenerate (AST, no LLM)
+#   graph.html     4.6MB, one command away: `graphify export html`
+#   cost.json      per-machine token tally, not shared state
+#
+# cache/semantic/ IS tracked on purpose: 1MB, fully repo-relative, and it is the
+# only artifact here that costs money to reproduce (2.28M tokens of doc/image
+# extraction). Committing it makes a full rebuild free for anyone who clones.
 # ============================================
 /graphify-out/.graphify_*
-/graphify-out/cache/
+/graphify-out/cache/ast/
+/graphify-out/graph.html
+/graphify-out/cost.json
 
 # ============================================
 # macOS Finder metadata

@@ -40,7 +40,7 @@
 ## 코드베이스 탐색 (graphify 지식 그래프)
 
 21. **코드베이스 질문은 graphify 그래프를 먼저 조회한다.** 이 저장소에는 코어·Unity 레이어·스펙·플랜을 한 그래프로 묶은
-    `graphify-out/`이 커밋되어 있다(3,875 노드 / 8,519 엣지 / 305 커뮤니티, 2026-07-29 기준).
+    `graphify-out/`이 커밋되어 있다. 규모와 갱신 시각은 `GRAPH_REPORT.md` 머리말에서 확인한다.
     - `graphify query "<질문>"` — 질문에 걸리는 부분 그래프. 넓은 맥락이 필요할 때의 기본 진입점.
     - `graphify path "<A>" "<B>"` — 두 개념 사이의 최단 경로. "이게 저기까지 어떻게 이어지지"에 쓴다.
     - `graphify explain "<개념>"` — 한 노드 중심의 설명.
@@ -48,17 +48,26 @@
     grep이나 파일 전수 읽기보다 먼저 쓴다. 반환되는 부분 그래프가 `GRAPH_REPORT.md` 전문이나 raw grep보다 훨씬 좁다.
     `GRAPH_REPORT.md`는 전체 아키텍처를 훑거나 위 세 명령으로 맥락이 부족할 때만 연다.
 
-22. **그래프 갱신은 master에서 머지 직후에만 커밋한다.** `graphify-out/graph.json`은 6MB 생성 파일이라
-    작업 브랜치마다 커밋하면 병렬 워크트리 머지에서 충돌이 난다. 그래서 **작업 브랜치·워크트리에서는
-    `graphify-out/`을 스테이징하지 않는다.** 머지(규칙 19)가 끝난 뒤 master에서 `graphify update .`를
-    한 번 돌려 `graph.json`·`GRAPH_REPORT.md`를 갱신 커밋한다. AST 재추출만 하므로 LLM을 쓰지 않고
-    API 비용도 없다.
+22. **코드 그래프 갱신은 post-commit 훅이 자동으로 한다.** `graphify hook install`로 설치되어 있다.
+    커밋할 때마다 변경된 코드 파일만 AST 재추출해 `graph.json`·`GRAPH_REPORT.md`를 갱신한다.
+    LLM을 쓰지 않아 비용이 없고, 백그라운드로 분리 실행되어 `git commit`은 즉시 반환한다
+    (로그: `~/.cache/graphify-rebuild.log`). 끄려면 `GRAPHIFY_SKIP_HOOK=1`.
 
-    작업 중 최신 구조가 필요하면 워크트리에서 `graphify update .`를 돌려 조회해도 되지만, 세션을 마치기 전
-    `git checkout -- graphify-out/`으로 되돌려 워킹 트리를 깨끗이 남긴다(규칙 18).
+    훅은 **메인 체크아웃에서만** 동작한다 — 링크된 워크트리에서는 스스로 빠진다
+    (`git-dir != git-common-dir`이면 즉시 종료). 그래서 워크트리 작업은 훅의 영향을 받지 않는다.
+    워크트리에서 최신 구조가 필요하면 직접 `graphify update .`를 돌린다. 커밋된 `manifest.json`이
+    상대 경로 기반이라 다른 워크트리·클론에서도 증분이 그대로 맞물린다 — 전체 리빌드가 필요 없다.
 
-    문서·이미지 변경은 AST로 잡히지 않는다. 스펙·플랜이 크게 바뀌었으면 시맨틱 재추출이 필요하므로
-    `/graphify --update`를 사용자에게 제안한다(서브에이전트를 쓰는 유료 경로다 — 임의로 돌리지 않는다).
+    브랜치에서 `graph.json`을 커밋해도 된다. `.gitattributes`에 등록된 union merge driver가
+    자동 병합하므로 충돌하지 않는다. 다만 union 병합은 양쪽 노드를 합치므로 **코드를 대량 삭제한 뒤에는**
+    `graphify update . --force`로 한 번 온전히 재빌드해 사라진 노드를 정리한다.
 
-23. **`graphify-out/cache/`는 커밋하지 않는다.** 절대 경로가 박힌 머신 로컬 캐시라 `.gitignore`에 있다.
-    캐시가 없는 새 워크트리에서도 커밋된 `manifest.json` 덕분에 `graphify update .`가 그대로 동작한다.
+23. **문서·스펙이 바뀌면 시맨틱 재추출을 사용자에게 제안한다.** 훅과 `graphify update .`는 코드(AST)만 본다.
+    문서·이미지는 `/graphify --update` 경로라야 반영되고, 이건 서브에이전트를 쓰는 **유료** 작업이다.
+    임의로 돌리지 말고 제안만 한다.
+
+24. **`graphify-out/cache/semantic/`은 커밋 대상이다.** 여기만 유료 산출물이다(문서·이미지 추출 2.28M 토큰).
+    저장소 상대 경로만 담고 있어 이식 가능하고, 이게 있으면 누가 클론하든 전체 재빌드가 무료가 된다.
+    반대로 `cache/ast/`·`graph.html`·`cost.json`은 무료로 재생성되거나 머신 로컬이라 `.gitignore`에 있다.
+    캐시 키에 graphify의 추출 프롬프트 해시가 들어가므로(`cache/semantic/p<해시>/`), graphify를 올려
+    프롬프트가 바뀌면 캐시가 무효화되고 재추출은 유료다.
