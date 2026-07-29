@@ -8,7 +8,7 @@ namespace FateWeaver.Simulation.Authoring
 {
     public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random, All }
 
-    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard }
+    public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard, NoFollowingPlayerCard, ConsumedStatusAtLeast }
 
     /// <summary>Closed condition combinator (백로그 §10): the kind enum + central switch stay by design.</summary>
     [Serializable]
@@ -17,6 +17,7 @@ namespace FateWeaver.Simulation.Authoring
         public ConditionKind Kind;
         public int N;
         public int SuccessEffectValue;
+        public bool SkipOnBasic;
 
         public Condition ToCondition()
         {
@@ -35,6 +36,10 @@ namespace FateWeaver.Simulation.Authoring
                     return new NoPrecedingCardOfSide(Side.Player);
                 case ConditionKind.NoFollowingEnemyCard:
                     return new NoFollowingCardOfSide(Side.Enemy);
+                case ConditionKind.NoFollowingPlayerCard:
+                    return new NoFollowingCardOfSide(Side.Player);
+                case ConditionKind.ConsumedStatusAtLeast:
+                    return new ConsumedStatusAtLeast(N);
                 default: return null;
             }
         }
@@ -66,13 +71,15 @@ namespace FateWeaver.Simulation.Authoring
                 : effect with
                 {
                     Condition = Condition.ToCondition(),
-                    SuccessEffectValue = Condition.SuccessEffectValue
+                    SuccessEffectValue = Condition.SuccessEffectValue,
+                    SkipOnBasic = Condition.SkipOnBasic
                 };
 
         protected string ConditionLiteral()
             => "Condition = new ConditionSpec { Kind = ConditionKind." + Condition.Kind
                 + ", N = " + Condition.N
-                + ", SuccessEffectValue = " + Condition.SuccessEffectValue + " }";
+                + ", SuccessEffectValue = " + Condition.SuccessEffectValue
+                + ", SkipOnBasic = " + (Condition.SkipOnBasic ? "true" : "false") + " }";
 
         protected static TargetSelector? ToSelector(TargetSelectorRef selector)
         {

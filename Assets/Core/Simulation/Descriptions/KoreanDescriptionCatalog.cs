@@ -47,6 +47,9 @@ namespace FateWeaver.Simulation.Descriptions
             effects.Register(new NullifyNextPlayerConditionRewardDescriptionHandler());
             effects.Register(new GrantNextPlayerDamageCardBonusDescriptionHandler());
             effects.Register(new MoveFormationDescriptionHandler());
+            effects.Register(new ConsumeStatusDescriptionHandler());
+            effects.Register(new TriggerStatusDescriptionHandler());
+            effects.Register(new GrantNextTurnFateDescriptionHandler());
 
             var interventions = new InterventionDescriptionRegistry();
             interventions.Register(new ChangeExecutionOrderDescriptionHandler());
