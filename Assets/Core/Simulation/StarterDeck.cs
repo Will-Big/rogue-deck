@@ -1,34 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation.Authoring;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>The 10-card starter deck (7 action : 3 fate). Card-specific executionOrder values plus
-    /// intervention actions and enemy executionOrder create the ordering puzzle.</summary>
+    /// <summary>The selected 10-card starter deck mapped from authoring specs.
+    /// Card-specific executionOrder values plus intervention actions and enemy executionOrder create the ordering puzzle.</summary>
     public static class StarterDeck
     {
         public const int DefaultExecutionOrder = 5;
 
         public static IReadOnlyList<CardDefinition> Build()
-        {
-            var cards = new List<CardDefinition>();
-            cards.Add(Slash());
-            cards.Add(Slash());
-            cards.Add(Guard());
-            cards.Add(Guard());
-            cards.Add(QuickCut());
-            cards.Add(Counter());
-            cards.Add(Cover());
-            cards.Add(PullForward());
-            cards.Add(PushBack());
-            cards.Add(SwapPositions());
-            return cards;
-        }
+            => StarterDeckSpecs.Build()
+                .Select(CardSpecMapper.ToDefinition)
+                .ToList();
 
         // --- execution cards ---------------------------------------------------
 

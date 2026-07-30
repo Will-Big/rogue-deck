@@ -6,14 +6,22 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Authoring
 {
-    /// <summary>The 10-card starter deck expressed as flat CardSpecs (mirrors the hand-coded StarterDeck,
-    /// which stays as the equivalence oracle). The SO/codegen path produces specs of this shape.</summary>
+    /// <summary>The selected 10-card starter deck expressed as flat CardSpecs.
+    /// The SO/codegen path produces specs of this shape.</summary>
     public static class StarterDeckSpecs
     {
         public static IReadOnlyList<CardSpec> Build() => new List<CardSpec>
         {
-            Slash(), Slash(), Guard(), Guard(), QuickCut(), Counter(), Cover(),
-            PullForward(), PushBack(), SwapPositions()
+            StarterPoolSpecs.ProbingStrike(),
+            StarterPoolSpecs.DelayedStrike(),
+            StarterPoolSpecs.QuickCover(),
+            StarterPoolSpecs.EarlyGuard(),
+            StarterPoolSpecs.Breather(),
+            StarterPoolSpecs.Hasten(),
+            StarterPoolSpecs.ToxicReclaim(),
+            StarterPoolSpecs.EarlyOnset(),
+            StarterPoolSpecs.SporeVeil(),
+            StarterPoolSpecs.LastDrop()
         };
 
         public static CardSpec Slash() => new CardSpec
