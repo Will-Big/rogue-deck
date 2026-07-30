@@ -51,6 +51,9 @@ namespace FateWeaver.Core.Status
         /// <summary>Entity-scoped: fold into damage the holder is about to RECEIVE.</summary>
         int ModifyIncomingDamage(int damage, StatusContext ctx);
 
+        /// <summary>Entity-scoped: fold into damage the holder is about to DEAL (e.g. weak).</summary>
+        int ModifyOutgoingDamage(int damage, StatusContext ctx);
+
         /// <summary>Card-scoped: return true to nullify/skip the card's resolution (e.g. stun).</summary>
         bool InterceptCardResolve(StatusContext ctx);
 
@@ -74,6 +77,7 @@ namespace FateWeaver.Core.Status
         public virtual bool StacksMagnitude => false;
         public virtual StatusDamageLayer DamageLayer => StatusDamageLayer.Multiplier;
         public virtual int ModifyIncomingDamage(int damage, StatusContext ctx) => damage;
+        public virtual int ModifyOutgoingDamage(int damage, StatusContext ctx) => damage;
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }

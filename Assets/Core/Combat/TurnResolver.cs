@@ -84,6 +84,7 @@ namespace FateWeaver.Core.Combat
                     State = state,
                     ResolutionContext = resolutionContext,
                     StatusRegistry = _statuses,
+                    ActorStatuses = CardActor.StatusesFor(state, card),
                     Effect = effect,
                     EffectValue = ResolveEffectValue(effect, tier)
                 };

@@ -23,7 +23,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var amount = ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus();
+            var amount = FoldOutgoing(ctx, ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus());
             if (ctx.Card.Def.Side == Side.Player)
             {
                 if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
@@ -138,5 +138,12 @@ namespace FateWeaver.Core.Effects
         /// actually changed the damage spends a charge (auto-consume).</summary>
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
             => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, ctx.State.StatusRules, damage);
+
+        /// <summary>Folds the acting side's entity-scoped statuses into the damage it deals (e.g.
+        /// Weak). Applied once per effect, before any target's incoming statuses — so an All-target
+        /// card reduces its damage once and every target is hit with the same reduced value.</summary>
+        private static int FoldOutgoing(EffectContext ctx, int damage)
+            => StatusDamageFold.Outgoing(
+                ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage);
     }
 }

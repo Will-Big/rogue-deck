@@ -6,11 +6,13 @@ namespace FateWeaver.Core.Status
     public static class StatusRuleCatalog
     {
         public const int VulnerableIncomingPercent = 150;
+        public const int WeakOutgoingPercent = 75;
 
         public static StatusRuleSet Default()
         {
             var rules = new StatusRuleSet();
             rules.Set(StatusKeys.Vulnerable, new StatusRule { MultiplierPercent = VulnerableIncomingPercent });
+            rules.Set(StatusKeys.Weak, new StatusRule { MultiplierPercent = WeakOutgoingPercent });
             return rules;
         }
     }

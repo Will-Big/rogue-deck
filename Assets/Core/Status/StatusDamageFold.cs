@@ -19,6 +19,39 @@ namespace FateWeaver.Core.Status
             return damage;
         }
 
+        /// <summary>행위자의 엔티티 스코프 상태를 접어 주는 피해를 계산한다. 흡수는 받는 쪽
+        /// 개념이므로 여기서는 배율 층만 접는다.</summary>
+        public static int Outgoing(StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage)
+        {
+            if (registry == null || bag == null)
+            {
+                return damage;
+            }
+
+            // Snapshot: consuming may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (!registry.TryResolve(status.Key, out var behavior)
+                    || behavior.DamageLayer != StatusDamageLayer.Multiplier)
+                {
+                    continue;
+                }
+
+                var after = behavior.ModifyOutgoingDamage(
+                    damage,
+                    new StatusContext { Instance = status, Rules = rules });
+                if (after != damage)
+                {
+                    bag.Consume(status);
+                }
+
+                damage = after;
+            }
+
+            return damage;
+        }
+
         private static int FoldLayer(
             StatusBag bag,
             StatusRegistry registry,

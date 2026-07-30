@@ -46,7 +46,8 @@ namespace FateWeaver.Tests
                 StatusKeys.RewardNullified,
                 StatusKeys.Slow,
                 StatusKeys.Stun,
-                StatusKeys.Vulnerable
+                StatusKeys.Vulnerable,
+                StatusKeys.Weak
             }));
         }
 
