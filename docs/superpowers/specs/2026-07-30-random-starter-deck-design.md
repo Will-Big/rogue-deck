@@ -50,6 +50,48 @@
 
 고정 시드 기반 재추첨이나 런타임 무작위 덱 구성은 이번 범위에 포함하지 않는다.
 
+승인된 1회 추첨 기록은 다음과 같다. 각 역할에서 키를 오름차순으로 정렬하고 앞의 2/2/2/4장을 선택했다.
+
+| 역할 | 무작위 키 | 카드 ID | 선택 |
+|---|---|---|---|
+| 공격 | `2dbc79f3152c0ed007ef5efc18bb47d6` | `probing_strike` | 예 |
+| 공격 | `2e982e12d5c2bebc739ce7d6edad677a` | `delayed_strike` | 예 |
+| 공격 | `4aa0e3b19709f57d8199e8ef7d69cc2d` | `riposte` | 아니오 |
+| 공격 | `734b834f12e737d61f6415a88e6fc6ea` | `vanguard_slash` | 아니오 |
+| 방어 | `478fd58074130b003096ce93daab7605` | `quick_cover` | 예 |
+| 방어 | `53177139463d9467ef4d28cd257601e9` | `early_guard` | 예 |
+| 방어 | `daed39524a8f73366e8a534fa6230f22` | `parry_strike` | 아니오 |
+| 방어 | `fe1413e30c599d58b539d96c403730a9` | `foresight` | 아니오 |
+| 조작 | `2de87e7f2f2cff12d3495dadfdc15ee7` | `breather` | 예 |
+| 조작 | `36bbb8ac4104fb71438428e647ed9293` | `hasten` | 예 |
+| 조작 | `968f785375eb633b7f272a284a402d8b` | `crossover` | 아니오 |
+| 조작 | `ff08c04aa7eb546dfd68592897ead2f8` | `delay` | 아니오 |
+| 독 | `0698a911914f05e45e1f4a356267a953` | `toxic_reclaim` | 예 |
+| 독 | `2d0f68d50354daac58fcd2d12f846ae7` | `early_onset` | 예 |
+| 독 | `4579d5c704ebf728b7abed933badbde9` | `spore_veil` | 예 |
+| 독 | `872caaef5462c11582a1e5fab6604a78` | `last_drop` | 예 |
+| 독 | `8f3130b05c109f5e069d6540d345491c` | `stable_culture` | 아니오 |
+| 독 | `95c42dbd8b58126af69afae216a4f250` | `condensed_burst` | 아니오 |
+| 독 | `aa064f8fbf38f1eb0c46feb480a9dba9` | `venom_thrust` | 아니오 |
+| 독 | `ceac563bde871c7356d693fefd27ad6e` | `spread_culture` | 아니오 |
+| 독 | `d0e81489db22570bb635b70c75352ecb` | `distill` | 아니오 |
+| 독 | `d5712f5a2f3088b323369c2ffebdebe5` | `posthumous_spread` | 아니오 |
+
+덱에는 선택 행을 역할 순서로 고정한다.
+
+```text
+probing_strike
+delayed_strike
+quick_cover
+early_guard
+breather
+hasten
+toxic_reclaim
+early_onset
+spore_veil
+last_drop
+```
+
 ## 4. 에셋 변경
 
 현재 메인 Unity 체크아웃에는 시더가 생성한 다음 미커밋 콘텐츠가 있다.

@@ -14,19 +14,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.DeckAsset
   Id: starter
   Entries:
-  - Card: {fileID: 11400000, guid: 40cf285a465a52c4888e543d02bfc6a3, type: 2}
-    Count: 2
-  - Card: {fileID: 11400000, guid: 41ac26a2dd8d535479f93723241f2422, type: 2}
-    Count: 2
-  - Card: {fileID: 11400000, guid: 17bb3b7b4aa7041418fe3e5cadce0c0c, type: 2}
+  - Card: {fileID: 11400000, guid: 1648cb66e617c46b3af8d8b4a3df8e48, type: 2}
     Count: 1
-  - Card: {fileID: 11400000, guid: 9c8f5fcf5c586f2449cf0e8c1b5e9a27, type: 2}
+  - Card: {fileID: 11400000, guid: bc4af7ec1db1b4718a6d1fea385bac8f, type: 2}
     Count: 1
-  - Card: {fileID: 11400000, guid: 3dd80a784b326474093df11d283f8149, type: 2}
+  - Card: {fileID: 11400000, guid: 83e583e3340fe41899849253e3a4f7ea, type: 2}
     Count: 1
-  - Card: {fileID: 11400000, guid: 4c91cdaa649006e40b611fe344d1d3de, type: 2}
+  - Card: {fileID: 11400000, guid: a685cc5fad4dc4b9a89081c92b0ce6a5, type: 2}
     Count: 1
-  - Card: {fileID: 11400000, guid: 421ff64acf8d05d42a73d6f8750a2239, type: 2}
+  - Card: {fileID: 11400000, guid: a4405b5075938443eb66b5fce4e647ef, type: 2}
     Count: 1
-  - Card: {fileID: 11400000, guid: 5c036736ae4cc4647bab5405c8a00510, type: 2}
+  - Card: {fileID: 11400000, guid: 2fd0a870fde6b4c708ab4b66b5b95d6a, type: 2}
+    Count: 1
+  - Card: {fileID: 11400000, guid: c97e0e4e9e1f94900adf4c154153086d, type: 2}
+    Count: 1
+  - Card: {fileID: 11400000, guid: fb91223f507d4452eaa8f8f43024de5c, type: 2}
+    Count: 1
+  - Card: {fileID: 11400000, guid: 03b33173ab0614d5ebe10b260cf236b5, type: 2}
+    Count: 1
+  - Card: {fileID: 11400000, guid: eb92aa4928626402c9181114e4349844, type: 2}
     Count: 1

@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8d4f6e05806b3d46ac625bc1dacfdaa, type: 3}
+  m_Name: venom_thrust
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardAsset
+  Id: venom_thrust
+  DisplayName: "\uB9F9\uB3C5 \uCC0C\uB974\uAE30"
+  Side: 0
+  Category: 0
+  EnergyCost: 1
+  BaseExecutionOrder: 4
+  Art: {fileID: 0}
+  Description: 
+  Effects:
+  - rid: 9096977252664737802
+  - rid: 9096977252664737803
+  Intervention:
+    Id: 
+  InterventionEffectValue: 0
+  _interventionTargetSide: 0
+  _interventionRequireAdjacent: 0
+  _grade: 1
+  _tags:
+  - "\uC2DC\uC791"
+  - "\uB3C5"
+  - "\uC131\uC7A5\uD615"
+  references:
+    version: 2
+    RefIds:
+    - rid: 9096977252664737802
+      type: {class: DamageSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+          SkipOnBasic: 0
+        Value: 2
+        Selector: 1
+    - rid: 9096977252664737803
+      type: {class: ApplyStatusSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+          SkipOnBasic: 0
+        Status:
+          Id: poison
+        Value: 1
+        Lifetime: 0
+        LifetimeCount: 0
+        Target: 1
+        Selector: 1
