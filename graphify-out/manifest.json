@@ -1350,9 +1350,9 @@
     "semantic_hash": "961f7fad292db0bcdb46f4af3ad01e78"
   },
   "Tools/card-idea-notebook/index.test.mjs": {
-    "mtime": 1785306430.2736163,
-    "ast_hash": "0906faa2ab69cb1d8e7f4d1b28a77163",
-    "semantic_hash": "0906faa2ab69cb1d8e7f4d1b28a77163"
+    "mtime": 1785386326.273067,
+    "ast_hash": "8d03529f56498e8235959e8cca9beb88",
+    "semantic_hash": ""
   },
   "AGENTS.md": {
     "mtime": 1785326897.881978,
@@ -1415,9 +1415,9 @@
     "semantic_hash": "f3a719548338b19ea47d448fea5e9e68"
   },
   "Tools/card-idea-notebook/index.html": {
-    "mtime": 1785306430.2730844,
-    "ast_hash": "84d6092064be029b3983aede6b186af4",
-    "semantic_hash": "84d6092064be029b3983aede6b186af4"
+    "mtime": 1785386326.2726057,
+    "ast_hash": "f687618d672c06dbac63ab08451f1438",
+    "semantic_hash": ""
   },
   "Tools/card-idea-notebook/\uc2dc\uc791 \uce74\ub4dc \ud480.md": {
     "mtime": 1785307752.160964,
@@ -1830,9 +1830,9 @@
     "semantic_hash": "77c10c82de4e2a185f05c4f9f7ff8861"
   },
   "docs/superpowers/specs/2026-07-27-card-idea-notebook-design.md": {
-    "mtime": 1785306430.2763193,
-    "ast_hash": "e138a7af72259a9477e5594573d485cb",
-    "semantic_hash": "e138a7af72259a9477e5594573d485cb"
+    "mtime": 1785386326.2736554,
+    "ast_hash": "fbbbd8c46ecde05e77e6e5622d40ff7a",
+    "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md": {
     "mtime": 1785224755.7240868,
@@ -2037,6 +2037,11 @@
   "docs/superpowers/specs/2026-07-29-starter-pool-so-authoring-design.md": {
     "mtime": 1785348034.5909007,
     "ast_hash": "424da8794fbd87e93fec4f78735eddc5",
+    "semantic_hash": ""
+  },
+  "Tools/card-idea-notebook/\u110c\u1165\u11a8 \u1110\u1161\u110b\u1175\u11b8 A.md": {
+    "mtime": 1785385916.128668,
+    "ast_hash": "90a25187539e404d6a490daceca5bb8a",
     "semantic_hash": ""
   }
 }
