@@ -7,21 +7,22 @@ namespace FateWeaver.Core.Status
     /// 자리에서 수명을 1 소비한다.</summary>
     public static class StatusDamageFold
     {
-        public static int Incoming(StatusBag bag, StatusRegistry registry, int damage)
+        public static int Incoming(StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage)
         {
             if (registry == null || bag == null)
             {
                 return damage;
             }
 
-            damage = FoldLayer(bag, registry, damage, StatusDamageLayer.Multiplier);
-            damage = FoldLayer(bag, registry, damage, StatusDamageLayer.Absorb);
+            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Multiplier);
+            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Absorb);
             return damage;
         }
 
         private static int FoldLayer(
             StatusBag bag,
             StatusRegistry registry,
+            StatusRuleSet rules,
             int damage,
             StatusDamageLayer layer)
         {
@@ -35,7 +36,9 @@ namespace FateWeaver.Core.Status
                     continue;
                 }
 
-                var after = behavior.ModifyIncomingDamage(damage, new StatusContext { Instance = status });
+                var after = behavior.ModifyIncomingDamage(
+                    damage,
+                    new StatusContext { Instance = status, Rules = rules });
                 if (after != damage)
                 {
                     bag.Consume(status);

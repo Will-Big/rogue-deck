@@ -169,5 +169,50 @@ namespace FateWeaver.Tests
             Assert.AreEqual(10, ((CardResolved)events[1]).DamageDealt);
             Assert.AreEqual(20, enemy.Hp);
         }
+
+        [Test]
+        public void Vulnerable_multiplier_comes_from_the_combat_status_rules()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            state.StatusRules.Set(StatusKeys.Vulnerable, new StatusRule { MultiplierPercent = 200 });
+            var enemy = new Enemy("goblin", 30);
+            enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
+            state.Enemies.Add(enemy);
+            state.Zone.Add(Card("strike", Side.Player, 1, 4));
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(8, ((CardResolved)events[1]).DamageDealt); // 4 x 2.00
+        }
+
+        [Test]
+        public void Vulnerable_multiplier_defaults_to_one_hundred_fifty_percent()
+        {
+            var rules = StatusRuleCatalog.Default();
+            Assert.AreEqual(150, rules.For(StatusKeys.Vulnerable).MultiplierPercent);
+        }
+
+        [Test]
+        public void Unregistered_status_rule_is_a_neutral_multiplier()
+        {
+            var rules = StatusRuleCatalog.Default();
+            Assert.AreEqual(100, rules.For(new StatusKey("no_such_status")).MultiplierPercent);
+        }
+
+        [Test]
+        public void Vulnerable_multiplier_floors_odd_damage()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 30);
+            enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
+            state.Enemies.Add(enemy);
+            state.Zone.Add(Card("strike", Side.Player, 1, 5));
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(7, ((CardResolved)events[1]).DamageDealt); // floor(5 x 1.5) = 7
+        }
     }
 }

@@ -137,6 +137,6 @@ namespace FateWeaver.Core.Effects
         /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
         /// actually changed the damage spends a charge (auto-consume).</summary>
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
-            => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, damage);
+            => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, ctx.State.StatusRules, damage);
     }
 }

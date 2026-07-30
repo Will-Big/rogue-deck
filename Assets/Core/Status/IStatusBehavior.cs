@@ -8,6 +8,9 @@ namespace FateWeaver.Core.Status
     public sealed class StatusContext
     {
         public StatusInstance Instance;
+
+        /// <summary>이 전투의 상태 규칙 (배율). 훅에서 튜닝 수치를 읽는 유일한 경로다.</summary>
+        public StatusRuleSet Rules;
     }
 
     /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 직접 피해를 주는 배선(파티원은

@@ -46,7 +46,7 @@ namespace FateWeaver.Core.Combat
         {
             // Step 6 (part 1): a cancellation reason recorded before this card's turn to resolve
             // (OwnerDied from an earlier card's death sweep this same turn) skips effects entirely.
-            if (card.CancellationReason == null && IsInterceptedByStatus(card))
+            if (card.CancellationReason == null && IsInterceptedByStatus(state, card))
             {
                 card.CancellationReason = CardCancellationReason.StatusIntercepted;
             }
@@ -239,7 +239,7 @@ namespace FateWeaver.Core.Combat
             }
         }
 
-        private bool IsInterceptedByStatus(ExecutionCardInstance card)
+        private bool IsInterceptedByStatus(CombatState state, ExecutionCardInstance card)
         {
             if (_statuses == null)
             {
@@ -252,7 +252,8 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior)
                     && behavior.Scope == StatusScope.CardInstance
-                    && behavior.InterceptCardResolve(new StatusContext { Instance = status }))
+                    && behavior.InterceptCardResolve(
+                        new StatusContext { Instance = status, Rules = state.StatusRules }))
                 {
                     card.Statuses.Consume(status);
                     return true;
