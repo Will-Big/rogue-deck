@@ -641,6 +641,46 @@ test("normalizes Markdown download names and permits an empty name", () => {
   );
 });
 
+test("builds save picker options from the export name", () => {
+  const core = loadCore();
+  const options = core.saveFilePickerOptions(" 독 카드풀 ", "2026-07-28");
+
+  assert.equal(options.suggestedName, "독 카드풀.md");
+  assert.equal(options.id, core.SAVE_PICKER_ID);
+  assert.equal(options.types.length, 1);
+  assert.equal(options.types[0].description, "Markdown 파일");
+  assert.deepEqual(Object.keys(options.types[0].accept), ["text/markdown"]);
+  assert.deepEqual([...options.types[0].accept["text/markdown"]], [".md"]);
+  assert.equal(
+    core.saveFilePickerOptions("", "2026-07-28").suggestedName,
+    "fate-weaver-card-ideas-2026-07-28.md",
+  );
+});
+
+test("keeps the save picker id within the browser limit", () => {
+  const core = loadCore();
+
+  assert.match(core.SAVE_PICKER_ID, /^[A-Za-z0-9_-]{1,32}$/);
+});
+
+test("treats only a cancelled picker as a silent abort", () => {
+  const core = loadCore();
+
+  assert.equal(core.isPickerCancel({ name: "AbortError" }), true);
+  assert.equal(core.isPickerCancel(new Error("boom")), false);
+  assert.equal(core.isPickerCancel({ name: "SecurityError" }), false);
+  assert.equal(core.isPickerCancel(undefined), false);
+});
+
+test("detects save picker support without assuming a browser", () => {
+  const core = loadCore();
+
+  assert.equal(core.supportsSavePicker({ showSaveFilePicker: () => {} }), true);
+  assert.equal(core.supportsSavePicker({ showSaveFilePicker: "nope" }), false);
+  assert.equal(core.supportsSavePicker({}), false);
+  assert.equal(core.supportsSavePicker(undefined), false);
+});
+
 test("accepts only Markdown file names for import", () => {
   const core = loadCore();
   assert.equal(core.isMarkdownFileName("카드풀.md"), true);
