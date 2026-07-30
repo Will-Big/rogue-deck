@@ -1,0 +1,52 @@
+Copyright (c) 2026 Sanghak Im. All rights reserved.
+
+This repository contains the source code, assets, and documentation of
+Rogue-deck (working title), a commercial game project under development.
+
+The contents of this repository are made publicly viewable for reference
+purposes only. No license is granted, express or implied, to any person or
+organization to use, copy, modify, merge, publish, distribute, sublicense,
+sell, or create derivative works from any part of this work.
+
+Reading and viewing the source code is permitted. Any other use requires
+prior written permission from the copyright holder.
+
+For permission requests, contact: im.willbig@gmail.com
+
+Third-party components included in this repository remain subject to their
+own respective licenses.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+---
+
+한국어 참고 번역 (편의를 위한 번역이며, 해석상 차이가 있을 경우 위 영문이 우선합니다.)
+
+저작권 (c) 2026 임상학. 모든 권리 보유.
+
+이 저장소는 개발 중인 상업용 게임 프로젝트 Rogue-deck(가제)의 소스 코드,
+에셋, 문서를 담고 있습니다.
+
+이 저장소의 내용은 열람 목적으로만 공개됩니다. 저작권자는 어떠한 개인이나
+단체에게도 이 저작물의 일부를 사용, 복제, 수정, 병합, 게시, 배포, 재실시,
+판매하거나 이를 기반으로 2차적 저작물을 작성할 권리를 명시적으로든
+묵시적으로든 부여하지 않습니다.
+
+소스 코드의 열람은 허용됩니다. 그 밖의 모든 이용에는 저작권자의 사전 서면
+동의가 필요합니다.
+
+이용 문의: im.willbig@gmail.com
+
+이 저장소에 포함된 제3자 구성 요소는 각각의 라이선스를 따릅니다.
+
+이 소프트웨어는 상품성, 특정 목적 적합성, 비침해에 대한 보증을 포함하여
+명시적이든 묵시적이든 어떠한 종류의 보증 없이 "있는 그대로" 제공됩니다.
+저작자 또는 저작권자는 계약, 불법행위 또는 그 밖의 사유로 이 소프트웨어나
+그 사용과 관련하여 발생하는 어떠한 청구, 손해 또는 책임에 대해서도 책임을
+지지 않습니다.
