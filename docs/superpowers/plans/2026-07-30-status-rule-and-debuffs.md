@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-07-30
-- 상태: `active`
+- 상태: `active` — Task 1~4 구현 완료(409 tests 통과), Unity 표시 확인과 count 단일화가 남았다
 - 브랜치: `claude/brave-nash-3974c5`
 
 **Goal:** 약화(주는 피해 −25%), 취약(받는 피해 +50%), 손상(방어도 획득 −25%)을 추가하고, 세 배율을

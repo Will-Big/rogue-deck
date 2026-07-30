@@ -333,9 +333,11 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 모두 `IStatusBehavior`를 경유한다. `ModifyConditionTier` 훅을 추가하면 이 특수 분기와 빈 클래스가 함께
 사라진다.
 
-**`VulnerableBehavior` 하드코딩.** `(damage * 3) / 2`로 50%를 고정하고 자신의 `Magnitude`를 무시한다.
-형제 상태 넷(`Block`, `Slow`, `Haste`)은 모두 `Magnitude`를 읽는다. 규칙 8 위반이고 "취약 2"를 표현할 수
-없다.
+**`VulnerableBehavior` 하드코딩.** ~~`(damage * 3) / 2`로 50%를 고정하고 자신의 `Magnitude`를
+무시한다.~~ **2026-07-30 해소** — 배율이 `StatusRule.MultiplierPercent`로 이동해
+`CombatState.StatusRules`에서 런타임 조절이 가능하고, 기본값은 `StatusRuleCatalog`에 모였다.
+`Magnitude`를 세기로 쓰지 않는 것은 의도된 설계다: 취약의 count는 남은 턴이며 중첩은 지속을
+늘릴 뿐 배율을 키우지 않는다("취약 2" = 2턴). 강도와 지속은 서로 다른 축이다.
 
 **비용 이중 원본.** `CardDefinition.EnergyCost`와 `InterventionActionData.InterventionCost`가 별개
 필드이고, 개입 플레이 경로는 전자를 아예 읽지 않는다. 현재는 `CardSpecMapper`가 둘 다 같은 값으로
@@ -379,7 +381,8 @@ fallback 정책을 복사해 재구현하게 된다.
 **방어와 취약의 적용 순서가 걸린 순서에 좌우된다.** `DamageHandler.FoldIncoming`이 대상의 상태를
 `bag.All` 삽입 순서대로 한 루프에서 접으므로, 방어가 취약보다 먼저 걸려 있으면 방어가 먼저 흡수하고
 남은 값에 취약이 곱해진다. 확정된 규칙은 "취약을 먼저 곱하고 방어는 추가 체력처럼 마지막에 흡수"다.
-[상태 규칙 파라미터화와 3종 디버프](2026-07-30-status-rule-and-debuffs.md) Task 1이 이 항목을 다룬다.
+**2026-07-30 해소** — `StatusDamageLayer`로 층을 선언하고 `StatusDamageFold`가 배율 층을 모두 접은
+뒤 흡수 층을 적용한다. 걸린 순서와 무관하게 같은 결과가 나온다.
 
 **상태 수명이 저작 시점에 고정된다.** `StatusLifetime`은 적용마다 4종(`Permanent`/`ThisTurn`/
 `Turns`/`UntilConsumed`) 중 하나를 고르는 구조라, "방어를 이 런 동안 영구로", "독을 이번 턴만으로"
