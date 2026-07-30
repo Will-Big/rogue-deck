@@ -47,46 +47,18 @@ namespace FateWeaver.Tests
 
         // --- goldens (sorted; captured from the current code, verbatim) -----------------
 
-        private static readonly string[] GoldenStarterDeckHandCoded =
+        private static readonly string[] GoldenStarterDeck =
         {
-            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
-            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
-        };
-
-        private static readonly string[] GoldenStarterDeckSpecs =
-        {
-            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
-            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
-        };
-
-        private static readonly string[] GoldenGeneratedStarterDeck =
-        {
-            "counter_stance;반격;Player;Execution;2;7;-;damage,4,PreviousExecutedCardHasEffect { Side = Enemy, EffectKey = damage },9,-,-",
-            "cover;엄호;Player;Execution;1;5;-;apply_status,2,AdjacentCardHasEffect { Direction = Next, Side = Enemy, EffectKey = damage },7,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "guard;막기;Player;Execution;1;5;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
-            "pull_forward;앞당김;Player;Intervention;1;0;change_execution_order:1:-1;",
-            "push_back;밀어내기;Player;Intervention;1;0;change_execution_order:1:1;",
-            "quick_cut;찰나의 베기;Player;Execution;1;5;-;damage,2,FirstToTrigger { },8,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "slash;베기;Player;Execution;1;4;-;damage,4,-,-,-,-",
-            "swap_positions;자리 교환;Player;Intervention;1;0;swap_execution_order:1:0;"
+            "breather;숨 고르기;Player;Intervention;1;0;change_execution_order:1:1;",
+            "delayed_strike;늦춘 일격;Player;Execution;1;5;-;damage,5,-,-,FrontMost,-",
+            "early_guard;앞선 대비;Player;Execution;1;4;-;apply_status,4,-,-,-,block/ThisTurn:0/Self",
+            "early_onset;조기 발병;Player;Execution;2;3;-;apply_status,1,-,-,FrontMost,poison/Permanent:0/TargetEnemy|trigger_status,0,-,-,FrontMost,-",
+            "hasten;재촉;Player;Intervention;1;0;change_execution_order:1:-1;",
+            "last_drop;마지막 한 방울;Player;Execution;1;7;-;apply_status,1,NoFollowingCardOfSide { Side = Player },2,FrontMost,poison/Permanent:0/TargetEnemy",
+            "probing_strike;견제타;Player;Execution;1;4;-;damage,4,-,-,FrontMost,-|apply_status,1,-,-,-,block/ThisTurn:0/Self",
+            "quick_cover;빠른 엄호;Player;Execution;1;4;-;apply_status,4,-,-,FrontMost,block/ThisTurn:0/PartyBySelector",
+            "spore_veil;포자막;Player;Execution;1;5;-;apply_status,1,-,-,FrontMost,poison/Permanent:0/TargetEnemy|apply_status,2,-,-,-,block/ThisTurn:0/Self",
+            "toxic_reclaim;독성 환원;Player;Execution;1;5;-;consume_status,0,-,-,FrontMost,-|apply_status,1,-,-,FrontMost,poison/Permanent:0/TargetEnemy|apply_status,4,ConsumedStatusAtLeast { N = 1 },4,-,block/ThisTurn:0/Self"
         };
 
         private static readonly string[] GoldenPartyPrototypeHandCoded =
@@ -113,18 +85,18 @@ namespace FateWeaver.Tests
 
         [Test]
         public void Handcoded_starter_deck_matches_golden()
-            => CollectionAssert.AreEqual(GoldenStarterDeckHandCoded, Sigs(StarterDeck.Build()));
+            => CollectionAssert.AreEqual(GoldenStarterDeck, Sigs(StarterDeck.Build()));
 
         [Test]
         public void Starter_specs_match_golden()
             => CollectionAssert.AreEqual(
-                GoldenStarterDeckSpecs,
+                GoldenStarterDeck,
                 Sigs(StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
 
         [Test]
         public void Generated_starter_deck_matches_golden()
             => CollectionAssert.AreEqual(
-                GoldenGeneratedStarterDeck,
+                GoldenStarterDeck,
                 Sigs(GeneratedCards.StarterDeck().Select(CardSpecMapper.ToDefinition)));
 
         [Test]

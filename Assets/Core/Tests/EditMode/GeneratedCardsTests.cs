@@ -1,6 +1,5 @@
 using System.Linq;
 using NUnit.Framework;
-using FateWeaver.Simulation.Authoring;
 using FateWeaver.Simulation.Generated;
 
 namespace FateWeaver.Tests
@@ -8,19 +7,20 @@ namespace FateWeaver.Tests
     public class GeneratedCardsTests
     {
         [Test]
-        public void Generated_starter_deck_matches_updated_slash_and_counter_specs()
+        public void Generated_snapshots_have_the_fixed_deck_and_complete_pool()
         {
-            var cards = GeneratedCards.StarterDeck();
-            var slash = cards.First(c => c.Id == "slash");
-            var counter = cards.First(c => c.Id == "counter_stance");
-
-            Assert.AreEqual(4, slash.BaseExecutionOrder);
-            Assert.AreEqual(4, slash.Effects.Single().ToEffectData().EffectValue);
-            Assert.AreEqual("반격", counter.Name);
-            Assert.AreEqual(7, counter.BaseExecutionOrder);
-            Assert.AreEqual(4, counter.Effects.Single().ToEffectData().EffectValue);
-            Assert.AreEqual(ConditionKind.PrevExecutedIsEnemyDamageCard, counter.Effects.Single().Condition.Kind);
-            Assert.AreEqual(9, counter.Effects.Single().ToEffectData().SuccessEffectValue);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "probing_strike", "delayed_strike", "quick_cover", "early_guard",
+                    "breather", "hasten", "toxic_reclaim", "early_onset",
+                    "spore_veil", "last_drop"
+                },
+                GeneratedCards.StarterDeck().Select(card => card.Id).ToArray());
+            Assert.AreEqual(22, GeneratedCards.StarterPool().Count);
+            Assert.AreEqual(
+                22,
+                GeneratedCards.StarterPool().Select(card => card.Id).Distinct().Count());
         }
     }
 }
