@@ -22,6 +22,7 @@ namespace FateWeaver.Tests
             r.Register(new StunBehavior());
             r.Register(new VulnerableBehavior());
             r.Register(new RewardSuppressionBehavior());
+            r.Register(new BlockBehavior());
             return r;
         }
 
@@ -131,6 +132,42 @@ namespace FateWeaver.Tests
             var events = new TurnResolver(Effects()).Resolve(state, 0); // no StatusRegistry
             Assert.AreEqual(4, ((CardResolved)events[1]).DamageDealt);
             Assert.AreEqual(16, enemy.Hp);
+        }
+
+        [Test]
+        public void Vulnerable_multiplies_before_block_absorbs_when_block_applied_first()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 30);
+            enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, 5);   // 방어가 먼저
+            enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
+            state.Enemies.Add(enemy);
+            state.Zone.Add(Card("strike", Side.Player, 1, 10));
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            // 10 x 1.5 = 15, 그 다음 방어 5가 흡수 -> 10
+            Assert.AreEqual(10, ((CardResolved)events[1]).DamageDealt);
+            Assert.AreEqual(20, enemy.Hp);
+            Assert.IsFalse(enemy.Statuses.Has(StatusKeys.Block)); // ThisTurn 방어는 턴 끝에 사라진다
+        }
+
+        [Test]
+        public void Vulnerable_and_block_result_is_independent_of_apply_order()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 30);
+            enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2)); // 취약이 먼저
+            enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, 5);
+            state.Enemies.Add(enemy);
+            state.Zone.Add(Card("strike", Side.Player, 1, 10));
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(10, ((CardResolved)events[1]).DamageDealt);
+            Assert.AreEqual(20, enemy.Hp);
         }
     }
 }

@@ -19,7 +19,7 @@
 ## Global Constraints
 
 - 헤드리스 테스트 명령: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-- 착수 시점 기준선: 397 tests, 0 failed
+- 착수 시점 기준선: 395 tests, 0 failed
 - `FateWeaver.Core`에서 `UnityEngine`을 참조하지 않는다 (AGENTS.md 규칙 6)
 - 모든 무작위는 `CombatState`의 시드 RNG를 경유한다. `System.Random` 즉석 생성·`DateTime`·`Guid.NewGuid()` 금지 (규칙 7)
 - 튜닝 수치를 계산식에 박지 않는다. 명명된 프로퍼티나 데이터로 둔다 (규칙 8)
@@ -152,7 +152,7 @@
             // 10 x 1.5 = 15, 그 다음 방어 5가 흡수 -> 10
             Assert.AreEqual(10, ((CardResolved)events[1]).DamageDealt);
             Assert.AreEqual(20, enemy.Hp);
-            Assert.AreEqual(0, enemy.Statuses.Get(StatusKeys.Block).Magnitude);
+            Assert.IsFalse(enemy.Statuses.Has(StatusKeys.Block)); // ThisTurn 방어는 턴 끝에 사라진다
         }
 
         [Test]
@@ -297,7 +297,7 @@ namespace FateWeaver.Core.Status
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
-Expected: `Failed: 0`, 총 399 tests (기준선 397 + 신규 2).
+Expected: `Failed: 0`, 총 397 tests (기준선 395 + 신규 2).
 
 - [ ] **Step 9: 커밋**
 
@@ -654,7 +654,7 @@ namespace FateWeaver.Core.Status
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
-Expected: `Failed: 0`, 총 403 tests (399 + 신규 4).
+Expected: `Failed: 0`, 총 401 tests (397 + 신규 4).
 
 - [ ] **Step 11: 커밋**
 
@@ -1058,7 +1058,7 @@ namespace FateWeaver.Core.Combat
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
-Expected: `Failed: 0`, 총 408 tests (403 + 신규 5).
+Expected: `Failed: 0`, 총 406 tests (401 + 신규 5).
 
 - [ ] **Step 13: 커밋**
 
@@ -1104,13 +1104,15 @@ git commit -m "feat: add weak status reducing outgoing damage"
 같은 파일에 헬퍼와 테스트를 추가한다.
 
 ```csharp
+        // 방어를 Turns(2)로 거는 것은 저작 관례가 아니라 테스트 편의다. ThisTurn으로 걸면
+        // 턴 종료 정리가 인스턴스를 지워 Magnitude를 조회할 수 없다.
         private static ExecutionCardInstance PlayerGuard(string id, int block)
         {
             var def = new CardDefinition(id, id, Side.Player, 1,
                 new[]
                 {
                     EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, block)
+                        StatusKeys.Block, StatusLifetime.Turns(2), StatusApplyTarget.Self, block)
                 });
             return new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId };
         }
@@ -1339,7 +1341,7 @@ namespace FateWeaver.Core.Status
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
-Expected: `Failed: 0`, 총 411 tests (408 + 신규 3).
+Expected: `Failed: 0`, 총 409 tests (406 + 신규 3).
 
 - [ ] **Step 10: 커밋**
 
@@ -1372,7 +1374,7 @@ git commit -m "feat: add damaged status reducing block gain"
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
-Expected: `Failed: 0`, 411 tests
+Expected: `Failed: 0`, 409 tests
 
 - [ ] **Step 4: 워킹 트리를 확인하고 커밋한다**
 

@@ -42,6 +42,9 @@ namespace FateWeaver.Core.Status
         /// <summary>재부여 시 수치를 교체하지 않고 합산할지 (방어·독 = true; §3.1/§3.2).</summary>
         bool StacksMagnitude { get; }
 
+        /// <summary>피해 계산에서 이 상태가 접히는 단계 (방어만 흡수 층).</summary>
+        StatusDamageLayer DamageLayer { get; }
+
         /// <summary>Entity-scoped: fold into damage the holder is about to RECEIVE.</summary>
         int ModifyIncomingDamage(int damage, StatusContext ctx);
 
@@ -66,6 +69,7 @@ namespace FateWeaver.Core.Status
         public abstract StatusScope Scope { get; }
 
         public virtual bool StacksMagnitude => false;
+        public virtual StatusDamageLayer DamageLayer => StatusDamageLayer.Multiplier;
         public virtual int ModifyIncomingDamage(int damage, StatusContext ctx) => damage;
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;

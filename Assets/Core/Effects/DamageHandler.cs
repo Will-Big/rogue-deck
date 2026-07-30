@@ -133,32 +133,10 @@ namespace FateWeaver.Core.Effects
             return living;
         }
 
-        /// <summary>Folds the target's entity-scoped statuses into incoming damage. An UntilConsumed
-        /// status that actually changed the damage spends a charge (auto-consume).</summary>
+        /// <summary>Folds the target's entity-scoped statuses into incoming damage: the multiplier
+        /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
+        /// actually changed the damage spends a charge (auto-consume).</summary>
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
-        {
-            if (ctx.StatusRegistry == null || bag == null)
-            {
-                return damage;
-            }
-
-            // Snapshot: consuming may modify the bag mid-iteration.
-            var snapshot = new List<StatusInstance>(bag.All);
-            foreach (var status in snapshot)
-            {
-                if (ctx.StatusRegistry.TryResolve(status.Key, out var behavior))
-                {
-                    var after = behavior.ModifyIncomingDamage(damage, new StatusContext { Instance = status });
-                    if (after != damage)
-                    {
-                        bag.Consume(status);
-                    }
-
-                    damage = after;
-                }
-            }
-
-            return damage;
-        }
+            => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, damage);
     }
 }
