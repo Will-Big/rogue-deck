@@ -11,8 +11,15 @@ namespace FateWeaver.Tests
 {
     public class StarterDeckSpecEquivalenceTests
     {
-        private static CardDefinition Def(string id) =>
-            CardSpecMapper.ToDefinition(StarterDeckSpecs.Build().First(s => s.Id == id));
+        private static readonly string[] SelectedIds =
+        {
+            "probing_strike", "delayed_strike", "quick_cover", "early_guard",
+            "breather", "hasten", "toxic_reclaim", "early_onset", "spore_veil",
+            "last_drop"
+        };
+
+        private static CardDefinition Def(CardSpec spec) =>
+            CardSpecMapper.ToDefinition(spec);
 
         private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
             new IReadOnlyList<CardDefinition>[]
@@ -41,14 +48,15 @@ namespace FateWeaver.Tests
         {
             var specs = StarterDeckSpecs.Build();
             Assert.AreEqual(10, specs.Count);
-            Assert.AreEqual(7, specs.Count(s => s.Category == CardCategory.Execution));
-            Assert.AreEqual(3, specs.Count(s => s.Category == CardCategory.Intervention));
+            CollectionAssert.AreEqual(SelectedIds, specs.Select(spec => spec.Id).ToArray());
+            Assert.AreEqual(8, specs.Count(s => s.Category == CardCategory.Execution));
+            Assert.AreEqual(2, specs.Count(s => s.Category == CardCategory.Intervention));
         }
 
         [Test]
         public void Counter_spec_uses_previous_executed_enemy_attack_condition()
         {
-            var counter = StarterDeckSpecs.Build().Single(s => s.Id == "counter_stance");
+            var counter = StarterDeckSpecs.Counter();
 
             Assert.AreEqual(
                 ConditionKind.PrevExecutedIsEnemyDamageCard,
@@ -59,7 +67,7 @@ namespace FateWeaver.Tests
         public void Spec_quick_cut_pulled_first_deals_eight()
         {
             var session = new DeckCombatSession(
-                new[] { Def("quick_cut"), Def("pull_forward") }, 30,
+                new[] { Def(StarterDeckSpecs.QuickCut()), Def(StarterDeckSpecs.PullForward()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(5, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "quick_cut"));
             session.PlayInterventionCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
@@ -70,7 +78,7 @@ namespace FateWeaver.Tests
         public void Spec_counter_immediately_after_enemy_attack_deals_nine()
         {
             var session = new DeckCombatSession(
-                new[] { Def("counter_stance") }, 30,
+                new[] { Def(StarterDeckSpecs.Counter()) }, 30,
                 new[] { new Enemy("goblin", 100) },
                 Goblin(6, 4), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "counter_stance"));
@@ -81,7 +89,7 @@ namespace FateWeaver.Tests
         public void Spec_cover_before_enemy_attack_absorbs()
         {
             var session = new DeckCombatSession(
-                new[] { Def("cover") }, 30,
+                new[] { Def(StarterDeckSpecs.Cover()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "cover"));
             int hp = session.State.Party[0].Hp;

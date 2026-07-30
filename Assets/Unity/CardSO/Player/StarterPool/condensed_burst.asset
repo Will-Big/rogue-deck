@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8d4f6e05806b3d46ac625bc1dacfdaa, type: 3}
+  m_Name: condensed_burst
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardAsset
+  Id: condensed_burst
+  DisplayName: "\uC751\uCD95 \uD30C\uC5F4"
+  Side: 0
+  Category: 0
+  EnergyCost: 2
+  BaseExecutionOrder: 6
+  Art: {fileID: 0}
+  Description: 
+  Effects:
+  - rid: 9096977252664737812
+  - rid: 9096977252664737813
+  - rid: 9096977252664737814
+  Intervention:
+    Id: 
+  InterventionEffectValue: 0
+  _interventionTargetSide: 0
+  _interventionRequireAdjacent: 0
+  _grade: 1
+  _tags:
+  - "\uC2DC\uC791"
+  - "\uB3C5"
+  - "\uC18C\uBE44\uD615"
+  - "\uACF5\uACA9"
+  references:
+    version: 2
+    RefIds:
+    - rid: 9096977252664737812
+      type: {class: ConsumeStatusSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+          SkipOnBasic: 0
+        Status:
+          Id: poison
+        MaxAmount: 3
+        DamageBonusPerConsumed: 2
+        Selector: 1
+    - rid: 9096977252664737813
+      type: {class: DamageSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+          SkipOnBasic: 0
+        Value: 2
+        Selector: 1
+    - rid: 9096977252664737814
+      type: {class: ApplyStatusSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      data:
+        Condition:
+          Kind: 0
+          N: 0
+          SuccessEffectValue: 0
+          SkipOnBasic: 0
+        Status:
+          Id: poison
+        Value: 1
+        Lifetime: 0
+        LifetimeCount: 0
+        Target: 1
+        Selector: 1
