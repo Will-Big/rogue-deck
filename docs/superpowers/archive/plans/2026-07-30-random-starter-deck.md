@@ -85,7 +85,7 @@ last_drop
 - Consumes: `DeckAsset.Entries`, `CardPoolAsset.Cards`, `CardAsset.Id`, `CardCodeGenerator.EmitSource(IReadOnlyList<CardSpec>, IReadOnlyList<CardSpec>)`.
 - Produces: a 22-card pool and a 10-entry deck whose selected IDs are fixed in the order above.
 
-- [ ] **Step 1: Write the failing Unity asset contract test**
+- [x] **Step 1: Write the failing Unity asset contract test**
 
 Create `StarterDeckAssetCompositionTests.cs` with constants for the two asset
 paths, the exact 22 expected pool IDs, the exact 10 selected IDs, and the four
@@ -156,7 +156,7 @@ private static readonly HashSet<string> PoisonIds = new HashSet<string>
 };
 ```
 
-- [ ] **Step 2: Run the focused Unity test and verify RED**
+- [x] **Step 2: Run the focused Unity test and verify RED**
 
 Run:
 
@@ -171,7 +171,7 @@ Run:
 Expected: failure because `StarterPool.asset` is absent from the worktree and
 the old deck/generated snapshot still describe the legacy deck.
 
-- [ ] **Step 3: Copy the user-created pool and verify GUID preservation**
+- [x] **Step 3: Copy the user-created pool and verify GUID preservation**
 
 Run the following from the worktree:
 
@@ -197,7 +197,7 @@ diff -u /private/tmp/starter-pool-main.sha256 /private/tmp/starter-pool-worktree
 Expected: `diff` exits 0 with no output. Also verify there are exactly 22 card
 assets and 22 card metas.
 
-- [ ] **Step 4: Replace the deck YAML with the selected GUIDs**
+- [x] **Step 4: Replace the deck YAML with the selected GUIDs**
 
 Keep the existing deck asset GUID and script reference. Replace only `Entries`
 with these exact references, all at count 1:
@@ -230,7 +230,7 @@ Append the fixed draw table and selected order from this plan to section 3 of
 the current design spec so the authoritative content document retains the
 result after this implementation plan is archived.
 
-- [ ] **Step 5: Import the assets and verify the structural test is now past the asset assertions**
+- [x] **Step 5: Import the assets and verify the structural test is now past the asset assertions**
 
 Run the same focused Unity command from Step 2 with result files
 `/private/tmp/random-starter-assets.xml` and
@@ -239,7 +239,7 @@ Run the same focused Unity command from Step 2 with result files
 Expected: the structural contract passes; the byte-for-byte generated snapshot
 test still fails because code generation has not run yet.
 
-- [ ] **Step 6: Commit the asset contract**
+- [x] **Step 6: Commit the asset contract**
 
 ```bash
 git add Assets/Tests/UnityEditMode/StarterDeckAssetCompositionTests.cs \
@@ -268,7 +268,7 @@ git commit -m "feat: author fixed random starter deck assets"
 - Produces: `StarterDeckSpecs.Build(): IReadOnlyList<CardSpec>` and `StarterDeck.Build(): IReadOnlyList<CardDefinition>` with the exact same fixed 10-card composition.
 - Preserves: legacy individual factories such as `StarterDeck.Slash()` and `StarterDeckSpecs.Counter()` for focused rule tests that still use them.
 
-- [ ] **Step 1: Rewrite the composition tests first**
+- [x] **Step 1: Rewrite the composition tests first**
 
 Change `StarterDeckTests` to assert the exact selected ID order, ten distinct
 IDs, eight execution cards, and two intervention cards:
@@ -317,7 +317,7 @@ Def(StarterDeckSpecs.PullForward())
 var counter = StarterDeckSpecs.Counter();
 ```
 
-- [ ] **Step 2: Run focused headless tests and verify RED**
+- [x] **Step 2: Run focused headless tests and verify RED**
 
 Run:
 
@@ -329,7 +329,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: failures showing the legacy `slash`, `guard`, and 7:3 composition.
 
-- [ ] **Step 3: Make `StarterDeckSpecs.Build()` name the fixed pool selection**
+- [x] **Step 3: Make `StarterDeckSpecs.Build()` name the fixed pool selection**
 
 Replace only `Build()` and its summary; keep all legacy factory methods:
 
@@ -349,7 +349,7 @@ public static IReadOnlyList<CardSpec> Build() => new List<CardSpec>
 };
 ```
 
-- [ ] **Step 4: Make `StarterDeck.Build()` map the selected specs**
+- [x] **Step 4: Make `StarterDeck.Build()` map the selected specs**
 
 Add `System.Linq` and `FateWeaver.Simulation.Authoring` imports, then replace
 the hand-maintained list body:
@@ -364,7 +364,7 @@ public static IReadOnlyList<CardDefinition> Build()
 Keep the old named card helpers because other focused tests call them directly.
 Update the class summary so it no longer claims a 7:3 composition.
 
-- [ ] **Step 5: Run focused and full headless tests**
+- [x] **Step 5: Run focused and full headless tests**
 
 Run:
 
@@ -379,7 +379,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 Expected: focused tests pass. The full suite may still fail only in generated
 snapshot/golden tests until Task 3 regenerates the export.
 
-- [ ] **Step 6: Commit the pure composition**
+- [x] **Step 6: Commit the pure composition**
 
 ```bash
 git add Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs \
@@ -402,7 +402,7 @@ git commit -m "feat: sync core starter deck selection"
 - Consumes: `StarterDeck.asset`, `StarterPool.asset`, and `CardCodeGenerator.Generate()`.
 - Produces: `GeneratedCards.StarterDeck()` with 10 selected specs and `GeneratedCards.StarterPool()` with all 22 specs.
 
-- [ ] **Step 1: Change generated-content tests before regenerating**
+- [x] **Step 1: Change generated-content tests before regenerating**
 
 Replace the legacy slash/counter test with:
 
@@ -445,7 +445,7 @@ private static readonly string[] GoldenStarterDeck =
 };
 ```
 
-- [ ] **Step 2: Run generated tests and verify RED**
+- [x] **Step 2: Run generated tests and verify RED**
 
 Run:
 
@@ -458,7 +458,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 Expected: compilation or assertion failure because `GeneratedCards` still has
 the legacy deck and no `StarterPool()` method.
 
-- [ ] **Step 3: Generate the C# snapshot from the two Unity assets**
+- [x] **Step 3: Generate the C# snapshot from the two Unity assets**
 
 Run:
 
@@ -472,14 +472,14 @@ Run:
 Verify the log contains `Generated Assets/Core/Simulation/Generated/GeneratedCards.cs`
 and does not contain `Card validation failed` or `Starter pool validation failed`.
 
-- [ ] **Step 4: Run focused tests and correct only literal signature mismatches**
+- [x] **Step 4: Run focused tests and correct only literal signature mismatches**
 
 Run the focused command from Step 2. Expected: all tests pass. If NUnit reports
 a formatting difference in `Condition.ToString()`, copy the actual signature
 verbatim into `GoldenStarterDeck`; do not change card values or the selected IDs
 to accommodate a golden.
 
-- [ ] **Step 5: Run the Unity asset contract**
+- [x] **Step 5: Run the Unity asset contract**
 
 Run:
 
@@ -493,7 +493,7 @@ Run:
 
 Expected: both structural and byte-for-byte generation tests pass.
 
-- [ ] **Step 6: Commit the generated snapshot and pinning tests**
+- [x] **Step 6: Commit the generated snapshot and pinning tests**
 
 ```bash
 git add Assets/Core/Simulation/Generated/GeneratedCards.cs \
@@ -506,6 +506,10 @@ git commit -m "test: pin generated random starter deck"
 
 ### Task 4: Full verification and documentation closeout
 
+**Result (2026-07-30):** Headless 395 passed, 0 failed, 0 skipped; Unity
+EditMode 469 passed, 0 failed, 0 skipped (`/private/tmp/random-starter-full-editmode.xml`).
+Implementation commits: `401af45`, `837d671`, `98d596b`.
+
 **Files:**
 - Move: `docs/superpowers/plans/2026-07-30-random-starter-deck.md` to `docs/superpowers/archive/plans/2026-07-30-random-starter-deck.md`
 - Modify: `docs/superpowers/README.md`
@@ -515,7 +519,7 @@ git commit -m "test: pin generated random starter deck"
 - Consumes: all committed asset, core, generated, and test changes.
 - Produces: a clean, fully verified feature branch and an archived implementation record.
 
-- [ ] **Step 1: Run the full headless suite**
+- [x] **Step 1: Run the full headless suite**
 
 Run:
 
@@ -526,7 +530,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: all tests pass with zero failures and zero errors.
 
-- [ ] **Step 2: Run the full Unity EditMode suite**
+- [x] **Step 2: Run the full Unity EditMode suite**
 
 Run:
 
@@ -540,7 +544,7 @@ Run:
 Expected: result is `Passed`, with zero failed tests. Inspect `git status --short`
 after Unity exits; stage only the intended test `.meta` and task files.
 
-- [ ] **Step 3: Verify the final content contract directly**
+- [x] **Step 3: Verify the final content contract directly**
 
 Run:
 
@@ -555,7 +559,7 @@ git status --short
 Expected: generated methods for both deck and pool, 22 card assets, no whitespace
 errors, and no unrelated files.
 
-- [ ] **Step 4: Archive this completed plan and update both indexes**
+- [x] **Step 4: Archive this completed plan and update both indexes**
 
 Before moving the file, mark every checkbox complete and add the exact headless
 and Unity pass counts plus the commit hashes to a short result block below this
@@ -571,7 +575,7 @@ Remove the plan from `docs/superpowers/README.md` active plans and add
 under “상태 훅·독 시스템·시작 카드 풀” in
 `docs/superpowers/archive/README.md`.
 
-- [ ] **Step 5: Commit documentation closeout**
+- [x] **Step 5: Commit documentation closeout**
 
 ```bash
 git add docs/superpowers/README.md \
@@ -580,7 +584,7 @@ git add docs/superpowers/README.md \
 git commit -m "docs: archive random starter deck implementation"
 ```
 
-- [ ] **Step 6: Final cleanliness check**
+- [x] **Step 6: Final cleanliness check**
 
 Run:
 

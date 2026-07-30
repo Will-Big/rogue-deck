@@ -88,6 +88,7 @@
 
 - [상태 훅·독 시스템·시작 카드 풀](plans/2026-07-29-status-hooks-poison-starter-pool.md)
 - [시작 카드 풀 SO 저작 구현 기록](plans/2026-07-30-starter-pool-so-authoring.md)
+- [무작위 10장 시작 덱 구현 기록](plans/2026-07-30-random-starter-deck.md)
 
 ### 과거 런 원 사이클
 
