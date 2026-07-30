@@ -32,5 +32,6 @@ namespace FateWeaver.Core.Status
         public static readonly StatusKey PoisonStasis = new StatusKey("poison_stasis");
         public static readonly StatusKey Contagion = new StatusKey("contagion");
         public static readonly StatusKey Weak = new StatusKey("weak");
+        public static readonly StatusKey Damaged = new StatusKey("damaged");
     }
 }

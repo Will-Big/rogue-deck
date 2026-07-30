@@ -52,6 +52,44 @@ namespace FateWeaver.Core.Status
             return damage;
         }
 
+        /// <summary>보유자가 얻으려는 상태 수치를 그 보유자의 상태로 접는다 (예: 손상이 방어도
+        /// 획득을 깎는다). 어느 키에 걸릴지는 각 행동이 판단한다.</summary>
+        public static int GainedMagnitude(
+            StatusKey gained,
+            StatusBag bag,
+            StatusRegistry registry,
+            StatusRuleSet rules,
+            int magnitude)
+        {
+            if (registry == null || bag == null)
+            {
+                return magnitude;
+            }
+
+            // Snapshot: consuming may modify the bag mid-iteration.
+            var snapshot = new List<StatusInstance>(bag.All);
+            foreach (var status in snapshot)
+            {
+                if (!registry.TryResolve(status.Key, out var behavior))
+                {
+                    continue;
+                }
+
+                var after = behavior.ModifyGainedMagnitude(
+                    gained,
+                    magnitude,
+                    new StatusContext { Instance = status, Rules = rules });
+                if (after != magnitude)
+                {
+                    bag.Consume(status);
+                }
+
+                magnitude = after;
+            }
+
+            return magnitude;
+        }
+
         private static int FoldLayer(
             StatusBag bag,
             StatusRegistry registry,

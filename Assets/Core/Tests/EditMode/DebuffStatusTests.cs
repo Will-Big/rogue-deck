@@ -25,7 +25,21 @@ namespace FateWeaver.Tests
             r.Register(new VulnerableBehavior());
             r.Register(new BlockBehavior());
             r.Register(new WeakBehavior());
+            r.Register(new DamagedBehavior());
             return r;
+        }
+
+        // 방어를 Turns(2)로 거는 것은 저작 관례가 아니라 테스트 편의다. ThisTurn으로 걸면
+        // 턴 종료 정리가 인스턴스를 지워 Magnitude를 조회할 수 없다.
+        private static ExecutionCardInstance PlayerGuard(string id, int block)
+        {
+            var def = new CardDefinition(id, id, Side.Player, 1,
+                new[]
+                {
+                    EffectData.ApplyStatus(
+                        StatusKeys.Block, StatusLifetime.Turns(2), StatusApplyTarget.Self, block)
+                });
+            return new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId };
         }
 
         private static ExecutionCardInstance PlayerStrike(string id, int damage)
@@ -114,6 +128,56 @@ namespace FateWeaver.Tests
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
 
             Assert.AreEqual(8, ((CardResolved)events[1]).DamageDealt);
+        }
+
+        [Test]
+        public void Damaged_reduces_block_gained_by_the_rule_multiplier()
+        {
+            var state = new CombatState();
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
+            state.Enemies.Add(new Enemy("goblin", 30));
+            state.Zone.Add(PlayerGuard("guard", 5));
+
+            new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            // floor(5 x 0.75) = 3
+            Assert.AreEqual(3, player.Statuses.Get(StatusKeys.Block).Magnitude);
+        }
+
+        [Test]
+        public void Damaged_does_not_reduce_other_gained_statuses()
+        {
+            var state = new CombatState();
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
+            state.Enemies.Add(new Enemy("goblin", 30));
+            var def = new CardDefinition("hex", "hex", Side.Player, 1,
+                new[]
+                {
+                    EffectData.ApplyStatus(
+                        StatusKeys.Vulnerable, StatusLifetime.Turns(4), StatusApplyTarget.Self)
+                });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+
+            new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(3, player.Statuses.Get(StatusKeys.Vulnerable).Count); // 4 -> 턴 끝에 3
+        }
+
+        [Test]
+        public void Damaged_on_someone_else_does_not_reduce_the_block_this_holder_gains()
+        {
+            var state = new CombatState();
+            var player = state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 30);
+            enemy.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
+            state.Enemies.Add(enemy);
+            state.Zone.Add(PlayerGuard("guard", 5));
+
+            new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(5, player.Statuses.Get(StatusKeys.Block).Magnitude); // 감소 없음
         }
     }
 }

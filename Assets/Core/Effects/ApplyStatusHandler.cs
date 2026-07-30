@@ -71,18 +71,22 @@ namespace FateWeaver.Core.Effects
 
         /// <summary>Stacking-aware status application: when the key's behavior declares
         /// StacksMagnitude (e.g. Block), an existing instance's Magnitude is added to rather than
-        /// replaced; otherwise falls back to the legacy replace semantics.</summary>
+        /// replaced; otherwise falls back to the legacy replace semantics. The magnitude is first
+        /// folded through the RECEIVING holder's statuses (e.g. Damaged reducing block gain).</summary>
         private static void ApplyTo(EffectContext ctx, ApplyStatusPayload payload, StatusBag bag)
         {
+            var magnitude = StatusDamageFold.GainedMagnitude(
+                payload.Key, bag, ctx.StatusRegistry, ctx.State.StatusRules, ctx.EffectValue);
+
             if (ctx.StatusRegistry != null
                 && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior)
                 && behavior.StacksMagnitude)
             {
-                bag.Stack(payload.Key, payload.Lifetime, ctx.EffectValue);
+                bag.Stack(payload.Key, payload.Lifetime, magnitude);
                 return;
             }
 
-            bag.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+            bag.Add(payload.Key, payload.Lifetime, magnitude);
         }
 
         private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)

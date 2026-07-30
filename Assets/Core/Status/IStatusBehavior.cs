@@ -54,6 +54,11 @@ namespace FateWeaver.Core.Status
         /// <summary>Entity-scoped: fold into damage the holder is about to DEAL (e.g. weak).</summary>
         int ModifyOutgoingDamage(int damage, StatusContext ctx);
 
+        /// <summary>Entity-scoped: fold into the magnitude the holder is about to GAIN from an applied
+        /// status (e.g. damaged reducing block gain). The behavior decides which gained keys it affects,
+        /// so no central switch grows here.</summary>
+        int ModifyGainedMagnitude(StatusKey gained, int magnitude, StatusContext ctx);
+
         /// <summary>Card-scoped: return true to nullify/skip the card's resolution (e.g. stun).</summary>
         bool InterceptCardResolve(StatusContext ctx);
 
@@ -78,6 +83,9 @@ namespace FateWeaver.Core.Status
         public virtual StatusDamageLayer DamageLayer => StatusDamageLayer.Multiplier;
         public virtual int ModifyIncomingDamage(int damage, StatusContext ctx) => damage;
         public virtual int ModifyOutgoingDamage(int damage, StatusContext ctx) => damage;
+
+        public virtual int ModifyGainedMagnitude(StatusKey gained, int magnitude, StatusContext ctx)
+            => magnitude;
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }

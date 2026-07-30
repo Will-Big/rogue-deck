@@ -7,12 +7,14 @@ namespace FateWeaver.Core.Status
     {
         public const int VulnerableIncomingPercent = 150;
         public const int WeakOutgoingPercent = 75;
+        public const int DamagedBlockGainPercent = 75;
 
         public static StatusRuleSet Default()
         {
             var rules = new StatusRuleSet();
             rules.Set(StatusKeys.Vulnerable, new StatusRule { MultiplierPercent = VulnerableIncomingPercent });
             rules.Set(StatusKeys.Weak, new StatusRule { MultiplierPercent = WeakOutgoingPercent });
+            rules.Set(StatusKeys.Damaged, new StatusRule { MultiplierPercent = DamagedBlockGainPercent });
             return rules;
         }
     }
