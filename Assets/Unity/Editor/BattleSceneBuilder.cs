@@ -131,12 +131,12 @@ namespace FateWeaver.Unity.Editor
             var handRect = BattleUiKit.Rect(canvasRect, "HandFan");
             handRect.anchorMin = new Vector2(0f, 0f);
             handRect.anchorMax = new Vector2(1f, 0f);
-            handRect.anchoredPosition = new Vector2(0f, 130f);
+            handRect.anchoredPosition = new Vector2(0f, 210f);
             handRect.sizeDelta = new Vector2(0f, 260f);
             var handContent = BattleUiKit.Rect(handRect, "Content");
             handContent.anchorMin = handContent.anchorMax =
                 new Vector2(0.5f, 0.5f);
-            handContent.anchoredPosition = new Vector2(0f, 80f);
+            handContent.anchoredPosition = Vector2.zero;
             handContent.sizeDelta = Vector2.zero;
             var hand = handRect.gameObject.AddComponent<HandFanView>();
             hand.EditorBuild(cardPrefabs, handContent);

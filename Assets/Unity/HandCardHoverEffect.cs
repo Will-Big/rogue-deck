@@ -31,6 +31,37 @@ namespace FateWeaver.Unity
             _baseSiblingIndex = _rect.GetSiblingIndex();
         }
 
+        public void UpdateBaseline(
+            Vector2 position,
+            Quaternion rotation,
+            int siblingIndex)
+        {
+            if (_rect == null)
+            {
+                _rect = (RectTransform)transform;
+            }
+
+            _basePosition = position;
+            _baseRotation = rotation;
+            _baseSiblingIndex = siblingIndex;
+            if (_hovering || _held)
+            {
+                Enlarge();
+            }
+            else
+            {
+                Restore();
+            }
+        }
+
+        internal void ReapplyActiveSiblingOrder()
+        {
+            if (_hovering || _held)
+            {
+                _rect.SetAsLastSibling();
+            }
+        }
+
         public void Hold(bool value)
         {
             _held = value;

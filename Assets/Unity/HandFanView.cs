@@ -39,6 +39,7 @@ namespace FateWeaver.Unity
         private readonly List<CardView> _views = new List<CardView>();
         private readonly List<HandCardHoverEffect> _hoverEffects = new List<HandCardHoverEffect>();
         private readonly List<CanvasGroup> _groups = new List<CanvasGroup>();
+        private int _layoutRevision;
 
         public void EditorBuild(CardPrefabCatalog catalog, RectTransform content)
         {
@@ -222,6 +223,8 @@ namespace FateWeaver.Unity
                 return;
             }
 
+            _layoutRevision++;
+
             var settings = new ResponsiveHandSettings(
                 _cardSize.x,
                 _cardSize.y,
@@ -245,11 +248,15 @@ namespace FateWeaver.Unity
                     metrics.Spacing,
                     _anglePerCard,
                     _arcDrop);
-                var rect = (RectTransform)_views[i].transform;
-                rect.anchoredPosition = new Vector2(pose.XOffset, pose.YOffset);
-                rect.localRotation =
-                    Quaternion.Euler(0f, 0f, pose.AngleDegrees);
-                _hoverEffects[i].Capture();
+                _hoverEffects[i].UpdateBaseline(
+                    new Vector2(pose.XOffset, pose.YOffset),
+                    Quaternion.Euler(0f, 0f, pose.AngleDegrees),
+                    i);
+            }
+
+            foreach (var hover in _hoverEffects)
+            {
+                hover.ReapplyActiveSiblingOrder();
             }
         }
 

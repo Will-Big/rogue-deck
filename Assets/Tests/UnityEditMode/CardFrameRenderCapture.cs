@@ -1,12 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -73,6 +74,8 @@ namespace FateWeaver.Tests.UnityEditMode
                 24,
                 RenderTextureFormat.ARGB32);
             Texture2D texture = null;
+            IDisposable fontIsolation = null;
+            IDisposable catalogResources = null;
             var previousActive = RenderTexture.active;
             try
             {
@@ -83,10 +86,16 @@ namespace FateWeaver.Tests.UnityEditMode
                     renderTarget,
                     width,
                     height);
+                catalogResources = CloneCatalogForCapture(
+                    CardPrefabCatalogTests.LoadCatalog(),
+                    out var captureCatalog);
                 BuildHand(
                     (RectTransform)canvasObject.transform,
                     width,
-                    Presentations(content));
+                    Presentations(content),
+                    captureCatalog);
+                PrewarmFontsForCapture(canvasObject);
+                fontIsolation = IsolateFontsForCapture(canvasObject);
                 Canvas.ForceUpdateCanvases();
 
                 cameraObject.GetComponent<Camera>().Render();
@@ -107,7 +116,7 @@ namespace FateWeaver.Tests.UnityEditMode
             finally
             {
                 RenderTexture.active = previousActive;
-                ClearPersistentFontDirtyFlags(canvasObject);
+                fontIsolation?.Dispose();
                 if (texture != null)
                 {
                     Object.DestroyImmediate(texture);
@@ -118,33 +127,191 @@ namespace FateWeaver.Tests.UnityEditMode
                 Object.DestroyImmediate(renderTarget);
                 Object.DestroyImmediate(canvasObject);
                 Object.DestroyImmediate(cameraObject);
+                catalogResources?.Dispose();
             }
         }
 
-        private static void ClearPersistentFontDirtyFlags(GameObject canvasObject)
+        internal static IDisposable CloneCatalogForCapture(
+            CardPrefabCatalog source,
+            out CardPrefabCatalog clone)
         {
+            clone = Object.Instantiate(source);
+            clone.name = source.name + " Capture Clone";
+            clone.hideFlags = HideFlags.HideAndDontSave;
+            var templateRoot = new GameObject("Capture Catalog Templates");
+            templateRoot.hideFlags = HideFlags.HideAndDontSave;
+            templateRoot.SetActive(false);
+            var isolations = new List<IDisposable>();
+            try
+            {
+                var execution = CloneTemplate(
+                    source.Resolve(CardCategory.Execution),
+                    templateRoot.transform,
+                    isolations);
+                var intervention = CloneTemplate(
+                    source.Resolve(CardCategory.Intervention),
+                    templateRoot.transform,
+                    isolations);
+                var targetGlyph = CloneTemplate(
+                    Field<TargetGlyphView>(source, "_targetGlyph"),
+                    templateRoot.transform,
+                    isolations);
+                var descriptionLine = CloneTemplate(
+                    Field<DescriptionLineView>(source, "_descriptionLine"),
+                    templateRoot.transform,
+                    isolations);
+                SetField(clone, "_executionCard", execution);
+                SetField(clone, "_interventionCard", intervention);
+                SetField(clone, "_targetGlyph", targetGlyph);
+                SetField(clone, "_descriptionLine", descriptionLine);
+                return new CatalogIsolation(clone, templateRoot, isolations);
+            }
+            catch
+            {
+                new CatalogIsolation(clone, templateRoot, isolations).Dispose();
+                clone = null;
+                throw;
+            }
+        }
+
+        private static T CloneTemplate<T>(
+            T source,
+            Transform parent,
+            ICollection<IDisposable> isolations)
+            where T : Component
+        {
+            var clone = Object.Instantiate(source, parent);
+            clone.gameObject.name = source.gameObject.name + " Capture Clone";
+            clone.gameObject.hideFlags = HideFlags.HideAndDontSave;
+            isolations.Add(IsolateFonts(
+                clone.gameObject,
+                AtlasPopulationMode.Dynamic));
+            return clone;
+        }
+
+        private static T Field<T>(object target, string name)
+            => (T)target.GetType()
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(target);
+
+        private static void SetField(object target, string name, object value)
+            => target.GetType()
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(target, value);
+
+        internal static IDisposable IsolateFontsForCapture(
+            GameObject canvasObject)
+            => IsolateFonts(canvasObject, AtlasPopulationMode.Static);
+
+        private static IDisposable IsolateFonts(
+            GameObject canvasObject,
+            AtlasPopulationMode populationMode)
+        {
+            var fontClones = new Dictionary<TMP_FontAsset, TMP_FontAsset>();
+            var materialClones = new Dictionary<Material, Material>();
+            var atlasClones = new Dictionary<Texture, Texture2D>();
+            var states = new List<FontState>();
             foreach (var text in canvasObject.GetComponentsInChildren<TMP_Text>(true))
             {
-                var font = text.font;
-                if (font == null || !AssetDatabase.Contains(font))
+                var sourceFont = text.font;
+                if (sourceFont == null)
                 {
                     continue;
                 }
 
-                EditorUtility.ClearDirty(font);
-                if (font.material != null)
+                var sourceMaterial = text.fontSharedMaterial;
+                states.Add(new FontState(text, sourceFont, sourceMaterial));
+                if (!fontClones.TryGetValue(sourceFont, out var fontClone))
                 {
-                    EditorUtility.ClearDirty(font.material);
+                    fontClone = Object.Instantiate(sourceFont);
+                    fontClone.name = sourceFont.name + " Capture Clone";
+                    fontClone.hideFlags = HideFlags.HideAndDontSave;
+                    fontClone.atlasPopulationMode = populationMode;
+                    fontClone.atlasTextures = CloneAtlases(
+                        sourceFont.atlasTextures,
+                        atlasClones);
+                    if (sourceFont.material != null)
+                    {
+                        fontClone.material = CloneMaterial(
+                            sourceFont.material,
+                            materialClones,
+                            atlasClones);
+                    }
+
+                    fontClones.Add(sourceFont, fontClone);
                 }
 
-                foreach (var atlas in font.atlasTextures)
+                text.font = fontClone;
+                if (sourceMaterial != null)
                 {
-                    if (atlas != null)
-                    {
-                        EditorUtility.ClearDirty(atlas);
-                    }
+                    text.fontSharedMaterial = CloneMaterial(
+                        sourceMaterial,
+                        materialClones,
+                        atlasClones);
                 }
             }
+
+            return new FontIsolation(states, fontClones, materialClones);
+        }
+
+        private static void PrewarmFontsForCapture(GameObject canvasObject)
+        {
+            foreach (var text in canvasObject.GetComponentsInChildren<TMP_Text>(true))
+            {
+                text.ForceMeshUpdate(true, true);
+            }
+
+            Canvas.ForceUpdateCanvases();
+        }
+
+        private static Material CloneMaterial(
+            Material source,
+            IDictionary<Material, Material> clones,
+            IReadOnlyDictionary<Texture, Texture2D> atlasClones)
+        {
+            if (clones.TryGetValue(source, out var clone))
+            {
+                return clone;
+            }
+
+            clone = Object.Instantiate(source);
+            clone.name = source.name + " Capture Clone";
+            clone.hideFlags = HideFlags.HideAndDontSave;
+            if (source.mainTexture != null
+                && atlasClones.TryGetValue(source.mainTexture, out var atlasClone))
+            {
+                clone.mainTexture = atlasClone;
+            }
+
+            clones.Add(source, clone);
+            return clone;
+        }
+
+        private static Texture2D[] CloneAtlases(
+            IReadOnlyList<Texture2D> sources,
+            IDictionary<Texture, Texture2D> clones)
+        {
+            var results = new Texture2D[sources.Count];
+            for (int i = 0; i < sources.Count; i++)
+            {
+                var source = sources[i];
+                if (source == null)
+                {
+                    continue;
+                }
+
+                if (!clones.TryGetValue(source, out var clone))
+                {
+                    clone = Object.Instantiate(source);
+                    clone.name = source.name + " Capture Clone";
+                    clone.hideFlags = HideFlags.HideAndDontSave;
+                    clones.Add(source, clone);
+                }
+
+                results[i] = clone;
+            }
+
+            return results;
         }
 
         private static void ConfigureCameraAndCanvas(
@@ -175,24 +342,25 @@ namespace FateWeaver.Tests.UnityEditMode
         private static void BuildHand(
             RectTransform canvas,
             int logicalWidth,
-            CardPresentation[] presentations)
+            CardPresentation[] presentations,
+            CardPrefabCatalog catalog)
         {
             var handObject = new GameObject("HandFan", typeof(RectTransform));
             var handRect = (RectTransform)handObject.transform;
             handRect.SetParent(canvas, false);
             handRect.anchorMin = handRect.anchorMax = new Vector2(0.5f, 0f);
-            handRect.anchoredPosition = new Vector2(0f, 130f);
+            handRect.anchoredPosition = new Vector2(0f, 210f);
             handRect.sizeDelta = new Vector2(logicalWidth, 260f);
 
             var contentObject = new GameObject("Content", typeof(RectTransform));
             var content = (RectTransform)contentObject.transform;
             content.SetParent(handRect, false);
             content.anchorMin = content.anchorMax = new Vector2(0.5f, 0.5f);
-            content.anchoredPosition = new Vector2(0f, 80f);
+            content.anchoredPosition = Vector2.zero;
             content.sizeDelta = Vector2.zero;
 
             var hand = handObject.AddComponent<HandFanView>();
-            hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
+            hand.EditorBuild(catalog, content);
             hand.SetCards(presentations, _ => { }, (_, __) => { });
         }
 
@@ -317,6 +485,94 @@ namespace FateWeaver.Tests.UnityEditMode
             Intervention,
             ToxicReclaim,
             MixedFive
+        }
+
+        private readonly struct FontState
+        {
+            public FontState(
+                TMP_Text text,
+                TMP_FontAsset font,
+                Material material)
+            {
+                Text = text;
+                Font = font;
+                Material = material;
+            }
+
+            public TMP_Text Text { get; }
+            public TMP_FontAsset Font { get; }
+            public Material Material { get; }
+        }
+
+        private sealed class FontIsolation : IDisposable
+        {
+            private readonly IReadOnlyList<FontState> _states;
+            private readonly IReadOnlyDictionary<TMP_FontAsset, TMP_FontAsset>
+                _fontClones;
+            private readonly IReadOnlyDictionary<Material, Material>
+                _materialClones;
+
+            public FontIsolation(
+                IReadOnlyList<FontState> states,
+                IReadOnlyDictionary<TMP_FontAsset, TMP_FontAsset> fontClones,
+                IReadOnlyDictionary<Material, Material> materialClones)
+            {
+                _states = states;
+                _fontClones = fontClones;
+                _materialClones = materialClones;
+            }
+
+            public void Dispose()
+            {
+                foreach (var state in _states)
+                {
+                    if (state.Text == null)
+                    {
+                        continue;
+                    }
+
+                    state.Text.font = state.Font;
+                    state.Text.fontSharedMaterial = state.Material;
+                }
+
+                foreach (var clone in _fontClones.Values)
+                {
+                    Object.DestroyImmediate(clone);
+                }
+
+                foreach (var clone in _materialClones.Values)
+                {
+                    Object.DestroyImmediate(clone);
+                }
+            }
+        }
+
+        private sealed class CatalogIsolation : IDisposable
+        {
+            private readonly CardPrefabCatalog _catalog;
+            private readonly GameObject _templateRoot;
+            private readonly IReadOnlyList<IDisposable> _isolations;
+
+            public CatalogIsolation(
+                CardPrefabCatalog catalog,
+                GameObject templateRoot,
+                IReadOnlyList<IDisposable> isolations)
+            {
+                _catalog = catalog;
+                _templateRoot = templateRoot;
+                _isolations = isolations;
+            }
+
+            public void Dispose()
+            {
+                foreach (var isolation in _isolations)
+                {
+                    isolation.Dispose();
+                }
+
+                Object.DestroyImmediate(_templateRoot);
+                Object.DestroyImmediate(_catalog);
+            }
         }
     }
 }

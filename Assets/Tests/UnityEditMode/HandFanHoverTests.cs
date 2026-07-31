@@ -84,6 +84,75 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Hovered_card_keeps_hover_pose_during_resize_then_restores_new_fan_pose_and_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var middleLeft = root.GetComponentsInChildren<CardView>()[1];
+                var hover = middleLeft.GetComponent<HandCardHoverEffect>();
+                var rect = (RectTransform)middleLeft.transform;
+
+                hover.OnPointerEnter(null);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
+                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
+
+                hover.OnPointerExit(null);
+
+                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.Less(
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    0.01f);
+                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(1, rect.GetSiblingIndex());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Held_card_keeps_hover_pose_during_resize_then_restores_new_fan_pose_and_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var middleLeft = root.GetComponentsInChildren<CardView>()[1];
+                var rect = (RectTransform)middleLeft.transform;
+
+                hand.SetHeld(1, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
+                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
+
+                hand.SetHeld(1, false);
+
+                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.Less(
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    0.01f);
+                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(1, rect.GetSiblingIndex());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Hovered_card_is_last_sibling_then_restores_its_original_sibling()
         {
             var root = new GameObject("Hand", typeof(RectTransform));
@@ -307,8 +376,39 @@ namespace FateWeaver.Tests.UnityEditMode
             return hand;
         }
 
+        private static HandFanView BuildResponsiveHand(
+            GameObject root,
+            IReadOnlyList<CardPresentation> cards,
+            float width,
+            float height)
+        {
+            var rootRect = (RectTransform)root.transform;
+            rootRect.sizeDelta = new Vector2(width, height);
+            var contentObject = new GameObject("Content", typeof(RectTransform));
+            var content = (RectTransform)contentObject.transform;
+            content.SetParent(rootRect, false);
+            content.anchorMin = content.anchorMax = new Vector2(0.5f, 0.5f);
+            var hand = root.AddComponent<HandFanView>();
+            hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
+            hand.SetCards(cards, _ => { }, (_, __) => { });
+            return hand;
+        }
+
+        private static void InvokeDimensionChange(HandFanView hand)
+            => typeof(HandFanView)
+                .GetMethod(
+                    "OnRectTransformDimensionsChange",
+                    BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(hand, null);
+
         private static CardPresentation[] ThreeCards()
-            => Enumerable.Range(0, 3)
+            => Cards(3);
+
+        private static CardPresentation[] FiveCards()
+            => Cards(5);
+
+        private static CardPresentation[] Cards(int count)
+            => Enumerable.Range(0, count)
                 .Select(index => new CardPresentation(
                     "execution-" + index,
                     "execution",

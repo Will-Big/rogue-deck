@@ -31,9 +31,11 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             for (int cardCount = 1; cardCount <= 5; cardCount++)
             {
-                var fixture = BuildHand(width, height, cardCount);
+                var fixture = BuildSceneEquivalentHand(width, height, cardCount);
                 try
                 {
+                    Assert.AreEqual(260f, fixture.HandRect.rect.height, 0.01f);
+                    Assert.AreEqual(Vector2.zero, fixture.Content.anchoredPosition);
                     AssertUniformContentScale(fixture.Content);
                     AssertCardsStayInsideSafeArea(fixture);
                     AssertSpacingStaysInAuthoredRange(fixture.Views);
@@ -49,7 +51,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Too_small_root_scales_only_the_common_content_root()
         {
-            var fixture = BuildHand(420f, 190f, 5);
+            var fixture = BuildDirectHand(420f, 190f, 5);
             try
             {
                 Assert.That(fixture.Content.localScale.x, Is.LessThan(1f));
@@ -71,14 +73,13 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Root_dimension_change_recomputes_geometry_immediately_without_frame_loop()
         {
-            var fixture = BuildHand(650f, 260f, 5);
+            var fixture = BuildDirectHand(650f, 260f, 5);
             try
             {
                 float narrowSpacing = Spacing(fixture.Views);
                 float narrowScale = fixture.Content.localScale.x;
 
-                var rootRect = (RectTransform)fixture.Root.transform;
-                rootRect.sizeDelta = new Vector2(900f, 260f);
+                fixture.HandRect.sizeDelta = new Vector2(900f, 260f);
                 var dimensionCallback = typeof(HandFanView).GetMethod(
                     "OnRectTransformDimensionsChange",
                     BindingFlags.Instance | BindingFlags.NonPublic);
@@ -101,22 +102,48 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
-        private static HandFixture BuildHand(
+        private static HandFixture BuildSceneEquivalentHand(
+            float width,
+            float height,
+            int cardCount)
+        {
+            var root = new GameObject("LogicalRoot", typeof(RectTransform));
+            var rootRect = (RectTransform)root.transform;
+            rootRect.sizeDelta = new Vector2(width, height);
+            var handObject = new GameObject("HandFan", typeof(RectTransform));
+            var handRect = (RectTransform)handObject.transform;
+            handRect.SetParent(rootRect, false);
+            handRect.anchorMin = new Vector2(0f, 0f);
+            handRect.anchorMax = new Vector2(1f, 0f);
+            handRect.anchoredPosition = new Vector2(0f, 210f);
+            handRect.sizeDelta = new Vector2(0f, 260f);
+            return BuildHand(root, handRect, cardCount);
+        }
+
+        private static HandFixture BuildDirectHand(
             float width,
             float height,
             int cardCount)
         {
             var root = new GameObject("Hand", typeof(RectTransform));
-            var rootRect = (RectTransform)root.transform;
-            rootRect.sizeDelta = new Vector2(width, height);
+            var handRect = (RectTransform)root.transform;
+            handRect.sizeDelta = new Vector2(width, height);
+            return BuildHand(root, handRect, cardCount);
+        }
+
+        private static HandFixture BuildHand(
+            GameObject root,
+            RectTransform handRect,
+            int cardCount)
+        {
             var contentObject = new GameObject("Content", typeof(RectTransform));
             var content = (RectTransform)contentObject.transform;
-            content.SetParent(rootRect, false);
+            content.SetParent(handRect, false);
             content.anchorMin = content.anchorMax = new Vector2(0.5f, 0.5f);
             content.pivot = new Vector2(0.5f, 0.5f);
             content.sizeDelta = Vector2.zero;
 
-            var hand = root.AddComponent<HandFanView>();
+            var hand = handRect.gameObject.AddComponent<HandFanView>();
             hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
             hand.SetCards(
                 Presentations(cardCount),
@@ -126,6 +153,7 @@ namespace FateWeaver.Tests.UnityEditMode
             return new HandFixture(
                 root,
                 hand,
+                handRect,
                 content,
                 content.GetComponentsInChildren<CardView>());
         }
@@ -251,17 +279,20 @@ namespace FateWeaver.Tests.UnityEditMode
             public HandFixture(
                 GameObject root,
                 HandFanView hand,
+                RectTransform handRect,
                 RectTransform content,
                 CardView[] views)
             {
                 Root = root;
                 Hand = hand;
+                HandRect = handRect;
                 Content = content;
                 Views = views;
             }
 
             public GameObject Root { get; }
             public HandFanView Hand { get; }
+            public RectTransform HandRect { get; }
             public RectTransform Content { get; }
             public CardView[] Views { get; }
         }
