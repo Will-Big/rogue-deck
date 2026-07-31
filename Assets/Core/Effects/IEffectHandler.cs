@@ -14,6 +14,10 @@ namespace FateWeaver.Core.Effects
         public CombatState State;
         public ResolutionContext ResolutionContext;
         public StatusRegistry StatusRegistry;
+
+        /// <summary>이 카드를 쓰는 쪽의 상태 (약화처럼 주는 피해를 접는 훅이 읽는다).
+        /// 소유자를 확정할 수 없으면 null이며, 그 경우 행위자 상태는 적용되지 않는다.</summary>
+        public StatusBag ActorStatuses;
         public EffectData Effect;
         public int EffectValue;
 

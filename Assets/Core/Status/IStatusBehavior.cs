@@ -8,6 +8,9 @@ namespace FateWeaver.Core.Status
     public sealed class StatusContext
     {
         public StatusInstance Instance;
+
+        /// <summary>이 전투의 상태 규칙 (배율). 훅에서 튜닝 수치를 읽는 유일한 경로다.</summary>
+        public StatusRuleSet Rules;
     }
 
     /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 직접 피해를 주는 배선(파티원은
@@ -42,8 +45,19 @@ namespace FateWeaver.Core.Status
         /// <summary>재부여 시 수치를 교체하지 않고 합산할지 (방어·독 = true; §3.1/§3.2).</summary>
         bool StacksMagnitude { get; }
 
+        /// <summary>피해 계산에서 이 상태가 접히는 단계 (방어만 흡수 층).</summary>
+        StatusDamageLayer DamageLayer { get; }
+
         /// <summary>Entity-scoped: fold into damage the holder is about to RECEIVE.</summary>
         int ModifyIncomingDamage(int damage, StatusContext ctx);
+
+        /// <summary>Entity-scoped: fold into damage the holder is about to DEAL (e.g. weak).</summary>
+        int ModifyOutgoingDamage(int damage, StatusContext ctx);
+
+        /// <summary>Entity-scoped: fold into the magnitude the holder is about to GAIN from an applied
+        /// status (e.g. damaged reducing block gain). The behavior decides which gained keys it affects,
+        /// so no central switch grows here.</summary>
+        int ModifyGainedMagnitude(StatusKey gained, int magnitude, StatusContext ctx);
 
         /// <summary>Card-scoped: return true to nullify/skip the card's resolution (e.g. stun).</summary>
         bool InterceptCardResolve(StatusContext ctx);
@@ -66,7 +80,12 @@ namespace FateWeaver.Core.Status
         public abstract StatusScope Scope { get; }
 
         public virtual bool StacksMagnitude => false;
+        public virtual StatusDamageLayer DamageLayer => StatusDamageLayer.Multiplier;
         public virtual int ModifyIncomingDamage(int damage, StatusContext ctx) => damage;
+        public virtual int ModifyOutgoingDamage(int damage, StatusContext ctx) => damage;
+
+        public virtual int ModifyGainedMagnitude(StatusKey gained, int magnitude, StatusContext ctx)
+            => magnitude;
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }

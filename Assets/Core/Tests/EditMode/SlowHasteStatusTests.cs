@@ -53,11 +53,11 @@ namespace FateWeaver.Tests
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
-            Assert.AreEqual(8, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
+            Assert.AreEqual(8, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default()));
 
             var bag2 = new StatusBag();
             bag2.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 2);
-            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry()));
+            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry(), StatusRuleCatalog.Default()));
         }
 
         [Test]
@@ -65,9 +65,9 @@ namespace FateWeaver.Tests
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry()));
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null));
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null, StatusRuleCatalog.Default()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry(), StatusRuleCatalog.Default()));
         }
 
         private static CardDefinition PlayerStrike() => new CardDefinition(

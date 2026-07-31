@@ -219,7 +219,7 @@ namespace FateWeaver.Simulation
 
         private int EffectiveExecutionOrderFor(OwnedCard card)
             => StatusExecutionOrder.ExecutionOrderFor(
-                card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses);
+                card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses, _state.StatusRules);
 
         private static void ValidateBaseExecutionDefinitions(IReadOnlyList<OwnedCard> cards)
         {
@@ -379,7 +379,8 @@ namespace FateWeaver.Simulation
                 inst.IsLocked = enemyCard.StartsLocked;
                 if (!inst.IsLocked)
                 {
-                    inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(inst.ExecutionOrder, enemyBag, _statuses);
+                    inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(
+                        inst.ExecutionOrder, enemyBag, _statuses, _state.StatusRules);
                 }
 
                 _state.Zone.Add(inst);

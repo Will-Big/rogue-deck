@@ -333,9 +333,11 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 모두 `IStatusBehavior`를 경유한다. `ModifyConditionTier` 훅을 추가하면 이 특수 분기와 빈 클래스가 함께
 사라진다.
 
-**`VulnerableBehavior` 하드코딩.** `(damage * 3) / 2`로 50%를 고정하고 자신의 `Magnitude`를 무시한다.
-형제 상태 넷(`Block`, `Slow`, `Haste`)은 모두 `Magnitude`를 읽는다. 규칙 8 위반이고 "취약 2"를 표현할 수
-없다.
+**`VulnerableBehavior` 하드코딩.** ~~`(damage * 3) / 2`로 50%를 고정하고 자신의 `Magnitude`를
+무시한다.~~ **2026-07-30 해소** — 배율이 `StatusRule.MultiplierPercent`로 이동해
+`CombatState.StatusRules`에서 런타임 조절이 가능하고, 기본값은 `StatusRuleCatalog`에 모였다.
+`Magnitude`를 세기로 쓰지 않는 것은 의도된 설계다: 취약의 count는 남은 턴이며 중첩은 지속을
+늘릴 뿐 배율을 키우지 않는다("취약 2" = 2턴). 강도와 지속은 서로 다른 축이다.
 
 **비용 이중 원본.** `CardDefinition.EnergyCost`와 `InterventionActionData.InterventionCost`가 별개
 필드이고, 개입 플레이 경로는 전자를 아예 읽지 않는다. 현재는 `CardSpecMapper`가 둘 다 같은 값으로
@@ -371,3 +373,67 @@ fallback 정책을 복사해 재구현하게 된다.
 **독 상태 미구현.** `poison` 상태 키도, `PoisonBehavior`도, 덱 루프 설계가 명시한 "행동 턴 종료 시 발동
 후 1 증가"의 훅 지점도 없다. 캐릭터·카드풀 설계가 독을 아키타입 축으로 두고 있으므로, 해당 카드풀을
 구현하려면 이 상태와 훅이 먼저 필요하다.
+
+## 13. 2026-07-30 상태 이상 설계 논의에서 추가된 항목
+
+### 13.1 P1급 — 확정된 규칙을 코드가 지키지 않음
+
+**방어와 취약의 적용 순서가 걸린 순서에 좌우된다.** `DamageHandler.FoldIncoming`이 대상의 상태를
+`bag.All` 삽입 순서대로 한 루프에서 접으므로, 방어가 취약보다 먼저 걸려 있으면 방어가 먼저 흡수하고
+남은 값에 취약이 곱해진다. 확정된 규칙은 "취약을 먼저 곱하고 방어는 추가 체력처럼 마지막에 흡수"다.
+**2026-07-30 해소** — `StatusDamageLayer`로 층을 선언하고 `StatusDamageFold`가 배율 층을 모두 접은
+뒤 흡수 층을 적용한다. 걸린 순서와 무관하게 같은 결과가 나온다.
+
+**상태 수명이 저작 시점에 고정된다.** `StatusLifetime`은 적용마다 4종(`Permanent`/`ThisTurn`/
+`Turns`/`UntilConsumed`) 중 하나를 고르는 구조라, "방어를 이 런 동안 영구로", "독을 이번 턴만으로"
+같은 런타임 변경을 표현할 수 없다. 수명은 강도와 마찬가지로 상태별 규칙 파라미터여야 한다.
+
+목표 구조는 인스턴스에 count 하나만 두고(상태마다 의미가 다르다 — 취약은 남은 턴, 방어는 흡수량),
+감쇠를 `{트리거 → 변화량}` 데이터로 옮기는 것이다. 트리거는 최소한 `턴 끝`과 `발동 시` 둘이며 동시에
+켤 수 있어야 한다. 조건부 감쇠(독 안정이 독의 성장을 막는 것)는 데이터로 표현되지 않으므로
+`데이터 = 기본 감쇠, behavior = 그 위의 예외` 2층을 유지한다. 이는 캐릭터·카드풀 설계 §3.3의
+5층 우선순위와 같은 구조다.
+
+영향 범위가 넓다 — `StatusBag`, `ApplyStatusPayload`, `ApplyStatusSpec`, 저작 콘텐츠
+(`StarterPoolSpecs`, `StarterDeckSpecs`, `PartyPrototypeDeckSpecs`, `GoblinDeck`, `WardenDeck`,
+`GeneratedCards.cs`), 설명 문법의 `LifetimeSuffix`. 별도 계획으로 분리한다.
+
+### 13.2 P1급 — 플레이어 카드와 콘텐츠 로딩
+
+**`OwnedCard`에 변형을 담을 자리가 없다.** 3계층 카드 모델의 중간 계층이 `Def`와 `OwnerId` 두
+필드뿐이라 런 중 영구 강화도, 전투 한정 일시 강화도 표현할 수 없다.
+
+**콘텐츠가 편집 시점 코드 생성으로 고정된다.** `CardCodeGenerator`가 `GeneratedCards.cs`를 만들고
+코어가 그것을 컴파일하므로, 모드가 카드를 추가하려면 재컴파일이 필요하다.
+
+두 항목의 요구와 경계는
+[카드 변형과 런타임 콘텐츠 로딩 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)에
+확정되어 있다. 구현 계획은 아직 없다.
+
+### 13.3 P2급 — 중복
+
+**카드 소유자 해결이 두 곳에 있다.** `ApplyStatusHandler`의 `ResolvePlayerSelf`/`ResolveEnemySelf`와
+`CardActor.StatusesFor`가 같은 fallback 정책(OwnerId 우선, 없으면 후보가 하나일 때만 확정)을 각자
+구현한다. 반환 타입이 달라(엔티티 vs `StatusBag`) 즉시 통합되지는 않는다.
+
+**같은 보유자에게 곱셈 상태가 둘 이상 붙을 때의 순서 규칙이 없다.** 단계별 버림에서는 곱셈 순서가
+결과를 바꾼다(피해 10에 ×0.75와 ×1.5를 순서만 바꿔 적용하면 10과 11로 갈린다). 현재는 약화가
+공격자, 취약이 대상 쪽이라 파이프라인상 순서가 고정되어 문제가 드러나지 않는다. 곱셈 상태가 한
+bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배율 누적 후 1회 버림으로 바꿔야 한다.
+
+### 13.4 P1급 — 전투가 무엇을 했는지 볼 수 없다
+
+**배틀 화면이 타임라인을 표시하지 않는다.** `BattleScreenController`는 `SetMessage`로 조작 안내만
+띄우고 해석 결과를 보여주지 않는다. 2026-07-31 검증에서 앞열 파티원이 HP 1에서 죽지 않는 현상을
+확인했는데, 실제 원인인 치명 버팀(`DeathsDoorSurvived`)이 정상 발행되고 있었는데도 화면에서 판단할
+방법이 없었다. 규칙이 맞는지 틀리는지 확인할 수 없는 상태다.
+
+**타임라인이 상호작용을 다 담지 않는다.** 상태가 부여·만료되는 사건에 대응하는 이벤트가 아예 없고
+(`StatusTicked`·`StatusTransferred`만 있다), 피해가 약화·취약·방어로 어떻게 바뀌었는지는
+`CardResolved.DamageDealt` 총합 하나로만 남는다. 규칙 11이 "코어의 출력은 이벤트 타임라인뿐"이라고
+정한 이상, 타임라인에 없는 사건은 UI도 로그도 표현할 수 없다.
+
+**플레이테스트 화면의 렌더링이 조용히 버린다.** `DeckPlaytestController.RefreshTimeline`은
+`CardResolved`와 `TurnEnded`만 처리하고 나머지 이벤트를 아무 표시 없이 건너뛴다.
+
+[전투 상호작용 로그 계획](2026-07-31-combat-interaction-log.md)이 이 항목을 다룬다.

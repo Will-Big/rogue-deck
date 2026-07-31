@@ -4,7 +4,11 @@ namespace FateWeaver.Core.Status
     /// Mirrors DamageHandler.FoldIncoming, but duration-based (no charge consume).</summary>
     public static class StatusExecutionOrder
     {
-        public static int ExecutionOrderFor(int baseExecutionOrder, StatusBag bag, StatusRegistry registry)
+        public static int ExecutionOrderFor(
+            int baseExecutionOrder,
+            StatusBag bag,
+            StatusRegistry registry,
+            StatusRuleSet rules)
         {
             if (registry == null || bag == null)
             {
@@ -17,7 +21,9 @@ namespace FateWeaver.Core.Status
                 if (registry.TryResolve(status.Key, out var behavior)
                     && behavior.Scope == StatusScope.Entity)
                 {
-                    result = behavior.ModifyExecutionOrder(result, new StatusContext { Instance = status });
+                    result = behavior.ModifyExecutionOrder(
+                        result,
+                        new StatusContext { Instance = status, Rules = rules });
                 }
             }
 

@@ -40,6 +40,8 @@ namespace FateWeaver.Simulation.Descriptions
             statuses.Register(StatusKeys.PoisonDormant, "독 잠복");
             statuses.Register(StatusKeys.PoisonStasis, "독 안정");
             statuses.Register(StatusKeys.Contagion, "전염");
+            statuses.Register(StatusKeys.Weak, "약화");
+            statuses.Register(StatusKeys.Damaged, "손상");
 
             var effects = new EffectDescriptionRegistry();
             effects.Register(new DamageDescriptionHandler());

@@ -28,6 +28,10 @@ namespace FateWeaver.Core.Combat
         public int PendingNextTurnFateEnergy { get; set; }
         public int RngSeed { get; set; }
 
+        /// <summary>이 전투의 상태 배율. 전투 단위로 존재하므로 전투 중 변경이 런으로 새지 않는다.
+        /// 런 지속 변경(유물 등)은 전투 시작 시 이 값을 시딩해 반영한다.</summary>
+        public Status.StatusRuleSet StatusRules { get; set; } = Status.StatusRuleCatalog.Default();
+
         /// <summary>Seeded RNG shared by all combat rule logic (AGENTS.md rule 7: no ad-hoc `new Random()`
         /// elsewhere). Lazily created from RngSeed so RngSeed can still be assigned via object initializer.</summary>
         public Random Rng => _rng ??= new Random(RngSeed);

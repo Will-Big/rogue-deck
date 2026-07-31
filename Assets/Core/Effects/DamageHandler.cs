@@ -23,7 +23,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var amount = ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus();
+            var amount = FoldOutgoing(ctx, ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus());
             if (ctx.Card.Def.Side == Side.Player)
             {
                 if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
@@ -133,32 +133,17 @@ namespace FateWeaver.Core.Effects
             return living;
         }
 
-        /// <summary>Folds the target's entity-scoped statuses into incoming damage. An UntilConsumed
-        /// status that actually changed the damage spends a charge (auto-consume).</summary>
+        /// <summary>Folds the target's entity-scoped statuses into incoming damage: the multiplier
+        /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
+        /// actually changed the damage spends a charge (auto-consume).</summary>
         private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
-        {
-            if (ctx.StatusRegistry == null || bag == null)
-            {
-                return damage;
-            }
+            => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, ctx.State.StatusRules, damage);
 
-            // Snapshot: consuming may modify the bag mid-iteration.
-            var snapshot = new List<StatusInstance>(bag.All);
-            foreach (var status in snapshot)
-            {
-                if (ctx.StatusRegistry.TryResolve(status.Key, out var behavior))
-                {
-                    var after = behavior.ModifyIncomingDamage(damage, new StatusContext { Instance = status });
-                    if (after != damage)
-                    {
-                        bag.Consume(status);
-                    }
-
-                    damage = after;
-                }
-            }
-
-            return damage;
-        }
+        /// <summary>Folds the acting side's entity-scoped statuses into the damage it deals (e.g.
+        /// Weak). Applied once per effect, before any target's incoming statuses — so an All-target
+        /// card reduces its damage once and every target is hit with the same reduced value.</summary>
+        private static int FoldOutgoing(EffectContext ctx, int damage)
+            => StatusDamageFold.Outgoing(
+                ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage);
     }
 }
