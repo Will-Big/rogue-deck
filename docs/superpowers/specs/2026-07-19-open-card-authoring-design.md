@@ -34,7 +34,7 @@
 
 ### 4.1 저작 모델 — 다형 EffectSpec
 
-`FateWeaver.Simulation.Authoring`에 추상 `[Serializable]` 클래스 `EffectSpec`을 두고, 현재 5종 효과를
+`FateWeaver.Core.Authoring`에 추상 `[Serializable]` 클래스 `EffectSpec`을 두고, 현재 5종 효과를
 서브클래스로 옮긴다:
 
 | 서브클래스 | 파라미터 | 대응 코어 키 |

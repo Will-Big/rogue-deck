@@ -1,4 +1,3 @@
-using FateWeaver.Core;
 using System.Collections.Generic;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
