@@ -29,7 +29,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 9096977016729108488
-      type: {class: DamageSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      type: {class: DamageSpec, ns: FateWeaver.Core.Authoring, asm: FateWeaver.Core}
       data:
         Condition:
           Kind: 0

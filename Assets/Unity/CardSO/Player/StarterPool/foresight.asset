@@ -36,7 +36,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 9096977252664737801
-      type: {class: ApplyStatusSpec, ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation}
+      type: {class: ApplyStatusSpec, ns: FateWeaver.Core.Authoring, asm: FateWeaver.Core}
       data:
         Condition:
           Kind: 5
