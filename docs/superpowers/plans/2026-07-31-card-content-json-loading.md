@@ -839,7 +839,12 @@ namespace FateWeaver.Tests
         [Test]
         public void ReportsMalformedJsonWithFileNameAndLineNumber()
         {
-            var result = Load(new CardContentSource("broken.json", "{ \"id\": \"x\", }"));
+            // 필수 키는 모두 있고 중괄호만 닫히지 않았다. 필수 키 검사를 통과해 파서까지
+            // 도달해야 파싱 오류 경로를 실제로 검증한다. Newtonsoft 13은 트레일링 콤마를
+            // 허용하므로 그것으로는 파싱이 실패하지 않는다.
+            var result = Load(new CardContentSource(
+                "broken.json",
+                "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\""));
 
             Assert.IsFalse(result.Succeeded);
             Assert.IsNull(result.Catalog);
@@ -901,8 +906,12 @@ namespace FateWeaver.Tests
         public void ReportsEveryFailingFileAtOnce()
         {
             var result = Load(
-                new CardContentSource("one.json", "{ \"id\": \"a\", }"),
-                new CardContentSource("two.json", "{ \"id\": \"b\", }"));
+                new CardContentSource(
+                    "one.json",
+                    "{ \"id\": \"a\", \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\""),
+                new CardContentSource(
+                    "two.json",
+                    "{ \"id\": \"b\", \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\""));
 
             Assert.AreEqual(2, result.Errors.Count);
             Assert.IsTrue(result.Errors.Any(e => e.Contains("one.json")));
@@ -1135,8 +1144,9 @@ namespace FateWeaver.Core.Authoring
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter CardContentLoaderTests`
 Expected: `Passed: 8, Failed: 0`
 
-`ReportsMalformedJsonWithFileNameAndLineNumber`가 `line 1`을 못 찾으면 Newtonsoft가 트레일링 콤마를
-`JsonReaderException`이 아닌 다른 예외로 내는 것이다. 실제 메시지를 확인해 `Describe`를 맞춘다.
+`ReportsMalformedJsonWithFileNameAndLineNumber`가 `line 1`을 못 찾으면 실제 예외 타입과 메시지를
+확인해 `Describe`를 맞춘다. **단언을 약화시키지 않는다** — 저작자에게 위치를 알려주는 것이 이
+테스트의 존재 이유다.
 
 - [ ] **Step 6: 디렉터리 읽기를 더한다**
 
