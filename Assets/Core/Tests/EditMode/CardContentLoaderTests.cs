@@ -91,8 +91,12 @@ namespace FateWeaver.Tests
         public void ReportsEveryFailingFileAtOnce()
         {
             var result = Load(
-                new CardContentSource("one.json", "{ \"id\": \"a\", }"),
-                new CardContentSource("two.json", "{ \"id\": \"b\", }"));
+                new CardContentSource(
+                    "one.json",
+                    "{ \"id\": \"a\", \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\""),
+                new CardContentSource(
+                    "two.json",
+                    "{ \"id\": \"b\", \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\""));
 
             Assert.AreEqual(2, result.Errors.Count);
             Assert.IsTrue(result.Errors.Any(e => e.Contains("one.json")));
