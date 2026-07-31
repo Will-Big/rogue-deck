@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-07-30
+- 개정일: 2026-07-31
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -44,7 +44,7 @@
 | [무작위 10장 시작 덱 구성](specs/2026-07-30-random-starter-deck-design.md) | `current` | 22장 풀에서 역할별 2/2/2/4를 한 번 추첨해 고정하는 시작 덱 | 시작 덱 10장 추첨·에셋 교체·검증 |
 | [캐릭터 및 카드풀 설계 규칙](specs/2026-07-20-character-card-pools-design.md) | `current` | 카드 소유권, 카드풀, 독 아키타입, 유산 | 캐릭터·카드·독 카드풀 디자인 |
 | [간수 적 설계](specs/2026-06-27-warden-lock-enemy-design.md) | `current` | 잠금 입문 적의 카드·행동 패턴 | 간수 조정 또는 잠금 적 확장 |
-| [카드 변형과 런타임 콘텐츠 로딩](specs/2026-07-30-card-mutation-and-runtime-content-design.md) | `current` | 플레이어 소유 카드의 영구·일시 변형, 편집 시점 코드 생성의 런타임 로딩 대체, UGC 경계 | 카드 강화·변경 구현, 모딩 지원 착수 |
+| [카드 변형과 런타임 콘텐츠 로딩](specs/2026-07-30-card-mutation-and-runtime-content-design.md) | `current` | OwnedCard의 영구·전투 변형 2목록과 Effective 카드, 코드 생성의 JSON 런타임 로딩 대체, UGC 경계 | 카드 강화·변경 구현, 모딩 지원 착수 |
 
 카드 디자인을 새 세션에서 이어갈 때는
 [캐릭터 및 카드풀 설계 규칙](specs/2026-07-20-character-card-pools-design.md)부터 읽는다.
