@@ -97,5 +97,91 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AllItemsAreUnique(kinds);
         }
+
+        [Test]
+        public void RoundTripsAnExecutionCardWithMultipleEffects()
+        {
+            var original = new CardSpec
+            {
+                Id = "probing_strike",
+                Name = "견제타",
+                Side = Side.Player,
+                Category = CardCategory.Execution,
+                EnergyCost = 1,
+                BaseExecutionOrder = 4,
+                Effects = new EffectSpec[]
+                {
+                    new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontMost },
+                    new ApplyStatusSpec
+                    {
+                        Status = new StatusKeyRef { Id = "block" },
+                        Value = 1,
+                        Lifetime = StatusLifetimeKind.ThisTurn,
+                        Target = StatusApplyTarget.Self
+                    }
+                }
+            };
+
+            var restored = ContentJson.Read<CardSpec>(ContentJson.Write(original));
+
+            Assert.AreEqual("probing_strike", restored.Id);
+            Assert.AreEqual("견제타", restored.Name);
+            Assert.AreEqual(4, restored.BaseExecutionOrder);
+            Assert.AreEqual(2, restored.Effects.Length);
+            Assert.IsInstanceOf<DamageSpec>(restored.Effects[0]);
+            Assert.AreEqual(4, ((DamageSpec)restored.Effects[0]).Value);
+            Assert.IsInstanceOf<ApplyStatusSpec>(restored.Effects[1]);
+            Assert.AreEqual("block", ((ApplyStatusSpec)restored.Effects[1]).Status.Id);
+        }
+
+        [Test]
+        public void RoundTripsAnInterventionCardIncludingTargetRestrictions()
+        {
+            var original = new CardSpec
+            {
+                Id = "hasten",
+                Name = "재촉",
+                Side = Side.Player,
+                Category = CardCategory.Intervention,
+                EnergyCost = 1,
+                Intervention = new InterventionKeyRef { Id = "change_execution_order" },
+                InterventionEffectValue = -2,
+                InterventionTargetSide = InterventionTargetSideRef.Player,
+                InterventionRequireAdjacent = true
+            };
+
+            var restored = ContentJson.Read<CardSpec>(ContentJson.Write(original));
+
+            Assert.AreEqual("change_execution_order", restored.Intervention.Id);
+            Assert.AreEqual(-2, restored.InterventionEffectValue);
+            Assert.AreEqual(InterventionTargetSideRef.Player, restored.InterventionTargetSide);
+            Assert.IsTrue(restored.InterventionRequireAdjacent);
+        }
+
+        [Test]
+        public void RoundTrippedCardProducesAnIdenticalDefinition()
+        {
+            var original = new CardSpec
+            {
+                Id = "delayed_strike",
+                Name = "늦춘 일격",
+                Side = Side.Player,
+                Category = CardCategory.Execution,
+                EnergyCost = 1,
+                BaseExecutionOrder = 5,
+                Effects = new EffectSpec[] { new DamageSpec { Value = 5 } }
+            };
+
+            var before = CardSpecMapper.ToDefinition(original);
+            var after = CardSpecMapper.ToDefinition(
+                ContentJson.Read<CardSpec>(ContentJson.Write(original)));
+
+            Assert.AreEqual(before.Id, after.Id);
+            Assert.AreEqual(before.Name, after.Name);
+            Assert.AreEqual(before.BaseExecutionOrder, after.BaseExecutionOrder);
+            Assert.AreEqual(before.Effects.Count, after.Effects.Count);
+            Assert.AreEqual(before.Effects[0].Key, after.Effects[0].Key);
+            Assert.AreEqual(before.Effects[0].EffectValue, after.Effects[0].EffectValue);
+        }
     }
 }
