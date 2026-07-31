@@ -6,6 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using TMPro;
 using UnityEngine;
@@ -23,6 +24,7 @@ namespace FateWeaver.Unity
         [SerializeField] private CardAsset[] _enemyArtCards = Array.Empty<CardAsset>();
 
         [Header("Views")]
+        [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private HandFanView _hand;
         [SerializeField] private ExecutionRailView _rail;
         [SerializeField] private UnitView _unitPrefab;
@@ -63,6 +65,13 @@ namespace FateWeaver.Unity
 
         private void StartSession()
         {
+            if (_cardPrefabs == null)
+            {
+                throw new InvalidOperationException(
+                    "Battle screen requires a card prefab catalog.");
+            }
+
+            _cardPrefabs.ValidateOrThrow();
             _selection.CancelSelection();
             if (_unitPrefab == null || _party == null || _party.Length == 0 || _party.Any(member => member == null || member.Deck == null))
             {
@@ -76,6 +85,10 @@ namespace FateWeaver.Unity
                 member.DisplayName,
                 tuning.DefaultMemberMaxHp,
                 member.Deck.ToSpecs().Select(CardSpecMapper.ToDefinition).ToList())).ToList();
+            DescriptionCatalogValidator.ValidateDefault(
+                loadouts.SelectMany(loadout => loadout.Cards)
+                    .Concat(GoblinDeck.AllCards()),
+                KoreanDescriptionCatalog.Default);
             var enemies = new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) };
             _session = new DeckCombatSession(
                 loadouts,

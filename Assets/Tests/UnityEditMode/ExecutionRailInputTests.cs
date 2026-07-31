@@ -330,10 +330,14 @@ namespace FateWeaver.Tests.UnityEditMode
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 rail.ArmPlacementPreview(() => { });
-                var cardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>(
-                    "Assets/Unity/Prefabs/CardView.prefab");
-                Assert.IsNotNull(cardPrefab);
-                var flightCard = Object.Instantiate(cardPrefab, overlay);
+                var flightPresentation = Card(
+                    "flight",
+                    3,
+                    Side.Player,
+                    CardCategory.Intervention);
+                var flightCard = CardPrefabCatalogTests.LoadCatalog()
+                    .Create(flightPresentation, overlay);
+                flightCard.Bind(flightPresentation, null);
                 var flight = (RectTransform)flightCard.transform;
                 flight.sizeDelta = new Vector2(170f, 238f);
                 var preview = Field<RailCardView>(rail, "_placementPreview");
@@ -397,14 +401,21 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var fullPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>(
-                    "Assets/Unity/Prefabs/CardView.prefab");
-                Assert.IsNotNull(fullPrefab);
+                var catalog = CardPrefabCatalogTests.LoadCatalog();
                 var miniPrefab = RailCardView.EditorCreate(
                     ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
                 var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(fullPrefab, miniPrefab, overlay);
-                rail.SetCards(new[] { Card("existing", 4, Side.Enemy) }, _ => { });
+                rail.EditorBuild(catalog, miniPrefab, overlay);
+                rail.SetCards(
+                    new[]
+                    {
+                        Card(
+                            "existing",
+                            4,
+                            Side.Enemy,
+                            CardCategory.Intervention)
+                    },
+                    _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 rail.ArmPlacementPreview(() => { });
                 var existing = Field<List<RailCardView>>(rail, "_views")[0];
@@ -414,6 +425,8 @@ namespace FateWeaver.Tests.UnityEditMode
                 var detail = Field<CardView>(rail, "_preview");
                 Assert.IsNotNull(detail);
                 Assert.IsTrue(detail.gameObject.activeSelf);
+                Assert.AreEqual(CardCategory.Intervention, detail.PrefabCategory);
+                Assert.IsInstanceOf<RailCardView>(existing);
             }
             finally
             {
@@ -435,9 +448,21 @@ namespace FateWeaver.Tests.UnityEditMode
             return (RectTransform)child.transform;
         }
 
-        private static CardPresentation Card(string id, int order, Side side)
+        private static CardPresentation Card(
+            string id,
+            int order,
+            Side side,
+            CardCategory category = CardCategory.Execution)
             => new CardPresentation(
-                id, id, order, 1, side, EmptyDescriptionLayout(), null, false);
+                id,
+                id,
+                order,
+                1,
+                side,
+                EmptyDescriptionLayout(),
+                null,
+                false,
+                category: category);
 
         private static CardDescriptionLayout EmptyDescriptionLayout()
             => new CardDescriptionLayout(

@@ -7,6 +7,7 @@ using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Authoring;
+using FateWeaver.Simulation.Descriptions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,7 +31,7 @@ namespace FateWeaver.Unity
         [SerializeField] private CardAsset[] _enemyArtCards = System.Array.Empty<CardAsset>();
 
         [Header("Prefab + containers")]
-        [SerializeField] private CardView _cardPrefab;
+        [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private RectTransform _handRow;
         [SerializeField] private RectTransform _zoneRow;
 
@@ -70,8 +71,18 @@ namespace FateWeaver.Unity
 
         private void StartSession()
         {
+            if (_cardPrefabs == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Deck playtest requires a card prefab catalog.");
+            }
+
+            _cardPrefabs.ValidateOrThrow();
             var specs = _deck != null ? _deck.ToSpecs() : StarterDeckSpecs.Build();
             var deckDefs = specs.Select(CardSpecMapper.ToDefinition).ToList();
+            DescriptionCatalogValidator.ValidateDefault(
+                deckDefs.Concat(EnemyDefinitions()),
+                KoreanDescriptionCatalog.Default);
             var enemies = new[] { new Enemy(EnemyId(), EnemyStartingHp()) };
             _session = new DeckCombatSession(
                 deckDefs, PlayerHp, enemies, EnemyPolicy(), FateEnergyPerTurn, HandSize, Seed);
@@ -89,6 +100,11 @@ namespace FateWeaver.Unity
 
         private IEnemyTurnPolicy EnemyPolicy()
             => _enemyKind == EnemyKind.Warden ? WardenDeck.Policy() : GoblinDeck.Policy();
+
+        private IReadOnlyList<CardDefinition> EnemyDefinitions()
+            => _enemyKind == EnemyKind.Warden
+                ? WardenDeck.Deck()
+                : GoblinDeck.AllCards();
 
         // --- input ---
 
@@ -216,16 +232,17 @@ namespace FateWeaver.Unity
 
             for (int i = 0; i < _session.Hand.Count; i++)
             {
-                var view = Instantiate(_cardPrefab, _handRow);
                 int captured = i;
                 var owned = _session.Hand[i];
+                var presentation = CardPresentation.FromDefinition(
+                    owned.Def,
+                    ArtFor,
+                    PlaytestKoreanText.SideName(Side.Player),
+                    PlayerOwnerColor,
+                    false);
+                var view = _cardPrefabs.Create(presentation, _handRow);
                 view.Bind(
-                    CardPresentation.FromDefinition(
-                        owned.Def,
-                        ArtFor,
-                        PlaytestKoreanText.SideName(Side.Player),
-                        PlayerOwnerColor,
-                        false),
+                    presentation,
                     () => OnHandClicked(captured));
                 view.SetSelection(i == _armedInterventionHandIndex ? CardView.SelectionKind.Primary : CardView.SelectionKind.None);
                 _handViews.Add(view);
@@ -240,9 +257,10 @@ namespace FateWeaver.Unity
             var order = _session.CurrentOrder;
             for (int i = 0; i < order.Count; i++)
             {
-                var view = Instantiate(_cardPrefab, _zoneRow);
                 int captured = i;
-                view.Bind(PresentationFor(order[i]), () => OnZoneClicked(captured));
+                var presentation = PresentationFor(order[i]);
+                var view = _cardPrefabs.Create(presentation, _zoneRow);
+                view.Bind(presentation, () => OnZoneClicked(captured));
                 view.SetSelection(i == _firstSwapZoneIndex ? CardView.SelectionKind.Secondary : CardView.SelectionKind.None);
                 _zoneViews.Add(view);
             }

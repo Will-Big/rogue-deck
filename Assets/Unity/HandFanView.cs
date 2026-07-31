@@ -24,7 +24,8 @@ namespace FateWeaver.Unity
             internal CanvasGroup SourceGroup { get; }
         }
 
-        [SerializeField] private CardView _cardPrefab;
+        [SerializeField] private CardPrefabCatalog _cardPrefabs;
+        [SerializeField] private RectTransform _content;
 
         private const float Spacing = 150f;
         private const float AnglePerCard = 4f;
@@ -35,9 +36,10 @@ namespace FateWeaver.Unity
         private readonly List<HandCardHoverEffect> _hoverEffects = new List<HandCardHoverEffect>();
         private readonly List<CanvasGroup> _groups = new List<CanvasGroup>();
 
-        public void EditorBuild(CardView cardPrefab)
+        public void EditorBuild(CardPrefabCatalog catalog, RectTransform content)
         {
-            _cardPrefab = cardPrefab;
+            _cardPrefabs = catalog;
+            _content = content;
         }
 
         public void SetCards(
@@ -53,10 +55,9 @@ namespace FateWeaver.Unity
             _views.Clear();
             _hoverEffects.Clear();
             _groups.Clear();
-            var root = (RectTransform)transform;
             for (int i = 0; i < cards.Count; i++)
             {
-                var view = Instantiate(_cardPrefab, root);
+                var view = _cardPrefabs.Create(cards[i], _content);
                 var rect = (RectTransform)view.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.sizeDelta = CardSize;
@@ -89,13 +90,13 @@ namespace FateWeaver.Unity
             out PlacementFlightVisual visual)
         {
             visual = null;
-            if (index < 0 || index >= _views.Count || _cardPrefab == null || layer == null)
+            if (index < 0 || index >= _views.Count || _cardPrefabs == null || layer == null)
             {
                 return false;
             }
 
             var source = (RectTransform)_views[index].transform;
-            var copy = Instantiate(_cardPrefab, layer);
+            var copy = _cardPrefabs.Create(card, layer);
             copy.Bind(card, null);
             copy.SetInteractable(false);
             foreach (var graphic in copy.GetComponentsInChildren<Graphic>(true))

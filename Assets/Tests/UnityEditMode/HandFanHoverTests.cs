@@ -7,7 +7,6 @@ using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -27,11 +26,10 @@ namespace FateWeaver.Tests.UnityEditMode
             var root = new GameObject("Hand", typeof(RectTransform));
             try
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                    "Assets/Unity/Prefabs/ExecutionCardView.prefab");
-                Assert.IsNotNull(prefab);
                 var hand = root.AddComponent<HandFanView>();
-                hand.EditorBuild(prefab);
+                hand.EditorBuild(
+                    CardPrefabCatalogTests.LoadCatalog(),
+                    (RectTransform)root.transform);
                 var calls = new List<(int Index, bool Hovering)>();
                 var cards = new[]
                 {
@@ -218,15 +216,65 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        [Test]
+        public void Mixed_hand_uses_distinct_category_prefabs()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                BuildHand(
+                    root,
+                    new[]
+                    {
+                        Presentation(CardCategory.Execution),
+                        Presentation(CardCategory.Intervention)
+                    });
+
+                var views = root.GetComponentsInChildren<CardView>();
+
+                Assert.AreEqual(CardCategory.Execution, views[0].PrefabCategory);
+                Assert.AreEqual(CardCategory.Intervention, views[1].PrefabCategory);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Placement_flight_preserves_source_card_category()
+        {
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            try
+            {
+                overlay.transform.SetParent(root.transform, false);
+                var intervention = Presentation(CardCategory.Intervention);
+                var hand = BuildHand(root, new[] { intervention });
+
+                Assert.IsTrue(hand.TryPreparePlacementFlight(
+                    0,
+                    intervention,
+                    (RectTransform)overlay.transform,
+                    out var flight));
+                Assert.AreEqual(
+                    CardCategory.Intervention,
+                    flight.Card.PrefabCategory);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static HandFanView BuildHand(
             GameObject root,
             IReadOnlyList<CardPresentation> cards)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                "Assets/Unity/Prefabs/ExecutionCardView.prefab");
-            Assert.IsNotNull(prefab);
             var hand = root.AddComponent<HandFanView>();
-            hand.EditorBuild(prefab);
+            hand.EditorBuild(
+                CardPrefabCatalogTests.LoadCatalog(),
+                (RectTransform)root.transform);
             hand.SetCards(cards, _ => { }, (_, __) => { });
             return hand;
         }
@@ -243,6 +291,18 @@ namespace FateWeaver.Tests.UnityEditMode
                     null,
                     false))
                 .ToArray();
+
+        private static CardPresentation Presentation(CardCategory category)
+            => new CardPresentation(
+                category.ToString(),
+                category.ToString(),
+                3,
+                1,
+                Side.Player,
+                EmptyDescriptionLayout(),
+                null,
+                false,
+                category: category);
 
         private static CardDescriptionLayout EmptyDescriptionLayout()
             => new CardDescriptionLayout(

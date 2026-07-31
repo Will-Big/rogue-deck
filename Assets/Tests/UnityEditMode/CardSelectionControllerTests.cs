@@ -7,7 +7,6 @@ using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,11 +33,10 @@ namespace FateWeaver.Tests.UnityEditMode
             _root = new GameObject("CardSelectionControllerTests", typeof(RectTransform));
             _root.SetActive(false);
 
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                "Assets/Unity/Prefabs/ExecutionCardView.prefab");
-            Assert.IsNotNull(cardPrefab);
             _hand = Child("Hand", typeof(RectTransform)).AddComponent<HandFanView>();
-            _hand.EditorBuild(cardPrefab);
+            _hand.EditorBuild(
+                CardPrefabCatalogTests.LoadCatalog(),
+                (RectTransform)_hand.transform);
             _hand.SetCards(
                 new[]
                 {

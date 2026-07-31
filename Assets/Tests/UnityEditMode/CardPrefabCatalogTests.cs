@@ -6,6 +6,7 @@ using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -23,6 +24,10 @@ namespace FateWeaver.Tests.UnityEditMode
             "Assets/Unity/Prefabs/TargetGlyphView.prefab";
         internal const string DescriptionLinePath =
             "Assets/Unity/Prefabs/DescriptionLineView.prefab";
+        internal const string GoblinPlaytestScenePath =
+            "Assets/Scenes/FateWeaverPlaytest.unity";
+        internal const string WardenPlaytestScenePath =
+            "Assets/Scenes/FateWeaverWardenPlaytest.unity";
 
         [TestCase(CardCategory.Execution, "ExecutionCardView")]
         [TestCase(CardCategory.Intervention, "InterventionCardView")]
@@ -143,6 +148,74 @@ namespace FateWeaver.Tests.UnityEditMode
                 }
 
                 Object.DestroyImmediate(root);
+            }
+        }
+
+        [TestCase(typeof(BattleScreenController))]
+        [TestCase(typeof(DeckPlaytestController))]
+        public void Battle_controller_validates_card_prefabs_before_other_startup_work(
+            Type controllerType)
+        {
+            var root = new GameObject("Controller");
+            var catalog = ScriptableObject.CreateInstance<CardPrefabCatalog>();
+            try
+            {
+                var controller = root.AddComponent(controllerType);
+                controllerType
+                    .GetField(
+                        "_cardPrefabs",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(controller, catalog);
+
+                var exception = Assert.Throws<TargetInvocationException>(
+                    () => controllerType
+                        .GetMethod(
+                            "StartSession",
+                            BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Invoke(controller, null));
+
+                Assert.IsInstanceOf<InvalidOperationException>(
+                    exception.InnerException);
+                StringAssert.Contains(
+                    "Card prefab catalog validation failed",
+                    exception.InnerException.Message);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(catalog);
+            }
+        }
+
+        [TestCase(GoblinPlaytestScenePath)]
+        [TestCase(WardenPlaytestScenePath)]
+        public void Deck_playtest_scene_serializes_the_card_prefab_catalog(
+            string scenePath)
+        {
+            var scene = EditorSceneManager.OpenScene(
+                scenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                var controllers = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<DeckPlaytestController>(true))
+                    .ToArray();
+
+                Assert.AreEqual(
+                    1,
+                    controllers.Length,
+                    scenePath + " must contain exactly one DeckPlaytestController.");
+                var serialized = new SerializedObject(controllers[0]);
+                var catalog = serialized.FindProperty("_cardPrefabs")
+                    .objectReferenceValue as CardPrefabCatalog;
+                Assert.IsNotNull(
+                    catalog,
+                    scenePath + " must serialize CardPrefabCatalog.");
+                Assert.DoesNotThrow(catalog.ValidateOrThrow);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
             }
         }
 
