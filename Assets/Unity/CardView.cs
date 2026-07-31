@@ -300,6 +300,7 @@ namespace FateWeaver.Unity
                 child.SetActive(false);
                 if (Application.isPlaying)
                 {
+                    child.transform.SetParent(null, false);
                     Destroy(child);
                 }
                 else

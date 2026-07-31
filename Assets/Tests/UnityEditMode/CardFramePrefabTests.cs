@@ -193,6 +193,62 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Description_line_wraps_to_remaining_width_and_grows_in_a_constrained_parent()
+        {
+            var parentObject = new GameObject(
+                "ConstrainedDescription",
+                typeof(RectTransform),
+                typeof(VerticalLayoutGroup));
+            DescriptionLineView line = null;
+            try
+            {
+                var parent = (RectTransform)parentObject.transform;
+                parent.sizeDelta = new Vector2(158f, 200f);
+                var parentLayout = parentObject.GetComponent<VerticalLayoutGroup>();
+                parentLayout.childControlWidth = true;
+                parentLayout.childControlHeight = true;
+                parentLayout.childForceExpandWidth = true;
+                parentLayout.childForceExpandHeight = false;
+
+                line = Object.Instantiate(
+                    Load<DescriptionLineView>(
+                        CardPrefabCatalogTests.DescriptionLinePath),
+                    parent);
+                line.Bind(new CardDescriptionLine(
+                    new CardTargetKey(
+                        CardTargetFaction.Enemy,
+                        CardTargetRange.FrontOne),
+                    "A sufficiently long card effect description should wrap "
+                    + "across several lines inside the remaining width."));
+
+                var lineRect = (RectTransform)line.transform;
+                var text = CardPrefabCatalogTests.Field<TMP_Text>(line, "_text");
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(lineRect);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parent);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(lineRect);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parent);
+                Canvas.ForceUpdateCanvases();
+
+                Assert.That(lineRect.rect.width, Is.EqualTo(158f).Within(0.1f));
+                Assert.That(text.rectTransform.rect.width, Is.EqualTo(118f).Within(0.5f));
+                Assert.Greater(lineRect.rect.height, 28f);
+                Assert.That(
+                    lineRect.rect.height,
+                    Is.GreaterThanOrEqualTo(text.preferredHeight - 0.5f));
+            }
+            finally
+            {
+                if (line != null)
+                {
+                    Object.DestroyImmediate(line.gameObject);
+                }
+
+                Object.DestroyImmediate(parentObject);
+            }
+        }
+
+        [Test]
         public void Description_line_binds_target_glyph_and_text()
         {
             var line = InstantiateDescriptionLine();
@@ -328,6 +384,46 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.IsNotNull(CardPrefabCatalogTests.Field<Outline>(view, "_selectionOutline"));
                 Assert.IsNotNull(CardPrefabCatalogTests.Field<CardBackView>(view, "_backFace"));
                 Assert.IsNotNull(CardPrefabCatalogTests.Field<Button>(view, "_button"));
+            }
+        }
+
+        [TestCase(CardCategory.Execution)]
+        [TestCase(CardCategory.Intervention)]
+        public void Bound_full_card_button_uses_the_root_raycast_and_rebind_replaces_listener(
+            CardCategory category)
+        {
+            var source = category == CardCategory.Execution
+                ? LoadExecution()
+                : LoadIntervention();
+            var view = InstantiateConfigured(source);
+            try
+            {
+                var button = CardPrefabCatalogTests.Field<Button>(view, "_button");
+                var rootGraphic = view.GetComponent<Image>();
+                Assert.AreSame(rootGraphic, button.targetGraphic);
+                Assert.IsTrue(rootGraphic.raycastTarget);
+                Assert.AreEqual(
+                    1,
+                    view.GetComponentsInChildren<Graphic>(true)
+                        .Count(graphic => graphic.raycastTarget));
+
+                int firstCalls = 0;
+                int secondCalls = 0;
+                var presentation = CardPrefabCatalogTests.Presentation(
+                    category,
+                    Array.Empty<CardTargetKey>(),
+                    Array.Empty<CardDescriptionLine>());
+                view.Bind(presentation, () => firstCalls++);
+                button.onClick.Invoke();
+                view.Bind(presentation, () => secondCalls++);
+                button.onClick.Invoke();
+
+                Assert.AreEqual(1, firstCalls);
+                Assert.AreEqual(1, secondCalls);
+            }
+            finally
+            {
+                Object.DestroyImmediate(view.gameObject);
             }
         }
 
