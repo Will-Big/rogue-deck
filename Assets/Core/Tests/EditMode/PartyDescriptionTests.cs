@@ -29,6 +29,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
 
+        [Test]
         public void Party_member_status_fails_because_direct_selection_has_no_frame_schema()
         {
             var card = Execution(EffectData.ApplyStatus(
