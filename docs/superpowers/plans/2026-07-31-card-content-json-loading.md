@@ -150,6 +150,27 @@ Expected: `Passed! - Failed: 0, Passed: 409` — 기준선과 정확히 같은 �
 수가 다르면 sed가 파일을 놓친 것이다. `grep -rn "FateWeaver.Simulation.Authoring" Assets --include='*.cs'`로
 남은 참조를 찾는다.
 
+- [ ] **Step 6b: 카드 에셋의 직렬화 참조를 함께 옮긴다**
+
+Unity의 `[SerializeReference]`는 어셈블리 한정 타입명을 `.asset` YAML에 박아둔다. 코드만 옮기면
+27개 카드 에셋의 `Effects` 배열이 조용히 `null`이 된다. 헤드리스 테스트는 이걸 못 잡는다.
+
+```bash
+/usr/bin/grep -rl "ns: FateWeaver.Simulation.Authoring, asm: FateWeaver.Simulation" Assets --include='*.asset' \
+  | xargs sed -i '' 's/ns: FateWeaver\.Simulation\.Authoring, asm: FateWeaver\.Simulation/ns: FateWeaver.Core.Authoring, asm: FateWeaver.Core/g'
+```
+
+Unity 표준 해법인 `[MovedFromAttribute]`는 쓸 수 없다 — `UnityEngine` 타입이라 코어의
+`noEngineReferences`를 깬다(규칙 6). 직렬화 데이터를 직접 옮기는 것이 이 프로젝트에서의 올바른
+해법이다.
+
+`.asset`의 다른 `[SerializeReference]` 항목은 전부 Unity 렌더 파이프라인 어셈블리 소유이므로
+`git diff`에 FateWeaver 줄만 나와야 한다. 확인:
+
+```bash
+/usr/bin/grep -rl "FateWeaver.Simulation" Assets --include='*.asset' | wc -l   # 0이어야 한다
+```
+
 - [ ] **Step 7: Unity 컴파일을 배치로 확인한다**
 
 Run:
@@ -159,7 +180,10 @@ Run:
   -runTests -testPlatform EditMode -testResults /private/tmp/fw-task1.xml \
   -logFile /private/tmp/fw-task1.log
 ```
-Expected: 종료 코드 0, `/private/tmp/fw-task1.xml`에 실패 0건
+Expected: 종료 코드 0, `/private/tmp/fw-task1.xml`에 실패 0건 (483/483)
+
+Step 6b를 건너뛰면 `StarterDeckAssetCompositionTests.Generated_snapshot_is_byte_for_byte_current_with_the_assets`가
+`NullReferenceException`으로 실패한다.
 
 `-quit`를 함께 쓰면 테스트 없이 exit 0이 나므로 절대 붙이지 않는다.
 
