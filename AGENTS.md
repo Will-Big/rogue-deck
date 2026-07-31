@@ -71,3 +71,45 @@
     반대로 `cache/ast/`·`graph.html`·`cost.json`은 무료로 재생성되거나 머신 로컬이라 `.gitignore`에 있다.
     캐시 키에 graphify의 추출 프롬프트 해시가 들어가므로(`cache/semantic/p<해시>/`), graphify를 올려
     프롬프트가 바뀌면 캐시가 무효화되고 재추출은 유료다.
+
+## Unity 실행 장애 대응
+
+25. **"Unity Licensing Client 연결 상실"은 좀비 라이선싱 클라이언트부터 의심한다.** Unity Hub에서 프로젝트를 열 때
+    `The connection with the Unity Licensing Client has been lost.`가 뜨거나 `-batchmode` 실행이
+    `Licensing is not yet initialized`에서 멈추면, 원인은 라이선스·Hub 버전이 아니라 **기동 중 행(hang)에 걸린
+    라이선싱 클라이언트가 글로벌 뮤텍스를 점유**한 것이다. 2026-07-20, 2026-07-31 두 번 같은 원인으로 확인됐다.
+
+    판별:
+    ```bash
+    pgrep -lf Unity.Licensing.Client
+    ```
+    Hub 자체 클라이언트(`--namedPipe Unity-LicenseClient-ish --cloudEnvironment production`)는 정상이므로
+    남겨둔다. 문제는 **에디터 버전 전용 클라이언트**(`--namedPipe Unity-LicenseClient-ish-<버전>`) 쪽이다.
+    좀비는 로깅 초기화 전에 멈추므로 `~/Library/Logs/Unity/Unity.Licensing.Client.log`에 **자기 PID 로그를
+    한 줄도 남기지 않는다.** 로그에 PID가 없는데 `ps`에는 살아 있고, 뒤이어 뜬 클라이언트들이
+    `Failed to acquire global mutex Unity-LicenseClient-ish-<버전>`을 남기면 확정이다.
+    (확보된 행 스택: 메인 스레드가 부팅 중 `Monitor.Wait`에서 영구 대기. 재발 시 `sample`을 다시 뜰 필요는 없다.)
+
+    해결:
+    ```bash
+    kill <좀비 PID>
+    ```
+    - 죽인 직후 5~10초는 새 클라이언트도 뮤텍스 획득에 실패할 수 있다. 바로 재시도해 실패했다고 오진하지 말 것.
+    - 뮤텍스가 풀렸는지는 클라이언트를 직접 띄워 확인한다. `Failed to acquire` 없이 `Waiting for a connection`이
+      찍히면 정상이며, 확인 후 그 프로세스는 반드시 죽인다.
+      ```bash
+      '/Applications/Unity/Hub/Editor/<버전>/Unity.app/Contents/Helpers/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client' --namedPipe Unity-LicenseClient-ish-<버전> &
+      ```
+    - **이미 행에 걸린 Editor·batchmode 실행은 좀비를 죽여도 회복되지 않는다.** 해당 실행은 재시작해야 한다.
+
+    오진 금지 — 다음 둘은 원인이 아니다:
+    - 로그의 `Unsupported protocol version '1.18.1'` **[505] 거부는 정상 동작**이다. Hub은 구버전용 공용
+      클라이언트를, Unity 6 계열 Editor는 자기 버전 전용 클라이언트를 따로 띄우는 설계다. 505를 보고 Hub
+      업데이트를 권하지 말 것.
+    - 라이선스 자체는 멀쩡하다. `ULF license activated successfully` / `Found 1 entitlements`가 찍히면
+      재로그인·캐시 삭제는 불필요하다.
+
+26. **다른 세션의 Unity 프로세스를 죽이지 않는다.** 규칙 15·17대로 여러 워크트리가 동시에 `-batchmode`를 돌린다.
+    좀비를 정리할 때는 `ps`의 `-projectPath` 인자로 소유 워크트리를 확인하고, **라이선싱 클라이언트만** 죽인다.
+    남의 Editor·batchmode 프로세스가 같은 좀비에 막혀 있더라도 직접 죽이지 말고, 실패 사실과 로그 경로를
+    사용자에게 보고해 해당 세션이 재실행하게 한다.
