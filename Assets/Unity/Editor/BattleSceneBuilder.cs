@@ -129,11 +129,17 @@ namespace FateWeaver.Unity.Editor
 
             // --- hand fan ---
             var handRect = BattleUiKit.Rect(canvasRect, "HandFan");
-            handRect.anchorMin = handRect.anchorMax = new Vector2(0.5f, 0f);
+            handRect.anchorMin = new Vector2(0f, 0f);
+            handRect.anchorMax = new Vector2(1f, 0f);
             handRect.anchoredPosition = new Vector2(0f, 130f);
-            handRect.sizeDelta = new Vector2(900f, 260f);
+            handRect.sizeDelta = new Vector2(0f, 260f);
+            var handContent = BattleUiKit.Rect(handRect, "Content");
+            handContent.anchorMin = handContent.anchorMax =
+                new Vector2(0.5f, 0.5f);
+            handContent.anchoredPosition = new Vector2(0f, 80f);
+            handContent.sizeDelta = Vector2.zero;
             var hand = handRect.gameObject.AddComponent<HandFanView>();
-            hand.EditorBuild(cardPrefabs, handRect);
+            hand.EditorBuild(cardPrefabs, handContent);
 
             // --- HUD texts ---
             var energy = BattleUiKit.Text(canvasRect, "Energy", 34f, TextAlignmentOptions.Center);

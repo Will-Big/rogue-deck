@@ -236,9 +236,11 @@ namespace FateWeaver.Tests.UnityEditMode
                         Field<PileView>(controller, "_drawPile"),
                         Field<PileView>(controller, "_discardPile"),
                         Field<PileView>(controller, "_fullDeck")
-                    });
+                });
                 Assert.AreSame(catalog, Field<CardPrefabCatalog>(hand, "_cardPrefabs"));
-                Assert.AreSame(hand.transform, Field<RectTransform>(hand, "_content"));
+                var handContent = Field<RectTransform>(hand, "_content");
+                Assert.AreSame(hand.transform, handContent.parent);
+                Assert.AreEqual("Content", handContent.name);
                 Assert.AreSame(catalog, Field<CardPrefabCatalog>(rail, "_cardPrefabs"));
                 Assert.AreEqual(
                     RailCardPath,

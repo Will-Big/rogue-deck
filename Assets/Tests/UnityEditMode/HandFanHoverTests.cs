@@ -84,6 +84,34 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Hovered_card_is_last_sibling_then_restores_its_original_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                BuildHand(root, ThreeCards());
+                var views = root.GetComponentsInChildren<CardView>();
+                var middle = views[1];
+                var hover = middle.GetComponent<HandCardHoverEffect>();
+                int originalSibling = middle.transform.GetSiblingIndex();
+
+                hover.OnPointerEnter(null);
+
+                Assert.AreEqual(
+                    middle.transform.parent.childCount - 1,
+                    middle.transform.GetSiblingIndex());
+
+                hover.OnPointerExit(null);
+
+                Assert.AreEqual(originalSibling, middle.transform.GetSiblingIndex());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Target_selected_hand_card_uses_only_the_blue_frame_outline()
         {
             var root = new GameObject("Hand", typeof(RectTransform));
