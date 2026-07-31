@@ -4,7 +4,7 @@ using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 
 namespace FateWeaver.Tests
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>대상 적의 상태 틱을 즉시 발동시키고 이번 턴 종료 발동을 마커로 막는다 (조기 발병).</summary>
     [Serializable]

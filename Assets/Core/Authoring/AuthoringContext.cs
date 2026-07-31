@@ -1,9 +1,10 @@
+using FateWeaver.Core;
 using System.Collections.Generic;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Registry lookups for authoring-time validation (editor and boot use the same checks).</summary>
     public sealed class AuthoringContext

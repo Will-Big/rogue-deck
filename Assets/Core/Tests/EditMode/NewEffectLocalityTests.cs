@@ -5,7 +5,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests

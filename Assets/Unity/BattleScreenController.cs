@@ -5,7 +5,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation.Presentation;
 using TMPro;
 using UnityEngine;

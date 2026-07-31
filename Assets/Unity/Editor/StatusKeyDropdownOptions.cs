@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Status;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Unity.Editor

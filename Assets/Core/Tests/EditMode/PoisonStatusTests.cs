@@ -85,7 +85,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Default_registries_resolve_poison_and_markers()
         {
-            var context = FateWeaver.Simulation.Authoring.AuthoringContext.Default();
+            var context = FateWeaver.Core.Authoring.AuthoringContext.Default();
             Assert.IsTrue(context.HasStatus(StatusKeys.Poison));
             Assert.IsTrue(context.HasStatus(StatusKeys.PoisonDormant));
             Assert.IsTrue(context.HasStatus(StatusKeys.PoisonStasis));

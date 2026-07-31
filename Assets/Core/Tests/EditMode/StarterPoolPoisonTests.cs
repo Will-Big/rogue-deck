@@ -5,7 +5,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 
 namespace FateWeaver.Tests
 {

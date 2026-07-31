@@ -6,7 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests

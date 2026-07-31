@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using UnityEngine;
 using UnityEngine.Serialization;
 

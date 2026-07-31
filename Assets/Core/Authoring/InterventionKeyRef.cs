@@ -1,7 +1,7 @@
 using System;
 using FateWeaver.Core.Intervention;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Serializable reference to an open-set intervention action key. Uniform {key, value}
     /// params today; promote to polymorphic specs (like EffectSpec) only when an action needs

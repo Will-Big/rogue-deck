@@ -1,7 +1,7 @@
 using System;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Serializable reference to an open-set status key. Validated (registry membership)
     /// at editor/boot time instead of being a closed enum.</summary>

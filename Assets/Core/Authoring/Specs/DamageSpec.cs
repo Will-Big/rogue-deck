@@ -2,7 +2,7 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Deals flat damage to the target selected by <see cref="Selector"/> (or the handler's
     /// default when unset).</summary>

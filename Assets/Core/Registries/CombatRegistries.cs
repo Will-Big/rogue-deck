@@ -2,11 +2,11 @@ using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core
 {
     /// <summary>Single source of truth for the default effect / status / fate-action registries used by
     /// the runners and the playtest session — so a new handler is registered everywhere at once.</summary>
-    internal static class CombatRegistries
+    public static class CombatRegistries
     {
         public static EffectRegistry Effects()
         {

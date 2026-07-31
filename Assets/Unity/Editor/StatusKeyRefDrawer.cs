@@ -1,5 +1,5 @@
 using System.Linq;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using UnityEditor;
 using UnityEngine;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>대상 적의 상태를 최대치까지 소비한다 (소비형 독 카드).</summary>
     [Serializable]

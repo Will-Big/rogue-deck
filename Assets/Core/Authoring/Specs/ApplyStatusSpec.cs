@@ -4,7 +4,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Applies a status effect to the selected target(s).</summary>
     [Serializable]

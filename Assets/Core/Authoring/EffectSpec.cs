@@ -4,7 +4,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random, All }
 

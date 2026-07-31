@@ -3,7 +3,7 @@ using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Intervention;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Card-level assembly only. Effect mapping lives on each EffectSpec subclass
     /// (no central effect switch — AGENTS.md rule 9).</summary>

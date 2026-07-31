@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Walks authored card specs and collects every validation error (returns them instead of
     /// throwing so the editor can show all problems at once; boot/tests assert the list is empty).</summary>

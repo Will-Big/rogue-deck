@@ -4,7 +4,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation.Generated;
 
 namespace FateWeaver.Tests

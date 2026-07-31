@@ -4,7 +4,7 @@ using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>The selected 10-card starter deck expressed as flat CardSpecs.
     /// The SO/codegen path produces specs of this shape.</summary>

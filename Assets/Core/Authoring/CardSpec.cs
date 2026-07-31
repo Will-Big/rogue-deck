@@ -1,6 +1,6 @@
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Flat, pure card data (the single source the headless sims read). Built from a CardAsset SO
     /// at edit time (code generation) and converted to a core CardDefinition by CardSpecMapper.</summary>

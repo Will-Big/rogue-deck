@@ -1,3 +1,4 @@
+using FateWeaver.Core;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using FateWeaver.Core.Cards;

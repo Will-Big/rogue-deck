@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests

@@ -3,7 +3,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Authoring-shaped mirror of the neutral party validation deck.</summary>
     public static class PartyPrototypeDeckSpecs

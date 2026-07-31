@@ -4,7 +4,7 @@ using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>시작 카드 풀 22장 (Tools/card-idea-notebook/시작 카드 풀.md, 2026-07-29).
     /// StarterDeckSpecs와 같은 순수 CardSpec 저작 — SO 미러링은 병합 후 메인 체크아웃에서 진행.</summary>

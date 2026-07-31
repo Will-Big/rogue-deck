@@ -1,6 +1,6 @@
 using System.Linq;
 using FateWeaver.Core.Cards;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Unity;
 using FateWeaver.Unity.Editor;
 using NUnit.Framework;

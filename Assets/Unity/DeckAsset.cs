@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using UnityEngine;
 
 namespace FateWeaver.Unity

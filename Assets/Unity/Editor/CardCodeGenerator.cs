@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Authoring;
+using FateWeaver.Core.Authoring;
 using UnityEditor;
 using UnityEngine;
 
@@ -621,7 +621,7 @@ namespace FateWeaver.Unity.Editor
             sb.AppendLine("using FateWeaver.Core.Cards;");
             sb.AppendLine("using FateWeaver.Core.Effects;");
             sb.AppendLine("using FateWeaver.Core.Status;");
-            sb.AppendLine("using FateWeaver.Simulation.Authoring;");
+            sb.AppendLine("using FateWeaver.Core.Authoring;");
             sb.AppendLine();
             sb.AppendLine("namespace FateWeaver.Simulation.Generated");
             sb.AppendLine("{");

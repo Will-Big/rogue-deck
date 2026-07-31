@@ -2,7 +2,7 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Nullifies the next player condition reward. No parameters.</summary>
     [Serializable]

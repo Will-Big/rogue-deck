@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FateWeaver.Simulation.Authoring
+namespace FateWeaver.Core.Authoring
 {
     /// <summary>Metadata for one authorable effect spec type: its display name, concrete type, and a
     /// no-arg factory.</summary>
