@@ -4,6 +4,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
@@ -49,6 +50,41 @@ namespace FateWeaver.Tests
             };
 
             new MoveFormationHandler().Apply(context);
+        }
+
+        [Test]
+        public void Later_effect_does_not_promote_a_new_enemy_after_captured_front_two_die()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(MemberHp);
+            state.Enemies.Add(new Enemy("a", 2));
+            state.Enemies.Add(new Enemy("b", 2));
+            state.Enemies.Add(new Enemy("c", 2));
+            var damage = new EffectData(EffectKeys.Damage, 2)
+            {
+                TargetSelector = TargetSelector.FrontTwo
+            };
+            var poison = EffectData.ApplyStatus(
+                StatusKeys.Poison,
+                StatusLifetime.Permanent,
+                StatusApplyTarget.TargetEnemy,
+                magnitude: 1) with
+            {
+                TargetSelector = TargetSelector.FrontTwo
+            };
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
+                "snapshot_kill", "Snapshot Kill", Side.Player, 1, new[] { damage, poison }))
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new ApplyStatusHandler());
+
+            new TurnResolver(effects).Resolve(state, 0);
+
+            Assert.AreEqual(2, state.Enemies[2].Hp);
+            Assert.IsFalse(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
         }
 
         [Test]

@@ -16,6 +16,7 @@ namespace FateWeaver.Core.Effects
         public StatusRegistry StatusRegistry;
         public EffectData Effect;
         public int EffectValue;
+        public CardTargetSnapshot Targets;
 
         // outputs (read by TurnResolver)
         public int DamageDealt;
@@ -39,6 +40,7 @@ namespace FateWeaver.Core.Effects
     public interface IEffectHandler
     {
         EffectKey Key { get; }
+        CardTargetKey? TargetFor(CardDefinition card, EffectData effect);
         void Apply(EffectContext ctx);
     }
 }

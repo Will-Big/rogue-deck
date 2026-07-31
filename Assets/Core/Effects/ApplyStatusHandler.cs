@@ -23,6 +23,36 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.ApplyStatus;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+        {
+            if (!(effect.Payload is ApplyStatusPayload payload))
+            {
+                return null;
+            }
+
+            switch (payload.Target)
+            {
+                case StatusApplyTarget.Self:
+                    return new CardTargetKey(
+                        card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
+                        CardTargetRange.Self);
+                case StatusApplyTarget.TargetEnemy:
+                    return new CardTargetKey(
+                        CardTargetFaction.Enemy,
+                        CardTargetSnapshot.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
+                case StatusApplyTarget.PartyBySelector:
+                    return new CardTargetKey(
+                        CardTargetFaction.Ally,
+                        CardTargetSnapshot.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
+                case StatusApplyTarget.AllPartyMembers:
+                    return new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.All);
+                case StatusApplyTarget.PartyMember:
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)
@@ -32,6 +62,12 @@ namespace FateWeaver.Core.Effects
 
             if (!(ctx.Effect?.Payload is ApplyStatusPayload payload))
             {
+                return;
+            }
+
+            if (ctx.Targets != null && TargetFor(ctx.Card.Def, ctx.Effect).HasValue)
+            {
+                ApplySnapshotTargets(ctx, payload, TargetFor(ctx.Card.Def, ctx.Effect).Value);
                 return;
             }
 
@@ -83,6 +119,49 @@ namespace FateWeaver.Core.Effects
             }
 
             bag.Add(payload.Key, payload.Lifetime, ctx.EffectValue);
+        }
+
+        private static void ApplySnapshotTargets(
+            EffectContext ctx,
+            ApplyStatusPayload payload,
+            CardTargetKey key)
+        {
+            var affected = 0;
+            string onlyTargetId = null;
+            if (key.Faction == CardTargetFaction.Ally)
+            {
+                foreach (var target in ctx.Targets.PartyTargets(key))
+                {
+                    if (!target.IsAlive)
+                    {
+                        continue;
+                    }
+
+                    ApplyTo(ctx, payload, target.Statuses);
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+            }
+            else
+            {
+                foreach (var target in ctx.Targets.EnemyTargets(key))
+                {
+                    if (target.Hp <= 0)
+                    {
+                        continue;
+                    }
+
+                    ApplyTo(ctx, payload, target.Statuses);
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+            }
+
+            ctx.TargetId = affected == 1 ? onlyTargetId : null;
+            if (affected == 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+            }
         }
 
         private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)

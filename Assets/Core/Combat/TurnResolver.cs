@@ -62,8 +62,24 @@ namespace FateWeaver.Core.Combat
             var strongestTier = ConditionTier.Basic;
             var pendingDeathEvents = new List<ResolutionEvent>();
 
-            foreach (var effect in card.Def.Effects)
+            var handlers = card.Def.Effects
+                .Select(effect => _effects.Resolve(effect.Key))
+                .ToArray();
+            var targetKeys = card.Def.Effects
+                .Select((effect, index) => handlers[index].TargetFor(card.Def, effect))
+                .Where(key => key.HasValue)
+                .Select(key => key.Value)
+                .ToArray();
+            var targets = CardTargetSnapshot.Capture(state, card, targetKeys);
+
+            for (var effectIndex = 0; effectIndex < card.Def.Effects.Count; effectIndex++)
             {
+                if (card.CancellationReason != null)
+                {
+                    break;
+                }
+
+                var effect = card.Def.Effects[effectIndex];
                 var tier = ResolveTier(effect, card, resolutionContext);
                 if (tier > strongestTier)
                 {
@@ -85,9 +101,10 @@ namespace FateWeaver.Core.Combat
                     ResolutionContext = resolutionContext,
                     StatusRegistry = _statuses,
                     Effect = effect,
-                    EffectValue = ResolveEffectValue(effect, tier)
+                    EffectValue = ResolveEffectValue(effect, tier),
+                    Targets = targets
                 };
-                _effects.Resolve(effect.Key).Apply(ctx);
+                handlers[effectIndex].Apply(ctx);
                 totalDamage += ctx.DamageDealt;
                 if (ctx.TargetId != null) targetId = ctx.TargetId;
                 pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록

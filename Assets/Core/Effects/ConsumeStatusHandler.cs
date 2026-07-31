@@ -12,6 +12,11 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.ConsumeStatus;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+            => new CardTargetKey(
+                CardTargetFaction.Enemy,
+                CardTargetSnapshot.RangeFor(effect.TargetSelector ?? TargetSelector.FrontOne));
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)
@@ -21,6 +26,12 @@ namespace FateWeaver.Core.Effects
 
             if (!(ctx.Effect?.Payload is ConsumeStatusPayload payload))
             {
+                return;
+            }
+
+            if (ctx.Targets != null)
+            {
+                ApplySnapshotTargets(ctx, payload, TargetFor(ctx.Card.Def, ctx.Effect).Value);
                 return;
             }
 
@@ -51,6 +62,48 @@ namespace FateWeaver.Core.Effects
             }
 
             ctx.TargetId = enemy.Id;
+        }
+
+        private static void ApplySnapshotTargets(
+            EffectContext ctx,
+            ConsumeStatusPayload payload,
+            CardTargetKey key)
+        {
+            var affected = 0;
+            string onlyTargetId = null;
+            foreach (var enemy in ctx.Targets.EnemyTargets(key))
+            {
+                if (enemy.Hp <= 0)
+                {
+                    continue;
+                }
+
+                var status = enemy.Statuses.Get(payload.Key);
+                var consumed = status == null ? 0 : Math.Min(status.Magnitude, payload.MaxAmount);
+                if (consumed > 0)
+                {
+                    status.Magnitude -= consumed;
+                    if (status.Magnitude <= 0)
+                    {
+                        enemy.Statuses.Remove(payload.Key);
+                    }
+
+                    ctx.Card.RecordConsumedStatus(consumed);
+                    if (payload.DamageBonusPerConsumed != 0)
+                    {
+                        ctx.Card.AddPendingDamageBonus(consumed * payload.DamageBonusPerConsumed);
+                    }
+                }
+
+                onlyTargetId = enemy.Id;
+                affected++;
+            }
+
+            ctx.TargetId = affected == 1 ? onlyTargetId : null;
+            if (affected == 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+            }
         }
 
         public IEnumerable<string> ValidateData(EffectData effect)

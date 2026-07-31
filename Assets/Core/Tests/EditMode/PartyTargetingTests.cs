@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
@@ -9,6 +10,37 @@ namespace FateWeaver.Tests
 {
     public class PartyTargetingTests
     {
+        [Test]
+        public void Front_two_returns_up_to_two_distinct_living_members_in_order()
+        {
+            var state = new CombatState();
+            var deadFront = new PartyMember("a", "A", maxHp: 10) { Hp = 0 };
+            state.Party.Add(deadFront);
+            state.Party.Add(new PartyMember("b", "B", maxHp: 10));
+            state.Party.Add(new PartyMember("c", "C", maxHp: 10));
+            state.Party.Add(new PartyMember("d", "D", maxHp: 10));
+
+            CollectionAssert.AreEqual(
+                new[] { "b", "c" },
+                PartyTargeting.SelectRange(state, TargetSelector.FrontTwo)
+                    .Select(member => member.Id));
+        }
+
+        [TestCase(TargetSelector.FrontTwo)]
+        [TestCase(TargetSelector.BackTwo)]
+        [TestCase(TargetSelector.All)]
+        public void One_living_member_range_returns_that_member_once(TargetSelector selector)
+        {
+            var state = new CombatState();
+            var only = new PartyMember("only", "Only", maxHp: 10);
+            state.Party.Add(only);
+
+            var targets = PartyTargeting.SelectRange(state, selector);
+
+            Assert.AreEqual(1, targets.Count);
+            Assert.AreSame(only, targets[0]);
+        }
+
         private static StatusRegistry Statuses()
         {
             var r = new StatusRegistry();

@@ -16,6 +16,15 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.Damage;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+        {
+            var faction = card.Side == Side.Player
+                ? CardTargetFaction.Enemy
+                : CardTargetFaction.Ally;
+            var selector = effect.TargetSelector ?? Cards.TargetSelector.FrontOne;
+            return new CardTargetKey(faction, CardTargetSnapshot.RangeFor(selector));
+        }
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)
@@ -24,6 +33,12 @@ namespace FateWeaver.Core.Effects
             }
 
             var amount = ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus();
+            if (ctx.Targets != null)
+            {
+                ApplySnapshotTargets(ctx, amount);
+                return;
+            }
+
             if (ctx.Card.Def.Side == Side.Player)
             {
                 if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
@@ -106,6 +121,62 @@ namespace FateWeaver.Core.Effects
                 target.TakeDamage(damage);
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
+            }
+        }
+
+        private static void ApplySnapshotTargets(EffectContext ctx, int amount)
+        {
+            var key = new DamageHandler().TargetFor(ctx.Card.Def, ctx.Effect).Value;
+            if (key.Faction == CardTargetFaction.Enemy)
+            {
+                var total = 0;
+                string onlyTargetId = null;
+                var affected = 0;
+                foreach (var target in ctx.Targets.EnemyTargets(key))
+                {
+                    if (target.Hp <= 0)
+                    {
+                        continue;
+                    }
+
+                    var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                    target.Hp -= dealt;
+                    total += dealt;
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+
+                ctx.DamageDealt = total;
+                ctx.TargetId = affected == 1 ? onlyTargetId : null;
+                if (affected == 0)
+                {
+                    ctx.Cancel(CardCancellationReason.NoValidTarget);
+                }
+                return;
+            }
+
+            var partyTotal = 0;
+            string partyOnlyTargetId = null;
+            var partyAffected = 0;
+            foreach (var target in ctx.Targets.PartyTargets(key))
+            {
+                if (!target.IsAlive)
+                {
+                    continue;
+                }
+
+                var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                target.TakeDamage(dealt);
+                partyTotal += dealt;
+                partyOnlyTargetId = target.Id;
+                partyAffected++;
+            }
+
+            ctx.DamageDealt = partyTotal;
+            ctx.TargetId = partyAffected == 1 ? partyOnlyTargetId : null;
+            if (partyAffected == 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
             }
         }
 

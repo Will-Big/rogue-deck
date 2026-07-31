@@ -10,6 +10,35 @@ namespace FateWeaver.Tests
 {
     public class EnemyTargetingTests
     {
+        [Test]
+        public void Back_two_returns_up_to_two_distinct_living_enemies_in_formation_order()
+        {
+            var state = new CombatState();
+            state.Enemies.Add(new Enemy("a", 10));
+            state.Enemies.Add(new Enemy("b", 10));
+            state.Enemies.Add(new Enemy("c", 10));
+
+            CollectionAssert.AreEqual(
+                new[] { "b", "c" },
+                EnemyTargeting.SelectRange(state, TargetSelector.BackTwo)
+                    .Select(enemy => enemy.Id));
+        }
+
+        [TestCase(TargetSelector.FrontTwo)]
+        [TestCase(TargetSelector.BackTwo)]
+        [TestCase(TargetSelector.All)]
+        public void One_living_enemy_range_returns_that_enemy_once(TargetSelector selector)
+        {
+            var state = new CombatState();
+            var only = new Enemy("only", 10);
+            state.Enemies.Add(only);
+
+            var targets = EnemyTargeting.SelectRange(state, selector);
+
+            Assert.AreEqual(1, targets.Count);
+            Assert.AreSame(only, targets[0]);
+        }
+
         private static EffectRegistry Effects()
         {
             var effects = new EffectRegistry();

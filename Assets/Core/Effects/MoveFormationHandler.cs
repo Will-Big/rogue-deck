@@ -11,6 +11,11 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.MoveFormation;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+            => new CardTargetKey(
+                card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
+                CardTargetRange.Self);
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)
@@ -20,11 +25,57 @@ namespace FateWeaver.Core.Effects
 
             if (ctx.Card.Def.Side == Side.Player)
             {
+                if (ctx.Targets != null)
+                {
+                    MoveSnapshotPartyOwner(ctx, TargetFor(ctx.Card.Def, ctx.Effect).Value);
+                    return;
+                }
+
                 MovePartyOwner(ctx);
                 return;
             }
 
+            if (ctx.Targets != null)
+            {
+                MoveSnapshotEnemyOwner(ctx, TargetFor(ctx.Card.Def, ctx.Effect).Value);
+                return;
+            }
+
             MoveEnemyOwner(ctx);
+        }
+
+        private static void MoveSnapshotPartyOwner(EffectContext ctx, CardTargetKey key)
+        {
+            var targets = ctx.Targets.PartyTargets(key);
+            if (targets.Count != 1 || !targets[0].IsAlive)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+                return;
+            }
+
+            var owner = targets[0];
+            var currentIndex = ctx.State.Party.IndexOf(owner);
+            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Party.Count);
+            ctx.State.Party.RemoveAt(currentIndex);
+            ctx.State.Party.Insert(destinationIndex, owner);
+            ctx.TargetId = owner.Id;
+        }
+
+        private static void MoveSnapshotEnemyOwner(EffectContext ctx, CardTargetKey key)
+        {
+            var targets = ctx.Targets.EnemyTargets(key);
+            if (targets.Count != 1 || targets[0].Hp <= 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+                return;
+            }
+
+            var owner = targets[0];
+            var currentIndex = ctx.State.Enemies.IndexOf(owner);
+            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Enemies.Count);
+            ctx.State.Enemies.RemoveAt(currentIndex);
+            ctx.State.Enemies.Insert(destinationIndex, owner);
+            ctx.TargetId = owner.Id;
         }
 
         private static void MovePartyOwner(EffectContext ctx)
