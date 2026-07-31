@@ -24,6 +24,14 @@ namespace FateWeaver.Core.Authoring
             StarterPoolSpecs.LastDrop()
         };
 
+        /// <summary>Build()이 고르지 않은 카드까지 포함한, 이 클래스가 저작한 전부.
+        /// 콘텐츠 내보내기와 그 동등성 검사가 읽는다 — Build()만 보면 10장이 누락된다.</summary>
+        public static IReadOnlyList<CardSpec> AllAuthored() => new List<CardSpec>
+        {
+            Slash(), Guard(), QuickCut(), Counter(), Cover(),
+            PullForward(), PushBack(), SwapPositions(), SlowHex(), QuickenSelf()
+        };
+
         public static CardSpec Slash() => new CardSpec
         {
             Id = "slash", Name = "베기", Side = Side.Player,

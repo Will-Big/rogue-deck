@@ -1,0 +1,8 @@
+{
+  "id": "swap_positions",
+  "name": "자리 교환",
+  "side": "Player",
+  "category": "Intervention",
+  "energyCost": 1,
+  "intervention": "swap_execution_order"
+}

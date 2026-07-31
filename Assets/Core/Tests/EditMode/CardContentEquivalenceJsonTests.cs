@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Json;
 using FateWeaver.Core.Cards;
@@ -51,7 +52,7 @@ namespace FateWeaver.Tests
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
+                .Concat(StarterDeckSpecs.AllAuthored())
                 .Concat(PartyPrototypeDeckSpecs.Build())
                 .GroupBy(spec => spec.Id)
                 .Select(group => group.First());
@@ -89,6 +90,28 @@ namespace FateWeaver.Tests
             var files = Directory.GetFiles(ContentDirectory(), "*.json");
 
             Assert.AreEqual(AuthoredSpecs().Count(), files.Length);
+        }
+
+        [Test]
+        public void EveryAuthoredCardFactoryIsRepresentedInTheContent()
+        {
+            var catalog = Catalog();
+            var factories = new[]
+                {
+                    typeof(StarterPoolSpecs), typeof(StarterDeckSpecs), typeof(PartyPrototypeDeckSpecs)
+                }
+                .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                .Where(method => method.ReturnType == typeof(CardSpec)
+                    && method.GetParameters().Length == 0);
+
+            foreach (var factory in factories)
+            {
+                var spec = (CardSpec)factory.Invoke(null, null);
+                Assert.IsTrue(
+                    catalog.Cards.ContainsKey(spec.Id),
+                    factory.DeclaringType.Name + "." + factory.Name + "가 만든 '"
+                        + spec.Id + "'가 내보낸 콘텐츠에 없다.");
+            }
         }
     }
 }

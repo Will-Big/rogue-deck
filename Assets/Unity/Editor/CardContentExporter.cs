@@ -33,7 +33,7 @@ namespace FateWeaver.Unity.Editor
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
+                .Concat(StarterDeckSpecs.AllAuthored())
                 .Concat(PartyPrototypeDeckSpecs.Build());
 
         private static IEnumerable<CardSpec> DistinctById(IEnumerable<CardSpec> specs)

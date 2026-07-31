@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
+using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
@@ -12,6 +13,10 @@ namespace FateWeaver.Core.Authoring
     {
         public StatusKeyRef Status;
         public int Value;
+
+        // Permanent은 StatusLifetimeKind의 0번째(기본) 값이라 DefaultValueHandling.Ignore가 지운다.
+        // 생략된 lifetime이 조용히 "영원히 지속"으로 복원되는 사고를 막기 위해 항상 써야 한다.
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
         public StatusLifetimeKind Lifetime;
         public int LifetimeCount;
         public StatusApplyTarget Target;

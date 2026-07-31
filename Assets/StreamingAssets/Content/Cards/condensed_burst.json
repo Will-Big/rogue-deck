@@ -22,6 +22,7 @@
       "kind": "apply_status",
       "status": "poison",
       "value": 1,
+      "lifetime": "Permanent",
       "target": "TargetEnemy",
       "selector": "FrontMost"
     }

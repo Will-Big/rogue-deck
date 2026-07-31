@@ -1,0 +1,18 @@
+{
+  "id": "counter_stance",
+  "name": "반격",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 2,
+  "baseExecutionOrder": 7,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 4,
+      "condition": {
+        "kind": "PrevExecutedIsEnemyDamageCard",
+        "successEffectValue": 9
+      }
+    }
+  ]
+}

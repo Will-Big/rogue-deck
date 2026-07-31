@@ -1,0 +1,20 @@
+{
+  "id": "cover",
+  "name": "엄호",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 2,
+      "lifetime": "ThisTurn",
+      "condition": {
+        "kind": "NextIsEnemyDamageCard",
+        "successEffectValue": 7
+      }
+    }
+  ]
+}

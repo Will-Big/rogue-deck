@@ -1,0 +1,17 @@
+{
+  "id": "quicken_self",
+  "name": "가속",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 3,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "haste",
+      "value": 3,
+      "lifetime": "Turns",
+      "lifetimeCount": 2
+    }
+  ]
+}
