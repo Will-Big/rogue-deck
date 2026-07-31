@@ -341,6 +341,16 @@ namespace FateWeaver.Core.Authoring.Json
 `MissingMemberHandling.Error`는 모드 저작자의 오타(`"vale": 5`)를 침묵으로 흘리지 않고 줄 위치와
 함께 예외로 만든다 — Task 5의 오류 보고가 이 동작에 의존한다.
 
+`DefaultValueHandling.Ignore`가 **의미 있는 0을 지우는 두 곳**을 함께 처리한다.
+
+- `CardSpec.Side`·`CardSpec.Category`에 `[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]`.
+  `Side.Player`와 `CardCategory.Execution`이 각 enum의 0번 값이라 그냥 두면 지워지는데,
+  Task 5의 로더는 두 키의 **존재 자체**로 무결성을 검증한다(생략 시 조용히 Player가 되는 사고 방지).
+- `EffectSpec.Key`에 `[JsonIgnore]`. `Key`는 public 읽기 전용 프로퍼티라 그냥 두면 효과마다
+  `"key": { "id": "damage" }`가 `"kind"`와 나란히 찍힌다. 값이 같은 중복이고, 손으로 고치는
+  파일에서 어느 쪽이 진짜인지 헷갈리게 만든다. 읽을 때는 setter가 없어 무시되므로 조용히
+  어긋날 수도 있다.
+
 - [ ] **Step 6: 키 참조 컨버터를 만든다**
 
 Create `Assets/Core/Authoring/Json/KeyRefJsonConverters.cs`:
@@ -1280,7 +1290,10 @@ namespace FateWeaver.Tests
                 + "|" + string.Join(",", def.Effects.Select(e =>
                     e.Key + ":" + e.EffectValue + ":" + e.TargetSelector
                         + ":" + (e.Condition == null ? "-" : e.Condition.GetType().Name)
-                        + ":" + e.SuccessEffectValue + ":" + e.SkipOnBasic));
+                        + ":" + e.SuccessEffectValue + ":" + e.SkipOnBasic
+                        + ":" + (e.Payload == null
+                            ? "-"
+                            : e.Payload.GetType().Name + ContentJson.Write(e.Payload))));
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
@@ -1399,9 +1412,10 @@ Expected: 종료 코드 0, 로그에 `Exported N cards`
 
 - [ ] **Step 5: 생성물을 눈으로 확인한다**
 
-Run: `ls Assets/StreamingAssets/Content/Cards | head; cat Assets/StreamingAssets/Content/Cards/slash.json`
-Expected: 카드당 파일 하나. `slash.json`이 `"id"`, `"name"`, `"side"`, `"category"`, `"effects"`를
-포함하고 조건이 없는 효과에는 `"condition"` 키가 없다.
+Run: `ls Assets/StreamingAssets/Content/Cards | head; cat Assets/StreamingAssets/Content/Cards/distill.json`
+Expected: 카드당 파일 하나(26장). 각 파일이 `"id"`, `"name"`, `"side"`, `"category"`, `"effects"`를
+포함하고, 조건이 없는 효과에는 `"condition"` 키가 없다. 효과마다 `"kind"`가 하나씩만 있어야 한다 —
+`"key"`가 함께 나오면 `EffectSpec.Key`에 `[JsonIgnore]`가 빠진 것이다.
 
 - [ ] **Step 6: 동등성 테스트 통과를 확인한다**
 
