@@ -104,6 +104,32 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void ReportsANullIdInsteadOfThrowing()
+        {
+            var result = Load(new CardContentSource(
+                "nullid.json",
+                "{ \"id\": null, \"name\": \"x\", \"side\": \"Player\", \"category\": \"Execution\" }"));
+
+            Assert.IsFalse(result.Succeeded);
+            StringAssert.Contains("nullid.json", result.Errors[0]);
+            StringAssert.Contains("id", result.Errors[0]);
+        }
+
+        [Test]
+        public void ReportsANonStringStatusKeyWithItsLocation()
+        {
+            var result = Load(new CardContentSource(
+                "badkey.json",
+                "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\","
+                + " \"category\": \"Execution\", \"effects\": ["
+                + " { \"kind\": \"apply_status\", \"status\": 5, \"value\": 1 } ] }"));
+
+            Assert.IsFalse(result.Succeeded);
+            StringAssert.Contains("badkey.json", result.Errors[0]);
+            StringAssert.Contains("string", result.Errors[0]);
+        }
+
+        [Test]
         public void ExposesIdsInSortedOrderForDeterminism()
         {
             var result = Load(

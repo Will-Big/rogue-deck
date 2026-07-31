@@ -62,6 +62,12 @@ namespace FateWeaver.Core.Authoring
                     continue;
                 }
 
+                if (string.IsNullOrEmpty(spec.Id))
+                {
+                    errors.Add(source.Name + ": required key 'id' must be a non-empty string.");
+                    continue;
+                }
+
                 if (origin.TryGetValue(spec.Id, out var first))
                 {
                     errors.Add(

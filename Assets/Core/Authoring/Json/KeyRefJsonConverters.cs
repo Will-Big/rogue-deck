@@ -10,7 +10,15 @@ namespace FateWeaver.Core.Authoring.Json
         public override StatusKeyRef ReadJson(
             JsonReader reader, Type objectType, StatusKeyRef existingValue,
             bool hasExistingValue, JsonSerializer serializer)
-            => new StatusKeyRef { Id = (string)reader.Value };
+        {
+            if (reader.TokenType != JsonToken.String)
+            {
+                throw new JsonSerializationException(
+                    "Status key must be a string, got " + reader.TokenType + ".");
+            }
+
+            return new StatusKeyRef { Id = (string)reader.Value };
+        }
 
         public override void WriteJson(JsonWriter writer, StatusKeyRef value, JsonSerializer serializer)
             => writer.WriteValue(value.Id);
@@ -22,7 +30,15 @@ namespace FateWeaver.Core.Authoring.Json
         public override InterventionKeyRef ReadJson(
             JsonReader reader, Type objectType, InterventionKeyRef existingValue,
             bool hasExistingValue, JsonSerializer serializer)
-            => new InterventionKeyRef { Id = (string)reader.Value };
+        {
+            if (reader.TokenType != JsonToken.String)
+            {
+                throw new JsonSerializationException(
+                    "Intervention key must be a string, got " + reader.TokenType + ".");
+            }
+
+            return new InterventionKeyRef { Id = (string)reader.Value };
+        }
 
         public override void WriteJson(
             JsonWriter writer, InterventionKeyRef value, JsonSerializer serializer)
