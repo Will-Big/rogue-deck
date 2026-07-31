@@ -20,42 +20,6 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(string id, Side side, EffectData effect)
             => new ExecutionCardInstance(new CardDefinition(id, id, side, 1, new[] { effect }));
 
-        // --- Second-from-front position selector ------------------------------------------------
-
-        [Test]
-        public void Second_from_front_selects_the_second_living_member()
-        {
-            var state = new CombatState();
-            state.Party.Clear();
-            var a = new PartyMember("a", "A", maxHp: 10);
-            var b = new PartyMember("b", "B", maxHp: 10);
-            var c = new PartyMember("c", "C", maxHp: 10);
-            a.Hp = 0; // dead front member must be skipped, not reindexed around
-            state.Party.Add(a);
-            state.Party.Add(b);
-            state.Party.Add(c);
-
-            var result = PartyTargeting.Select(state, TargetSelector.SecondFromFront);
-
-            Assert.AreEqual("c", result.Id);
-        }
-
-        [Test]
-        public void Second_from_front_returns_null_with_one_living_member()
-        {
-            var state = new CombatState();
-            state.Party.Clear();
-            var a = new PartyMember("a", "A", maxHp: 10);
-            var b = new PartyMember("b", "B", maxHp: 10);
-            a.Hp = 0;
-            state.Party.Add(a);
-            state.Party.Add(b);
-
-            var result = PartyTargeting.Select(state, TargetSelector.SecondFromFront);
-
-            Assert.IsNull(result);
-        }
-
         // --- Strict explicit ally / self resolution ----------------------------------------------
 
         [Test]
@@ -185,7 +149,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(5, b.Statuses.Get(StatusKeys.Block).Magnitude);
 
             // Consume A's block via an enemy attack that targets the front (A); B's must remain untouched.
-            var damageEffect = new EffectData(EffectKeys.Damage, 5) { TargetSelector = TargetSelector.FrontMost };
+            var damageEffect = new EffectData(EffectKeys.Damage, 5) { TargetSelector = TargetSelector.FrontOne };
             var damageCard = Card("smash", Side.Enemy, damageEffect);
             var damageCtx = new EffectContext { Card = damageCard, State = state, Effect = damageEffect, EffectValue = 5, StatusRegistry = Statuses() };
             new DamageHandler().Apply(damageCtx);
@@ -208,7 +172,7 @@ namespace FateWeaver.Tests
             a.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
             a.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, magnitude: 10);
 
-            var damageEffect = new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackMost };
+            var damageEffect = new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackOne };
             var card = Card("smash", Side.Enemy, damageEffect);
             var ctx = new EffectContext { Card = card, State = state, Effect = damageEffect, EffectValue = 4, StatusRegistry = Statuses() };
 
@@ -219,35 +183,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(16, b.Hp);
             Assert.AreEqual(20, a.Hp); // A untouched
             Assert.AreEqual(10, a.Statuses.Get(StatusKeys.Block).Magnitude); // A's block untouched
-        }
-
-        // --- Random selector determinism ----------------------------------------------------------
-
-        [Test]
-        public void Random_target_is_deterministic_for_equal_seed()
-        {
-            CombatState BuildState()
-            {
-                var s = new CombatState { RngSeed = 42 };
-                s.Party.Clear();
-                s.Party.Add(new PartyMember("a", "A", maxHp: 10));
-                s.Party.Add(new PartyMember("b", "B", maxHp: 10));
-                s.Party.Add(new PartyMember("c", "C", maxHp: 10));
-                return s;
-            }
-
-            var state1 = BuildState();
-            var state2 = BuildState();
-
-            var picks1 = new List<string>();
-            var picks2 = new List<string>();
-            for (int i = 0; i < 10; i++)
-            {
-                picks1.Add(PartyTargeting.Select(state1, TargetSelector.Random).Id);
-                picks2.Add(PartyTargeting.Select(state2, TargetSelector.Random).Id);
-            }
-
-            CollectionAssert.AreEqual(picks1, picks2);
         }
 
         // --- Independent formations -----------------------------------------------------------
@@ -267,8 +202,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("e1", 10));
             state.Enemies.Add(new Enemy("e2", 10));
 
-            var frontMost = PartyTargeting.Select(state, TargetSelector.FrontMost);
-            Assert.AreEqual("b", frontMost.Id, "position selection skips the dead front member");
+            var frontOne = PartyTargeting.Select(state, TargetSelector.FrontOne);
+            Assert.AreEqual("b", frontOne.Id, "position selection skips the dead front member");
 
             // The player formation change above must have no bearing on enemy-formation indexing.
             var damageEffect = new EffectData(EffectKeys.Damage, 3);

@@ -172,7 +172,7 @@ namespace FateWeaver.Tests
         public void Venom_thrust_hits_the_new_living_front_after_the_original_front_dies_mid_turn()
         {
             // Position spec §3: "앞 하나" is re-evaluated against the living formation — a card that
-            // kills the front enemy must not leave a later card's FrontMost selector locked onto the
+            // kills the front enemy must not leave a later card's FrontOne selector locked onto the
             // now-dead corpse (the legacy ByIdOrFront fallback would return raw Enemies[0] regardless
             // of HP).
             var state = NewState(new Enemy("front", 3), new Enemy("back", 20));

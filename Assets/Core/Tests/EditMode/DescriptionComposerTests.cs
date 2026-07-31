@@ -39,7 +39,7 @@ namespace FateWeaver.Tests.EditMode
         public void Target_selector_prefixes_the_effect_fragment_through_the_vocabulary()
         {
             var card = Execution("aimed_slash",
-                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackMost });
+                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackOne });
             Assert.AreEqual("가장 뒤의 대상에게 피해 4.", DescriptionComposer.Describe(card, Korean));
         }
 

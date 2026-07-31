@@ -12,7 +12,7 @@ namespace FateWeaver.Core.Effects
         TargetEnemy,      // the card's target enemy (by TargetId, else the first enemy; or by TargetSelector)
         PartyMember,      // an explicitly chosen living party member (by TargetId)
         AllPartyMembers,  // every living party member, applied as independent per-member instances
-        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontMost
+        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontOne
     }
 
     /// <summary>Applies a status (key + lifetime + magnitude) to one or more holders. Magnitude rides on
@@ -178,11 +178,11 @@ namespace FateWeaver.Core.Effects
             }
         }
 
-        /// <summary>아군 위치 범위: effect.TargetSelector(기본 FrontMost)로 생존 파티 대형에서 확정된
+        /// <summary>아군 위치 범위: effect.TargetSelector(기본 FrontOne)로 생존 파티 대형에서 확정된
         /// 한 명에게 적용한다.</summary>
         private static void ApplyPartyBySelector(EffectContext ctx, ApplyStatusPayload payload)
         {
-            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontOne;
             var member = PartyTargeting.Select(ctx.State, selector);
             if (member == null)
             {

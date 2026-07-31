@@ -35,6 +35,11 @@ namespace FateWeaver.Simulation.Authoring
             {
                 yield return "Unknown status key '" + Status.Id + "'.";
             }
+
+            foreach (var error in ValidateSelector(Selector))
+            {
+                yield return error;
+            }
         }
 
         public override string ToLiteral()

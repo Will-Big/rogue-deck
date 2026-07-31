@@ -14,11 +14,8 @@ namespace FateWeaver.Core.Combat
             var living = SelectAll(state);
             switch (selector)
             {
-                case TargetSelector.FrontMost: return living.Count > 0 ? living[0] : null;
-                case TargetSelector.SecondFromFront: return living.Count > 1 ? living[1] : null;
-                case TargetSelector.BackMost: return living.Count > 0 ? living[living.Count - 1] : null;
-                case TargetSelector.Random:
-                    return living.Count > 0 ? living[state.Rng.Next(living.Count)] : null;
+                case TargetSelector.FrontOne: return living.Count > 0 ? living[0] : null;
+                case TargetSelector.BackOne: return living.Count > 0 ? living[living.Count - 1] : null;
                 default: return null; // All은 다중 대상 — SelectAll을 쓴다.
             }
         }

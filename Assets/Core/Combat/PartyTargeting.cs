@@ -14,10 +14,8 @@ namespace FateWeaver.Core.Combat
             var living = LivingInFormationOrder(state);
             return selector switch
             {
-                TargetSelector.FrontMost => living.Count > 0 ? living[0] : null,
-                TargetSelector.SecondFromFront => living.Count > 1 ? living[1] : null,
-                TargetSelector.BackMost => living.Count > 0 ? living[^1] : null,
-                TargetSelector.Random => living.Count > 0 ? living[state.Rng.Next(living.Count)] : null,
+                TargetSelector.FrontOne => living.Count > 0 ? living[0] : null,
+                TargetSelector.BackOne => living.Count > 0 ? living[^1] : null,
                 _ => null
             };
         }

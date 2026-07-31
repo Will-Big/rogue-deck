@@ -143,7 +143,7 @@ namespace FateWeaver.Tests
                 executionOrder: 5,
                 new EffectData(EffectKeys.Damage, AttackDamage)
                 {
-                    TargetSelector = TargetSelector.FrontMost
+                    TargetSelector = TargetSelector.FrontOne
                 },
                 ownerId: "validation_enemy");
             state.Zone.Add(move);

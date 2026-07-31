@@ -32,6 +32,11 @@ namespace FateWeaver.Simulation.Authoring
             {
                 yield return "trigger_status spec requires a known suppress-marker key.";
             }
+
+            foreach (var error in ValidateSelector(Selector))
+            {
+                yield return error;
+            }
         }
 
         public override string ToLiteral()

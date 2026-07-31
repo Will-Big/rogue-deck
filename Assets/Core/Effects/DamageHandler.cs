@@ -8,7 +8,7 @@ namespace FateWeaver.Core.Effects
     /// <summary>Player cards hit an enemy target resolved by the effect's TargetSelector (position in
     /// the living formation, or All for every living enemy); with no selector, falls back to the
     /// legacy path (explicit id, else the raw first enemy) for pre-selector content. Enemy cards hit a
-    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontMost,
+    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontOne,
     /// for pre-party compat). Incoming damage is folded through the target's entity-scoped statuses
     /// (e.g. Vulnerable, Block) when a StatusRegistry is present; with no registry it applies raw. If no
     /// target can be resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
@@ -110,10 +110,10 @@ namespace FateWeaver.Core.Effects
         }
 
         /// <summary>Picks the party member an enemy attack hits, via the effect's position selector
-        /// (defaulting to FrontMost) evaluated against the living party formation at execution time.</summary>
+        /// (defaulting to FrontOne) evaluated against the living party formation at execution time.</summary>
         private static PartyMember SelectPartyTarget(EffectContext ctx)
         {
-            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontOne;
             return PartyTargeting.Select(ctx.State, selector);
         }
 

@@ -46,7 +46,7 @@ namespace FateWeaver.Tests
             string id = "enemy_strike",
             int order = 1,
             int damage = 50,
-            TargetSelector selector = TargetSelector.FrontMost)
+            TargetSelector selector = TargetSelector.FrontOne)
             => new CardDefinition(
                 id,
                 id,

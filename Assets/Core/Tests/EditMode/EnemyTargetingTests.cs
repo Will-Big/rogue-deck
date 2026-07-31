@@ -35,11 +35,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void BackMost_selector_hits_the_living_back_enemy()
+        public void BackOne_selector_hits_the_living_back_enemy()
         {
             var state = TwoEnemies();
             var def = new CardDefinition("back_hit", "후열 타격", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.BackMost } });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.BackOne } });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -95,7 +95,7 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("back_status", "후열 부여", Side.Player, 4,
                 new[] { EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.TargetEnemy, 2)
-                    with { TargetSelector = TargetSelector.BackMost } });
+                    with { TargetSelector = TargetSelector.BackOne } });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
             var def2 = new CardDefinition("back_status2", "후열 부여2", Side.Player, 4,
                 new[] { EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.Permanent, StatusApplyTarget.TargetEnemy, 2)
-                    with { TargetSelector = TargetSelector.BackMost } });
+                    with { TargetSelector = TargetSelector.BackOne } });
             state2.Zone.Add(new ExecutionCardInstance(def2) { OwnerId = CombatState.SoloPlayerId });
             new TurnResolver(Effects(), Statuses()).Resolve(state2, 0);
             Assert.AreEqual(2, state2.Enemies[1].Statuses.Get(StatusKeys.Block).Magnitude);
@@ -123,7 +123,7 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("cover_front", "전열 엄호", Side.Player, 4,
                 new[] { EffectData.ApplyStatus(
                         StatusKeys.Block, StatusLifetime.Permanent, StatusApplyTarget.PartyBySelector, 4)
-                    with { TargetSelector = TargetSelector.FrontMost } });
+                    with { TargetSelector = TargetSelector.FrontOne } });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "b" });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);

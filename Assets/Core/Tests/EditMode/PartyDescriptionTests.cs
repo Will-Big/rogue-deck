@@ -18,10 +18,10 @@ namespace FateWeaver.Tests
                 Category = CardCategory.Execution
             };
 
-        [TestCase(TargetSelector.FrontMost, "가장 앞의 대상에게 피해 4.")]
-        [TestCase(TargetSelector.SecondFromFront, "전열에서 두 번째 대상에게 피해 4.")]
-        [TestCase(TargetSelector.BackMost, "가장 뒤의 대상에게 피해 4.")]
-        [TestCase(TargetSelector.Random, "무작위 대상에게 피해 4.")]
+        [TestCase(TargetSelector.FrontOne, "가장 앞의 대상에게 피해 4.")]
+        [TestCase(TargetSelector.FrontTwo, "앞에서 두 대상에게 피해 4.")]
+        [TestCase(TargetSelector.BackOne, "가장 뒤의 대상에게 피해 4.")]
+        [TestCase(TargetSelector.BackTwo, "뒤에서 두 대상에게 피해 4.")]
         public void Position_selector_uses_exact_target_phrase(TargetSelector selector, string expected)
         {
             var card = Execution(new EffectData(EffectKeys.Damage, 4) { TargetSelector = selector });

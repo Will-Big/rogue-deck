@@ -12,11 +12,12 @@ namespace FateWeaver.Simulation.Descriptions
         {
             switch (selector)
             {
-                case TargetSelector.FrontMost: return "가장 앞의 대상에게";
-                case TargetSelector.SecondFromFront: return "전열에서 두 번째 대상에게";
-                case TargetSelector.BackMost: return "가장 뒤의 대상에게";
+                case TargetSelector.FrontOne: return "가장 앞의 대상에게";
+                case TargetSelector.FrontTwo: return "앞에서 두 대상에게";
+                case TargetSelector.BackOne: return "가장 뒤의 대상에게";
+                case TargetSelector.BackTwo: return "뒤에서 두 대상에게";
                 case TargetSelector.All: return "모두에게";
-                default: return "무작위 대상에게";
+                default: return "대상에게";
             }
         }
 

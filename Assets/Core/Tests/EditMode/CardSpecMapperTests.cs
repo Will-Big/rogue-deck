@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
@@ -10,6 +11,21 @@ namespace FateWeaver.Tests
 {
     public class CardSpecMapperTests
     {
+        [Test]
+        public void Target_selector_schema_contains_only_approved_ranges()
+        {
+            CollectionAssert.AreEqual(
+                new[] { "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" },
+                Enum.GetNames(typeof(TargetSelector)));
+        }
+
+        [Test]
+        public void Removed_serialized_selector_values_are_not_reused()
+        {
+            Assert.IsFalse(Enum.IsDefined(typeof(TargetSelectorRef), 2));
+            Assert.IsFalse(Enum.IsDefined(typeof(TargetSelectorRef), 4));
+        }
+
         [Test]
         public void Maps_flat_damage_action()
         {
@@ -119,15 +135,27 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Maps_second_from_front_selector()
+        public void Maps_front_two_selector()
         {
             var effect = new DamageSpec
             {
                 Value = 4,
-                Selector = TargetSelectorRef.SecondFromFront
+                Selector = TargetSelectorRef.FrontTwo
             }.ToEffectData();
 
-            Assert.AreEqual(TargetSelector.SecondFromFront, effect.TargetSelector);
+            Assert.AreEqual(TargetSelector.FrontTwo, effect.TargetSelector);
+        }
+
+        [Test]
+        public void Maps_back_two_selector()
+        {
+            var effect = new DamageSpec
+            {
+                Value = 4,
+                Selector = TargetSelectorRef.BackTwo
+            }.ToEffectData();
+
+            Assert.AreEqual(TargetSelector.BackTwo, effect.TargetSelector);
         }
 
         [Test]
