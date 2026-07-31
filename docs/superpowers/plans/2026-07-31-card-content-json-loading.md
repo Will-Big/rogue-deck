@@ -102,8 +102,8 @@ git mv Assets/Core/Simulation/CombatRegistries.cs Assets/Core/Registries/CombatR
 git mv Assets/Core/Simulation/CombatRegistries.cs.meta Assets/Core/Registries/CombatRegistries.cs.meta
 ```
 
-`Assets/Core/Registries.meta`는 Unity가 다음 임포트에서 생성한다. 이 Task의 커밋에는 포함하지 않고,
-계획 2에서 Unity를 한 번 돌린 뒤 함께 커밋한다.
+`Assets/Core/Registries.meta`는 아직 없다. Step 7의 Unity 배치 실행이 생성하므로 Step 8에서 함께
+커밋한다.
 
 - [ ] **Step 3: 네임스페이스를 일괄 치환한다**
 
@@ -165,8 +165,14 @@ Expected: 종료 코드 0, `/private/tmp/fw-task1.xml`에 실패 0건
 
 - [ ] **Step 8: 커밋**
 
+Step 7의 Unity 실행이 만든 `Assets/Core/Registries.meta`가 `git status`에 보여야 한다. Unity가
+남긴 그 밖의 변경(`Library/`, `ProjectSettings/`)은 스테이징하지 않는다.
+
 ```bash
-git add -A Assets/Core
+git status --short
+git add Assets/Core/Authoring Assets/Core/Authoring.meta \
+        Assets/Core/Registries Assets/Core/Registries.meta \
+        Assets/Core/Simulation Assets/Core/Tests Assets/Unity
 git commit -m "refactor: 저작 스펙 기반을 FateWeaver.Core로 옮긴다
 
 OwnedCard(Core)가 변형 목록에 EffectSpec(Simulation)을 담아야 하는데 참조
@@ -1010,18 +1016,16 @@ namespace FateWeaver.Core.Authoring
 
             foreach (var source in sources)
             {
+                var missing = FirstMissingKey(source.Json);
+                if (missing != null)
+                {
+                    errors.Add(source.Name + ": required key '" + missing + "' is missing.");
+                    continue;
+                }
+
                 CardSpec spec;
                 try
                 {
-                    foreach (var key in RequiredKeys)
-                    {
-                        if (source.Json.IndexOf("\"" + key + "\"", System.StringComparison.Ordinal) < 0)
-                        {
-                            errors.Add(source.Name + ": required key '" + key + "' is missing.");
-                            goto nextSource;
-                        }
-                    }
-
                     spec = ContentJson.Read<CardSpec>(source.Json);
                 }
                 catch (JsonException ex)
@@ -1040,8 +1044,6 @@ namespace FateWeaver.Core.Authoring
 
                 origin.Add(spec.Id, source.Name);
                 specs.Add(spec);
-
-                nextSource: ;
             }
 
             foreach (var error in AuthoringValidator.Validate(specs, context))
@@ -1061,6 +1063,20 @@ namespace FateWeaver.Core.Authoring
             }
 
             return CardContentLoadResult.Ok(new CardContentCatalog(cards));
+        }
+
+        /// <summary>필수 키 중 처음으로 빠진 것. 없으면 null.</summary>
+        private static string FirstMissingKey(string json)
+        {
+            foreach (var key in RequiredKeys)
+            {
+                if (json.IndexOf("\"" + key + "\"", System.StringComparison.Ordinal) < 0)
+                {
+                    return key;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>Newtonsoft의 예외에서 줄·열을 꺼내 저작자가 고칠 수 있는 문장으로 만든다.</summary>
