@@ -9,19 +9,13 @@
     {
       "kind": "damage",
       "value": 1,
-      "selector": "FrontMost",
-      "key": {
-        "id": "damage"
-      }
+      "selector": "FrontMost"
     },
     {
       "kind": "apply_status",
       "status": "block",
       "value": 3,
-      "lifetime": "ThisTurn",
-      "key": {
-        "id": "apply_status"
-      }
+      "lifetime": "ThisTurn"
     }
   ]
 }

@@ -9,20 +9,14 @@
     {
       "kind": "damage",
       "value": 2,
-      "selector": "FrontMost",
-      "key": {
-        "id": "damage"
-      }
+      "selector": "FrontMost"
     },
     {
       "kind": "apply_status",
       "status": "poison",
       "value": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "FrontMost"
     }
   ]
 }

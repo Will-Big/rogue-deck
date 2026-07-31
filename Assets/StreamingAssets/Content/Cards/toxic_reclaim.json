@@ -10,20 +10,14 @@
       "kind": "consume_status",
       "status": "poison",
       "maxAmount": 1,
-      "selector": "FrontMost",
-      "key": {
-        "id": "consume_status"
-      }
+      "selector": "FrontMost"
     },
     {
       "kind": "apply_status",
       "status": "poison",
       "value": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "FrontMost"
     },
     {
       "kind": "apply_status",
@@ -35,9 +29,6 @@
         "n": 1,
         "successEffectValue": 4,
         "skipOnBasic": true
-      },
-      "key": {
-        "id": "apply_status"
       }
     }
   ]

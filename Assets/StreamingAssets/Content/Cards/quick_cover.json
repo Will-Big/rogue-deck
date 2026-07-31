@@ -12,10 +12,7 @@
       "value": 4,
       "lifetime": "ThisTurn",
       "target": "PartyBySelector",
-      "selector": "FrontMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "FrontMost"
     }
   ]
 }

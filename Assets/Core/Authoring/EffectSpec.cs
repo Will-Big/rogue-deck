@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
@@ -53,6 +54,7 @@ namespace FateWeaver.Core.Authoring
     {
         public ConditionSpec Condition;
 
+        [JsonIgnore]
         public abstract EffectKey Key { get; }
         public abstract EffectData ToEffectData();
 

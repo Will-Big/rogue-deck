@@ -10,10 +10,7 @@
       "kind": "apply_status",
       "status": "block",
       "value": 4,
-      "lifetime": "ThisTurn",
-      "key": {
-        "id": "apply_status"
-      }
+      "lifetime": "ThisTurn"
     }
   ]
 }

@@ -15,9 +15,6 @@
       "condition": {
         "kind": "NoFollowingPlayerCard",
         "successEffectValue": 2
-      },
-      "key": {
-        "id": "apply_status"
       }
     }
   ]

@@ -14,9 +14,6 @@
       "condition": {
         "kind": "NextIsEnemyDamageCard",
         "successEffectValue": 6
-      },
-      "key": {
-        "id": "apply_status"
       }
     }
   ]

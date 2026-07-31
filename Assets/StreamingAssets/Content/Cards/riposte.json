@@ -13,9 +13,6 @@
       "condition": {
         "kind": "PrevExecutedIsEnemyDamageCard",
         "successEffectValue": 7
-      },
-      "key": {
-        "id": "damage"
       }
     }
   ]

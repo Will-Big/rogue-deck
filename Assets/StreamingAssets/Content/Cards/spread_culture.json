@@ -9,20 +9,14 @@
     {
       "kind": "damage",
       "value": 2,
-      "selector": "All",
-      "key": {
-        "id": "damage"
-      }
+      "selector": "All"
     },
     {
       "kind": "apply_status",
       "status": "poison",
       "value": 1,
       "target": "TargetEnemy",
-      "selector": "All",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "All"
     }
   ]
 }

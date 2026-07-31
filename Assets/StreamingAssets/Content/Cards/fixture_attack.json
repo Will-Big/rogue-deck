@@ -8,10 +8,7 @@
   "effects": [
     {
       "kind": "damage",
-      "value": 4,
-      "key": {
-        "id": "damage"
-      }
+      "value": 4
     }
   ]
 }

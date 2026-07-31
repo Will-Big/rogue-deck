@@ -11,19 +11,13 @@
       "status": "poison",
       "value": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "FrontMost"
     },
     {
       "kind": "trigger_status",
       "status": "poison",
       "suppressMarker": "poison_dormant",
-      "selector": "FrontMost",
-      "key": {
-        "id": "trigger_status"
-      }
+      "selector": "FrontMost"
     }
   ]
 }

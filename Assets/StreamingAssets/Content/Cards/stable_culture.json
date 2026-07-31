@@ -11,20 +11,14 @@
       "status": "poison",
       "value": 2,
       "target": "TargetEnemy",
-      "selector": "BackMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "BackMost"
     },
     {
       "kind": "apply_status",
       "status": "poison_stasis",
       "lifetime": "ThisTurn",
       "target": "TargetEnemy",
-      "selector": "BackMost",
-      "key": {
-        "id": "apply_status"
-      }
+      "selector": "BackMost"
     }
   ]
 }

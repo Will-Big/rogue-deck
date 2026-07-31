@@ -9,10 +9,7 @@
     {
       "kind": "damage",
       "value": 5,
-      "selector": "FrontMost",
-      "key": {
-        "id": "damage"
-      }
+      "selector": "FrontMost"
     }
   ]
 }

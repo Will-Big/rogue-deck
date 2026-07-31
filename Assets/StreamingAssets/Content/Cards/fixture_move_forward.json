@@ -8,10 +8,7 @@
   "effects": [
     {
       "kind": "move_formation",
-      "value": -1,
-      "key": {
-        "id": "move_formation"
-      }
+      "value": -1
     }
   ]
 }

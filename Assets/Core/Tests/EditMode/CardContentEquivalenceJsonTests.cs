@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Authoring.Json;
 using FateWeaver.Core.Cards;
 using NUnit.Framework;
 
@@ -43,7 +44,10 @@ namespace FateWeaver.Tests
                 + "|" + string.Join(",", def.Effects.Select(e =>
                     e.Key + ":" + e.EffectValue + ":" + e.TargetSelector
                         + ":" + (e.Condition == null ? "-" : e.Condition.GetType().Name)
-                        + ":" + e.SuccessEffectValue + ":" + e.SkipOnBasic));
+                        + ":" + e.SuccessEffectValue + ":" + e.SkipOnBasic
+                        + ":" + (e.Payload == null
+                            ? "-"
+                            : e.Payload.GetType().Name + ContentJson.Write(e.Payload))));
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()

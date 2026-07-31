@@ -11,10 +11,7 @@
       "status": "block",
       "value": 4,
       "lifetime": "ThisTurn",
-      "target": "AllPartyMembers",
-      "key": {
-        "id": "apply_status"
-      }
+      "target": "AllPartyMembers"
     }
   ]
 }
