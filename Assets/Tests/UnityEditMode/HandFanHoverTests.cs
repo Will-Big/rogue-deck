@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using FateWeaver.Core.Cards;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
@@ -35,7 +37,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 {
                     new CardPresentation(
                         "execution", "execution", 3, 1, Side.Player,
-                        string.Empty, null, false)
+                        EmptyDescriptionLayout(), null, false)
                 };
                 hand.SetCards(cards, _ => { },
                     (index, hovering) => calls.Add((index, hovering)));
@@ -237,10 +239,14 @@ namespace FateWeaver.Tests.UnityEditMode
                     3,
                     1,
                     Side.Player,
-                    string.Empty,
+                    EmptyDescriptionLayout(),
                     null,
                     false))
                 .ToArray();
+
+        private static CardDescriptionLayout EmptyDescriptionLayout()
+            => new CardDescriptionLayout(
+                Array.Empty<CardTargetKey>(), Array.Empty<CardDescriptionLine>(), string.Empty);
 
         private static T Field<T>(object target, string name)
             => (T)target.GetType()

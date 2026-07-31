@@ -27,24 +27,6 @@ namespace FateWeaver.Unity
 
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
-            string description, Sprite art, bool isLocked,
-            IReadOnlyList<CardStatusIcon> statusIcons = null,
-            CardCategory category = CardCategory.Execution,
-            string ownerDisplayName = null,
-            Color ownerColor = default,
-            bool isPartyOwned = false)
-            : this(
-                id, displayName, executionOrder, energyCost, side,
-                new CardDescriptionLayout(
-                    Array.Empty<CardTargetKey>(),
-                    Array.Empty<CardDescriptionLine>(),
-                    description ?? throw new ArgumentNullException(nameof(description))),
-                art, isLocked, statusIcons, category, ownerDisplayName, ownerColor, isPartyOwned)
-        {
-        }
-
-        public CardPresentation(
-            string id, string displayName, int executionOrder, int energyCost, Side side,
             CardDescriptionLayout descriptionLayout, Sprite art, bool isLocked,
             IReadOnlyList<CardStatusIcon> statusIcons = null,
             CardCategory category = CardCategory.Execution,

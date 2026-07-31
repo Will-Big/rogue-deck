@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using DG.Tweening;
 using FateWeaver.Core.Cards;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
@@ -79,7 +80,7 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 var view = RailCardView.EditorCreate((RectTransform)root.transform, new Vector2(96f, 132f));
                 var card = new CardPresentation(
-                    "test", "test", 1, 0, Side.Enemy, string.Empty, null, false);
+                    "test", "test", 1, 0, Side.Enemy, EmptyDescriptionLayout(), null, false);
                 int hoverCalls = 0;
                 view.Bind(card, null, _ => hoverCalls++);
                 view.SetInteractable(false);
@@ -126,7 +127,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     _ => Array.Empty<SelectionTargetRef>(),
                     () => { });
                 var card = new CardPresentation(
-                    "test", "test", 1, 0, Side.Player, string.Empty, null, false);
+                    "test", "test", 1, 0, Side.Player, EmptyDescriptionLayout(), null, false);
                 rail.SetCards(
                     new[] { card },
                     index => selection.OnTargetClicked(
@@ -436,7 +437,11 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private static CardPresentation Card(string id, int order, Side side)
             => new CardPresentation(
-                id, id, order, 1, side, string.Empty, null, false);
+                id, id, order, 1, side, EmptyDescriptionLayout(), null, false);
+
+        private static CardDescriptionLayout EmptyDescriptionLayout()
+            => new CardDescriptionLayout(
+                Array.Empty<CardTargetKey>(), Array.Empty<CardDescriptionLine>(), string.Empty);
 
         private static void SimulateDotweenRuntimeInitializationForEditMode()
         {

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using DG.Tweening;
+using FateWeaver.Core.Cards;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
@@ -260,7 +262,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var intervention = new CardPresentation(
                 "intervention", "intervention", 0, 1,
                 FateWeaver.Core.Cards.Side.Player,
-                string.Empty, null, false,
+                EmptyDescriptionLayout(), null, false,
                 category: FateWeaver.Core.Cards.CardCategory.Intervention);
             _controller.ShowPlacementHover(0, intervention, 0);
             var rail = Field<ExecutionRailView>(_controller, "_rail");
@@ -314,7 +316,11 @@ namespace FateWeaver.Tests.UnityEditMode
             => new CardPresentation(
                 "execution", "execution", 3, 1,
                 FateWeaver.Core.Cards.Side.Player,
-                string.Empty, null, false);
+                EmptyDescriptionLayout(), null, false);
+
+        private static CardDescriptionLayout EmptyDescriptionLayout()
+            => new CardDescriptionLayout(
+                Array.Empty<CardTargetKey>(), Array.Empty<CardDescriptionLine>(), string.Empty);
 
         private static void SimulateDotweenRuntimeInitializationForEditMode()
         {

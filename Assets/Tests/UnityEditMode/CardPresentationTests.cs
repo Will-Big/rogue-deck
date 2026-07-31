@@ -26,6 +26,16 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Presentation_constructor_does_not_accept_a_lossy_string_description()
+        {
+            Assert.IsNull(typeof(CardPresentation)
+                .GetConstructors()
+                .SingleOrDefault(constructor =>
+                    constructor.GetParameters().Length > 5
+                    && constructor.GetParameters()[5].ParameterType == typeof(string)));
+        }
+
+        [Test]
         public void Locked_zone_card_exposes_lock_status_icon()
         {
             var instance = new ExecutionCardInstance(EnemyCard()) { IsLocked = true };
