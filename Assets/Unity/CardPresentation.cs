@@ -15,7 +15,8 @@ namespace FateWeaver.Unity
         public int ExecutionOrder { get; }
         public int EnergyCost { get; }
         public Side Side { get; }
-        public string Description { get; }
+        public CardDescriptionLayout DescriptionLayout { get; }
+        public string Description => DescriptionLayout.PlainText;
         public Sprite Art { get; }
         public bool IsLocked { get; }
         public CardCategory Category { get; }
@@ -32,13 +33,31 @@ namespace FateWeaver.Unity
             string ownerDisplayName = null,
             Color ownerColor = default,
             bool isPartyOwned = false)
+            : this(
+                id, displayName, executionOrder, energyCost, side,
+                new CardDescriptionLayout(
+                    Array.Empty<CardTargetKey>(),
+                    Array.Empty<CardDescriptionLine>(),
+                    description ?? throw new ArgumentNullException(nameof(description))),
+                art, isLocked, statusIcons, category, ownerDisplayName, ownerColor, isPartyOwned)
+        {
+        }
+
+        public CardPresentation(
+            string id, string displayName, int executionOrder, int energyCost, Side side,
+            CardDescriptionLayout descriptionLayout, Sprite art, bool isLocked,
+            IReadOnlyList<CardStatusIcon> statusIcons = null,
+            CardCategory category = CardCategory.Execution,
+            string ownerDisplayName = null,
+            Color ownerColor = default,
+            bool isPartyOwned = false)
         {
             Id = id;
             DisplayName = displayName;
             ExecutionOrder = executionOrder;
             EnergyCost = energyCost;
             Side = side;
-            Description = description;
+            DescriptionLayout = descriptionLayout ?? throw new ArgumentNullException(nameof(descriptionLayout));
             Art = art;
             IsLocked = isLocked;
             StatusIcons = statusIcons ?? Array.Empty<CardStatusIcon>();
@@ -55,7 +74,7 @@ namespace FateWeaver.Unity
                 executionOrder,
                 EnergyCost,
                 Side,
-                Description,
+                DescriptionLayout,
                 Art,
                 IsLocked,
                 StatusIcons,
@@ -80,7 +99,7 @@ namespace FateWeaver.Unity
                 card.ExecutionOrder,
                 def.EnergyCost,
                 def.Side,
-                DescriptionComposer.Describe(def, KoreanDescriptionCatalog.Default),
+                DescriptionComposer.Compose(def, KoreanDescriptionCatalog.Default),
                 ResolveArt(def.Id, art),
                 card.IsLocked,
                 StatusIconsFor(card),
@@ -104,7 +123,7 @@ namespace FateWeaver.Unity
                 def.BaseExecutionOrder,
                 def.EnergyCost,
                 def.Side,
-                DescriptionComposer.Describe(def, KoreanDescriptionCatalog.Default),
+                DescriptionComposer.Compose(def, KoreanDescriptionCatalog.Default),
                 ResolveArt(def.Id, art),
                 false,
                 Array.Empty<CardStatusIcon>(),
