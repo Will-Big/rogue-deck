@@ -67,9 +67,35 @@ namespace FateWeaver.Tests
             };
             var key = new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne);
 
-            var snapshot = CardTargetSnapshot.Capture(state, card, new[] { key });
+            var snapshot = CardTargetSnapshot.Capture(state, card, new[] { key }, new[] { key });
 
             CollectionAssert.AreEqual(new[] { selected }, snapshot.EnemyTargets(key));
+        }
+
+        [Test]
+        public void Explicit_target_id_does_not_override_an_authored_positional_selector()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(10);
+            state.Enemies.Add(new Enemy("front", 10));
+            state.Enemies.Add(new Enemy("middle", 10));
+            state.Enemies.Add(new Enemy("explicit", 10));
+            var effect = new EffectData(EffectKeys.Damage, 2)
+            {
+                TargetSelector = TargetSelector.FrontTwo
+            };
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
+                "positional", "Positional", Side.Player, 1, new[] { effect }))
+            {
+                OwnerId = CombatState.SoloPlayerId,
+                TargetId = "explicit"
+            });
+
+            new TurnResolver(Effects()).Resolve(state, 0);
+
+            Assert.AreEqual(8, state.Enemies[0].Hp);
+            Assert.AreEqual(8, state.Enemies[1].Hp);
+            Assert.AreEqual(10, state.Enemies[2].Hp);
         }
 
         [Test]

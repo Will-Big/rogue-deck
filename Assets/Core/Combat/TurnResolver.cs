@@ -65,12 +65,23 @@ namespace FateWeaver.Core.Combat
             var handlers = card.Def.Effects
                 .Select(effect => _effects.Resolve(effect.Key))
                 .ToArray();
-            var targetKeys = card.Def.Effects
-                .Select((effect, index) => handlers[index].TargetFor(card.Def, effect))
-                .Where(key => key.HasValue)
-                .Select(key => key.Value)
+            var targetBindings = card.Def.Effects
+                .Select((effect, index) => (Effect: effect, Key: handlers[index].TargetFor(card.Def, effect)))
                 .ToArray();
-            var targets = CardTargetSnapshot.Capture(state, card, targetKeys);
+            var targetKeys = targetBindings
+                .Where(binding => binding.Key.HasValue)
+                .Select(binding => binding.Key.Value)
+                .ToArray();
+            var legacyExplicitTargetKeys = targetBindings
+                .Where(binding => binding.Key.HasValue
+                    && card.Def.Side == Cards.Side.Player
+                    && !string.IsNullOrEmpty(card.TargetId)
+                    && binding.Effect.TargetSelector == null
+                    && binding.Key.Value.Faction == Cards.CardTargetFaction.Enemy)
+                .Select(binding => binding.Key.Value)
+                .ToArray();
+            var targets = CardTargetSnapshot.Capture(
+                state, card, targetKeys, legacyExplicitTargetKeys);
 
             for (var effectIndex = 0; effectIndex < card.Def.Effects.Count; effectIndex++)
             {
@@ -106,7 +117,14 @@ namespace FateWeaver.Core.Combat
                 };
                 handlers[effectIndex].Apply(ctx);
                 totalDamage += ctx.DamageDealt;
-                if (ctx.TargetId != null) targetId = ctx.TargetId;
+                if (ctx.TargetId != null)
+                {
+                    targetId = ctx.TargetId;
+                }
+                else if (targetBindings[effectIndex].Key.HasValue)
+                {
+                    targetId = null;
+                }
                 pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록
 
                 CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);

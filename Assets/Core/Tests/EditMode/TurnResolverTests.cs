@@ -4,6 +4,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
+using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
@@ -13,6 +14,7 @@ namespace FateWeaver.Tests
         {
             var r = new EffectRegistry();
             r.Register(new DamageHandler());
+            r.Register(new ApplyStatusHandler());
             return r;
         }
 
@@ -109,6 +111,37 @@ namespace FateWeaver.Tests
             CollectionAssert.AreEqual(
                 a.Select(e => e.ToString()).ToArray(),
                 b.Select(e => e.ToString()).ToArray());
+        }
+
+        [Test]
+        public void Multi_target_effect_clears_a_previous_single_target_from_card_resolved()
+        {
+            var state = new CombatState();
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("front", 12));
+            state.Enemies.Add(new Enemy("back", 12));
+            var self = EffectData.ApplyStatus(
+                StatusKeys.Block,
+                StatusLifetime.Permanent,
+                StatusApplyTarget.Self,
+                magnitude: 1);
+            var all = new EffectData(EffectKeys.Damage, 2)
+            {
+                TargetSelector = TargetSelector.All
+            };
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
+                "self_then_all", "Self Then All", Side.Player, 1, new[] { self, all }))
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+
+            var resolved = new TurnResolver(Registry()).Resolve(state, 0)
+                .OfType<CardResolved>()
+                .Single();
+
+            Assert.IsNull(resolved.TargetId);
+            Assert.AreEqual(10, state.Enemies[0].Hp);
+            Assert.AreEqual(10, state.Enemies[1].Hp);
         }
     }
 }

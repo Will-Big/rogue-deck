@@ -19,9 +19,20 @@ namespace FateWeaver.Core.Combat
             CombatState state,
             ExecutionCardInstance card,
             IEnumerable<CardTargetKey> targetKeys)
+            => Capture(state, card, targetKeys, Array.Empty<CardTargetKey>());
+
+        /// <summary>Captures positional targets, optionally retaining the legacy explicit enemy id
+        /// for effect keys that did not author a TargetSelector. Selector-bearing effects always
+        /// use their declared range.</summary>
+        public static CardTargetSnapshot Capture(
+            CombatState state,
+            ExecutionCardInstance card,
+            IEnumerable<CardTargetKey> targetKeys,
+            IEnumerable<CardTargetKey> legacyExplicitTargetKeys)
         {
             var snapshot = new CardTargetSnapshot();
             var ranges = new Dictionary<CardTargetFaction, CardTargetRange>();
+            var legacyExplicitKeys = new HashSet<CardTargetKey>(legacyExplicitTargetKeys);
 
             foreach (var key in targetKeys)
             {
@@ -50,7 +61,8 @@ namespace FateWeaver.Core.Combat
                 }
                 else
                 {
-                    var targets = CaptureEnemyTargets(state, card, key.Range);
+                    var targets = CaptureEnemyTargets(
+                        state, card, key.Range, legacyExplicitKeys.Contains(key));
                     if (targets == null)
                     {
                         card.CancellationReason = CardCancellationReason.NoValidTarget;
@@ -115,7 +127,8 @@ namespace FateWeaver.Core.Combat
         private static IReadOnlyList<Enemy> CaptureEnemyTargets(
             CombatState state,
             ExecutionCardInstance card,
-            CardTargetRange range)
+            CardTargetRange range,
+            bool useLegacyExplicitTarget)
         {
             if (range == CardTargetRange.Self)
             {
@@ -123,7 +136,7 @@ namespace FateWeaver.Core.Combat
                 return self == null ? null : new List<Enemy> { self }.AsReadOnly();
             }
 
-            if (card.Def.Side == Side.Player && !string.IsNullOrEmpty(card.TargetId))
+            if (useLegacyExplicitTarget && card.Def.Side == Side.Player && !string.IsNullOrEmpty(card.TargetId))
             {
                 var explicitTarget = EnemyTargeting.ByIdOrFront(state, card.TargetId);
                 return explicitTarget == null || explicitTarget.Hp <= 0
