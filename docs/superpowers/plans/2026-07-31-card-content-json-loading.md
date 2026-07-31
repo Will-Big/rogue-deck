@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-07-31
-- 상태: `active` — Task 1~6 구현 완료(429 tests 통과). 계획 2(콘텐츠 원본 전환) 대기
+- 상태: `active` — Task 1~6 구현 완료, 전체 브랜치 리뷰 반영(432 tests 통과, Unity EditMode 506). 계획 2(콘텐츠 원본 전환) 대기
 - 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
 - 브랜치: `claude/card-mutation-runtime-content-a65c58`
 
@@ -1297,7 +1297,7 @@ namespace FateWeaver.Tests
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
+                .Concat(StarterDeckSpecs.AllAuthored())
                 .Concat(PartyPrototypeDeckSpecs.Build())
                 .GroupBy(spec => spec.Id)
                 .Select(group => group.First());
@@ -1388,7 +1388,7 @@ namespace FateWeaver.Unity.Editor
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
+                .Concat(StarterDeckSpecs.AllAuthored())
                 .Concat(PartyPrototypeDeckSpecs.Build());
 
         private static IEnumerable<CardSpec> DistinctById(IEnumerable<CardSpec> specs)
@@ -1413,7 +1413,7 @@ Expected: 종료 코드 0, 로그에 `Exported N cards`
 - [ ] **Step 5: 생성물을 눈으로 확인한다**
 
 Run: `ls Assets/StreamingAssets/Content/Cards | head; cat Assets/StreamingAssets/Content/Cards/distill.json`
-Expected: 카드당 파일 하나(26장). 각 파일이 `"id"`, `"name"`, `"side"`, `"category"`, `"effects"`를
+Expected: 카드당 파일 하나(36장). 각 파일이 `"id"`, `"name"`, `"side"`, `"category"`, `"effects"`를
 포함하고, 조건이 없는 효과에는 `"condition"` 키가 없다. 효과마다 `"kind"`가 하나씩만 있어야 한다 —
 `"key"`가 함께 나오면 `EffectSpec.Key`에 `[JsonIgnore]`가 빠진 것이다.
 
@@ -1429,7 +1429,7 @@ DefaultValueHandling = DefaultValueHandling.Include)]`를 붙여 그 필드만 �
 - [ ] **Step 7: 전체 테스트**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-Expected: `Failed: 0, Passed: 429`
+Expected: `Failed: 0, Passed: 432`
 
 - [ ] **Step 8: 워킹 트리를 확인하고 커밋한다**
 
@@ -1477,9 +1477,27 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
+## 전체 브랜치 리뷰가 찾은 것 (반영 완료)
+
+Task별 리뷰가 구조적으로 볼 수 없던 세 가지를 최종 리뷰가 잡았다.
+
+- **저작 카드 10장에 JSON이 없었다.** `StarterDeckSpecs.Build()`는 자기 클래스의 팩터리가 아니라
+  `StarterPoolSpecs`의 카드 10장을 고른다. 그래서 `Slash`·`Guard`·`QuickCut`·`Counter`·`Cover`·
+  `PullForward`·`PushBack`·`SwapPositions`·`SlowHex`·`QuickenSelf`가 내보내기에서 통째로 빠졌고,
+  동등성 테스트가 같은 `Build()`를 기준으로 삼아 이를 볼 수 없었다. `AllAuthored()`를 추가하고,
+  세 스펙 클래스의 `CardSpec` 팩터리를 리플렉션으로 훑어 전부 카탈로그에 있는지 확인하는 테스트를
+  더했다. 26장 → **36장**.
+- **`"id": null`이 로더를 터뜨렸다.** 필수 키 검사는 토큰 존재만 보므로 통과했고, 중복 검사에서
+  `ArgumentNullException`이 났다. 파일명 없는 예외는 로더의 계약 자체를 어긴다.
+- **문자열이 아닌 상태 키가 `InvalidCastException`으로 새어나갔다.** `JsonException`이 아니라
+  로더의 `catch`에 걸리지 않았다. 두 키 참조 컨버터에 토큰 타입 가드를 넣었다.
+
+함께 고친 것: `ApplyStatusSpec.Lifetime`에 `Include`(생략 시 `Permanent`가 되는 함정),
+UnityEditMode asmdef의 Newtonsoft 참조, `2026-07-19-open-card-authoring-design.md`의 옛 네임스페이스.
+
 ## 완료 조건
 
-- 헤드리스 429 tests 통과, 실패 0
+- 헤드리스 432 tests 통과, 실패 0
 - `Assets/StreamingAssets/Content/Cards/`에 카드당 JSON 파일이 있고, 로더가 읽은 결과가 기존 C#
   스펙과 같은 `CardDefinition`을 만든다
 - 깨진 JSON·미등록 효과 키·누락된 필수 키·중복 id가 각각 파일 이름과 함께 보고되고, 하나라도
