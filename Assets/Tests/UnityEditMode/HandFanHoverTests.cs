@@ -28,7 +28,7 @@ namespace FateWeaver.Tests.UnityEditMode
             try
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                    "Assets/Unity/Prefabs/CardView.prefab");
+                    "Assets/Unity/Prefabs/ExecutionCardView.prefab");
                 Assert.IsNotNull(prefab);
                 var hand = root.AddComponent<HandFanView>();
                 hand.EditorBuild(prefab);
@@ -161,7 +161,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 var card = root.GetComponentsInChildren<CardView>()[0];
                 var back = card.GetComponentInChildren<CardBackView>(true);
 
-                Assert.IsNotNull(back, "CardView.prefab should carry a CardBack child");
+                Assert.IsNotNull(back, "ExecutionCardView.prefab should carry a CardBack child");
                 Assert.IsFalse(back.gameObject.activeSelf);
                 Assert.IsFalse(Field<Image>(back, "_art").enabled);
                 var fallback = Field<Image>(back, "_artFallback");
@@ -223,7 +223,7 @@ namespace FateWeaver.Tests.UnityEditMode
             IReadOnlyList<CardPresentation> cards)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                "Assets/Unity/Prefabs/CardView.prefab");
+                "Assets/Unity/Prefabs/ExecutionCardView.prefab");
             Assert.IsNotNull(prefab);
             var hand = root.AddComponent<HandFanView>();
             hand.EditorBuild(prefab);

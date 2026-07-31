@@ -35,7 +35,7 @@ namespace FateWeaver.Tests.UnityEditMode
             _root.SetActive(false);
 
             var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                "Assets/Unity/Prefabs/CardView.prefab");
+                "Assets/Unity/Prefabs/ExecutionCardView.prefab");
             Assert.IsNotNull(cardPrefab);
             _hand = Child("Hand", typeof(RectTransform)).AddComponent<HandFanView>();
             _hand.EditorBuild(cardPrefab);
