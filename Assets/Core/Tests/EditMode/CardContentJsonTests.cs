@@ -179,6 +179,8 @@ namespace FateWeaver.Tests
             Assert.AreEqual(before.Id, after.Id);
             Assert.AreEqual(before.Name, after.Name);
             Assert.AreEqual(before.BaseExecutionOrder, after.BaseExecutionOrder);
+            Assert.AreEqual(before.EnergyCost, after.EnergyCost);
+            Assert.AreEqual(before.Category, after.Category);
             Assert.AreEqual(before.Effects.Count, after.Effects.Count);
             Assert.AreEqual(before.Effects[0].Key, after.Effects[0].Key);
             Assert.AreEqual(before.Effects[0].EffectValue, after.Effects[0].EffectValue);
