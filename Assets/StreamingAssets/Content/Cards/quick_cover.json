@@ -1,0 +1,21 @@
+{
+  "id": "quick_cover",
+  "name": "빠른 엄호",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 4,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 4,
+      "lifetime": "ThisTurn",
+      "target": "PartyBySelector",
+      "selector": "FrontMost",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

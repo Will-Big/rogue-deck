@@ -1,0 +1,19 @@
+{
+  "id": "early_guard",
+  "name": "앞선 대비",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 4,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 4,
+      "lifetime": "ThisTurn",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

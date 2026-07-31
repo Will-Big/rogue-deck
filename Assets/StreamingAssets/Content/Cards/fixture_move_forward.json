@@ -1,0 +1,17 @@
+{
+  "id": "fixture_move_forward",
+  "name": "[검증] 대형 이동",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "move_formation",
+      "value": -1,
+      "key": {
+        "id": "move_formation"
+      }
+    }
+  ]
+}

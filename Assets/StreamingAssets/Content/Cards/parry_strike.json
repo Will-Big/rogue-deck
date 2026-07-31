@@ -1,0 +1,27 @@
+{
+  "id": "parry_strike",
+  "name": "쳐내기",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 1,
+      "selector": "FrontMost",
+      "key": {
+        "id": "damage"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 3,
+      "lifetime": "ThisTurn",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

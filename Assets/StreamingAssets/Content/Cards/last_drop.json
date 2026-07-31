@@ -1,0 +1,24 @@
+{
+  "id": "last_drop",
+  "name": "마지막 한 방울",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 7,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 1,
+      "target": "TargetEnemy",
+      "selector": "FrontMost",
+      "condition": {
+        "kind": "NoFollowingPlayerCard",
+        "successEffectValue": 2
+      },
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

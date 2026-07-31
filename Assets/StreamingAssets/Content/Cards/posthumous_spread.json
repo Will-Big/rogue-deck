@@ -1,0 +1,39 @@
+{
+  "id": "posthumous_spread",
+  "name": "사후 전염",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 4,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 1,
+      "selector": "FrontMost",
+      "key": {
+        "id": "damage"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 1,
+      "target": "TargetEnemy",
+      "selector": "FrontMost",
+      "key": {
+        "id": "apply_status"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "contagion",
+      "lifetime": "Turns",
+      "lifetimeCount": 2,
+      "target": "TargetEnemy",
+      "selector": "FrontMost",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

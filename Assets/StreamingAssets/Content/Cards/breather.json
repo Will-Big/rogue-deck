@@ -1,0 +1,10 @@
+{
+  "id": "breather",
+  "name": "숨 고르기",
+  "side": "Player",
+  "category": "Intervention",
+  "energyCost": 1,
+  "intervention": "change_execution_order",
+  "interventionEffectValue": 1,
+  "interventionTargetSide": "Player"
+}

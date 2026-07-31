@@ -1,0 +1,30 @@
+{
+  "id": "stable_culture",
+  "name": "안정 배양",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 2,
+      "target": "TargetEnemy",
+      "selector": "BackMost",
+      "key": {
+        "id": "apply_status"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "poison_stasis",
+      "lifetime": "ThisTurn",
+      "target": "TargetEnemy",
+      "selector": "BackMost",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

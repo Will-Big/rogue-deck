@@ -1,0 +1,38 @@
+{
+  "id": "condensed_burst",
+  "name": "응축 파열",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 2,
+  "baseExecutionOrder": 6,
+  "effects": [
+    {
+      "kind": "consume_status",
+      "status": "poison",
+      "maxAmount": 3,
+      "damageBonusPerConsumed": 2,
+      "selector": "FrontMost",
+      "key": {
+        "id": "consume_status"
+      }
+    },
+    {
+      "kind": "damage",
+      "value": 2,
+      "selector": "FrontMost",
+      "key": {
+        "id": "damage"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 1,
+      "target": "TargetEnemy",
+      "selector": "FrontMost",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

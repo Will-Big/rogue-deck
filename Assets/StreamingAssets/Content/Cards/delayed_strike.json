@@ -1,0 +1,18 @@
+{
+  "id": "delayed_strike",
+  "name": "늦춘 일격",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 5,
+      "selector": "FrontMost",
+      "key": {
+        "id": "damage"
+      }
+    }
+  ]
+}

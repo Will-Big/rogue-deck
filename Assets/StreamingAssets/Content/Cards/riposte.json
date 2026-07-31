@@ -1,0 +1,22 @@
+{
+  "id": "riposte",
+  "name": "응수",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 3,
+      "selector": "FrontMost",
+      "condition": {
+        "kind": "PrevExecutedIsEnemyDamageCard",
+        "successEffectValue": 7
+      },
+      "key": {
+        "id": "damage"
+      }
+    }
+  ]
+}

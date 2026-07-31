@@ -1,0 +1,18 @@
+{
+  "id": "vanguard_slash",
+  "name": "선봉 베기",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 3,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 5,
+      "selector": "FrontMost",
+      "key": {
+        "id": "damage"
+      }
+    }
+  ]
+}

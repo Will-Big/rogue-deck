@@ -1,0 +1,20 @@
+{
+  "id": "fixture_all_block",
+  "name": "[검증] 전체 방어",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 4,
+      "lifetime": "ThisTurn",
+      "target": "AllPartyMembers",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

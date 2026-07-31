@@ -1,0 +1,28 @@
+{
+  "id": "spread_culture",
+  "name": "확산 배양",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 2,
+  "baseExecutionOrder": 6,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 2,
+      "selector": "All",
+      "key": {
+        "id": "damage"
+      }
+    },
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 1,
+      "target": "TargetEnemy",
+      "selector": "All",
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}

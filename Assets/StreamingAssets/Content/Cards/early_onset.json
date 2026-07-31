@@ -1,0 +1,29 @@
+{
+  "id": "early_onset",
+  "name": "조기 발병",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 2,
+  "baseExecutionOrder": 3,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "poison",
+      "value": 1,
+      "target": "TargetEnemy",
+      "selector": "FrontMost",
+      "key": {
+        "id": "apply_status"
+      }
+    },
+    {
+      "kind": "trigger_status",
+      "status": "poison",
+      "suppressMarker": "poison_dormant",
+      "selector": "FrontMost",
+      "key": {
+        "id": "trigger_status"
+      }
+    }
+  ]
+}

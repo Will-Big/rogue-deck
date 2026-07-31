@@ -1,0 +1,9 @@
+{
+  "id": "crossover",
+  "name": "엇갈림",
+  "side": "Player",
+  "category": "Intervention",
+  "energyCost": 1,
+  "intervention": "swap_execution_order",
+  "interventionRequireAdjacent": true
+}

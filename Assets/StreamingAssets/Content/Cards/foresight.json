@@ -1,0 +1,23 @@
+{
+  "id": "foresight",
+  "name": "예견",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "value": 2,
+      "lifetime": "ThisTurn",
+      "condition": {
+        "kind": "NextIsEnemyDamageCard",
+        "successEffectValue": 6
+      },
+      "key": {
+        "id": "apply_status"
+      }
+    }
+  ]
+}
