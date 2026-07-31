@@ -39,14 +39,19 @@
 
 ## 코드베이스 탐색 (graphify 지식 그래프)
 
-21. **코드베이스 질문은 graphify 그래프를 먼저 조회한다.** 이 저장소에는 코어·Unity 레이어·스펙·플랜을 한 그래프로 묶은
-    `graphify-out/`이 커밋되어 있다. 규모와 갱신 시각은 `GRAPH_REPORT.md` 머리말에서 확인한다.
-    - `graphify query "<질문>"` — 질문에 걸리는 부분 그래프. 넓은 맥락이 필요할 때의 기본 진입점.
-    - `graphify path "<A>" "<B>"` — 두 개념 사이의 최단 경로. "이게 저기까지 어떻게 이어지지"에 쓴다.
-    - `graphify explain "<개념>"` — 한 노드 중심의 설명.
+21. **코드베이스 질문은 아는 이름이 있으면 `graphify explain`부터 조회한다.** 이 저장소에는 코어·Unity 레이어·스펙·플랜을
+    한 그래프로 묶은 `graphify-out/`이 커밋되어 있다. 규모와 갱신 시각은 `GRAPH_REPORT.md` 머리말에서 확인한다.
+    갈림길은 코드냐 문서냐가 아니라 **노드 이름을 아느냐**다 (2026-07-31 실측):
+    - **심볼·문서 노드 이름을 알면** → `graphify explain "<이름>"`. 호출자·메서드·관계를 file:line으로 돌려주며
+      grep·파일 통독보다 훨씬 싸다 (실측: 코드 질의당 ~3천, 문서 질의당 ~1.1만 토큰 절약).
+    - **개념만 알면** → `graphify query "<질문>"`으로 **진입점 이름만 얻고** 즉시 `explain`으로 들어간다.
+      query 결과를 코드 질문의 답으로 삼지 않는다 — 코드↔문서 엣지가 전체의 1.4%뿐이라 자연어 질의는
+      문서 노드에 착지한 뒤 코드로 건너가지 못하고, ~2000토큰 예산에서 매번 잘린다.
+    - **파일 위치만 필요하면** grep이 더 싸다.
+    - `graphify path "<A>" "<B>"`는 문서↔문서 관계(cites/implements)에서만 신뢰한다. 코드↔코드는
+      허브 노드(`CombatState` 등)를 경유한 무의미한 경로가 나오기 쉽다.
 
-    grep이나 파일 전수 읽기보다 먼저 쓴다. 반환되는 부분 그래프가 `GRAPH_REPORT.md` 전문이나 raw grep보다 훨씬 좁다.
-    `GRAPH_REPORT.md`는 전체 아키텍처를 훑거나 위 세 명령으로 맥락이 부족할 때만 연다.
+    `GRAPH_REPORT.md`는 전체 아키텍처를 훑거나 위 명령으로 맥락이 부족할 때만 연다.
 
 22. **코드 그래프 갱신은 post-commit 훅이 자동으로 한다.** `graphify hook install`로 설치되어 있다.
     커밋할 때마다 변경된 코드 파일만 AST 재추출해 `graph.json`·`GRAPH_REPORT.md`를 갱신한다.
@@ -58,13 +63,37 @@
     워크트리에서 최신 구조가 필요하면 직접 `graphify update .`를 돌린다. 커밋된 `manifest.json`이
     상대 경로 기반이라 다른 워크트리·클론에서도 증분이 그대로 맞물린다 — 전체 리빌드가 필요 없다.
 
+    **`git merge`는 post-commit을 발동시키지 않는다.** `graphify hook install`은 post-commit·post-checkout만
+    설치하므로, 워크트리에서 작업해 master로 머지하는 이 저장소의 기본 워크플로에서는 두 경로가 모두 막혀
+    그래프가 조용히 낡는다 (2026-07-31에 20커밋 누락으로 실증). 메인 체크아웃의 로컬 `.git/hooks/post-merge`가
+    이를 메운다 — post-commit에서 MERGE_HEAD 가드만 제거해 실행하는 래퍼다 (post-merge 시점엔 MERGE_HEAD가
+    아직 남아 있어 그대로 exec하면 가드에서 조용히 빠진다). 이 훅은 git 추적이 안 되므로 `graphify hook install`
+    재실행·재클론 후에는 사라진다. **그래프가 낡아 보이면** `GRAPH_REPORT.md`의 `Built from commit`을 HEAD와
+    대조하고 이 훅의 존재부터 확인한다. 재설치:
+    ```sh
+    cat > .git/hooks/post-merge <<'EOF'
+    #!/bin/sh
+    _PC="$(dirname "$0")/post-commit"
+    [ -x "$_PC" ] || exit 0
+    _T=$(mktemp) || exit 0
+    sed '/MERGE_HEAD/d' "$_PC" > "$_T"
+    sh "$_T"
+    rm -f "$_T"
+    EOF
+    chmod +x .git/hooks/post-merge
+    ```
+
     브랜치에서 `graph.json`을 커밋해도 된다. `.gitattributes`에 등록된 union merge driver가
     자동 병합하므로 충돌하지 않는다. 다만 union 병합은 양쪽 노드를 합치므로 **코드를 대량 삭제한 뒤에는**
     `graphify update . --force`로 한 번 온전히 재빌드해 사라진 노드를 정리한다.
 
-23. **문서·스펙이 바뀌면 시맨틱 재추출을 사용자에게 제안한다.** 훅과 `graphify update .`는 코드(AST)만 본다.
-    문서·이미지는 `/graphify --update` 경로라야 반영되고, 이건 서브에이전트를 쓰는 **유료** 작업이다.
-    임의로 돌리지 말고 제안만 한다.
+23. **문서 시맨틱 재추출은 에포크 경계에서만 제안한다.** 훅과 `graphify update .`는 코드(AST)만 본다.
+    문서·이미지는 `/graphify --update` 경로라야 반영되고, 이건 서브에이전트를 쓰는 **유료** 작업이다
+    (갱신당 약 25만~40만 토큰). 문서가 바뀔 때마다 돌리면 손해다 — 활발히 편집 중인 문서는 세션이 어차피
+    직접 읽으므로 그래프의 낡음이 아프지 않고, 그래프가 값을 하는 안정된 코어 스펙은 낡지 않는다.
+    기본값은 **갱신하지 않음**이고, 완료된 플랜을 `archive/`로 옮기는 커밋(규칙 20) 이후 문서들이 참조
+    자료로 안정화된 시점에만 재추출을 제안한다. 임의로 돌리지 않으며, 돌릴 때는 `.superpowers/`·
+    `graphify-out/memory/` 같은 스크래치 산출물을 대상에서 제외한다.
 
 24. **`graphify-out/cache/semantic/`은 커밋 대상이다.** 여기만 유료 산출물이다(문서·이미지 추출 2.28M 토큰).
     저장소 상대 경로만 담고 있어 이식 가능하고, 이게 있으면 누가 클론하든 전체 재빌드가 무료가 된다.
