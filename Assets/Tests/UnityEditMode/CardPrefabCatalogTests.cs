@@ -28,6 +28,10 @@ namespace FateWeaver.Tests.UnityEditMode
             "Assets/Scenes/FateWeaverPlaytest.unity";
         internal const string WardenPlaytestScenePath =
             "Assets/Scenes/FateWeaverWardenPlaytest.unity";
+        internal const string BattleScenePath =
+            "Assets/Scenes/FateWeaverBattle.unity";
+        internal const string RailCardPath =
+            "Assets/Unity/Prefabs/RailCardView.prefab";
 
         [TestCase(CardCategory.Execution, "ExecutionCardView")]
         [TestCase(CardCategory.Intervention, "InterventionCardView")]
@@ -153,8 +157,19 @@ namespace FateWeaver.Tests.UnityEditMode
 
         [TestCase(typeof(BattleScreenController))]
         [TestCase(typeof(DeckPlaytestController))]
-        public void Battle_controller_validates_card_prefabs_before_other_startup_work(
+        public void Battle_controller_start_validates_card_prefabs_before_other_startup_work(
             Type controllerType)
+            => AssertCatalogValidationFailsFirst(controllerType, "Start");
+
+        [TestCase(typeof(BattleScreenController))]
+        [TestCase(typeof(DeckPlaytestController))]
+        public void Battle_controller_session_restart_still_validates_card_prefabs(
+            Type controllerType)
+            => AssertCatalogValidationFailsFirst(controllerType, "StartSession");
+
+        private static void AssertCatalogValidationFailsFirst(
+            Type controllerType,
+            string methodName)
         {
             var root = new GameObject("Controller");
             var catalog = ScriptableObject.CreateInstance<CardPrefabCatalog>();
@@ -170,7 +185,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 var exception = Assert.Throws<TargetInvocationException>(
                     () => controllerType
                         .GetMethod(
-                            "StartSession",
+                            methodName,
                             BindingFlags.Instance | BindingFlags.NonPublic)
                         .Invoke(controller, null));
 
@@ -184,6 +199,60 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 Object.DestroyImmediate(root);
                 Object.DestroyImmediate(catalog);
+            }
+        }
+
+        [Test]
+        public void Battle_scene_serializes_every_catalog_consumer_and_rail_prefab()
+        {
+            var scene = EditorSceneManager.OpenScene(
+                BattleScenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                var roots = scene.GetRootGameObjects();
+                var controller = roots
+                    .SelectMany(root => root.GetComponentsInChildren<BattleScreenController>(true))
+                    .Single();
+                var hand = roots
+                    .SelectMany(root => root.GetComponentsInChildren<HandFanView>(true))
+                    .Single();
+                var rail = roots
+                    .SelectMany(root => root.GetComponentsInChildren<ExecutionRailView>(true))
+                    .Single();
+                var piles = roots
+                    .SelectMany(root => root.GetComponentsInChildren<PileView>(true))
+                    .ToArray();
+                var catalog = LoadCatalog();
+
+                Assert.AreSame(catalog, Field<CardPrefabCatalog>(controller, "_cardPrefabs"));
+                Assert.AreSame(hand, Field<HandFanView>(controller, "_hand"));
+                Assert.AreSame(rail, Field<ExecutionRailView>(controller, "_rail"));
+                Assert.AreEqual(3, piles.Length);
+                CollectionAssert.AreEquivalent(
+                    piles,
+                    new[]
+                    {
+                        Field<PileView>(controller, "_drawPile"),
+                        Field<PileView>(controller, "_discardPile"),
+                        Field<PileView>(controller, "_fullDeck")
+                    });
+                Assert.AreSame(catalog, Field<CardPrefabCatalog>(hand, "_cardPrefabs"));
+                Assert.AreSame(hand.transform, Field<RectTransform>(hand, "_content"));
+                Assert.AreSame(catalog, Field<CardPrefabCatalog>(rail, "_cardPrefabs"));
+                Assert.AreEqual(
+                    RailCardPath,
+                    AssetDatabase.GetAssetPath(Field<RailCardView>(rail, "_cardPrefab")));
+                foreach (var pile in piles)
+                {
+                    Assert.AreSame(
+                        catalog,
+                        Field<CardPrefabCatalog>(pile, "_cardPrefabs"));
+                }
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
             }
         }
 

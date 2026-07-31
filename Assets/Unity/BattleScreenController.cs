@@ -55,6 +55,7 @@ namespace FateWeaver.Unity
 
         private void Start()
         {
+            ValidateCardPrefabs();
             _turnButton.onClick.AddListener(OnTurnButton);
             _resetButton.onClick.AddListener(StartSession);
             _emptyClickCatcher.onClick.AddListener(OnEmptyClicked);
@@ -65,13 +66,7 @@ namespace FateWeaver.Unity
 
         private void StartSession()
         {
-            if (_cardPrefabs == null)
-            {
-                throw new InvalidOperationException(
-                    "Battle screen requires a card prefab catalog.");
-            }
-
-            _cardPrefabs.ValidateOrThrow();
+            ValidateCardPrefabs();
             _selection.CancelSelection();
             if (_unitPrefab == null || _party == null || _party.Length == 0 || _party.Any(member => member == null || member.Deck == null))
             {
@@ -104,6 +99,17 @@ namespace FateWeaver.Unity
             BindPiles();
             SetMessage("전투 시작.");
             RefreshAll();
+        }
+
+        private void ValidateCardPrefabs()
+        {
+            if (_cardPrefabs == null)
+            {
+                throw new InvalidOperationException(
+                    "Battle screen requires a card prefab catalog.");
+            }
+
+            _cardPrefabs.ValidateOrThrow();
         }
 
         private void SpawnUnits()

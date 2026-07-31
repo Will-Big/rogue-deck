@@ -63,6 +63,7 @@ namespace FateWeaver.Unity
 
         private void Start()
         {
+            ValidateCardPrefabs();
             _resolveButton.onClick.AddListener(ResolveTurn);
             _nextButton.onClick.AddListener(NextTurn);
             _resetButton.onClick.AddListener(StartSession);
@@ -71,13 +72,7 @@ namespace FateWeaver.Unity
 
         private void StartSession()
         {
-            if (_cardPrefabs == null)
-            {
-                throw new System.InvalidOperationException(
-                    "Deck playtest requires a card prefab catalog.");
-            }
-
-            _cardPrefabs.ValidateOrThrow();
+            ValidateCardPrefabs();
             var specs = _deck != null ? _deck.ToSpecs() : StarterDeckSpecs.Build();
             var deckDefs = specs.Select(CardSpecMapper.ToDefinition).ToList();
             DescriptionCatalogValidator.ValidateDefault(
@@ -90,6 +85,17 @@ namespace FateWeaver.Unity
             ClearArmed();
             SetMessage(_deck != null ? "전투 시작." : "전투 시작 (코드 시작덱 폴백 — DeckAsset 미연결).");
             RefreshAll();
+        }
+
+        private void ValidateCardPrefabs()
+        {
+            if (_cardPrefabs == null)
+            {
+                throw new System.InvalidOperationException(
+                    "Deck playtest requires a card prefab catalog.");
+            }
+
+            _cardPrefabs.ValidateOrThrow();
         }
 
         private string EnemyId()
