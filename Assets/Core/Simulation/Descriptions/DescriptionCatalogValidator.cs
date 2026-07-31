@@ -49,7 +49,7 @@ namespace FateWeaver.Simulation.Descriptions
                     var actionKey = card.InterventionAction.Key;
                     interventions.Resolve(actionKey);
                     descriptions.Interventions.Resolve(actionKey);
-                    DescriptionComposer.Describe(card, descriptions);
+                    DescriptionComposer.Compose(card, descriptions);
                     continue;
                 }
 
@@ -86,7 +86,7 @@ namespace FateWeaver.Simulation.Descriptions
                     }
                 }
 
-                DescriptionComposer.Describe(card, descriptions);
+                DescriptionComposer.Compose(card, descriptions);
             }
         }
     }

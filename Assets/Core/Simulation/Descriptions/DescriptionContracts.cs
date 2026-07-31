@@ -10,7 +10,7 @@ namespace FateWeaver.Simulation.Descriptions
     public interface IEffectDescriptionHandler
     {
         EffectKey Key { get; }
-        string Describe(EffectData effect, int effectValue, DescriptionContext context);
+        EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context);
     }
 
     public interface IInterventionDescriptionHandler
@@ -22,9 +22,8 @@ namespace FateWeaver.Simulation.Descriptions
 
     public interface IDescriptionGrammar
     {
-        string Target(TargetSelector selector);
+        string Symbol(CardTargetKey target);
         string Condition(Condition condition);
-        string StatusTargetPrefix(StatusApplyTarget target);
         string LifetimeSuffix(StatusLifetime lifetime);
     }
 
@@ -34,25 +33,54 @@ namespace FateWeaver.Simulation.Descriptions
 
         public DescriptionContext(
             IDescriptionGrammar grammar,
-            StatusDescriptionRegistry statuses)
+            StatusDescriptionRegistry statuses,
+            string cardId,
+            Side cardSide)
         {
             _grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
+            CardId = cardId ?? throw new ArgumentNullException(nameof(cardId));
+            CardSide = cardSide;
         }
 
         public StatusDescriptionRegistry Statuses { get; }
+        public string CardId { get; }
+        public Side CardSide { get; }
 
-        public string TargetPrefix(EffectData effect)
-            => effect.TargetSelector.HasValue
-                ? _grammar.Target(effect.TargetSelector.Value) + " "
-                : string.Empty;
+        public CardTargetRange Range(TargetSelector? selector)
+        {
+            switch (selector ?? TargetSelector.FrontOne)
+            {
+                case TargetSelector.FrontOne: return CardTargetRange.FrontOne;
+                case TargetSelector.FrontTwo: return CardTargetRange.FrontTwo;
+                case TargetSelector.BackOne: return CardTargetRange.BackOne;
+                case TargetSelector.BackTwo: return CardTargetRange.BackTwo;
+                case TargetSelector.All: return CardTargetRange.All;
+                default: throw new ArgumentOutOfRangeException(nameof(selector));
+            }
+        }
+
+        public CardTargetKey EnemyRange(TargetSelector? selector)
+            => new CardTargetKey(CardTargetFaction.Enemy, Range(selector));
+
+        public CardTargetKey AllyRange(TargetSelector? selector)
+            => new CardTargetKey(CardTargetFaction.Ally, Range(selector));
+
+        public CardTargetKey OpposingRange(TargetSelector? selector)
+            => new CardTargetKey(
+                CardSide == Side.Player ? CardTargetFaction.Enemy : CardTargetFaction.Ally,
+                Range(selector));
+
+        public CardTargetKey SelfTarget()
+            => new CardTargetKey(
+                CardSide == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
+                CardTargetRange.Self);
 
         public string Condition(Condition condition) => _grammar.Condition(condition);
 
-        public string StatusTargetPrefix(StatusApplyTarget target)
-            => _grammar.StatusTargetPrefix(target);
-
         public string LifetimeSuffix(StatusLifetime lifetime)
             => _grammar.LifetimeSuffix(lifetime);
+
+        public string Symbol(CardTargetKey target) => _grammar.Symbol(target);
     }
 }

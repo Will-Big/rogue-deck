@@ -1,4 +1,5 @@
 using System;
+using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
@@ -19,13 +20,19 @@ namespace FateWeaver.Simulation.Descriptions
             Interventions = interventions
                 ?? throw new ArgumentNullException(nameof(interventions));
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
-            Context = new DescriptionContext(grammar, statuses);
+            Grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
         }
 
         public EffectDescriptionRegistry Effects { get; }
         public InterventionDescriptionRegistry Interventions { get; }
         public StatusDescriptionRegistry Statuses { get; }
-        public DescriptionContext Context { get; }
+        public IDescriptionGrammar Grammar { get; }
+
+        public DescriptionContext ContextFor(CardDefinition card)
+        {
+            if (card == null) throw new ArgumentNullException(nameof(card));
+            return new DescriptionContext(Grammar, Statuses, card.Id, card.Side);
+        }
 
         public static KoreanDescriptionCatalog CreateDefault()
         {

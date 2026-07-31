@@ -58,25 +58,25 @@ namespace FateWeaver.Tests
         [Test]
         public void Korean_spread_culture() =>
             Assert.AreEqual(
-                "모두에게 피해 2. 모두에게 적 독 1.",
+                "[◆] 피해 2. 독 1.",
                 Describe(StarterPoolSpecs.SpreadCulture()));
 
         [Test]
         public void Korean_toxic_reclaim() =>
             Assert.AreEqual(
-                "가장 앞의 대상에게 독 최대 1 소비. 가장 앞의 대상에게 적 독 1. 소비했다면 방어 4.",
+                "[◆] 독 최대 1 소비. 독 1.\n[◇◎] 소비했다면 방어 4.",
                 Describe(StarterPoolSpecs.ToxicReclaim()));
 
         [Test]
         public void Korean_distill() =>
             Assert.AreEqual(
-                "가장 앞의 대상에게 독 최대 1 소비. 가장 앞의 대상에게 적 독 1. 소비했다면 다음 사용 턴에 운명력 1 획득.",
+                "[◆] 독 최대 1 소비. 독 1.\n소비했다면 다음 사용 턴에 운명력 1 획득.",
                 Describe(StarterPoolSpecs.Distill()));
 
         [Test]
         public void Korean_quick_cover() =>
             Assert.AreEqual(
-                "가장 앞의 대상에게 아군 방어 4.",
+                "[◇] 방어 4.",
                 Describe(StarterPoolSpecs.QuickCover()));
 
         private static int CountOccurrences(string haystack, string needle)

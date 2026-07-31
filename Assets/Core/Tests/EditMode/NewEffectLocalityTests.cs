@@ -51,8 +51,8 @@ namespace FateWeaver.Tests
         {
             public EffectKey Key => HealKey;
 
-            public string Describe(EffectData effect, int effectValue, DescriptionContext context)
-                => "치유 " + effectValue;
+            public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
+                => new EffectDescriptionFragment(context.SelfTarget(), "치유 " + effectValue);
         }
 
         [Test]
@@ -79,8 +79,15 @@ namespace FateWeaver.Tests
         {
             var registry = new EffectDescriptionRegistry();
             registry.Register(new HealDescriptionHandler());
+            var card = new CardDefinition("heal_touch", "치유의 손길", Side.Player, 1,
+                new[] { new EffectData(HealKey, 5) });
+            var context = new DescriptionContext(
+                new KoreanDescriptionGrammar(),
+                new StatusDescriptionRegistry(),
+                card.Id,
+                card.Side);
             Assert.AreEqual("치유 5",
-                registry.Resolve(HealKey).Describe(new EffectData(HealKey, 5), 5, null));
+                registry.Resolve(HealKey).Describe(new EffectData(HealKey, 5), 5, context).Text);
         }
 
         // --- Execution-path proof: a Heal card resolved through the real TurnResolver restores an
