@@ -1,16 +1,16 @@
-# Graph Report - rogue-deck  (2026-07-30)
+# Graph Report - rogue-deck  (2026-07-31)
 
 ## Corpus Check
-- 370 files · ~1,337,319 words
+- 385 files · ~1,356,921 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3988 nodes · 8723 edges · 308 communities (215 shown, 93 thin omitted)
-- Extraction: 91% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 734 edges (avg confidence: 0.81)
+- 4112 nodes · 8989 edges · 306 communities (213 shown, 93 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 748 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `660b9bcf`
+- Built from commit: `bc1d2c07`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -321,39 +321,36 @@
 - 2026 07 19 Open Card Authoring Design
 - 2026 07 24 Document Index Cleanup Design
 - InterventionActionRegistry
-- RandomMovesetPolicy
-- .Counter_does_nothing_without_a_preceding_enemy_attack
 
 ## God Nodes (most connected - your core abstractions)
-1. `FateWeaver.Core.Cards` - 134 edges
-2. `FateWeaver.Core.Effects` - 98 edges
-3. `FateWeaver.Core.Status` - 90 edges
+1. `FateWeaver.Core.Cards` - 135 edges
+2. `FateWeaver.Core.Effects` - 99 edges
+3. `FateWeaver.Core.Status` - 98 edges
 4. `CardDefinition` - 82 edges
-5. `FateWeaver.Core.Combat` - 74 edges
+5. `FateWeaver.Core.Combat` - 76 edges
 6. `FateWeaver.Simulation` - 73 edges
-7. `FateWeaver.Tests` - 69 edges
-8. `CardSpec` - 66 edges
-9. `ExecutionCardInstance` - 56 edges
-10. `CombatState` - 55 edges
+7. `FateWeaver.Tests` - 70 edges
+8. `CardSpec` - 68 edges
+9. `CombatState` - 59 edges
+10. `ExecutionCardInstance` - 59 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `ScriptableObject 저작 → 코드 생성 파이프라인` --semantically_similar_to--> `콘텐츠는 ScriptableObject로 저작`  [INFERRED] [semantically similar]
-  docs/PORTFOLIO.md → AGENTS.md
-- `UnityEngine 무참조 결정론 코어 (하이라이트 1)` --semantically_similar_to--> `FateWeaver.Core noEngineReferences 강제`  [INFERRED] [semantically similar]
-  docs/PORTFOLIO.md → AGENTS.md
 - `validateCard` --semantically_similar_to--> `튜닝 수치 하드코딩 금지`  [INFERRED] [semantically similar]
   Tools/card-idea-notebook/index.html → AGENTS.md
-- `새 효과 = 파일 1개 열린 확장 구조` --semantically_similar_to--> `레지스트리 확장 패턴 (핸들러 1개 + 키 등록)`  [INFERRED] [semantically similar]
-  docs/PORTFOLIO.md → AGENTS.md
+- `실행순서 필드 (카드 초안 속성)` --semantically_similar_to--> `주도력 (실행 순서 수치)`  [INFERRED] [semantically similar]
+  Tools/card-idea-notebook/시작 카드 풀.md → Fate_Weaver_card_balance_principles_v2.md
+- `CardView 프리팹 + CardPresentation 뷰모델` --conceptually_related_to--> `콘텐츠는 ScriptableObject로 저작`  [INFERRED]
+  Assets/Unity/PLAYTEST.md → AGENTS.md
 - `카드 아이디어 노트 (단일 파일 웹 앱)` --conceptually_related_to--> `콘텐츠는 ScriptableObject로 저작`  [AMBIGUOUS]
   Tools/card-idea-notebook/index.html → AGENTS.md
+- `현재 카드풀 기준 전투 사이클 (사용 턴 / 행동 턴)` --semantically_similar_to--> `턴 해석 흐름 (Phase 0~3, EndTurn 동결)`  [INFERRED] [semantically similar]
+  docs/superpowers/specs/2026-06-22-deck-loop-design.md → docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
 - **결정론 불변식을 함께 보장하는 요소들** — agents_determinism_seeded_rng, readme_combatstate_seeded_rng, agents_event_timeline_only_output, readme_headless_test_harness, docs_superpowers_archive_readme_p0a_rng_unification [INFERRED 0.85]
-- **새 효과 추가 파이프라인 (레지스트리·SO 저작·설명·검증)** — agents_registry_extension_pattern, agents_scriptableobject_content_authoring, agents_card_description_autocomposition, docs_portfolio_open_extension_one_file_per_effect, docs_portfolio_so_codegen_pipeline, docs_superpowers_readme_open_card_authoring_spec [INFERRED 0.85]
 - **자동 발동 방지 밸런스 규칙군** — fate_weaver_card_balance_principles_v2_auto_trigger_problem, fate_weaver_card_balance_principles_v2_three_tier_performance, fate_weaver_card_balance_principles_v2_combo_two_condition_rule, fate_weaver_card_balance_principles_v2_reward_nullification, fate_weaver_card_balance_principles_v2_fate_energy_economy [EXTRACTED 1.00]
 - **Intervention action handler family (registry-keyed zone manipulation)** — docs_superpowers_archive_plans_2026_06_18_fate_weaver_m3_change_initiative_changeexecutionorderhandler, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m3_swap_initiative_swapexecutionorderhandler, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m3_lock_lockhandler, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m3_change_initiative_interventionactionregistry [EXTRACTED 1.00]
 - **Condition-tier resolution flow (frozen order to damage amount)** — docs_superpowers_archive_plans_2026_06_18_fate_weaver_m2_conditions_resolutioncontext, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m2_conditions_conditionevaluator, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m2_conditions_conditiontier, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m2_conditional_effects_successeffectvalue, docs_superpowers_archive_plans_2026_06_18_fate_weaver_m4_reward_nullified_conditionrewardnullified [EXTRACTED 1.00]
@@ -399,11 +396,11 @@
 - **DOTween Editor Brand Identity Presentation** — assets_plugins_demigiant_dotween_editor_imgs_header_header_image, assets_plugins_demigiant_dotween_editor_imgs_header_dotween, assets_plugins_demigiant_dotween_editor_imgs_header_hotween_v2, assets_plugins_demigiant_dotween_editor_imgs_header_pixel_logotype_style [INFERRED 0.75]
 - **EmojiOne Atlas Sprite Pipeline** — assets_textmesh_pro_sprites_emojione, assets_textmesh_pro_sprites_emojione_emoji_grid_layout, assets_textmesh_pro_sprites_emojione_inline_sprite_rendering, assets_textmesh_pro_sprites_emojione_missing_glyph_placeholder [INFERRED 0.85]
 
-## Communities (308 total, 93 thin omitted)
+## Communities (306 total, 93 thin omitted)
 
 ### Community 0 - "Goblin Deck & Card Tests"
-Cohesion: 0.08
-Nodes (13): Func, int, IReadOnlyList, string, GoblinDeck, Test, TestCase, DescriptionComposerTests (+5 more)
+Cohesion: 0.07
+Nodes (19): IEnumerable, DescriptionCatalogValidator, KoreanDescriptionCatalog, Func, int, IReadOnlyList, string, GoblinDeck (+11 more)
 
 ### Community 1 - "Run Definition & Node Handlers"
 Cohesion: 0.05
@@ -414,12 +411,12 @@ Cohesion: 0.09
 Nodes (27): CanvasGroup, Color, ColorOptions, FloatOptions, Gradient, Image, LayoutElement, Outline (+19 more)
 
 ### Community 3 - "Turn Resolver & Enemy Policies"
-Cohesion: 0.07
-Nodes (4): FateWeaver.Simulation, FateWeaver.Tests, FateWeaver.Core.Conditions, FateWeaver.Core.Events
+Cohesion: 0.08
+Nodes (3): FateWeaver.Simulation, FateWeaver.Tests, FateWeaver.Core.Events
 
 ### Community 4 - "Enemy & Party Targeting"
-Cohesion: 0.10
-Nodes (17): Enemy, List, EnemyTargeting, IEnumerable, ApplyStatusHandler, ApplyStatusPayload, GrantNextPlayerDamageCardBonusHandler, GrantNextTurnFateHandler (+9 more)
+Cohesion: 0.15
+Nodes (12): Enemy, List, EnemyTargeting, IEnumerable, ApplyStatusHandler, ApplyStatusPayload, CardCancellationReason, int (+4 more)
 
 ### Community 5 - "Core Effect Handlers"
 Cohesion: 0.10
@@ -430,20 +427,20 @@ Cohesion: 0.06
 Nodes (37): com.unity.2d.common, dependencies, depth, source, url, version, dependencies, depth (+29 more)
 
 ### Community 7 - "Battle Screen Controller"
-Cohesion: 0.06
-Nodes (19): ExecutionPlacementPreview, Button, Color, Dictionary, int, IReadOnlyList, RectTransform, Sprite (+11 more)
+Cohesion: 0.10
+Nodes (10): ExecutionPlacementPreview, Button, Color, Dictionary, int, IReadOnlyList, RectTransform, Sprite (+2 more)
 
 ### Community 8 - "Card Selection State Machine"
-Cohesion: 0.18
+Cohesion: 0.19
 Nodes (9): IReadOnlyCollection, IReadOnlyList, List, ReadOnlyCollection, CardSelectionMachine, SelectionPhase, SelectionResult, Test (+1 more)
 
 ### Community 9 - "Effect Payloads & Authoring Specs"
 Cohesion: 0.10
-Nodes (4): FateWeaver.Simulation.Generated, FateWeaver.Unity.Editor, FateWeaver.Simulation.Authoring, FateWeaver.Core.Cards
+Nodes (5): Test, SmokeTests, FateWeaver.Simulation.Generated, FateWeaver.Simulation.Authoring, FateWeaver.Core.Cards
 
 ### Community 10 - "DOTween Async Wait Helpers"
-Cohesion: 0.25
-Nodes (12): float, int, Tween, DOTweenCYInstruction, DOTweenModuleUnityVersion, WaitForCompletion, WaitForElapsedLoops, WaitForKill (+4 more)
+Cohesion: 0.12
+Nodes (27): AsyncWaitForCompletion(), AsyncWaitForElapsedLoops(), AsyncWaitForKill(), AsyncWaitForPosition(), AsyncWaitForRewind(), AsyncWaitForStart(), float, Gradient (+19 more)
 
 ### Community 11 - "Battle UI Kit Widgets"
 Cohesion: 0.11
@@ -454,28 +451,24 @@ Cohesion: 0.12
 Nodes (14): CardCancellationReason, int, ExecutionCardInstance, IEnumerable, IReadOnlyList, List, FutureZone, IReadOnlyList (+6 more)
 
 ### Community 13 - "Battle Screen Identity Tests"
-Cohesion: 0.12
-Nodes (13): Button, Dictionary, GameObject, RectTransform, SetUp, TearDown, Test, Transform (+5 more)
-
-### Community 14 - "Description Registries"
-Cohesion: 0.09
-Nodes (6): ConsumeStatusPayload, IEffectPayload, TriggerStatusPayload, FateWeaver.Tests.EditMode, FateWeaver.Core.Effects, FateWeaver.Simulation.Descriptions
+Cohesion: 0.10
+Nodes (18): Button, Dictionary, GameObject, RectTransform, SetUp, TearDown, Test, Transform (+10 more)
 
 ### Community 15 - "Card View Layout"
 Cohesion: 0.09
-Nodes (17): Action, Button, Color, Component, float, GameObject, Image, IReadOnlyList (+9 more)
+Nodes (16): Action, Button, Color, Component, float, GameObject, Image, IReadOnlyList (+8 more)
 
 ### Community 16 - "Execution Rail View"
-Cohesion: 0.07
-Nodes (25): Action, CanvasGroup, Color, float, Image, int, List, RectTransform (+17 more)
+Cohesion: 0.09
+Nodes (17): Action, CanvasGroup, Color, float, Image, int, IReadOnlyCollection, IReadOnlyList (+9 more)
 
 ### Community 17 - "Effect Description Handlers"
-Cohesion: 0.12
-Nodes (17): EffectData, TargetSelector, ApplyStatusDescriptionHandler, ConsumeStatusDescriptionHandler, DamageDescriptionHandler, GrantNextPlayerDamageCardBonusDescriptionHandler, GrantNextTurnFateDescriptionHandler, MoveFormationDescriptionHandler (+9 more)
+Cohesion: 0.14
+Nodes (15): EffectData, ApplyStatusDescriptionHandler, ConsumeStatusDescriptionHandler, DamageDescriptionHandler, GrantNextPlayerDamageCardBonusDescriptionHandler, GrantNextTurnFateDescriptionHandler, MoveFormationDescriptionHandler, NullifyNextPlayerConditionRewardDescriptionHandler (+7 more)
 
 ### Community 18 - "Starter Pool Card Specs"
-Cohesion: 0.18
-Nodes (6): bool, int, string, CardSpec, IReadOnlyList, StarterPoolSpecs
+Cohesion: 0.14
+Nodes (8): bool, int, string, CardSpec, IReadOnlyList, StarterDeckSpecs, IReadOnlyList, StarterPoolSpecs
 
 ### Community 19 - "Unity Subsystem Package Locks"
 Cohesion: 0.06
@@ -486,16 +479,16 @@ Cohesion: 0.07
 Nodes (31): com.unity.collections, com.unity.nuget.mono-cecil, com.unity.test-framework.performance, dependencies, depth, source, version, dependencies (+23 more)
 
 ### Community 21 - "Target Selector Authoring"
-Cohesion: 0.14
-Nodes (14): IReadOnlyList, AuthoringContext, IEnumerable, TargetSelectorRef, IEnumerable, int, ApplyStatusSpec, IEnumerable (+6 more)
+Cohesion: 0.10
+Nodes (15): TargetSelector, IReadOnlyList, AuthoringContext, IEnumerable, TargetSelectorRef, IEnumerable, IEnumerable, int (+7 more)
 
 ### Community 22 - "Placement Flight Path Tests"
 Cohesion: 0.13
 Nodes (13): float, SetUp, Test, PlacementFlightPathTests, float, Vector2, Geometry, PlacementFlightPath (+5 more)
 
 ### Community 23 - "Placement Preview Callbacks"
-Cohesion: 0.14
-Nodes (10): CanvasGroup, float, List, RectTransform, SelectionKind, Vector2, Vector3, HandFanView (+2 more)
+Cohesion: 0.11
+Nodes (12): Action, CanvasGroup, float, IReadOnlyList, List, RectTransform, SelectionKind, Vector2 (+4 more)
 
 ### Community 24 - "Deck Playtest Controller"
 Cohesion: 0.14
@@ -503,67 +496,71 @@ Nodes (11): Button, Color, Dictionary, int, List, RectTransform, Sprite, TMP_Tex
 
 ### Community 25 - "Render Pipeline Packages"
 Cohesion: 0.07
-Nodes (29): com.unity.render-pipelines.core, com.unity.render-pipelines.universal-config, com.unity.searcher, com.unity.shadergraph, depth, source, version, dependencies (+21 more)
+Nodes (30): com.unity.render-pipelines.core, com.unity.render-pipelines.universal-config, com.unity.searcher, com.unity.shadergraph, dependencies, depth, source, version (+22 more)
 
 ### Community 26 - "Package Lock Dependencies"
 Cohesion: 0.08
 Nodes (29): dependencies, depth, source, version, dependencies, depth, source, version (+21 more)
 
+### Community 27 - "Card Definition Data Tests"
+Cohesion: 0.09
+Nodes (6): ConsumeStatusPayload, IEffectPayload, TriggerStatusPayload, FateWeaver.Core.Status, FateWeaver.Core.Effects, FateWeaver.Core.Conditions
+
 ### Community 28 - "Intervention Action Handlers"
-Cohesion: 0.13
-Nodes (11): ExecutionCardInstance, ChangeExecutionOrderHandler, int, IInterventionActionHandler, InterventionPlayContext, LockHandler, SwapExecutionOrderHandler, TargetingRequirement (+3 more)
+Cohesion: 0.19
+Nodes (8): ChangeExecutionOrderHandler, int, IInterventionActionHandler, InterventionPlayContext, LockHandler, TargetingRequirement, TargetKind, FakeDoubleLockHandler
 
 ### Community 29 - "Card Selection Controller Tests"
-Cohesion: 0.08
-Nodes (20): Button, Color, GameObject, int, List, RectTransform, SetUp, TearDown (+12 more)
+Cohesion: 0.15
+Nodes (10): Button, Color, GameObject, int, List, RectTransform, SetUp, TearDown (+2 more)
 
 ### Community 30 - "Party Prototype Decks"
-Cohesion: 0.05
-Nodes (23): PartyTargetRules, IReadOnlyList, GeneratedCards, int, IReadOnlyList, PartyPrototypeDeck, IReadOnlyList, string (+15 more)
+Cohesion: 0.18
+Nodes (8): CardDefinition, PartyTargetRules, int, IReadOnlyList, PartyPrototypeDeck, IReadOnlyList, Test, PartyPrototypeDataTests
 
 ### Community 31 - "Card Play Conditions"
 Cohesion: 0.18
 Nodes (16): AdjacentCardHasEffect, AdjacentCardIs, AdjacentDirection, AllOf, BeforeNextEnemyDamageCard, Condition, ConsumedStatusAtLeast, FirstToTrigger (+8 more)
 
 ### Community 32 - "Resolution Event Timeline"
-Cohesion: 0.14
-Nodes (16): CardCancelled, CardResolved, DeathsDoorSurvived, EnemyDied, PartyMemberDied, ResolutionEvent, StatusTicked, StatusTransferred (+8 more)
+Cohesion: 0.15
+Nodes (16): CardCancelled, CardResolved, DeathsDoorSurvived, EnemyDied, Outcome, PartyMemberDied, ResolutionEvent, StatusTicked (+8 more)
 
 ### Community 33 - "Card Selection Target Clicks"
-Cohesion: 0.38
-Nodes (4): List, TearDown, Test, CardPoolAssetTests
+Cohesion: 0.30
+Nodes (5): List, TearDown, Test, CardPoolAssetTests, CardGrade
 
 ### Community 34 - "Execution Rail Input Tests"
 Cohesion: 0.19
 Nodes (8): Color, RectTransform, TearDown, Test, Transform, ExecutionRailInputTests, RectTransform, Vector2
 
 ### Community 35 - "Combat State & Turn Resolver"
-Cohesion: 0.17
-Nodes (12): List, Random, string, CombatState, Action, Dictionary, EffectData, List (+4 more)
+Cohesion: 0.15
+Nodes (14): StatusBag, CardActor, List, Random, StatusRuleSet, string, CombatState, Action (+6 more)
 
 ### Community 36 - "Status Behavior Hooks"
-Cohesion: 0.09
-Nodes (13): BlockBehavior, HasteBehavior, IStatusBehavior, StatusBehavior, StatusContext, PoisonDormantBehavior, PoisonStasisBehavior, RewardSuppressionBehavior (+5 more)
+Cohesion: 0.06
+Nodes (23): BlockBehavior, ContagionBehavior, DamagedBehavior, HasteBehavior, IStatusBehavior, StatusBehavior, StatusContext, int (+15 more)
 
 ### Community 37 - "Effect Spec Literals"
-Cohesion: 0.11
-Nodes (10): EffectSpec, int, DamageSpec, int, GrantNextDamageCardBonusSpec, int, GrantNextTurnFateSpec, int (+2 more)
+Cohesion: 0.12
+Nodes (8): EffectSpec, int, GrantNextDamageCardBonusSpec, int, GrantNextTurnFateSpec, int, MoveFormationSpec, NullifyNextRewardSpec
 
 ### Community 38 - "Status Description Registry"
-Cohesion: 0.15
-Nodes (10): Dictionary, StatusDescriptionRegistry, Test, Test, StatusKeyDropdownOptionsTests, IReadOnlyList, string, StatusKeyDropdownModel (+2 more)
+Cohesion: 0.09
+Nodes (19): Dictionary, StatusDescriptionRegistry, Test, StatusKeyDropdownOptionsTests, GUIContent, IEnumerable, Rect, SerializedProperty (+11 more)
 
 ### Community 39 - "Party Deck Session Tests"
 Cohesion: 0.32
 Nodes (3): IReadOnlyList, Test, PartyDeckCombatSessionTests
 
 ### Community 40 - "DOTween Path Tweens"
-Cohesion: 0.20
+Cohesion: 0.19
 Nodes (15): Color, Path, PathMode, PathOptions, PathType, Quaternion, Sequence, TweenerCore (+7 more)
 
 ### Community 41 - "Card Presentation Tests"
-Cohesion: 0.15
-Nodes (10): Test, CardPresentationTests, Color, Func, IReadOnlyList, Sprite, CardPresentation, CardStatusIcon (+2 more)
+Cohesion: 0.19
+Nodes (8): Test, CardPresentationTests, Color, Func, IReadOnlyList, Sprite, CardPresentation, CardStatusIcon
 
 ### Community 42 - "NUnit Package Locks"
 Cohesion: 0.08
@@ -574,28 +571,32 @@ Cohesion: 0.09
 Nodes (24): dependencies, depth, source, version, dependencies, depth, source, version (+16 more)
 
 ### Community 44 - "Deck Combat Session & Party Tuning"
-Cohesion: 0.14
-Nodes (12): OwnedCard, IEnumerable, Outcome, bool, int, IReadOnlyList, ReadOnlyCollection, DeckCombatSession (+4 more)
+Cohesion: 0.16
+Nodes (10): OwnedCard, bool, int, IReadOnlyList, ReadOnlyCollection, DeckCombatSession, IReadOnlyList, PartyMemberLoadout (+2 more)
 
 ### Community 45 - "Playtest Korean Text & Playtest Korean Text Tests"
-Cohesion: 0.19
-Nodes (4): Test, PlaytestKoreanTextTests, PlaytestKoreanText, IReadOnlyList
+Cohesion: 0.13
+Nodes (7): ConditionTier, Test, CardDescriptionTests, Test, PlaytestKoreanTextTests, PlaytestKoreanText, IReadOnlyList
 
 ### Community 46 - "Enemy Turn Policies"
 Cohesion: 0.29
 Nodes (6): IReadOnlyList, Random, SelfLockPolicy, Random, Test, SelfLockPolicyTests
 
 ### Community 47 - "Generated Card Equivalence"
-Cohesion: 0.15
-Nodes (10): IReadOnlyDictionary, SetUp, string, TearDown, Test, StarterPoolSeederTests, IReadOnlyList, string (+2 more)
+Cohesion: 0.23
+Nodes (6): IReadOnlyDictionary, SetUp, string, TearDown, Test, StarterPoolSeederTests
 
 ### Community 48 - "Deck Combat Session Tests"
-Cohesion: 0.32
-Nodes (3): IReadOnlyList, Test, DeckCombatSessionTests
+Cohesion: 0.18
+Nodes (6): InterventionActionData, int, StarterDeck, IReadOnlyList, Test, DeckCombatSessionTests
+
+### Community 49 - "Poison & Contagion Behaviors"
+Cohesion: 0.08
+Nodes (23): Global Constraints, Task 1: 방어를 흡수 층으로 분리, Task 2: 상태 배율을 런타임 조절 가능한 규칙으로 옮긴다, Task 3: 약화 (주는 피해 −25%), Task 4: 손상 (방어도 획득 −25%), Task 5: 문서 갱신과 마무리, Unity 레이어 확인 (사용자 검증 항목), 상태 규칙 파라미터화와 3종 디버프 구현 계획 (+15 more)
 
 ### Community 50 - "Status Bag"
-Cohesion: 0.17
-Nodes (8): IReadOnlyList, List, IStatusHolder, StatusBag, StatusInstance, Test, InertBehavior, StatusHookSurfaceTests
+Cohesion: 0.31
+Nodes (4): StatusInstance, Test, InertBehavior, StatusHookSurfaceTests
 
 ### Community 51 - "Packages Lock"
 Cohesion: 0.09
@@ -606,39 +607,39 @@ Cohesion: 0.14
 Nodes (8): InterventionActionKey, InterventionActionKeys, ChangeExecutionOrderDescriptionHandler, LockDescriptionHandler, SwapExecutionOrderDescriptionHandler, IInterventionDescriptionHandler, Dictionary, InterventionDescriptionRegistry
 
 ### Community 53 - "Scenario Report & Scenario Comparison Report"
-Cohesion: 0.18
-Nodes (9): InterventionPlayResult, StringBuilder, ScenarioComparisonReport, ScenarioComparisonResult, IReadOnlyList, StringBuilder, ScenarioReport, IReadOnlyList (+1 more)
+Cohesion: 0.13
+Nodes (12): StringBuilder, ScenarioComparisonReport, ScenarioComparisonResult, IReadOnlyList, StringBuilder, ScenarioReport, IReadOnlyList, ScenarioResult (+4 more)
 
 ### Community 54 - "New Effect Locality Tests & Effect Description Registry"
-Cohesion: 0.27
-Nodes (4): Dictionary, EffectDescriptionRegistry, DescriptionRegistryTests, FakeInterventionHandler
+Cohesion: 0.13
+Nodes (10): Dictionary, EffectDescriptionRegistry, Test, DescriptionRegistryTests, FakeInterventionHandler, int, Test, HealDescriptionHandler (+2 more)
 
 ### Community 55 - "Slow Haste Status Tests & Status Execution Order"
 Cohesion: 0.17
-Nodes (5): StatusExecutionOrder, Test, LockedEnemyExecutionOrderTests, Test, SlowHasteStatusTests
+Nodes (5): StatusExecutionOrder, int, StatusRuleCatalog, Test, SlowHasteStatusTests
 
 ### Community 56 - "Battle Screen Unit Identity Tests & Battle Screen Controller"
-Cohesion: 0.12
-Nodes (3): FateWeaver.Unity, FateWeaver.Tests.UnityEditMode, FateWeaver.Simulation.Presentation
+Cohesion: 0.09
+Nodes (7): Test, DotweenDependencyTests, FateWeaver.Unity, FateWeaver.Unity.Editor, FateWeaver.Tests.UnityEditMode, DG.Tweening, FateWeaver.Simulation.Presentation
 
 ### Community 57 - "Deck Asset & Card Category"
-Cohesion: 0.12
-Nodes (12): CardCategory, SetUp, TearDown, Test, CardAssetAuthoringTests, bool, int, IReadOnlyList (+4 more)
+Cohesion: 0.07
+Nodes (27): CardCategory, string, InterventionKeyRef, SetUp, TearDown, Test, CardAssetAuthoringTests, bool (+19 more)
 
 ### Community 58 - "Starter Deck & Starter Deck Tests"
-Cohesion: 0.22
-Nodes (7): CardDefinition, InterventionActionData, int, IReadOnlyList, StarterDeck, Test, StarterDeckTests
+Cohesion: 0.11
+Nodes (13): IReadOnlyList, GeneratedCards, IReadOnlyList, IEnumerable, List, string, Test, CardContentEquivalenceTests (+5 more)
 
 ### Community 59 - "Sample Multi Turn Scenarios & Counter Stance Tests"
-Cohesion: 0.15
-Nodes (7): Func, SampleMultiTurnScenarioEntry, SampleMultiTurnScenarios, IReadOnlyList, TurnScript, Test, ChainSlashTests
+Cohesion: 0.12
+Nodes (11): Dictionary, IReadOnlyList, MultiTurnRunner, IReadOnlyList, MultiTurnScenario, Func, SampleMultiTurnScenarioEntry, SampleMultiTurnScenarios (+3 more)
 
 ### Community 60 - "Warden Deck & Warden Deck Tests"
-Cohesion: 0.20
+Cohesion: 0.19
 Nodes (7): int, IReadOnlyList, string, WardenDeck, IReadOnlyList, Test, WardenDeckTests
 
 ### Community 61 - "DOTween Module Audio"
-Cohesion: 0.19
+Cohesion: 0.18
 Nodes (5): FloatOptions, TweenerCore, DOTweenModuleAudio, AudioMixer, AudioSource
 
 ### Community 62 - "DOTween Module Physics2 D"
@@ -650,12 +651,12 @@ Cohesion: 0.10
 Nodes (15): Test, CardCodeGeneratorTests, CardAsset, CardGrade, CardPoolAsset, Color, DeckAsset, Dictionary (+7 more)
 
 ### Community 64 - "Starter Deck Spec Equivalence Tests & Grant Next Turn Fate Tests"
-Cohesion: 0.23
-Nodes (5): Test, GrantNextTurnFateTests, IReadOnlyList, Test, StarterDeckSpecEquivalenceTests
+Cohesion: 0.28
+Nodes (4): IReadOnlyList, string, Test, StarterDeckSpecEquivalenceTests
 
 ### Community 65 - "Multi Turn Runner Tests & Sample Multi Turn Scenarios"
-Cohesion: 0.22
-Nodes (3): ScenarioCliReport, Test, MultiTurnRunnerTests
+Cohesion: 0.19
+Nodes (5): ScenarioCliReport, Test, MultiTurnRunnerTests, FateWeaver.Headless, Program
 
 ### Community 67 - "Condition Evaluator Tests & Condition Evaluator"
 Cohesion: 0.40
@@ -670,8 +671,8 @@ Cohesion: 0.24
 Nodes (10): Color, ColorOptions, FloatOptions, TweenerCore, VectorOptions, DOTweenModuleEPOOutline, OutlineProperties, Outliner (+2 more)
 
 ### Community 70 - "Hand Card Hover Effect"
-Cohesion: 0.15
-Nodes (10): Action, bool, float, int, PointerEventData, Quaternion, RectTransform, Vector2 (+2 more)
+Cohesion: 0.08
+Nodes (21): Action, bool, float, int, PointerEventData, Quaternion, RectTransform, Vector2 (+13 more)
 
 ### Community 71 - "Rail Card View"
 Cohesion: 0.12
@@ -698,19 +699,19 @@ Cohesion: 0.32
 Nodes (4): Test, ConditionalEffectResolutionTests, Test, StatusTickPipelineTests
 
 ### Community 77 - "Effect Key & Consume Status Handler"
-Cohesion: 0.15
-Nodes (8): IEnumerable, ConsumeStatusHandler, EffectKey, EffectKeys, IEnumerable, IEffectDataValidator, IEnumerable, TriggerStatusHandler
+Cohesion: 0.10
+Nodes (13): IEnumerable, ConsumeStatusHandler, EffectKey, EffectKeys, GrantNextPlayerDamageCardBonusHandler, GrantNextTurnFateHandler, IEnumerable, IEffectDataValidator (+5 more)
 
 ### Community 78 - "Multi Turn Runner & Multi Turn Result"
-Cohesion: 0.23
-Nodes (9): IReadOnlyList, MultiTurnResult, TurnOutcome, Dictionary, IReadOnlyList, MultiTurnRunner, IReadOnlyList, MultiTurnScenario (+1 more)
+Cohesion: 0.15
+Nodes (9): IReadOnlyList, List, IStatusHolder, StatusBag, StatusDamageFold, int, StatusRule, Dictionary (+1 more)
 
 ### Community 79 - "Starter Pool Poison Tests"
 Cohesion: 0.43
 Nodes (3): List, Test, StarterPoolPoisonTests
 
 ### Community 80 - "DOTween Module UIToolkit"
-Cohesion: 0.29
+Cohesion: 0.26
 Nodes (9): FloatOptions, ShakeRandomnessMode, Tweener, TweenerCore, Vector2, Vector3, VectorOptions, DOTweenModuleUIToolkit (+1 more)
 
 ### Community 81 - "Pile View"
@@ -726,28 +727,28 @@ Cohesion: 0.14
 Nodes (17): Every Card Is Character-Owned On Acquisition, Unique Pools Only For Living Owners, RewardCandidate, RewardPanelController, RewardPools, RewardRoller, RewardTuning, RunMember (+9 more)
 
 ### Community 84 - "2026 07 27 Card Idea Notebook & 2026 07 29 Card Notebook Grade Bulk Edit"
-Cohesion: 0.09
-Nodes (25): cardMarkdown / bundleMarkdown, Explicit Save, Never Auto-Save, Card Idea Notebook Single-File Tool, globalThis.CardIdeaNotebook Pure Core For Node Tests, Schema 1 Explicit Storage, Atomic All-Or-Nothing Markdown Import, parseBundleMarkdown / importCards, tryWriteStore Immediate-Persistence Recovery (+17 more)
+Cohesion: 0.12
+Nodes (17): cardMarkdown / bundleMarkdown, Explicit Save, Never Auto-Save, Card Idea Notebook Single-File Tool, globalThis.CardIdeaNotebook Pure Core For Node Tests, Schema 1 Explicit Storage, parseBundleMarkdown / importCards, tryWriteStore Immediate-Persistence Recovery, Enemy Card Invariants (execution role, empty cost) (+9 more)
 
 ### Community 85 - "2026 07 16 Architecture Refactor Backlog & 2026 06 18 Fate Weaver Core Design"
 Cohesion: 0.12
 Nodes (17): 조건 축의 침묵 실패, reward_nullified 특수 처리, DeckCombatSession 솔로·파티 모드 분리, VulnerableBehavior 배율 하드코딩, 운명력 경제 변수화 (fateEnergyPerTurn), 사용 시점 파라미터 해결 (Resolve), 상태 이상 Scope + Hook 시스템 (IStatusBehavior), 타입 안전 키 래퍼 + 상수 카탈로그 + 부팅 검증 (+9 more)
 
 ### Community 86 - "Deck & Deck Tests"
-Cohesion: 0.16
-Nodes (9): IReadOnlyList, List, Random, ReadOnlyCollection, Deck, Test, DeckTests, Test (+1 more)
+Cohesion: 0.20
+Nodes (8): IEnumerable, IReadOnlyList, List, Random, ReadOnlyCollection, Deck, Test, DeckTests
 
 ### Community 87 - "Authoring Validation Tests & Authoring Validator"
-Cohesion: 0.21
-Nodes (6): IEnumerable, IReadOnlyList, AuthoringValidator, Test, AuthoringValidationTests, IReadOnlyList
+Cohesion: 0.27
+Nodes (5): IEnumerable, IReadOnlyList, AuthoringValidator, Test, AuthoringValidationTests
 
 ### Community 88 - "Card Spec Mapper Tests & Card Spec Mapper"
-Cohesion: 0.16
-Nodes (7): InterventionTargetSideRef, CardSpecMapper, Test, CardSpecMapperTests, List, Test, StarterPoolSpecsTests
+Cohesion: 0.13
+Nodes (8): InterventionTargetSideRef, CardSpecMapper, Test, CardSpecMapperTests, List, Test, CombatRegistriesAccessor, StarterPoolSpecsTests
 
 ### Community 89 - "Death Sweep Hook Tests & Status Registry"
-Cohesion: 0.14
-Nodes (9): Dictionary, EffectRegistry, CombatRegistries, Dictionary, IReadOnlyList, StatusRegistry, Test, DeathSweepHookTests (+1 more)
+Cohesion: 0.13
+Nodes (10): Dictionary, EffectRegistry, CombatRegistries, Dictionary, IReadOnlyList, StatusRegistry, Test, DeathSweepHookTests (+2 more)
 
 ### Community 90 - "2026 06 18 Fate Weaver Core Foundation & 2026 06 18 Fate Weaver M4 Reward Nullified"
 Cohesion: 0.13
@@ -766,44 +767,44 @@ Cohesion: 0.12
 Nodes (16): dependencies, depth, source, url, version, depth, source, version (+8 more)
 
 ### Community 94 - "Packages Lock"
-Cohesion: 0.12
-Nodes (16): dependencies, depth, source, version, dependencies, depth, source, version (+8 more)
+Cohesion: 0.07
+Nodes (27): dependencies, depth, source, version, dependencies, depth, source, version (+19 more)
 
 ### Community 95 - "Packages Lock"
 Cohesion: 0.12
 Nodes (16): dependencies, depth, source, version, dependencies, depth, source, version (+8 more)
 
 ### Community 96 - "README & AGENTS"
-Cohesion: 0.15
-Nodes (15): Fate Weaver AI 구현 규칙 (AGENTS.md), 코어/Unity 레이어 분리 원칙, 코어 출력은 이벤트 타임라인뿐, FateWeaver.Core noEngineReferences 강제, DOTween 트위닝 라이브러리 (Demigiant), DOTween Utility Panel 셋업·모듈 활성화 절차, 통합 대상 선택 체크리스트 (실루엣·배치 비행·플립), CLAUDE.md — AGENTS.md 위임 (+7 more)
+Cohesion: 0.18
+Nodes (12): Fate Weaver AI 구현 규칙 (AGENTS.md), 코어/Unity 레이어 분리 원칙, FateWeaver.Core noEngineReferences 강제, DOTween 트위닝 라이브러리 (Demigiant), DOTween Utility Panel 셋업·모듈 활성화 절차, 통합 대상 선택 체크리스트 (실루엣·배치 비행·플립), CLAUDE.md — AGENTS.md 위임, 확장성·하드코딩 후속 리팩터링 백로그 (active) (+4 more)
 
 ### Community 97 - "README & AGENTS"
-Cohesion: 0.16
-Nodes (15): 문서 색인 같은 커밋 갱신 규칙, Unity 검증 범위 구분 (batchmode EditMode 허용), 병렬 세션 워크트리 격리 규칙 (15~19), 문서가 남는 AI 협업 개발 프로세스, Fate Weaver 보관 문서 색인, 카드 아이디어 노트 구현 계획군 (V1~등급/다중편집), P0-B2 CardType 제거, 전투 코어 M0~M5 구현 계획군 (+7 more)
+Cohesion: 0.15
+Nodes (17): 문서 색인 같은 커밋 갱신 규칙, 런타임 문자열 탐색 금지, 콘텐츠는 ScriptableObject로 저작, CardView 프리팹 + CardPresentation 뷰모델, PlaytestCardArt / PlaytestKoreanText 룩업, Fate Weaver 보관 문서 색인, 카드 아이디어 노트 구현 계획군 (V1~등급/다중편집), P0-B2 CardType 제거 (+9 more)
 
 ### Community 98 - "Previous Executed Card Condition Tests & Side"
-Cohesion: 0.39
+Cohesion: 0.36
 Nodes (4): Side, List, Test, PreviousExecutedCardConditionTests
 
 ### Community 100 - "Effect Spec Catalog & Effect Spec Drawer"
-Cohesion: 0.20
-Nodes (10): GUIContent, IEnumerable, Rect, SerializedProperty, EffectSpecDrawer, GUIContent, Rect, SerializedProperty (+2 more)
+Cohesion: 0.15
+Nodes (9): Button, Func, GameObject, IReadOnlyList, List, RectTransform, string, TMP_Text (+1 more)
 
 ### Community 101 - "Starter Deck Specs & Intervention Key Ref"
-Cohesion: 0.23
-Nodes (4): string, InterventionKeyRef, IReadOnlyList, StarterDeckSpecs
+Cohesion: 0.12
+Nodes (16): 1. 목적, 2.1 플레이어 카드에 변형을 담을 자리가 없다, 2.2 콘텐츠가 컴파일 시점에 고정된다, 2. 현재 상태와 문제, 3.1 포함, 3.2 제외, 3. 범위, 4.1 변형은 수치 패치가 아니라 효과 목록에 대한 연산이다 (+8 more)
 
 ### Community 102 - "Random Moveset Policy Tests & IEnemy Turn Policy"
-Cohesion: 0.28
+Cohesion: 0.30
 Nodes (5): IReadOnlyList, Random, IReadOnlyList, Test, RandomMovesetPolicyTests
 
 ### Community 103 - "Scenario Runner & Scenario Definition"
-Cohesion: 0.28
-Nodes (8): IReadOnlyList, EnemySpec, InterventionPlaySpec, ScenarioDefinition, ZoneCardSpec, Dictionary, IReadOnlyList, ScenarioRunner
+Cohesion: 0.15
+Nodes (11): Func, SampleScenarioEntry, SampleScenarios, IReadOnlyList, InterventionPlaySpec, ScenarioDefinition, Dictionary, IReadOnlyList (+3 more)
 
 ### Community 104 - "DOTween Module Utils"
-Cohesion: 0.15
-Nodes (11): Component, MonoBehaviour, Path, PathMode, PathOptions, Quaternion, Transform, Tween (+3 more)
+Cohesion: 0.09
+Nodes (17): bool, Component, MonoBehaviour, Path, PathMode, PathOptions, Quaternion, Transform (+9 more)
 
 ### Community 105 - "Hand Fan Hover Tests"
 Cohesion: 0.30
@@ -814,24 +815,16 @@ Cohesion: 0.16
 Nodes (15): BattleSceneBuilder (editor menu scene codegen), BattleScreenController (session wiring + render), BattleUiKit (code-built uGUI node factory), Deck/Session read-only pile API (DrawPile/DiscardPile/AllDeckCards), DeckCombatSession (pure C# combat session), Draw-pile order is a spoiler — UI sorts, core does not, No-prefab code-assembled UI hierarchy, PileView (draw/discard/full-deck button + popup) (+7 more)
 
 ### Community 107 - "Fate Weaver Card Balance Principles V2 & AGENTS"
-Cohesion: 0.14
-Nodes (14): Compare 밸런스 하니스 (무조작 vs 조작), 새 규칙 로직 헤드리스 테스트 필수, 튜닝 수치 하드코딩 금지, 행동 카드 설계 원칙, 행동 카드 자동 발동 문제, Fate Weaver 카드 밸런스 및 재설계 원칙 v2, 핵심 설계 문장 — 행동은 불완전, 운명이 완성, 반격 자세 (카드) (+6 more)
-
-### Community 108 - "Party Targeting & Damage Handler"
-Cohesion: 0.16
-Nodes (9): Func, IReadOnlyList, Type, EffectSpecCatalog, EffectSpecInfo, int, Test, HealSpec (+1 more)
+Cohesion: 0.25
+Nodes (8): Compare 밸런스 하니스 (무조작 vs 조작), 새 규칙 로직 헤드리스 테스트 필수, 튜닝 수치 하드코딩 금지, Fate Weaver 카드 밸런스 및 재설계 원칙 v2, 핵심 설계 문장 — 행동은 불완전, 운명이 완성, 헤드리스 dotnet test 하니스 (Tests/Headless), isCardComplete, validateCard
 
 ### Community 109 - "Description Contracts & Apply Status Spec"
 Cohesion: 0.22
 Nodes (8): Global Constraints, Review Follow-up, Starter Pool ScriptableObject Authoring Implementation Record, Task 1: Preserve CardAsset rules and metadata, Task 2: Validate and convert candidate pools, Task 3: Seed missing cards without overwriting authored values, Task 4: Export optional starter-pool headless snapshots, Task 5: Verify, document, and archive the completed plan
 
 ### Community 110 - "Description Catalog Validator Tests & Description Catalog Validator"
-Cohesion: 0.31
-Nodes (6): IEnumerable, DescriptionCatalogValidator, KoreanDescriptionCatalog, IReadOnlyList, Test, DescriptionCatalogValidatorTests
-
-### Community 111 - "IStatus Behavior & Death Sweep Hook Tests"
-Cohesion: 0.17
-Nodes (7): Action, string, StatusTickContext, int, PoisonBehavior, LethalTickBehavior, MarkerGatedTickBehavior
+Cohesion: 0.23
+Nodes (5): int, TestCase, CombatRngDeterminismTests, Test, GrantNextTurnFateTests
 
 ### Community 112 - "Manifest"
 Cohesion: 0.14
@@ -846,8 +839,8 @@ Cohesion: 0.14
 Nodes (14): ExecutionCardInstance.CancellationReason (NoValidTarget), Independent party/enemy formations (index 0 = own front line), Neutral [검증] fixture-only content policy, Runtime position selectors (FrontMost/SecondFromFront/BackMost/Random), No IRandomSource interface — inject the existing CombatState.Rng, AuthoringContext + AuthoringValidator, EffectSpec (abstract polymorphic authoring spec), EffectSpecCatalog (+6 more)
 
 ### Community 115 - "2026 07 28 P0c Targeting Metadata & 2026 07 28 Card Notebook Export Ordering"
-Cohesion: 0.18
-Nodes (12): Registry Extension Over Central Switch, BattleScreenController.LaunchExternal Seam, PlaytestCardArt Path Resolution Removal, Additive TARGETS Registry Extension, TARGETS.self (자신, ◎), CardTargetRules Deletion, Declare → Query → Enforce → Validate Four-Stage Path, DeckCombatSession.DescribeTargeting (+4 more)
+Cohesion: 0.15
+Nodes (14): Registry Extension Over Central Switch, BattleScreenController.LaunchExternal Seam, PlaytestCardArt Path Resolution Removal, downloadFileName, Notebook Schema 4 exportFileName, Additive TARGETS Registry Extension, TARGETS.self (자신, ◎), CardTargetRules Deletion (+6 more)
 
 ### Community 116 - "2026 07 29 Status Hooks Poison Starter Pool & 2026 07 24 Document Index Cleanup"
 Cohesion: 0.18
@@ -858,12 +851,8 @@ Cohesion: 0.16
 Nodes (14): 위치 대상과 카드 텍스트 스펙 (2026-07-27), bundleMarkdown, cardMarkdown, encodeNoteMarkdown / decodeNoteMarkdown, encodeTargetlessAbility / decodeTargetlessAbility, FACTION/GRADE/ROLE 라벨 어휘, readStore / writeStore 로컬 저장 계층, markdownImportError (+6 more)
 
 ### Community 118 - "Combat Rng Determinism Tests & Locked Enemy Execution Order Tests"
-Cohesion: 0.14
-Nodes (11): IEnemyTurnPolicy, int, IReadOnlyList, Random, RandomMovesetPolicy, int, TestCase, CombatRngDeterminismTests (+3 more)
-
-### Community 119 - "Intervention Play Resolver Tests & Intervention Action Registry"
-Cohesion: 0.32
-Nodes (4): Dictionary, InterventionActionRegistry, Test, InterventionPlayResolverTests
+Cohesion: 0.20
+Nodes (8): IEnemyTurnPolicy, int, IReadOnlyList, Random, RandomMovesetPolicy, IReadOnlyList, Random, NoEnemyTurns
 
 ### Community 121 - "Packages Lock"
 Cohesion: 0.15
@@ -878,28 +867,28 @@ Cohesion: 0.17
 Nodes (13): 카드 비용 이중 원본, P0-A 전투 RNG를 CombatState로 단일화, P0-B 열린 카드 저작 구조, 단일 적 가정, 결정론 불변식 (시드 RNG · 동일 타임라인), 턴 해석 흐름 (Phase 0~3, EndTurn 동결), DeckCombatSession 세션 드라이버, Deck 컴포넌트와 결정적 RNG 시드 주입 (+5 more)
 
 ### Community 124 - "New Effect Spec Tests & Effect Spec"
-Cohesion: 0.23
-Nodes (6): bool, int, ConditionKind, ConditionSpec, Test, NewEffectSpecTests
+Cohesion: 0.13
+Nodes (11): bool, int, ConditionKind, ConditionSpec, Func, IReadOnlyList, Type, EffectSpecCatalog (+3 more)
 
 ### Community 125 - "Hand Fan Layout Tests & Hand Fan Layout"
 Cohesion: 0.35
 Nodes (4): FanPose, HandFanLayout, Test, HandFanLayoutTests
 
 ### Community 126 - "Sample Scenarios & Sample Scenario Tests"
-Cohesion: 0.23
-Nodes (5): Func, SampleScenarioEntry, SampleScenarios, Test, SampleScenarioTests
+Cohesion: 0.20
+Nodes (9): 1. 목적, 2. 승인된 덱 구성, 3. 추첨 방식, 4. 에셋 변경, 5. 생성 C#과 런타임, 6. 검증, 7. 범위 제외, 8. 완료 조건 (+1 more)
 
 ### Community 127 - "Formation Targeting Integration Tests"
 Cohesion: 0.36
 Nodes (3): int, Test, FormationTargetingIntegrationTests
 
 ### Community 129 - "DOTween Module Sprite"
-Cohesion: 0.27
+Cohesion: 0.24
 Nodes (8): Color, ColorOptions, Gradient, Sequence, Tweener, TweenerCore, DOTweenModuleSprite, SpriteRenderer
 
 ### Community 130 - "PLAYTEST & README"
-Cohesion: 0.17
-Nodes (12): LiberationSans SIL OFL 1.1 라이선스, TMP 줄바꿈 금지 후행 문자 표, TMP 줄바꿈 금지 선행 문자 표, EmojiOne 스프라이트 귀속 고지, Pretendard 폰트 SIL OFL 1.1 라이선스, Build Battle Scene 에디터 빌더, Create Korean TMP Font 세팅 (Pretendard), Fate Weaver Unity Playtest 가이드 (+4 more)
+Cohesion: 0.18
+Nodes (11): LiberationSans SIL OFL 1.1 라이선스, TMP 줄바꿈 금지 후행 문자 표, TMP 줄바꿈 금지 선행 문자 표, EmojiOne 스프라이트 귀속 고지, Pretendard 폰트 SIL OFL 1.1 라이선스, Build Battle Scene 에디터 빌더, Create Korean TMP Font 세팅 (Pretendard), Fate Weaver Unity Playtest 가이드 (+3 more)
 
 ### Community 131 - "2026 06 18 Fate Weaver Core Foundation & 2026 06 26 Dynamic Card Descriptions"
 Cohesion: 0.18
@@ -910,8 +899,8 @@ Cohesion: 0.13
 Nodes (17): AdjacentCardIs condition, BeforeNextEnemyAttack condition, ConditionEvaluator, FirstToTrigger condition, SameTarget condition, WithinNth condition, CardCategory (Execution vs Intervention), Role split enforced by data, not code (+9 more)
 
 ### Community 133 - "2026 07 28 Card Notebook Shared Selection & 2026 07 27 Card Idea Notebook V2"
-Cohesion: 0.33
-Nodes (6): complete / incomplete Completion Status, Notebook Schema 2 Unified cards[], isCardComplete Completion Predicate, saveCard / saveAllCards, Two-Self Cross-Field Validation Rule, exportStatus Guarded Export
+Cohesion: 0.17
+Nodes (12): Atomic All-Or-Nothing Markdown Import, complete / incomplete Completion Status, Notebook Schema 2 Unified cards[], cards[] Array Order Is The Single Order Source, reorderCards Drag Reordering, isCardComplete Completion Predicate, saveCard / saveAllCards, Two-Self Cross-Field Validation Rule (+4 more)
 
 ### Community 134 - "2026 06 24 Status Effects Design & 2026 07 20 Run Cycle Skeleton Design"
 Cohesion: 0.20
@@ -926,36 +915,36 @@ Cohesion: 0.17
 Nodes (12): P2 이벤트 타임라인 중심 표현 경계 정리, 계층 분리 (순수 C# 코어 / Unity 표현), 해석 타임라인 (ResolutionEvent)이 코어의 유일 출력, 간수(Warden) 잠금 입문 적 설계, 코어 이벤트 갭 (CardResolved 정보 부족), ResolutionScriptBuilder (순수 C# 연출 스텝 변환), DescriptionComposer (문장 조립 전담), EffectDescriptionRegistry (+4 more)
 
 ### Community 137 - "Packages Lock"
-Cohesion: 0.17
-Nodes (12): dependencies, depth, source, version, dependencies, depth, source, version (+4 more)
+Cohesion: 0.33
+Nodes (3): Test, TestCase, CardDefinitionDataTests
 
 ### Community 138 - "Packages Lock"
 Cohesion: 0.17
 Nodes (12): dependencies, depth, source, version, dependencies, depth, source, url (+4 more)
 
 ### Community 139 - "Owned Card Deck Tests & Deck"
-Cohesion: 0.20
-Nodes (6): ContagionBehavior, CombatState, List, StatusDeathContext, List, DeathRecorderBehavior
+Cohesion: 0.17
+Nodes (8): Action, CombatState, List, string, StatusDeathContext, StatusTickContext, List, DeathRecorderBehavior
 
 ### Community 140 - "Party Member Tests & Party Member"
 Cohesion: 0.33
 Nodes (3): DamageOutcome, Test, PartyMemberTests
 
 ### Community 141 - "Playtest Session & Playtest Session Tests"
-Cohesion: 0.27
-Nodes (5): Dictionary, IReadOnlyList, PlaytestSession, Test, PlaytestSessionTests
+Cohesion: 0.15
+Nodes (8): InterventionPlay, IReadOnlyList, InterventionPlayResult, Dictionary, IReadOnlyList, PlaytestSession, Test, PlaytestSessionTests
 
 ### Community 142 - "Selection Target Ref & Execution Rail View"
-Cohesion: 0.31
-Nodes (4): SelectionTargetKind, SelectionTargetRef, IReadOnlyCollection, IReadOnlyList
+Cohesion: 0.12
+Nodes (12): SelectionTargetKind, SelectionTargetRef, Action, bool, Button, Func, GameObject, HashSet (+4 more)
 
 ### Community 143 - "Starter Pool Specs Tests & Starter Deck"
-Cohesion: 0.22
-Nodes (9): Color, string, CharacterAsset, int, string, DeckAsset, Entry, Entry (+1 more)
+Cohesion: 0.36
+Nodes (3): ExecutionCardInstance, SwapExecutionOrderHandler, ExecutionCardInstance&gt;
 
 ### Community 147 - "Dotween Dependency Tests & DOTween Module Audio"
-Cohesion: 0.20
-Nodes (3): Test, DotweenDependencyTests, DG.Tweening
+Cohesion: 0.25
+Nodes (7): Fixed Draw Record, Global Constraints, Random Starter Deck Implementation Plan, Task 1: Pin the Unity asset composition, Task 2: Synchronize the pure C# starter-deck paths, Task 3: Regenerate and pin the headless snapshot, Task 4: Full verification and documentation closeout
 
 ### Community 148 - "Playtest Card Art & Playtest Card Art Tests"
 Cohesion: 0.24
@@ -993,21 +982,17 @@ Nodes (11): 확장성·하드코딩 후속 리팩토링 백로그, Fate Weaver �
 Cohesion: 0.18
 Nodes (3): htmlUrl, MemoryStorage, ToggleStorage
 
-### Community 157 - "Lock Card Tests & Intervention Action Registry"
-Cohesion: 0.29
-Nodes (4): InterventionPlay, IReadOnlyList, Test, LockCardTests
-
 ### Community 158 - "Multi Turn Comparison Report & Multi Turn Comparison Result"
-Cohesion: 0.36
-Nodes (4): IReadOnlyList, StringBuilder, MultiTurnComparisonReport, MultiTurnComparisonResult
+Cohesion: 0.13
+Nodes (12): IReadOnlyList, StringBuilder, MultiTurnComparisonReport, MultiTurnComparisonResult, IReadOnlyList, MultiTurnResult, TurnOutcome, OrderCardSummary (+4 more)
 
 ### Community 159 - "Card View"
-Cohesion: 0.31
-Nodes (8): Gradient, Sequence, TweenerCore, Vector2, VectorOptions, DOOffset(), DOTiling(), Material
+Cohesion: 0.29
+Nodes (5): Color, Image, Sprite, CardBackView, MonoBehaviour
 
 ### Community 160 - "Unit View"
-Cohesion: 0.33
-Nodes (5): Color, Image, RectTransform, TMP_Text, UnitView
+Cohesion: 0.29
+Nodes (7): 행동 카드 설계 원칙, 행동 카드 자동 발동 문제, 반격 자세 (카드), 좋은 위치 / 나쁜 위치 조건 설계, 행동 카드 3단계 성능 구조 (실패/기본/성공), 조건부 보상 (실행 순서 의존), 보상이 좋은 세트 (응수·예견·숨 고르기)
 
 ### Community 161 - "2026 06 18 Fate Weaver Core Foundation & 2026 06 24 Status Effects"
 Cohesion: 0.29
@@ -1026,28 +1011,32 @@ Cohesion: 0.20
 Nodes (10): P0-B2 CardType 제거와 효과 기반 카드 성질 합성, P0-C 대상 선택 메타데이터와 입력 흐름 일반화, P1-A ScriptableObject 단일 원본화, P1-B Unity 프리팹·직렬화 참조 구조 전환, 3계층 카드 모델 (CardDefinition / OwnedCard / ExecutionCardInstance), 클릭 선택 입력 규칙 (호버=보기, 클릭=선택), 전투 화면 시각 개편 설계, EffectData IEffectPayload 이관 (ApplyStatusPayload) (+2 more)
 
 ### Community 165 - "Fate Weaver Card Balance Principles V2 & README"
-Cohesion: 0.22
-Nodes (10): 운명 카드 비용 기준 (0/1/2/3+), 운명 카드 설계 원칙 (조작 도구), 운명력 경제 원칙 (턴당 3, 5장 드로우), 주도력 (실행 순서 수치), 조건부 보상 (실행 순서 의존), 운명력 (fate energy), 미래 영역 (future zone), 개입/조작 카드 (앞당김·미룸·교환·잠금) (+2 more)
+Cohesion: 0.25
+Nodes (9): 운명 카드 비용 기준 (0/1/2/3+), 운명 카드 설계 원칙 (조작 도구), 운명력 경제 원칙 (턴당 3, 5장 드로우), 주도력 (실행 순서 수치), 운명력 (fate energy), 미래 영역 (future zone), 개입/조작 카드 (앞당김·미룸·교환·잠금), 실행순서 필드 (카드 초안 속성) (+1 more)
 
 ### Community 166 - "Party Prototype Deck Specs"
 Cohesion: 0.44
 Nodes (3): int, IReadOnlyList, PartyPrototypeDeckSpecs
 
 ### Community 167 - "Enemy Intent & Enemy Intent Tests"
-Cohesion: 0.36
+Cohesion: 0.31
 Nodes (5): IReadOnlyList, Random, EnemyIntent, Test, EnemyIntentTests
 
 ### Community 168 - "Scenario Comparison Tests & Scenario Runner Tests"
-Cohesion: 0.33
-Nodes (4): Test, ScenarioComparisonTests, Test, ScenarioRunnerTests
+Cohesion: 0.40
+Nodes (3): Dictionary, InterventionActionRegistry, InterventionPlayResolver
+
+### Community 172 - "Status Content Tests"
+Cohesion: 0.40
+Nodes (3): EnemySpec, Test, StatusContentTests
 
 ### Community 174 - "Fw Initiative Badge Poster V2"
 Cohesion: 0.28
 Nodes (9): Initiative Badge Poster v2 (card frame art), Gold Corner Tab Accents, Rotated Diamond Badge Motif, Empty Dark Center Slot (content placeholder), Gold-on-Dark-Green Palette, Initiative Stat Badge (card initiative indicator), Nested Border Layering (outer bevel, gold rim, inner well), Poster Variant v2 (iteration marker in filename) (+1 more)
 
 ### Community 175 - "Targeting Arrow View"
-Cohesion: 0.16
-Nodes (9): Color, Image, Sprite, CardBackView, Color, RectTransform, Vector2, TargetingArrowView (+1 more)
+Cohesion: 0.33
+Nodes (4): Color, RectTransform, Vector2, TargetingArrowView
 
 ### Community 176 - "2026 06 27 Warden Lock Enemy & 2026 06 22 Deck Loop Phase1"
 Cohesion: 0.38
@@ -1062,8 +1051,8 @@ Cohesion: 0.25
 Nodes (8): 결정론 보호 — CombatState 시드 RNG 단일 경유, DeckCombatSession (순수 C# 전투 진행), P0-A RNG 단일화 기록, 덱 기반 코어 루프 스펙 (2026-06-22), CLI 시나리오 시뮬레이터 (Tools/FateWeaver.Headless), CombatState 시드 RNG, FateWeaver.Core 어셈블리, FateWeaver.Simulation 어셈블리
 
 ### Community 181 - "DOTween Module Utils"
-Cohesion: 0.25
-Nodes (6): bool, DOTweenModuleUtils, PlaymodeStateChanged(), Preserver(), PlayModeStateChange, Preserve
+Cohesion: 0.40
+Nodes (4): HashSet, string, Test, StarterDeckAssetCompositionTests
 
 ### Community 182 - "Serpent Priest Idle 02"
 Cohesion: 0.32
@@ -1085,10 +1074,6 @@ Nodes (8): Slash Card Art (Player), Slash (Player Attack Card), Card ScriptableO
 Cohesion: 0.25
 Nodes (8): CardCodeGenerator (SO to generated C#), GeneratedCards.cs (headless bridge literals), SO as single source of truth with generated C# export, FutureZone virtual insertion index computation, Automatic execution placement preview, Shared effective-execution-order logic between preview and real play, CardType removal schema migration, RunDefinition (node array data authored as SO)
 
-### Community 187 - "AGENTS & PLAYTEST"
-Cohesion: 0.29
-Nodes (7): 런타임 문자열 탐색 금지, 콘텐츠는 ScriptableObject로 저작, CardView 프리팹 + CardPresentation 뷰모델, PlaytestCardArt / PlaytestKoreanText 룩업, 골든 서명이 잡은 콘텐츠 드리프트 3건, Unity 없이 도는 테스트 300+ (하이라이트 2), golden 콘텐츠 서명 테스트
-
 ### Community 190 - "Serpent Priest Idle 00"
 Cohesion: 0.38
 Nodes (7): Coiled Upright Silhouette (portrait framing), Crimson-and-Gold Enemy Color Identity, Enemy Idle Animation Frame Set, Priest Regalia Motif (mask, torc, pendant, tattered cowl), Serpent Priest (Enemy Character), Serpent Priest Idle Sprite (frame 00), Transparent-Background Cutout Sprite Convention
@@ -1100,10 +1085,6 @@ Nodes (7): Coiled Vertical Silhouette Composition, Crimson-and-Gold Priest Palet
 ### Community 192 - "Serpent Priest Idle 05"
 Cohesion: 0.38
 Nodes (7): Crimson Coiled Serpent Silhouette, Serpent Priest Idle Frame 05, Golden Serpent Skull Mask Headdress, Serpent Priest Idle Animation Sequence, Ritual Gold Regalia (Collar, Pendant, Earrings), Serpent Priest (Enemy Character), Transparent-Background Cutout Sprite Convention
-
-### Community 193 - "Card Back View"
-Cohesion: 0.43
-Nodes (7): AsyncWaitForCompletion(), AsyncWaitForElapsedLoops(), AsyncWaitForKill(), AsyncWaitForPosition(), AsyncWaitForRewind(), AsyncWaitForStart(), Task
 
 ### Community 194 - "Fw Cost Badge Poster V2"
 Cohesion: 0.43
@@ -1158,8 +1139,8 @@ Cohesion: 0.38
 Nodes (7): 연쇄 베기 (카드), 강한 콤보 최소 2조건 요구 규칙, 적 카드 설계 원칙 (조건 성공 보상 방해), 표식 새기기 (카드), 조건 성공 보상 무효화 방해 메커니즘, 3턴 시뮬레이션 교훈, 손목 베기 (적 카드)
 
 ### Community 207 - "AGENTS & PORTFOLIO"
-Cohesion: 0.33
-Nodes (6): 카드 설명 자동 생성 (EffectData → 컴포저), 레지스트리 확장 패턴 (핸들러 1개 + 키 등록), DescriptionComposer + KoreanDescriptionVocabulary, 새 효과 = 파일 1개 열린 확장 구조, [SerializeReference] 다형 spec 저작, 카드 설명 레지스트리 스펙 (2026-07-16)
+Cohesion: 0.50
+Nodes (4): 카드 설명 자동 생성 (EffectData → 컴포저), 레지스트리 확장 패턴 (핸들러 1개 + 키 등록), DescriptionComposer + KoreanDescriptionVocabulary, 카드 설명 레지스트리 스펙 (2026-07-16)
 
 ### Community 208 - "Header"
 Cohesion: 0.47
@@ -1229,6 +1210,14 @@ Nodes (5): net6.0, Microsoft.NET.Test.Sdk (17.11.1), NUnit (3.14.0), NUnit3TestA
 Cohesion: 0.33
 Nodes (6): dependencies, depth, source, url, version, com.unity.collab-proxy
 
+### Community 225 - "Chain Slash Tests"
+Cohesion: 0.21
+Nodes (5): StatusApplyTarget, int, ApplyStatusSpec, StatusLifetime, StatusLifetimeKind
+
+### Community 226 - "Design Invariant Tests"
+Cohesion: 0.40
+Nodes (4): Answer, Outcome, Q: 겹치는 핸드에서 돌출형 비용·실행 순서 배지를 구현하기 어려운가, 하드코딩은 얼마나 필요한가?, Source Nodes
+
 ### Community 228 - "Target Selection Visual Tests"
 Cohesion: 0.50
 Nodes (3): Color, Test, TargetSelectionVisualTests
@@ -1290,7 +1279,7 @@ Nodes (3): 카드 설계 체크리스트 (행동/운명/적), 카드 풀 비율 
   Assets/TextMesh Pro/Sprites/EmojiOne.png · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **496 isolated node(s):** `System.Runtime.CompilerServices`, `IsExternalInit`, `AdjacentDirection`, `ViewSnapshot`, `SelectionKind` (+491 more)
+- **543 isolated node(s):** `System.Runtime.CompilerServices`, `IsExternalInit`, `AdjacentDirection`, `ViewSnapshot`, `SelectionKind` (+538 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **93 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
