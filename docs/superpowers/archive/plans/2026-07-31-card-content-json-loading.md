@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-07-31
-- 상태: `active` — Task 1~6 구현 완료, 전체 브랜치 리뷰 반영(432 tests 통과, Unity EditMode 506). 계획 2(콘텐츠 원본 전환) 대기
+- 상태: `archived` — 완료. 2026-08-02 master 머지(ee35fc4). 헤드리스 432, Unity EditMode 506 통과
 - 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
 - 브랜치: `claude/card-mutation-runtime-content-a65c58`
 

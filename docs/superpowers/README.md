@@ -70,7 +70,6 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
-| [카드 콘텐츠 JSON 직렬화·로딩](plans/2026-07-31-card-content-json-loading.md) | `active` | 저작 기반의 코어 이동, EffectSpec 다형 JSON 컨버터, 콘텐츠 로더와 오류 보고, 익스포터와 동등성 증명 (카드 변형 설계의 계획 1/4) |
 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](plans/2026-08-02-status-content-and-authoring-surface.md) | `active` | 상태가 세기·수명 종류를 소유하고 카드는 count 하나만 준다, 레거시 카드 10장·stun 폐기 (카드 변형 설계의 계획 1.5/4) |
 
 ## 재설계가 필요한 영역
