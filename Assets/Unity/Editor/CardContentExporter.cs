@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Json;
+using FateWeaver.Core.Authoring.Statuses;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace FateWeaver.Unity.Editor
     public static class CardContentExporter
     {
         private const string OutputDirectory = "Assets/StreamingAssets/Content/Cards";
+        private const string StatusOutputDirectory = "Assets/StreamingAssets/Content/Statuses";
 
         [MenuItem("Fate Weaver/Export Card Content to JSON")]
         public static void ExportAll()
@@ -27,6 +29,8 @@ namespace FateWeaver.Unity.Editor
                 written++;
             }
 
+            ExportStatuses();
+
             AssetDatabase.Refresh();
             Debug.Log("Exported " + written + " cards to " + OutputDirectory);
         }
@@ -38,5 +42,19 @@ namespace FateWeaver.Unity.Editor
 
         private static IEnumerable<CardSpec> DistinctById(IEnumerable<CardSpec> specs)
             => specs.GroupBy(spec => spec.Id).Select(group => group.First());
+
+        private static void ExportStatuses()
+        {
+            Directory.CreateDirectory(StatusOutputDirectory);
+            foreach (var spec in StatusContentDefaults.Specs())
+            {
+                File.WriteAllText(
+                    Path.Combine(StatusOutputDirectory, spec.Key.Id + ".json"),
+                    ContentJson.Write(spec) + "\n");
+            }
+
+            Debug.Log("Exported " + StatusContentDefaults.Specs().Count
+                + " statuses to " + StatusOutputDirectory);
+        }
     }
 }

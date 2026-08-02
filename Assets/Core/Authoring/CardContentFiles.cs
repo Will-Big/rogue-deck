@@ -10,6 +10,7 @@ namespace FateWeaver.Core.Authoring
     public static class CardContentFiles
     {
         public const string CardsFolderName = "Cards";
+        public const string StatusesFolderName = "Statuses";
 
         public static IReadOnlyList<CardContentSource> ReadDirectory(string directory)
         {

@@ -14,7 +14,11 @@ namespace FateWeaver.Core.Authoring.Statuses
         public StatusKeyRef Key;
 
         /// <summary>이 상태의 수명 종류. 카드가 적는 count의 뜻을 여기서 정한다 —
-        /// Permanent·ThisTurn이면 세기, Turns·UntilConsumed면 지속.</summary>
+        /// Permanent·ThisTurn이면 세기, Turns·UntilConsumed면 지속.
+        /// Permanent은 StatusLifetimeKind의 0번째(기본) 값이라 DefaultValueHandling.Ignore가
+        /// 지운다. ApplyStatusSpec.Lifetime과 같은 이유로, 생략된 lifetime이 조용히
+        /// "영원히 지속"으로 복원되는 사고를 막기 위해 항상 써야 한다.</summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
         public StatusLifetimeKind Lifetime;
 
         [JsonIgnore]
