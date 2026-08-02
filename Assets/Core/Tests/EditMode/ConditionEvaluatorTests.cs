@@ -32,11 +32,7 @@ namespace FateWeaver.Tests
         }
 
         private static EffectData Block()
-            => EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusLifetime.ThisTurn,
-                StatusApplyTarget.Self,
-                2);
+            => EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2);
 
         [Test]
         public void AdjacentCardHasEffect_matches_damage_in_a_composite_card_only()

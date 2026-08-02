@@ -25,9 +25,9 @@ namespace FateWeaver.Core.Authoring
         public override EffectKey Key => EffectKeys.ApplyStatus;
 
         public override EffectData ToEffectData()
-            => ApplyCondition(new EffectData(Key, Value)
+            => ApplyCondition(new EffectData(Key, ResolvedCount())
             {
-                Payload = new ApplyStatusPayload(Status.ToKey(), ToLifetime(), Target)
+                Payload = new ApplyStatusPayload(Status.ToKey(), Target)
             }) with { TargetSelector = ToSelector(Selector) };
 
         public override IEnumerable<string> Validate(AuthoringContext context)
@@ -51,15 +51,13 @@ namespace FateWeaver.Core.Authoring
                 + ", Selector = TargetSelectorRef." + Selector
                 + ", " + ConditionLiteral() + " }";
 
-        private StatusLifetime ToLifetime()
-        {
-            switch (Lifetime)
-            {
-                case StatusLifetimeKind.Permanent: return StatusLifetime.Permanent;
-                case StatusLifetimeKind.Turns: return StatusLifetime.Turns(LifetimeCount);
-                case StatusLifetimeKind.UntilConsumed: return StatusLifetime.UntilConsumed(LifetimeCount);
-                default: return StatusLifetime.ThisTurn;
-            }
-        }
+        /// <summary>카드가 apply_status에 주는 count 하나로 접는다. Turns·UntilConsumed는 지속(카드가
+        /// 적은 LifetimeCount), 그 외(Permanent·ThisTurn)는 세기(Value)다 — ApplyStatusHandler가
+        /// StatusContentCatalog에서 같은 판단을 다시 하므로, 여기 Lifetime은 그 판단과 일치해야 한다
+        /// (카드 저작 시점의 Lifetime·LifetimeCount·Value 3필드는 후속 작업에서 정리 대상이다).</summary>
+        private int ResolvedCount()
+            => Lifetime == StatusLifetimeKind.Turns || Lifetime == StatusLifetimeKind.UntilConsumed
+                ? LifetimeCount
+                : Value;
     }
 }

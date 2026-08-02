@@ -17,7 +17,6 @@
     {
       "kind": "trigger_status",
       "status": "poison",
-      "suppressMarker": "poison_dormant",
       "selector": "FrontMost"
     }
   ]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
@@ -65,7 +66,7 @@ namespace FateWeaver.Tests.EditMode
         public void Apply_status_uses_amount_as_magnitude()
         {
             var card = Execution("guard",
-                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4));
+                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4));
             Assert.AreEqual("방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
@@ -73,7 +74,7 @@ namespace FateWeaver.Tests.EditMode
         public void Conditional_status_reuses_success_amount_for_the_success_fragment()
         {
             var card = Execution("cover",
-                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
+                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2)
                     with
                     {
                         Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
@@ -190,7 +191,8 @@ namespace FateWeaver.Tests.EditMode
                 effects,
                 new InterventionDescriptionRegistry(),
                 new StatusDescriptionRegistry(),
-                new KoreanDescriptionGrammar());
+                new KoreanDescriptionGrammar(),
+                StatusContentDefaults.Catalog());
 
             Assert.Throws<InvalidOperationException>(() =>
                 DescriptionComposer.Describe(
@@ -287,13 +289,15 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_slow_status_shows_turn_suffix()
         {
+            // Task 4: slow is Turns-kind in the catalog, so the card gives only a duration (2 turns) —
+            // its executionOrder strength is the status's own, not a card-authored number, so card text
+            // no longer restates it (규칙 10; 취약의 배율이 카드 텍스트에 없는 것과 같다).
             var card = new CardDefinition("slow_hex", "둔화 저주", Side.Player, 5,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Slow, StatusLifetime.Turns(2),
-                        StatusApplyTarget.TargetEnemy, 3)
+                    EffectData.ApplyStatus(StatusKeys.Slow, StatusApplyTarget.TargetEnemy, count: 2)
                 }) { Category = CardCategory.Execution };
-            Assert.AreEqual("적 둔화 3 (2턴).", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("적 둔화 (2턴).", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]

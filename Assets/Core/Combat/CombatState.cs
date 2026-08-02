@@ -28,9 +28,14 @@ namespace FateWeaver.Core.Combat
         public int PendingNextTurnFateEnergy { get; set; }
         public int RngSeed { get; set; }
 
-        /// <summary>이 전투의 상태 배율. 전투 단위로 존재하므로 전투 중 변경이 런으로 새지 않는다.
-        /// 런 지속 변경(유물 등)은 전투 시작 시 이 값을 시딩해 반영한다.</summary>
-        public Status.StatusRuleSet StatusRules { get; set; } = Status.StatusRuleCatalog.Default();
+        /// <summary>이 전투의 상태 저작 콘텐츠. 규칙(배율)과 수명 종류의 단일 출처다. 전투 단위로
+        /// 존재하므로 전투 중 변경이 런으로 새지 않는다. 런 지속 변경(유물 등)은 전투 시작 시 이 값을
+        /// 시딩해 반영한다. 파일 없이 도는 헤드리스 테스트와 하니스는 StatusContentDefaults.Catalog()로
+        /// 폴백한다; Unity 런타임은 로더가 파일에서 만든 카탈로그를 주입한다.</summary>
+        public Authoring.Statuses.StatusContentCatalog StatusContent { get; set; }
+            = Authoring.Statuses.StatusContentDefaults.Catalog();
+
+        public Status.StatusRuleSet StatusRules => StatusContent.Rules;
 
         /// <summary>Seeded RNG shared by all combat rule logic (AGENTS.md rule 7: no ad-hoc `new Random()`
         /// elsewhere). Lazily created from RngSeed so RngSeed can still be assigned via object initializer.</summary>

@@ -59,7 +59,6 @@ namespace FateWeaver.Tests
             if (hasBlock)
                 effects.Add(EffectData.ApplyStatus(
                     StatusKeys.Block,
-                    StatusLifetime.ThisTurn,
                     StatusApplyTarget.Self,
                     2));
 

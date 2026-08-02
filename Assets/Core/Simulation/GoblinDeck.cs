@@ -26,7 +26,7 @@ namespace FateWeaver.Simulation
 
         public static CardDefinition CrudeGuard() => new CardDefinition(
             "crude_guard", "조잡한 방어", Side.Enemy, 4,
-            new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) })
+            new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition SlyJab() => new CardDefinition(

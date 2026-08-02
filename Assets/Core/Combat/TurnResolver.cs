@@ -298,19 +298,20 @@ namespace FateWeaver.Core.Combat
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events);
+                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events, state.StatusContent);
             }
 
             foreach (var enemy in state.Enemies)
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events);
+                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events, state.StatusContent);
             }
         }
 
         private void TickHolder(
-            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events)
+            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events,
+            Authoring.Statuses.StatusContentCatalog content)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -324,7 +325,8 @@ namespace FateWeaver.Core.Combat
                         HolderBag = bag,
                         HolderId = holderId,
                         DealDamage = dealDamage,
-                        Events = events
+                        Events = events,
+                        Content = content
                     });
                 }
             }

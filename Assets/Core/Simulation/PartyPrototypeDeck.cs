@@ -34,7 +34,6 @@ namespace FateWeaver.Simulation
             StarterDeck.DefaultExecutionOrder,
             EffectData.ApplyStatus(
                 StatusKeys.Block,
-                StatusLifetime.ThisTurn,
                 StatusApplyTarget.Self,
                 BlockMagnitude));
 
@@ -44,7 +43,6 @@ namespace FateWeaver.Simulation
             StarterDeck.DefaultExecutionOrder,
             EffectData.ApplyStatus(
                 StatusKeys.Block,
-                StatusLifetime.ThisTurn,
                 StatusApplyTarget.AllPartyMembers,
                 BlockMagnitude));
 

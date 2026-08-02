@@ -22,6 +22,7 @@ namespace FateWeaver.Tests
         {
             var statuses = new StatusRegistry();
             statuses.Register(new BlockBehavior());
+            statuses.Register(new PoisonBehavior());
             return statuses;
         }
 
@@ -93,24 +94,24 @@ namespace FateWeaver.Tests
         {
             var state = TwoEnemies();
             var def = new CardDefinition("back_status", "후열 부여", Side.Player, 4,
-                new[] { EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.TargetEnemy, 2)
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.TargetEnemy, 2)
                     with { TargetSelector = TargetSelector.BackMost } });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
 
             Assert.IsFalse(state.Enemies[0].Statuses.Has(StatusKeys.Block));
-            // ThisTurn 상태는 턴 종료에 만료되므로 부여 사실은 수명 만료 이전 세맨틱으로 검증할 수
-            // 없다 — 대신 만료 전 수치를 남기는 Permanent로 재검증한다.
+            // Block은 카탈로그상 ThisTurn이라 턴 종료에 만료되므로 부여 사실은 수명 만료 이전
+            // 세맨틱으로 검증할 수 없다 — 카탈로그가 Permanent로 정한 독으로 재검증한다(카드는
+            // 더 이상 수명을 고를 수 없다 — Task 4).
             var state2 = TwoEnemies();
             var def2 = new CardDefinition("back_status2", "후열 부여2", Side.Player, 4,
-                new[] { EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.Permanent, StatusApplyTarget.TargetEnemy, 2)
+                new[] { EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.TargetEnemy, 2)
                     with { TargetSelector = TargetSelector.BackMost } });
             state2.Zone.Add(new ExecutionCardInstance(def2) { OwnerId = CombatState.SoloPlayerId });
             new TurnResolver(Effects(), Statuses()).Resolve(state2, 0);
-            Assert.AreEqual(2, state2.Enemies[1].Statuses.Get(StatusKeys.Block).Magnitude);
+            // 부여된 독 2가 턴 종료 틱에서 피해 2를 준 뒤 카탈로그의 턴당 성장치(1)만큼 자란다: 2 + 1 = 3.
+            Assert.AreEqual(3, state2.Enemies[1].Statuses.Get(StatusKeys.Poison).Magnitude);
         }
 
         [Test]
@@ -120,16 +121,19 @@ namespace FateWeaver.Tests
             state.Party.Add(new PartyMember("a", "A", 20));
             state.Party.Add(new PartyMember("b", "B", 20));
             state.Enemies.Add(new Enemy("goblin", 10));
+            // Block은 카탈로그상 ThisTurn이라 턴 종료에 만료되므로, 부여 사실을 만료 이후에도
+            // 검증할 수 있는 Permanent 상태(독)로 확인한다 — 카드는 더 이상 수명을 고르지 않는다
+            // (Task 4).
             var def = new CardDefinition("cover_front", "전열 엄호", Side.Player, 4,
-                new[] { EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.Permanent, StatusApplyTarget.PartyBySelector, 4)
+                new[] { EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.PartyBySelector, 4)
                     with { TargetSelector = TargetSelector.FrontMost } });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "b" });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
 
-            Assert.AreEqual(4, state.Party[0].Statuses.Get(StatusKeys.Block).Magnitude);
-            Assert.IsFalse(state.Party[1].Statuses.Has(StatusKeys.Block));
+            // 부여된 독 4가 턴 종료 틱에서 피해를 준 뒤 카탈로그의 턴당 성장치(1)만큼 자란다: 4 + 1 = 5.
+            Assert.AreEqual(5, state.Party[0].Statuses.Get(StatusKeys.Poison).Magnitude);
+            Assert.IsFalse(state.Party[1].Statuses.Has(StatusKeys.Poison));
         }
 
         [Test]
@@ -139,11 +143,9 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             var block3 = new CardDefinition("b3", "방어3", Side.Player, 4,
-                new[] { EffectData.ApplyStatus(
-                    StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) });
             var block1 = new CardDefinition("b1", "방어1", Side.Player, 5,
-                new[] { EffectData.ApplyStatus(
-                    StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 1) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 1) });
             var enemyHit = new CardDefinition("jab", "찌르기", Side.Enemy, 6,
                 new[] { new EffectData(EffectKeys.Damage, 4) });
             state.Zone.Add(new ExecutionCardInstance(block3) { OwnerId = CombatState.SoloPlayerId });

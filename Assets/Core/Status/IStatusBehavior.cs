@@ -9,8 +9,12 @@ namespace FateWeaver.Core.Status
     {
         public StatusInstance Instance;
 
-        /// <summary>이 전투의 상태 규칙 (배율). 훅에서 튜닝 수치를 읽는 유일한 경로다.</summary>
+        /// <summary>이 전투의 상태 규칙 (배율). 취약·약화·손상처럼 배율만 필요한 훅이 쓴다.</summary>
         public StatusRuleSet Rules;
+
+        /// <summary>이 전투의 상태 저작 콘텐츠 (수명 종류 + 세기). 둔화·가속처럼 카드가 아니라
+        /// 상태 자신이 세기를 아는 훅이 쓴다.</summary>
+        public Authoring.Statuses.StatusContentCatalog Content;
     }
 
     /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 직접 피해를 주는 배선(파티원은
@@ -23,6 +27,9 @@ namespace FateWeaver.Core.Status
         public string HolderId;
         public Action<int> DealDamage;
         public List<ResolutionEvent> Events;
+
+        /// <summary>이 전투의 상태 저작 콘텐츠. 독의 턴당 성장치처럼 규칙 수치를 읽는 훅이 쓴다.</summary>
+        public Authoring.Statuses.StatusContentCatalog Content;
     }
 
     /// <summary>보유자 사망 훅 입력. State는 이전 대상 탐색 등 규칙 판단에 쓴다.</summary>
@@ -70,6 +77,10 @@ namespace FateWeaver.Core.Status
 
         /// <summary>보유자가 사망한 직후 발동 (예: 남은 독 이전).</summary>
         void OnHolderDied(StatusDeathContext ctx);
+
+        /// <summary>이번 턴 이 상태의 발동을 막는다. trigger_status가 즉시 발동시킨 뒤 호출하며,
+        /// 어떤 마커를 쓰는지는 상태 자신만 안다 — 카드가 알 필요가 없다.</summary>
+        void SuppressThisTurn(StatusBag holderBag);
     }
 
     /// <summary>Base class with no-op hook defaults. Concrete statuses override what they use.
@@ -90,5 +101,6 @@ namespace FateWeaver.Core.Status
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }
         public virtual void OnHolderDied(StatusDeathContext ctx) { }
+        public virtual void SuppressThisTurn(StatusBag holderBag) { }
     }
 }

@@ -8,7 +8,8 @@ namespace FateWeaver.Core.Status
             int baseExecutionOrder,
             StatusBag bag,
             StatusRegistry registry,
-            StatusRuleSet rules)
+            StatusRuleSet rules,
+            Authoring.Statuses.StatusContentCatalog content)
         {
             if (registry == null || bag == null)
             {
@@ -23,7 +24,7 @@ namespace FateWeaver.Core.Status
                 {
                     result = behavior.ModifyExecutionOrder(
                         result,
-                        new StatusContext { Instance = status, Rules = rules });
+                        new StatusContext { Instance = status, Rules = rules, Content = content });
                 }
             }
 

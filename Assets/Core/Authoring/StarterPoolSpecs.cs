@@ -307,7 +307,6 @@ namespace FateWeaver.Core.Authoring
                 new TriggerStatusSpec
                 {
                     Status = StatusKeyRef.Of(StatusKeys.Poison),
-                    SuppressMarker = StatusKeyRef.Of(StatusKeys.PoisonDormant),
                     Selector = TargetSelectorRef.FrontMost
                 }
             }

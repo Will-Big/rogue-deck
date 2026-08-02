@@ -144,7 +144,7 @@ namespace FateWeaver.Simulation
                 new[]
                 {
                     EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
+                        StatusKeys.Block, StatusApplyTarget.Self, count: 2),
                     EffectData.Conditional(
                         EffectKeys.Damage,
                         effectValue: 0,

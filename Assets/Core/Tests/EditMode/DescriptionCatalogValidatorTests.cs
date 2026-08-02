@@ -57,7 +57,6 @@ namespace FateWeaver.Tests.EditMode
                 {
                     EffectData.ApplyStatus(
                         new StatusKey("unknown_status"),
-                        StatusLifetime.ThisTurn,
                         StatusApplyTarget.Self,
                         1)
                 })

@@ -49,14 +49,14 @@ namespace FateWeaver.Simulation.Descriptions
             }
         }
 
-        public string LifetimeSuffix(StatusLifetime lifetime)
+        public string LifetimeSuffix(StatusLifetimeKind kind, int count)
         {
-            switch (lifetime.Kind)
+            switch (kind)
             {
                 case StatusLifetimeKind.Turns:
-                    return "(" + lifetime.Count + "턴)";
+                    return "(" + count + "턴)";
                 case StatusLifetimeKind.UntilConsumed:
-                    return "(" + lifetime.Count + "회)";
+                    return "(" + count + "회)";
                 default:
                     return string.Empty;
             }

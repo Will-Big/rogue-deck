@@ -32,7 +32,7 @@ namespace FateWeaver.Simulation
             "guard", "막기", Side.Player, DefaultExecutionOrder,
             new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4)
+                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4)
             })
             { EnergyCost = 1, Category = CardCategory.Execution };
 
@@ -55,7 +55,7 @@ namespace FateWeaver.Simulation
             "cover", "엄호", Side.Player, DefaultExecutionOrder,
             new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 2)
+                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2)
                     with
                     {
                         Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),

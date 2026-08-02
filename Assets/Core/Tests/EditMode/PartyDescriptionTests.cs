@@ -35,11 +35,7 @@ namespace FateWeaver.Tests
             StatusApplyTarget target,
             string expected)
         {
-            var card = Execution(EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusLifetime.ThisTurn,
-                target,
-                4));
+            var card = Execution(EffectData.ApplyStatus(StatusKeys.Block, target, 4));
 
             Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }

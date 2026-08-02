@@ -72,21 +72,32 @@ namespace FateWeaver.Core.Effects
         /// <summary>Stacking-aware status application: when the key's behavior declares
         /// StacksMagnitude (e.g. Block), an existing instance's Magnitude is added to rather than
         /// replaced; otherwise falls back to the legacy replace semantics. The magnitude is first
-        /// folded through the RECEIVING holder's statuses (e.g. Damaged reducing block gain).</summary>
+        /// folded through the RECEIVING holder's statuses (e.g. Damaged reducing block gain).
+        ///
+        /// The card gives exactly one number (ctx.EffectValue, already resolved for any conditional
+        /// SuccessEffectValue override). Its meaning is derived from the status's catalog lifetime kind:
+        /// Permanent/ThisTurn treat it as magnitude; Turns/UntilConsumed treat it as duration.</summary>
         private static void ApplyTo(EffectContext ctx, ApplyStatusPayload payload, StatusBag bag)
         {
+            var lifetimeKind = ctx.State.StatusContent.LifetimeOf(payload.Key);
+            var countIsDuration = ctx.State.StatusContent.CountIsDuration(payload.Key);
+            var lifetime = countIsDuration
+                ? StatusLifetime.Of(lifetimeKind, ctx.EffectValue)
+                : StatusLifetime.Of(lifetimeKind, 0);
+            var baseMagnitude = countIsDuration ? 0 : ctx.EffectValue;
+
             var magnitude = StatusDamageFold.GainedMagnitude(
-                payload.Key, bag, ctx.StatusRegistry, ctx.State.StatusRules, ctx.EffectValue);
+                payload.Key, bag, ctx.StatusRegistry, ctx.State.StatusRules, baseMagnitude);
 
             if (ctx.StatusRegistry != null
                 && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior)
                 && behavior.StacksMagnitude)
             {
-                bag.Stack(payload.Key, payload.Lifetime, magnitude);
+                bag.Stack(payload.Key, lifetime, magnitude);
                 return;
             }
 
-            bag.Add(payload.Key, payload.Lifetime, magnitude);
+            bag.Add(payload.Key, lifetime, magnitude);
         }
 
         private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)

@@ -32,14 +32,14 @@ namespace FateWeaver.Simulation
 
         public static CardDefinition Block() => new CardDefinition(
             "warden_block", "막기", Side.Enemy, 4,
-            new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) })
+            new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         public static CardDefinition Brace() => new CardDefinition(
             "warden_brace", "버티기", Side.Enemy, 4,
             new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3)
+                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3)
                     with
                     {
                         Condition = new NoPrecedingCardOfSide(Side.Enemy),

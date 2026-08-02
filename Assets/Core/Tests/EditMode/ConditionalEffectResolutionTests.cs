@@ -122,11 +122,7 @@ namespace FateWeaver.Tests
                 {
                     new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 6)
                 }));
-            var block = EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusLifetime.ThisTurn,
-                StatusApplyTarget.TargetEnemy,
-                2);
+            var block = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.TargetEnemy, 2);
             var blockOnly = new ExecutionCardInstance(new CardDefinition(
                 "block_only",
                 "Block Only",

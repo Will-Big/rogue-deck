@@ -30,25 +30,30 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var status = enemy.Statuses.Get(payload.Key);
-            if (status != null
-                && ctx.StatusRegistry != null
-                && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior))
+            if (ctx.StatusRegistry != null && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior))
             {
-                var target = enemy;
-                var hpBefore = target.Hp;
-                behavior.OnTurnEnd(new StatusTickContext
+                var status = enemy.Statuses.Get(payload.Key);
+                if (status != null)
                 {
-                    Instance = status,
-                    HolderBag = target.Statuses,
-                    HolderId = target.Id,
-                    DealDamage = damage => target.Hp -= damage,
-                    Events = ctx.ExtraEvents
-                });
-                ctx.DamageDealt = hpBefore - target.Hp;
+                    var target = enemy;
+                    var hpBefore = target.Hp;
+                    behavior.OnTurnEnd(new StatusTickContext
+                    {
+                        Instance = status,
+                        HolderBag = target.Statuses,
+                        HolderId = target.Id,
+                        DealDamage = damage => target.Hp -= damage,
+                        Events = ctx.ExtraEvents,
+                        Content = ctx.State.StatusContent
+                    });
+                    ctx.DamageDealt = hpBefore - target.Hp;
+                }
+
+                // 마커는 상태 존재 여부와 무관하게 심는다 (선점 잠복): 이 카드보다 뒤에 실행되는
+                // 다른 카드가 이번 턴에 상태를 새로 부여하더라도 이번 턴 종료 발동은 막아야 한다.
+                behavior.SuppressThisTurn(enemy.Statuses);
             }
 
-            enemy.Statuses.Add(payload.SuppressMarkerKey, StatusLifetime.ThisTurn);
             ctx.TargetId = enemy.Id;
         }
 
@@ -63,11 +68,6 @@ namespace FateWeaver.Core.Effects
             if (string.IsNullOrEmpty(payload.Key.Id))
             {
                 yield return "trigger_status payload requires a status key.";
-            }
-
-            if (string.IsNullOrEmpty(payload.SuppressMarkerKey.Id))
-            {
-                yield return "trigger_status payload requires a suppress-marker key.";
             }
         }
     }

@@ -29,17 +29,23 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        // 방어를 Turns(2)로 거는 것은 저작 관례가 아니라 테스트 편의다. ThisTurn으로 걸면
-        // 턴 종료 정리가 인스턴스를 지워 Magnitude를 조회할 수 없다.
-        private static ExecutionCardInstance PlayerGuard(string id, int block)
+        /// <summary>Block은 카탈로그상 ThisTurn이라 TurnResolver.Resolve()를 다 돌리면 턴 종료 정리가
+        /// 인스턴스를 지워 Magnitude를 조회할 수 없다(Task 4: 카드가 수명을 고르던 시절의 테스트
+        /// 편의가 더는 통하지 않는다). GainedMagnitude 접힘만 보면 되므로 턴 전체를 돌리지 않고
+        /// ApplyStatusHandler를 직접 호출해 정리 전 상태를 확인한다.</summary>
+        private static PartyMember ApplyGuard(CombatState state, string ownerId, int block)
         {
-            var def = new CardDefinition(id, id, Side.Player, 1,
-                new[]
-                {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.Turns(2), StatusApplyTarget.Self, block)
-                });
-            return new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId };
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, block);
+            var card = new ExecutionCardInstance(
+                new CardDefinition("guard", "guard", Side.Player, 1, new[] { effect }))
+                { OwnerId = ownerId };
+            var ctx = new EffectContext
+            {
+                Card = card, State = state, Effect = effect, EffectValue = block, StatusRegistry = Statuses()
+            };
+
+            new ApplyStatusHandler().Apply(ctx);
+            return PartyTargeting.LivingById(state, ownerId);
         }
 
         private static ExecutionCardInstance PlayerStrike(string id, int damage)
@@ -137,9 +143,8 @@ namespace FateWeaver.Tests
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
             state.Enemies.Add(new Enemy("goblin", 30));
-            state.Zone.Add(PlayerGuard("guard", 5));
 
-            new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            ApplyGuard(state, CombatState.SoloPlayerId, 5);
 
             // floor(5 x 0.75) = 3
             Assert.AreEqual(3, player.Statuses.Get(StatusKeys.Block).Magnitude);
@@ -155,8 +160,7 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("hex", "hex", Side.Player, 1,
                 new[]
                 {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Vulnerable, StatusLifetime.Turns(4), StatusApplyTarget.Self)
+                    EffectData.ApplyStatus(StatusKeys.Vulnerable, StatusApplyTarget.Self, count: 4)
                 });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
@@ -173,9 +177,8 @@ namespace FateWeaver.Tests
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
             state.Enemies.Add(enemy);
-            state.Zone.Add(PlayerGuard("guard", 5));
 
-            new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            ApplyGuard(state, CombatState.SoloPlayerId, 5);
 
             Assert.AreEqual(5, player.Statuses.Get(StatusKeys.Block).Magnitude); // 감소 없음
         }

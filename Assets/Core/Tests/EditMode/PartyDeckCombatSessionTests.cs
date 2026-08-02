@@ -35,11 +35,7 @@ namespace FateWeaver.Tests
                 cost: 1,
                 effects: new[]
                 {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Block,
-                        StatusLifetime.ThisTurn,
-                        StatusApplyTarget.PartyMember,
-                        magnitude: 3)
+                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, count: 3)
                 });
 
         private static CardDefinition EnemyStrike(
@@ -342,8 +338,9 @@ namespace FateWeaver.Tests
             var session = Session(
                 new[] { Loadout("a", new[] { Execution("preview", order: 5) }) },
                 new[] { EnemyStrike(order: 4, damage: 0) });
-            session.State.Party.Single().Statuses.Add(
-                StatusKeys.Haste, StatusLifetime.Turns(2), magnitude: 3);
+            // Task 4: haste의 세기(카탈로그 delta -2)는 카드/부여 쪽 magnitude가 아니라 상태
+            // 자신에게서 온다 — 여기 magnitude는 이제 읽히지 않는다.
+            session.State.Party.Single().Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2));
             int energyBefore = session.FateEnergy;
             var handBefore = session.Hand.ToArray();
             var orderBefore = session.CurrentOrder.ToArray();
@@ -351,7 +348,7 @@ namespace FateWeaver.Tests
 
             Assert.IsTrue(session.TryPreviewExecutionPlacement(0, out var preview));
 
-            Assert.AreEqual(2, preview.ExecutionOrder);
+            Assert.AreEqual(3, preview.ExecutionOrder); // base 5 + haste's catalog delta -2
             Assert.AreEqual(0, preview.InsertionIndex);
             Assert.AreEqual(energyBefore, session.FateEnergy);
             CollectionAssert.AreEqual(handBefore, session.Hand);

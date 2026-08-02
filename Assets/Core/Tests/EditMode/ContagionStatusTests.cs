@@ -20,7 +20,7 @@ namespace FateWeaver.Tests
         private static StatusRegistry Statuses()
         {
             var statuses = new StatusRegistry();
-            statuses.Register(new PoisonBehavior(growthPerTurn: 1));
+            statuses.Register(new PoisonBehavior());
             statuses.Register(new PoisonDormantBehavior());
             statuses.Register(new PoisonStasisBehavior());
             statuses.Register(new ContagionBehavior());

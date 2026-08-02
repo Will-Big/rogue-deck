@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
         private static StatusRegistry Statuses()
         {
             var statuses = new StatusRegistry();
-            statuses.Register(new PoisonBehavior(growthPerTurn: 1));
+            statuses.Register(new PoisonBehavior());
             statuses.Register(new PoisonDormantBehavior());
             statuses.Register(new PoisonStasisBehavior());
             statuses.Register(new BlockBehavior());
@@ -82,31 +82,33 @@ namespace FateWeaver.Tests
         [Test]
         public void SkipOnBasic_effect_fires_only_when_condition_succeeds()
         {
-            // 독성 환원 모양: 독 1 소비 → 소비했다면 자신에게 방어 4.
+            // 독성 환원 모양: 독 1 소비 → 소비했다면 자신에게 독 4를 건다. (원래 모양은 "방어 4"지만
+            // Block은 카탈로그상 ThisTurn이라 Resolve()의 턴 종료 정리로 만료돼 버려 검증할 수 없다
+            // — Permanent인 독으로 같은 조건부 apply_status 배선을 검증한다. Task 4: 카드는 더 이상
+            // 수명을 고르지 않는다.)
             EffectData[] BuildEffects() => new[]
             {
                 new EffectData(EffectKeys.ConsumeStatus, 0)
                     { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 1, 0) },
-                EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.Permanent, StatusApplyTarget.Self, 4)
+                EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.Self, 4)
                     with { Condition = new ConsumedStatusAtLeast(1), SuccessEffectValue = 4, SkipOnBasic = true }
             };
 
-            // 독이 있으면: 소비 성공 → 방어 4.
+            // 독이 있으면: 소비 성공 → 독 4. 턴 종료 틱이 피해를 준 뒤 성장치(1)만큼 자라 5가 된다.
             var withPoison = OneEnemy(20, 1);
             withPoison.Zone.Add(new ExecutionCardInstance(
                 new CardDefinition("reclaim", "환원", Side.Player, 4, BuildEffects()))
                 { OwnerId = CombatState.SoloPlayerId });
             new TurnResolver(Effects(), Statuses()).Resolve(withPoison, 0);
-            Assert.AreEqual(4, withPoison.Party[0].Statuses.Get(StatusKeys.Block).Magnitude);
+            Assert.AreEqual(5, withPoison.Party[0].Statuses.Get(StatusKeys.Poison).Magnitude);
 
-            // 독이 없으면: 소비 0 → 효과 통째로 건너뜀 (방어 상태 자체가 없음).
+            // 독이 없으면: 소비 0 → 효과 통째로 건너뜀 (독 상태 자체가 없음).
             var without = OneEnemy(20, 0);
             without.Zone.Add(new ExecutionCardInstance(
                 new CardDefinition("reclaim", "환원", Side.Player, 4, BuildEffects()))
                 { OwnerId = CombatState.SoloPlayerId });
             new TurnResolver(Effects(), Statuses()).Resolve(without, 0);
-            Assert.IsFalse(without.Party[0].Statuses.Has(StatusKeys.Block));
+            Assert.IsFalse(without.Party[0].Statuses.Has(StatusKeys.Poison));
         }
 
         [Test]

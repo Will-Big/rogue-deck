@@ -23,12 +23,20 @@ namespace FateWeaver.Simulation.Descriptions
                     "Apply-status description requires an ApplyStatusPayload.",
                     nameof(effect));
 
-            var suffix = context.LifetimeSuffix(payload.Lifetime);
-            return context.TargetPrefix(effect)
-                + context.StatusTargetPrefix(payload.Target)
-                + context.Statuses.Resolve(payload.Key)
-                + " " + effectValue
-                + (string.IsNullOrEmpty(suffix) ? string.Empty : " " + suffix);
+            var prefix = context.TargetPrefix(effect) + context.StatusTargetPrefix(payload.Target);
+            var statusName = context.Statuses.Resolve(payload.Key);
+
+            // 규칙 10: 숫자가 세기인지 지속인지는 카드가 아니라 상태의 StatusContentCatalog 항목만
+            // 안다. 세기(Permanent·ThisTurn)는 오늘과 같은 "{상태} {N}"; 지속(Turns·UntilConsumed)은
+            // 카드가 준 숫자를 그대로 보여주면 세기로 오해되므로 숫자를 접미사 안에만 넣는다 — 상태의
+            // 진짜 세기(예: 취약의 배율)는 카드 텍스트에 애초에 나타나지 않는다(이미 그렇다).
+            if (!context.StatusContent.CountIsDuration(payload.Key))
+            {
+                return prefix + statusName + " " + effectValue;
+            }
+
+            var kind = context.StatusContent.LifetimeOf(payload.Key);
+            return prefix + statusName + " " + context.LifetimeSuffix(kind, effectValue);
         }
     }
 

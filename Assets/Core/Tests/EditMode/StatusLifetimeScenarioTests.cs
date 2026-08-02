@@ -24,8 +24,7 @@ namespace FateWeaver.Tests
             => new ZoneCardSpec(id, id, Side.Player, executionOrder,
                 new[]
                 {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: block)
+                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, count: block)
                 });
 
         private static MultiTurnScenario OneTurn(int playerHp, EnemySpec[] enemies, params ZoneCardSpec[] cards)
@@ -59,8 +58,7 @@ namespace FateWeaver.Tests
         {
             var expose = new[]
             {
-                EffectData.ApplyStatus(
-                    StatusKeys.Vulnerable, StatusLifetime.Turns(2), StatusApplyTarget.TargetEnemy)
+                EffectData.ApplyStatus(StatusKeys.Vulnerable, StatusApplyTarget.TargetEnemy, count: 2)
             };
 
             var scenario = new MultiTurnScenario(

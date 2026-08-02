@@ -43,9 +43,13 @@ namespace FateWeaver.Tests
         private static string PayloadSig(EffectData e)
             => e.Payload switch
             {
-                ApplyStatusPayload p => p.Key + "/" + p.Lifetime.Kind + ":" + p.Lifetime.Count + "/" + p.Target,
+                // Task 4: lifetime kind/count and the suppress-marker key no longer ride on the
+                // payload — they're derived from the status's StatusContentCatalog entry at apply
+                // time, so a payload-only signature can no longer see them (nor should it: the whole
+                // point is that the card no longer carries that information).
+                ApplyStatusPayload p => p.Key + "/" + p.Target,
                 ConsumeStatusPayload p => p.Key + "/" + p.MaxAmount + "/" + p.DamageBonusPerConsumed,
-                TriggerStatusPayload p => p.Key + "/" + p.SuppressMarkerKey,
+                TriggerStatusPayload p => p.Key.ToString(),
                 _ => "-"
             };
 
@@ -58,34 +62,34 @@ namespace FateWeaver.Tests
         {
             "breather;숨 고르기;Player;Intervention;1;0;change_execution_order:1:1:Player:False;",
             "delayed_strike;늦춘 일격;Player;Execution;1;5;-;damage,5,-,-,FrontMost,False,-",
-            "early_guard;앞선 대비;Player;Execution;1;4;-;apply_status,4,-,-,-,False,block/ThisTurn:0/Self",
-            "early_onset;조기 발병;Player;Execution;2;3;-;apply_status,1,-,-,FrontMost,False,poison/Permanent:0/TargetEnemy|trigger_status,0,-,-,FrontMost,False,poison/poison_dormant",
+            "early_guard;앞선 대비;Player;Execution;1;4;-;apply_status,4,-,-,-,False,block/Self",
+            "early_onset;조기 발병;Player;Execution;2;3;-;apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|trigger_status,0,-,-,FrontMost,False,poison",
             "hasten;재촉;Player;Intervention;1;0;change_execution_order:1:-1:Player:False;",
-            "last_drop;마지막 한 방울;Player;Execution;1;7;-;apply_status,1,NoFollowingCardOfSide { Side = Player },2,FrontMost,False,poison/Permanent:0/TargetEnemy",
-            "probing_strike;견제타;Player;Execution;1;4;-;damage,4,-,-,FrontMost,False,-|apply_status,1,-,-,-,False,block/ThisTurn:0/Self",
-            "quick_cover;빠른 엄호;Player;Execution;1;4;-;apply_status,4,-,-,FrontMost,False,block/ThisTurn:0/PartyBySelector",
-            "spore_veil;포자막;Player;Execution;1;5;-;apply_status,1,-,-,FrontMost,False,poison/Permanent:0/TargetEnemy|apply_status,2,-,-,-,False,block/ThisTurn:0/Self",
-            "toxic_reclaim;독성 환원;Player;Execution;1;5;-;consume_status,0,-,-,FrontMost,False,poison/1/0|apply_status,1,-,-,FrontMost,False,poison/Permanent:0/TargetEnemy|apply_status,4,ConsumedStatusAtLeast { N = 1 },4,-,True,block/ThisTurn:0/Self"
+            "last_drop;마지막 한 방울;Player;Execution;1;7;-;apply_status,1,NoFollowingCardOfSide { Side = Player },2,FrontMost,False,poison/TargetEnemy",
+            "probing_strike;견제타;Player;Execution;1;4;-;damage,4,-,-,FrontMost,False,-|apply_status,1,-,-,-,False,block/Self",
+            "quick_cover;빠른 엄호;Player;Execution;1;4;-;apply_status,4,-,-,FrontMost,False,block/PartyBySelector",
+            "spore_veil;포자막;Player;Execution;1;5;-;apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|apply_status,2,-,-,-,False,block/Self",
+            "toxic_reclaim;독성 환원;Player;Execution;1;5;-;consume_status,0,-,-,FrontMost,False,poison/1/0|apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|apply_status,4,ConsumedStatusAtLeast { N = 1 },4,-,True,block/Self"
         };
 
         private static readonly string[] GoldenPartyPrototypeHandCoded =
         {
-            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/AllPartyMembers",
+            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/AllPartyMembers",
             "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,False,-",
             "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,False,-",
             "fixture_move_forward;[검증] 대형 이동;Player;Execution;1;5;-;move_formation,-1,-,-,-,False,-",
-            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/Self",
-            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/Self"
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/Self",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/Self"
         };
 
         private static readonly string[] GoldenPartyPrototypeSpecs =
         {
-            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/AllPartyMembers",
+            "fixture_all_block;[검증] 전체 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/AllPartyMembers",
             "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,False,-",
             "fixture_attack;[검증] 공격;Player;Execution;1;4;-;damage,4,-,-,-,False,-",
             "fixture_move_forward;[검증] 대형 이동;Player;Execution;1;5;-;move_formation,-1,-,-,-,False,-",
-            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/Self",
-            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/ThisTurn:0/Self"
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/Self",
+            "fixture_selected_block;[검증] 선택 방어;Player;Execution;1;5;-;apply_status,4,-,-,-,False,block/Self"
         };
 
         // --- golden pinning tests ---------------------------------------------------------

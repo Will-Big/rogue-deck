@@ -26,5 +26,9 @@ namespace FateWeaver.Core.Status
         public static readonly StatusLifetime ThisTurn = new StatusLifetime(StatusLifetimeKind.ThisTurn, 0);
         public static StatusLifetime Turns(int turns) => new StatusLifetime(StatusLifetimeKind.Turns, turns);
         public static StatusLifetime UntilConsumed(int charges = 1) => new StatusLifetime(StatusLifetimeKind.UntilConsumed, charges);
+
+        /// <summary>카탈로그가 읽은 수명 종류로 조립한다 (생성자가 private이라 필요하다).
+        /// count는 Turns·UntilConsumed에서만 의미가 있다 — 그 외 종류는 0을 넘긴다.</summary>
+        public static StatusLifetime Of(StatusLifetimeKind kind, int count) => new StatusLifetime(kind, count);
     }
 }

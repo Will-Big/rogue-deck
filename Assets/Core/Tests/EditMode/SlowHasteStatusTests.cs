@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
@@ -12,32 +13,36 @@ namespace FateWeaver.Tests
 {
     public class SlowHasteStatusTests
     {
-        private static StatusContext Ctx(StatusKey key, int magnitude) =>
-            new StatusContext { Instance = new StatusInstance(key, StatusLifetime.Turns(2), magnitude) };
+        // Task 4: slow/haste no longer carry their own strength on the StatusInstance's Magnitude —
+        // the catalog is the only source (StatusContentDefaults: slow +2, haste -2 executionOrder).
+        private static readonly StatusContentCatalog Content = StatusContentDefaults.Catalog();
+
+        private static StatusContext Ctx(StatusKey key) =>
+            new StatusContext { Instance = new StatusInstance(key, StatusLifetime.Turns(2)), Content = Content };
 
         [Test]
         public void Base_behavior_does_not_change_executionOrder()
         {
             var block = new BlockBehavior();
-            Assert.AreEqual(5, block.ModifyExecutionOrder(5, Ctx(StatusKeys.Block, 3)));
+            Assert.AreEqual(5, block.ModifyExecutionOrder(5, Ctx(StatusKeys.Block)));
         }
 
         [Test]
-        public void Slow_adds_magnitude_to_executionOrder()
+        public void Slow_adds_the_catalog_delta_to_executionOrder()
         {
             var slow = new SlowBehavior();
             Assert.AreEqual(StatusScope.Entity, slow.Scope);
             Assert.AreEqual(StatusKeys.Slow, slow.Key);
-            Assert.AreEqual(8, slow.ModifyExecutionOrder(5, Ctx(StatusKeys.Slow, 3)));
+            Assert.AreEqual(7, slow.ModifyExecutionOrder(5, Ctx(StatusKeys.Slow))); // 5 + catalog delta 2
         }
 
         [Test]
-        public void Haste_subtracts_magnitude_from_executionOrder()
+        public void Haste_subtracts_the_catalog_delta_from_executionOrder()
         {
             var haste = new HasteBehavior();
             Assert.AreEqual(StatusScope.Entity, haste.Scope);
             Assert.AreEqual(StatusKeys.Haste, haste.Key);
-            Assert.AreEqual(2, haste.ModifyExecutionOrder(5, Ctx(StatusKeys.Haste, 3)));
+            Assert.AreEqual(3, haste.ModifyExecutionOrder(5, Ctx(StatusKeys.Haste))); // 5 + catalog delta -2
         }
         private static StatusRegistry Registry()
         {
@@ -52,12 +57,12 @@ namespace FateWeaver.Tests
         public void Fold_applies_entity_statuses_only()
         {
             var bag = new StatusBag();
-            bag.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
-            Assert.AreEqual(8, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default()));
+            bag.Add(StatusKeys.Slow, StatusLifetime.Turns(2));
+            Assert.AreEqual(7, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default(), Content));
 
             var bag2 = new StatusBag();
-            bag2.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 2);
-            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry(), StatusRuleCatalog.Default()));
+            bag2.Add(StatusKeys.Haste, StatusLifetime.Turns(2));
+            Assert.AreEqual(3, StatusExecutionOrder.ExecutionOrderFor(5, bag2, Registry(), StatusRuleCatalog.Default(), Content));
         }
 
         [Test]
@@ -65,9 +70,9 @@ namespace FateWeaver.Tests
         {
             var bag = new StatusBag();
             bag.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default()));
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null, StatusRuleCatalog.Default()));
-            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry(), StatusRuleCatalog.Default()));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default(), Content));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null, StatusRuleCatalog.Default(), Content));
+            Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry(), StatusRuleCatalog.Default(), Content));
         }
 
         private static CardDefinition PlayerStrike() => new CardDefinition(
@@ -88,11 +93,11 @@ namespace FateWeaver.Tests
         {
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
-            session.State.Enemies[0].Statuses.Add(StatusKeys.Slow, StatusLifetime.Turns(2), 3);
+            session.State.Enemies[0].Statuses.Add(StatusKeys.Slow, StatusLifetime.Turns(2));
             session.ResolveTurn();
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
+            Assert.AreEqual(7, jab.ExecutionOrder); // base 5 + slow's catalog delta 2
         }
 
         [Test]
@@ -100,10 +105,10 @@ namespace FateWeaver.Tests
         {
             var session = new DeckCombatSession(
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
-            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2));
             session.PlayExecutionCard(0);
             var strike = session.CurrentOrder.First(c => c.Def.Id == "p_strike");
-            Assert.AreEqual(2, strike.ExecutionOrder); // base 5 - haste 3
+            Assert.AreEqual(3, strike.ExecutionOrder); // base 5 + haste's catalog delta -2
         }
 
         [Test]
@@ -120,7 +125,7 @@ namespace FateWeaver.Tests
             // OwnerStatusesFor now matches by party member Id symmetrically in solo and party mode
             // (Task 4); "warrior" matches no member of the solo party (whose only member is
             // CombatState.SoloPlayerId), so the solo player's haste never reaches this card.
-            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2), 3);
+            session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2));
 
             Assert.IsTrue(session.PlayExecutionCard(0));
 
@@ -128,7 +133,8 @@ namespace FateWeaver.Tests
             Assert.AreEqual(5, strike.ExecutionOrder); // base order unmodified: no matching owner statuses
         }
 
-        // 폐기된 StarterDeckSpecs.SlowHex()의 값을 그대로 옮긴 픽스처.
+        // 폐기된 StarterDeckSpecs.SlowHex()의 값을 그대로 옮긴 픽스처. Slow는 Turns 종류라 카드가 주는
+        // count는 지속(2턴)뿐이다 — Value는 세기 자리이던 흔적이라 더 이상 읽히지 않는다(0으로 둔다).
         private static CardSpec SlowHexFixture() => new CardSpec
         {
             Id = "slow_hex",
@@ -140,7 +146,7 @@ namespace FateWeaver.Tests
             Effects = new EffectSpec[] { new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Value = 3,
+                Value = 0,
                 Lifetime = StatusLifetimeKind.Turns,
                 LifetimeCount = 2,
                 Target = StatusApplyTarget.TargetEnemy
@@ -160,7 +166,7 @@ namespace FateWeaver.Tests
             Assert.IsTrue(session.State.Enemies[0].Statuses.Has(StatusKeys.Slow));
             session.BeginNextTurn();
             var jab = session.CurrentOrder.First(c => c.Def.Id == "e_jab");
-            Assert.AreEqual(8, jab.ExecutionOrder); // base 5 + slow 3
+            Assert.AreEqual(7, jab.ExecutionOrder); // base 5 + slow's catalog delta 2
         }
     }
 }

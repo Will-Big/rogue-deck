@@ -32,8 +32,7 @@ namespace FateWeaver.Tests
             var counter = new ZoneCardSpec("counter", "Counter Stance", Side.Player, 1,
                 new[]
                 {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 2),
+                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, count: 2),
                     EffectData.Conditional(EffectKeys.Damage, 0,
                         new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), 7),
                     EffectData.Conditional(EffectKeys.Damage, 0,

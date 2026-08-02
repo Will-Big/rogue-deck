@@ -31,7 +31,7 @@ namespace FateWeaver.Core
             statuses.Register(new BlockBehavior());
             statuses.Register(new SlowBehavior());
             statuses.Register(new HasteBehavior());
-            statuses.Register(new PoisonBehavior(growthPerTurn: 1));
+            statuses.Register(new PoisonBehavior());
             statuses.Register(new PoisonDormantBehavior());
             statuses.Register(new PoisonStasisBehavior());
             statuses.Register(new ContagionBehavior());

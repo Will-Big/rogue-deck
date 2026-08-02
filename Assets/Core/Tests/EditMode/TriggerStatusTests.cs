@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
         private static StatusRegistry Statuses()
         {
             var statuses = new StatusRegistry();
-            statuses.Register(new PoisonBehavior(growthPerTurn: 1));
+            statuses.Register(new PoisonBehavior());
             statuses.Register(new PoisonDormantBehavior());
             statuses.Register(new PoisonStasisBehavior());
             return statuses;
@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
 
         private static EffectData Trigger() => new EffectData(EffectKeys.TriggerStatus, 0)
         {
-            Payload = new TriggerStatusPayload(StatusKeys.Poison, StatusKeys.PoisonDormant)
+            Payload = new TriggerStatusPayload(StatusKeys.Poison)
         };
 
         [Test]
@@ -41,8 +41,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("early_onset", "조기 발병", Side.Player, 3, new[]
             {
-                EffectData.ApplyStatus(
-                    StatusKeys.Poison, StatusLifetime.Permanent, StatusApplyTarget.TargetEnemy, 1),
+                EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.TargetEnemy, 1),
                 Trigger()
             });
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });

@@ -37,14 +37,16 @@ namespace FateWeaver.Core.Cards
                 SuccessEffectValue = successEffectValue
             };
 
+        /// <summary>카드가 apply_status에 주는 것은 count 하나뿐이다. 그 뜻(세기 또는 지속)과
+        /// 결과 수명의 종류는 상태 자신의 StatusContentCatalog 항목이 정한다 — 카드는 고르지 않는다.
+        /// count는 EffectValue에 실려 조건부 SuccessEffectValue를 그대로 통과한다.</summary>
         public static EffectData ApplyStatus(
             StatusKey statusKey,
-            StatusLifetime lifetime,
             StatusApplyTarget target,
-            int magnitude = 0)
-            => new EffectData(EffectKeys.ApplyStatus, magnitude)
+            int count = 0)
+            => new EffectData(EffectKeys.ApplyStatus, count)
             {
-                Payload = new ApplyStatusPayload(statusKey, lifetime, target)
+                Payload = new ApplyStatusPayload(statusKey, target)
             };
     }
 

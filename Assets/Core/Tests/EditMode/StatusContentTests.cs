@@ -3,6 +3,9 @@ using FateWeaver.Core;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Json;
 using FateWeaver.Core.Authoring.Statuses;
+using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
+using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using NUnit.Framework;
 
@@ -94,7 +97,7 @@ namespace FateWeaver.Tests
                         "poison.json",
                         "{ \"key\": \"poison\", \"lifetime\": \"Permanent\", \"growthPerTurn\": 1 }")
                 },
-                OnlyStatus(new PoisonBehavior(growthPerTurn: 1)));
+                OnlyStatus(new PoisonBehavior()));
 
             Assert.IsTrue(result.Succeeded, string.Join(" | ", result.Errors));
             Assert.AreEqual(
@@ -167,6 +170,85 @@ namespace FateWeaver.Tests
                 Assert.DoesNotThrow(
                     () => catalog.LifetimeOf(info.Key), "상태 '" + info.Key.Id + "'의 기본값이 없다.");
             }
+        }
+
+        // --- Task 4: 코어가 상태 카탈로그에서 수명과 세기를 읽는다 --------------------------------
+
+        /// <summary>상태 콘텐츠를 실은 CombatState와 apply_status 효과 하나짜리 카드를 조립하고,
+        /// 그 카드의 효과만 해결한다(EndOfTurnMaintenance는 돌리지 않는다 — 독의 자기 성장 틱이나
+        /// Turns 상태의 EndOfTurn() 감소가 "카드가 준 count가 곧바로 무엇이 되는지"를 가리기
+        /// 때문이다. 검증 대상은 부여 시점의 값이지, 틱을 거친 값이 아니다).</summary>
+        private static class CombatFixture
+        {
+            public static CombatState WithStatusContent()
+            {
+                var state = new CombatState();
+                state.AddSoloPlayer(20);
+                state.Enemies.Add(new Enemy("enemy", 20));
+                return state;
+            }
+
+            public static CardDefinition ApplyStatusCard(string statusId, int count)
+                => new CardDefinition("fixture_card", "fixture_card", Side.Player, 1,
+                    new[]
+                    {
+                        EffectData.ApplyStatus(new StatusKey(statusId), StatusApplyTarget.TargetEnemy, count)
+                    })
+                    { Category = CardCategory.Execution };
+
+            public static void Resolve(CombatState state, CardDefinition cardDef)
+            {
+                var card = new ExecutionCardInstance(cardDef) { OwnerId = CombatState.SoloPlayerId };
+                var effects = CombatRegistries.Effects();
+                var statuses = CombatRegistries.Statuses();
+
+                foreach (var effect in cardDef.Effects)
+                {
+                    var ctx = new EffectContext
+                    {
+                        Card = card,
+                        State = state,
+                        Effect = effect,
+                        EffectValue = effect.EffectValue,
+                        StatusRegistry = statuses
+                    };
+                    effects.Resolve(effect.Key).Apply(ctx);
+                }
+            }
+        }
+
+        [Test]
+        public void CardCountBecomesMagnitudeForAPermanentStatus()
+        {
+            var state = CombatFixture.WithStatusContent();
+            var card = CombatFixture.ApplyStatusCard("poison", count: 3);
+
+            CombatFixture.Resolve(state, card);
+
+            Assert.AreEqual(3, state.Enemies[0].Statuses.Get(StatusKeys.Poison).Magnitude);
+        }
+
+        [Test]
+        public void CardCountBecomesDurationForATurnsStatus()
+        {
+            var state = CombatFixture.WithStatusContent();
+            var card = CombatFixture.ApplyStatusCard("slow", count: 3);
+
+            CombatFixture.Resolve(state, card);
+            var instance = state.Enemies[0].Statuses.Get(StatusKeys.Slow);
+
+            Assert.AreEqual(3, instance.Count);
+            Assert.AreEqual(StatusLifetimeKind.Turns, instance.Kind);
+        }
+
+        [Test]
+        public void SlowStrengthComesFromTheStatusNotTheCard()
+        {
+            var state = CombatFixture.WithStatusContent();
+            CombatFixture.Resolve(state, CombatFixture.ApplyStatusCard("slow", count: 2));
+
+            Assert.AreEqual(
+                2, state.StatusContent.ExecutionOrderDeltaOf(StatusKeys.Slow));
         }
     }
 }

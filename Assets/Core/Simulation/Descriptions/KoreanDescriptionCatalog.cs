@@ -1,4 +1,5 @@
 using System;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
@@ -13,13 +14,14 @@ namespace FateWeaver.Simulation.Descriptions
             EffectDescriptionRegistry effects,
             InterventionDescriptionRegistry interventions,
             StatusDescriptionRegistry statuses,
-            IDescriptionGrammar grammar)
+            IDescriptionGrammar grammar,
+            StatusContentCatalog statusContent)
         {
             Effects = effects ?? throw new ArgumentNullException(nameof(effects));
             Interventions = interventions
                 ?? throw new ArgumentNullException(nameof(interventions));
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
-            Context = new DescriptionContext(grammar, statuses);
+            Context = new DescriptionContext(grammar, statuses, statusContent);
         }
 
         public EffectDescriptionRegistry Effects { get; }
@@ -62,7 +64,8 @@ namespace FateWeaver.Simulation.Descriptions
                 effects,
                 interventions,
                 statuses,
-                new KoreanDescriptionGrammar());
+                new KoreanDescriptionGrammar(),
+                StatusContentDefaults.Catalog());
         }
     }
 }

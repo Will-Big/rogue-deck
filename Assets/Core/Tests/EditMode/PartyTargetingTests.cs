@@ -71,7 +71,7 @@ namespace FateWeaver.Tests
             state.Party.Add(b);
             state.Party.Add(c);
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.PartyMember, magnitude: 4);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, 4);
             var card = Card("aid", Side.Player, effect);
             card.OwnerId = "a";
             card.TargetId = "b";
@@ -94,7 +94,7 @@ namespace FateWeaver.Tests
             state.Party.Add(a);
             state.Party.Add(b);
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 4);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4);
             var card = Card("guard", Side.Player, effect);
             // OwnerId intentionally left null.
             var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
@@ -112,7 +112,7 @@ namespace FateWeaver.Tests
             var state = new CombatState();
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 3);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3);
             var card = Card("crude_guard", Side.Enemy, effect);
             var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 3 };
 
@@ -130,7 +130,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("a", 20));
             state.Enemies.Add(new Enemy("b", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 3);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3);
             var card = Card("crude_guard", Side.Enemy, effect);
             var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 3 };
 
@@ -149,7 +149,7 @@ namespace FateWeaver.Tests
             state.Party.Add(hero);
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, magnitude: 4);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4);
             var card = Card("guard", Side.Player, effect);
             // OwnerId left null: with only one party member, Self resolves unambiguously — symmetric
             // with Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners above.
@@ -174,7 +174,7 @@ namespace FateWeaver.Tests
             state.Party.Add(b);
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var applyEffect = EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.AllPartyMembers, magnitude: 5);
+            var applyEffect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.AllPartyMembers, 5);
             var applyCard = Card("guard_all", Side.Player, applyEffect);
             var applyCtx = new EffectContext { Card = applyCard, State = state, Effect = applyEffect, EffectValue = 5 };
             new ApplyStatusHandler().Apply(applyCtx);
@@ -289,11 +289,11 @@ namespace FateWeaver.Tests
         public void RequiresExplicitAllyTarget_is_true_only_for_partymember_status_effects()
         {
             var partyMemberCard = new CardDefinition("aid", "aid", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.PartyMember, 3) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, 3) });
             var selfCard = new CardDefinition("guard", "guard", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 3) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) });
             var allCard = new CardDefinition("guard_all", "guard_all", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.AllPartyMembers, 3) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.AllPartyMembers, 3) });
             var damageCard = new CardDefinition("slash", "slash", Side.Player, 1,
                 new[] { new EffectData(EffectKeys.Damage, 3) });
 
