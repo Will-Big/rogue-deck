@@ -1351,15 +1351,35 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - 등록된 상태가 하나라도 저작되지 않으면 로드가 거부된다
 - 워킹 트리가 깨끗하다 (규칙 18)
 
-## 이 계획이 후속으로 넘기는 부채
+## 전체 브랜치 리뷰가 잡은 것
 
-- **17개 CardSO의 규칙 데이터가 검증되지 않은 채 남는다.** 상태의 세기·수명이 카드에서 상태
-  콘텐츠로 옮겨가면서 그 `.asset` YAML이 사라진 `Value`·`Lifetime`·`LifetimeCount`·`SuppressMarker`를
-  직렬화한 채 남았다. Unity가 로드 시 버리므로 게임 경로(C# 스펙 + 카드 JSON)에는 영향이 없지만,
-  SO→`CardCodeGenerator`→`GeneratedCards.cs` 일치를 지키던 스냅샷 테스트를 이 계획에서 제거했다.
-  설계 §4.5가 SO의 규칙 필드를 제거 대상으로 규정했고 후속 계획이 `CardCodeGenerator`와
-  `GeneratedCards.cs`를 함께 지우므로, 그때 이 부채도 사라진다. 그 전까지 SO의 규칙 필드를
-  신뢰하지 않는다.
+**카드 에셋 마이그레이션을 빠뜨렸다 — 게임을 깨뜨릴 뻔했다.**
+
+`ApplyStatusSpec`이 `Value`·`Lifetime`·`LifetimeCount`를 잃었는데 17개 `CardSO/*.asset`의
+`[SerializeReference]` YAML은 그대로였다. Unity가 사라진 필드를 버리므로 모든 에셋 카드가
+`Count = 0`으로 읽혔다.
+
+이걸 "게임 경로는 JSON이라 무해하다"고 판단해 스냅샷 가드 테스트를 지웠는데, **그 전제가
+틀렸다.** `BattleScreenController.cs:78`이 `member.Deck.ToSpecs()`로 **에셋에서** 카드를 만들고
+(`DeckPlaytestController.cs:73`도 같다), `CardContentLoader`는 아직 테스트에서만 불린다. 즉
+Play 모드에서 `early_guard`·`quick_cover`가 방어 0을, 독 카드들이 독 0을 걸 상태였다.
+
+에셋 YAML을 기계적으로 옮기고(`Count = (Lifetime ∈ {Turns, UntilConsumed}) ? LifetimeCount : Value`)
+가드 테스트를 되살렸다. C# 저작(`StarterPoolSpecs`)과 대조해 20개 항목 전부 일치를 확인했다.
+
+**교훈:** 이 저장소에서 `[SerializeReference]` 필드를 바꾸면 **코드와 에셋 YAML을 같은 커밋에서
+함께 옮겨야 한다.** 계획 1의 Task 1이 어셈블리 이름으로 같은 함정을 밟았고, 이번엔 필드 이름으로
+밟았다. 헤드리스 테스트는 둘 다 잡지 못한다 — Unity EditMode만 잡는다.
+
+## 후속으로 넘기는 것
+
+- **설명 카탈로그가 전투와 다른 `StatusContentCatalog` 인스턴스를 읽는다.**
+  `KoreanDescriptionCatalog.Default`는 프로세스 전역 싱글턴이고 그 `DescriptionContext.StatusContent`가
+  `StatusContentDefaults.Catalog()`로 고정돼 있다(`KoreanDescriptionCatalog.cs:11,66`). 반면
+  `CombatState.StatusContent`는 로더가 만든 카탈로그를 받도록 설계된 세터다. 지금은 값이 같아
+  드러나지 않지만, 후속 계획이 `StatusContentLoader`를 부팅에 배선하는 순간 **카드 텍스트는 코드
+  기본값으로, 규칙은 파일로** 갈린다. `CreateDefault()`에 카탈로그 오버로드를 주고 Unity 레이어가
+  세션마다 만들게 해야 한다.
 
 ## 후속
 
