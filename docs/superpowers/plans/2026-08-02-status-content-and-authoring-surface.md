@@ -505,16 +505,27 @@ namespace FateWeaver.Core.Authoring.Statuses
             Simple(StatusKeys.PoisonDormant),
             Simple(StatusKeys.PoisonStasis),
             Simple(StatusKeys.RewardNullified),
-            new StatusSpecInfo(StatusKeys.Poison, typeof(PoisonStatusSpec), () => new PoisonStatusSpec()),
-            new StatusSpecInfo(StatusKeys.Vulnerable, typeof(MultiplierStatusSpec), () => new MultiplierStatusSpec()),
-            new StatusSpecInfo(StatusKeys.Weak, typeof(MultiplierStatusSpec), () => new MultiplierStatusSpec()),
-            new StatusSpecInfo(StatusKeys.Damaged, typeof(MultiplierStatusSpec), () => new MultiplierStatusSpec()),
-            new StatusSpecInfo(StatusKeys.Slow, typeof(ExecutionOrderStatusSpec), () => new ExecutionOrderStatusSpec()),
-            new StatusSpecInfo(StatusKeys.Haste, typeof(ExecutionOrderStatusSpec), () => new ExecutionOrderStatusSpec())
+            Parameterised(StatusKeys.Poison, () => new PoisonStatusSpec()),
+            Parameterised(StatusKeys.Vulnerable, () => new MultiplierStatusSpec()),
+            Parameterised(StatusKeys.Weak, () => new MultiplierStatusSpec()),
+            Parameterised(StatusKeys.Damaged, () => new MultiplierStatusSpec()),
+            Parameterised(StatusKeys.Slow, () => new ExecutionOrderStatusSpec()),
+            Parameterised(StatusKeys.Haste, () => new ExecutionOrderStatusSpec())
         };
 
         private static StatusSpecInfo Simple(StatusKey key)
-            => new StatusSpecInfo(key, typeof(StatusSpec), () => new StatusSpec());
+            => Parameterised(key, () => new StatusSpec());
+
+        /// <summary>팩터리가 만든 스펙에 **반드시 Key를 채운다.** Key는 EffectSpec.Key와 달리
+        /// [JsonIgnore]가 아닌 실제 필드라, 비워두면 DefaultValueHandling.Ignore가 쓰기에서
+        /// 지워버리고 되읽을 때 "key 없음" 예외가 난다.</summary>
+        private static StatusSpecInfo Parameterised(StatusKey key, Func<StatusSpec> create)
+            => new StatusSpecInfo(key, create().GetType(), () =>
+            {
+                var spec = create();
+                spec.Key = StatusKeyRef.Of(key);
+                return spec;
+            });
     }
 }
 ```
