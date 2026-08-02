@@ -49,8 +49,11 @@ namespace FateWeaver.Core.Effects
                     ctx.DamageDealt = hpBefore - target.Hp;
                 }
 
-                // 마커는 상태 존재 여부와 무관하게 심는다 (선점 잠복): 이 카드보다 뒤에 실행되는
+                // 마커는 상태 보유 여부와 무관하게 심는다 (선점 잠복): 이 카드보다 뒤에 실행되는
                 // 다른 카드가 이번 턴에 상태를 새로 부여하더라도 이번 턴 종료 발동은 막아야 한다.
+                // 단, TryResolve(behavior) 가드 안쪽으로 좁힌 것은 의도적이다 — behavior를 못 찾으면
+                // 심을 마커의 정체도 알 수 없고, TurnResolver.TickHolder도 같은 TryResolve를 거쳐야
+                // 틱하므로, 여기서 못 심어도 억제할 대상 자체가 없다.
                 behavior.SuppressThisTurn(enemy.Statuses);
             }
 

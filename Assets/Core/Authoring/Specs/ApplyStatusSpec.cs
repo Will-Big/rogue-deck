@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
@@ -39,6 +40,13 @@ namespace FateWeaver.Core.Authoring
             else if (!context.HasStatus(Status.ToKey()))
             {
                 yield return "Unknown status key '" + Status.Id + "'.";
+            }
+            else if (!StatusSpecCatalog.HasContent(Status.ToKey()))
+            {
+                // 행동 레지스트리에는 있지만(HasStatus 통과) 저작 카탈로그에는 없는 상태(예: stun) —
+                // ApplyStatusHandler가 해결 시점에 StatusContentCatalog.LifetimeOf를 호출하므로
+                // 여기서 막지 않으면 KeyNotFoundException으로 죽는다.
+                yield return "status '" + Status.Id + "' has no authored content.";
             }
         }
 

@@ -157,6 +157,26 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void RejectsACardThatAppliesAStatusWithNoAuthoredContent()
+        {
+            // stun은 행동 레지스트리에는 등록돼 있어 HasStatus는 통과하지만 StatusSpecCatalog에는
+            // 없다(저작 불가로 확정된 상태). 예전에는 이런 카드가 검증을 통과해 해결 시점에
+            // ApplyStatusHandler가 StatusContentCatalog.LifetimeOf에서 KeyNotFoundException으로
+            // 죽었다 — 이제는 저작 시점에 거절돼야 한다.
+            var spec = new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.Stun),
+                Value = 1,
+                Lifetime = StatusLifetimeKind.ThisTurn,
+                Target = StatusApplyTarget.TargetEnemy
+            };
+
+            var errors = spec.Validate(AuthoringContext.Default()).ToList();
+
+            Assert.IsTrue(errors.Any(e => e.Contains("stun")));
+        }
+
+        [Test]
         public void DefaultsCoverEveryRegisteredStatus()
         {
             // AuthoringContext.Default().RegisteredStatusKeys가 아니라 StatusSpecCatalog.All()을

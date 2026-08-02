@@ -20,6 +20,9 @@ namespace FateWeaver.Tests
             // 기본 구현이 아무것도 하지 않고 예외 없이 통과해야 한다.
             behavior.OnTurnEnd(new StatusTickContext());
             behavior.OnHolderDied(new StatusDeathContext());
+            var bag = new StatusBag();
+            behavior.SuppressThisTurn(bag);
+            Assert.IsEmpty(bag.All); // 마커를 심지 않는다
         }
 
         [Test]
