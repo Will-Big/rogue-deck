@@ -9,8 +9,7 @@
     {
       "kind": "apply_status",
       "status": "block",
-      "value": 2,
-      "lifetime": "ThisTurn",
+      "count": 2,
       "condition": {
         "kind": "NextIsEnemyDamageCard",
         "successEffectValue": 6

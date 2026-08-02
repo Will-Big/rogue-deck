@@ -18,10 +18,10 @@ namespace FateWeaver.Core.Authoring
             CondensedBurst(), Distill(), EarlyOnset(), StableCulture(), PosthumousSpread()
         };
 
-        private static ApplyStatusSpec PoisonApply(int value) => new ApplyStatusSpec
+        private static ApplyStatusSpec PoisonApply(int count) => new ApplyStatusSpec
         {
-            Status = StatusKeyRef.Of(StatusKeys.Poison), Value = value,
-            Lifetime = StatusLifetimeKind.Permanent, Target = StatusApplyTarget.TargetEnemy,
+            Status = StatusKeyRef.Of(StatusKeys.Poison), Count = count,
+            Target = StatusApplyTarget.TargetEnemy,
             Selector = TargetSelectorRef.FrontMost
         };
 
@@ -42,8 +42,8 @@ namespace FateWeaver.Core.Authoring
                 new DamageSpec { Value = 1, Selector = TargetSelectorRef.FrontMost },
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 3,
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 3,
+                    Target = StatusApplyTarget.Self
                 }
             }
         };
@@ -66,8 +66,8 @@ namespace FateWeaver.Core.Authoring
                 new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontMost },
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 1,
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 1,
+                    Target = StatusApplyTarget.Self
                 }
             }
         };
@@ -80,8 +80,7 @@ namespace FateWeaver.Core.Authoring
             {
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 4,
-                    Lifetime = StatusLifetimeKind.ThisTurn,
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 4,
                     Target = StatusApplyTarget.PartyBySelector, Selector = TargetSelectorRef.FrontMost
                 }
             }
@@ -112,8 +111,8 @@ namespace FateWeaver.Core.Authoring
             {
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 4,
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 4,
+                    Target = StatusApplyTarget.Self
                 }
             }
         };
@@ -151,8 +150,8 @@ namespace FateWeaver.Core.Authoring
             {
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 2,
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 2,
+                    Target = StatusApplyTarget.Self,
                     Condition = new ConditionSpec
                     {
                         Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 6
@@ -202,8 +201,8 @@ namespace FateWeaver.Core.Authoring
                 PoisonApply(1),
                 new ApplyStatusSpec
                 {
-                    Status = StatusKeyRef.Of(StatusKeys.Block), Value = 2,
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self
+                    Status = StatusKeyRef.Of(StatusKeys.Block), Count = 2,
+                    Target = StatusApplyTarget.Self
                 }
             }
         };
@@ -228,8 +227,8 @@ namespace FateWeaver.Core.Authoring
         {
             var block = new ApplyStatusSpec
             {
-                Status = StatusKeyRef.Of(StatusKeys.Block), Value = 4,
-                Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
+                Status = StatusKeyRef.Of(StatusKeys.Block), Count = 4,
+                Target = StatusApplyTarget.Self,
                 Condition = new ConditionSpec
                 {
                     Kind = ConditionKind.ConsumedStatusAtLeast, N = 1,
@@ -318,8 +317,8 @@ namespace FateWeaver.Core.Authoring
             poison.Selector = TargetSelectorRef.BackMost;
             var stasis = new ApplyStatusSpec
             {
-                Status = StatusKeyRef.Of(StatusKeys.PoisonStasis), Value = 0,
-                Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.TargetEnemy,
+                Status = StatusKeyRef.Of(StatusKeys.PoisonStasis), Count = 0,
+                Target = StatusApplyTarget.TargetEnemy,
                 Selector = TargetSelectorRef.BackMost
             };
             return new CardSpec
@@ -334,8 +333,7 @@ namespace FateWeaver.Core.Authoring
         {
             var contagion = new ApplyStatusSpec
             {
-                Status = StatusKeyRef.Of(StatusKeys.Contagion), Value = 0,
-                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2,
+                Status = StatusKeyRef.Of(StatusKeys.Contagion), Count = 2,
                 Target = StatusApplyTarget.TargetEnemy, Selector = TargetSelectorRef.FrontMost
             };
             return new CardSpec

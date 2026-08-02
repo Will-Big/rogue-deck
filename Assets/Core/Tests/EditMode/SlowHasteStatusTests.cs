@@ -44,12 +44,22 @@ namespace FateWeaver.Tests
             Assert.AreEqual(StatusKeys.Haste, haste.Key);
             Assert.AreEqual(3, haste.ModifyExecutionOrder(5, Ctx(StatusKeys.Haste))); // 5 + catalog delta -2
         }
+        /// <summary>Entity 범위 실행 순서 조작과 대비되는, 카드 범위(CardInstance) 상태의 표본 —
+        /// 프로덕션의 stun을 대신한다(Task 5에서 제거). 카드 범위 상태가 ExecutionOrderFor의 접힘
+        /// 대상에서 빠진다는 것만 검증하면 되므로 상태 자체의 의미는 무관하다.</summary>
+        private sealed class CardScopedBehavior : StatusBehavior
+        {
+            public static readonly StatusKey TestKey = new StatusKey("test_card_scoped");
+            public override StatusKey Key => TestKey;
+            public override StatusScope Scope => StatusScope.CardInstance;
+        }
+
         private static StatusRegistry Registry()
         {
             var r = new StatusRegistry();
             r.Register(new SlowBehavior());
             r.Register(new HasteBehavior());
-            r.Register(new StunBehavior());
+            r.Register(new CardScopedBehavior());
             return r;
         }
 
@@ -69,7 +79,7 @@ namespace FateWeaver.Tests
         public void Fold_ignores_card_scoped_and_null_inputs()
         {
             var bag = new StatusBag();
-            bag.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
+            bag.Add(CardScopedBehavior.TestKey, StatusLifetime.UntilConsumed(1)); // card-scoped -> ignored
             Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, Registry(), StatusRuleCatalog.Default(), Content));
             Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, bag, null, StatusRuleCatalog.Default(), Content));
             Assert.AreEqual(5, StatusExecutionOrder.ExecutionOrderFor(5, null, Registry(), StatusRuleCatalog.Default(), Content));
@@ -134,7 +144,7 @@ namespace FateWeaver.Tests
         }
 
         // 폐기된 StarterDeckSpecs.SlowHex()의 값을 그대로 옮긴 픽스처. Slow는 Turns 종류라 카드가 주는
-        // count는 지속(2턴)뿐이다 — Value는 세기 자리이던 흔적이라 더 이상 읽히지 않는다(0으로 둔다).
+        // count는 지속(2턴)뿐이다.
         private static CardSpec SlowHexFixture() => new CardSpec
         {
             Id = "slow_hex",
@@ -146,9 +156,7 @@ namespace FateWeaver.Tests
             Effects = new EffectSpec[] { new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Value = 0,
-                Lifetime = StatusLifetimeKind.Turns,
-                LifetimeCount = 2,
+                Count = 2,
                 Target = StatusApplyTarget.TargetEnemy
             } }
         };

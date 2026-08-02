@@ -136,7 +136,6 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        [Ignore("Task 5에서 stun 제거 후 활성화")]
         public void ReportsAStatusThatHasNoRegisteredBehavior()
         {
             var result = Load(new CardContentSource(
@@ -156,33 +155,39 @@ namespace FateWeaver.Tests
             Assert.IsTrue(result.Errors.Any(e => e.Contains("poison")));
         }
 
+        /// <summary>행동은 있지만 저작 카탈로그에는 없는 가짜 상태 — Task 5 이전에는 stun이 이
+        /// 시나리오의 실제 표본이었다. stun이 완전히 제거된 지금은 프로덕션 레지스트리에 그런
+        /// 상태가 하나도 없어야 정상이므로(등록된 상태가 하나라도 저작되지 않으면 로드가 거부된다),
+        /// 검증 로직 자체는 이 가짜 상태로 계속 지킨다.</summary>
+        private sealed class UncontentedBehavior : StatusBehavior
+        {
+            public static readonly StatusKey TestKey = new StatusKey("test_uncontented");
+            public override StatusKey Key => TestKey;
+            public override StatusScope Scope => StatusScope.Entity;
+        }
+
         [Test]
         public void RejectsACardThatAppliesAStatusWithNoAuthoredContent()
         {
-            // stun은 행동 레지스트리에는 등록돼 있어 HasStatus는 통과하지만 StatusSpecCatalog에는
-            // 없다(저작 불가로 확정된 상태). 예전에는 이런 카드가 검증을 통과해 해결 시점에
-            // ApplyStatusHandler가 StatusContentCatalog.LifetimeOf에서 KeyNotFoundException으로
-            // 죽었다 — 이제는 저작 시점에 거절돼야 한다.
             var spec = new ApplyStatusSpec
             {
-                Status = StatusKeyRef.Of(StatusKeys.Stun),
-                Value = 1,
-                Lifetime = StatusLifetimeKind.ThisTurn,
+                Status = StatusKeyRef.Of(UncontentedBehavior.TestKey),
+                Count = 1,
                 Target = StatusApplyTarget.TargetEnemy
             };
 
-            var errors = spec.Validate(AuthoringContext.Default()).ToList();
+            var errors = spec.Validate(OnlyStatus(new UncontentedBehavior())).ToList();
 
-            Assert.IsTrue(errors.Any(e => e.Contains("stun")));
+            Assert.IsTrue(errors.Any(e => e.Contains("test_uncontented")));
         }
 
         [Test]
         public void DefaultsCoverEveryRegisteredStatus()
         {
             // AuthoringContext.Default().RegisteredStatusKeys가 아니라 StatusSpecCatalog.All()을
-            // 기준으로 삼는다 — stun은 여전히 전투 레지스트리(StatusRegistry)에 남아 있지만
-            // (Task 5에서 제거), 이미 Task 2에서 "저작 불가"로 확정돼 StatusSpecCatalog에서
-            // 의도적으로 빠져 있다. 저작 기본값은 "저작 가능한 상태"를 전부 덮으면 된다.
+            // 기준으로 삼는다 — Task 5에서 stun을 완전히 제거해 지금은 등록된 모든 상태가
+            // StatusSpecCatalog에도 있지만, 그 대응 관계를 다시 우회하는 새 상태가 생기지 않도록
+            // 이 테스트는 여전히 "저작 가능한 상태 전체"를 기준으로 삼는다.
             var catalog = StatusContentDefaults.Catalog();
 
             foreach (var info in StatusSpecCatalog.All())

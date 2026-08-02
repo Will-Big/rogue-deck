@@ -52,9 +52,9 @@ namespace FateWeaver.Tests
             {
                 Id = "cover", Name = "엄호", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
-                Effects = new EffectSpec[] { new ApplyStatusSpec { Value = 2,
+                Effects = new EffectSpec[] { new ApplyStatusSpec { Count = 2,
                     Status = StatusKeyRef.Of(StatusKeys.Block),
-                    Lifetime = StatusLifetimeKind.ThisTurn, Target = StatusApplyTarget.Self,
+                    Target = StatusApplyTarget.Self,
                     Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 7 } } }
             });
 
@@ -91,14 +91,14 @@ namespace FateWeaver.Tests
         public void Maps_slow_and_haste_apply_status()
         {
             var slow = new ApplyStatusSpec {
-                Value = 3, Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.TargetEnemy
+                Count = 2, Status = StatusKeyRef.Of(StatusKeys.Slow),
+                Target = StatusApplyTarget.TargetEnemy
             }.ToEffectData();
             Assert.AreEqual(StatusKeys.Slow, ((ApplyStatusPayload)slow.Payload).Key);
 
             var haste = new ApplyStatusSpec {
-                Value = 3, Status = StatusKeyRef.Of(StatusKeys.Haste),
-                Lifetime = StatusLifetimeKind.Turns, LifetimeCount = 2, Target = StatusApplyTarget.Self
+                Count = 2, Status = StatusKeyRef.Of(StatusKeys.Haste),
+                Target = StatusApplyTarget.Self
             }.ToEffectData();
             Assert.AreEqual(StatusKeys.Haste, ((ApplyStatusPayload)haste.Payload).Key);
         }
@@ -135,9 +135,8 @@ namespace FateWeaver.Tests
         {
             var effect = new ApplyStatusSpec
             {
-                Value = 4,
+                Count = 4,
                 Status = StatusKeyRef.Of(StatusKeys.Block),
-                Lifetime = StatusLifetimeKind.ThisTurn,
                 Target = StatusApplyTarget.AllPartyMembers
             }.ToEffectData();
 

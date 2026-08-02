@@ -110,7 +110,6 @@ namespace FateWeaver.Tests
         public static StatusRegistry Statuses()
         {
             var statuses = new StatusRegistry();
-            statuses.Register(new StunBehavior());
             statuses.Register(new VulnerableBehavior());
             statuses.Register(new RewardSuppressionBehavior());
             statuses.Register(new BlockBehavior());

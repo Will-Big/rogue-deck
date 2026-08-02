@@ -66,7 +66,7 @@ namespace FateWeaver.Core.Status
         /// so no central switch grows here.</summary>
         int ModifyGainedMagnitude(StatusKey gained, int magnitude, StatusContext ctx);
 
-        /// <summary>Card-scoped: return true to nullify/skip the card's resolution (e.g. stun).</summary>
+        /// <summary>Card-scoped: return true to nullify/skip the card's resolution.</summary>
         bool InterceptCardResolve(StatusContext ctx);
 
         /// <summary>Entity-scoped: fold into the executionOrder of a card owned by the holder (e.g. slow/haste).</summary>

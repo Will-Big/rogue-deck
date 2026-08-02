@@ -36,8 +36,7 @@ namespace FateWeaver.Core.Authoring
             new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Block),
-                Value = BlockMagnitude,
-                Lifetime = StatusLifetimeKind.ThisTurn,
+                Count = BlockMagnitude,
                 Target = StatusApplyTarget.Self
             });
 
@@ -48,8 +47,7 @@ namespace FateWeaver.Core.Authoring
             new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Block),
-                Value = BlockMagnitude,
-                Lifetime = StatusLifetimeKind.ThisTurn,
+                Count = BlockMagnitude,
                 Target = StatusApplyTarget.AllPartyMembers
             });
 

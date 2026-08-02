@@ -9,6 +9,17 @@ namespace FateWeaver.Tests
 {
     public class StatusTests
     {
+        /// <summary>카드 해결을 무조건 무효화하는 카드 범위(CardInstance) 테스트 전용 상태 — 프로덕션의
+        /// stun을 대신한다(Task 5에서 제거). 이 상태 자체의 의미는 테스트와 무관하고, CardInstance
+        /// 범위 가로채기 배선만 검증하면 된다.</summary>
+        private sealed class NullifyingBehavior : StatusBehavior
+        {
+            public static readonly StatusKey TestKey = new StatusKey("test_nullify");
+            public override StatusKey Key => TestKey;
+            public override StatusScope Scope => StatusScope.CardInstance;
+            public override bool InterceptCardResolve(StatusContext ctx) => true;
+        }
+
         private static EffectRegistry Effects()
         {
             var r = new EffectRegistry();
@@ -19,7 +30,7 @@ namespace FateWeaver.Tests
         private static StatusRegistry Statuses()
         {
             var r = new StatusRegistry();
-            r.Register(new StunBehavior());
+            r.Register(new NullifyingBehavior());
             r.Register(new VulnerableBehavior());
             r.Register(new RewardSuppressionBehavior());
             r.Register(new BlockBehavior());
@@ -52,12 +63,12 @@ namespace FateWeaver.Tests
         public void EndOfTurn_drops_thisturn_ticks_turns_keeps_permanent()
         {
             var bag = new StatusBag();
-            bag.Add(StatusKeys.Stun, StatusLifetime.ThisTurn);
+            bag.Add(NullifyingBehavior.TestKey, StatusLifetime.ThisTurn);
             bag.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
             bag.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
 
             bag.EndOfTurn();
-            Assert.IsFalse(bag.Has(StatusKeys.Stun));                  // ThisTurn dropped
+            Assert.IsFalse(bag.Has(NullifyingBehavior.TestKey));          // ThisTurn dropped
             Assert.AreEqual(1, bag.Get(StatusKeys.Vulnerable).Count);  // 2 -> 1
             Assert.IsTrue(bag.Has(StatusKeys.RewardNullified));        // permanent kept
 
@@ -102,13 +113,13 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Stun_until_consumed_nullifies_one_resolution_then_is_gone()
+        public void CardInstance_status_until_consumed_nullifies_one_resolution_then_is_gone()
         {
             var state = new CombatState();
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var card = Card("strike", Side.Player, 1, 5);
-            card.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));
+            card.Statuses.Add(NullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
             state.Zone.Add(card);
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -116,7 +127,7 @@ namespace FateWeaver.Tests
             var cancelled = (CardCancelled)events[1];
             Assert.AreEqual(CardCancellationReason.StatusIntercepted, cancelled.Reason);
             Assert.AreEqual(20, state.Enemies[0].Hp);
-            Assert.IsFalse(card.Statuses.Has(StatusKeys.Stun));
+            Assert.IsFalse(card.Statuses.Has(NullifyingBehavior.TestKey));
         }
 
         [Test]

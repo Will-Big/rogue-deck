@@ -80,8 +80,7 @@ namespace FateWeaver.Tests
             new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Block),
-                Value = 2,
-                Lifetime = StatusLifetimeKind.ThisTurn,
+                Count = 2,
                 Target = StatusApplyTarget.Self,
                 Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 7 }
             });

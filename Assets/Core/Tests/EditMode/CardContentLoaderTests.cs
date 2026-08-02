@@ -81,7 +81,7 @@ namespace FateWeaver.Tests
                 "badstatus.json",
                 "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\","
                 + " \"category\": \"Execution\", \"effects\": ["
-                + " { \"kind\": \"apply_status\", \"status\": \"no_such_status\", \"value\": 1 } ] }"));
+                + " { \"kind\": \"apply_status\", \"status\": \"no_such_status\", \"count\": 1 } ] }"));
 
             Assert.IsFalse(result.Succeeded);
             StringAssert.Contains("no_such_status", result.Errors[0]);

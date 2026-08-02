@@ -9,8 +9,7 @@
     {
       "kind": "apply_status",
       "status": "poison",
-      "value": 1,
-      "lifetime": "Permanent",
+      "count": 1,
       "target": "TargetEnemy",
       "selector": "FrontMost",
       "condition": {

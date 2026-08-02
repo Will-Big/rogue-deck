@@ -21,10 +21,21 @@ namespace FateWeaver.Tests
             return r;
         }
 
+        /// <summary>카드 해결을 무조건 무효화하는 카드 범위(CardInstance) 테스트 전용 상태 —
+        /// 프로덕션의 stun을 대신한다(Task 5에서 제거). "StatusIntercepted로 취소된 카드는 이전
+        /// 실행 카드 탐색에서 건너뛴다"는 조건 배선만 검증하면 되므로 상태 자체의 의미는 무관하다.</summary>
+        private sealed class NullifyingBehavior : StatusBehavior
+        {
+            public static readonly StatusKey TestKey = new StatusKey("test_nullify");
+            public override StatusKey Key => TestKey;
+            public override StatusScope Scope => StatusScope.CardInstance;
+            public override bool InterceptCardResolve(StatusContext ctx) => true;
+        }
+
         private static StatusRegistry Statuses()
         {
             var r = new StatusRegistry();
-            r.Register(new StunBehavior());
+            r.Register(new NullifyingBehavior());
             return r;
         }
 
@@ -120,7 +131,7 @@ namespace FateWeaver.Tests
 
                 var a = PlainCard("a_hit2", Side.Player, executionOrder: 1, damage: 2);
                 var b = PlainCard("b_hit2", Side.Player, executionOrder: 2, damage: 1);
-                b.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));
+                b.Statuses.Add(NullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
                 var c = ConditionalCard("c_hit2", Side.Player, executionOrder: 3,
                     new PreviousExecutedCardIs(Side.Player), baseDamage: 0, successDamage: 6);
 
@@ -146,13 +157,13 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 
-            // A's condition looks at the frozen next slot (B). B later gets cancelled by Stun, but
-            // that must not retroactively change A's already-evaluated tier.
+            // A's condition looks at the frozen next slot (B). B later gets cancelled by the
+            // nullifying status, but that must not retroactively change A's already-evaluated tier.
             var a = ConditionalCard("a_card", Side.Player, executionOrder: 1,
                 new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
                 baseDamage: 1, successDamage: 9);
             var b = PlainCard("b_card", Side.Enemy, executionOrder: 2, damage: 3);
-            b.Statuses.Add(StatusKeys.Stun, StatusLifetime.UntilConsumed(1));
+            b.Statuses.Add(NullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
 
             state.Zone.Add(a);
             state.Zone.Add(b);

@@ -4,7 +4,6 @@ using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
-using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
@@ -13,20 +12,18 @@ namespace FateWeaver.Core.Authoring
     public sealed class ApplyStatusSpec : EffectSpec
     {
         public StatusKeyRef Status;
-        public int Value;
 
-        // Permanent은 StatusLifetimeKind의 0번째(기본) 값이라 DefaultValueHandling.Ignore가 지운다.
-        // 생략된 lifetime이 조용히 "영원히 지속"으로 복원되는 사고를 막기 위해 항상 써야 한다.
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
-        public StatusLifetimeKind Lifetime;
-        public int LifetimeCount;
+        /// <summary>이 카드가 거는 양. 뜻은 상태가 정한다 — 수명이 Permanent·ThisTurn이면 세기,
+        /// Turns·UntilConsumed면 지속.</summary>
+        public int Count;
+
         public StatusApplyTarget Target;
         public TargetSelectorRef Selector;
 
         public override EffectKey Key => EffectKeys.ApplyStatus;
 
         public override EffectData ToEffectData()
-            => ApplyCondition(new EffectData(Key, ResolvedCount())
+            => ApplyCondition(new EffectData(Key, Count)
             {
                 Payload = new ApplyStatusPayload(Status.ToKey(), Target)
             }) with { TargetSelector = ToSelector(Selector) };
@@ -43,7 +40,7 @@ namespace FateWeaver.Core.Authoring
             }
             else if (!StatusSpecCatalog.HasContent(Status.ToKey()))
             {
-                // 행동 레지스트리에는 있지만(HasStatus 통과) 저작 카탈로그에는 없는 상태(예: stun) —
+                // 행동 레지스트리에는 있지만(HasStatus 통과) 저작 카탈로그에는 없는 상태 —
                 // ApplyStatusHandler가 해결 시점에 StatusContentCatalog.LifetimeOf를 호출하므로
                 // 여기서 막지 않으면 KeyNotFoundException으로 죽는다.
                 yield return "status '" + Status.Id + "' has no authored content.";
@@ -52,20 +49,9 @@ namespace FateWeaver.Core.Authoring
 
         public override string ToLiteral()
             => "new ApplyStatusSpec { Status = new StatusKeyRef { Id = " + Quote(Status.Id) + " }"
-                + ", Value = " + Value
-                + ", Lifetime = StatusLifetimeKind." + Lifetime
-                + ", LifetimeCount = " + LifetimeCount
+                + ", Count = " + Count
                 + ", Target = StatusApplyTarget." + Target
                 + ", Selector = TargetSelectorRef." + Selector
                 + ", " + ConditionLiteral() + " }";
-
-        /// <summary>카드가 apply_status에 주는 count 하나로 접는다. Turns·UntilConsumed는 지속(카드가
-        /// 적은 LifetimeCount), 그 외(Permanent·ThisTurn)는 세기(Value)다 — ApplyStatusHandler가
-        /// StatusContentCatalog에서 같은 판단을 다시 하므로, 여기 Lifetime은 그 판단과 일치해야 한다
-        /// (카드 저작 시점의 Lifetime·LifetimeCount·Value 3필드는 후속 작업에서 정리 대상이다).</summary>
-        private int ResolvedCount()
-            => Lifetime == StatusLifetimeKind.Turns || Lifetime == StatusLifetimeKind.UntilConsumed
-                ? LifetimeCount
-                : Value;
     }
 }

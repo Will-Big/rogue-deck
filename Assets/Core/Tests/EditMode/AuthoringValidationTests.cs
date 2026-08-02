@@ -25,8 +25,7 @@ namespace FateWeaver.Tests
         {
             var errors = AuthoringValidator.Validate(
                 new[] { Execution(new ApplyStatusSpec {
-                    Status = new StatusKeyRef { Id = "no_such_status" }, Value = 1,
-                    Lifetime = StatusLifetimeKind.ThisTurn }) },
+                    Status = new StatusKeyRef { Id = "no_such_status" }, Count = 1 }) },
                 AuthoringContext.Default());
             Assert.IsTrue(errors.Any(e => e.Contains("no_such_status")));
         }
@@ -46,7 +45,6 @@ namespace FateWeaver.Tests
                 StatusKeys.PoisonStasis,
                 StatusKeys.RewardNullified,
                 StatusKeys.Slow,
-                StatusKeys.Stun,
                 StatusKeys.Vulnerable,
                 StatusKeys.Weak
             }));
@@ -56,7 +54,7 @@ namespace FateWeaver.Tests
         public void Empty_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(
-                new[] { Execution(new ApplyStatusSpec { Value = 1, Lifetime = StatusLifetimeKind.ThisTurn }) },
+                new[] { Execution(new ApplyStatusSpec { Count = 1 }) },
                 AuthoringContext.Default());
             Assert.IsNotEmpty(errors);
         }

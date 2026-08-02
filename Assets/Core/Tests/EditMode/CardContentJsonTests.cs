@@ -56,9 +56,7 @@ namespace FateWeaver.Tests
             var original = new ApplyStatusSpec
             {
                 Status = new StatusKeyRef { Id = "poison" },
-                Value = 3,
-                Lifetime = StatusLifetimeKind.Turns,
-                LifetimeCount = 2,
+                Count = 2,
                 Target = StatusApplyTarget.TargetEnemy,
                 Selector = TargetSelectorRef.BackMost,
                 Condition = new ConditionSpec
@@ -70,9 +68,7 @@ namespace FateWeaver.Tests
             var restored = (ApplyStatusSpec)ContentJson.Read<EffectSpec>(ContentJson.Write(original));
 
             Assert.AreEqual("poison", restored.Status.Id);
-            Assert.AreEqual(3, restored.Value);
-            Assert.AreEqual(StatusLifetimeKind.Turns, restored.Lifetime);
-            Assert.AreEqual(2, restored.LifetimeCount);
+            Assert.AreEqual(2, restored.Count);
             Assert.AreEqual(StatusApplyTarget.TargetEnemy, restored.Target);
             Assert.AreEqual(TargetSelectorRef.BackMost, restored.Selector);
             Assert.AreEqual(ConditionKind.WithinNth, restored.Condition.Kind);
@@ -115,8 +111,7 @@ namespace FateWeaver.Tests
                     new ApplyStatusSpec
                     {
                         Status = new StatusKeyRef { Id = "block" },
-                        Value = 1,
-                        Lifetime = StatusLifetimeKind.ThisTurn,
+                        Count = 1,
                         Target = StatusApplyTarget.Self
                     }
                 }

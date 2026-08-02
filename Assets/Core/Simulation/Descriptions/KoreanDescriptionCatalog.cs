@@ -35,7 +35,6 @@ namespace FateWeaver.Simulation.Descriptions
             statuses.Register(StatusKeys.Block, "방어");
             statuses.Register(StatusKeys.Slow, "둔화");
             statuses.Register(StatusKeys.Haste, "가속");
-            statuses.Register(StatusKeys.Stun, "기절");
             statuses.Register(StatusKeys.Vulnerable, "취약");
             statuses.Register(StatusKeys.RewardNullified, "조건 보상 무효");
             statuses.Register(StatusKeys.Poison, "독");

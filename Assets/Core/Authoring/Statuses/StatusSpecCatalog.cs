@@ -46,7 +46,7 @@ namespace FateWeaver.Core.Authoring.Statuses
 
         /// <summary>true면 이 키는 콘텐츠(수명·세기)를 저작할 수 있다 — apply_status처럼 핸들러가
         /// StatusContentCatalog를 읽는 효과가 이걸로 저작 시점에 걸러야, 등록만 되고 콘텐츠가 없는
-        /// 상태(예: stun)를 카드가 가리켜 해결 시점에 KeyNotFoundException으로 죽는 일이 없다.</summary>
+        /// 상태를 카드가 가리켜 해결 시점에 KeyNotFoundException으로 죽는 일이 없다.</summary>
         public static bool HasContent(StatusKey key)
         {
             foreach (var info in All())

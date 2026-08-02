@@ -9,8 +9,7 @@
     {
       "kind": "apply_status",
       "status": "block",
-      "value": 4,
-      "lifetime": "ThisTurn"
+      "count": 4
     }
   ]
 }

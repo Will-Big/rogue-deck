@@ -9,15 +9,13 @@
     {
       "kind": "apply_status",
       "status": "poison",
-      "value": 2,
-      "lifetime": "Permanent",
+      "count": 2,
       "target": "TargetEnemy",
       "selector": "BackMost"
     },
     {
       "kind": "apply_status",
       "status": "poison_stasis",
-      "lifetime": "ThisTurn",
       "target": "TargetEnemy",
       "selector": "BackMost"
     }

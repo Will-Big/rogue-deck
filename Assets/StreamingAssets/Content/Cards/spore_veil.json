@@ -9,16 +9,14 @@
     {
       "kind": "apply_status",
       "status": "poison",
-      "value": 1,
-      "lifetime": "Permanent",
+      "count": 1,
       "target": "TargetEnemy",
       "selector": "FrontMost"
     },
     {
       "kind": "apply_status",
       "status": "block",
-      "value": 2,
-      "lifetime": "ThisTurn"
+      "count": 2
     }
   ]
 }
