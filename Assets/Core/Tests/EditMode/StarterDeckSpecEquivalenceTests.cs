@@ -50,33 +50,33 @@ namespace FateWeaver.Tests
         // 값을 그대로 옮긴 것이다. 이 세 테스트는 출시 카드가 아니라 규칙(개입 재정렬,
         // PrevExecutedIsEnemyDamageCard 조건, 블록 흡수)을 검사하므로 어떤 카드가
         // 실제로 출시되는지에 의존하지 않도록 인라인 픽스처를 쓴다.
-        private static CardSpec Fixture(string id, int order, params EffectSpec[] effects)
+        private static CardSpec Fixture(string id, int order, int energyCost, params EffectSpec[] effects)
             => new CardSpec
             {
                 Id = id,
                 Name = id,
                 Side = Side.Player,
                 Category = CardCategory.Execution,
-                EnergyCost = 1,
+                EnergyCost = energyCost,
                 BaseExecutionOrder = order,
                 Effects = effects
             };
 
-        private static CardSpec QuickCutFixture() => Fixture("quick_cut", 5,
+        private static CardSpec QuickCutFixture() => Fixture("quick_cut", 5, 1,
             new DamageSpec
             {
                 Value = 2,
                 Condition = new ConditionSpec { Kind = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 }
             });
 
-        private static CardSpec CounterFixture() => Fixture("counter_stance", 7,
+        private static CardSpec CounterFixture() => Fixture("counter_stance", 7, 2,
             new DamageSpec
             {
                 Value = 4,
                 Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsEnemyDamageCard, SuccessEffectValue = 9 }
             });
 
-        private static CardSpec CoverFixture() => Fixture("cover", 5,
+        private static CardSpec CoverFixture() => Fixture("cover", 5, 1,
             new ApplyStatusSpec
             {
                 Status = StatusKeyRef.Of(StatusKeys.Block),
