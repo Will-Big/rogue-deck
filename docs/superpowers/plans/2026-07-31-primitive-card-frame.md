@@ -1,10 +1,10 @@
-# Primitive Card Frame and Structured Description Implementation Plan
+# Primitive Card Frame and Structured Description Continuation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 실행·개입 카드가 서로 다른 프리미티브 프레임을 사용하고, 순수 C#이 대상 의미·설명 줄·심볼 평문을 구조화하며, 손패가 4:3부터 21:9까지 간격과 전체 스케일만으로 대응하게 한다.
+**Goal:** 현재 프리미티브 카드 프레임 구현을 승인된 색상 전용 진영 문법, 카드 전체 대상 그룹화, 실행·개입별 폼팩터로 완성하고 반응형 손패 회귀를 닫는다.
 
-**Architecture:** 코어의 닫힌 위치 범위와 카드 실행 시작 시점 대상 스냅샷이 실제 효과 대상을 소유하고, Simulation 설명 레지스트리는 같은 의미를 `CardDescriptionLayout`으로 합성한다. Unity 경계의 `CardPresentation`은 구조화 결과를 그대로 전달하며, `CardPrefabCatalog`가 카테고리별 전체 카드 프리팹과 재사용 심볼·설명 줄 프리팹을 제공한다. 모든 전체 카드 소비처는 카탈로그만 참조하고, `HandFanView`는 프리팹 내부 좌표 대신 간격과 공통 스케일만 계산한다.
+**Architecture:** 순수 C# `DescriptionComposer`가 정확한 nullable `CardTargetKey?`별로 카드 전체 효과를 첫 등장 순서에 따라 묶고, Unity는 구조화된 `Target`을 역파싱하지 않고 표시한다. 실행 카드는 가운데 대상 패널에 0–2개의 프리미티브 glyph를 한 행으로 표시하고, 개입 카드는 대상 패널 없이 그 높이를 설명 영역에 사용한다. 코드와 자동 테스트는 Codex가 작성하며, 프리팹 구조·좌표·직렬화 색은 각 RED 체크포인트에서 사용자가 Unity Inspector로 직접 저작한다.
 
 **Tech Stack:** Unity 6000.5.2f1, C# 9, .NET 6/net5.0 headless harness, NUnit 3, uGUI, TextMeshPro, ScriptableObject/YAML prefabs, Unity EditMode batch tests
 
@@ -12,986 +12,908 @@
 
 - 작업 위치는 `/Users/ish/Git/rogue-deck-card-frame-design`, 브랜치는 `refactor/card-frame-design`이다. 새 워크트리·브랜치를 만들거나 메인 체크아웃의 브랜치를 전환하지 않는다.
 - 권위 설계는 `docs/superpowers/specs/2026-07-31-primitive-card-frame-design.md`와 선행 문서 `docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md`다.
-- `FateWeaver.Core`와 `FateWeaver.Simulation`은 `UnityEngine`을 참조하지 않는다. C# 9 제약 때문에 `record struct` 대신 명시적 `readonly struct`와 `IEquatable<T>`를 사용한다.
-- 무작위 대상 선택을 제거한다. 규칙 코드에 새 `System.Random`, `DateTime`, `Guid.NewGuid()`를 도입하지 않는다.
-- `TargetSelectorRef`의 기존 직렬화 값 `2`(`SecondFromFront`)와 `4`(`Random`)를 새 범위에 재사용하지 않는다. 정의되지 않은 값으로 남겨 부팅 검증이 오래된 에셋을 확실히 거부하게 한다.
-- 새 효과의 대상 의미는 중앙 switch가 아니라 효과 핸들러 계약과 레지스트리를 통해 확장한다.
-- 런타임 `new GameObject`, `GameObject.Find`, `FindObjectOfType`, 태그·레이어 이름 비교, `Resources.Load` 호출, 카드 ID·파일 경로 기반 프리팹 선택을 추가하지 않는다.
-- Unity 인스펙터 참조는 `[SerializeField] private`으로 유지하고, 전체 카드·대상 심볼·설명 줄은 프리팹으로 저장한다.
-- 카드 아트, 카드 수치, 효과 순서, 개입 대상 규칙, `RailCardView` 레이아웃은 변경하지 않는다.
-- 카드 내부 좌표는 프리팹이 소유한다. 반응형 코드는 손패 간격과 `Content` 루트의 균일 스케일만 계산하며 `LateUpdate()`에서 좌표를 덮어쓰지 않는다.
+- `FateWeaver.Core`와 `FateWeaver.Simulation`은 `UnityEngine`을 참조하지 않는다.
+- 설명 문장과 효과 횟수는 중복 제거하지 않는다. 같은 nullable 대상 키의 문장만 카드 전체에서 한 줄로 모은다.
+- Unity 설명 줄은 대상 범위와 무관하게 같은 `◆`를 쓰고, 아군 `#5DADE2`·적군 `#E85D5D` 색만 심볼 한 글자에 적용한다.
+- Unity 대상 glyph도 같은 두 색만 진영 구분에 사용한다. 윤곽/채움, 별도 방향 표식, 서로 다른 진영 기호를 혼합하지 않는다.
+- 아군 전열은 오른쪽, 적군 전열은 왼쪽이다. `모두`는 `◇━━◇`이며 다른 위치 glyph와 같은 시각 폭을 사용한다.
+- 실행 카드 대상은 한 진영이면 가운데, 양 진영이면 아군 왼쪽·적군 오른쪽의 한 행으로 가운데 정렬한다. 세로 배치는 없다.
+- `∅`는 무대상 실행 카드에만 표시한다. 개입 카드에는 대상 패널과 `∅`가 모두 없고 `ExpandedDescriptionPanel`이 그 높이를 사용한다.
+- 런타임 `new GameObject`, `GameObject.Find`, `FindObjectOfType`, 태그·레이어 이름 비교, `Resources.Load` 호출, 파일 경로 기반 프리팹 선택을 추가하지 않는다.
+- 프리팹 참조와 색은 `[SerializeField] private`으로 저작한다. 색상 값을 규칙/표현 코드의 `const`나 `static readonly` 튜닝 상수로 만들지 않는다.
+- 프리팹의 자식 좌표는 Inspector가 소유한다. C#은 범위 visual 활성화, 진영색 적용, 좌우 미러링만 담당한다.
+- 카드 아트·수치·효과 실행 순서·개입 대상 규칙과 실행 영역의 소형 `RailCardView` 레이아웃은 변경하지 않는다.
+- 외부 패키지나 에셋을 추가하지 않는다.
+- 사용자가 수정 중인 `Assets/Unity/Prefabs/DescriptionLineView.prefab`을 자동 YAML 편집하거나 덮어쓰지 않는다.
 - 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`다.
-- Unity 자동 검증은 지정 워크트리를 `-projectPath`로 사용하고 결과·로그를 `/private/tmp`에 쓴다. GUI Play·씬/프리팹 수동 저작은 사용자가 별도로 요청하기 전에는 수행하지 않는다.
-- 새 `Assets/` 파일은 Unity가 생성한 1:1 `.meta`와 함께 커밋한다. 각 task는 RED → 최소 GREEN → 관련 회귀 → 제한 스테이징 → 커밋 순서를 지킨다.
+- Unity 자동 검증은 이 워크트리를 `-projectPath`로 사용하고 결과·로그를 `/private/tmp`에 쓴다.
+- 각 task는 RED → 최소 GREEN → 관련 회귀 → 사용자 프리팹 체크포인트(해당 시) → 제한 스테이징 → 커밋 순서를 지킨다.
 
 ---
 
-## File Map
+## Current Baseline
 
-### Core target schema and runtime
+다음 구현은 이미 현재 브랜치에 커밋됐다.
 
-- Create `Assets/Core/Cards/CardTarget.cs`: `CardTargetFaction`, `CardTargetRange`, 값 동등성을 갖는 `CardTargetKey`.
-- Modify `Assets/Core/Cards/TargetSelector.cs`: `FrontOne`, `FrontTwo`, `BackOne`, `BackTwo`, `All` 닫힌 집합.
-- Create `Assets/Core/Combat/CardTargetSnapshot.cs`: 카드 실행 시작 시 진영별 대상 객체를 한 번 확정하고 효과 사이에 공유.
-- Modify `Assets/Core/Effects/IEffectHandler.cs`: 각 핸들러가 `TargetFor(CardDefinition, EffectData)`를 선언하고 `EffectContext`가 스냅샷을 전달.
-- Modify `Assets/Core/Combat/TurnResolver.cs`: 효과 실행 전에 대상 의미를 수집·검증하고 단일 스냅샷 생성.
-- Modify `Assets/Core/Combat/EnemyTargeting.cs`, `Assets/Core/Combat/PartyTargeting.cs`: 앞/뒤 1·2·전체 집합 선택과 중복 없는 순서 보존.
-- Modify `Assets/Core/Effects/DamageHandler.cs`, `ApplyStatusHandler.cs`, `ConsumeStatusHandler.cs`, `TriggerStatusHandler.cs`, `MoveFormationHandler.cs`, `GrantNextTurnFateHandler.cs`, `GrantNextPlayerDamageCardBonusHandler.cs`, `NullifyNextPlayerConditionRewardHandler.cs`: 대상 의미 선언 및 스냅샷 소비.
+- 닫힌 위치 범위, 실행 시작 대상 스냅샷, 구조화 설명 모델: `dbeb678`–`80ab92c`
+- `CardPresentation` 구조화 설명 전달: `f62a129`
+- 카탈로그, 실행·개입 전체 카드, 초기 프리미티브 subview: `ab1b350`
+- 전체 카드 소비처의 카탈로그 전환과 부팅 검증: `1321a55`–`2149695`
+- 반응형 손패와 첫 번째 resize 상태 보존 수정: `48f15f8`, `6cfea6d`
+- 최종 진영색·대상 문법·전역 그룹화 설계: `2b62162`, `558159a`
 
-### Authoring and structured descriptions
+현재 워크트리에는 다음 사용자/진행 중 변경이 있으므로 계획 문서 커밋에 섞지 않는다.
 
-- Modify `Assets/Core/Simulation/Authoring/EffectSpec.cs`, `Specs/DamageSpec.cs`, `Specs/ApplyStatusSpec.cs`, `Specs/ConsumeStatusSpec.cs`, `Specs/TriggerStatusSpec.cs`: 명시적 `TargetSelectorRef` 숫자, 안전한 매핑, 정의되지 않은 값 검증.
-- Modify `Assets/Core/Simulation/Authoring/StarterPoolSpecs.cs` and `Generated/GeneratedCards.cs`: 새 선택자 이름으로 원본과 산출물 동기화.
-- Create `Assets/Core/Simulation/Descriptions/CardDescriptionLayout.cs`: `EffectDescriptionFragment`, `CardDescriptionLine`, `CardDescriptionLayout`.
-- Modify `DescriptionContracts.cs`, `DescriptionComposer.cs`, `BuiltInEffectDescriptionHandlers.cs`, `KoreanDescriptionGrammar.cs`, `KoreanDescriptionCatalog.cs`: 구조화 조각·줄·심볼 평문 계약.
-- Modify `DescriptionCatalogValidator.cs`: 카드 ID가 포함된 범위 충돌, 지원하지 않는 직접 선택, 빈 조각 검증.
+- `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`: Task 1 RED 두 개
+- `Assets/Unity/Prefabs/DescriptionLineView.prefab`: 사용자 Inspector 수정
+- `.superpowers/`, `graphify-out/.vocab.txt`, `graphify-out/memory/`, `graphify-out/reflections/`: 로컬 도구 산출물
 
-### Unity presentation and assets
+## Remaining File Map
 
-- Modify `Assets/Unity/CardPresentation.cs`: `CardDescriptionLayout` 전달.
-- Create `Assets/Unity/CardPrefabCatalog.cs` and `Assets/Unity/CardPrefabCatalog.asset`: 실행·개입·대상 심볼·설명 줄 프리팹 참조와 카테고리 조회.
-- Create `Assets/Unity/TargetGlyphView.cs`, `Assets/Unity/DescriptionLineView.cs` and matching prefabs.
-- Move `Assets/Unity/Prefabs/CardView.prefab` to `ExecutionCardView.prefab` while preserving its `.meta` GUID.
-- Create `Assets/Unity/Prefabs/InterventionCardView.prefab`: 대상 패널·실행 순서 없는 별도 레이아웃.
-- Modify `CardView.cs`, `HandFanView.cs`, `PileView.cs`, `ExecutionRailView.cs`, `DeckPlaytestController.cs`, `Editor/BattleSceneBuilder.cs`.
-- Create `Assets/Core/Simulation/Presentation/ResponsiveHandLayout.cs`: 순수 간격·스케일 계산.
-- Delete seven `Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png` files and matching `.meta` only after the reference audit is empty.
+### Responsive hand
 
-### Tests
+- Modify `Assets/Unity/HandCardHoverEffect.cs`: 활성 여부를 노출하고 authored sibling 복원 계약을 유지한다.
+- Modify `Assets/Unity/HandFanView.cs`: resize 전에 활성 카드의 현재 z-order를 캡처하고 그 순서대로 다시 올린다.
+- Test `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`.
 
-- Create `Assets/Core/Tests/EditMode/CardTargetSnapshotTests.cs`, `StructuredCardDescriptionTests.cs`, `ResponsiveHandLayoutTests.cs`.
-- Modify targeting, mapper, authoring, description, content-equivalence, starter-pool description tests under `Assets/Core/Tests/EditMode/`.
-- Create `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`, `CardFramePrefabTests.cs`, `CardFrameResponsiveLayoutTests.cs`, `CardFrameRenderCapture.cs`.
-- Modify `CardPresentationTests.cs`, `HandFanHoverTests.cs`, `ExecutionRailInputTests.cs`, `CardCodeGeneratorTests.cs`, and affected controller tests.
+### Structured descriptions
+
+- Modify `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs`: 인접 비교를 전역 ordered accumulator로 바꾼다.
+- Modify `Assets/Core/Simulation/Descriptions/KoreanDescriptionGrammar.cs`: 모든 대상 plain-text 심볼을 `◆`로 고정한다.
+- Modify `Assets/Core/Tests/EditMode/StructuredCardDescriptionTests.cs`와 기존 설명 golden 테스트.
+
+### Unity description and target views
+
+- Modify `Assets/Unity/DescriptionLineView.cs`: TMP 한 흐름의 색상 심볼 접두사.
+- User-modify `Assets/Unity/Prefabs/DescriptionLineView.prefab`: glyph 슬롯 제거, full-width TMP와 두 직렬화 색 할당.
+- Modify `Assets/Unity/TargetGlyphView.cs`: 범위별 authored visual 선택, 미러링, 색 적용.
+- User-modify `Assets/Unity/Prefabs/TargetGlyphView.prefab`: 범위별 동일 폭 프리미티브 계층.
+- User-review `ExecutionCardView.prefab`, `InterventionCardView.prefab`: 한 행 중앙 정렬과 확장 설명 영역.
+- Modify `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`, `CardPrefabCatalogTests.cs`.
+
+### Verification and cleanup
+
+- Modify `Assets/Unity/Editor/CardCodeGenerator.cs`, `Assets/Tests/UnityEditMode/CardCodeGeneratorTests.cs`.
+- Modify `Assets/Unity/PLAYTEST.md`.
+- Delete poster v2 PNG/meta 쌍은 GUID 참조 감사 결과가 완전히 비었을 때만 수행한다.
+- Archive this plan and update both document indexes only after all verification passes.
 
 ---
 
-### Task 1: Close the target schema and preserve serialized invalid values
+### Task 1: Finish responsive active-card sibling ordering
 
 **Files:**
-- Create: `Assets/Core/Cards/CardTarget.cs`
-- Modify: `Assets/Core/Cards/TargetSelector.cs`
-- Modify: `Assets/Core/Simulation/Authoring/EffectSpec.cs`
-- Modify: `Assets/Core/Simulation/Authoring/Specs/DamageSpec.cs`
-- Modify: `Assets/Core/Simulation/Authoring/Specs/ApplyStatusSpec.cs`
-- Modify: `Assets/Core/Simulation/Authoring/Specs/ConsumeStatusSpec.cs`
-- Modify: `Assets/Core/Simulation/Authoring/Specs/TriggerStatusSpec.cs`
-- Modify: `Assets/Core/Simulation/Authoring/StarterPoolSpecs.cs`
-- Modify: `Assets/Core/Simulation/Generated/GeneratedCards.cs`
-- Modify: `Assets/Core/Status/ContagionBehavior.cs`
-- Test: `Assets/Core/Tests/EditMode/CardSpecMapperTests.cs`
-- Test: `Assets/Core/Tests/EditMode/AuthoringValidationTests.cs`
-- Test: `Assets/Core/Tests/EditMode/CardContentEquivalenceTests.cs`
+- Modify: `Assets/Unity/HandCardHoverEffect.cs`
+- Modify: `Assets/Unity/HandFanView.cs`
+- Test: `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`
 
 **Interfaces:**
-- Produces: `CardTargetKey(CardTargetFaction faction, CardTargetRange range)` with structural equality.
-- Produces: `TargetSelector.FrontOne|FrontTwo|BackOne|BackTwo|All`.
-- Produces: `TargetSelectorRef.None=0, FrontOne=1, BackOne=3, All=5, FrontTwo=6, BackTwo=7`.
-- Preserves: existing YAML values `0`, `1`, `3`, `5`; raw values `2`, `4` remain invalid.
+- Produces: `HandCardHoverEffect.IsActive` internal read-only state.
+- Preserves: `UpdateBaseline(Vector2, Quaternion, int)`, `ReapplyActiveSiblingOrder()`, and exact authored sibling restoration.
+- `HandFanView.RecalculateLayout()` reapplies active cards in their pre-resize sibling order, so the most recently activated card remains topmost.
 
-- [ ] **Step 1: Write RED schema and authoring tests**
+- [x] **Step 1: Add the two RED tests already present in the worktree**
 
 ```csharp
 [Test]
-public void Target_selector_schema_contains_only_approved_ranges()
+public void Most_recent_active_card_remains_last_after_resize()
 {
-    CollectionAssert.AreEqual(
-        new[] { "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" },
-        Enum.GetNames(typeof(TargetSelector)));
+    var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+    var views = root.GetComponentsInChildren<CardView>();
+    hand.SetHeld(3, true);
+    hand.SetHeld(1, true);
+
+    ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+    InvokeDimensionChange(hand);
+
+    Assert.AreSame(views[1].transform, views[1].transform.parent.GetChild(4));
 }
 
 [Test]
-public void Removed_serialized_selector_values_are_not_reused()
+public void Releasing_multiple_active_cards_restores_original_sibling_order()
 {
-    Assert.IsFalse(Enum.IsDefined(typeof(TargetSelectorRef), 2));
-    Assert.IsFalse(Enum.IsDefined(typeof(TargetSelectorRef), 4));
-}
+    var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+    var views = root.GetComponentsInChildren<CardView>();
+    hand.SetHeld(1, true);
+    hand.SetHeld(3, true);
+    InvokeDimensionChange(hand);
+    hand.SetHeld(3, false);
+    hand.SetHeld(1, false);
 
-[TestCase(2)]
-[TestCase(4)]
-public void Undefined_authored_selector_reports_the_card_id(int rawValue)
-{
-    var spec = new CardSpec
-    {
-        Id = "legacy_selector",
-        Category = CardCategory.Execution,
-        Effects = new EffectSpec[]
-        {
-            new DamageSpec { Value = 1, Selector = (TargetSelectorRef)rawValue }
-        }
-    };
-
-    var errors = AuthoringValidator.Validate(
-        new[] { spec }, AuthoringContext.Default());
-
-    Assert.That(errors, Has.Some.Contains("Card 'legacy_selector'"));
-    Assert.That(errors, Has.Some.Contains("unsupported target selector value " + rawValue));
+    for (var i = 0; i < views.Length; i++)
+        Assert.AreEqual(i, views[i].transform.GetSiblingIndex());
 }
 ```
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [ ] **Step 2: Run the focused test and confirm RED**
+
+```bash
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
+  -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
+  -runTests -testPlatform EditMode \
+  -testFilter FateWeaver.Tests.UnityEditMode.HandFanHoverTests \
+  -testResults /private/tmp/hand-active-order-red.xml \
+  -logFile /private/tmp/hand-active-order-red.log
+```
+
+Expected: `Most_recent_active_card_remains_last_after_resize` fails because the current foreach loop reapplies list order, not activation order.
+
+- [ ] **Step 3: Preserve the pre-layout active order**
+
+```csharp
+// HandCardHoverEffect.cs
+internal bool IsActive => _hovering || _held;
+
+// HandFanView.RecalculateLayout(), before UpdateBaseline mutates siblings
+var activeInBackToFrontOrder = _hoverEffects
+    .Where(effect => effect.IsActive)
+    .OrderBy(effect => effect.transform.GetSiblingIndex())
+    .ToArray();
+
+// After every UpdateBaseline call
+foreach (var effect in activeInBackToFrontOrder)
+    effect.ReapplyActiveSiblingOrder();
+```
+
+Add `using System.Linq;` to `HandFanView.cs`. Do not add global/static activation counters.
+
+- [ ] **Step 4: Run focused and responsive regression tests**
+
+Run Step 2, then `CardFrameResponsiveLayoutTests` and `HandFanResponsivePlayModeTests` in their existing test platforms. Expected: all pass and resize never changes the last-active card.
+
+- [ ] **Step 5: Commit only the responsive fix**
+
+```bash
+git add Assets/Unity/HandCardHoverEffect.cs Assets/Unity/HandFanView.cs \
+  Assets/Tests/UnityEditMode/HandFanHoverTests.cs
+git commit -m "fix(ui): preserve active hand card ordering"
+```
+
+---
+
+### Task 2: Group description sentences across the whole card
+
+**Files:**
+- Modify: `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs`
+- Modify: `Assets/Core/Simulation/Descriptions/KoreanDescriptionGrammar.cs`
+- Modify: `Assets/Core/Tests/EditMode/StructuredCardDescriptionTests.cs`
+- Modify: exact golden assertions returned by `rg -n '\[◇|\[◎|Repeated_nonconsecutive' Assets/Core/Tests Tests/Headless`
+
+**Interfaces:**
+- `DescriptionComposer.Compose` preserves target-group first-occurrence order.
+- Every group preserves original sentence order and repetitions.
+- Exact nullable `CardTargetKey?` equality is the only grouping key; `null` is one group.
+- `KoreanDescriptionGrammar.Symbol(CardTargetKey)` returns `"◆"` for every faction/range.
+
+- [ ] **Step 1: Replace the old RED expectations**
+
+```csharp
+[Test]
+public void Repeated_nonconsecutive_target_joins_the_first_matching_line()
+{
+    var layout = DescriptionComposer.Compose(
+        Execution("repeat", DamageEnemy(3), BlockSelf(2), DamageEnemy(3)),
+        Korean);
+
+    Assert.AreEqual(2, layout.Lines.Count);
+    Assert.AreEqual(
+        new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne),
+        layout.Lines[0].Target.Value);
+    Assert.AreEqual("피해 3. 피해 3.", layout.Lines[0].Text);
+    Assert.AreEqual(
+        new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self),
+        layout.Lines[1].Target.Value);
+    Assert.AreEqual("방어 2.", layout.Lines[1].Text);
+    Assert.AreEqual("[◆] 피해 3. 피해 3.\n[◆] 방어 2.", layout.PlainText);
+}
+
+[Test]
+public void Nonconsecutive_null_targets_share_one_line_without_deduplication()
+{
+    var layout = DescriptionComposer.Compose(
+        Execution(
+            "repeat_null",
+            new EffectData(EffectKeys.GrantNextTurnFate, 1),
+            DamageEnemy(3),
+            new EffectData(EffectKeys.GrantNextTurnFate, 2)),
+        Korean);
+
+    Assert.AreEqual(2, layout.Lines.Count);
+    Assert.IsNull(layout.Lines[0].Target);
+    Assert.AreEqual(
+        "다음 사용 턴에 운명력 1 획득. 다음 사용 턴에 운명력 2 획득.",
+        layout.Lines[0].Text);
+}
+```
+
+Update `Toxic_reclaim_separates_enemy_and_ally_self_lines` plain text to:
+
+```text
+[◆] 독 최대 1 소비. 독 1.
+[◆] 소비했다면 방어 4.
+```
+
+- [ ] **Step 2: Run the focused headless tests and confirm RED**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
   -p:TargetFramework=net5.0 --nologo \
-  --filter "FullyQualifiedName~CardSpecMapperTests|FullyQualifiedName~AuthoringValidationTests"
+  --filter "FullyQualifiedName~StructuredCardDescriptionTests|FullyQualifiedName~DescriptionComposerTests|FullyQualifiedName~StarterPoolDescriptionTests"
 ```
 
-Expected: legacy enum names still exist and invalid selector validation is absent.
+Expected: current composer returns three lines for `Enemy → Ally → Enemy`, and `Ally/Self` still renders `◇◎`.
 
-- [ ] **Step 3: Add C# 9 target types and explicit authoring values**
+- [ ] **Step 3: Replace adjacent append with an ordered accumulator**
 
 ```csharp
-public enum CardTargetFaction { Ally, Enemy }
-public enum CardTargetRange { Self, FrontOne, FrontTwo, BackOne, BackTwo, All }
-
-public readonly struct CardTargetKey : IEquatable<CardTargetKey>
+private static void AppendSentence(
+    List<CardTargetKey?> lineTargets,
+    List<StringBuilder> lineTexts,
+    EffectDescriptionFragment fragment,
+    string condition)
 {
-    public CardTargetFaction Faction { get; }
-    public CardTargetRange Range { get; }
-
-    public CardTargetKey(CardTargetFaction faction, CardTargetRange range)
+    var sentence = string.IsNullOrEmpty(condition)
+        ? fragment.Text + "."
+        : condition + " " + fragment.Text + ".";
+    var index = lineTargets.FindIndex(
+        target => Nullable.Equals(target, fragment.Target));
+    if (index >= 0)
     {
-        Faction = faction;
-        Range = range;
+        lineTexts[index].Append(' ').Append(sentence);
+        return;
     }
 
-    public bool Equals(CardTargetKey other)
-        => Faction == other.Faction && Range == other.Range;
-    public override bool Equals(object obj)
-        => obj is CardTargetKey other && Equals(other);
-    public override int GetHashCode() => ((int)Faction * 397) ^ (int)Range;
-    public override string ToString() => Faction + "/" + Range;
+    lineTargets.Add(fragment.Target);
+    lineTexts.Add(new StringBuilder(sentence));
 }
 ```
 
-Use the exact explicit values:
+`KoreanDescriptionGrammar.Symbol` becomes:
 
 ```csharp
-public enum TargetSelectorRef
-{
-    None = 0,
-    FrontOne = 1,
-    BackOne = 3,
-    All = 5,
-    FrontTwo = 6,
-    BackTwo = 7
-}
+public string Symbol(CardTargetKey target) => "◆";
 ```
 
-`ToSelector` throws `ArgumentOutOfRangeException` for undefined non-zero values. Add a protected `ValidateSelector` iterator and call it from all four selector-bearing specs so `AuthoringValidator` reports the card ID before mapping/code generation.
+Do not alter `Layout` target-entry deduplication or its `Ally` then `Enemy` sorting.
 
-- [ ] **Step 4: Rename source-authored selectors and golden strings**
-
-Replace `FrontMost` with `FrontOne` and `BackMost` with `BackOne` in source, generated output, and tests. Remove tests dedicated to `SecondFromFront` and random target determinism; replace mapper coverage with `FrontTwo` and `BackTwo`. Do not change `CardSO` YAML `Selector:` numbers: production assets currently use only `0`, `1`, `3`, `5`.
-
-- [ ] **Step 5: Run focused and full headless tests**
-
-Run Step 2, then:
+- [ ] **Step 4: Update all exact goldens and run the full headless suite**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
   -p:TargetFramework=net5.0 --nologo
 ```
 
-Expected: all pass; `rg 'SecondFromFront|TargetSelector\.Random|TargetSelectorRef\.Random' Assets/Core Assets/Unity` has no production match.
+Expected: all pass; `rg -n '◇◎|◎◆' Assets/Core/Tests Tests/Headless Assets/Core/Simulation/Descriptions` has no production/golden match.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit the pure C# change**
 
 ```bash
-git add Assets/Core/Cards Assets/Core/Simulation/Authoring \
-  Assets/Core/Simulation/Generated/GeneratedCards.cs \
-  Assets/Core/Status/ContagionBehavior.cs Assets/Core/Tests/EditMode
-git commit -m "refactor(core): close positional target schema"
+git add Assets/Core/Simulation/Descriptions/DescriptionComposer.cs \
+  Assets/Core/Simulation/Descriptions/KoreanDescriptionGrammar.cs \
+  Assets/Core/Tests/EditMode Tests/Headless
+git commit -m "refactor(sim): group descriptions by target"
 ```
 
 ---
 
-### Task 2: Resolve one target snapshot per executing card
+### Task 3: Render description faction symbols in one TMP flow
 
 **Files:**
-- Create: `Assets/Core/Combat/CardTargetSnapshot.cs`
-- Modify: `Assets/Core/Combat/EnemyTargeting.cs`
-- Modify: `Assets/Core/Combat/PartyTargeting.cs`
-- Modify: `Assets/Core/Effects/IEffectHandler.cs`
-- Modify: `Assets/Core/Effects/DamageHandler.cs`
-- Modify: `Assets/Core/Effects/ApplyStatusHandler.cs`
-- Modify: `Assets/Core/Effects/ConsumeStatusHandler.cs`
-- Modify: `Assets/Core/Effects/TriggerStatusHandler.cs`
-- Modify: `Assets/Core/Effects/MoveFormationHandler.cs`
-- Modify: `Assets/Core/Effects/GrantNextTurnFateHandler.cs`
-- Modify: `Assets/Core/Effects/GrantNextPlayerDamageCardBonusHandler.cs`
-- Modify: `Assets/Core/Effects/NullifyNextPlayerConditionRewardHandler.cs`
-- Modify: `Assets/Core/Combat/TurnResolver.cs`
-- Test: `Assets/Core/Tests/EditMode/CardTargetSnapshotTests.cs`
-- Test: `Assets/Core/Tests/EditMode/PartyTargetingTests.cs`
-- Test: `Assets/Core/Tests/EditMode/EnemyTargetingTests.cs`
-- Test: `Assets/Core/Tests/EditMode/FormationTargetingIntegrationTests.cs`
+- Modify: `Assets/Unity/DescriptionLineView.cs`
+- User-modify: `Assets/Unity/Prefabs/DescriptionLineView.prefab`
+- Modify: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
+- Modify: affected assertions in `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
 
 **Interfaces:**
-- Produces: `IEffectHandler.TargetFor(CardDefinition card, EffectData effect) -> CardTargetKey?`.
-- Produces: `CardTargetSnapshot.Capture(CombatState, ExecutionCardInstance, IEnumerable<CardTargetKey>)`.
-- Produces: typed `PartyTargets(CardTargetKey)` and `EnemyTargets(CardTargetKey)` lists whose object identities remain fixed for the card.
+- `DescriptionLineView.Bind(CardDescriptionLine)` renders either plain body text or `<color=#RRGGBB>◆</color> {body}`.
+- Serialized fields are exactly `TMP_Text _text`, `Color _allySymbolColor`, `Color _enemySymbolColor`.
+- The prefab contains no `TargetGlyphView` and no fixed glyph slot.
 
-- [ ] **Step 1: Write RED range and snapshot tests**
-
-```csharp
-[Test]
-public void Front_two_returns_up_to_two_distinct_living_members_in_order()
-{
-    var state = PartyState(deadFront: true, livingIds: new[] { "b", "c", "d" });
-    CollectionAssert.AreEqual(
-        new[] { "b", "c" },
-        PartyTargeting.SelectRange(state, TargetSelector.FrontTwo)
-            .Select(member => member.Id));
-}
-
-[Test]
-public void Back_two_returns_up_to_two_distinct_living_enemies_in_formation_order()
-{
-    var state = EnemyState("a", "b", "c");
-    CollectionAssert.AreEqual(
-        new[] { "b", "c" },
-        EnemyTargeting.SelectRange(state, TargetSelector.BackTwo)
-            .Select(enemy => enemy.Id));
-}
-
-[Test]
-public void Later_effect_does_not_promote_a_new_target_after_snapshot_target_dies()
-{
-    var state = ThreeEnemyState(hp: 2);
-    state.Zone.Add(PlayerCard(
-        Damage(2, TargetSelector.FrontTwo),
-        ApplyPoison(1, TargetSelector.FrontTwo)));
-
-    new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses())
-        .Resolve(state, 0);
-
-    Assert.AreEqual(2, state.Enemies[2].Hp);
-    Assert.IsFalse(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
-}
-```
-
-Also assert one-member `FrontTwo`, `BackTwo`, and `All` return exactly one object with no duplication.
-
-- [ ] **Step 2: Run focused tests and verify RED**
-
-```bash
-dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
-  -p:TargetFramework=net5.0 --nologo \
-  --filter "FullyQualifiedName~CardTargetSnapshotTests|FullyQualifiedName~PartyTargetingTests|FullyQualifiedName~EnemyTargetingTests"
-```
-
-Expected: `SelectRange`, `TargetFor`, and `CardTargetSnapshot` do not exist.
-
-- [ ] **Step 3: Implement ordered range selection and snapshot capture**
-
-`SelectRange` returns a fresh ordered list, skips dead units, takes at most the requested count, and never calls RNG. Use this mapping in both formation helpers:
+- [ ] **Step 1: Write RED binding and prefab-contract tests**
 
 ```csharp
-private static int TakeCount(TargetSelector selector, int livingCount)
+[TestCase(CardTargetFaction.Ally, "#5DADE2")]
+[TestCase(CardTargetFaction.Enemy, "#E85D5D")]
+public void Description_line_colors_only_the_shared_symbol(
+    CardTargetFaction faction,
+    string expectedHex)
 {
-    switch (selector)
+    var line = InstantiateDescriptionLine();
+    try
     {
-        case TargetSelector.FrontOne:
-        case TargetSelector.BackOne: return Math.Min(1, livingCount);
-        case TargetSelector.FrontTwo:
-        case TargetSelector.BackTwo: return Math.Min(2, livingCount);
-        case TargetSelector.All: return livingCount;
-        default: throw new ArgumentOutOfRangeException(nameof(selector));
+        line.Bind(new CardDescriptionLine(
+            new CardTargetKey(faction, CardTargetRange.Self),
+            "방어 2."));
+
+        Assert.AreEqual(
+            "<color=" + expectedHex + ">◆</color> 방어 2.",
+            CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+    }
+    finally
+    {
+        Object.DestroyImmediate(line.gameObject);
+    }
+}
+
+[Test]
+public void Description_line_uses_full_width_text_without_a_glyph_slot()
+{
+    var prefab = Load<DescriptionLineView>(CardPrefabCatalogTests.DescriptionLinePath);
+    Assert.IsEmpty(prefab.GetComponentsInChildren<TargetGlyphView>(true));
+    Assert.AreEqual(1, prefab.GetComponentsInChildren<TMP_Text>(true).Length);
+    Assert.IsNull(
+        typeof(DescriptionLineView).GetField(
+            "_glyphSlot", BindingFlags.Instance | BindingFlags.NonPublic));
+}
+```
+
+Keep a no-target assertion equal to `"카드 1장 뽑기."`, with no leading space or rich-text tag. Add a range-parameterized assertion proving `FrontOne`, `All`, and `Self` use the same `◆`.
+
+```csharp
+[TestCase(CardTargetRange.FrontOne)]
+[TestCase(CardTargetRange.All)]
+[TestCase(CardTargetRange.Self)]
+public void Description_line_prefix_does_not_encode_range(CardTargetRange range)
+{
+    var line = InstantiateDescriptionLine();
+    try
+    {
+        line.Bind(new CardDescriptionLine(
+            new CardTargetKey(CardTargetFaction.Enemy, range),
+            "피해 3."));
+        Assert.AreEqual(
+            "<color=#E85D5D>◆</color> 피해 3.",
+            CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+
+        line.Bind(new CardDescriptionLine(null, "카드 1장 뽑기."));
+        Assert.AreEqual(
+            "카드 1장 뽑기.",
+            CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+    }
+    finally
+    {
+        Object.DestroyImmediate(line.gameObject);
     }
 }
 ```
 
-`CardTargetSnapshot` stores returned object references keyed by `CardTargetKey`; `Self` resolves the living owner once from `ExecutionCardInstance.OwnerId` and fails capture with `NoValidTarget` when missing or ambiguous.
-
-- [ ] **Step 4: Make runtime handlers declare and consume target meaning**
-
-Use this mapping exactly:
-
-| Handler | Target key |
-|---|---|
-| `DamageHandler` | player card → `Enemy/<selector or FrontOne>`; enemy card → `Ally/<selector or FrontOne>` |
-| `ApplyStatusHandler` `Self` | card side → `Ally/Self` or `Enemy/Self` |
-| `ApplyStatusHandler` `TargetEnemy` | `Enemy/<selector or FrontOne>` |
-| `ApplyStatusHandler` `PartyBySelector` | `Ally/<selector or FrontOne>` |
-| `ApplyStatusHandler` `AllPartyMembers` | `Ally/All` |
-| `ApplyStatusHandler` `PartyMember` | `null`; retain explicit-target legacy runtime behavior, but Task 3 rejects authored use in structured catalogs |
-| `ConsumeStatusHandler`, `TriggerStatusHandler` | `Enemy/<selector or FrontOne>` |
-| `MoveFormationHandler` | card side → `Ally/Self` or `Enemy/Self` |
-| grant/nullify/fate handlers | `null` |
-
-Snapshot-backed handlers iterate the captured list, skip a captured object that is dead when reached, and do not select a replacement. Set `EffectContext.TargetId` only when exactly one living target was affected; preserve null for multi-target events.
-
-- [ ] **Step 5: Capture once in `TurnResolver.ResolveCard`**
-
-```csharp
-var handlers = card.Def.Effects
-    .Select(effect => _effects.Resolve(effect.Key))
-    .ToArray();
-var targetKeys = card.Def.Effects
-    .Select((effect, index) => handlers[index].TargetFor(card.Def, effect))
-    .Where(key => key.HasValue)
-    .Select(key => key.Value)
-    .ToArray();
-var targets = CardTargetSnapshot.Capture(state, card, targetKeys);
-```
-
-Reject conflicting ranges for the same faction before effects. Pass one snapshot into every `EffectContext`. Keep condition evaluation, death sweep, cancellation, and event order unchanged.
-
-- [ ] **Step 6: Run focused and full headless suites**
-
-Run Step 2 and the full headless command. Existing single-target and `All` behavior must stay green; new range/snapshot tests pass; targeting consumes no RNG.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add Assets/Core/Cards Assets/Core/Combat Assets/Core/Effects \
-  Assets/Core/Tests/EditMode
-git commit -m "refactor(core): snapshot positional card targets"
-```
-
----
-
-### Task 3: Compose structured layouts and symbol-only plain text
-
-**Files:**
-- Create: `Assets/Core/Simulation/Descriptions/CardDescriptionLayout.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/DescriptionContracts.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/BuiltInEffectDescriptionHandlers.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/KoreanDescriptionGrammar.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/KoreanDescriptionCatalog.cs`
-- Modify: `Assets/Core/Simulation/Descriptions/DescriptionCatalogValidator.cs`
-- Test: `Assets/Core/Tests/EditMode/StructuredCardDescriptionTests.cs`
-- Test: existing description/registry/catalog test fixtures
-
-**Interfaces:**
-- Produces: `DescriptionComposer.Compose(CardDefinition, KoreanDescriptionCatalog) -> CardDescriptionLayout`.
-- Preserves: `DescriptionComposer.Describe` as a wrapper returning `DescriptionComposer.Compose(card, catalog).PlainText`.
-- Changes: `IEffectDescriptionHandler.Describe -> EffectDescriptionFragment`.
-- Produces: consecutive-equal line grouping, target-entry-only deduplication, stable `Ally` then `Enemy` order.
-
-- [ ] **Step 1: Write RED structured-layout tests**
-
-```csharp
-[Test]
-public void Toxic_reclaim_separates_enemy_and_ally_self_lines()
-{
-    var definition = GeneratedCards.StarterPool()
-        .Select(CardSpecMapper.ToDefinition)
-        .Single(card => card.Id == "toxic_reclaim");
-    var layout = DescriptionComposer.Compose(
-        definition, KoreanDescriptionCatalog.Default);
-
-    CollectionAssert.AreEqual(
-        new[]
-        {
-            new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self),
-            new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne)
-        },
-        layout.TargetEntries);
-    Assert.AreEqual("독 최대 1 소비. 독 1.", layout.Lines[0].Text);
-    Assert.AreEqual("소비했다면 방어 4.", layout.Lines[1].Text);
-    Assert.AreEqual(
-        "[◆] 독 최대 1 소비. 독 1.\n[◇◎] 소비했다면 방어 4.",
-        layout.PlainText);
-}
-
-[Test]
-public void Repeated_nonconsecutive_target_keeps_three_lines()
-{
-    var layout = DescriptionComposer.Compose(
-        Execution("repeat", DamageEnemy(3), BlockSelf(2), DamageEnemy(3)), Korean);
-    Assert.AreEqual(3, layout.Lines.Count);
-    Assert.AreEqual(2, layout.TargetEntries.Count);
-}
-
-[Test]
-public void Conflicting_ranges_include_card_id_and_both_ranges()
-{
-    var ex = Assert.Throws<InvalidOperationException>(() =>
-        DescriptionComposer.Compose(
-            Execution("conflict",
-                DamageEnemy(3, TargetSelector.FrontOne),
-                PoisonEnemy(1, TargetSelector.BackOne)), Korean));
-    StringAssert.Contains("conflict", ex.Message);
-    StringAssert.Contains("FrontOne", ex.Message);
-    StringAssert.Contains("BackOne", ex.Message);
-}
-```
-
-- [ ] **Step 2: Run description tests and verify RED**
-
-```bash
-dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
-  -p:TargetFramework=net5.0 --nologo \
-  --filter "FullyQualifiedName~StructuredCardDescriptionTests|FullyQualifiedName~DescriptionComposerTests|FullyQualifiedName~PartyDescriptionTests"
-```
-
-Expected: `Compose` and structured types do not exist.
-
-- [ ] **Step 3: Implement immutable C# 9 DTOs**
-
-Use constructors plus read-only properties; copy lists to arrays. Both target properties use `CardTargetKey?`.
-
-```csharp
-public sealed class EffectDescriptionFragment
-{
-    public CardTargetKey? Target { get; }
-    public string Text { get; }
-    public EffectDescriptionFragment(CardTargetKey? target, string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            throw new ArgumentException("Description text is required.", nameof(text));
-        Target = target;
-        Text = text;
-    }
-}
-
-public sealed class CardDescriptionLine
-{
-    public CardTargetKey? Target { get; }
-    public string Text { get; }
-    public CardDescriptionLine(CardTargetKey? target, string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            throw new ArgumentException("Description line text is required.", nameof(text));
-        Target = target;
-        Text = text;
-    }
-}
-
-public sealed class CardDescriptionLayout
-{
-    public IReadOnlyList<CardTargetKey> TargetEntries { get; }
-    public IReadOnlyList<CardDescriptionLine> Lines { get; }
-    public string PlainText { get; }
-    public CardDescriptionLayout(
-        IReadOnlyList<CardTargetKey> targetEntries,
-        IReadOnlyList<CardDescriptionLine> lines,
-        string plainText)
-    {
-        if (targetEntries == null) throw new ArgumentNullException(nameof(targetEntries));
-        if (lines == null) throw new ArgumentNullException(nameof(lines));
-        TargetEntries = targetEntries.ToArray();
-        Lines = lines.ToArray();
-        PlainText = plainText ?? throw new ArgumentNullException(nameof(plainText));
-    }
-}
-```
-
-Reject null/whitespace fragments with card ID and effect key.
-
-- [ ] **Step 4: Change handler and grammar contracts**
-
-Create `DescriptionContext` per card with `CardId`, `CardSide`, condition/lifetime/status vocabulary, `Range(TargetSelector?)`, and `SelfTarget()`. Remove target prose and status-target prefixes from `IDescriptionGrammar`.
-
-`KoreanDescriptionGrammar.Symbol` returns:
-
-```text
-Ally/Self      ◇◎
-Enemy/Self     ◎◆
-Ally/non-Self  ◇
-Enemy/non-Self ◆
-```
-
-No-target lines have no bracket prefix. Do not emit `적`, `아군`, `자신`, `가장 앞`, or `가장 뒤` as target prose.
-
-- [ ] **Step 5: Implement grouping and target-entry validation**
-
-Render effects in order. Append base and conditional-success sentences to the current line only when the nullable target equals the preceding target; otherwise start a line. `SkipOnBasic` omits only the base sentence. Build `TargetEntries` from unique keys and sort `Ally`, then `Enemy`; never deduplicate sentences.
-
-Intervention cards return one no-target line and no target entries. Zero-effect execution cards return empty lines/plain text. Before construction, group target entries by faction and throw when a faction has multiple ranges. `DescriptionCatalogValidator` invokes `Compose` so boot validation shares the rule.
-
-- [ ] **Step 6: Migrate built-in description handlers**
-
-Return target-free Korean text and the Task 2 target key. `ApplyStatusDescriptionHandler` maps `AllPartyMembers` to `Ally/All`; `PartyMember` throws an `InvalidOperationException` containing card ID because direct unit selection is outside the approved frame schema. Runtime support remains only for legacy selection tests. `MoveFormationDescriptionHandler` returns `Self` plus `대형 전방으로 N칸 이동`, `대형 후방으로 N칸 이동`, or `대형 위치 유지` so owner/self prose is not duplicated.
-
-```csharp
-return new EffectDescriptionFragment(
-    context.EnemyRange(effect.TargetSelector),
-    "피해 " + effectValue);
-
-return new EffectDescriptionFragment(
-    context.SelfTarget(),
-    context.Statuses.Resolve(payload.Key) + " " + effectValue + suffix);
-
-return new EffectDescriptionFragment(
-    null,
-    "다음 사용 턴에 운명력 " + effectValue + " 획득");
-```
-
-- [ ] **Step 7: Update exact goldens and run full suite**
-
-Update `DescriptionComposerTests`, `PartyDescriptionTests`, and `StarterPoolDescriptionTests` to bracketed symbols/newlines. Add a loop composing every default/generated card twice and asserting byte-identical `PlainText`, entries, and lines. Run Step 2 and the full suite; description registry locality tests must remain green.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add Assets/Core/Simulation/Descriptions Assets/Core/Tests/EditMode
-git commit -m "refactor(sim): compose structured card descriptions"
-```
-
----
-
-### Task 4: Carry the layout through `CardPresentation`
-
-**Files:**
-- Modify: `Assets/Unity/CardPresentation.cs`
-- Test: `Assets/Tests/UnityEditMode/CardPresentationTests.cs`
-
-**Interfaces:**
-- Produces: `CardPresentation.DescriptionLayout`.
-- Preserves: read-only `Description` returning `DescriptionLayout.PlainText`.
-- Preserves: `WithExecutionOrder` changes only order.
-
-- [ ] **Step 1: Write RED tests**
-
-```csharp
-[Test]
-public void Toxic_reclaim_presentation_keeps_structured_targets_and_lines()
-{
-    var definition = GeneratedCards.StarterPool()
-        .Select(CardSpecMapper.ToDefinition)
-        .Single(card => card.Id == "toxic_reclaim");
-    var presentation = CardPresentation.FromDefinition(definition);
-
-    Assert.AreEqual(2, presentation.DescriptionLayout.TargetEntries.Count);
-    Assert.AreEqual(2, presentation.DescriptionLayout.Lines.Count);
-    Assert.AreEqual(presentation.DescriptionLayout.PlainText, presentation.Description);
-}
-
-[Test]
-public void Intervention_presentation_has_no_unit_target_entries()
-{
-    var presentation = CardPresentation.FromDefinition(StarterDeck.PullForward());
-    Assert.AreEqual(CardCategory.Intervention, presentation.Category);
-    Assert.AreEqual(0, presentation.DescriptionLayout.TargetEntries.Count);
-}
-```
-
-- [ ] **Step 2: Run focused Unity test and verify RED**
+- [ ] **Step 2: Run `CardFramePrefabTests` and confirm RED**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
   -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
   -runTests -testPlatform EditMode \
-  -testFilter FateWeaver.Tests.UnityEditMode.CardPresentationTests \
-  -testResults /private/tmp/card-presentation-red.xml \
-  -logFile /private/tmp/card-presentation-red.log
+  -testFilter FateWeaver.Tests.UnityEditMode.CardFramePrefabTests \
+  -testResults /private/tmp/description-inline-red.xml \
+  -logFile /private/tmp/description-inline-red.log
 ```
 
-Expected: `DescriptionLayout` is absent.
+Expected: current view still exposes `_glyphSlot` and `_glyph`.
 
-- [ ] **Step 3: Add the property and preserve it across copies**
-
-The constructor accepts non-null `CardDescriptionLayout descriptionLayout`; `From` and `FromDefinition` call `DescriptionComposer.Compose`; `WithExecutionOrder` passes the same layout instance and all existing metadata unchanged.
-
-- [ ] **Step 4: Run focused test and commit**
-
-Re-run Step 2. Expected: all `CardPresentationTests` pass.
-
-```bash
-git add Assets/Unity/CardPresentation.cs Assets/Tests/UnityEditMode/CardPresentationTests.cs
-git commit -m "refactor(unity): carry structured card descriptions"
-```
-
----
-
-### Task 5: Add prefab catalog and reusable primitive subviews
-
-**Files:**
-- Create: `Assets/Unity/CardPrefabCatalog.cs`
-- Create: `Assets/Unity/TargetGlyphView.cs`
-- Create: `Assets/Unity/DescriptionLineView.cs`
-- Create: matching prefabs under `Assets/Unity/Prefabs/`
-- Create: `Assets/Unity/CardPrefabCatalog.asset`
-- Test: `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
-- Test: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
-
-**Interfaces:**
-- Produces: `CardPrefabCatalog.Resolve(CardCategory)` and `Create(CardPresentation, RectTransform)`.
-- Produces: `TargetGlyphView.Bind(CardTargetKey?)`.
-- Produces: `DescriptionLineView.Bind(CardDescriptionLine)`.
-
-- [ ] **Step 1: Write RED catalog and subview tests**
+- [ ] **Step 3: Implement the TMP prefix without hardcoded palette constants**
 
 ```csharp
-[TestCase(CardCategory.Execution, "ExecutionCardView")]
-[TestCase(CardCategory.Intervention, "InterventionCardView")]
-public void Catalog_resolves_the_category_prefab(CardCategory category, string expectedName)
+[SerializeField] private TMP_Text _text;
+[SerializeField] private Color _allySymbolColor;
+[SerializeField] private Color _enemySymbolColor;
+
+public void Bind(CardDescriptionLine line)
 {
-    var catalog = AssetDatabase.LoadAssetAtPath<CardPrefabCatalog>(CatalogPath);
-    Assert.AreEqual(expectedName, catalog.Resolve(category).name);
-}
+    if (line == null) throw new ArgumentNullException(nameof(line));
+    if (_text == null)
+        throw new InvalidOperationException(
+            "DescriptionLineView is missing its TMP text reference.");
 
-[Test]
-public void Target_glyph_prefab_uses_images_and_no_text()
-{
-    var prefab = AssetDatabase.LoadAssetAtPath<TargetGlyphView>(TargetGlyphPath);
-    Assert.IsEmpty(prefab.GetComponentsInChildren<TMP_Text>(true));
-    Assert.IsNotEmpty(prefab.GetComponentsInChildren<Image>(true));
-}
+    if (!line.Target.HasValue)
+    {
+        _text.text = line.Text;
+        return;
+    }
 
-[Test]
-public void Description_line_hides_glyph_for_no_target_line()
-{
-    var line = InstantiateDescriptionLine();
-    line.Bind(new CardDescriptionLine(null, "카드 1장 뽑기."));
-    Assert.IsFalse(Field<TargetGlyphView>(line, "_glyph").gameObject.activeSelf);
-}
-```
-
-- [ ] **Step 2: Run focused EditMode tests and verify RED**
-
-Run filter `CardPrefabCatalogTests,CardFramePrefabTests`, results `/private/tmp/card-primitives-red.xml`, log `/private/tmp/card-primitives-red.log`. Expected: missing types/assets.
-
-- [ ] **Step 3: Implement the catalog**
-
-Define four `[SerializeField] private` references: execution card, intervention card, target glyph, description line. `Resolve` rejects undefined categories; `Validate` reports each missing reference and prefab/category mismatch. `Create` resolves by `CardPresentation.Category`, instantiates under parent, calls `CardView.Configure(this)`, and returns the view.
-
-- [ ] **Step 4: Author reusable primitive prefabs**
-
-Use this fixed `TargetGlyphView.prefab` hierarchy:
-
-```text
-TargetGlyphView
-├─ AllyDirection
-├─ Rail
-│  ├─ Segment0
-│  ├─ Segment1
-│  ├─ Segment2
-│  ├─ Segment3
-│  └─ Segment4
-├─ Diamond0
-├─ Diamond1
-├─ SelfOuter
-├─ SelfInner
-├─ EnemyDirection
-└─ EmptySlash
-```
-
-All nodes are uGUI `Image` primitives with serialized references. `Bind` toggles/mirrors them by faction/range; fill/outline and direction distinguish factions without color alone. A null key activates the circle-plus-slash empty glyph.
-
-`DescriptionLineView.prefab` contains a fixed-width glyph slot and wrapping `TMP_Text`, embeds one `TargetGlyphView`, and hides the glyph slot for null-target lines.
-
-- [ ] **Step 5: Create the catalog asset**
-
-Create one `CardPrefabCatalog.asset`, assign both subview prefabs, and leave the two full-card slots for Task 6. Do not commit until Tasks 5–6 are green together.
-
----
-
-### Task 6: Author separate execution and intervention full-card prefabs
-
-**Files:**
-- Move: `Assets/Unity/Prefabs/CardView.prefab` → `Assets/Unity/Prefabs/ExecutionCardView.prefab`
-- Move: matching `.meta` with it
-- Create: `Assets/Unity/Prefabs/InterventionCardView.prefab`
-- Modify: `Assets/Unity/CardView.cs`
-- Modify: `Assets/Unity/CardPrefabCatalog.asset`
-- Test: `CardFramePrefabTests.cs`, `HandFanHoverTests.cs`, `CardSelectionControllerTests.cs`
-
-**Interfaces:**
-- `CardView.Configure(CardPrefabCatalog)` supplies line/glyph prefabs.
-- `CardView.Bind` clears generated children, binds entries/lines, and never recalculates authored coordinates.
-- Full-card prefabs expose a serialized `PrefabCategory` marker.
-
-- [ ] **Step 1: Extend RED prefab-contract tests**
-
-```csharp
-[Test]
-public void Execution_frame_has_symbol_target_panel_and_protruding_badges()
-{
-    var view = LoadExecution();
-    Assert.IsNotNull(Child(view, "SymbolOnlyTargetPanel"));
-    Assert.IsNotNull(Child(view, "ExecutionOrderBadge"));
-    Assert.IsEmpty(Child(view, "SymbolOnlyTargetPanel")
-        .GetComponentsInChildren<TMP_Text>(true));
-    AssertBadgeOutsideFrame(view, "CostBadge");
-    AssertBadgeOutsideFrame(view, "ExecutionOrderBadge");
-}
-
-[Test]
-public void Intervention_frame_omits_target_and_order_and_expands_description()
-{
-    var view = LoadIntervention();
-    Assert.IsNull(ChildOrNull(view, "SymbolOnlyTargetPanel"));
-    Assert.IsNull(ChildOrNull(view, "ExecutionOrderBadge"));
-    Assert.Greater(
-        Child(view, "ExpandedDescriptionPanel").rect.height,
-        Child(LoadExecution(), "DescriptionPanel").rect.height);
+    Color color;
+    switch (line.Target.Value.Faction)
+    {
+        case CardTargetFaction.Ally:
+            color = _allySymbolColor;
+            break;
+        case CardTargetFaction.Enemy:
+            color = _enemySymbolColor;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(
+                nameof(line),
+                line.Target.Value.Faction,
+                "Undefined target faction.");
+    }
+    _text.text = "<color=#" + ColorUtility.ToHtmlStringRGB(color)
+        + ">◆</color> " + line.Text;
 }
 ```
 
-Also assert badges are under `OverlayLayer`, no badge ancestor has `Mask`/`RectMask2D`, cost diameter is `68`, and order diamond bounding size is `50`.
+Validate undefined factions with `ArgumentOutOfRangeException`. Do not read `Range` when choosing the prefix.
 
-- [ ] **Step 2: Move the existing prefab and preserve GUID**
+- [ ] **Step 4: Pause for the user’s DescriptionLineView prefab edit**
 
-Move prefab and `.meta` together. `git diff --summary -- Assets/Unity/Prefabs` must show rename detection.
+Codex provides these Inspector instructions and waits:
 
-- [ ] **Step 3: Replace poster-backed layers with primitive hierarchy**
+1. Open `Assets/Unity/Prefabs/DescriptionLineView.prefab` in Prefab Mode.
+2. Delete the `GlyphSlot` child and its nested `TargetGlyphView`.
+3. Keep `Text` as the only child.
+4. Keep the root `HorizontalLayoutGroup`, set spacing `0`, child control width/height on, force expand width on, force expand height off.
+5. Keep `Text` wrapping `Normal`; its layout width is controlled by the root and its preferred height drives the row.
+6. On `DescriptionLineView`, assign `Text`; set ally color to `#5DADE2` and enemy color to `#E85D5D`.
+7. Save the prefab and tell Codex the edit is complete.
 
-Author spec §11.1/§11.2 hierarchies. Keep art, owner chip, selection outline, back face, status icons. Place `68×68` cost upper-left and `50×50` rotated-square order badge on the right/lower band; offsets live only in prefab `RectTransform`s.
+Codex must not run a YAML rewrite against this prefab.
 
-In `CardView.cs`:
+- [ ] **Step 5: Verify the user-authored prefab and wrapping**
 
-- remove `BaseWidth`, `BaseHeight`, `MinCardHeight`, `LateUpdate`, `ApplyResponsiveLayout`, and all `Layout*` helpers;
-- replace `_descriptionText` with `_descriptionContent` and generated `DescriptionLineView` children;
-- add `_targetContent`, `_targetPanel`, `_executionOrderBadge`, and prefab category marker;
-- throw on bound category mismatch;
-- when an execution layout has zero `TargetEntries`, create exactly one `TargetGlyphView` bound to `null` so the panel shows the primitive `∅`; intervention prefabs never create a target glyph;
-- retain selection, owner/status, art/back-face, and button behavior.
+Run Step 2 plus `Description_line_wraps_to_remaining_width_and_grows_in_a_constrained_parent`. Expected: a long line wraps across the full 158-unit test parent width, and the second visual line begins beneath the symbol because symbol and body are one TMP flow.
 
-- [ ] **Step 4: Complete catalog references**
-
-Assign all four prefabs to `CardPrefabCatalog.asset` by GUID-backed references. No runtime path lookup.
-
-- [ ] **Step 5: Run focused tests**
-
-Run filters `CardPrefabCatalogTests,CardFramePrefabTests,HandFanHoverTests,CardSelectionControllerTests`, results `/private/tmp/card-frames-green.xml`, log `/private/tmp/card-frames-green.log`. Expected: all pass and all new `.meta` files exist.
-
-- [ ] **Step 6: Commit Tasks 5–6 together**
+- [ ] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
-git add Assets/Unity/CardPrefabCatalog.cs Assets/Unity/CardPrefabCatalog.cs.meta \
-  Assets/Unity/CardPrefabCatalog.asset Assets/Unity/CardPrefabCatalog.asset.meta \
-  Assets/Unity/TargetGlyphView.cs Assets/Unity/TargetGlyphView.cs.meta \
-  Assets/Unity/DescriptionLineView.cs Assets/Unity/DescriptionLineView.cs.meta \
-  Assets/Unity/CardView.cs Assets/Unity/Prefabs \
-  Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs \
-  Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs.meta \
+git add Assets/Unity/DescriptionLineView.cs \
+  Assets/Unity/Prefabs/DescriptionLineView.prefab \
   Assets/Tests/UnityEditMode/CardFramePrefabTests.cs \
-  Assets/Tests/UnityEditMode/CardFramePrefabTests.cs.meta \
-  Assets/Tests/UnityEditMode/HandFanHoverTests.cs \
-  Assets/Tests/UnityEditMode/CardSelectionControllerTests.cs
-git commit -m "feat(unity): add primitive card frame prefabs"
-```
-
----
-
-### Task 7: Switch every full-card consumer to the catalog
-
-**Files:**
-- Modify: `HandFanView.cs`, `PileView.cs`, `ExecutionRailView.cs`, `DeckPlaytestController.cs`
-- Modify: `Assets/Unity/Editor/BattleSceneBuilder.cs`
-- Modify: `Assets/Scenes/FateWeaverBattle.unity`
-- Test: `HandFanHoverTests.cs`, `ExecutionRailInputTests.cs`, `CardPrefabCatalogTests.cs`
-
-**Interfaces:**
-- `HandFanView.EditorBuild(CardPrefabCatalog catalog, RectTransform content)`.
-- `PileView.Create(RectTransform parent, RectTransform popupLayer, string title, CardPrefabCatalog catalog, Vector2 buttonSize)`.
-- `ExecutionRailView.EditorBuild(CardPrefabCatalog catalog, RailCardView railPrefab, RectTransform previewLayer)`.
-- Placement flight and rail hover preview preserve `CardPresentation.Category`.
-
-- [ ] **Step 1: Write RED mixed-category consumer tests**
-
-```csharp
-[Test]
-public void Mixed_hand_uses_distinct_category_prefabs()
-{
-    var hand = BuildHand(root,
-        new[] { ExecutionPresentation(), InterventionPresentation() });
-    var views = root.GetComponentsInChildren<CardView>();
-    Assert.AreEqual(CardCategory.Execution, views[0].PrefabCategory);
-    Assert.AreEqual(CardCategory.Intervention, views[1].PrefabCategory);
-}
-
-[Test]
-public void Placement_flight_preserves_source_card_category()
-{
-    var intervention = InterventionPresentation();
-    var hand = BuildHand(root, new[] { intervention });
-    Assert.IsTrue(hand.TryPreparePlacementFlight(
-        0, intervention, overlay, out var flight));
-    Assert.AreEqual(CardCategory.Intervention, flight.Card.PrefabCategory);
-}
-```
-
-In `ExecutionRailInputTests`, hover an intervention presentation and assert the full preview uses `InterventionCardView`, while the rail item remains `RailCardView`.
-
-- [ ] **Step 2: Run focused tests and verify RED**
-
-Run filters `HandFanHoverTests,ExecutionRailInputTests,CardPrefabCatalogTests`. Expected: consumers still accept a single `CardView` prefab.
-
-- [ ] **Step 3: Replace single-prefab fields and instantiation**
-
-Every full-card consumer stores `[SerializeField] private CardPrefabCatalog _cardPrefabs` and calls `_cardPrefabs.Create(presentation, parent)`. `ExecutionRailView` keeps `RailCardView _cardPrefab`; only full preview changes. Placement flight creates from the passed presentation category, disables interaction/raycasting, and preserves source transform.
-
-`DeckPlaytestController` uses the catalog for hand and full-size zone rows without changing session/input behavior.
-
-At session startup, both battle controllers call `_cardPrefabs.ValidateOrThrow()`. They also pass the complete player definitions plus `GoblinDeck.AllCards()` or the selected enemy deck to `DescriptionCatalogValidator.ValidateDefault` before constructing views, so missing prefab references, category mismatches, unsupported direct-target descriptions, and conflicting per-faction ranges fail before a card enters the visible catalog.
-
-- [ ] **Step 4: Rebuild scene references**
-
-In editor-only `BattleSceneBuilder`, require exactly one `t:CardPrefabCatalog` result and pass it to hand, rail, and piles. This is editor validation, not runtime lookup.
-
-```bash
-/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
-  -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
-  -executeMethod FateWeaver.Unity.Editor.BattleSceneBuilder.Build \
-  -logFile /private/tmp/card-catalog-scene-build.log -quit
-```
-
-- [ ] **Step 5: Run focused tests, inspect scene diff, and commit**
-
-```bash
-git add Assets/Unity/HandFanView.cs Assets/Unity/PileView.cs \
-  Assets/Unity/ExecutionRailView.cs Assets/Unity/DeckPlaytestController.cs \
-  Assets/Unity/Editor/BattleSceneBuilder.cs Assets/Scenes/FateWeaverBattle.unity \
-  Assets/Tests/UnityEditMode/HandFanHoverTests.cs \
-  Assets/Tests/UnityEditMode/ExecutionRailInputTests.cs \
   Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs
-git commit -m "refactor(unity): select full cards through catalog"
+git commit -m "refactor(ui): render inline faction symbols"
 ```
 
 ---
 
-### Task 8: Make the overlapping hand responsive
+### Task 4: Replace faction-shaped target glyphs with colored range visuals
 
 **Files:**
-- Create: `Assets/Core/Simulation/Presentation/ResponsiveHandLayout.cs`
-- Modify: `Assets/Core/Simulation/Presentation/HandFanLayout.cs`
-- Modify: `Assets/Unity/HandFanView.cs`
-- Modify: `Assets/Unity/Editor/BattleSceneBuilder.cs`
-- Modify: `Assets/Scenes/FateWeaverBattle.unity`
-- Test: `Assets/Core/Tests/EditMode/ResponsiveHandLayoutTests.cs`
-- Test: `Assets/Tests/UnityEditMode/CardFrameResponsiveLayoutTests.cs`
-- Test: `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`
-- Create: `Assets/Tests/UnityEditMode/CardFrameRenderCapture.cs`
+- Modify: `Assets/Unity/TargetGlyphView.cs`
+- User-modify: `Assets/Unity/Prefabs/TargetGlyphView.prefab`
+- Modify: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
 
 **Interfaces:**
-- Produces: `ResponsiveHandLayout.Calculate(float availableWidth, float availableHeight, int cardCount, ResponsiveHandSettings settings) -> ResponsiveHandMetrics` containing `Spacing` and `Scale` only.
-- `HandFanView` recalculates on `SetCards` and `OnRectTransformDimensionsChange`, never `LateUpdate`.
+- Serialized visual roots: `_frontOneVisual`, `_frontTwoVisual`, `_backOneVisual`, `_backTwoVisual`, `_allVisual`, `_selfVisual`, `_emptyVisual`.
+- Serialized faction colors: `_allyColor`, `_enemyColor`.
+- `Bind(null)` activates neutral `Empty`; `Bind(key)` activates one range visual, colors every active `Graphic`, and mirrors that visual only for `Enemy`.
 
-- [ ] **Step 1: Write RED pure calculation tests**
+- [ ] **Step 1: Replace old shape tests with final grammar tests**
 
-Use named settings: card width `170`, card height `238`, base spacing `150`, minimum spacing `72`, badge overflow from authored badge bounds, safe margins, minimum scale.
+```csharp
+[TestCase(CardTargetRange.FrontOne, "FrontOne")]
+[TestCase(CardTargetRange.FrontTwo, "FrontTwo")]
+[TestCase(CardTargetRange.BackOne, "BackOne")]
+[TestCase(CardTargetRange.BackTwo, "BackTwo")]
+[TestCase(CardTargetRange.All, "All")]
+[TestCase(CardTargetRange.Self, "Self")]
+public void Target_glyph_activates_exactly_one_authored_range_visual(
+    CardTargetRange range,
+    string expectedName)
+{
+    var glyph = InstantiateGlyph();
+    glyph.Bind(new CardTargetKey(CardTargetFaction.Ally, range));
+    AssertActiveVisual(glyph, expectedName);
+}
+
+[TestCase(CardTargetFaction.Ally, "#5DADE2", 1f)]
+[TestCase(CardTargetFaction.Enemy, "#E85D5D", -1f)]
+public void Target_glyph_uses_color_only_and_points_front_toward_center(
+    CardTargetFaction faction,
+    string expectedHex,
+    float expectedScaleSign)
+{
+    var glyph = InstantiateGlyph();
+    glyph.Bind(new CardTargetKey(faction, CardTargetRange.FrontOne));
+    var visual = Child(glyph.transform, "FrontOne");
+
+    Assert.AreEqual(
+        expectedScaleSign,
+        Mathf.Sign(visual.localScale.x));
+    Assert.IsTrue(
+        visual.GetComponentsInChildren<Graphic>(true)
+            .All(graphic =>
+                "#" + ColorUtility.ToHtmlStringRGB(graphic.color) == expectedHex));
+    Assert.IsEmpty(glyph.GetComponentsInChildren<Outline>(true));
+}
+
+private static void AssertActiveVisual(TargetGlyphView glyph, string expectedName)
+{
+    var names = new[]
+    {
+        "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All", "Self", "Empty"
+    };
+    foreach (var name in names)
+        Assert.AreEqual(name == expectedName, Child(glyph.transform, name).gameObject.activeSelf);
+}
+```
+
+Add the following structure, width, self, and empty assertions:
 
 ```csharp
 [Test]
-public void Wide_five_card_hand_keeps_baseline_spacing_and_scale()
+public void Positional_target_visuals_have_equal_authored_widths()
 {
-    var result = ResponsiveHandLayout.Calculate(900f, 260f, 5, Settings());
-    Assert.AreEqual(150f, result.Spacing, 0.01f);
-    Assert.AreEqual(1f, result.Scale, 0.001f);
+    var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+    var widths = new[] { "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" }
+        .Select(name => ActiveGraphicBoundsWidth(Child(prefab.transform, name)))
+        .ToArray();
+    Assert.That(widths.Max() - widths.Min(), Is.LessThanOrEqualTo(0.5f));
 }
 
 [Test]
-public void Narrow_hand_reduces_spacing_before_scaling()
+public void Self_and_empty_use_single_neutral_grammars()
 {
-    var result = ResponsiveHandLayout.Calculate(650f, 260f, 5, Settings());
-    Assert.That(result.Spacing, Is.InRange(72f, 149.99f));
-    Assert.AreEqual(1f, result.Scale, 0.001f);
+    var glyph = InstantiateGlyph();
+    try
+    {
+        glyph.Bind(new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self));
+        AssertActiveVisual(glyph, "Self");
+        var allyStructure = DirectChildNames(Child(glyph.transform, "Self"));
+        Assert.IsTrue(Child(glyph.transform, "Self")
+            .GetComponentsInChildren<Graphic>(true)
+            .All(graphic => ColorUtility.ToHtmlStringRGB(graphic.color) == "5DADE2"));
+
+        glyph.Bind(new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.Self));
+        CollectionAssert.AreEqual(
+            allyStructure,
+            DirectChildNames(Child(glyph.transform, "Self")));
+        Assert.IsTrue(Child(glyph.transform, "Self")
+            .GetComponentsInChildren<Graphic>(true)
+            .All(graphic => ColorUtility.ToHtmlStringRGB(graphic.color) == "E85D5D"));
+
+        glyph.Bind(null);
+        AssertActiveVisual(glyph, "Empty");
+        Assert.IsTrue(Child(glyph.transform, "Empty")
+            .GetComponentsInChildren<Graphic>(true)
+            .All(graphic =>
+            {
+                var hex = ColorUtility.ToHtmlStringRGB(graphic.color);
+                return hex != "5DADE2" && hex != "E85D5D";
+            }));
+    }
+    finally
+    {
+        Object.DestroyImmediate(glyph.gameObject);
+    }
 }
 
 [Test]
-public void Too_small_hand_uses_minimum_spacing_then_uniform_scale()
+public void Target_glyph_has_no_faction_shape_nodes_and_all_has_two_endpoints()
 {
-    var result = ResponsiveHandLayout.Calculate(420f, 190f, 5, Settings());
-    Assert.AreEqual(72f, result.Spacing, 0.01f);
-    Assert.That(result.Scale, Is.LessThan(1f));
-    Assert.That(result.Scale, Is.GreaterThanOrEqualTo(Settings().MinimumScale));
+    var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+    var direct = DirectChildNames(prefab.transform);
+    CollectionAssert.DoesNotContain(direct, "AllyDirection");
+    CollectionAssert.DoesNotContain(direct, "EnemyDirection");
+    CollectionAssert.AreEqual(
+        new[] { "LeftDiamond", "Rail", "RightDiamond" },
+        DirectChildNames(Child(prefab.transform, "All")));
+    Assert.IsEmpty(prefab.GetComponentsInChildren<Outline>(true));
+}
+
+[Test]
+public void Target_and_description_prefabs_share_the_same_faction_palette()
+{
+    var glyph = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+    var line = Load<DescriptionLineView>(CardPrefabCatalogTests.DescriptionLinePath);
+    Assert.AreEqual(
+        CardPrefabCatalogTests.Field<Color>(glyph, "_allyColor"),
+        CardPrefabCatalogTests.Field<Color>(line, "_allySymbolColor"));
+    Assert.AreEqual(
+        CardPrefabCatalogTests.Field<Color>(glyph, "_enemyColor"),
+        CardPrefabCatalogTests.Field<Color>(line, "_enemySymbolColor"));
+}
+
+private static float ActiveGraphicBoundsWidth(Transform root)
+{
+    var corners = new Vector3[4];
+    var min = float.PositiveInfinity;
+    var max = float.NegativeInfinity;
+    foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
+    {
+        graphic.rectTransform.GetWorldCorners(corners);
+        min = Mathf.Min(min, corners[0].x);
+        max = Mathf.Max(max, corners[2].x);
+    }
+    return max - min;
 }
 ```
 
-- [ ] **Step 2: Run headless test and verify RED**
+- [ ] **Step 2: Run the focused test and confirm RED**
 
-```bash
-dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
-  -p:TargetFramework=net5.0 --nologo \
-  --filter FullyQualifiedName~ResponsiveHandLayoutTests
-```
+Run Task 3 Step 2 with results `/private/tmp/target-glyph-red.xml`. Expected: old direction nodes, outline/fill differences, five-rail `All`, and old serialized fields fail.
 
-Expected: missing layout types.
-
-- [ ] **Step 3: Implement pure formula**
-
-For 0/1 card, avoid division by zero and use baseline spacing. Otherwise:
+- [ ] **Step 3: Implement authored visual selection and color application**
 
 ```csharp
-var widthForCards = Math.Max(0f,
-    availableWidth - settings.HorizontalSafeMargins);
-var rawSpacing = (widthForCards - settings.CardWidth - settings.BadgeOverflow)
-    / (cardCount - 1);
-var spacing = Clamp(rawSpacing,
-    settings.MinimumSpacing, settings.BaseSpacing);
-var widthAtMinimum = settings.CardWidth + settings.BadgeOverflow
-    + settings.MinimumSpacing * (cardCount - 1);
-var scale = Min(1f,
-    widthForCards / widthAtMinimum,
-    (availableHeight - settings.VerticalSafeMargins)
-        / settings.RequiredFanHeight);
-scale = Math.Max(settings.MinimumScale, scale);
+[SerializeField] private RectTransform _frontOneVisual;
+[SerializeField] private RectTransform _frontTwoVisual;
+[SerializeField] private RectTransform _backOneVisual;
+[SerializeField] private RectTransform _backTwoVisual;
+[SerializeField] private RectTransform _allVisual;
+[SerializeField] private RectTransform _selfVisual;
+[SerializeField] private RectTransform _emptyVisual;
+[SerializeField] private Color _allyColor;
+[SerializeField] private Color _enemyColor;
+
+public void Bind(CardTargetKey? key)
+{
+    if (!key.HasValue)
+    {
+        ActivateOnly(_emptyVisual);
+        SetMirror(_emptyVisual, false);
+        return;
+    }
+
+    Validate(key.Value);
+    var visual = VisualFor(key.Value.Range);
+    ActivateOnly(visual);
+    SetMirror(visual, key.Value.Faction == CardTargetFaction.Enemy);
+    var color = key.Value.Faction == CardTargetFaction.Ally
+        ? _allyColor
+        : _enemyColor;
+    foreach (var graphic in visual.GetComponentsInChildren<Graphic>(true))
+        graphic.color = color;
+}
 ```
 
-Return only spacing/scale; continue using deterministic `HandFanLayout.PoseFor`.
+`VisualFor` is an exhaustive switch over six ranges. `ActivateOnly` iterates the seven serialized roots. `SetMirror` preserves the authored absolute X scale and changes only its sign. No runtime anchored-position or size mutation is allowed.
 
-- [ ] **Step 4: Apply metrics to one content root**
+- [ ] **Step 4: Pause for the user’s TargetGlyphView prefab edit**
 
-Store serialized tuning fields and `_content` on `HandFanView`. Instantiate under `_content`, set authored base size once, compute poses with returned spacing, and set `_content.localScale` uniformly. Do not resize badge/text children. Hover raises the card to highest sibling and restores its original sibling.
+Codex provides these Inspector instructions and waits:
 
-- [ ] **Step 5: Add Unity geometry tests**
+1. Open `Assets/Unity/Prefabs/TargetGlyphView.prefab`.
+2. Keep the root `LayoutElement` fixed at width `52`, height `32`.
+3. Replace the old direct children with seven `RectTransform` roots named `FrontOne`, `FrontTwo`, `BackOne`, `BackTwo`, `All`, `Self`, `Empty`; each root uses the same `52×32` rect and authored scale `(1,1,1)`.
+4. Build the canonical ally-facing geometry: `FrontOne = ━━━◇`, `FrontTwo = ━━◇◇`, `BackOne = ◇━━━`, `BackTwo = ◇◇━━`, `All = ◇━━◇`, `Self = ◎`. The left/right active primitive bounds of the five positional roots must all be `48±0.5` units wide.
+5. Build `Empty` from the existing circle and slash sprites, centered in the same root.
+6. Use only `Image` primitives under these roots; remove all `Outline`, `AllyDirection`, and `EnemyDirection` objects.
+7. Assign all seven roots to `TargetGlyphView`; set ally `#5DADE2`, enemy `#E85D5D`.
+8. Save the prefab and tell Codex the edit is complete.
 
-For logical root sizes `960×720`, `1280×800`, `1280×720`, `1680×720`, instantiate 1–5 mixed-category cards and assert:
+Enemy orientation is produced by mirroring the canonical root, so do not author separate enemy children.
 
-- full bounds including badge overflow stay inside safe margins;
-- X/Y scale is equal and within `[minimumScale, 1]`;
-- spacing stays within `[minimumSpacing, baseSpacing]` before scale;
-- adjacent cards do not fully cover cost/order badges;
-- hovered card is last sibling;
-- dimension changes trigger one recomputation without a frame loop.
+- [ ] **Step 5: Verify the user-authored prefab**
 
-Create `CardFrameRenderCapture` as an explicit EditMode fixture with seven test cases. Each case constructs a camera-backed test canvas, binds the catalog, sets the logical size, renders to `RenderTexture`, and writes `ImageConversion.EncodeToPNG(texture)` to `/private/tmp/primitive-card-frame-captures/<case>.png`. Cases are `execution-1280x720`, `intervention-1280x720`, `toxic-reclaim-1280x720`, `mixed-five-960x720`, `mixed-five-1280x800`, `mixed-five-1280x720`, and `mixed-five-1680x720`. The fixture creates no repository files.
+Run `CardFramePrefabTests` and `CardPrefabCatalogTests`. Expected: all six ranges, both faction colors, equal positional widths, self, and neutral empty glyph pass with no missing serialized reference.
 
-- [ ] **Step 6: Run headless and Unity tests**
-
-Run Step 2, then Unity filters `CardFrameResponsiveLayoutTests,HandFanHoverTests`, results `/private/tmp/card-responsive-green.xml`, log `/private/tmp/card-responsive-green.log`.
-
-- [ ] **Step 7: Rebuild scene and commit**
-
-Run Task 7 scene builder command, review only tuning/content-root changes, then:
+- [ ] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
-git add Assets/Core/Simulation/Presentation/ResponsiveHandLayout.cs \
-  Assets/Core/Simulation/Presentation/ResponsiveHandLayout.cs.meta \
-  Assets/Core/Tests/EditMode/ResponsiveHandLayoutTests.cs \
-  Assets/Core/Tests/EditMode/ResponsiveHandLayoutTests.cs.meta \
-  Assets/Unity/HandFanView.cs Assets/Unity/Editor/BattleSceneBuilder.cs \
-  Assets/Scenes/FateWeaverBattle.unity \
-  Assets/Tests/UnityEditMode/CardFrameResponsiveLayoutTests.cs \
-  Assets/Tests/UnityEditMode/CardFrameResponsiveLayoutTests.cs.meta \
-  Assets/Tests/UnityEditMode/CardFrameRenderCapture.cs \
-  Assets/Tests/UnityEditMode/CardFrameRenderCapture.cs.meta \
-  Assets/Tests/UnityEditMode/HandFanHoverTests.cs
-git commit -m "feat(ui): scale overlapping hand responsively"
+git add Assets/Unity/TargetGlyphView.cs \
+  Assets/Unity/Prefabs/TargetGlyphView.prefab \
+  Assets/Tests/UnityEditMode/CardFramePrefabTests.cs
+git commit -m "refactor(ui): color target range glyphs"
 ```
 
 ---
 
-### Task 9: Validate authored assets and retire poster frames
+### Task 5: Lock execution and intervention form-factor contracts
+
+**Files:**
+- User-review/modify if needed: `Assets/Unity/Prefabs/ExecutionCardView.prefab`
+- User-review/modify if needed: `Assets/Unity/Prefabs/InterventionCardView.prefab`
+- Modify: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
+- Modify: `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
+
+**Interfaces:**
+- Execution `SymbolOnlyTargetPanel` owns one centered `HorizontalLayoutGroup`.
+- `CardView` iterates `TargetEntries`, already sorted `Ally` then `Enemy`; no C# coordinate branch is added.
+- Intervention prefab has null `_targetContent` and `_targetPanel`; it never creates `TargetGlyphView` outside description lines.
+
+- [ ] **Step 1: Add RED layout-contract tests**
+
+```csharp
+[Test]
+public void Execution_target_panel_is_one_centered_horizontal_row()
+{
+    var panel = Child(LoadExecution().transform, "SymbolOnlyTargetPanel");
+    var layout = panel.GetComponent<HorizontalLayoutGroup>();
+
+    Assert.IsNotNull(layout);
+    Assert.AreEqual(TextAnchor.MiddleCenter, layout.childAlignment);
+    Assert.IsFalse(layout.childForceExpandWidth);
+    Assert.IsFalse(layout.childForceExpandHeight);
+}
+
+[Test]
+public void Two_factions_bind_ally_left_enemy_right_on_the_same_y()
+{
+    var view = InstantiateConfigured(LoadExecution());
+    view.Bind(CardPrefabCatalogTests.Presentation(
+        CardCategory.Execution,
+        new[]
+        {
+            new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self),
+            new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne)
+        },
+        Array.Empty<CardDescriptionLine>()), null);
+
+    var content = CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent");
+    Canvas.ForceUpdateCanvases();
+    LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+    var ally = (RectTransform)content.GetChild(0);
+    var enemy = (RectTransform)content.GetChild(1);
+    Assert.Less(ally.anchoredPosition.x, enemy.anchoredPosition.x);
+    Assert.AreEqual(ally.anchoredPosition.y, enemy.anchoredPosition.y, 0.01f);
+}
+```
+
+Also assert:
+
+- a single target child center equals the panel center within `0.5f`;
+- zero execution targets create exactly one `Empty` visual;
+- intervention creates no target-panel glyph and no `Empty`;
+- `ExpandedDescriptionPanel.rect.height == DescriptionPanel.rect.height + SymbolOnlyTargetPanel.rect.height` within `0.5f`.
+
+```csharp
+[Test]
+public void One_target_centers_and_no_target_is_execution_only()
+{
+    var execution = InstantiateConfigured(LoadExecution());
+    execution.Bind(CardPrefabCatalogTests.Presentation(
+        CardCategory.Execution,
+        new[]
+        {
+            new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self)
+        },
+        Array.Empty<CardDescriptionLine>()), null);
+    var content = CardPrefabCatalogTests.Field<RectTransform>(execution, "_targetContent");
+    Canvas.ForceUpdateCanvases();
+    LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+    Assert.AreEqual(0f, ((RectTransform)content.GetChild(0)).anchoredPosition.x, 0.5f);
+
+    var intervention = InstantiateConfigured(LoadIntervention());
+    intervention.Bind(CardPrefabCatalogTests.Presentation(
+        CardCategory.Intervention,
+        Array.Empty<CardTargetKey>(),
+        new[] { new CardDescriptionLine(null, "순서를 바꾼다.") }), null);
+    Assert.IsEmpty(intervention.GetComponentsInChildren<TargetGlyphView>(true));
+}
+
+[Test]
+public void Intervention_description_reclaims_the_execution_target_height()
+{
+    var execution = LoadExecution();
+    var intervention = LoadIntervention();
+    var expected = Child(execution.transform, "DescriptionPanel").rect.height
+        + Child(execution.transform, "SymbolOnlyTargetPanel").rect.height;
+    Assert.AreEqual(
+        expected,
+        Child(intervention.transform, "ExpandedDescriptionPanel").rect.height,
+        0.5f);
+}
+```
+
+- [ ] **Step 2: Run form-factor tests and identify only authored-layout failures**
+
+Run `CardFramePrefabTests` to `/private/tmp/card-form-factor-red.xml`. Do not change `CardView.BindTargetEntries` unless a test proves its category branch violates the contract.
+
+- [ ] **Step 3: Pause for the user’s full-card prefab review**
+
+For `ExecutionCardView.prefab`, the user verifies:
+
+1. `SymbolOnlyTargetPanel` remains between `ArtPanel` and `DescriptionPanel`.
+2. Its `HorizontalLayoutGroup` uses Middle Center, left/right padding `8`, spacing `8`, no force expansion, no reverse arrangement.
+3. `_targetContent` and `_targetPanel` reference this panel.
+4. One `52`-wide glyph centers; two glyphs occupy `128` units including padding/spacing and remain inside the `140`-wide panel.
+
+For `InterventionCardView.prefab`, the user verifies:
+
+1. no `SymbolOnlyTargetPanel`, target-content child, or `ExecutionOrderBadge` exists;
+2. `ExpandedDescriptionPanel` begins at the same Y as the execution description region and has height `118` versus execution description `78` plus target `40`;
+3. `CardView._targetContent`, `_targetPanel`, `_executionOrderBadge` remain unassigned.
+
+The user saves only if Inspector values differ.
+
+- [ ] **Step 4: Run form-factor, catalog, and bind regression tests**
+
+Run `CardFramePrefabTests`, `CardPrefabCatalogTests`, and `CardPresentationTests`. Expected: execution 0/1/2 states and intervention form factor all pass.
+
+- [ ] **Step 5: Commit only if a full-card prefab changed**
+
+```bash
+git add Assets/Unity/Prefabs/ExecutionCardView.prefab \
+  Assets/Unity/Prefabs/InterventionCardView.prefab \
+  Assets/Tests/UnityEditMode/CardFramePrefabTests.cs \
+  Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs
+git commit -m "fix(ui): lock card form factor layouts"
+```
+
+If neither full-card prefab changes, include only the tests in the nearest relevant Task 4 commit rather than creating an empty layout commit.
+
+---
+
+### Task 6: Validate authored assets and retire unused poster frames
 
 **Files:**
 - Modify: `Assets/Unity/Editor/CardCodeGenerator.cs`
 - Modify: `Assets/Tests/UnityEditMode/CardCodeGeneratorTests.cs`
 - Modify: `Assets/Unity/PLAYTEST.md`
-- Delete: seven `Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png` and matching `.meta`
+- Delete only after empty reference audit: seven `Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png` files and matching `.meta`
 
 **Interfaces:**
-- Produces: editor validation errors containing card ID, asset path, raw invalid selector value.
-- Preserves: generated card equivalence after selector rename.
+- Editor validation errors contain card ID, asset path, and raw invalid selector value.
+- Produces: `CardCodeGenerator.ValidateCardAsset(CardAsset card, string assetPath) -> IReadOnlyList<string>`.
+- Generated card equivalence remains unchanged.
 
 - [ ] **Step 1: Write RED serialized-asset validation tests**
 
-Create an in-memory `CardAsset` with `DamageSpec.Selector = (TargetSelectorRef)2`, validate it against path `Assets/Validation/legacy_card.asset`, and assert one error contains `legacy_card`, that path, and `2`. Also scan every real `CardAsset` from `AssetDatabase.FindAssets("t:CardAsset")` and assert none reports values `2` or `4`.
+```csharp
+[Test]
+public void Card_asset_validation_reports_id_path_and_raw_selector()
+{
+    var card = ScriptableObject.CreateInstance<CardAsset>();
+    try
+    {
+        card.Id = "legacy_card";
+        card.DisplayName = "레거시";
+        card.Category = CardCategory.Execution;
+        card.Effects = new EffectSpec[]
+        {
+            new DamageSpec
+            {
+                Value = 1,
+                Selector = (TargetSelectorRef)2
+            }
+        };
 
-- [ ] **Step 2: Run `CardCodeGeneratorTests` and verify RED**
+        var errors = CardCodeGenerator.ValidateCardAsset(
+            card,
+            "Assets/Validation/legacy_card.asset");
 
-Expected: missing path-aware validation helper.
+        Assert.That(errors, Has.Some.Contains("legacy_card"));
+        Assert.That(errors, Has.Some.Contains("Assets/Validation/legacy_card.asset"));
+        Assert.That(errors, Has.Some.Contains("2"));
+    }
+    finally
+    {
+        Object.DestroyImmediate(card);
+    }
+}
+
+[Test]
+public void Every_authored_card_uses_only_defined_selector_values()
+{
+    foreach (var guid in AssetDatabase.FindAssets("t:CardAsset"))
+    {
+        var path = AssetDatabase.GUIDToAssetPath(guid);
+        var card = AssetDatabase.LoadAssetAtPath<CardAsset>(path);
+        Assert.IsEmpty(CardCodeGenerator.ValidateCardAsset(card, path), path);
+    }
+}
+```
+
+- [ ] **Step 2: Run `CardCodeGeneratorTests` and confirm RED**
+
+```bash
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
+  -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
+  -runTests -testPlatform EditMode \
+  -testFilter FateWeaver.Tests.UnityEditMode.CardCodeGeneratorTests \
+  -testResults /private/tmp/card-generator-red.xml \
+  -logFile /private/tmp/card-generator-red.log
+```
 
 - [ ] **Step 3: Add path-aware preflight**
 
-Before conversion or source emission, validate every loaded asset. Reuse `AuthoringValidator` and prefix each error with `Card '<id>' at '<path>':`. Abort generation; never coerce undefined values.
+Before conversion/source emission, reuse `AuthoringValidator` and prefix each error:
+
+```csharp
+public static IReadOnlyList<string> ValidateCardAsset(
+    CardAsset card,
+    string assetPath)
+{
+    if (card == null) throw new ArgumentNullException(nameof(card));
+    if (string.IsNullOrWhiteSpace(assetPath))
+        throw new ArgumentException("Asset path is required.", nameof(assetPath));
+
+    return AuthoringValidator
+        .Validate(new[] { card.ToSpec() }, AuthoringContext.Default())
+        .Select(error =>
+            "Card '" + card.Id + "' at '" + assetPath + "': " + error)
+        .ToArray();
+}
+```
+
+Abort generation on any error; never coerce undefined values.
 
 - [ ] **Step 4: Audit poster GUID references**
 
@@ -1002,13 +924,23 @@ for meta in Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png.meta; do
 done
 ```
 
-Expected after Task 6: no matches. If a GUID remains, replace that serialized sprite with primitives and repeat. Only then delete each PNG and matching `.meta`.
+Every search must be empty. If any GUID remains, replace that serialized reference with the already-approved primitive asset through the responsible prefab Inspector, repeat the search, then delete only the seven audited PNG/meta pairs.
 
-- [ ] **Step 5: Document manual visual checks**
+- [ ] **Step 5: Update the manual visual checklist**
 
-Update `PLAYTEST.md` with: mixed execution/intervention hand; `독성 환원` two target groups; no-target execution `∅`; intervention without target/order; 1–5 cards at 4:3/16:10/16:9/21:9; hovered-card top ordering; flight category preservation; unchanged `RailCardView`.
+`PLAYTEST.md` must include:
 
-- [ ] **Step 6: Run tests and commit cleanup**
+- `Enemy → Ally → Enemy` renders two grouped description lines;
+- both description symbols are `◆`, red/blue only;
+- ally front points right and enemy front points left;
+- `All` matches other positional glyph widths;
+- target panel states 0/1/2 remain horizontal and centered;
+- no-target execution shows `∅`;
+- intervention has no target panel/`∅` and uses the expanded description region;
+- mixed hands at 4:3, 16:10, 16:9, 21:9;
+- latest hovered/held card remains topmost after resize.
+
+- [ ] **Step 6: Run focused tests and commit cleanup**
 
 ```bash
 git add Assets/Unity/Editor/CardCodeGenerator.cs \
@@ -1019,14 +951,14 @@ git commit -m "chore(ui): retire poster card frame assets"
 
 ---
 
-### Task 10: Run full verification and archive the completed plan
+### Task 7: Run full verification and archive the plan
 
 **Files:**
-- Move after successful implementation: this plan to `docs/superpowers/archive/plans/2026-07-31-primitive-card-frame.md`
+- Move after successful verification: this plan to `docs/superpowers/archive/plans/2026-07-31-primitive-card-frame.md`
 - Modify: `docs/superpowers/README.md`
 - Modify: `docs/superpowers/archive/README.md`
 
-- [ ] **Step 1: Run full headless suite**
+- [ ] **Step 1: Run the full headless suite**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
@@ -1035,7 +967,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: all pass.
 
-- [ ] **Step 2: Run full Unity EditMode suite**
+- [ ] **Step 2: Run the full Unity EditMode suite**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -1045,30 +977,37 @@ Expected: all pass.
   -logFile /private/tmp/primitive-card-frame-editmode.log
 ```
 
-Expected: XML `result="Passed"`; no compile errors, missing scripts/references, or import failures.
+Expected: XML `result="Passed"`; no compile, missing-script/reference, or import failure.
 
-- [ ] **Step 3: Run structural and dirty-tree audits**
+- [ ] **Step 3: Run structural audits**
 
 ```bash
-rg -n 'SecondFromFront|TargetSelector\.Random|TargetSelectorRef\.Random' Assets/Core Assets/Unity
+rg -n '◇◎|◎◆|AllyDirection|EnemyDirection|_glyphSlot|_allyFill|_enemyFill' \
+  Assets/Core Assets/Unity Assets/Tests Tests/Headless
 rg -n 'Resources\.Load|GameObject\.Find|FindObjectOfType' \
   Assets/Unity/CardView.cs Assets/Unity/CardPrefabCatalog.cs \
-  Assets/Unity/HandFanView.cs Assets/Unity/PileView.cs Assets/Unity/ExecutionRailView.cs
+  Assets/Unity/TargetGlyphView.cs Assets/Unity/DescriptionLineView.cs
 git diff --check
 git status --short
 ```
 
-Expected: searches empty, diff check clean, only intended files listed.
+Expected: both searches empty and only intended local tool artifacts remain untracked.
 
-- [ ] **Step 4: Record automated render captures**
+- [ ] **Step 4: Render captures for user review**
 
-Run `FateWeaver.Tests.UnityEditMode.CardFrameRenderCapture` to render execution, intervention, toxic-reclaim, and mixed five-card hands at four logical sizes into `/private/tmp/primitive-card-frame-captures/`. Capture output remains untracked.
+Run `FateWeaver.Tests.UnityEditMode.CardFrameRenderCapture`. Inspect:
 
-- [ ] **Step 5: Archive plan and update indexes**
+- execution and intervention at `1280×720`;
+- toxic reclaim with blue `◎` left and red front-one glyph right;
+- mixed five-card hands at `960×720`, `1280×800`, `1280×720`, `1680×720`.
 
-After all implementation and verification pass, move this plan to `archive/plans/`, remove its active row from `docs/superpowers/README.md`, add the archived entry to `docs/superpowers/archive/README.md`, and keep the design spec current.
+Captures stay under `/private/tmp/primitive-card-frame-captures/`. Present them to the user and wait for visual approval before archiving.
 
-- [ ] **Step 6: Commit completion record**
+- [ ] **Step 5: Archive the completed plan and update indexes**
+
+Move this file to `docs/superpowers/archive/plans/`, remove its active row from `docs/superpowers/README.md`, add the archived row to `docs/superpowers/archive/README.md`, and keep the design spec current.
+
+- [ ] **Step 6: Commit the completion record**
 
 ```bash
 git add docs/superpowers/README.md docs/superpowers/archive/README.md \
@@ -1076,11 +1015,11 @@ git add docs/superpowers/README.md docs/superpowers/archive/README.md \
 git commit -m "docs: archive primitive card frame implementation"
 ```
 
-- [ ] **Step 7: Confirm final branch state**
+- [ ] **Step 7: Confirm branch state**
 
 ```bash
 git status --short
-git log --oneline --decorate -10
+git log --oneline --decorate -12
 ```
 
-Expected: clean worktree on `refactor/card-frame-design`. Do not merge to `master` without explicit user approval.
+Expected: no uncommitted project file on `refactor/card-frame-design`. Do not merge to `master` without explicit user approval.
