@@ -64,7 +64,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Korean_toxic_reclaim() =>
             Assert.AreEqual(
-                "[◆] 독 최대 1 소비. 독 1.\n[◇◎] 소비했다면 방어 4.",
+                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 4.",
                 Describe(StarterPoolSpecs.ToxicReclaim()));
 
         [Test]
@@ -76,7 +76,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Korean_quick_cover() =>
             Assert.AreEqual(
-                "[◇] 방어 4.",
+                "[◆] 방어 4.",
                 Describe(StarterPoolSpecs.QuickCover()));
 
         private static int CountOccurrences(string haystack, string needle)

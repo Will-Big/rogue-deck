@@ -102,10 +102,11 @@ namespace FateWeaver.Simulation.Descriptions
             var sentence = string.IsNullOrEmpty(condition)
                 ? fragment.Text + "."
                 : condition + " " + fragment.Text + ".";
-            var last = lineTargets.Count - 1;
-            if (last >= 0 && Nullable.Equals(lineTargets[last], fragment.Target))
+            var lineIndex = lineTargets.FindIndex(
+                target => Nullable.Equals(target, fragment.Target));
+            if (lineIndex >= 0)
             {
-                lineTexts[last].Append(' ').Append(sentence);
+                lineTexts[lineIndex].Append(' ').Append(sentence);
                 return;
             }
 

@@ -9,11 +9,7 @@ namespace FateWeaver.Simulation.Descriptions
     public sealed class KoreanDescriptionGrammar : IDescriptionGrammar
     {
         public string Symbol(CardTargetKey target)
-        {
-            if (target.Range == CardTargetRange.Self)
-                return target.Faction == CardTargetFaction.Ally ? "◇◎" : "◎◆";
-            return target.Faction == CardTargetFaction.Ally ? "◇" : "◆";
-        }
+            => "◆";
 
         public string Condition(Condition condition)
         {

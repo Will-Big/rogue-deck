@@ -52,7 +52,7 @@ namespace FateWeaver.Tests
                 StatusApplyTarget.AllPartyMembers,
                 4));
 
-            Assert.AreEqual("[◇] 방어 4.", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]

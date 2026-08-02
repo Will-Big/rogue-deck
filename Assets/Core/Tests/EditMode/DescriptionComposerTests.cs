@@ -66,7 +66,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("guard",
                 EffectData.ApplyStatus(StatusKeys.Block, StatusLifetime.ThisTurn, StatusApplyTarget.Self, 4));
-            Assert.AreEqual("[◇◎] 방어 4.", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace FateWeaver.Tests.EditMode
                         SuccessEffectValue = 7
                     });
             Assert.AreEqual(
-                "[◇◎] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
+                "[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -156,9 +156,9 @@ namespace FateWeaver.Tests.EditMode
                 DescriptionComposer.Describe(card, Korean));
         }
 
-        [TestCase(-2, "[◇◎] 대형 전방으로 2칸 이동.")]
-        [TestCase(2, "[◇◎] 대형 후방으로 2칸 이동.")]
-        [TestCase(0, "[◇◎] 대형 위치 유지.")]
+        [TestCase(-2, "[◆] 대형 전방으로 2칸 이동.")]
+        [TestCase(2, "[◆] 대형 후방으로 2칸 이동.")]
+        [TestCase(0, "[◆] 대형 위치 유지.")]
         public void Korean_formation_movement_uses_signed_direction(
             int distance,
             string expected)
@@ -216,7 +216,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_guard() =>
-            Assert.AreEqual("[◇◎] 방어 4.",
+            Assert.AreEqual("[◆] 방어 4.",
                 DescriptionComposer.Describe(StarterDeck.Guard(), Korean));
 
         [Test]
@@ -231,7 +231,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_cover() =>
-            Assert.AreEqual("[◇◎] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
+            Assert.AreEqual("[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(StarterDeck.Cover(), Korean));
 
         [Test]
@@ -251,17 +251,17 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_goblin_jab() =>
-            Assert.AreEqual("[◇] 피해 4.",
+            Assert.AreEqual("[◆] 피해 4.",
                 DescriptionComposer.Describe(GoblinDeck.Thrust(), Korean));
 
         [Test]
         public void Korean_crude_guard() =>
-            Assert.AreEqual("[◎◆] 방어 3.",
+            Assert.AreEqual("[◆] 방어 3.",
                 DescriptionComposer.Describe(GoblinDeck.CrudeGuard(), Korean));
 
         [Test]
         public void Korean_sly_jab() =>
-            Assert.AreEqual("[◇] 피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
+            Assert.AreEqual("[◆] 피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
                 DescriptionComposer.Describe(GoblinDeck.SlyJab(), Korean));
 
         [Test]

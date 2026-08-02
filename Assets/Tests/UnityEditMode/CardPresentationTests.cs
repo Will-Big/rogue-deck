@@ -123,7 +123,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 id => null);
 
             Assert.AreEqual(
-                "[◇◎] 대형 전방으로 1칸 이동.",
+                "[◆] 대형 전방으로 1칸 이동.",
                 presentation.Description);
         }
 

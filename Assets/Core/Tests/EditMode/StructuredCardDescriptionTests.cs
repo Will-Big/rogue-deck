@@ -35,18 +35,58 @@ namespace FateWeaver.Tests.EditMode
             Assert.AreEqual("독 최대 1 소비. 독 1.", layout.Lines[0].Text);
             Assert.AreEqual("소비했다면 방어 4.", layout.Lines[1].Text);
             Assert.AreEqual(
-                "[◆] 독 최대 1 소비. 독 1.\n[◇◎] 소비했다면 방어 4.",
+                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 4.",
                 layout.PlainText);
         }
 
         [Test]
-        public void Repeated_nonconsecutive_target_keeps_three_lines()
+        public void Repeated_nonconsecutive_target_joins_the_first_matching_line()
         {
             var layout = DescriptionComposer.Compose(
                 Execution("repeat", DamageEnemy(3), BlockSelf(2), DamageEnemy(3)), Korean);
 
-            Assert.AreEqual(3, layout.Lines.Count);
+            Assert.AreEqual(2, layout.Lines.Count);
             Assert.AreEqual(2, layout.TargetEntries.Count);
+            Assert.AreEqual(
+                new CardTargetKey(
+                    CardTargetFaction.Enemy,
+                    CardTargetRange.FrontOne),
+                layout.Lines[0].Target.Value);
+            Assert.AreEqual("피해 3. 피해 3.", layout.Lines[0].Text);
+            Assert.AreEqual(
+                new CardTargetKey(
+                    CardTargetFaction.Ally,
+                    CardTargetRange.Self),
+                layout.Lines[1].Target.Value);
+            Assert.AreEqual("방어 2.", layout.Lines[1].Text);
+            Assert.AreEqual(
+                "[◆] 피해 3. 피해 3.\n[◆] 방어 2.",
+                layout.PlainText);
+        }
+
+        [Test]
+        public void Nonconsecutive_null_targets_share_one_line_without_deduplication()
+        {
+            var layout = DescriptionComposer.Compose(
+                Execution(
+                    "repeat_null",
+                    new EffectData(EffectKeys.GrantNextTurnFate, 1),
+                    DamageEnemy(3),
+                    new EffectData(EffectKeys.GrantNextTurnFate, 2)),
+                Korean);
+
+            Assert.AreEqual(2, layout.Lines.Count);
+            Assert.IsNull(layout.Lines[0].Target);
+            Assert.AreEqual(
+                "다음 사용 턴에 운명력 1 획득. "
+                + "다음 사용 턴에 운명력 2 획득.",
+                layout.Lines[0].Text);
+            Assert.AreEqual(
+                new CardTargetKey(
+                    CardTargetFaction.Enemy,
+                    CardTargetRange.FrontOne),
+                layout.Lines[1].Target.Value);
+            Assert.AreEqual("피해 3.", layout.Lines[1].Text);
         }
 
         [Test]
