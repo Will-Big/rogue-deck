@@ -37,6 +37,7 @@ namespace FateWeaver.Core.Authoring.Json
             if (includePolymorphic)
             {
                 settings.Converters.Add(new EffectSpecJsonConverter());
+                settings.Converters.Add(new StatusSpecJsonConverter());
             }
 
             return settings;
