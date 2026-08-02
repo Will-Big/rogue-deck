@@ -128,10 +128,29 @@ namespace FateWeaver.Tests
             Assert.AreEqual(5, strike.ExecutionOrder); // base order unmodified: no matching owner statuses
         }
 
+        // 폐기된 StarterDeckSpecs.SlowHex()의 값을 그대로 옮긴 픽스처.
+        private static CardSpec SlowHexFixture() => new CardSpec
+        {
+            Id = "slow_hex",
+            Name = "slow_hex",
+            Side = Side.Player,
+            Category = CardCategory.Execution,
+            EnergyCost = 1,
+            BaseExecutionOrder = 3,
+            Effects = new EffectSpec[] { new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.Slow),
+                Value = 3,
+                Lifetime = StatusLifetimeKind.Turns,
+                LifetimeCount = 2,
+                Target = StatusApplyTarget.TargetEnemy
+            } }
+        };
+
         [Test]
         public void Playing_slow_card_slows_enemy_next_turn()
         {
-            var slowCard = CardSpecMapper.ToDefinition(StarterDeckSpecs.SlowHex());
+            var slowCard = CardSpecMapper.ToDefinition(SlowHexFixture());
             var session = new DeckCombatSession(
                 new[] { slowCard }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
 

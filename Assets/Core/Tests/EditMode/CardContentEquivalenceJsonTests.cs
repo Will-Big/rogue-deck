@@ -52,7 +52,7 @@ namespace FateWeaver.Tests
 
         private static IEnumerable<CardSpec> AuthoredSpecs()
             => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.AllAuthored())
+                .Concat(StarterDeckSpecs.Build())
                 .Concat(PartyPrototypeDeckSpecs.Build())
                 .GroupBy(spec => spec.Id)
                 .Select(group => group.First());

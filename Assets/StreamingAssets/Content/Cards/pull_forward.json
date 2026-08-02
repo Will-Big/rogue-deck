@@ -1,9 +1,0 @@
-{
-  "id": "pull_forward",
-  "name": "앞당김",
-  "side": "Player",
-  "category": "Intervention",
-  "energyCost": 1,
-  "intervention": "change_execution_order",
-  "interventionEffectValue": -1
-}

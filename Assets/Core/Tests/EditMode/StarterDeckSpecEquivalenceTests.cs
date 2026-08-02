@@ -6,6 +6,9 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
 using FateWeaver.Simulation;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Status;
+using FateWeaver.Core.Effects;
+using FateWeaver.Core.Intervention;
 
 namespace FateWeaver.Tests
 {
@@ -43,6 +46,57 @@ namespace FateWeaver.Tests
         private static int DamageOf(IReadOnlyList<ResolutionEvent> t, string id)
             => t.OfType<CardResolved>().First(e => e.CardId == id).DamageDealt;
 
+        // 아래 픽스처는 폐기된 StarterDeckSpecs 팩터리(QuickCut/Counter/Cover/PullForward)의
+        // 값을 그대로 옮긴 것이다. 이 세 테스트는 출시 카드가 아니라 규칙(개입 재정렬,
+        // PrevExecutedIsEnemyDamageCard 조건, 블록 흡수)을 검사하므로 어떤 카드가
+        // 실제로 출시되는지에 의존하지 않도록 인라인 픽스처를 쓴다.
+        private static CardSpec Fixture(string id, int order, params EffectSpec[] effects)
+            => new CardSpec
+            {
+                Id = id,
+                Name = id,
+                Side = Side.Player,
+                Category = CardCategory.Execution,
+                EnergyCost = 1,
+                BaseExecutionOrder = order,
+                Effects = effects
+            };
+
+        private static CardSpec QuickCutFixture() => Fixture("quick_cut", 5,
+            new DamageSpec
+            {
+                Value = 2,
+                Condition = new ConditionSpec { Kind = ConditionKind.FirstToTrigger, SuccessEffectValue = 8 }
+            });
+
+        private static CardSpec CounterFixture() => Fixture("counter_stance", 7,
+            new DamageSpec
+            {
+                Value = 4,
+                Condition = new ConditionSpec { Kind = ConditionKind.PrevExecutedIsEnemyDamageCard, SuccessEffectValue = 9 }
+            });
+
+        private static CardSpec CoverFixture() => Fixture("cover", 5,
+            new ApplyStatusSpec
+            {
+                Status = StatusKeyRef.Of(StatusKeys.Block),
+                Value = 2,
+                Lifetime = StatusLifetimeKind.ThisTurn,
+                Target = StatusApplyTarget.Self,
+                Condition = new ConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard, SuccessEffectValue = 7 }
+            });
+
+        private static CardSpec PullForwardFixture() => new CardSpec
+        {
+            Id = "pull_forward",
+            Name = "pull_forward",
+            Side = Side.Player,
+            Category = CardCategory.Intervention,
+            EnergyCost = 1,
+            Intervention = InterventionKeyRef.Of(InterventionActionKeys.ChangeExecutionOrder),
+            InterventionEffectValue = -1
+        };
+
         [Test]
         public void Spec_deck_has_same_composition()
         {
@@ -54,20 +108,10 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Counter_spec_uses_previous_executed_enemy_attack_condition()
-        {
-            var counter = StarterDeckSpecs.Counter();
-
-            Assert.AreEqual(
-                ConditionKind.PrevExecutedIsEnemyDamageCard,
-                counter.Effects.Single().Condition.Kind);
-        }
-
-        [Test]
         public void Spec_quick_cut_pulled_first_deals_eight()
         {
             var session = new DeckCombatSession(
-                new[] { Def(StarterDeckSpecs.QuickCut()), Def(StarterDeckSpecs.PullForward()) }, 30,
+                new[] { Def(QuickCutFixture()), Def(PullForwardFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(5, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "quick_cut"));
             session.PlayInterventionCard(HandIndex(session, "pull_forward"), ZoneIndex(session, "quick_cut"));
@@ -78,7 +122,7 @@ namespace FateWeaver.Tests
         public void Spec_counter_immediately_after_enemy_attack_deals_nine()
         {
             var session = new DeckCombatSession(
-                new[] { Def(StarterDeckSpecs.Counter()) }, 30,
+                new[] { Def(CounterFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) },
                 Goblin(6, 4), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "counter_stance"));
@@ -89,7 +133,7 @@ namespace FateWeaver.Tests
         public void Spec_cover_before_enemy_attack_absorbs()
         {
             var session = new DeckCombatSession(
-                new[] { Def(StarterDeckSpecs.Cover()) }, 30,
+                new[] { Def(CoverFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "cover"));
             int hp = session.State.Party[0].Hp;
