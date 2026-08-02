@@ -88,6 +88,7 @@
 | `Assets/Core/Authoring/Statuses/StatusSpecCatalog.cs` | 명시적 등록 목록 (규칙 9) |
 | `Assets/Core/Authoring/Statuses/StatusContentLoader.cs` | 상태 소스 → `StatusContentCatalog` 또는 오류 목록 |
 | `Assets/Core/Authoring/Statuses/StatusContentCatalog.cs` | `StatusRuleSet` + 수명 종류 조회 |
+| `Assets/Core/Authoring/Statuses/StatusContentDefaults.cs` | 상태 기본값의 **단일 출처**. 내보내기와 헤드리스 폴백이 둘 다 여기서 읽는다 |
 | `Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs` | 다형 컨버터. 판별자는 `key` |
 | `Assets/StreamingAssets/Content/Statuses/*.json` | 상태 11개 |
 | `Assets/Core/Tests/EditMode/StatusContentTests.cs` | 왕복·로더·검증 테스트 |
@@ -711,6 +712,22 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 마지막 테스트가 중요하다 — 상태 하나라도 저작이 빠지면 그 상태를 거는 카드가 조용히 잘못
 동작하므로, 로더는 **등록된 전 상태가 저작됐는지**까지 확인한다.
 
+그리고 내보낸 파일과 헤드리스 폴백이 같은 출처임을 잠근다.
+
+```csharp
+        [Test]
+        public void DefaultsCoverEveryRegisteredStatus()
+        {
+            var catalog = StatusContentDefaults.Catalog();
+
+            foreach (var key in AuthoringContext.Default().RegisteredStatusKeys)
+            {
+                Assert.DoesNotThrow(
+                    () => catalog.LifetimeOf(key), "상태 '" + key.Id + "'의 기본값이 없다.");
+            }
+        }
+```
+
 `ReportsAStatusThatHasNoRegisteredBehavior`는 Task 5에서 `stun`을 지운 뒤에야 통과한다. 그때까지는
 `[Ignore("Task 5에서 stun 제거 후 활성화")]`를 붙여둔다.
 
@@ -869,33 +886,57 @@ namespace FateWeaver.Core.Authoring.Statuses
 }
 ```
 
-- [ ] **Step 5: 익스포터에 상태를 더한다**
+- [ ] **Step 5: 저작 기본값을 한 곳에 두고 익스포터가 그것을 읽는다**
 
-`Assets/Unity/Editor/CardContentExporter.cs`에 상태 내보내기를 더한다. 값은 현재 코드에 있는 것을
-그대로 옮긴다 — `StatusRuleCatalog`의 배율 3개, `CombatRegistries`의 `PoisonBehavior(growthPerTurn: 1)`,
-그리고 §확정된 결정 표의 수명.
+**원본은 하나여야 한다.** 익스포터가 값을 직접 나열하고 코어가 폴백으로 같은 값을 또 갖고 있으면
+둘이 어긋날 수 있고, 그건 이 작업이 없애려는 바로 그 문제다. 따라서 기본값을 코어에 한 번만 두고
+익스포터는 **읽기만** 한다. 카드가 `StarterPoolSpecs` → JSON으로 나가는 것과 같은 형태이며,
+후속 계획이 C# 쪽을 지울 때도 같은 경로를 밟는다.
+
+Create `Assets/Core/Authoring/Statuses/StatusContentDefaults.cs`:
 
 ```csharp
-        private const string StatusOutputDirectory = "Assets/StreamingAssets/Content/Statuses";
+using System.Collections.Generic;
+using FateWeaver.Core.Status;
 
-        private static IEnumerable<StatusSpec> AuthoredStatuses()
+namespace FateWeaver.Core.Authoring.Statuses
+{
+    /// <summary>저작된 상태의 기본값. 이 게임의 상태 규칙이 실제로 사는 곳이며, 내보내기와 헤드리스
+    /// 폴백이 **둘 다 여기서 읽는다** — 값이 두 곳에 있으면 어긋날 수 있기 때문이다.
+    /// 후속 계획에서 JSON이 진실의 원천이 되면 이 클래스는 제거된다.</summary>
+    public static class StatusContentDefaults
+    {
+        public static IReadOnlyList<StatusSpec> Specs() => new[]
         {
-            yield return Simple(StatusKeys.Block, StatusLifetimeKind.ThisTurn);
-            yield return Simple(StatusKeys.Contagion, StatusLifetimeKind.Turns);
-            yield return Simple(StatusKeys.PoisonDormant, StatusLifetimeKind.ThisTurn);
-            yield return Simple(StatusKeys.PoisonStasis, StatusLifetimeKind.ThisTurn);
-            yield return Simple(StatusKeys.RewardNullified, StatusLifetimeKind.UntilConsumed);
-            yield return new PoisonStatusSpec
+            Simple(StatusKeys.Block, StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.Contagion, StatusLifetimeKind.Turns),
+            Simple(StatusKeys.PoisonDormant, StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.PoisonStasis, StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.RewardNullified, StatusLifetimeKind.UntilConsumed),
+            new PoisonStatusSpec
             {
                 Key = StatusKeyRef.Of(StatusKeys.Poison),
                 Lifetime = StatusLifetimeKind.Permanent,
                 GrowthPerTurn = 1
-            };
-            yield return Multiplier(StatusKeys.Vulnerable, StatusRuleCatalog.VulnerableIncomingPercent);
-            yield return Multiplier(StatusKeys.Weak, StatusRuleCatalog.WeakOutgoingPercent);
-            yield return Multiplier(StatusKeys.Damaged, StatusRuleCatalog.DamagedBlockGainPercent);
-            yield return Order(StatusKeys.Slow, 2);
-            yield return Order(StatusKeys.Haste, -2);
+            },
+            Multiplier(StatusKeys.Vulnerable, StatusRuleCatalog.VulnerableIncomingPercent),
+            Multiplier(StatusKeys.Weak, StatusRuleCatalog.WeakOutgoingPercent),
+            Multiplier(StatusKeys.Damaged, StatusRuleCatalog.DamagedBlockGainPercent),
+            Order(StatusKeys.Slow, 2),
+            Order(StatusKeys.Haste, -2)
+        };
+
+        /// <summary>파일 없이 도는 헤드리스 테스트와 하니스가 쓰는 카탈로그.
+        /// 내보낸 JSON과 같은 Specs()에서 만들어지므로 둘이 어긋날 수 없다.</summary>
+        public static StatusContentCatalog Catalog()
+        {
+            var specs = new Dictionary<StatusKey, StatusSpec>();
+            foreach (var spec in Specs())
+            {
+                specs.Add(spec.Key.ToKey(), spec);
+            }
+
+            return new StatusContentCatalog(specs);
         }
 
         private static StatusSpec Simple(StatusKey key, StatusLifetimeKind lifetime)
@@ -918,7 +959,27 @@ namespace FateWeaver.Core.Authoring.Statuses
             };
 ```
 
-`ExportAll()`에서 상태 디렉터리도 만들고 `key.Id + ".json"`으로 쓴다.
+그리고 `Assets/Unity/Editor/CardContentExporter.cs`는 **읽기만** 한다 — 값을 다시 적지 않는다.
+
+```csharp
+        private const string StatusOutputDirectory = "Assets/StreamingAssets/Content/Statuses";
+
+        private static void ExportStatuses()
+        {
+            Directory.CreateDirectory(StatusOutputDirectory);
+            foreach (var spec in StatusContentDefaults.Specs())
+            {
+                File.WriteAllText(
+                    Path.Combine(StatusOutputDirectory, spec.Key.Id + ".json"),
+                    ContentJson.Write(spec) + "\n");
+            }
+        }
+```
+
+`ExportAll()`에서 `ExportStatuses()`를 부른다.
+
+내보낸 JSON과 헤드리스 폴백이 **같은 `Specs()`에서 나오므로** 어긋날 수 없다. 이 동등성을 잠그는
+테스트를 Task 3 Step 1에 함께 넣는다.
 
 둔화·가속의 `2`/`-2`는 폐기된 `slow_hex`·`quicken_self`가 갖고 있던 값(3)이 아니라 **새로 정하는
 기본값**이다. 카드가 0장이라 회귀시킬 대상이 없으므로 이 계획이 정한다.
@@ -941,7 +1002,7 @@ Expected: `poison.json`에 `growthPerTurn: 1`이 있고, `block.json`에는 `key
 - [ ] **Step 8: 테스트와 커밋**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-Expected: `Failed: 0, Passed: 440` (`ReportsAStatusThatHasNoRegisteredBehavior`는 Ignore 상태)
+Expected: `Failed: 0, Passed: 441` (`ReportsAStatusThatHasNoRegisteredBehavior`는 Ignore 상태)
 
 ```bash
 git status --short
@@ -1038,8 +1099,9 @@ Expected: 컴파일 실패 — `CombatState does not contain StatusContent`
         public Status.StatusRuleSet StatusRules => StatusContent.Rules;
 ```
 
-`StatusContentDefaults`는 헤드리스 테스트와 하니스가 파일 없이 돌 수 있도록 익스포터와 같은 값을
-코드로 제공하는 폴백이다. Unity 런타임은 로더가 만든 카탈로그를 주입한다.
+`StatusContentDefaults.Catalog()`(Task 3에서 만든다)는 파일 없이 도는 헤드리스 테스트와 하니스의
+폴백이다. 내보낸 JSON과 **같은 `Specs()`에서 만들어지므로** 값이 어긋날 수 없다. Unity 런타임은
+로더가 파일에서 만든 카탈로그를 주입한다.
 
 - [ ] **Step 4: 페이로드에서 수명을 빼고 `Count`를 넣는다**
 
@@ -1100,7 +1162,7 @@ public sealed record ApplyStatusPayload(StatusKey Key, int Count, StatusApplyTar
 - [ ] **Step 7: 테스트와 커밋**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-Expected: `Failed: 0, Passed: 443`
+Expected: `Failed: 0, Passed: 444`
 
 기존 상태 테스트가 깨지면 대부분 `ApplyStatusPayload` 생성자 시그니처 때문이다. 값의 의미가 바뀌지
 않았는지(`count`가 세기인지 지속인지) 확인하며 고친다.
@@ -1228,7 +1290,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ## 완료 조건
 
-- 헤드리스 444 tests 통과, 실패 0 / Unity EditMode 실패 0
+- 헤드리스 445 tests 통과, 실패 0 / Unity EditMode 실패 0
 - 카드 JSON **26장**, 상태 JSON **11개**
 - 카드의 `apply_status`에 `lifetime`·`value`가 없고 `count`만 있다
 - `trigger_status`에 `suppressMarker`가 없다
