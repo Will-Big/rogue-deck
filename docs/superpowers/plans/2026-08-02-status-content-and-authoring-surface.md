@@ -1351,6 +1351,16 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - 등록된 상태가 하나라도 저작되지 않으면 로드가 거부된다
 - 워킹 트리가 깨끗하다 (규칙 18)
 
+## 이 계획이 후속으로 넘기는 부채
+
+- **17개 CardSO의 규칙 데이터가 검증되지 않은 채 남는다.** 상태의 세기·수명이 카드에서 상태
+  콘텐츠로 옮겨가면서 그 `.asset` YAML이 사라진 `Value`·`Lifetime`·`LifetimeCount`·`SuppressMarker`를
+  직렬화한 채 남았다. Unity가 로드 시 버리므로 게임 경로(C# 스펙 + 카드 JSON)에는 영향이 없지만,
+  SO→`CardCodeGenerator`→`GeneratedCards.cs` 일치를 지키던 스냅샷 테스트를 이 계획에서 제거했다.
+  설계 §4.5가 SO의 규칙 필드를 제거 대상으로 규정했고 후속 계획이 `CardCodeGenerator`와
+  `GeneratedCards.cs`를 함께 지우므로, 그때 이 부채도 사라진다. 그 전까지 SO의 규칙 필드를
+  신뢰하지 않는다.
+
 ## 후속
 
 이 계획이 끝나면 계획 2(콘텐츠 원본 전환·코드 생성 제거)가 이어진다. 스키마 정정을 계획 2보다
