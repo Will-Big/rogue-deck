@@ -39,14 +39,19 @@
 
 ## 코드베이스 탐색 (graphify 지식 그래프)
 
-21. **코드베이스 질문은 graphify 그래프를 먼저 조회한다.** 이 저장소에는 코어·Unity 레이어·스펙·플랜을 한 그래프로 묶은
-    `graphify-out/`이 커밋되어 있다. 규모와 갱신 시각은 `GRAPH_REPORT.md` 머리말에서 확인한다.
-    - `graphify query "<질문>"` — 질문에 걸리는 부분 그래프. 넓은 맥락이 필요할 때의 기본 진입점.
-    - `graphify path "<A>" "<B>"` — 두 개념 사이의 최단 경로. "이게 저기까지 어떻게 이어지지"에 쓴다.
-    - `graphify explain "<개념>"` — 한 노드 중심의 설명.
+21. **코드베이스 질문은 아는 이름이 있으면 `graphify explain`부터 조회한다.** 이 저장소에는 코어·Unity 레이어·스펙·플랜을
+    한 그래프로 묶은 `graphify-out/`이 커밋되어 있다. 규모와 갱신 시각은 `GRAPH_REPORT.md` 머리말에서 확인한다.
+    갈림길은 코드냐 문서냐가 아니라 **노드 이름을 아느냐**다 (2026-07-31 실측):
+    - **심볼·문서 노드 이름을 알면** → `graphify explain "<이름>"`. 호출자·메서드·관계를 file:line으로 돌려주며
+      grep·파일 통독보다 훨씬 싸다 (실측: 코드 질의당 ~3천, 문서 질의당 ~1.1만 토큰 절약).
+    - **개념만 알면** → `graphify query "<질문>"`으로 **진입점 이름만 얻고** 즉시 `explain`으로 들어간다.
+      query 결과를 코드 질문의 답으로 삼지 않는다 — 코드↔문서 엣지가 전체의 1.4%뿐이라 자연어 질의는
+      문서 노드에 착지한 뒤 코드로 건너가지 못하고, ~2000토큰 예산에서 매번 잘린다.
+    - **파일 위치만 필요하면** grep이 더 싸다.
+    - `graphify path "<A>" "<B>"`는 문서↔문서 관계(cites/implements)에서만 신뢰한다. 코드↔코드는
+      허브 노드(`CombatState` 등)를 경유한 무의미한 경로가 나오기 쉽다.
 
-    grep이나 파일 전수 읽기보다 먼저 쓴다. 반환되는 부분 그래프가 `GRAPH_REPORT.md` 전문이나 raw grep보다 훨씬 좁다.
-    `GRAPH_REPORT.md`는 전체 아키텍처를 훑거나 위 세 명령으로 맥락이 부족할 때만 연다.
+    `GRAPH_REPORT.md`는 전체 아키텍처를 훑거나 위 명령으로 맥락이 부족할 때만 연다.
 
 22. **코드 그래프 갱신은 post-commit 훅이 자동으로 한다.** `graphify hook install`로 설치되어 있다.
     커밋할 때마다 변경된 코드 파일만 AST 재추출해 `graph.json`·`GRAPH_REPORT.md`를 갱신한다.
@@ -58,16 +63,82 @@
     워크트리에서 최신 구조가 필요하면 직접 `graphify update .`를 돌린다. 커밋된 `manifest.json`이
     상대 경로 기반이라 다른 워크트리·클론에서도 증분이 그대로 맞물린다 — 전체 리빌드가 필요 없다.
 
+    **`git merge`는 post-commit을 발동시키지 않는다.** `graphify hook install`은 post-commit·post-checkout만
+    설치하므로, 워크트리에서 작업해 master로 머지하는 이 저장소의 기본 워크플로에서는 두 경로가 모두 막혀
+    그래프가 조용히 낡는다 (2026-07-31에 20커밋 누락으로 실증). 메인 체크아웃의 로컬 `.git/hooks/post-merge`가
+    이를 메운다 — post-commit에서 MERGE_HEAD 가드만 제거해 실행하는 래퍼다 (post-merge 시점엔 MERGE_HEAD가
+    아직 남아 있어 그대로 exec하면 가드에서 조용히 빠진다). 이 훅은 git 추적이 안 되므로 `graphify hook install`
+    재실행·재클론 후에는 사라진다. **그래프가 낡아 보이면** `GRAPH_REPORT.md`의 `Built from commit`을 HEAD와
+    대조하고 이 훅의 존재부터 확인한다. 재설치:
+    ```sh
+    cat > .git/hooks/post-merge <<'EOF'
+    #!/bin/sh
+    _PC="$(dirname "$0")/post-commit"
+    [ -x "$_PC" ] || exit 0
+    _T=$(mktemp) || exit 0
+    sed '/MERGE_HEAD/d' "$_PC" > "$_T"
+    sh "$_T"
+    rm -f "$_T"
+    EOF
+    chmod +x .git/hooks/post-merge
+    ```
+
     브랜치에서 `graph.json`을 커밋해도 된다. `.gitattributes`에 등록된 union merge driver가
     자동 병합하므로 충돌하지 않는다. 다만 union 병합은 양쪽 노드를 합치므로 **코드를 대량 삭제한 뒤에는**
     `graphify update . --force`로 한 번 온전히 재빌드해 사라진 노드를 정리한다.
 
-23. **문서·스펙이 바뀌면 시맨틱 재추출을 사용자에게 제안한다.** 훅과 `graphify update .`는 코드(AST)만 본다.
-    문서·이미지는 `/graphify --update` 경로라야 반영되고, 이건 서브에이전트를 쓰는 **유료** 작업이다.
-    임의로 돌리지 말고 제안만 한다.
+23. **문서 시맨틱 재추출은 에포크 경계에서만 제안한다.** 훅과 `graphify update .`는 코드(AST)만 본다.
+    문서·이미지는 `/graphify --update` 경로라야 반영되고, 이건 서브에이전트를 쓰는 **유료** 작업이다
+    (갱신당 약 25만~40만 토큰). 문서가 바뀔 때마다 돌리면 손해다 — 활발히 편집 중인 문서는 세션이 어차피
+    직접 읽으므로 그래프의 낡음이 아프지 않고, 그래프가 값을 하는 안정된 코어 스펙은 낡지 않는다.
+    기본값은 **갱신하지 않음**이고, 완료된 플랜을 `archive/`로 옮기는 커밋(규칙 20) 이후 문서들이 참조
+    자료로 안정화된 시점에만 재추출을 제안한다. 임의로 돌리지 않으며, 돌릴 때는 `.superpowers/`·
+    `graphify-out/memory/` 같은 스크래치 산출물을 대상에서 제외한다.
 
 24. **`graphify-out/cache/semantic/`은 커밋 대상이다.** 여기만 유료 산출물이다(문서·이미지 추출 2.28M 토큰).
     저장소 상대 경로만 담고 있어 이식 가능하고, 이게 있으면 누가 클론하든 전체 재빌드가 무료가 된다.
     반대로 `cache/ast/`·`graph.html`·`cost.json`은 무료로 재생성되거나 머신 로컬이라 `.gitignore`에 있다.
     캐시 키에 graphify의 추출 프롬프트 해시가 들어가므로(`cache/semantic/p<해시>/`), graphify를 올려
     프롬프트가 바뀌면 캐시가 무효화되고 재추출은 유료다.
+
+## Unity 실행 장애 대응
+
+25. **"Unity Licensing Client 연결 상실"은 좀비 라이선싱 클라이언트부터 의심한다.** Unity Hub에서 프로젝트를 열 때
+    `The connection with the Unity Licensing Client has been lost.`가 뜨거나 `-batchmode` 실행이
+    `Licensing is not yet initialized`에서 멈추면, 원인은 라이선스·Hub 버전이 아니라 **기동 중 행(hang)에 걸린
+    라이선싱 클라이언트가 글로벌 뮤텍스를 점유**한 것이다. 2026-07-20, 2026-07-31 두 번 같은 원인으로 확인됐다.
+
+    판별:
+    ```bash
+    pgrep -lf Unity.Licensing.Client
+    ```
+    Hub 자체 클라이언트(`--namedPipe Unity-LicenseClient-ish --cloudEnvironment production`)는 정상이므로
+    남겨둔다. 문제는 **에디터 버전 전용 클라이언트**(`--namedPipe Unity-LicenseClient-ish-<버전>`) 쪽이다.
+    좀비는 로깅 초기화 전에 멈추므로 `~/Library/Logs/Unity/Unity.Licensing.Client.log`에 **자기 PID 로그를
+    한 줄도 남기지 않는다.** 로그에 PID가 없는데 `ps`에는 살아 있고, 뒤이어 뜬 클라이언트들이
+    `Failed to acquire global mutex Unity-LicenseClient-ish-<버전>`을 남기면 확정이다.
+    (확보된 행 스택: 메인 스레드가 부팅 중 `Monitor.Wait`에서 영구 대기. 재발 시 `sample`을 다시 뜰 필요는 없다.)
+
+    해결:
+    ```bash
+    kill <좀비 PID>
+    ```
+    - 죽인 직후 5~10초는 새 클라이언트도 뮤텍스 획득에 실패할 수 있다. 바로 재시도해 실패했다고 오진하지 말 것.
+    - 뮤텍스가 풀렸는지는 클라이언트를 직접 띄워 확인한다. `Failed to acquire` 없이 `Waiting for a connection`이
+      찍히면 정상이며, 확인 후 그 프로세스는 반드시 죽인다.
+      ```bash
+      '/Applications/Unity/Hub/Editor/<버전>/Unity.app/Contents/Helpers/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client' --namedPipe Unity-LicenseClient-ish-<버전> &
+      ```
+    - **이미 행에 걸린 Editor·batchmode 실행은 좀비를 죽여도 회복되지 않는다.** 해당 실행은 재시작해야 한다.
+
+    오진 금지 — 다음 둘은 원인이 아니다:
+    - 로그의 `Unsupported protocol version '1.18.1'` **[505] 거부는 정상 동작**이다. Hub은 구버전용 공용
+      클라이언트를, Unity 6 계열 Editor는 자기 버전 전용 클라이언트를 따로 띄우는 설계다. 505를 보고 Hub
+      업데이트를 권하지 말 것.
+    - 라이선스 자체는 멀쩡하다. `ULF license activated successfully` / `Found 1 entitlements`가 찍히면
+      재로그인·캐시 삭제는 불필요하다.
+
+26. **다른 세션의 Unity 프로세스를 죽이지 않는다.** 규칙 15·17대로 여러 워크트리가 동시에 `-batchmode`를 돌린다.
+    좀비를 정리할 때는 `ps`의 `-projectPath` 인자로 소유 워크트리를 확인하고, **라이선싱 클라이언트만** 죽인다.
+    남의 Editor·batchmode 프로세스가 같은 좀비에 막혀 있더라도 직접 죽이지 말고, 실패 사실과 로그 경로를
+    사용자에게 보고해 해당 세션이 재실행하게 한다.

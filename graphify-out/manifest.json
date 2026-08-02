@@ -35,9 +35,9 @@
     "semantic_hash": "c42cd9be238c6a8a5ab7107fbfdffd53"
   },
   "Assets/Core/Combat/CombatState.cs": {
-    "mtime": 1785321808.931987,
-    "ast_hash": "6a57ab7ae88358b97b0080202a937e12",
-    "semantic_hash": "6a57ab7ae88358b97b0080202a937e12"
+    "mtime": 1785474617.842563,
+    "ast_hash": "887b4f6bd78816ed22cf0c3e528cba73",
+    "semantic_hash": ""
   },
   "Assets/Core/Combat/Deck.cs": {
     "mtime": 1784972886.3788102,
@@ -80,9 +80,9 @@
     "semantic_hash": "288da95556039a6073aae79c0fabdb2c"
   },
   "Assets/Core/Combat/TurnResolver.cs": {
-    "mtime": 1785321808.9329448,
-    "ast_hash": "c1acd340a150231b7c94502990f8aef3",
-    "semantic_hash": "c1acd340a150231b7c94502990f8aef3"
+    "mtime": 1785474617.8430076,
+    "ast_hash": "9cc8391fe0f3bad9bebf7c75ec119744",
+    "semantic_hash": ""
   },
   "Assets/Core/Compat/IsExternalInit.cs": {
     "mtime": 1784174641.5190828,
@@ -110,9 +110,9 @@
     "semantic_hash": "88ba6c57a37d22070e6dfc9d9f35f77b"
   },
   "Assets/Core/Effects/ApplyStatusHandler.cs": {
-    "mtime": 1785321808.9338968,
-    "ast_hash": "2593a217e90df9de8a5ecf89aee873ea",
-    "semantic_hash": "2593a217e90df9de8a5ecf89aee873ea"
+    "mtime": 1785474617.8432655,
+    "ast_hash": "e6d1d66b21c327c405f25eff702f3f75",
+    "semantic_hash": ""
   },
   "Assets/Core/Effects/ApplyStatusPayload.cs": {
     "mtime": 1784450435.85766,
@@ -130,9 +130,9 @@
     "semantic_hash": "d34f9c71bb568eadaa22b45e5f95502a"
   },
   "Assets/Core/Effects/DamageHandler.cs": {
-    "mtime": 1785321808.9348607,
-    "ast_hash": "a5feed05f9c0ef344158a338fb8cbf1b",
-    "semantic_hash": "a5feed05f9c0ef344158a338fb8cbf1b"
+    "mtime": 1785474617.843523,
+    "ast_hash": "ea7aef0105c7ec4401cdf45b7e043906",
+    "semantic_hash": ""
   },
   "Assets/Core/Effects/EffectKey.cs": {
     "mtime": 1785321808.9350612,
@@ -160,9 +160,9 @@
     "semantic_hash": "7cc661cf444b746cb16a8595056bb8f8"
   },
   "Assets/Core/Effects/IEffectHandler.cs": {
-    "mtime": 1785321808.9356573,
-    "ast_hash": "1f3ecd668f0310eebf1f1042f19b0a7a",
-    "semantic_hash": "1f3ecd668f0310eebf1f1042f19b0a7a"
+    "mtime": 1785474617.843749,
+    "ast_hash": "06f242a8335465c2265e4010f2daac92",
+    "semantic_hash": ""
   },
   "Assets/Core/Effects/IEffectPayload.cs": {
     "mtime": 1784450435.8592858,
@@ -330,9 +330,9 @@
     "semantic_hash": "8bc84f36acc3ef70e08a87da947dce79"
   },
   "Assets/Core/Simulation/Authoring/StarterDeckSpecs.cs": {
-    "mtime": 1784533031.9950027,
-    "ast_hash": "a467875e8e832b3069441694b6234584",
-    "semantic_hash": "a467875e8e832b3069441694b6234584"
+    "mtime": 1785387793.8483212,
+    "ast_hash": "003c6fc717124e06fb5be776dae8b933",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/Authoring/StarterPoolSpecs.cs": {
     "mtime": 1785321808.9402952,
@@ -345,14 +345,14 @@
     "semantic_hash": "0f94c3553d2ba77cef9859aa3c105a12"
   },
   "Assets/Core/Simulation/CombatRegistries.cs": {
-    "mtime": 1785321808.9409637,
-    "ast_hash": "d287ca1a34fcdb0570d6dc45841360eb",
-    "semantic_hash": "d287ca1a34fcdb0570d6dc45841360eb"
+    "mtime": 1785474617.8442132,
+    "ast_hash": "f6459c81d66ad78b06db89bda68c0618",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/DeckCombatSession.cs": {
-    "mtime": 1785321808.941269,
-    "ast_hash": "0b74adf3f7150df6b9e89da0c3493bf2",
-    "semantic_hash": "0b74adf3f7150df6b9e89da0c3493bf2"
+    "mtime": 1785474617.84582,
+    "ast_hash": "52e8495458d8d75174c3a22b69d93c25",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/Descriptions/BuiltInEffectDescriptionHandlers.cs": {
     "mtime": 1785321808.9415612,
@@ -390,9 +390,9 @@
     "semantic_hash": "819f4377d34e17ed1920d1c27c1b6475"
   },
   "Assets/Core/Simulation/Descriptions/KoreanDescriptionCatalog.cs": {
-    "mtime": 1785321808.944904,
-    "ast_hash": "431f9045588ca1aa5842338fb9ec53d8",
-    "semantic_hash": "431f9045588ca1aa5842338fb9ec53d8"
+    "mtime": 1785474617.8460655,
+    "ast_hash": "1dbe294f823566701052457543d206af",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/Descriptions/KoreanDescriptionGrammar.cs": {
     "mtime": 1785321808.945623,
@@ -430,9 +430,9 @@
     "semantic_hash": "603fad67957dc5cb1c0ce42fa6b38fca"
   },
   "Assets/Core/Simulation/Generated/GeneratedCards.cs": {
-    "mtime": 1784533031.9982119,
-    "ast_hash": "999a54cb8daf80c9ed598fa7487bf9a1",
-    "semantic_hash": "999a54cb8daf80c9ed598fa7487bf9a1"
+    "mtime": 1785387793.8488286,
+    "ast_hash": "af60e2716def57c38823875712820f49",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/GoblinDeck.cs": {
     "mtime": 1784533031.9986932,
@@ -605,9 +605,9 @@
     "semantic_hash": "3fe5a31e4f4d72107530e0193b424e8a"
   },
   "Assets/Core/Simulation/StarterDeck.cs": {
-    "mtime": 1784972886.3855457,
-    "ast_hash": "0bc4b193b0cf02d4d0347915d22772d4",
-    "semantic_hash": "0bc4b193b0cf02d4d0347915d22772d4"
+    "mtime": 1785387793.8499527,
+    "ast_hash": "a461c8a9c1bdf462add2a1af383d738d",
+    "semantic_hash": ""
   },
   "Assets/Core/Simulation/TurnScript.cs": {
     "mtime": 1783604336.0988352,
@@ -620,9 +620,9 @@
     "semantic_hash": "252da1fc26e155336eb8a2496340cd49"
   },
   "Assets/Core/Status/BlockBehavior.cs": {
-    "mtime": 1785321808.9462483,
-    "ast_hash": "621ca15544ad2eb8e5aa0f68a35c1785",
-    "semantic_hash": "621ca15544ad2eb8e5aa0f68a35c1785"
+    "mtime": 1785474617.8464372,
+    "ast_hash": "ae391ddf331fce6de7ee9aa2dfdd8195",
+    "semantic_hash": ""
   },
   "Assets/Core/Status/ContagionBehavior.cs": {
     "mtime": 1785321808.9464703,
@@ -635,9 +635,9 @@
     "semantic_hash": "2a746211a346699501763f1d6e9e5c24"
   },
   "Assets/Core/Status/IStatusBehavior.cs": {
-    "mtime": 1785321808.947786,
-    "ast_hash": "69b64b8fc7343912956516562b83385e",
-    "semantic_hash": "69b64b8fc7343912956516562b83385e"
+    "mtime": 1785474617.8469617,
+    "ast_hash": "eb2f87f9082343ddf49502efb0f528d8",
+    "semantic_hash": ""
   },
   "Assets/Core/Status/PoisonBehavior.cs": {
     "mtime": 1785321808.9479716,
@@ -670,9 +670,9 @@
     "semantic_hash": "fef61512f6aaf65c110fcfe6c45d9f5c"
   },
   "Assets/Core/Status/StatusExecutionOrder.cs": {
-    "mtime": 1783604336.0823364,
-    "ast_hash": "2626c3e4cc15eede6979b25bc1114f5c",
-    "semantic_hash": "2626c3e4cc15eede6979b25bc1114f5c"
+    "mtime": 1785474617.8481004,
+    "ast_hash": "ca3a44126ee5a914852288959ddd4efc",
+    "semantic_hash": ""
   },
   "Assets/Core/Status/StatusInstance.cs": {
     "mtime": 1783604336.0837538,
@@ -680,9 +680,9 @@
     "semantic_hash": "99f9a4a4d76c16e8bc55d437b81614f0"
   },
   "Assets/Core/Status/StatusKey.cs": {
-    "mtime": 1785321808.9494166,
-    "ast_hash": "109f7090d42dd657929828602c26f56b",
-    "semantic_hash": "109f7090d42dd657929828602c26f56b"
+    "mtime": 1785474617.84829,
+    "ast_hash": "62cd0fd7ffd7bb096457c2d5e45ce738",
+    "semantic_hash": ""
   },
   "Assets/Core/Status/StatusLifetime.cs": {
     "mtime": 1783604336.0840228,
@@ -705,14 +705,14 @@
     "semantic_hash": "2fd90cd72bb752cc631b17d1b16b7bea"
   },
   "Assets/Core/Status/VulnerableBehavior.cs": {
-    "mtime": 1783604336.0827825,
-    "ast_hash": "96cf6740c59f5a618c6b06370091795c",
-    "semantic_hash": "96cf6740c59f5a618c6b06370091795c"
+    "mtime": 1785474617.8494525,
+    "ast_hash": "c2fffbdc6d138be694984d3b92a1edec",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/AuthoringValidationTests.cs": {
-    "mtime": 1785321808.9500768,
-    "ast_hash": "3b7d2d46c48ac49a9ed95c24d045b565",
-    "semantic_hash": "3b7d2d46c48ac49a9ed95c24d045b565"
+    "mtime": 1785474617.850145,
+    "ast_hash": "769ccb45ea102caadd8fc2ee29fd0f21",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/CardCancellationTests.cs": {
     "mtime": 1784972886.3861828,
@@ -720,9 +720,9 @@
     "semantic_hash": "c1cc3116753936a75e3231efbff8e652"
   },
   "Assets/Core/Tests/EditMode/CardContentEquivalenceTests.cs": {
-    "mtime": 1784972886.386629,
-    "ast_hash": "3825c027ba65a3a3a16e2404fdc27b95",
-    "semantic_hash": "3825c027ba65a3a3a16e2404fdc27b95"
+    "mtime": 1785387793.8503919,
+    "ast_hash": "5fda06f6986d47b3bd233ca45dab17cb",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/CardDefinitionDataTests.cs": {
     "mtime": 1784533032.0074008,
@@ -840,9 +840,9 @@
     "semantic_hash": "3547e321c3f8f07ce26b3526f6565521"
   },
   "Assets/Core/Tests/EditMode/GeneratedCardsTests.cs": {
-    "mtime": 1784533032.0138054,
-    "ast_hash": "39327c8ff067af3d95b5d4254dbe3dbd",
-    "semantic_hash": "39327c8ff067af3d95b5d4254dbe3dbd"
+    "mtime": 1785387793.851006,
+    "ast_hash": "5c99ed96ad2f2c22aaba2123e6f6cb39",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/GoblinDeckTests.cs": {
     "mtime": 1784533032.014352,
@@ -995,9 +995,9 @@
     "semantic_hash": "b63bbaf10e1651421256a311691b0a4d"
   },
   "Assets/Core/Tests/EditMode/SlowHasteStatusTests.cs": {
-    "mtime": 1784972886.3979971,
-    "ast_hash": "e7264b438dc8a02bead22bb3116746af",
-    "semantic_hash": "e7264b438dc8a02bead22bb3116746af"
+    "mtime": 1785474617.851569,
+    "ast_hash": "0be0845c9fb784de6f1f22dd63498f0b",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/SmokeTests.cs": {
     "mtime": 1784533032.0207632,
@@ -1005,14 +1005,14 @@
     "semantic_hash": "4cc9614515398bf493d1ac6cd741b527"
   },
   "Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs": {
-    "mtime": 1784972886.398292,
-    "ast_hash": "06b92a33abcb9921cca7cceb5dc8b1c5",
-    "semantic_hash": "06b92a33abcb9921cca7cceb5dc8b1c5"
+    "mtime": 1785387793.8512788,
+    "ast_hash": "2f24b39df9232f008f3b91e19de1d79a",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/StarterDeckTests.cs": {
-    "mtime": 1784972886.3999846,
-    "ast_hash": "34977915fd1b6b26cc479bc5d9e4366e",
-    "semantic_hash": "34977915fd1b6b26cc479bc5d9e4366e"
+    "mtime": 1785387793.8515127,
+    "ast_hash": "59c89d2bd1e21b658adc6fa11a7db354",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/StarterPoolDescriptionTests.cs": {
     "mtime": 1785321808.9531727,
@@ -1040,9 +1040,9 @@
     "semantic_hash": "79de92dc87580bdee11d5a17b8ef12bf"
   },
   "Assets/Core/Tests/EditMode/StatusTests.cs": {
-    "mtime": 1784972886.4009752,
-    "ast_hash": "8725345e8d51d287a980d6cbf8d64651",
-    "semantic_hash": "8725345e8d51d287a980d6cbf8d64651"
+    "mtime": 1785474617.85193,
+    "ast_hash": "8d3fa25f10f2eaa4d920a4805e9bad11",
+    "semantic_hash": ""
   },
   "Assets/Core/Tests/EditMode/StatusTickPipelineTests.cs": {
     "mtime": 1785321808.954547,
@@ -1410,9 +1410,9 @@
     "semantic_hash": "e4919beb1c6a107e0594cea475abcc09"
   },
   "README.md": {
-    "mtime": 1784450435.871641,
-    "ast_hash": "f3a719548338b19ea47d448fea5e9e68",
-    "semantic_hash": "f3a719548338b19ea47d448fea5e9e68"
+    "mtime": 1785419940.055203,
+    "ast_hash": "a14cfd1dee38f3f76ab4d0e4878a2a61",
+    "semantic_hash": ""
   },
   "Tools/card-idea-notebook/index.html": {
     "mtime": 1785386326.2726057,
@@ -1424,19 +1424,14 @@
     "ast_hash": "072c6197056b5d982411b566f33311f1",
     "semantic_hash": "072c6197056b5d982411b566f33311f1"
   },
-  "docs/PORTFOLIO.md": {
-    "mtime": 1784450435.8719318,
-    "ast_hash": "1687b219b99c675e2ef6792224d36358",
-    "semantic_hash": "1687b219b99c675e2ef6792224d36358"
-  },
   "docs/superpowers/README.md": {
-    "mtime": 1785348034.58669,
-    "ast_hash": "3f9e1728584b407e7ffdeedb078a39ba",
+    "mtime": 1785474617.8523262,
+    "ast_hash": "dad4a1f3d2aada1a6fd3b325b786875a",
     "semantic_hash": ""
   },
   "docs/superpowers/archive/README.md": {
-    "mtime": 1785348034.587864,
-    "ast_hash": "8810a71538eb43cfae9477c8669200bc",
+    "mtime": 1785387793.8602905,
+    "ast_hash": "5bc97d87412520dc4891624a1b10d25c",
     "semantic_hash": ""
   },
   "docs/superpowers/archive/plans/2026-06-18-fate-weaver-core-foundation.md": {
@@ -1780,9 +1775,9 @@
     "semantic_hash": "8c32d70e824aaf2217509e6cb268ead3"
   },
   "docs/superpowers/plans/2026-07-16-architecture-refactor-backlog.md": {
-    "mtime": 1785217392.6273572,
-    "ast_hash": "89096f2f9f91f38eb96fb37211340cc1",
-    "semantic_hash": "89096f2f9f91f38eb96fb37211340cc1"
+    "mtime": 1785474617.8530283,
+    "ast_hash": "df14e616e85679ddff35d048fb950654",
+    "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md": {
     "mtime": 1784882127.8689706,
@@ -2042,6 +2037,151 @@
   "Tools/card-idea-notebook/\u110c\u1165\u11a8 \u1110\u1161\u110b\u1175\u11b8 A.md": {
     "mtime": 1785385916.128668,
     "ast_hash": "90a25187539e404d6a490daceca5bb8a",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Combat/CardActor.cs": {
+    "mtime": 1785474617.8417602,
+    "ast_hash": "0f03904f9830f758557f58ee8768cfd9",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/DamagedBehavior.cs": {
+    "mtime": 1785474617.8465905,
+    "ast_hash": "88c1f75e9170a80b41766540d42cf95a",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/StatusDamageFold.cs": {
+    "mtime": 1785474617.8471103,
+    "ast_hash": "5d67967b1599b449106d2295d01fec38",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/StatusDamageLayer.cs": {
+    "mtime": 1785474617.8473763,
+    "ast_hash": "37e91e724f81184cc1928d41b554e1f0",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/StatusRule.cs": {
+    "mtime": 1785474617.8484538,
+    "ast_hash": "a7f1f7620b81002ce615bf0d1b465ccb",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/StatusRuleCatalog.cs": {
+    "mtime": 1785474617.8487394,
+    "ast_hash": "e7be9e66e72739dccbce58e2cc41a4f6",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/StatusRuleSet.cs": {
+    "mtime": 1785474617.8490868,
+    "ast_hash": "61882510906f645f7924c68d0976c4ad",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Status/WeakBehavior.cs": {
+    "mtime": 1785474617.8496106,
+    "ast_hash": "7fbe4f68b3c9e2fea6a7353f3b7f12ac",
+    "semantic_hash": ""
+  },
+  "Assets/Core/Tests/EditMode/DebuffStatusTests.cs": {
+    "mtime": 1785474617.8503087,
+    "ast_hash": "c723afd00b1297c702339e85fadc2ad6",
+    "semantic_hash": ""
+  },
+  "Assets/Tests/UnityEditMode/StarterDeckAssetCompositionTests.cs": {
+    "mtime": 1785387793.8517272,
+    "ast_hash": "e95869b7095882d9ca309da8ff5da2a2",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-architecture.html": {
+    "mtime": 1785425813.7843966,
+    "ast_hash": "9508b22a9541ad18325ca152092a484f",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-hand-overlap-v1.html": {
+    "mtime": 1785429936.2494862,
+    "ast_hash": "19d6c727774ac996a7bd007f441ffe43",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-layout.html": {
+    "mtime": 1785425213.6261075,
+    "ast_hash": "915e19b8b826b257cb0246fa6d3a48df",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers-v2.html": {
+    "mtime": 1785429032.3824842,
+    "ast_hash": "99d3779903130f98111de1495b5a6f24",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers-v3.html": {
+    "mtime": 1785429391.1445134,
+    "ast_hash": "f08f28c12aa01b2bc966d662530facae",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers-v4.html": {
+    "mtime": 1785429465.426848,
+    "ast_hash": "cfdee6887698cf0dace1b13795d6c935",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers-v5.html": {
+    "mtime": 1785429562.154436,
+    "ast_hash": "63a615eaa77777b500b5171cf681a42d",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers-v6.html": {
+    "mtime": 1785429652.132435,
+    "ast_hash": "2eb92c5ae4a9fa162201b2f1896b1372",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/card-frame-prefab-layers.html": {
+    "mtime": 1785428398.9989574,
+    "ast_hash": "bdfc59eb0ab8daee0b327fe4ce68f1af",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/responsive-hand-layout.html": {
+    "mtime": 1785435303.0356405,
+    "ast_hash": "b57e5bfb0211f6dc57605b9c2162c213",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/waiting-data-contract.html": {
+    "mtime": 1785427700.5624118,
+    "ast_hash": "e9dc6a24d0cc7ba3cf5e7dde03796131",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/waiting-final-design.html": {
+    "mtime": 1785436505.41942,
+    "ast_hash": "8db41b68cb6be2592f67c921585f391c",
+    "semantic_hash": ""
+  },
+  ".superpowers/brainstorm/40305-1785425147/content/waiting-target-contract.html": {
+    "mtime": 1785425348.9973018,
+    "ast_hash": "c676dc603ebb05be605521979677aa80",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/archive/plans/2026-07-30-random-starter-deck.md": {
+    "mtime": 1785387793.8605695,
+    "ast_hash": "7a42ecf0b73edc0a1e0c73d20c88c366",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-30-status-rule-and-debuffs.md": {
+    "mtime": 1785474617.853493,
+    "ast_hash": "c406d13ea3d0e04efc4b465f3ab99434",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-31-combat-interaction-log.md": {
+    "mtime": 1785474617.8538454,
+    "ast_hash": "03ece054840fa82c505b161ecfa26449",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-30-card-mutation-and-runtime-content-design.md": {
+    "mtime": 1785474617.8541014,
+    "ast_hash": "33cbac688f4b8886cdb5fc6c1adb0f96",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-30-random-starter-deck-design.md": {
+    "mtime": 1785387793.8608623,
+    "ast_hash": "a6c7f8e6820628b933f96c83872820d6",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260730_164942_\uacb9\uce58\ub294_\ud578\ub4dc\uc5d0\uc11c_\ub3cc\ucd9c\ud615_\ube44\uc6a9_\uc2e4\ud589_\uc21c\uc11c_\ubc30\uc9c0\ub97c_\uad6c\ud604\ud558\uae30_\uc5b4\ub824\uc6b4\uac00__\ud558\ub4dc\ucf54\ub529\uc740_\uc5bc\ub9c8\ub098_\ud544\uc694\ud55c.md": {
+    "mtime": 1785430182.227092,
+    "ast_hash": "f3fdb7e24b2353e74051711014476909",
     "semantic_hash": ""
   }
 }
