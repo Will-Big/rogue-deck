@@ -1035,10 +1035,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 **Files:**
 - Modify: `Assets/Core/Combat/CombatState.cs` (`StatusContent` 보유)
-- Modify: `Assets/Core/Effects/ApplyStatusPayload.cs` (`StatusLifetime` → `int Count`)
+- Modify: `Assets/Core/Effects/ApplyStatusPayload.cs` (`StatusLifetime` 제거 — 숫자는 담지 않는다)
 - Modify: `Assets/Core/Effects/ApplyStatusHandler.cs`
 - Modify: `Assets/Core/Cards/CardDefinition.cs` (`EffectData.ApplyStatus` 헬퍼)
 - Modify: `Assets/Core/Simulation/StarterDeck.cs` (9개 테스트 픽스처 팩터리)
+- Modify: `Assets/Core/Simulation/Descriptions/DescriptionContracts.cs` (`DescriptionContext`가 카탈로그를 든다)
+- Modify: `Assets/Core/Simulation/Descriptions/BuiltInEffectDescriptionHandlers.cs` (`ApplyStatusDescriptionHandler`)
 - Modify: `Assets/Core/Status/{SlowBehavior,HasteBehavior}.cs` (세기를 규칙에서)
 - Modify: `Assets/Core/Status/PoisonBehavior.cs` (성장치를 규칙에서)
 - Modify: `Assets/Core/Effects/TriggerStatusHandler.cs` (억제 마커를 behavior가 안다)
@@ -1048,7 +1050,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Consumes: `StatusContentCatalog` (Task 3)
 - Produces:
   - `CombatState.StatusContent` (`StatusContentCatalog`)
-  - `ApplyStatusPayload(StatusKey Key, int Count, StatusApplyTarget Target)`
+  - `ApplyStatusPayload(StatusKey Key, StatusApplyTarget Target)` — **숫자를 담지 않는다.**
+    수치는 이미 `EffectData.EffectValue`에 있고, 조건부 성공값 덮어쓰기도 그쪽이 처리한다
+    (`Cover`의 조건부 방어 7이 그 경로다). 페이로드에 또 넣으면 같은 숫자가 두 벌이 되어
+    어긋날 수 있다 — 이 계획이 없애려는 바로 그 결함이다.
+  - `DescriptionContext.StatusContent` (`StatusContentCatalog`)
   - `StatusBehavior.SuppressThisTurn(StatusBag holderBag)` — 기본 구현은 no-op,
     `PoisonBehavior`가 `poison_dormant`를 건다
 
@@ -1131,12 +1137,12 @@ public sealed record ApplyStatusPayload(StatusKey Key, int Count, StatusApplyTar
 `ApplyStatusHandler`가 카탈로그를 보고 조립한다.
 
 ```csharp
-            var lifetimeKind = ctx.State.StatusContent.LifetimeOf(payload.Key);
-            var countIsDuration = ctx.State.StatusContent.CountIsDuration(payload.Key);
-            var lifetime = countIsDuration
-                ? StatusLifetime.Of(lifetimeKind, payload.Count)
-                : StatusLifetime.Of(lifetimeKind, 0);
-            var magnitude = countIsDuration ? 0 : payload.Count;
+            var content = ctx.State.StatusContent;
+            var kind = content.LifetimeOf(payload.Key);
+            var countIsDuration = content.CountIsDuration(payload.Key);
+            // 숫자는 ctx.EffectValue 하나뿐이다 — 조건부 성공값이 이미 반영된 값이다.
+            var lifetime = StatusLifetime.Of(kind, countIsDuration ? ctx.EffectValue : 0);
+            var magnitude = countIsDuration ? 0 : ctx.EffectValue;
 ```
 
 `StatusLifetime`에 `public static StatusLifetime Of(StatusLifetimeKind kind, int count)`를 더한다
@@ -1156,6 +1162,34 @@ public sealed record ApplyStatusPayload(StatusKey Key, int Count, StatusApplyTar
 쓴다). `PoisonBehavior`의 `_growthPerTurn` 필드를 제거하고 `ctx.Content.GrowthPerTurnOf(Key)`로
 바꾼다 — `StatusTickContext`에도 `Content`를 더한다. `CombatRegistries.Statuses()`의
 `new PoisonBehavior(growthPerTurn: 1)`은 `new PoisonBehavior()`가 된다.
+
+- [ ] **Step 5b: 설명 레이어가 카탈로그를 읽는다**
+
+`ApplyStatusDescriptionHandler`는 지금 `payload.Lifetime.Kind`로 "(N턴)" 접미사를 만든다. 페이로드가
+수명을 잃으면 컴파일되지 않고, 숫자가 턴인지 세기인지는 이제 상태만 안다. 규칙 10(설명은 데이터에서
+생성)을 지키려면 컴포저가 카탈로그에 닿아야 한다.
+
+`DescriptionContext` 생성자에 `StatusContentCatalog statusContent`를 더하고 프로퍼티로 노출한다.
+설명 레이어가 이미 `StatusDescriptionRegistry`로 상태 메타데이터에 의존하고 있으므로 같은 성격의
+확장이다.
+
+`ApplyStatusDescriptionHandler`는 `CountIsDuration`으로 갈린다. 새로 지어낼 문구는 없다.
+
+| `CountIsDuration` | 수명 종류 | 문구 |
+|---|---|---|
+| false | `Permanent`·`ThisTurn` | `"{상태} {N}"` — 예: `방어 4`, `독 1` (오늘과 같다) |
+| true | `Turns` | `"{상태} ({N}턴)"` — 예: `취약 (2턴)` |
+| true | `UntilConsumed` | `"{상태} ({N}회)"` |
+
+상태 자신의 세기(`executionOrderDelta`·`multiplierPercent`)는 **카드 텍스트에 나오지 않는다.** 취약이
+이미 그렇다 — 배율은 상태의 성질이지 카드의 성질이 아니라서 카드 본문이 ×150%를 되풀이하지 않는다.
+둔화도 같아진다.
+
+`LifetimeSuffix(StatusLifetime)`은 종류와 수를 받는 메서드로 바꾼다.
+
+`Korean_slow_status_shows_turn_suffix`는 **지우지 말고 기대값을 다시 쓴다.** 이 테스트는 둔화가
+세기 3과 지속 2를 동시에 갖던 옛 구조를 못박고 있으므로, 새 규칙에 맞는 문자열로 바꾸되 접미사가
+여전히 렌더링되는지 지키는 역할은 남긴다.
 
 - [ ] **Step 6: 억제 마커를 behavior가 소유한다**
 
