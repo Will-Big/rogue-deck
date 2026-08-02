@@ -155,19 +155,21 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
-        [Test]
-        public void Description_line_hides_glyph_for_no_target_line()
+        [TestCase(CardTargetFaction.Ally, "#5DADE2")]
+        [TestCase(CardTargetFaction.Enemy, "#E85D5D")]
+        public void Description_line_colors_only_the_shared_symbol(
+            CardTargetFaction faction,
+            string expectedHex)
         {
             var line = InstantiateDescriptionLine();
             try
             {
-                line.Bind(new CardDescriptionLine(null, "카드 1장 뽑기."));
+                line.Bind(new CardDescriptionLine(
+                    new CardTargetKey(faction, CardTargetRange.Self),
+                    "방어 2."));
 
-                Assert.IsFalse(
-                    CardPrefabCatalogTests.Field<TargetGlyphView>(line, "_glyph")
-                        .gameObject.activeSelf);
                 Assert.AreEqual(
-                    "카드 1장 뽑기.",
+                    "<color=" + expectedHex + ">◆</color> 방어 2.",
                     CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
             }
             finally
@@ -177,19 +179,117 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Description_line_has_fixed_glyph_slot_and_wrapping_text()
+        public void Description_line_uses_full_width_text_without_a_glyph_slot()
         {
             var prefab = Load<DescriptionLineView>(
                 CardPrefabCatalogTests.DescriptionLinePath);
-            var slot = CardPrefabCatalogTests.Field<RectTransform>(prefab, "_glyphSlot");
-            var slotLayout = slot.GetComponent<LayoutElement>();
             var text = CardPrefabCatalogTests.Field<TMP_Text>(prefab, "_text");
+            var layout = prefab.GetComponent<HorizontalLayoutGroup>();
 
-            Assert.IsNotNull(slotLayout);
-            Assert.Greater(slotLayout.preferredWidth, 0f);
-            Assert.AreEqual(slotLayout.minWidth, slotLayout.preferredWidth);
-            Assert.AreEqual(0f, slotLayout.flexibleWidth);
+            Assert.IsEmpty(prefab.GetComponentsInChildren<TargetGlyphView>(true));
+            Assert.AreEqual(1, prefab.GetComponentsInChildren<TMP_Text>(true).Length);
+            Assert.IsNull(
+                typeof(DescriptionLineView).GetField(
+                    "_glyphSlot",
+                    BindingFlags.Instance | BindingFlags.NonPublic));
+            Assert.IsNull(
+                typeof(DescriptionLineView).GetField(
+                    "_glyph",
+                    BindingFlags.Instance | BindingFlags.NonPublic));
+            Assert.IsNotNull(layout);
+            Assert.AreEqual(0f, layout.spacing);
+            Assert.IsTrue(layout.childControlWidth);
+            Assert.IsTrue(layout.childControlHeight);
+            Assert.IsTrue(layout.childForceExpandWidth);
+            Assert.IsFalse(layout.childForceExpandHeight);
             Assert.AreEqual(TextWrappingModes.Normal, text.textWrappingMode);
+            Assert.IsTrue(text.richText);
+        }
+
+        [Test]
+        public void Description_line_declares_only_inline_serialized_fields()
+        {
+            var serializedFields = typeof(DescriptionLineView)
+                .GetFields(
+                    BindingFlags.Instance
+                    | BindingFlags.NonPublic
+                    | BindingFlags.DeclaredOnly)
+                .Where(field => field.GetCustomAttribute<SerializeField>() != null)
+                .Select(field => (field.Name, field.FieldType))
+                .ToArray();
+
+            CollectionAssert.AreEquivalent(
+                new[]
+                {
+                    ("_text", typeof(TMP_Text)),
+                    ("_allySymbolColor", typeof(Color)),
+                    ("_enemySymbolColor", typeof(Color))
+                },
+                serializedFields);
+        }
+
+        [Test]
+        public void Description_line_requires_its_text_reference()
+        {
+            var root = new GameObject("UnconfiguredDescriptionLine");
+            try
+            {
+                var line = root.AddComponent<DescriptionLineView>();
+
+                Assert.Throws<InvalidOperationException>(
+                    () => line.Bind(
+                        new CardDescriptionLine(null, "카드 1장 뽑기.")));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Description_line_rejects_an_undefined_target_faction()
+        {
+            var line = InstantiateDescriptionLine();
+            try
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(
+                    () => line.Bind(new CardDescriptionLine(
+                        new CardTargetKey(
+                            (CardTargetFaction)999,
+                            CardTargetRange.FrontOne),
+                        "피해 3.")));
+            }
+            finally
+            {
+                Object.DestroyImmediate(line.gameObject);
+            }
+        }
+
+        [TestCase(CardTargetRange.FrontOne)]
+        [TestCase(CardTargetRange.All)]
+        [TestCase(CardTargetRange.Self)]
+        public void Description_line_prefix_does_not_encode_range(
+            CardTargetRange range)
+        {
+            var line = InstantiateDescriptionLine();
+            try
+            {
+                line.Bind(new CardDescriptionLine(
+                    new CardTargetKey(CardTargetFaction.Enemy, range),
+                    "피해 3."));
+                Assert.AreEqual(
+                    "<color=#E85D5D>◆</color> 피해 3.",
+                    CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+
+                line.Bind(new CardDescriptionLine(null, "카드 1장 뽑기."));
+                Assert.AreEqual(
+                    "카드 1장 뽑기.",
+                    CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+            }
+            finally
+            {
+                Object.DestroyImmediate(line.gameObject);
+            }
         }
 
         [Test]
@@ -231,7 +331,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 Canvas.ForceUpdateCanvases();
 
                 Assert.That(lineRect.rect.width, Is.EqualTo(158f).Within(0.1f));
-                Assert.That(text.rectTransform.rect.width, Is.EqualTo(118f).Within(0.5f));
+                Assert.That(text.rectTransform.rect.width, Is.EqualTo(158f).Within(0.5f));
                 Assert.Greater(lineRect.rect.height, 28f);
                 Assert.That(
                     lineRect.rect.height,
@@ -245,29 +345,6 @@ namespace FateWeaver.Tests.UnityEditMode
                 }
 
                 Object.DestroyImmediate(parentObject);
-            }
-        }
-
-        [Test]
-        public void Description_line_binds_target_glyph_and_text()
-        {
-            var line = InstantiateDescriptionLine();
-            try
-            {
-                line.Bind(new CardDescriptionLine(
-                    new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.BackOne),
-                    "독 1."));
-
-                var glyph = CardPrefabCatalogTests.Field<TargetGlyphView>(line, "_glyph");
-                Assert.IsTrue(glyph.gameObject.activeSelf);
-                Assert.IsTrue(Child(glyph.transform, "EnemyDirection").gameObject.activeSelf);
-                Assert.AreEqual(
-                    "독 1.",
-                    CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
-            }
-            finally
-            {
-                Object.DestroyImmediate(line.gameObject);
             }
         }
 
@@ -518,15 +595,16 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.AreEqual(2, targetContent.childCount);
                 Assert.AreEqual(3, descriptionContent.childCount);
                 CollectionAssert.AreEqual(
-                    new[] { "피해 3.", "방어 2.", "카드 1장 뽑기." },
+                    new[]
+                    {
+                        "<color=#E85D5D>◆</color> 피해 3.",
+                        "<color=#5DADE2>◆</color> 방어 2.",
+                        "카드 1장 뽑기."
+                    },
                     descriptionContent
                         .GetComponentsInChildren<DescriptionLineView>(true)
                         .Select(line => CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text)
                         .ToArray());
-                Assert.IsFalse(
-                    CardPrefabCatalogTests.Field<TargetGlyphView>(
-                        descriptionContent.GetChild(2).GetComponent<DescriptionLineView>(),
-                        "_glyph").gameObject.activeSelf);
             }
             finally
             {
