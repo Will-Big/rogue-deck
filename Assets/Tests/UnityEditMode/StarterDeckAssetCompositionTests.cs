@@ -1,15 +1,13 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FateWeaver.Unity;
+using FateWeaver.Unity.Editor;
 using NUnit.Framework;
 using UnityEditor;
 
 namespace FateWeaver.Tests.UnityEditMode
 {
-    // SO의 규칙 데이터(Effects)는 더 이상 검증하지 않는다. 상태의 세기·수명이 카드에서 상태
-    // 콘텐츠로 옮겨가면서 17개 CardSO의 YAML이 사라진 필드를 직렬화한 채 남았고, 게임 경로는
-    // C# 스펙과 내보낸 카드 JSON을 읽으므로 영향이 없다. SO의 규칙 필드와 CardCodeGenerator는
-    // 설계 §4.5에 따라 후속 계획에서 제거된다 — 그때까지 이 경로는 검증되지 않은 상태로 둔다.
     public class StarterDeckAssetCompositionTests
     {
         private const string PoolPath = "Assets/Unity/CardSO/Player/StarterPool.asset";
@@ -79,6 +77,17 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual(2, SelectedIds.Count(DefenseIds.Contains));
             Assert.AreEqual(2, SelectedIds.Count(ManipulationIds.Contains));
             Assert.AreEqual(4, SelectedIds.Count(PoisonIds.Contains));
+        }
+
+        [Test]
+        public void Generated_snapshot_is_byte_for_byte_current_with_the_assets()
+        {
+            var pool = AssetDatabase.LoadAssetAtPath<CardPoolAsset>(PoolPath);
+            var deck = AssetDatabase.LoadAssetAtPath<DeckAsset>(DeckPath);
+            var expected = CardCodeGenerator.EmitSource(deck.ToSpecs(), pool.ToSpecs());
+            var actual = File.ReadAllText("Assets/Core/Simulation/Generated/GeneratedCards.cs");
+
+            Assert.AreEqual(expected, actual);
         }
     }
 }

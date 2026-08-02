@@ -55,8 +55,6 @@ MonoBehaviour:
           SkipOnBasic: 0
         Status:
           Id: block
-        Value: 1
-        Lifetime: 1
-        LifetimeCount: 0
+        Count: 1
         Target: 0
         Selector: 0

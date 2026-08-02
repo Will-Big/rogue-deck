@@ -47,9 +47,7 @@ MonoBehaviour:
           SkipOnBasic: 0
         Status:
           Id: poison
-        Value: 2
-        Lifetime: 0
-        LifetimeCount: 0
+        Count: 2
         Target: 1
         Selector: 3
     - rid: 9096977252664737821
@@ -62,8 +60,6 @@ MonoBehaviour:
           SkipOnBasic: 0
         Status:
           Id: poison_stasis
-        Value: 0
-        Lifetime: 1
-        LifetimeCount: 0
+        Count: 0
         Target: 1
         Selector: 3

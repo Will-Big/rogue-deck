@@ -71,8 +71,6 @@ MonoBehaviour:
           SkipOnBasic: 0
         Status:
           Id: poison
-        Value: 1
-        Lifetime: 0
-        LifetimeCount: 0
+        Count: 1
         Target: 1
         Selector: 1
