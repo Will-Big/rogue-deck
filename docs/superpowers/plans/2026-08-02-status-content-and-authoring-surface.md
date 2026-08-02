@@ -127,22 +127,23 @@ Expected: `Failed: 0, Passed: 432`
 `Assets/Core/Tests/EditMode/StarterDeckSpecEquivalenceTests.cs`에 픽스처 헬퍼를 더한다.
 
 ```csharp
-        private static CardSpec Fixture(string id, int order, params EffectSpec[] effects)
+        private static CardSpec Fixture(string id, int cost, int order, params EffectSpec[] effects)
             => new CardSpec
             {
                 Id = id,
                 Name = id,
                 Side = Side.Player,
                 Category = CardCategory.Execution,
-                EnergyCost = 1,
+                EnergyCost = cost,
                 BaseExecutionOrder = order,
                 Effects = effects
             };
 ```
 
 세 테스트의 카드 출처를 바꾼다. 값은 원래 카드가 갖고 있던 것을 그대로 옮긴다 — 폐기 전
-`StarterDeckSpecs.cs`에서 각 팩터리의 `BaseExecutionOrder`·`Value`·`Condition`·`Selector`를 읽어
-그대로 채운다. 단언은 하나도 바꾸지 않는다.
+`StarterDeckSpecs.cs`에서 각 팩터리의 `EnergyCost`·`BaseExecutionOrder`·`Value`·`Condition`·
+`Selector`를 **전부** 읽어 그대로 채운다. 이 픽스처가 그 카드가 무엇이었는지의 유일한 기록이
+되므로, 테스트 결과에 영향이 없는 필드도 흘리지 않는다. 단언은 하나도 바꾸지 않는다.
 
 ```csharp
         [Test]
