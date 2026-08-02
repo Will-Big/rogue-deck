@@ -1025,6 +1025,8 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `Assets/Core/Combat/CombatState.cs` (`StatusContent` 보유)
 - Modify: `Assets/Core/Effects/ApplyStatusPayload.cs` (`StatusLifetime` → `int Count`)
 - Modify: `Assets/Core/Effects/ApplyStatusHandler.cs`
+- Modify: `Assets/Core/Cards/CardDefinition.cs` (`EffectData.ApplyStatus` 헬퍼)
+- Modify: `Assets/Core/Simulation/StarterDeck.cs` (9개 테스트 픽스처 팩터리)
 - Modify: `Assets/Core/Status/{SlowBehavior,HasteBehavior}.cs` (세기를 규칙에서)
 - Modify: `Assets/Core/Status/PoisonBehavior.cs` (성장치를 규칙에서)
 - Modify: `Assets/Core/Effects/TriggerStatusHandler.cs` (억제 마커를 behavior가 안다)
@@ -1102,6 +1104,11 @@ Expected: 컴파일 실패 — `CombatState does not contain StatusContent`
 `StatusContentDefaults.Catalog()`(Task 3에서 만든다)는 파일 없이 도는 헤드리스 테스트와 하니스의
 폴백이다. 내보낸 JSON과 **같은 `Specs()`에서 만들어지므로** 값이 어긋날 수 없다. Unity 런타임은
 로더가 파일에서 만든 카탈로그를 주입한다.
+
+`Assets/Core/Simulation/StarterDeck.cs`는 폐기된 레거시 카드와 같은 id를 갖지만 `CardSpec`이 아니라
+`CardDefinition`을 직접 만드는 **테스트 픽스처 9개**다(테스트 22곳이 쓴다). 출시 경로가 없으므로
+Task 1이 남겨두었지만, `ApplyStatusPayload` 시그니처가 바뀌면 함께 고쳐야 한다. 이들을 없애는 것은
+22곳 이관이 필요한 별도 정리 작업이다.
 
 - [ ] **Step 4: 페이로드에서 수명을 빼고 `Count`를 넣는다**
 
