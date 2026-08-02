@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
@@ -70,7 +71,11 @@ namespace FateWeaver.Unity
                 view.Bind(cards[i], () => onClick?.Invoke(captured));
                 var hover = view.gameObject.AddComponent<HandCardHoverEffect>();
                 hover.Capture();
-                hover.Initialize(hovering => onHover?.Invoke(captured, hovering));
+                hover.Initialize(hovering =>
+                {
+                    NormalizeSiblingOrder();
+                    onHover?.Invoke(captured, hovering);
+                });
                 _hoverEffects.Add(hover);
                 _groups.Add(view.gameObject.AddComponent<CanvasGroup>());
                 _views.Add(view);
@@ -84,6 +89,7 @@ namespace FateWeaver.Unity
             if (index >= 0 && index < _hoverEffects.Count)
             {
                 _hoverEffects[index].Hold(value);
+                NormalizeSiblingOrder();
             }
         }
 
@@ -187,6 +193,8 @@ namespace FateWeaver.Unity
             {
                 hover.SetSuppressed(value);
             }
+
+            NormalizeSiblingOrder();
         }
 
         public void SetSelection(int index, CardView.SelectionKind kind)
@@ -225,6 +233,11 @@ namespace FateWeaver.Unity
 
             _layoutRevision++;
 
+            var activeInBackToFrontOrder = _hoverEffects
+                .Where(effect => effect.IsActive)
+                .OrderBy(effect => effect.transform.GetSiblingIndex())
+                .ToArray();
+
             var settings = new ResponsiveHandSettings(
                 _cardSize.x,
                 _cardSize.y,
@@ -254,7 +267,27 @@ namespace FateWeaver.Unity
                     i);
             }
 
-            foreach (var hover in _hoverEffects)
+            NormalizeSiblingOrder(activeInBackToFrontOrder);
+        }
+
+        private void NormalizeSiblingOrder()
+        {
+            var activeInBackToFrontOrder = _hoverEffects
+                .Where(effect => effect.IsActive)
+                .OrderBy(effect => effect.transform.GetSiblingIndex())
+                .ToArray();
+            NormalizeSiblingOrder(activeInBackToFrontOrder);
+        }
+
+        private void NormalizeSiblingOrder(
+            IReadOnlyList<HandCardHoverEffect> activeInBackToFrontOrder)
+        {
+            for (int index = 0; index < _views.Count; index++)
+            {
+                _views[index].transform.SetSiblingIndex(index);
+            }
+
+            foreach (var hover in activeInBackToFrontOrder)
             {
                 hover.ReapplyActiveSiblingOrder();
             }

@@ -153,6 +153,70 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Most_recent_active_card_remains_last_after_resize()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var views = root.GetComponentsInChildren<CardView>();
+
+                hand.SetHeld(3, true);
+                hand.SetHeld(1, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                var parent = views[0].transform.parent;
+                Assert.AreEqual(3, views[3].transform.GetSiblingIndex());
+                Assert.AreEqual(2, views[4].transform.GetSiblingIndex());
+                CollectionAssert.AreEqual(
+                    new[]
+                    {
+                        views[0].transform,
+                        views[2].transform,
+                        views[4].transform,
+                        views[3].transform,
+                        views[1].transform
+                    },
+                    Enumerable.Range(0, views.Length)
+                        .Select(parent.GetChild)
+                        .ToArray());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Releasing_multiple_active_cards_restores_original_sibling_order()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var views = root.GetComponentsInChildren<CardView>();
+
+                hand.SetHeld(1, true);
+                hand.SetHeld(3, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+                hand.SetHeld(3, false);
+                hand.SetHeld(1, false);
+
+                for (int i = 0; i < views.Length; i++)
+                {
+                    Assert.AreEqual(i, views[i].transform.GetSiblingIndex(),
+                        $"Card {i} did not return to its authored sibling index.");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Hovered_card_is_last_sibling_then_restores_its_original_sibling()
         {
             var root = new GameObject("Hand", typeof(RectTransform));

@@ -18,6 +18,8 @@ namespace FateWeaver.Unity
         private bool _suppressed;
         private System.Action<bool> _onHover;
 
+        internal bool IsActive => _hovering || _held;
+
         public void Initialize(System.Action<bool> onHover)
         {
             _onHover = onHover;
