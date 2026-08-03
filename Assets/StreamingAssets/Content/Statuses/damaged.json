@@ -1,5 +1,6 @@
 {
   "multiplierPercent": 75,
   "key": "damaged",
+  "displayName": "손상",
   "lifetime": "Turns"
 }

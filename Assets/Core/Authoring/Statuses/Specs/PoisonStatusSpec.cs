@@ -9,6 +9,8 @@ namespace FateWeaver.Core.Authoring.Statuses
     {
         public int GrowthPerTurn;
 
+        public override StatusSpec NewInstance() => new PoisonStatusSpec();
+
         public override IEnumerable<string> Validate(AuthoringContext context)
         {
             foreach (var error in base.Validate(context)) yield return error;

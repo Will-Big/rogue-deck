@@ -13,6 +13,10 @@ namespace FateWeaver.Core.Authoring.Statuses
     {
         public StatusKeyRef Key;
 
+        /// <summary>카드 본문과 UI가 이 상태를 부르는 이름. 상태에 관한 저작 데이터이므로 설명
+        /// 카탈로그가 아니라 상태가 소유한다 — 이름 변경이 재컴파일 없이 끝난다.</summary>
+        public string DisplayName;
+
         /// <summary>이 상태의 수명 종류. 카드가 적는 count의 뜻을 여기서 정한다 —
         /// Permanent·ThisTurn이면 세기, Turns·UntilConsumed면 지속.
         /// Permanent은 StatusLifetimeKind의 0번째(기본) 값이라 DefaultValueHandling.Ignore가
@@ -26,6 +30,10 @@ namespace FateWeaver.Core.Authoring.Statuses
             => Lifetime == StatusLifetimeKind.Turns
                 || Lifetime == StatusLifetimeKind.UntilConsumed;
 
+        /// <summary>자기 타입의 빈 인스턴스. JSON 컨버터가 Populate 대상으로 쓴다.
+        /// 리플렉션 대신 각 타입이 스스로 답한다 (규칙 9).</summary>
+        public virtual StatusSpec NewInstance() => new StatusSpec();
+
         public virtual StatusRule ToRule() => new StatusRule();
 
         public virtual IEnumerable<string> Validate(AuthoringContext context)
@@ -37,6 +45,11 @@ namespace FateWeaver.Core.Authoring.Statuses
             else if (!context.HasStatus(Key.ToKey()))
             {
                 yield return "no runtime behavior for status key '" + Key.Id + "'.";
+            }
+
+            if (string.IsNullOrWhiteSpace(DisplayName))
+            {
+                yield return "status spec requires a displayName.";
             }
         }
     }

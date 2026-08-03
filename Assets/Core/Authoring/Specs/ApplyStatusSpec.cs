@@ -38,7 +38,7 @@ namespace FateWeaver.Core.Authoring
             {
                 yield return "Unknown status key '" + Status.Id + "'.";
             }
-            else if (!StatusSpecCatalog.HasContent(Status.ToKey()))
+            else if (!StatusContentDefaults.HasContent(Status.ToKey()))
             {
                 // 행동 레지스트리에는 있지만(HasStatus 통과) 저작 카탈로그에는 없는 상태 —
                 // ApplyStatusHandler가 해결 시점에 StatusContentCatalog.LifetimeOf를 호출하므로

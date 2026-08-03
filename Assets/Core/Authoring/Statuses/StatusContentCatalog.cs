@@ -31,6 +31,8 @@ namespace FateWeaver.Core.Authoring.Statuses
 
         public StatusLifetimeKind LifetimeOf(StatusKey key) => Spec(key).Lifetime;
 
+        public string DisplayNameOf(StatusKey key) => Spec(key).DisplayName;
+
         public bool CountIsDuration(StatusKey key) => Spec(key).CountIsDuration;
 
         public int ExecutionOrderDeltaOf(StatusKey key)

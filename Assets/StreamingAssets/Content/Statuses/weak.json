@@ -1,5 +1,6 @@
 {
   "multiplierPercent": 75,
   "key": "weak",
+  "displayName": "약화",
   "lifetime": "Turns"
 }

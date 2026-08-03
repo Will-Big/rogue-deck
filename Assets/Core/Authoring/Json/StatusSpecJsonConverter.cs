@@ -46,15 +46,22 @@ namespace FateWeaver.Core.Authoring.Json
         private static Dictionary<string, Func<StatusSpec>> BuildFactories()
         {
             var table = new Dictionary<string, Func<StatusSpec>>();
-            foreach (var info in StatusSpecCatalog.All())
+            foreach (var spec in StatusContentDefaults.Specs())
             {
-                if (table.ContainsKey(info.Key.Id))
+                var key = spec.Key.Id;
+                if (table.ContainsKey(key))
                 {
                     throw new InvalidOperationException(
-                        "Duplicate status key '" + info.Key.Id + "' in StatusSpecCatalog.");
+                        "Duplicate status key '" + key + "' in StatusContentDefaults.");
                 }
 
-                table.Add(info.Key.Id, info.Create);
+                var prototype = spec;
+                table.Add(key, () =>
+                {
+                    var created = prototype.NewInstance();
+                    created.Key = prototype.Key;
+                    return created;
+                });
             }
 
             return table;

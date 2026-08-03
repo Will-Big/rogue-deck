@@ -10,6 +10,8 @@ namespace FateWeaver.Core.Authoring.Statuses
     {
         public int MultiplierPercent = StatusRule.NeutralPercent;
 
+        public override StatusSpec NewInstance() => new MultiplierStatusSpec();
+
         public override StatusRule ToRule()
             => new StatusRule { MultiplierPercent = MultiplierPercent };
 
