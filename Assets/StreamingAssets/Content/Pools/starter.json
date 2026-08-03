@@ -1,0 +1,27 @@
+{
+  "id": "starter",
+  "cards": [
+    "vanguard_slash",
+    "parry_strike",
+    "hasten",
+    "probing_strike",
+    "quick_cover",
+    "delay",
+    "delayed_strike",
+    "early_guard",
+    "crossover",
+    "riposte",
+    "foresight",
+    "breather",
+    "venom_thrust",
+    "last_drop",
+    "spore_veil",
+    "spread_culture",
+    "toxic_reclaim",
+    "condensed_burst",
+    "distill",
+    "early_onset",
+    "stable_culture",
+    "posthumous_spread"
+  ]
+}

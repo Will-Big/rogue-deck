@@ -1,0 +1,15 @@
+{
+  "id": "starter",
+  "cards": [
+    "probing_strike",
+    "delayed_strike",
+    "quick_cover",
+    "early_guard",
+    "breather",
+    "hasten",
+    "toxic_reclaim",
+    "early_onset",
+    "spore_veil",
+    "last_drop"
+  ]
+}

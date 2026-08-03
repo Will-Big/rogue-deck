@@ -1,0 +1,11 @@
+{
+  "id": "party_prototype",
+  "cards": [
+    "fixture_attack",
+    "fixture_attack",
+    "fixture_selected_block",
+    "fixture_selected_block",
+    "fixture_all_block",
+    "fixture_move_forward"
+  ]
+}
