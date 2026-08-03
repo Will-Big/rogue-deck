@@ -21,9 +21,10 @@ namespace FateWeaver.Core.Authoring.Statuses
                 Lifetime = StatusLifetimeKind.Permanent,
                 GrowthPerTurn = 1
             },
-            Multiplier(StatusKeys.Vulnerable, StatusRuleCatalog.VulnerableIncomingPercent),
-            Multiplier(StatusKeys.Weak, StatusRuleCatalog.WeakOutgoingPercent),
-            Multiplier(StatusKeys.Damaged, StatusRuleCatalog.DamagedBlockGainPercent),
+            // 취약 150 = 받는 피해 +50%, 약화 75 = 주는 피해 -25%, 손상 75 = 방어 획득 -25%.
+            Multiplier(StatusKeys.Vulnerable, 150),
+            Multiplier(StatusKeys.Weak, 75),
+            Multiplier(StatusKeys.Damaged, 75),
             Order(StatusKeys.Slow, 2),
             Order(StatusKeys.Haste, -2)
         };

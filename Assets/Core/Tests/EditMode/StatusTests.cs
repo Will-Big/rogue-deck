@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
@@ -200,14 +201,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_multiplier_defaults_to_one_hundred_fifty_percent()
         {
-            var rules = StatusRuleCatalog.Default();
+            var rules = StatusContentDefaults.Catalog().Rules;
             Assert.AreEqual(150, rules.For(StatusKeys.Vulnerable).MultiplierPercent);
         }
 
         [Test]
         public void Unregistered_status_rule_is_a_neutral_multiplier()
         {
-            var rules = StatusRuleCatalog.Default();
+            var rules = StatusContentDefaults.Catalog().Rules;
             Assert.AreEqual(100, rules.For(new StatusKey("no_such_status")).MultiplierPercent);
         }
 
