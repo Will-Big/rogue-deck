@@ -19,8 +19,8 @@ namespace FateWeaver.Unity
     {
         [Header("Data")]
         [SerializeField] private CharacterAsset[] _party = Array.Empty<CharacterAsset>();
-        [Tooltip("Enemy cards' art source (rules live in the goblin deck).")]
-        [SerializeField] private CardAsset[] _enemyArtCards = Array.Empty<CardAsset>();
+        [Tooltip("id → Sprite 매핑. 카드 규칙은 JSON이 갖고 여기는 표현만 담당한다.")]
+        [SerializeField] private CardArtCatalog _cardArt;
 
         [Header("Views")]
         [SerializeField] private HandFanView _hand;
@@ -49,7 +49,6 @@ namespace FateWeaver.Unity
         private readonly Dictionary<string, UnitView> _partyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, UnitView> _enemyUnits = new Dictionary<string, UnitView>();
         private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
-        private readonly Dictionary<string, Sprite> _artById = new Dictionary<string, Sprite>();
 
         /// <summary>부팅 1회로 만들어 상주하는 콘텐츠. 씬을 리셋해도 다시 읽지 않는다(설계 §4.5).</summary>
         private GameContent _content;
@@ -103,7 +102,6 @@ namespace FateWeaver.Unity
                 fateEnergyPerTurn: FateEnergyPerTurn,
                 seed: Seed);
 
-            BuildArtLookup();
             SpawnUnits();
             BindPiles();
             SetMessage("전투 시작.");
@@ -328,25 +326,9 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        private void BuildArtLookup()
-        {
-            // 플레이어 카드는 아트가 없다(색상 틴트 아트 방향). 덱을 훑어봐야 전부 null이므로
-            // 적 카드만 모은다.
-            _artById.Clear();
-            foreach (var card in _enemyArtCards) AddArt(card);
-        }
-
-        private void AddArt(CardAsset card)
-        {
-            if (card != null && !string.IsNullOrEmpty(card.Id) && card.Art != null)
-            {
-                _artById[card.Id] = card.Art;
-            }
-        }
-
-        // Card face art comes only from authored CardAsset.Art (GUID reference, move-safe).
-        private Sprite ArtFor(string id)
-            => _artById.TryGetValue(id, out var sprite) ? sprite : null;
+        /// <summary>아트는 표현이므로 카탈로그가 갖는다. 플레이어 카드는 아트가 없고(색상 틴트
+        /// 아트 방향) 적 카드 셋만 항목을 갖는다.</summary>
+        private Sprite ArtFor(string id) => _cardArt != null ? _cardArt.ArtFor(id) : null;
 
         private CardPresentation PresentationFor(OwnedCard card)
         {

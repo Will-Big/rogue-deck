@@ -22,12 +22,7 @@ namespace FateWeaver.Unity.Editor
         private const string MemberBPath = "Assets/Unity/CharacterSO/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
 
-        private static readonly string[] EnemyArtCardPaths =
-        {
-            "Assets/Unity/CardSO/Enemies/Goblin/goblin_jab.asset",
-            "Assets/Unity/CardSO/Enemies/Goblin/goblin_sly_jab.asset",
-            "Assets/Unity/CardSO/Enemies/Goblin/goblin_crude_guard.asset"
-        };
+        private const string CardArtCatalogPath = "Assets/Unity/CardSO/CardArt.asset";
 
         [MenuItem("Fate Weaver/Build Battle Scene")]
         public static void Build()
@@ -193,13 +188,8 @@ namespace FateWeaver.Unity.Editor
             {
                 serializedParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
             }
-            var arts = so.FindProperty("_enemyArtCards");
-            arts.arraySize = EnemyArtCardPaths.Length;
-            for (int i = 0; i < EnemyArtCardPaths.Length; i++)
-            {
-                arts.GetArrayElementAtIndex(i).objectReferenceValue =
-                    AssetDatabase.LoadAssetAtPath<CardAsset>(EnemyArtCardPaths[i]);
-            }
+            so.FindProperty("_cardArt").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<CardArtCatalog>(CardArtCatalogPath);
 
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
