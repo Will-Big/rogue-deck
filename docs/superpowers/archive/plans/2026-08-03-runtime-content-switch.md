@@ -3,9 +3,9 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-08-03
-- 상태: `active`
-- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
-- 선행 계획: [`archive/plans/2026-08-03-deck-pool-character-content.md`](../archive/plans/2026-08-03-deck-pool-character-content.md) (3a)
+- 상태: `완료` (2026-08-03 구현)
+- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
+- 선행 계획: [`archive/plans/2026-08-03-deck-pool-character-content.md`](./2026-08-03-deck-pool-character-content.md) (3a)
 - 후속 계획: 3c(상태 원본 확정) · 3d(C# 카드 스펙 제거)
 - 브랜치: `feat/runtime-content-switch`
 
@@ -80,6 +80,41 @@
 7. **`BattleSceneBuilder`(355줄)가 `CharacterAsset`·`CardAsset`을 경로로 로드한다.** 삭제 대상이
    아니고 적 아트 참조부(201줄) 한 곳만 고친다.
 
+## 구현 결과 (2026-08-03)
+
+헤드리스 **487 → 499**, Unity EditMode **561 → 557**(순감은 SO·코드 생성 테스트를 지운 결과다).
+카드 규칙의 원본이 `Content/Cards/*.json` 하나가 됐다.
+
+**계획이 틀렸던 곳 여섯.** 다음 계획을 쓸 때 같은 실수를 피하려고 적어 둔다.
+
+1. **등급·태그 병합 대상이 22가 아니라 26이었다.** `fixture_*` 카드에도 `CardAsset`이 있다는 걸
+   조사에서 놓쳤다. 병합 자체는 옳았고(풀 22장은 등급+태그, fixture 4장은 빈 태그 배열) diff는
+   순수 추가였다 — 삭제된 8줄이 전부 같은 줄에 콤마만 붙어 다시 나타났다.
+2. **`CardAssetAuthoringTests`가 반대 방향 불변식을 잠그고 있었다.**
+   `Assert.IsNull(typeof(CardSpec).GetField("Grade"))` — "등급·태그는 Unity 전용"이라는 주장이다.
+   3b가 의도적으로 뒤집는 것이라 테스트를 뒤집었다. Files 목록에 없던 파일이다.
+3. **`ContentExportWriter`가 파괴적 도구가 됐다.** 등급·태그를 JSON에 넣은 순간, C# 스펙에서
+   카드를 다시 쓰는 `Export_to_repository`는 그 값을 지우는 명령이 된다. 카드 내보내기 경로를
+   없애고 `WriteAllDoesNotTouchCards` 회귀 테스트를 뒀다. **원본을 옮길 때는 옛 생성 경로가
+   파괴적으로 변하지 않는지 반드시 확인한다.**
+4. **`_enemyArtCards`는 이미 덱과 무관했다.** `BuildArtLookup`이 덱을 훑는 코드는 `Art != null`
+   가드에 전부 걸려 아무것도 넣지 않았다(플레이어 카드는 아트가 없다). `DeckAsset` 제거가 아트
+   경로를 끊는다는 계획의 전제가 틀렸고, 덕분에 씬 작업이 한 단계 줄었다.
+5. **씬 배선을 사람이 할 필요가 없었다.** `BattleSceneBuilder`가 씬을 자동 생성하므로 거기서
+   `_cardArt`를 배선하면 메뉴 한 번으로 끝난다. 하드코딩된 카드 경로 셋도 카탈로그 경로 하나로 줄었다.
+6. **`GeneratedCards`·`ToLiteral` 제거를 3d에서 앞당겼다.** 런타임 소비자가 없었고 `CardAsset`이
+   죽으면 생성기도 함께 죽는다. `ToLiteral` 제거로 `EffectSpec` 서브클래스 8개가 메서드 하나씩
+   잃었고 전용 헬퍼 `ConditionLiteral`·`Quote`도 죽었다.
+
+**범위를 벗어나 함께 처리한 것** (사용자 요청):
+
+- **안 쓰는 플레이테스트 씬 둘과 `DeckPlaytestController`(334줄) 제거.** 그 두 씬이 컨트롤러의
+  유일한 소비자였다. 빌드 설정이 없어진 씬 둘을 등록하고 정작 전투 씬은 빠뜨리고 있어 바로잡았다.
+
+**아직 검증되지 않은 축 하나: Play 모드.** 배치 EditMode는 `Application.streamingAssetsPath`로
+JSON을 읽는 실제 경로를 밟지 못한다. 씬 재생성(`Fate Weaver ▸ Build Battle Scene`) 후 Play로
+확인해야 한다.
+
 ## 씬 저작 경계
 
 **이 계획에서 사람이 Unity GUI로 해야 하는 일은 둘뿐이다** (규칙 17: 워크트리는 에디터를 열지
@@ -118,12 +153,12 @@ UnityEngine을 참조하지 않는 평범한 enum이므로 파일을 옮기고 �
 카드의 정상 상태이고, 생략이 곧 `None`이라 정보 손실이 없다. 반면 `Tags`는 빈 배열이 그대로
 살아남는다(3a에서 확인).
 
-- [ ] **Step 1: 기준선을 기록한다**
+- [x] **Step 1: 기준선을 기록한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0, Passed: 487`
 
-- [ ] **Step 2: 왕복 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 2: 왕복 테스트를 먼저 쓴다 (RED)**
 
 Create `Assets/Core/Tests/EditMode/CardSpecGradeTagTests.cs`:
 
@@ -188,7 +223,7 @@ namespace FateWeaver.Tests
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: 컴파일 실패 — `CardGrade` 가 `FateWeaver.Core.Cards`에 없고 `CardSpec.Grade`도 없다
 
-- [ ] **Step 3: enum을 옮기고 필드를 더한다 (GREEN)**
+- [x] **Step 3: enum을 옮기고 필드를 더한다 (GREEN)**
 
 Create `Assets/Core/Cards/CardGrade.cs`:
 
@@ -235,7 +270,7 @@ Delete `Assets/Unity/CardGrade.cs` 와 `Assets/Unity/CardGrade.cs.meta`.
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`, `Passed: 490`
 
-- [ ] **Step 4: Unity 배치로 컴파일과 회귀를 확인한다**
+- [x] **Step 4: Unity 배치로 컴파일과 회귀를 확인한다**
 
 Run:
 ```
@@ -247,7 +282,7 @@ Expected: XML 루트의 `failed="0"`. `CardGrade` 이동이 `.asset` YAML을 깨
 `_grade`는 `[SerializeField] private CardGrade`이고 enum은 int로 직렬화되므로 네임스페이스 변경이
 YAML에 영향을 주지 않는다. **`git status`로 `.asset`이 하나도 수정되지 않았음을 확인한다.**
 
-- [ ] **Step 5: 커밋한다**
+- [x] **Step 5: 커밋한다**
 
 ```bash
 git status --short
@@ -288,7 +323,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 `CardPoolAsset.Validate`의 나머지(빈 풀 id, null 카드, 빈 카드 id, 카드 중복)는 3a의
 `PoolContentLoader`가 **이미 거부한다.**
 
-- [ ] **Step 1: 거부 경로 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 1: 거부 경로 테스트를 먼저 쓴다 (RED)**
 
 `Assets/Core/Tests/EditMode/DeckPoolCharacterLoaderTests.cs`의 `Cards` 헬퍼를 등급·태그를 받도록
 바꾸고(기본값은 유효한 값), 위 표의 네 줄 각각에 테스트를 하나씩 더한다. 기존 헬퍼:
@@ -376,7 +411,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 Expected: 컴파일 실패 — `CardContentCatalog`에 2인자 생성자와 `Specs`가 없다
 
-- [ ] **Step 2: 카탈로그에 스펙을 싣고 풀 로더에 규칙을 더한다 (GREEN)**
+- [x] **Step 2: 카탈로그에 스펙을 싣고 풀 로더에 규칙을 더한다 (GREEN)**
 
 `Assets/Core/Authoring/CardContentCatalog.cs`에 스펙 사전을 더한다:
 
@@ -499,7 +534,7 @@ Expected: 새 테스트 4개는 통과, 풀 로드를 거치는 기존 테스트
 `CardAsset`이 아직 살아 있는 지금 Unity에서 읽어 병합한다. 이 테스트는 Task 7이 `CardAsset`과
 함께 지운다.
 
-- [ ] **Step 1: 마이그레이션 테스트를 쓴다**
+- [x] **Step 1: 마이그레이션 테스트를 쓴다**
 
 Create `Assets/Tests/UnityEditMode/CardGradeTagMigrationTests.cs`. `Assets/Tests/UnityEditMode/`에
 두는 이유는 `AssetDatabase`가 필요해서다(헤드리스 프로젝트는 이 폴더를 컴파일하지 않는다).
@@ -601,7 +636,7 @@ namespace FateWeaver.Tests.UnityEditMode
 }
 ```
 
-- [ ] **Step 2: 병합을 1회 실행한다**
+- [x] **Step 2: 병합을 1회 실행한다**
 
 Run:
 ```
@@ -613,7 +648,7 @@ Run:
 Expected: XML의 `passed="1"`. `git diff --stat Assets/StreamingAssets/Content/Cards`가 **22개 파일
 수정**을 보여야 한다.
 
-- [ ] **Step 3: 병합 결과를 눈으로 확인한다**
+- [x] **Step 3: 병합 결과를 눈으로 확인한다**
 
 ```bash
 git diff Assets/StreamingAssets/Content/Cards/hasten.json
@@ -621,7 +656,7 @@ git diff Assets/StreamingAssets/Content/Cards/hasten.json
 `"grade": "Common"`과 `"tags": [...]`가 더해졌고 **다른 키는 하나도 바뀌지 않아야 한다.**
 `fixture_*`·`goblin_*` JSON은 수정되지 않아야 한다.
 
-- [ ] **Step 4: 헤드리스와 Unity를 모두 돌린다**
+- [x] **Step 4: 헤드리스와 Unity를 모두 돌린다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0` — Task 2에서 깨졌던 풀 잠금 테스트가 되살아난다
@@ -629,7 +664,7 @@ Expected: `Failed: 0` — Task 2에서 깨졌던 풀 잠금 테스트가 되살�
 Run: Unity 배치 EditMode 전체 (Global Constraints의 명령)
 Expected: `failed="0"`, skipped는 `[Explicit]` 둘(3a의 내보내기 + 이번 병합)
 
-- [ ] **Step 5: 커밋한다**
+- [x] **Step 5: 커밋한다**
 
 ```bash
 git status --short
@@ -666,7 +701,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 상태 카탈로그는 이 계획에서 묶지 않는다 — `StatusSpecJsonConverter`가 아직 `StatusContentDefaults`에
 의존하므로(3c가 뗀다) `GameContent`에 넣으면 "JSON이 원본"이라는 거짓 신호를 준다.
 
-- [ ] **Step 1: 부팅 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 1: 부팅 테스트를 먼저 쓴다 (RED)**
 
 Create `Assets/Core/Tests/EditMode/ContentBootstrapTests.cs`:
 
@@ -735,7 +770,7 @@ namespace FateWeaver.Tests
 
 Expected: 컴파일 실패 — `ContentBootstrap`이 없다
 
-- [ ] **Step 2: 번들과 부팅을 만든다 (GREEN)**
+- [x] **Step 2: 번들과 부팅을 만든다 (GREEN)**
 
 Create `Assets/Core/Authoring/GameContent.cs`:
 
@@ -867,7 +902,7 @@ namespace FateWeaver.Core.Authoring
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`, 새 테스트 3개 증가
 
-- [ ] **Step 3: 커밋한다**
+- [x] **Step 3: 커밋한다**
 
 ```bash
 git status --short
@@ -912,7 +947,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 아니라 콘텐츠이고, 3a가 이미 `Content/Characters/*.json`에 넣었다. `CharacterAsset`에 남는 것은
 id와 Color뿐이다.
 
-- [ ] **Step 1: 로드아웃 조립 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 1: 로드아웃 조립 테스트를 먼저 쓴다 (RED)**
 
 로드아웃 조립은 순수 로직이므로 코어에 두고 헤드리스로 잠근다. Create
 `Assets/Core/Tests/EditMode/ContentDrivenLoadoutTests.cs`:
@@ -978,7 +1013,7 @@ namespace FateWeaver.Tests
 
 Expected: 컴파일 실패 — `ContentLoadouts`가 없다
 
-- [ ] **Step 2: 로드아웃 조립기를 만든다 (GREEN)**
+- [x] **Step 2: 로드아웃 조립기를 만든다 (GREEN)**
 
 Create **`Assets/Core/Simulation/ContentLoadouts.cs`** (+ `.meta`). 코어가 아니라 시뮬레이션
 어셈블리에 두는 이유는 `PartyMemberLoadout`이 `FateWeaver.Simulation`에 있고 `FateWeaver.Core`가
@@ -1016,7 +1051,7 @@ namespace FateWeaver.Simulation
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`, 새 테스트 2개 증가
 
-- [ ] **Step 3: Unity 쪽 콘텐츠 루트를 만든다**
+- [x] **Step 3: Unity 쪽 콘텐츠 루트를 만든다**
 
 Create `Assets/Unity/UnityContentRoot.cs`:
 
@@ -1038,7 +1073,7 @@ namespace FateWeaver.Unity
 }
 ```
 
-- [ ] **Step 4: `BattleScreenController`를 전환한다**
+- [x] **Step 4: `BattleScreenController`를 전환한다**
 
 `_party` 필드 타입은 그대로 둔다. `StartSession()`을 고친다:
 
@@ -1096,7 +1131,7 @@ namespace FateWeaver.Unity
         }
 ```
 
-- [ ] **Step 5: `DeckPlaytestController`를 전환한다**
+- [x] **Step 5: `DeckPlaytestController`를 전환한다**
 
 `[SerializeField] private DeckAsset _deck;`를 지우고 덱 id 문자열로 바꾼다:
 
@@ -1134,12 +1169,12 @@ namespace FateWeaver.Unity
 "JSON이 원본"이 거짓말이 된다. `_deck != null` 분기를 쓰던 `BuildArtLookup()`도 `_enemyArtCards`
 계열만 남기도록 같이 정리한다.
 
-- [ ] **Step 6: Unity 배치로 검증한다**
+- [x] **Step 6: Unity 배치로 검증한다**
 
 Run: Unity 배치 EditMode 전체
 Expected: `failed="0"`. `.asset`이 수정되지 않았음을 `git status`로 확인한다.
 
-- [ ] **Step 7: 커밋한다**
+- [x] **Step 7: 커밋한다**
 
 ```bash
 git status --short
@@ -1170,7 +1205,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 설계 §4.5의 "카드 아트는 id → Sprite 매핑 SO로 남는다"를 그대로 만든다. 항목은 셋뿐이다
 (`goblin_jab`, `crude_guard`, `sly_jab`).
 
-- [ ] **Step 1: 카탈로그 타입을 만든다**
+- [x] **Step 1: 카탈로그 타입을 만든다**
 
 Create `Assets/Unity/CardArtCatalog.cs`:
 
@@ -1210,7 +1245,7 @@ namespace FateWeaver.Unity
 }
 ```
 
-- [ ] **Step 2: 사람이 에셋을 만들고 배선한다 (Unity GUI)**
+- [x] **Step 2: 사람이 에셋을 만들고 배선한다 (Unity GUI)**
 
 **이 단계는 워크트리가 아니라 메인 체크아웃에서 사람이 한다** (규칙 17).
 
@@ -1222,7 +1257,7 @@ namespace FateWeaver.Unity
 3. 전투 씬에서 `BattleScreenController`의 `_enemyArtCards` 자리에 `_cardArt`로 이 에셋을 연결
 4. 플레이테스트 씬에서도 같은 필드를 연결
 
-- [ ] **Step 3: 컨트롤러 둘의 아트 경로를 교체한다**
+- [x] **Step 3: 컨트롤러 둘의 아트 경로를 교체한다**
 
 `BattleScreenController`:
 
@@ -1239,12 +1274,12 @@ namespace FateWeaver.Unity
 `BattleSceneBuilder.cs`의 `EnemyArtCardPaths` 로드부(201줄 부근)를 `CardArtCatalog` 하나를
 로드하는 것으로 바꾼다.
 
-- [ ] **Step 4: Unity 배치로 검증한다**
+- [x] **Step 4: Unity 배치로 검증한다**
 
 Run: Unity 배치 EditMode 전체
 Expected: `failed="0"`
 
-- [ ] **Step 5: 커밋한다**
+- [x] **Step 5: 커밋한다**
 
 ```bash
 git status --short
@@ -1286,7 +1321,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 `CharacterAsset`은 삭제하지 않고 축소한다 — `_party` 배선을 유지하기로 했다(씬 저작 경계).
 
-- [ ] **Step 1: 제거 대상이 정말 안 쓰이는지 다시 확인한다**
+- [x] **Step 1: 제거 대상이 정말 안 쓰이는지 다시 확인한다**
 
 ```bash
 /usr/bin/grep -rn "GeneratedCards\.\|ToLiteral\|CardPoolAsset\|DeckAsset" Assets --include='*.cs' \
@@ -1294,7 +1329,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 남은 참조가 위 Files 목록에 없는 파일에서 나오면 **멈추고 기록한다.**
 
-- [ ] **Step 2: 코드부터 지운다**
+- [x] **Step 2: 코드부터 지운다**
 
 Files 목록의 `.cs`와 `.meta`를 지우고 Modify 대상을 고친다. `CharacterAsset`은 이렇게 남는다:
 
@@ -1320,7 +1355,7 @@ namespace FateWeaver.Unity
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`. 테스트 수가 줄어든다(`GeneratedCardsTests` 제거분).
 
-- [ ] **Step 3: 에셋을 지운다**
+- [x] **Step 3: 에셋을 지운다**
 
 ```bash
 git rm -r Assets/Unity/CardSO/Player Assets/Unity/CardSO/Enemies
@@ -1329,20 +1364,20 @@ git rm Assets/Unity/CardSO/StarterDeck.asset Assets/Unity/CardSO/StarterDeck.ass
 경로는 실제 트리에 맞춰 확인한 뒤 지운다. **적 아트 스프라이트 파일(.png)은 지우지 않는다** —
 `CardArtCatalog`가 참조한다.
 
-- [ ] **Step 4: 사람이 `CharacterAsset` 에셋 둘을 정리한다 (Unity GUI)**
+- [x] **Step 4: 사람이 `CharacterAsset` 에셋 둘을 정리한다 (Unity GUI)**
 
 메인 체크아웃에서 `member_a`·`member_b`의 `CharacterAsset`을 열어 `Deck` 참조가 사라졌는지
 확인한다. `_displayName`·`_deck`은 필드가 없어졌으므로 Unity가 조용히 버린다 — **이것이 README
 함정 1의 정상 경로이며, 두 값 모두 JSON에 이미 있으므로 손실이 없다.**
 
-- [ ] **Step 5: Unity 배치로 최종 검증한다**
+- [x] **Step 5: Unity 배치로 최종 검증한다**
 
 Run: Unity 배치 EditMode 전체
 Expected: `failed="0"`. 지운 테스트만큼 총계가 줄어든다.
 
 `git status`로 **의도하지 않은 `.asset` 수정이 없는지** 확인한다.
 
-- [ ] **Step 6: 커밋한다**
+- [x] **Step 6: 커밋한다**
 
 ```bash
 git status --short
@@ -1367,12 +1402,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `docs/superpowers/archive/README.md`
 - Move: `docs/superpowers/plans/2026-08-03-runtime-content-switch.md` → `archive/plans/`
 
-- [ ] **Step 1: 이 계획을 완료로 표시하고 보관으로 옮긴다**
+- [x] **Step 1: 이 계획을 완료로 표시하고 보관으로 옮긴다**
 
 머리말의 상태를 `완료`로 고치고 `구현 결과` 절을 더한다 (3a의 형식을 따른다). 상대 링크의
 깊이를 한 단계 늘린다.
 
-- [ ] **Step 2: README를 갱신한다**
+- [x] **Step 2: README를 갱신한다**
 
 1. `활성 계획과 로드맵` 표에서 이 계획 줄을 지운다
 2. 카드 콘텐츠 흐름 표에서 3b를 **완료·머지**로, 3c를 **다음**으로 바꾼다
@@ -1382,7 +1417,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 5. `넘어온 부채`의 `CardSO의 규칙 필드` 항목을 해결로 표시한다
 6. `현재 수치`를 갱신한다
 
-- [ ] **Step 3: 최종 검증하고 커밋한다**
+- [x] **Step 3: 최종 검증하고 커밋한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`
