@@ -16,116 +16,94 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class CardFramePrefabTests
     {
-        private static readonly string[] GlyphChildren =
+        private static readonly string[] GlyphVisualNames =
         {
-            "AllyDirection",
-            "Rail",
-            "Diamond0",
-            "Diamond1",
-            "SelfOuter",
-            "SelfInner",
-            "EnemyDirection",
-            "EmptySlash"
+            "FrontOne",
+            "FrontTwo",
+            "BackOne",
+            "BackTwo",
+            "All",
+            "Self",
+            "Empty"
         };
 
-        [Test]
-        public void Target_glyph_prefab_has_the_fixed_image_only_hierarchy()
-        {
-            var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
-
-            CollectionAssert.AreEqual(
-                GlyphChildren,
-                DirectChildNames(prefab.transform));
-            CollectionAssert.AreEqual(
-                new[] { "Segment0", "Segment1", "Segment2", "Segment3", "Segment4" },
-                DirectChildNames(prefab.transform.Find("Rail")));
-            Assert.IsEmpty(prefab.GetComponentsInChildren<TMP_Text>(true));
-            Assert.IsNotEmpty(prefab.GetComponentsInChildren<Image>(true));
-            foreach (var childName in GlyphChildren)
-            {
-                Assert.IsNotNull(
-                    prefab.transform.Find(childName).GetComponent<Image>(),
-                    childName + " must be a uGUI Image primitive.");
-            }
-        }
-
-        [Test]
-        public void Target_glyph_null_key_shows_only_circle_and_slash()
-        {
-            var glyph = InstantiateGlyph();
-            try
-            {
-                glyph.Bind(null);
-
-                Assert.IsTrue(Child(glyph.transform, "SelfOuter").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "SelfInner").gameObject.activeSelf);
-                Assert.IsTrue(Child(glyph.transform, "EmptySlash").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "Rail").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "Diamond0").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "Diamond1").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "AllyDirection").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "EnemyDirection").gameObject.activeSelf);
-            }
-            finally
-            {
-                Object.DestroyImmediate(glyph.gameObject);
-            }
-        }
-
-        [Test]
-        public void Target_glyph_front_two_uses_two_units_three_rails_and_faction_shape()
-        {
-            var glyph = InstantiateGlyph();
-            try
-            {
-                glyph.Bind(new CardTargetKey(
-                    CardTargetFaction.Ally,
-                    CardTargetRange.FrontTwo));
-                float allyScale = glyph.transform.localScale.x;
-                Assert.IsTrue(Child(glyph.transform, "AllyDirection").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "EnemyDirection").gameObject.activeSelf);
-                Assert.AreEqual(2, ActiveDiamondCount(glyph));
-                Assert.AreEqual(3, ActiveRailSegmentCount(glyph));
-                Assert.IsTrue(
-                    Child(glyph.transform, "Diamond0").GetComponent<Outline>().enabled,
-                    "Ally units use an outline in addition to direction.");
-
-                glyph.Bind(new CardTargetKey(
-                    CardTargetFaction.Enemy,
-                    CardTargetRange.FrontTwo));
-
-                Assert.IsFalse(Child(glyph.transform, "AllyDirection").gameObject.activeSelf);
-                Assert.IsTrue(Child(glyph.transform, "EnemyDirection").gameObject.activeSelf);
-                Assert.AreEqual(-allyScale, glyph.transform.localScale.x);
-                Assert.IsFalse(
-                    Child(glyph.transform, "Diamond0").GetComponent<Outline>().enabled,
-                    "Enemy units use a filled shape in addition to direction.");
-            }
-            finally
-            {
-                Object.DestroyImmediate(glyph.gameObject);
-            }
-        }
-
-        [TestCase(CardTargetRange.FrontOne, 4, 1)]
-        [TestCase(CardTargetRange.BackOne, 4, 1)]
-        [TestCase(CardTargetRange.FrontTwo, 3, 2)]
-        [TestCase(CardTargetRange.BackTwo, 3, 2)]
-        [TestCase(CardTargetRange.All, 5, 1)]
-        public void Target_glyph_range_controls_rail_and_unit_counts(
+        [TestCase(CardTargetRange.FrontOne, "FrontOne")]
+        [TestCase(CardTargetRange.FrontTwo, "FrontTwo")]
+        [TestCase(CardTargetRange.BackOne, "BackOne")]
+        [TestCase(CardTargetRange.BackTwo, "BackTwo")]
+        [TestCase(CardTargetRange.All, "All")]
+        [TestCase(CardTargetRange.Self, "Self")]
+        public void Target_glyph_activates_exactly_one_authored_range_visual(
             CardTargetRange range,
-            int expectedRails,
-            int expectedDiamonds)
+            string expectedName)
         {
             var glyph = InstantiateGlyph();
             try
             {
                 glyph.Bind(new CardTargetKey(CardTargetFaction.Ally, range));
 
-                Assert.AreEqual(expectedRails, ActiveRailSegmentCount(glyph));
-                Assert.AreEqual(expectedDiamonds, ActiveDiamondCount(glyph));
-                Assert.IsFalse(Child(glyph.transform, "SelfOuter").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "EmptySlash").gameObject.activeSelf);
+                AssertActiveVisual(glyph, expectedName);
+            }
+            finally
+            {
+                Object.DestroyImmediate(glyph.gameObject);
+            }
+        }
+
+        [TestCase(CardTargetRange.FrontOne, "FrontOne")]
+        [TestCase(CardTargetRange.FrontTwo, "FrontTwo")]
+        [TestCase(CardTargetRange.BackOne, "BackOne")]
+        [TestCase(CardTargetRange.BackTwo, "BackTwo")]
+        [TestCase(CardTargetRange.All, "All")]
+        [TestCase(CardTargetRange.Self, "Self")]
+        public void Enemy_target_mirrors_the_same_range_visual(
+            CardTargetRange range,
+            string expectedName)
+        {
+            var glyph = InstantiateGlyph();
+            try
+            {
+                glyph.Bind(new CardTargetKey(CardTargetFaction.Enemy, range));
+
+                AssertActiveVisual(glyph, expectedName);
+                Assert.Less(
+                    Child(glyph.transform, expectedName).localScale.x,
+                    0f);
+
+                glyph.Bind(new CardTargetKey(CardTargetFaction.Ally, range));
+                AssertActiveVisual(glyph, expectedName);
+                Assert.Greater(
+                    Child(glyph.transform, expectedName).localScale.x,
+                    0f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(glyph.gameObject);
+            }
+        }
+
+        [TestCase(CardTargetFaction.Ally, "#5DADE2", 1f)]
+        [TestCase(CardTargetFaction.Enemy, "#E85D5D", -1f)]
+        public void Target_glyph_uses_color_only_and_points_front_toward_center(
+            CardTargetFaction faction,
+            string expectedHex,
+            float expectedScaleSign)
+        {
+            var glyph = InstantiateGlyph();
+            try
+            {
+                glyph.Bind(new CardTargetKey(faction, CardTargetRange.FrontOne));
+                var visual = Child(glyph.transform, "FrontOne");
+
+                Assert.AreEqual(
+                    expectedScaleSign,
+                    Mathf.Sign(visual.localScale.x));
+                Assert.IsTrue(
+                    visual.GetComponentsInChildren<Graphic>(true)
+                        .All(graphic =>
+                            "#" + ColorUtility.ToHtmlStringRGB(graphic.color)
+                            == expectedHex));
+                Assert.IsEmpty(glyph.GetComponentsInChildren<Outline>(true));
             }
             finally
             {
@@ -134,25 +112,124 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Target_glyph_self_uses_direction_and_double_circle()
+        public void Positional_target_visuals_have_equal_authored_widths()
+        {
+            var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+            var widths = new[] { "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" }
+                .Select(name => ActiveGraphicBoundsWidth(Child(prefab.transform, name)))
+                .ToArray();
+
+            Assert.That(widths.Max() - widths.Min(), Is.LessThanOrEqualTo(0.5f));
+            Assert.That(widths, Has.All.EqualTo(48f).Within(0.5f));
+        }
+
+        [Test]
+        public void Self_and_empty_use_single_neutral_grammars()
         {
             var glyph = InstantiateGlyph();
             try
             {
                 glyph.Bind(new CardTargetKey(
+                    CardTargetFaction.Ally,
+                    CardTargetRange.Self));
+                AssertActiveVisual(glyph, "Self");
+                var allyStructure = DirectChildNames(Child(glyph.transform, "Self"));
+                Assert.IsTrue(Child(glyph.transform, "Self")
+                    .GetComponentsInChildren<Graphic>(true)
+                    .All(graphic =>
+                        ColorUtility.ToHtmlStringRGB(graphic.color) == "5DADE2"));
+
+                glyph.Bind(new CardTargetKey(
                     CardTargetFaction.Enemy,
                     CardTargetRange.Self));
+                CollectionAssert.AreEqual(
+                    allyStructure,
+                    DirectChildNames(Child(glyph.transform, "Self")));
+                Assert.IsTrue(Child(glyph.transform, "Self")
+                    .GetComponentsInChildren<Graphic>(true)
+                    .All(graphic =>
+                        ColorUtility.ToHtmlStringRGB(graphic.color) == "E85D5D"));
 
-                Assert.IsTrue(Child(glyph.transform, "EnemyDirection").gameObject.activeSelf);
-                Assert.IsTrue(Child(glyph.transform, "SelfOuter").gameObject.activeSelf);
-                Assert.IsTrue(Child(glyph.transform, "SelfInner").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "EmptySlash").gameObject.activeSelf);
-                Assert.IsFalse(Child(glyph.transform, "Rail").gameObject.activeSelf);
+                glyph.Bind(null);
+                AssertActiveVisual(glyph, "Empty");
+                Assert.IsTrue(Child(glyph.transform, "Empty")
+                    .GetComponentsInChildren<Graphic>(true)
+                    .All(graphic =>
+                    {
+                        var hex = ColorUtility.ToHtmlStringRGB(graphic.color);
+                        return hex != "5DADE2" && hex != "E85D5D";
+                    }));
             }
             finally
             {
                 Object.DestroyImmediate(glyph.gameObject);
             }
+        }
+
+        [Test]
+        public void Target_glyph_has_no_faction_shape_nodes_and_all_has_two_endpoints()
+        {
+            var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+            var direct = DirectChildNames(prefab.transform);
+            var layout = prefab.GetComponent<LayoutElement>();
+
+            CollectionAssert.AreEquivalent(GlyphVisualNames, direct);
+            CollectionAssert.DoesNotContain(direct, "AllyDirection");
+            CollectionAssert.DoesNotContain(direct, "EnemyDirection");
+            CollectionAssert.AreEqual(
+                new[] { "LeftDiamond", "Rail", "RightDiamond" },
+                DirectChildNames(Child(prefab.transform, "All")));
+            Assert.IsEmpty(prefab.GetComponentsInChildren<Outline>(true));
+            Assert.IsEmpty(prefab.GetComponentsInChildren<TMP_Text>(true));
+            Assert.IsNotNull(layout);
+            Assert.AreEqual(52f, layout.minWidth);
+            Assert.AreEqual(32f, layout.minHeight);
+            Assert.AreEqual(52f, layout.preferredWidth);
+            Assert.AreEqual(32f, layout.preferredHeight);
+            Assert.AreEqual(0f, layout.flexibleWidth);
+            Assert.AreEqual(0f, layout.flexibleHeight);
+        }
+
+        [Test]
+        public void Target_glyph_declares_only_authored_visual_and_palette_fields()
+        {
+            var serializedFields = typeof(TargetGlyphView)
+                .GetFields(
+                    BindingFlags.Instance
+                    | BindingFlags.NonPublic
+                    | BindingFlags.DeclaredOnly)
+                .Where(field => field.GetCustomAttribute<SerializeField>() != null)
+                .Select(field => (field.Name, field.FieldType))
+                .ToArray();
+
+            CollectionAssert.AreEquivalent(
+                new[]
+                {
+                    ("_frontOneVisual", typeof(RectTransform)),
+                    ("_frontTwoVisual", typeof(RectTransform)),
+                    ("_backOneVisual", typeof(RectTransform)),
+                    ("_backTwoVisual", typeof(RectTransform)),
+                    ("_allVisual", typeof(RectTransform)),
+                    ("_selfVisual", typeof(RectTransform)),
+                    ("_emptyVisual", typeof(RectTransform)),
+                    ("_allyColor", typeof(Color)),
+                    ("_enemyColor", typeof(Color))
+                },
+                serializedFields);
+        }
+
+        [Test]
+        public void Target_and_description_prefabs_share_the_same_faction_palette()
+        {
+            var glyph = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
+            var line = Load<DescriptionLineView>(CardPrefabCatalogTests.DescriptionLinePath);
+
+            Assert.AreEqual(
+                CardPrefabCatalogTests.Field<Color>(glyph, "_allyColor"),
+                CardPrefabCatalogTests.Field<Color>(line, "_allySymbolColor"));
+            Assert.AreEqual(
+                CardPrefabCatalogTests.Field<Color>(glyph, "_enemyColor"),
+                CardPrefabCatalogTests.Field<Color>(line, "_enemySymbolColor"));
         }
 
         [TestCase(CardTargetFaction.Ally, "#5DADE2")]
@@ -353,9 +430,9 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var glyph = Load<TargetGlyphView>(
                 CardPrefabCatalogTests.TargetGlyphPath);
-            var circle = Child(glyph.transform, "SelfOuter")
+            var circle = Child(Child(glyph.transform, "Empty"), "Circle")
                 .GetComponent<Image>().sprite;
-            var innerCircle = Child(glyph.transform, "SelfInner")
+            var innerCircle = Child(Child(glyph.transform, "Self"), "Center")
                 .GetComponent<Image>().sprite;
             var executionCost = Child(
                 LoadExecution().transform,
@@ -549,7 +626,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.AreEqual(1, targetContent.childCount);
                 var glyph = targetContent.GetChild(0).GetComponent<TargetGlyphView>();
                 Assert.IsNotNull(glyph);
-                Assert.IsTrue(Child(glyph.transform, "EmptySlash").gameObject.activeSelf);
+                AssertActiveVisual(glyph, "Empty");
             }
             finally
             {
@@ -741,17 +818,36 @@ namespace FateWeaver.Tests.UnityEditMode
             return null;
         }
 
-        private static int ActiveRailSegmentCount(TargetGlyphView glyph)
-            => Enumerable.Range(0, 5)
-                .Count(index => Child(
-                    Child(glyph.transform, "Rail"),
-                    "Segment" + index).gameObject.activeSelf);
+        private static void AssertActiveVisual(
+            TargetGlyphView glyph,
+            string expectedName)
+        {
+            foreach (var name in GlyphVisualNames)
+            {
+                Assert.AreEqual(
+                    name == expectedName,
+                    Child(glyph.transform, name).gameObject.activeSelf,
+                    name);
+            }
+        }
 
-        private static int ActiveDiamondCount(TargetGlyphView glyph)
-            => Enumerable.Range(0, 2)
-                .Count(index => Child(
-                    glyph.transform,
-                    "Diamond" + index).gameObject.activeSelf);
+        private static float ActiveGraphicBoundsWidth(Transform root)
+        {
+            var corners = new Vector3[4];
+            var min = float.PositiveInfinity;
+            var max = float.NegativeInfinity;
+            foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
+            {
+                graphic.rectTransform.GetWorldCorners(corners);
+                foreach (var corner in corners)
+                {
+                    min = Mathf.Min(min, corner.x);
+                    max = Mathf.Max(max, corner.x);
+                }
+            }
+
+            return max - min;
+        }
 
         private static void AssertBadgeOutsideFrame(
             CardView view,
