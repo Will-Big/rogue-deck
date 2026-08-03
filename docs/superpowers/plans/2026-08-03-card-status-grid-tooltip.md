@@ -60,7 +60,7 @@
 - Produces: `CardStatusIconView.Bind(CardStatusPresentation data, CardStatusTooltipView tooltip)`.
 - Produces: `CardStatusTooltipView.Show(CardStatusIconView owner, string title, string description, Vector2 screenPosition)` and `Hide(CardStatusIconView owner)`.
 
-- [ ] **Step 1: Write RED tests for validation and owner-aware hover lifetime**
+- [x] **Step 1: Write RED tests for validation and owner-aware hover lifetime**
 
 ```csharp
 [Test]
@@ -91,7 +91,7 @@ public void Older_icon_cannot_hide_newer_icons_tooltip()
 }
 ```
 
-- [ ] **Step 2: Run the focused test and confirm RED**
+- [x] **Step 2: Run the focused test and confirm RED**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -104,7 +104,7 @@ public void Older_icon_cannot_hide_newer_icons_tooltip()
 
 Expected: compile failure because the three production types do not exist.
 
-- [ ] **Step 3: Implement the minimal contracts**
+- [x] **Step 3: Implement the minimal contracts**
 
 ```csharp
 public readonly struct CardStatusPresentation
@@ -143,7 +143,7 @@ public interface ICardStatusDisplaySource
 
 `CardStatusIconView` stores serialized `Image _icon`, the bound value and tooltip. Pointer enter calls `Show(this, Title, Description, eventData.position)`; pointer exit and `OnDisable` call `Hide(this)`. `CardStatusTooltipView` changes only its current owner's panel and never prepends field labels.
 
-- [ ] **Step 4: Run focused tests and commit**
+- [x] **Step 4: Run focused tests and commit**
 
 Run Step 2 and expect PASS.
 
