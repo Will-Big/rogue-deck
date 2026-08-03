@@ -26,6 +26,10 @@ namespace FateWeaver.Core.Authoring.Statuses
             => Lifetime == StatusLifetimeKind.Turns
                 || Lifetime == StatusLifetimeKind.UntilConsumed;
 
+        /// <summary>자기 타입의 빈 인스턴스. JSON 컨버터가 Populate 대상으로 쓴다.
+        /// 리플렉션 대신 각 타입이 스스로 답한다 (규칙 9).</summary>
+        public virtual StatusSpec NewInstance() => new StatusSpec();
+
         public virtual StatusRule ToRule() => new StatusRule();
 
         public virtual IEnumerable<string> Validate(AuthoringContext context)

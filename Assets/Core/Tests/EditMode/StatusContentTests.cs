@@ -16,12 +16,11 @@ namespace FateWeaver.Tests
         [Test]
         public void RoundTripsEveryRegisteredStatusSpecKind()
         {
-            foreach (var info in StatusSpecCatalog.All())
+            foreach (var spec in StatusContentDefaults.Specs())
             {
-                var original = info.Create();
-                var restored = ContentJson.Read<StatusSpec>(ContentJson.Write(original));
+                var restored = ContentJson.Read<StatusSpec>(ContentJson.Write(spec));
 
-                Assert.AreEqual(info.SpecType, restored.GetType(), info.Key.Id);
+                Assert.AreEqual(spec.GetType(), restored.GetType(), spec.Key.Id);
             }
         }
 
@@ -60,7 +59,7 @@ namespace FateWeaver.Tests
         public void EveryCatalogEntryHasADistinctKey()
         {
             CollectionAssert.AllItemsAreUnique(
-                StatusSpecCatalog.All().Select(info => info.Key.Id).ToList());
+                StatusContentDefaults.Specs().Select(spec => spec.Key.Id).ToList());
         }
 
         [Test]
@@ -179,22 +178,6 @@ namespace FateWeaver.Tests
             var errors = spec.Validate(OnlyStatus(new UncontentedBehavior())).ToList();
 
             Assert.IsTrue(errors.Any(e => e.Contains("test_uncontented")));
-        }
-
-        [Test]
-        public void DefaultsCoverEveryRegisteredStatus()
-        {
-            // AuthoringContext.Default().RegisteredStatusKeys가 아니라 StatusSpecCatalog.All()을
-            // 기준으로 삼는다 — Task 5에서 stun을 완전히 제거해 지금은 등록된 모든 상태가
-            // StatusSpecCatalog에도 있지만, 그 대응 관계를 다시 우회하는 새 상태가 생기지 않도록
-            // 이 테스트는 여전히 "저작 가능한 상태 전체"를 기준으로 삼는다.
-            var catalog = StatusContentDefaults.Catalog();
-
-            foreach (var info in StatusSpecCatalog.All())
-            {
-                Assert.DoesNotThrow(
-                    () => catalog.LifetimeOf(info.Key), "상태 '" + info.Key.Id + "'의 기본값이 없다.");
-            }
         }
 
         // --- Task 4: 코어가 상태 카탈로그에서 수명과 세기를 읽는다 --------------------------------

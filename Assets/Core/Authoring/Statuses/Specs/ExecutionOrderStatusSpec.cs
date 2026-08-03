@@ -8,5 +8,7 @@ namespace FateWeaver.Core.Authoring.Statuses
     public sealed class ExecutionOrderStatusSpec : StatusSpec
     {
         public int ExecutionOrderDelta;
+
+        public override StatusSpec NewInstance() => new ExecutionOrderStatusSpec();
     }
 }
