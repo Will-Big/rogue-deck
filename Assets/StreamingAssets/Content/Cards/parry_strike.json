@@ -16,5 +16,10 @@
       "status": "block",
       "count": 3
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "방어"
   ]
 }

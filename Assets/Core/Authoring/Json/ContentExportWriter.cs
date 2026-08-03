@@ -19,19 +19,19 @@ namespace FateWeaver.Core.Authoring.Json
         public const string PartyPrototypeDeckId = "party_prototype";
         public const string StarterPoolId = "starter";
 
-        /// <summary>rootDirectory 아래에 Cards·Statuses·Decks·Pools·Characters를 채운다.
-        /// 개별 파일 경로를 하드코딩하지 않고 폴더 이름 상수만 쓴다(규칙 2·3).</summary>
+        /// <summary>rootDirectory 아래에 Statuses·Decks·Pools·Characters를 채운다.
+        /// 개별 파일 경로를 하드코딩하지 않고 폴더 이름 상수만 쓴다(규칙 2·3).
+        ///
+        /// **카드는 더 이상 쓰지 않는다.** 계획 3b가 등급·태그를 카드 JSON으로 옮기면서 카드의
+        /// 원본이 JSON이 되었고, C# 스펙에는 두 값이 없다. 여기서 카드를 다시 쓰면 등급·태그가
+        /// 지워진다 — 되살릴 원본이 없으므로 경로 자체를 없앤다. 나머지 넷은 id 목록과 상태
+        /// 기본값이라 C# 스펙이 여전히 온전한 원본이다(3c·3d가 정리한다).</summary>
         /// <returns>쓴 파일의 전체 경로. 저작 순서 그대로다.</returns>
         public static IReadOnlyList<string> WriteAll(
             string rootDirectory,
             IReadOnlyList<CharacterSpec> characters)
         {
             var written = new List<string>();
-
-            foreach (var spec in DistinctById(AuthoredCardSpecs()))
-            {
-                written.Add(Write(rootDirectory, CardContentFiles.CardsFolderName, spec.Id, spec));
-            }
 
             foreach (var spec in StatusContentDefaults.Specs())
             {

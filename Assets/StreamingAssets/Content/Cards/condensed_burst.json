@@ -25,5 +25,12 @@
       "target": "TargetEnemy",
       "selector": "FrontMost"
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "독",
+    "소비형",
+    "공격"
   ]
 }

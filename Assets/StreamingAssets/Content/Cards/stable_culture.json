@@ -19,5 +19,12 @@
       "target": "TargetEnemy",
       "selector": "BackMost"
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "독",
+    "변이형",
+    "성장"
   ]
 }

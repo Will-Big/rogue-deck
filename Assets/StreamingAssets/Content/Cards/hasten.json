@@ -6,5 +6,10 @@
   "energyCost": 1,
   "intervention": "change_execution_order",
   "interventionEffectValue": -1,
-  "interventionTargetSide": "Player"
+  "interventionTargetSide": "Player",
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "실행력"
+  ]
 }

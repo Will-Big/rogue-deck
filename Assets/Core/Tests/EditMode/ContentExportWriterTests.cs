@@ -47,21 +47,13 @@ namespace FateWeaver.Tests
             return names;
         }
 
-        private static IEnumerable<string> AuthoredCardIds()
-            => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
-                .Concat(PartyPrototypeDeckSpecs.Build())
-                .Select(spec => spec.Id)
-                .Distinct();
-
         [Test]
         public void WriteAllReportsEveryFileItWrote()
         {
             var written = WriteAll();
 
             Assert.AreEqual(
-                AuthoredCardIds().Count()
-                    + StatusContentDefaults.Specs().Count
+                StatusContentDefaults.Specs().Count
                     + 2 // Decks/starter.json, Decks/party_prototype.json
                     + 1 // Pools/starter.json
                     + PartyPrototypeCharacterSpecs.Build().Count,
@@ -74,14 +66,23 @@ namespace FateWeaver.Tests
             }
         }
 
+        /// <summary>계획 3b 이후 카드는 내보내지 않는다 — 등급·태그가 JSON에만 있어 C# 스펙에서
+        /// 다시 쓰면 지워지기 때문이다. 이 단언이 그 회귀를 막는다.</summary>
+        [Test]
+        public void WriteAllDoesNotTouchCards()
+        {
+            WriteAll();
+
+            Assert.IsFalse(
+                Directory.Exists(Path.Combine(_root, CardContentFiles.CardsFolderName)),
+                "카드를 다시 쓰면 등급·태그가 지워진다.");
+        }
+
         [Test]
         public void WriteAllFillsEveryContentFolder()
         {
             WriteAll();
 
-            Assert.AreEqual(
-                AuthoredCardIds().Count(),
-                JsonIn(Path.Combine(_root, CardContentFiles.CardsFolderName)).Length);
             Assert.AreEqual(
                 StatusContentDefaults.Specs().Count,
                 JsonIn(Path.Combine(_root, CardContentFiles.StatusesFolderName)).Length);
@@ -147,14 +148,25 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ContentExportWriter.StarterDeckId, memberA.Deck);
         }
 
+        /// <summary>내보낸 덱·풀·캐릭터가 **리포지토리의 실제 카드**에 대고 로드되는지 본다.
+        /// 카드는 더 이상 내보내지 않으므로(등급·태그가 JSON에만 있다) 카드 카탈로그는 저장소에서
+        /// 읽는다 — 내보낸 id 목록이 진짜 카드를 가리키는지가 이 테스트의 요점이다.</summary>
         [Test]
-        public void ExportedContentLoadsWithoutErrors()
+        public void ExportedContentLoadsAgainstRepositoryCards()
         {
             WriteAll();
 
+            var directory = TestContext.CurrentContext.TestDirectory;
+            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
+            {
+                directory = Path.GetDirectoryName(directory);
+            }
+
+            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
             var cards = CardContentLoader.Load(
-                CardContentFiles.ReadDirectory(
-                    Path.Combine(_root, CardContentFiles.CardsFolderName)),
+                CardContentFiles.ReadDirectory(Path.Combine(
+                    directory, "Assets", "StreamingAssets", "Content",
+                    CardContentFiles.CardsFolderName)),
                 AuthoringContext.Default());
             Assert.IsTrue(cards.Succeeded, string.Join("\n", cards.Errors));
 

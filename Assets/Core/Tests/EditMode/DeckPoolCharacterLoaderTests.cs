@@ -12,21 +12,32 @@ namespace FateWeaver.Tests
     /// 형태로, 실패하면 카탈로그를 내주지 않고 모든 이유를 모아 보고한다(설계 §4.5).</summary>
     public class DeckPoolCharacterLoaderTests
     {
+        /// <summary>풀 검증을 통과하는 기본 카드들. 등급·태그 규칙은 풀 소속 카드에만 걸리므로
+        /// 덱·캐릭터 테스트도 이 기본값을 그대로 쓴다.</summary>
         private static CardContentCatalog Cards(params string[] ids)
+            => Cards(CardGrade.Common, new[] { "시작" }, ids);
+
+        private static CardContentCatalog Cards(
+            CardGrade grade, string[] tags, params string[] ids)
         {
             var cards = new Dictionary<string, CardDefinition>();
+            var specs = new Dictionary<string, CardSpec>();
             foreach (var id in ids)
             {
-                cards.Add(id, CardSpecMapper.ToDefinition(new CardSpec
+                var spec = new CardSpec
                 {
                     Id = id,
                     Name = id,
                     Side = Side.Player,
-                    Category = CardCategory.Execution
-                }));
+                    Category = CardCategory.Execution,
+                    Grade = grade,
+                    Tags = tags
+                };
+                cards.Add(id, CardSpecMapper.ToDefinition(spec));
+                specs.Add(id, spec);
             }
 
-            return new CardContentCatalog(cards);
+            return new CardContentCatalog(cards, specs);
         }
 
         private static CardContentSource Source(string name, string json)
@@ -144,6 +155,66 @@ namespace FateWeaver.Tests
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(result.Errors, "starter.json: unknown card id 'ghost_card'.");
+        }
+
+        [Test]
+        public void PoolLoaderRejectsACardWithoutAGrade()
+        {
+            var result = PoolContentLoader.Load(
+                new[] { Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }") },
+                Cards(CardGrade.None, new[] { "시작" }, "hasten"));
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(
+                result.Errors, "starter.json: card 'hasten' must have a grade.");
+        }
+
+        [Test]
+        public void PoolLoaderRejectsACardWithoutTags()
+        {
+            var result = PoolContentLoader.Load(
+                new[] { Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }") },
+                Cards(CardGrade.Common, new string[0], "hasten"));
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(
+                result.Errors, "starter.json: card 'hasten' must have at least one tag.");
+        }
+
+        [Test]
+        public void PoolLoaderRejectsAnEmptyTag()
+        {
+            var result = PoolContentLoader.Load(
+                new[] { Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }") },
+                Cards(CardGrade.Common, new[] { "시작", "" }, "hasten"));
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(
+                result.Errors, "starter.json: card 'hasten' has an empty tag at index 1.");
+        }
+
+        [Test]
+        public void PoolLoaderRejectsADuplicateTag()
+        {
+            var result = PoolContentLoader.Load(
+                new[] { Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }") },
+                Cards(CardGrade.Common, new[] { "시작", "시작" }, "hasten"));
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(
+                result.Errors, "starter.json: card 'hasten' has duplicate tag '시작'.");
+        }
+
+        [Test]
+        public void DeckLoaderIgnoresGradeAndTags()
+        {
+            var catalog = DeckContentLoader.Load(
+                new[] { Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }") },
+                Cards(CardGrade.None, new string[0], "hasten"));
+
+            Assert.IsTrue(
+                catalog.Succeeded,
+                "등급·태그 규칙은 풀에만 걸린다 — 덱은 등급 없는 카드를 담을 수 있다.");
         }
 
         [Test]

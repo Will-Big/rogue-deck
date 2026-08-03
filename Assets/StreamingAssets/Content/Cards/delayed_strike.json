@@ -11,5 +11,10 @@
       "value": 5,
       "selector": "FrontMost"
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "공격"
   ]
 }

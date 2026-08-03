@@ -15,5 +15,11 @@
         "successEffectValue": 7
       }
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "공격",
+    "조건"
   ]
 }

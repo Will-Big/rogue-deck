@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Authoring.Json;
+using FateWeaver.Core.Cards;
 using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring.Decks
@@ -90,6 +92,12 @@ namespace FateWeaver.Core.Authoring.Decks
                         errors.Add(
                             source.Name + ": duplicate card id '" + cardId + "' in pool.");
                         rejected = true;
+                        continue;
+                    }
+
+                    if (!ValidateGradeAndTags(source.Name, cardId, cards, errors))
+                    {
+                        rejected = true;
                     }
                 }
 
@@ -106,6 +114,56 @@ namespace FateWeaver.Core.Authoring.Decks
             }
 
             return PoolContentLoadResult.Ok(new PoolContentCatalog(pools));
+        }
+
+        /// <summary>풀 소속 카드에만 걸리는 규칙이다. fixture 카드처럼 풀에 들지 않는 카드는
+        /// 등급·태그가 없어도 정상이므로 AuthoringValidator(전역)로 올리지 않는다.
+        /// CardPoolAsset.Validate가 하던 판정을 그대로 옮겨 왔다.</summary>
+        private static bool ValidateGradeAndTags(
+            string sourceName,
+            string cardId,
+            CardContentCatalog cards,
+            List<string> errors)
+        {
+            var spec = cards.Specs[cardId];
+            var ok = true;
+
+            if (spec.Grade == CardGrade.None)
+            {
+                errors.Add(sourceName + ": card '" + cardId + "' must have a grade.");
+                ok = false;
+            }
+
+            var tags = spec.Tags ?? new string[0];
+            if (tags.Length == 0)
+            {
+                errors.Add(
+                    sourceName + ": card '" + cardId + "' must have at least one tag.");
+                return false;
+            }
+
+            var seenTags = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < tags.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(tags[i]))
+                {
+                    errors.Add(
+                        sourceName + ": card '" + cardId + "' has an empty tag at index "
+                        + i + ".");
+                    ok = false;
+                    continue;
+                }
+
+                if (!seenTags.Add(tags[i]))
+                {
+                    errors.Add(
+                        sourceName + ": card '" + cardId + "' has duplicate tag '"
+                        + tags[i] + "'.");
+                    ok = false;
+                }
+            }
+
+            return ok;
         }
     }
 }

@@ -91,12 +91,14 @@ namespace FateWeaver.Core.Authoring
             }
 
             var cards = new Dictionary<string, CardDefinition>();
+            var specsById = new Dictionary<string, CardSpec>();
             foreach (var spec in specs)
             {
                 cards.Add(spec.Id, CardSpecMapper.ToDefinition(spec));
+                specsById.Add(spec.Id, spec);
             }
 
-            return CardContentLoadResult.Ok(new CardContentCatalog(cards));
+            return CardContentLoadResult.Ok(new CardContentCatalog(cards, specsById));
         }
     }
 }

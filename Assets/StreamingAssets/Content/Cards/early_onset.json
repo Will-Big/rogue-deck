@@ -18,5 +18,12 @@
       "status": "poison",
       "selector": "FrontMost"
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "독",
+    "변이형",
+    "발동"
   ]
 }

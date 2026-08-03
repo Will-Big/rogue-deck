@@ -16,5 +16,10 @@
       "status": "block",
       "count": 1
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "공격"
   ]
 }

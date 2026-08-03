@@ -18,5 +18,12 @@
       "target": "TargetEnemy",
       "selector": "All"
     }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "독",
+    "성장형",
+    "광역"
   ]
 }

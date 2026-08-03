@@ -5,5 +5,10 @@
   "category": "Intervention",
   "energyCost": 1,
   "intervention": "swap_execution_order",
-  "interventionRequireAdjacent": true
+  "interventionRequireAdjacent": true,
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "실행력"
+  ]
 }
