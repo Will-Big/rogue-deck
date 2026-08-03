@@ -73,6 +73,52 @@
 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](plans/2026-08-02-status-content-and-authoring-surface.md) | `active` | 상태가 세기·수명 종류를 소유하고 카드는 count 하나만 준다, 레거시 카드 10장·stun 폐기 (카드 변형 설계의 계획 1.5/4). Task 1~5 구현 완료, 최종 브랜치 리뷰 대기 |
 | [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | `active` | 상태 추가 시 손대는 곳 7→4, 수치·이름 변경을 JSON 한 줄로 (카드 변형 설계의 계획 2.5) |
 
+## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
+
+[카드 변형과 런타임 콘텐츠 로딩 설계](specs/2026-07-30-card-mutation-and-runtime-content-design.md)를
+여러 계획으로 나눠 구현하는 중이다. 새 세션은 이 절을 먼저 읽고 다음 계획 문서로 들어간다.
+
+| | 계획 | 상태 |
+|---|---|---|
+| 1 | [카드 콘텐츠 JSON 직렬화·로딩](archive/plans/2026-07-31-card-content-json-loading.md) | **완료·머지** |
+| 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
+| 2.5 | [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | **다음** |
+| 3 | 콘텐츠 원본 전환 (계획 문서 미작성) | 대기 |
+| 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
+| 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
+
+계획 3은 소비자를 JSON으로 돌리고 `CardCodeGenerator`·`GeneratedCards.cs`·`CardAsset`의 규칙 필드를
+제거한다. 계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
+(핸들러가 읽는 파라미터가 액션마다 달라, 지금은 `lock` 카드가 안 쓰는 칸 넷을 들고 있다).
+
+### 새 세션이 먼저 알아야 할 함정 셋
+
+1. **`[SerializeReference]`를 건드리면 `.asset` YAML도 같은 커밋에서 옮긴다.** Unity는 어셈블리
+   한정 타입명과 필드명을 YAML에 박아두고, 없는 멤버는 조용히 버린다. 이 흐름에서 두 번 밟았다 —
+   계획 1은 어셈블리 이동으로 27개 카드 에셋의 `Effects`를 `null`로, 계획 2는 필드 제거로 17개
+   에셋을 `Count = 0`으로 만들 뻔했다. **헤드리스 테스트는 둘 다 못 잡는다. Unity EditMode만 잡는다.**
+2. **`DefaultValueHandling.Ignore`가 열거형 0번 값을 지운다.** `Side.Player`·`CardCategory.Execution`·
+   `StatusLifetimeKind.Permanent`가 전부 0이라 JSON에서 사라졌다. 생략이 위험한 필드에는
+   `[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]`를 붙인다.
+3. **런타임은 아직 JSON을 읽지 않는다.** 배틀 씬은 `BattleScreenController.cs`의
+   `member.Deck.ToSpecs()`로 **CardSO 에셋에서** 카드를 만든다. `CardContentLoader`·
+   `StatusContentLoader`는 테스트에서만 불린다. 계획 3이 이 전환을 한다 — 그전까지 SO는 살아 있는
+   원본이다.
+
+### 넘어온 부채
+
+- **설명 카탈로그가 전투와 다른 `StatusContentCatalog` 인스턴스를 읽는다.**
+  `KoreanDescriptionCatalog.Default`가 전역 싱글턴이고 그 `StatusContent`가
+  `StatusContentDefaults.Catalog()`로 고정돼 있다. 계획 3이 로더를 부팅에 배선하면 카드 텍스트는
+  코드 기본값을, 규칙은 파일을 보게 되어 갈린다. **계획 2.5의 Task 3이 이걸 함께 고친다.**
+- **`CardSO`의 규칙 필드가 검증 없이 남아 있다.** SO→코드생성 일치를 지키던 스냅샷 테스트는
+  복원했지만, 설계 §4.5대로 계획 3이 SO의 규칙 필드를 지우면 이 축 전체가 사라진다.
+
+### 현재 수치 (계획 2 머지 시점)
+
+헤드리스 **446/446**, Unity EditMode **520/520**, 카드 JSON **26**, 상태 JSON **11**.
+헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
+
 ## 재설계가 필요한 영역
 
 | 영역 | 상태 | 이유와 재개 기준 |
