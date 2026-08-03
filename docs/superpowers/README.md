@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-08-02
+- 개정일: 2026-08-03
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -71,6 +71,7 @@
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](plans/2026-08-02-status-content-and-authoring-surface.md) | `active` | 상태가 세기·수명 종류를 소유하고 카드는 count 하나만 준다, 레거시 카드 10장·stun 폐기 (카드 변형 설계의 계획 1.5/4). Task 1~5 구현 완료, 최종 브랜치 리뷰 대기 |
+| [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | `active` | 상태 추가 시 손대는 곳 7→4, 수치·이름 변경을 JSON 한 줄로 (카드 변형 설계의 계획 2.5) |
 
 ## 재설계가 필요한 영역
 
