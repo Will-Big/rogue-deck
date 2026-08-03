@@ -44,7 +44,7 @@ namespace FateWeaver.Core.Authoring
 
             foreach (var source in sources)
             {
-                var missing = FirstMissingKey(source.Json);
+                var missing = ContentKeys.FirstMissing(source.Json, RequiredKeys);
                 if (missing != null)
                 {
                     errors.Add(source.Name + ": required key '" + missing + "' is missing.");
@@ -58,7 +58,7 @@ namespace FateWeaver.Core.Authoring
                 }
                 catch (JsonException ex)
                 {
-                    errors.Add(source.Name + ": " + Describe(ex));
+                    errors.Add(source.Name + ": " + ContentJsonError.Describe(ex));
                     continue;
                 }
 
@@ -97,39 +97,6 @@ namespace FateWeaver.Core.Authoring
             }
 
             return CardContentLoadResult.Ok(new CardContentCatalog(cards));
-        }
-
-        /// <summary>필수 키 중 처음으로 빠진 것. 없으면 null.</summary>
-        private static string FirstMissingKey(string json)
-        {
-            foreach (var key in RequiredKeys)
-            {
-                if (json.IndexOf("\"" + key + "\"", System.StringComparison.Ordinal) < 0)
-                {
-                    return key;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>Newtonsoft의 예외에서 줄·열을 꺼내 저작자가 고칠 수 있는 문장으로 만든다.</summary>
-        private static string Describe(JsonException exception)
-        {
-            if (exception is JsonReaderException reader)
-            {
-                return exception.Message + " (line " + reader.LineNumber
-                    + ", position " + reader.LinePosition + ")";
-            }
-
-            if (exception is JsonSerializationException serialization
-                && serialization.LineNumber > 0)
-            {
-                return exception.Message + " (line " + serialization.LineNumber
-                    + ", position " + serialization.LinePosition + ")";
-            }
-
-            return exception.Message;
         }
     }
 }
