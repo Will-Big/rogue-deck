@@ -70,7 +70,6 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
-| [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | `완료` | 상태 추가 시 손대는 곳 7→4 달성. 머지 후 `archive/plans/`로 옮긴다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -81,7 +80,7 @@
 |---|---|---|
 | 1 | [카드 콘텐츠 JSON 직렬화·로딩](archive/plans/2026-07-31-card-content-json-loading.md) | **완료·머지** |
 | 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
-| 2.5 | [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | **완료 · 머지 대기** |
+| 2.5 | [상태 등록 지점 통합](archive/plans/2026-08-03-status-registration-consolidation.md) | **완료·머지** |
 | 3 | 콘텐츠 원본 전환 (계획 문서 미작성) | **다음** |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
@@ -89,6 +88,14 @@
 계획 3은 소비자를 JSON으로 돌리고 `CardCodeGenerator`·`GeneratedCards.cs`·`CardAsset`의 규칙 필드를
 제거한다. 계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
 (핸들러가 읽는 파라미터가 액션마다 달라, 지금은 `lock` 카드가 안 쓰는 칸 넷을 들고 있다).
+
+**계획 3에 착수하는 세션이 먼저 할 일:** 계획 문서가 아직 없다. 설계
+[§4.5](specs/2026-07-30-card-mutation-and-runtime-content-design.md)를 근거로 계획을 먼저 쓴다.
+그 계획은 최소한 이 셋을 다뤄야 한다 — (1) 부팅에서 `CardContentLoader`·`StatusContentLoader`를
+배선해 `BattleScreenController`가 SO 대신 JSON을 읽게 하고, (2) 그때 만든 `StatusContentCatalog`를
+`KoreanDescriptionCatalog.CreateDefault(catalog)`에 넘겨 텍스트와 규칙이 같은 콘텐츠를 보게 하며,
+(3) `CardCodeGenerator`·`GeneratedCards.cs`·`CardSO`의 규칙 필드를 제거한다. 계획 2.5가 (2)의
+진입점을 미리 뚫어놨다.
 
 ### 새 세션이 먼저 알아야 할 함정 셋
 

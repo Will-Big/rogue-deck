@@ -4,8 +4,8 @@
 
 - 작성일: 2026-08-03
 - 상태: `완료` — 2026-08-03, Task 1~3 전부 구현
-- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
-- 선행 계획: [`../archive/plans/2026-08-02-status-content-and-authoring-surface.md`](../archive/plans/2026-08-02-status-content-and-authoring-surface.md)
+- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
+- 선행 계획: [`2026-08-02-status-content-and-authoring-surface.md`](2026-08-02-status-content-and-authoring-surface.md)
 - 브랜치: `refactor/status-registration-consolidation`
 
 **Goal:** 상태 하나를 추가할 때 손대야 하는 곳을 7곳에서 4곳으로 줄이고, 수치·이름 변경을 JSON 한
