@@ -70,6 +70,7 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
+| [런타임 콘텐츠 전환 (계획 3b)](plans/2026-08-03-runtime-content-switch.md) | `active` | ContentBootstrap 신설, 소비자 둘을 JSON으로, 등급·태그 이관, 카드 SO·코드 생성 제거 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -82,7 +83,7 @@
 | 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
 | 2.5 | [상태 등록 지점 통합](archive/plans/2026-08-03-status-registration-consolidation.md) | **완료·머지** |
 | 3a | [덱·풀·캐릭터 콘텐츠 스키마](archive/plans/2026-08-03-deck-pool-character-content.md) | **완료·머지** |
-| 3b | 런타임 전환 (미작성) | **다음** |
+| 3b | [런타임 콘텐츠 전환](plans/2026-08-03-runtime-content-switch.md) | **다음** |
 | 3c | 상태 원본 확정 (미작성) | 대기 |
 | 3d | C# 카드 스펙 제거 (미작성) | 대기 |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
