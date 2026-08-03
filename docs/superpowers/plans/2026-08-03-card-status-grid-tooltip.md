@@ -172,7 +172,7 @@ git commit -m "feat(ui): add card status tooltip components"
 - The grid uses only standard `GridLayoutGroup` and `ContentSizeFitter`; no custom layout component.
 - Tooltip prefab exposes panel, title TMP, description TMP, and screen offset through `CardStatusTooltipView` serialized fields.
 
-- [ ] **Step 1: Add RED prefab-contract tests**
+- [x] **Step 1: Add RED prefab-contract tests**
 
 ```csharp
 [TestCase(CardPrefabCatalogTests.ExecutionCardPath)]
@@ -200,15 +200,15 @@ public void Status_grid_is_four_columns_and_grows_down(string path)
 
 Add tooltip assertions for exactly two TMP children, no literal `제목:`/`설명:` text, title color `F2C14E`, description color `E8EDF2`, and disabled root by default.
 
-- [ ] **Step 2: Run `CardFramePrefabTests` and confirm RED**
+- [x] **Step 2: Run `CardFramePrefabTests` and confirm RED**
 
 Use Task 1's Unity command with filter `FateWeaver.Tests.UnityEditMode.CardFramePrefabTests` and results `/private/tmp/card-status-prefabs-red.xml`.
 
-- [ ] **Step 3: Codex creates the prefab objects and serialized references**
+- [x] **Step 3: Codex creates the prefab objects and serialized references**
 
 Create the tooltip prefab as a reusable asset. In both card prefabs rename `CardStatusRow` to `CardStatusGrid` and `LockIcon` to `StatusIconTemplate`, preserve the user's existing grid anchored position, add the standard layout components and attach `CardStatusIconView` to the template. Keep the current `_lockBadge` reference valid until Task 4 replaces it; this preserves current lock rendering while JSON wiring is unavailable.
 
-- [ ] **Step 4: Pause for user numeric review**
+- [x] **Step 4: Pause for user numeric review**
 
 The user adjusts only these Inspector values if desired:
 
@@ -217,7 +217,7 @@ The user adjusts only these Inspector values if desired:
 3. Do not change grid cell `26×26`, spacing `4×4`, or four-column constraint.
 4. Keep title `#F2C14E`, description `#E8EDF2` and tell Codex when saved.
 
-- [ ] **Step 5: Verify and commit the reviewed structures**
+- [x] **Step 5: Verify and commit the reviewed structures**
 
 Run `CardFramePrefabTests`; expected PASS without changing current `CardStatusIcon` runtime behavior.
 

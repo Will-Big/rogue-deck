@@ -16,6 +16,9 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class CardFramePrefabTests
     {
+        private const string StatusTooltipPath =
+            "Assets/Unity/Prefabs/CardStatusTooltipView.prefab";
+
         private static readonly string[] GlyphVisualNames =
         {
             "FrontOne",
@@ -543,7 +546,7 @@ namespace FateWeaver.Tests.UnityEditMode
 
         [TestCase(CardCategory.Execution)]
         [TestCase(CardCategory.Intervention)]
-        public void Bound_full_card_button_uses_the_root_raycast_and_rebind_replaces_listener(
+        public void Bound_full_card_uses_only_root_and_status_hover_raycasts(
             CardCategory category)
         {
             var source = category == CardCategory.Execution
@@ -556,10 +559,15 @@ namespace FateWeaver.Tests.UnityEditMode
                 var rootGraphic = view.GetComponent<Image>();
                 Assert.AreSame(rootGraphic, button.targetGraphic);
                 Assert.IsTrue(rootGraphic.raycastTarget);
+                var raycastGraphics = view.GetComponentsInChildren<Graphic>(true)
+                    .Where(graphic => graphic.raycastTarget)
+                    .ToArray();
+                Assert.AreEqual(2, raycastGraphics.Length);
+                CollectionAssert.Contains(raycastGraphics, rootGraphic);
                 Assert.AreEqual(
                     1,
-                    view.GetComponentsInChildren<Graphic>(true)
-                        .Count(graphic => graphic.raycastTarget));
+                    raycastGraphics.Count(graphic =>
+                        graphic.GetComponent<CardStatusIconView>() != null));
 
                 int firstCalls = 0;
                 int secondCalls = 0;
@@ -756,6 +764,59 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 Object.DestroyImmediate(view.gameObject);
             }
+        }
+
+        [TestCase(CardPrefabCatalogTests.ExecutionPath)]
+        [TestCase(CardPrefabCatalogTests.InterventionPath)]
+        public void Status_grid_uses_four_columns_and_grows_from_its_top_edge(
+            string path)
+        {
+            var card = Load<CardView>(path);
+            var grid = Child(card.transform, "CardStatusGrid");
+            var layout = grid.GetComponent<GridLayoutGroup>();
+            var fitter = grid.GetComponent<ContentSizeFitter>();
+            var template = Child(grid, "StatusIconTemplate");
+
+            Assert.IsNotNull(layout);
+            Assert.AreEqual(new Vector2(26f, 26f), layout.cellSize);
+            Assert.AreEqual(new Vector2(4f, 4f), layout.spacing);
+            Assert.AreEqual(
+                GridLayoutGroup.Constraint.FixedColumnCount,
+                layout.constraint);
+            Assert.AreEqual(4, layout.constraintCount);
+            Assert.AreEqual(GridLayoutGroup.Corner.UpperLeft, layout.startCorner);
+            Assert.AreEqual(GridLayoutGroup.Axis.Horizontal, layout.startAxis);
+            Assert.AreEqual(TextAnchor.UpperLeft, layout.childAlignment);
+            Assert.AreEqual(1f, grid.pivot.y);
+            Assert.IsNotNull(fitter);
+            Assert.AreEqual(
+                ContentSizeFitter.FitMode.Unconstrained,
+                fitter.horizontalFit);
+            Assert.AreEqual(
+                ContentSizeFitter.FitMode.PreferredSize,
+                fitter.verticalFit);
+            Assert.IsFalse(template.gameObject.activeSelf);
+            Assert.IsNotNull(template.GetComponent<CardStatusIconView>());
+            Assert.IsTrue(template.GetComponent<Image>().raycastTarget);
+        }
+
+        [Test]
+        public void Status_tooltip_prefab_has_unlabeled_colored_title_and_body()
+        {
+            var tooltip = Load<CardStatusTooltipView>(StatusTooltipPath);
+            var title = CardPrefabCatalogTests.Field<TMP_Text>(tooltip, "_titleText");
+            var description = CardPrefabCatalogTests.Field<TMP_Text>(
+                tooltip,
+                "_descriptionText");
+
+            Assert.IsFalse(tooltip.gameObject.activeSelf);
+            Assert.AreEqual("", title.text);
+            Assert.AreEqual("", description.text);
+            Assert.AreEqual("F2C14E", ColorUtility.ToHtmlStringRGB(title.color));
+            Assert.AreEqual(
+                "E8EDF2",
+                ColorUtility.ToHtmlStringRGB(description.color));
+            Assert.AreEqual(2, tooltip.GetComponentsInChildren<TMP_Text>(true).Length);
         }
 
         private static TargetGlyphView InstantiateGlyph()
