@@ -10,23 +10,24 @@ namespace FateWeaver.Core.Authoring.Statuses
     {
         public static IReadOnlyList<StatusSpec> Specs() => new[]
         {
-            Simple(StatusKeys.Block, StatusLifetimeKind.ThisTurn),
-            Simple(StatusKeys.Contagion, StatusLifetimeKind.Turns),
-            Simple(StatusKeys.PoisonDormant, StatusLifetimeKind.ThisTurn),
-            Simple(StatusKeys.PoisonStasis, StatusLifetimeKind.ThisTurn),
-            Simple(StatusKeys.RewardNullified, StatusLifetimeKind.UntilConsumed),
+            Simple(StatusKeys.Block, "방어", StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.Contagion, "전염", StatusLifetimeKind.Turns),
+            Simple(StatusKeys.PoisonDormant, "독 잠복", StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.PoisonStasis, "독 안정", StatusLifetimeKind.ThisTurn),
+            Simple(StatusKeys.RewardNullified, "조건 보상 무효", StatusLifetimeKind.UntilConsumed),
             new PoisonStatusSpec
             {
                 Key = StatusKeyRef.Of(StatusKeys.Poison),
+                DisplayName = "독",
                 Lifetime = StatusLifetimeKind.Permanent,
                 GrowthPerTurn = 1
             },
             // 취약 150 = 받는 피해 +50%, 약화 75 = 주는 피해 -25%, 손상 75 = 방어 획득 -25%.
-            Multiplier(StatusKeys.Vulnerable, 150),
-            Multiplier(StatusKeys.Weak, 75),
-            Multiplier(StatusKeys.Damaged, 75),
-            Order(StatusKeys.Slow, 2),
-            Order(StatusKeys.Haste, -2)
+            Multiplier(StatusKeys.Vulnerable, "취약", 150),
+            Multiplier(StatusKeys.Weak, "약화", 75),
+            Multiplier(StatusKeys.Damaged, "손상", 75),
+            Order(StatusKeys.Slow, "둔화", 2),
+            Order(StatusKeys.Haste, "가속", -2)
         };
 
         /// <summary>파일 없이 도는 헤드리스 테스트와 하니스가 쓰는 카탈로그.
@@ -58,21 +59,28 @@ namespace FateWeaver.Core.Authoring.Statuses
             return false;
         }
 
-        private static StatusSpec Simple(StatusKey key, StatusLifetimeKind lifetime)
-            => new StatusSpec { Key = StatusKeyRef.Of(key), Lifetime = lifetime };
+        private static StatusSpec Simple(StatusKey key, string displayName, StatusLifetimeKind lifetime)
+            => new StatusSpec
+            {
+                Key = StatusKeyRef.Of(key),
+                DisplayName = displayName,
+                Lifetime = lifetime
+            };
 
-        private static StatusSpec Multiplier(StatusKey key, int percent)
+        private static StatusSpec Multiplier(StatusKey key, string displayName, int percent)
             => new MultiplierStatusSpec
             {
                 Key = StatusKeyRef.Of(key),
+                DisplayName = displayName,
                 Lifetime = StatusLifetimeKind.Turns,
                 MultiplierPercent = percent
             };
 
-        private static StatusSpec Order(StatusKey key, int delta)
+        private static StatusSpec Order(StatusKey key, string displayName, int delta)
             => new ExecutionOrderStatusSpec
             {
                 Key = StatusKeyRef.Of(key),
+                DisplayName = displayName,
                 Lifetime = StatusLifetimeKind.Turns,
                 ExecutionOrderDelta = delta
             };

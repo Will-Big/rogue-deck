@@ -1,4 +1,5 @@
 {
   "key": "poison_stasis",
+  "displayName": "독 안정",
   "lifetime": "ThisTurn"
 }

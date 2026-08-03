@@ -70,7 +70,7 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
-| [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | `active` | 상태 추가 시 손대는 곳 7→4, 수치·이름 변경을 JSON 한 줄로 (카드 변형 설계의 계획 2.5) |
+| [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | `완료` | 상태 추가 시 손대는 곳 7→4 달성. 머지 후 `archive/plans/`로 옮긴다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -81,8 +81,8 @@
 |---|---|---|
 | 1 | [카드 콘텐츠 JSON 직렬화·로딩](archive/plans/2026-07-31-card-content-json-loading.md) | **완료·머지** |
 | 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
-| 2.5 | [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | **다음** |
-| 3 | 콘텐츠 원본 전환 (계획 문서 미작성) | 대기 |
+| 2.5 | [상태 등록 지점 통합](plans/2026-08-03-status-registration-consolidation.md) | **완료 · 머지 대기** |
+| 3 | 콘텐츠 원본 전환 (계획 문서 미작성) | **다음** |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
@@ -106,16 +106,16 @@
 
 ### 넘어온 부채
 
-- **설명 카탈로그가 전투와 다른 `StatusContentCatalog` 인스턴스를 읽는다.**
-  `KoreanDescriptionCatalog.Default`가 전역 싱글턴이고 그 `StatusContent`가
-  `StatusContentDefaults.Catalog()`로 고정돼 있다. 계획 3이 로더를 부팅에 배선하면 카드 텍스트는
-  코드 기본값을, 규칙은 파일을 보게 되어 갈린다. **계획 2.5의 Task 3이 이걸 함께 고친다.**
+- ~~설명 카탈로그가 전투와 다른 `StatusContentCatalog` 인스턴스를 읽는다.~~ **계획 2.5가 해결했다.**
+  `KoreanDescriptionCatalog.CreateDefault(StatusContentCatalog)` 오버로드가 생겼다. 계획 3이 로더를
+  부팅에 배선할 때 **그 카탈로그를 이 오버로드에 넘겨야** 카드 텍스트와 규칙이 같은 콘텐츠를 본다 —
+  인자 없는 `CreateDefault()`와 전역 `Default` 싱글턴은 여전히 코드 기본값을 쓴다.
 - **`CardSO`의 규칙 필드가 검증 없이 남아 있다.** SO→코드생성 일치를 지키던 스냅샷 테스트는
   복원했지만, 설계 §4.5대로 계획 3이 SO의 규칙 필드를 지우면 이 축 전체가 사라진다.
 
-### 현재 수치 (계획 2 머지 시점)
+### 현재 수치 (계획 2.5 완료 시점)
 
-헤드리스 **446/446**, Unity EditMode **520/520**, 카드 JSON **26**, 상태 JSON **11**.
+헤드리스 **447/447**, Unity EditMode **521/521**, 카드 JSON **26**, 상태 JSON **11**(전부 `displayName` 보유).
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
 
 ## 재설계가 필요한 영역

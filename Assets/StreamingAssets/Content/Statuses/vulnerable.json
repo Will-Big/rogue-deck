@@ -1,5 +1,6 @@
 {
   "multiplierPercent": 150,
   "key": "vulnerable",
+  "displayName": "취약",
   "lifetime": "Turns"
 }

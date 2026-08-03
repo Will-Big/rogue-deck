@@ -63,6 +63,25 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void StatusContentCarriesItsDisplayName()
+        {
+            var catalog = StatusContentDefaults.Catalog();
+
+            Assert.AreEqual("약화", catalog.DisplayNameOf(StatusKeys.Weak));
+            Assert.AreEqual("독", catalog.DisplayNameOf(StatusKeys.Poison));
+        }
+
+        [Test]
+        public void RejectsAStatusWithNoDisplayName()
+        {
+            var result = Load(new CardContentSource(
+                "block.json", "{ \"key\": \"block\", \"lifetime\": \"ThisTurn\" }"));
+
+            Assert.IsFalse(result.Succeeded);
+            Assert.IsTrue(result.Errors.Any(e => e.Contains("displayName")));
+        }
+
+        [Test]
         public void RejectsAnUnknownStatusKeyByName()
         {
             var ex = Assert.Throws<Newtonsoft.Json.JsonSerializationException>(
@@ -94,7 +113,7 @@ namespace FateWeaver.Tests
                 {
                     new CardContentSource(
                         "poison.json",
-                        "{ \"key\": \"poison\", \"lifetime\": \"Permanent\", \"growthPerTurn\": 1 }")
+                        "{ \"key\": \"poison\", \"displayName\": \"독\", \"lifetime\": \"Permanent\", \"growthPerTurn\": 1 }")
                 },
                 OnlyStatus(new PoisonBehavior()));
 
@@ -112,7 +131,7 @@ namespace FateWeaver.Tests
                 {
                     new CardContentSource(
                         "vulnerable.json",
-                        "{ \"key\": \"vulnerable\", \"lifetime\": \"Turns\", \"multiplierPercent\": 150 }")
+                        "{ \"key\": \"vulnerable\", \"displayName\": \"취약\", \"lifetime\": \"Turns\", \"multiplierPercent\": 150 }")
                 },
                 OnlyStatus(new VulnerableBehavior()));
 
@@ -124,7 +143,7 @@ namespace FateWeaver.Tests
         [Test]
         public void ReportsADuplicateStatusAcrossFiles()
         {
-            const string Block = "{ \"key\": \"block\", \"lifetime\": \"ThisTurn\" }";
+            const string Block = "{ \"key\": \"block\", \"displayName\": \"방어\", \"lifetime\": \"ThisTurn\" }";
             var result = Load(
                 new CardContentSource("a.json", Block),
                 new CardContentSource("b.json", Block));
@@ -138,7 +157,7 @@ namespace FateWeaver.Tests
         public void ReportsAStatusThatHasNoRegisteredBehavior()
         {
             var result = Load(new CardContentSource(
-                "ghost.json", "{ \"key\": \"stun\", \"lifetime\": \"ThisTurn\" }"));
+                "ghost.json", "{ \"key\": \"stun\", \"displayName\": \"기절\", \"lifetime\": \"ThisTurn\" }"));
 
             Assert.IsFalse(result.Succeeded);
             StringAssert.Contains("stun", result.Errors[0]);
@@ -148,7 +167,7 @@ namespace FateWeaver.Tests
         public void RequiresEveryRegisteredStatusToBeAuthored()
         {
             var result = Load(new CardContentSource(
-                "block.json", "{ \"key\": \"block\", \"lifetime\": \"ThisTurn\" }"));
+                "block.json", "{ \"key\": \"block\", \"displayName\": \"방어\", \"lifetime\": \"ThisTurn\" }"));
 
             Assert.IsFalse(result.Succeeded);
             Assert.IsTrue(result.Errors.Any(e => e.Contains("poison")));

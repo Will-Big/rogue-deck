@@ -1,4 +1,5 @@
 {
   "key": "block",
+  "displayName": "방어",
   "lifetime": "ThisTurn"
 }

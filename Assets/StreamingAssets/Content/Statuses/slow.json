@@ -1,5 +1,6 @@
 {
   "executionOrderDelta": 2,
   "key": "slow",
+  "displayName": "둔화",
   "lifetime": "Turns"
 }
