@@ -3,8 +3,8 @@ using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
-    /// <summary>Flat, pure card data (the single source the headless sims read). Built from a CardAsset SO
-    /// at edit time (code generation) and converted to a core CardDefinition by CardSpecMapper.</summary>
+    /// <summary>평평한 순수 카드 데이터이자 카드 규칙의 유일한 원본. Content/Cards/*.json에서 읽어
+    /// CardSpecMapper가 코어의 CardDefinition으로 옮긴다(설계 §4.5).</summary>
     public sealed class CardSpec
     {
         public string Id;

@@ -17,12 +17,6 @@ namespace FateWeaver.Tests.UnityEditMode
             { EnergyCost = 0, Category = CardCategory.Execution };
 
         [Test]
-        public void CardAsset_has_no_serialized_card_type_field()
-        {
-            Assert.IsNull(typeof(CardAsset).GetField("Type"));
-        }
-
-        [Test]
         public void Locked_zone_card_exposes_lock_status_icon()
         {
             var instance = new ExecutionCardInstance(EnemyCard()) { IsLocked = true };

@@ -360,10 +360,19 @@ namespace FateWeaver.Unity
                 return;
             }
 
+            // 표시명은 콘텐츠에서 온다(세션이 JSON으로 만든 것). CharacterAsset은 색만 갖는다.
+            foreach (var member in _session.State.Party)
+            {
+                if (member.Id == ownerId)
+                {
+                    name = member.Name;
+                    break;
+                }
+            }
+
             var character = CharacterFor(ownerId);
             if (character != null)
             {
-                name = character.DisplayName;
                 color = character.Color;
             }
         }

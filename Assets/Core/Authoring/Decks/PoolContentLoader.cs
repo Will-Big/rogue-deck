@@ -118,7 +118,7 @@ namespace FateWeaver.Core.Authoring.Decks
 
         /// <summary>풀 소속 카드에만 걸리는 규칙이다. fixture 카드처럼 풀에 들지 않는 카드는
         /// 등급·태그가 없어도 정상이므로 AuthoringValidator(전역)로 올리지 않는다.
-        /// CardPoolAsset.Validate가 하던 판정을 그대로 옮겨 왔다.</summary>
+        /// 계획 3b가 CardPoolAsset.Validate에서 옮겨 온 판정이다.</summary>
         private static bool ValidateGradeAndTags(
             string sourceName,
             string cardId,

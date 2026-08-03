@@ -65,7 +65,7 @@ namespace FateWeaver.Unity
                 IsPartyOwned);
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
-        /// the sprite by id (e.g. from the authored CardAsset.Art).</summary>
+        /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
         public static CardPresentation From(
             ExecutionCardInstance card,
             Func<string, Sprite> art = null,
@@ -114,7 +114,7 @@ namespace FateWeaver.Unity
                 isPartyOwned);
         }
 
-        // Card face art comes only from the authored resolver (GUID-backed CardAsset.Art); no id→path fallback.
+        // 카드 앞면 아트는 주입된 resolver(CardArtCatalog)에서만 온다. id→경로 폴백은 없다.
         private static Sprite ResolveArt(string id, Func<string, Sprite> art)
             => art != null ? art(id) : null;
 
