@@ -1,60 +1,25 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Json;
-using FateWeaver.Core.Authoring.Statuses;
+using FateWeaver.Simulation;
 using UnityEditor;
 using UnityEngine;
 
 namespace FateWeaver.Unity.Editor
 {
-    /// <summary>손으로 쓴 C# 카드 스펙을 StreamingAssets의 JSON으로 1회 변환한다. 변환이 끝나고
-    /// 계획 2가 소비자를 JSON으로 옮기면 이 익스포터와 C# 스펙은 함께 제거된다.</summary>
+    /// <summary>내보내기의 Unity 껍데기. 파일 쓰기는 코어의 ContentExportWriter가 하고 여기서는
+    /// AssetDatabase.Refresh만 한다 — 그래서 전용 워크트리에서 헤드리스로도 내보낼 수 있다
+    /// (규칙 17). 계획 3d가 라이터와 이 껍데기를 함께 제거한다.</summary>
     public static class CardContentExporter
     {
-        private const string OutputDirectory = "Assets/StreamingAssets/Content/Cards";
-        private const string StatusOutputDirectory = "Assets/StreamingAssets/Content/Statuses";
+        private const string OutputRoot = "Assets/StreamingAssets/Content";
 
         [MenuItem("Fate Weaver/Export Card Content to JSON")]
         public static void ExportAll()
         {
-            Directory.CreateDirectory(OutputDirectory);
-
-            var written = 0;
-            foreach (var spec in DistinctById(AuthoredSpecs()))
-            {
-                var path = Path.Combine(OutputDirectory, spec.Id + ".json");
-                File.WriteAllText(path, ContentJson.Write(spec) + "\n");
-                written++;
-            }
-
-            ExportStatuses();
+            var written = ContentExportWriter.WriteAll(
+                OutputRoot, PartyPrototypeCharacterSpecs.Build());
 
             AssetDatabase.Refresh();
-            Debug.Log("Exported " + written + " cards to " + OutputDirectory);
-        }
-
-        private static IEnumerable<CardSpec> AuthoredSpecs()
-            => StarterPoolSpecs.Build()
-                .Concat(StarterDeckSpecs.Build())
-                .Concat(PartyPrototypeDeckSpecs.Build());
-
-        private static IEnumerable<CardSpec> DistinctById(IEnumerable<CardSpec> specs)
-            => specs.GroupBy(spec => spec.Id).Select(group => group.First());
-
-        private static void ExportStatuses()
-        {
-            Directory.CreateDirectory(StatusOutputDirectory);
-            foreach (var spec in StatusContentDefaults.Specs())
-            {
-                File.WriteAllText(
-                    Path.Combine(StatusOutputDirectory, spec.Key.Id + ".json"),
-                    ContentJson.Write(spec) + "\n");
-            }
-
-            Debug.Log("Exported " + StatusContentDefaults.Specs().Count
-                + " statuses to " + StatusOutputDirectory);
+            Debug.Log("Exported " + written.Count + " content files to " + OutputRoot);
         }
     }
 }
