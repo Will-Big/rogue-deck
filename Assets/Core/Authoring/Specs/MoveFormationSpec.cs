@@ -13,8 +13,5 @@ namespace FateWeaver.Core.Authoring
         public override EffectKey Key => EffectKeys.MoveFormation;
 
         public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, Value));
-
-        public override string ToLiteral()
-            => "new MoveFormationSpec { Value = " + Value + ", " + ConditionLiteral() + " }";
     }
 }

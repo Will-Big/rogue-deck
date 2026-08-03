@@ -38,12 +38,5 @@ namespace FateWeaver.Core.Authoring
                 yield return "consume_status MaxAmount must be at least 1.";
             }
         }
-
-        public override string ToLiteral()
-            => "new ConsumeStatusSpec { Status = new StatusKeyRef { Id = " + Quote(Status.Id) + " }"
-                + ", MaxAmount = " + MaxAmount
-                + ", DamageBonusPerConsumed = " + DamageBonusPerConsumed
-                + ", Selector = TargetSelectorRef." + Selector
-                + ", " + ConditionLiteral() + " }";
     }
 }

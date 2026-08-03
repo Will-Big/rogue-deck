@@ -13,9 +13,5 @@ namespace FateWeaver.Core.Authoring
         public override EffectKey Key => EffectKeys.GrantNextPlayerDamageCardBonus;
 
         public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, Value));
-
-        public override string ToLiteral()
-            => "new GrantNextDamageCardBonusSpec { Value = " + Value + ", "
-                + ConditionLiteral() + " }";
     }
 }

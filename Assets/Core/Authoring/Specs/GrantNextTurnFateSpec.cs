@@ -14,8 +14,5 @@ namespace FateWeaver.Core.Authoring
 
         public override EffectData ToEffectData()
             => ApplyCondition(new EffectData(Key, Value));
-
-        public override string ToLiteral()
-            => "new GrantNextTurnFateSpec { Value = " + Value + ", " + ConditionLiteral() + " }";
     }
 }

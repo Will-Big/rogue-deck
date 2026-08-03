@@ -16,10 +16,5 @@ namespace FateWeaver.Core.Authoring
 
         public override EffectData ToEffectData()
             => ApplyCondition(new EffectData(Key, Value)) with { TargetSelector = ToSelector(Selector) };
-
-        public override string ToLiteral()
-            => "new DamageSpec { Value = " + Value
-                + ", Selector = TargetSelectorRef." + Selector
-                + ", " + ConditionLiteral() + " }";
     }
 }

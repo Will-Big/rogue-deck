@@ -40,9 +40,6 @@ namespace FateWeaver.Tests
             public override EffectKey Key => HealKey;
 
             public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, Value));
-
-            public override string ToLiteral()
-                => "new HealSpec { Value = " + Value + ", " + ConditionLiteral() + " }";
         }
 
         private sealed class HealDescriptionHandler : IEffectDescriptionHandler

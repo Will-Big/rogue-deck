@@ -58,10 +58,6 @@ namespace FateWeaver.Core.Authoring
         public abstract EffectKey Key { get; }
         public abstract EffectData ToEffectData();
 
-        /// <summary>C# literal for codegen (SO → GeneratedCards.cs). Lives here so a new effect's
-        /// authoring+export stay in one class.</summary>
-        public abstract string ToLiteral();
-
         public virtual IEnumerable<string> Validate(AuthoringContext context)
         {
             yield break;
@@ -76,12 +72,6 @@ namespace FateWeaver.Core.Authoring
                     SuccessEffectValue = Condition.SuccessEffectValue,
                     SkipOnBasic = Condition.SkipOnBasic
                 };
-
-        protected string ConditionLiteral()
-            => "Condition = new ConditionSpec { Kind = ConditionKind." + Condition.Kind
-                + ", N = " + Condition.N
-                + ", SuccessEffectValue = " + Condition.SuccessEffectValue
-                + ", SkipOnBasic = " + (Condition.SkipOnBasic ? "true" : "false") + " }";
 
         protected static TargetSelector? ToSelector(TargetSelectorRef selector)
         {

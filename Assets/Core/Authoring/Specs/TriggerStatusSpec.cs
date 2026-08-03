@@ -29,10 +29,5 @@ namespace FateWeaver.Core.Authoring
                 yield return "trigger_status spec requires a known status key.";
             }
         }
-
-        public override string ToLiteral()
-            => "new TriggerStatusSpec { Status = new StatusKeyRef { Id = " + Quote(Status.Id) + " }"
-                + ", Selector = TargetSelectorRef." + Selector
-                + ", " + ConditionLiteral() + " }";
     }
 }

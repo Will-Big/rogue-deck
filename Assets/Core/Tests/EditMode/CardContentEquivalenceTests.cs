@@ -5,7 +5,6 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Simulation;
 using FateWeaver.Core.Authoring;
-using FateWeaver.Simulation.Generated;
 
 namespace FateWeaver.Tests
 {
@@ -14,8 +13,9 @@ namespace FateWeaver.Tests
     /// current card content is pinned as sorted golden signature lists. Signatures are shape-agnostic
     /// so the payload migration (Task 2) keeps passing as long as content is unchanged.
     ///
-    /// All three starter paths (runtime, specs, generated) are content-equivalent and pinned by
-    /// cross-path oracle tests, so a future divergence fails instead of being documented.
+    /// 남은 두 저작 경로(runtime, specs)는 내용이 같고 교차 신탁 테스트가 그것을 잠근다.
+    /// 계획 3b가 코드 생성 경로(GeneratedCards)를 지우면서 세 번째 축이 사라졌다 — 카드 규칙의
+    /// 원본은 이제 Content/Cards/*.json이고, 남은 C# 스펙은 계획 3d가 지운다.
     ///
     /// When you change card content INTENTIONALLY, update the matching golden array in the same
     /// commit. If a golden test fails and you did not mean to change content, the migration broke
@@ -105,12 +105,6 @@ namespace FateWeaver.Tests
                 Sigs(StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
 
         [Test]
-        public void Generated_starter_deck_matches_golden()
-            => CollectionAssert.AreEqual(
-                GoldenStarterDeck,
-                Sigs(GeneratedCards.StarterDeck().Select(CardSpecMapper.ToDefinition)));
-
-        [Test]
         public void Handcoded_party_prototype_deck_matches_golden()
             => CollectionAssert.AreEqual(GoldenPartyPrototypeHandCoded, Sigs(PartyPrototypeDeck.Build()));
 
@@ -133,11 +127,5 @@ namespace FateWeaver.Tests
             => CollectionAssert.AreEqual(
                 Sigs(StarterDeck.Build()),
                 Sigs(StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition)));
-
-        [Test]
-        public void Generated_starter_deck_matches_runtime_deck()
-            => CollectionAssert.AreEqual(
-                Sigs(StarterDeck.Build()),
-                Sigs(GeneratedCards.StarterDeck().Select(CardSpecMapper.ToDefinition)));
     }
 }

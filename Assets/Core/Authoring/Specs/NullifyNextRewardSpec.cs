@@ -11,8 +11,5 @@ namespace FateWeaver.Core.Authoring
         public override EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;
 
         public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, 0));
-
-        public override string ToLiteral()
-            => "new NullifyNextRewardSpec { " + ConditionLiteral() + " }";
     }
 }

@@ -46,12 +46,5 @@ namespace FateWeaver.Core.Authoring
                 yield return "status '" + Status.Id + "' has no authored content.";
             }
         }
-
-        public override string ToLiteral()
-            => "new ApplyStatusSpec { Status = new StatusKeyRef { Id = " + Quote(Status.Id) + " }"
-                + ", Count = " + Count
-                + ", Target = StatusApplyTarget." + Target
-                + ", Selector = TargetSelectorRef." + Selector
-                + ", " + ConditionLiteral() + " }";
     }
 }
