@@ -24,7 +24,8 @@ namespace FateWeaver.Unity
         }
 
         [Header("Data")]
-        [SerializeField] private DeckAsset _deck;
+        [Tooltip("Content/Decks 아래 덱 JSON의 id.")]
+        [SerializeField] private string _deckId = "starter";
         [SerializeField] private EnemyKind _enemyKind = EnemyKind.Goblin;
         [Tooltip("Enemy cards' art source (rules live in the selected pure enemy deck).")]
         [SerializeField] private CardAsset[] _enemyArtCards = System.Array.Empty<CardAsset>();
@@ -70,14 +71,30 @@ namespace FateWeaver.Unity
 
         private void StartSession()
         {
-            var specs = _deck != null ? _deck.ToSpecs() : StarterDeckSpecs.Build();
-            var deckDefs = specs.Select(CardSpecMapper.ToDefinition).ToList();
+            var loaded = ContentBootstrap.Load(UnityContentRoot.Path);
+            if (!loaded.Succeeded)
+            {
+                var reasons = string.Join("\n", loaded.Errors);
+                SetMessage("콘텐츠 로드 실패:\n" + reasons);
+                Debug.LogError("콘텐츠 로드 실패:\n" + reasons);
+                return;
+            }
+
+            var content = loaded.Content;
+            if (!content.Decks.Contains(_deckId))
+            {
+                SetMessage("덱 '" + _deckId + "'가 콘텐츠에 없습니다.");
+                Debug.LogError("덱 '" + _deckId + "'가 콘텐츠에 없습니다.");
+                return;
+            }
+
+            var deckDefs = content.Decks.Get(_deckId).Select(content.Cards.Get).ToList();
             var enemies = new[] { new Enemy(EnemyId(), EnemyStartingHp()) };
             _session = new DeckCombatSession(
                 deckDefs, PlayerHp, enemies, EnemyPolicy(), FateEnergyPerTurn, HandSize, Seed);
             BuildArtLookup();
             ClearArmed();
-            SetMessage(_deck != null ? "전투 시작." : "전투 시작 (코드 시작덱 폴백 — DeckAsset 미연결).");
+            SetMessage("전투 시작.");
             RefreshAll();
         }
 
@@ -171,15 +188,8 @@ namespace FateWeaver.Unity
 
         private void BuildArtLookup()
         {
+            // 플레이어 카드는 아트가 없다(색상 틴트 아트 방향). 적 카드만 모은다.
             _artById.Clear();
-            if (_deck != null)
-            {
-                foreach (var entry in _deck.Entries)
-                {
-                    AddArt(entry.Card);
-                }
-            }
-
             foreach (var card in _enemyArtCards)
             {
                 AddArt(card);

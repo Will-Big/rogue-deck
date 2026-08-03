@@ -51,6 +51,9 @@ namespace FateWeaver.Unity
         private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
         private readonly Dictionary<string, Sprite> _artById = new Dictionary<string, Sprite>();
 
+        /// <summary>부팅 1회로 만들어 상주하는 콘텐츠. 씬을 리셋해도 다시 읽지 않는다(설계 §4.5).</summary>
+        private GameContent _content;
+
         private void Start()
         {
             _turnButton.onClick.AddListener(OnTurnButton);
@@ -64,18 +67,32 @@ namespace FateWeaver.Unity
         private void StartSession()
         {
             _selection.CancelSelection();
-            if (_unitPrefab == null || _party == null || _party.Length == 0 || _party.Any(member => member == null || member.Deck == null))
+            if (_unitPrefab == null || _party == null || _party.Length == 0
+                || _party.Any(member => member == null))
             {
-                SetMessage("파티 CharacterAsset, 덱 또는 UnitView 프리팹이 연결되지 않았습니다.");
+                SetMessage("파티 CharacterAsset 또는 UnitView 프리팹이 연결되지 않았습니다.");
                 return;
             }
 
+            if (_content == null)
+            {
+                var loaded = ContentBootstrap.Load(UnityContentRoot.Path);
+                if (!loaded.Succeeded)
+                {
+                    var reasons = string.Join("\n", loaded.Errors);
+                    SetMessage("콘텐츠 로드 실패:\n" + reasons);
+                    Debug.LogError("콘텐츠 로드 실패:\n" + reasons);
+                    return;
+                }
+
+                _content = loaded.Content;
+            }
+
             var tuning = PartyPrototypeRoster.Tuning;
-            var loadouts = _party.Select(member => new PartyMemberLoadout(
-                member.Id,
-                member.DisplayName,
-                tuning.DefaultMemberMaxHp,
-                member.Deck.ToSpecs().Select(CardSpecMapper.ToDefinition).ToList())).ToList();
+            var loadouts = _party
+                .Select(member => ContentLoadouts.For(
+                    _content, member.Id, tuning.DefaultMemberMaxHp))
+                .ToList();
             var enemies = new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) };
             _session = new DeckCombatSession(
                 loadouts,
@@ -313,15 +330,9 @@ namespace FateWeaver.Unity
 
         private void BuildArtLookup()
         {
+            // 플레이어 카드는 아트가 없다(색상 틴트 아트 방향). 덱을 훑어봐야 전부 null이므로
+            // 적 카드만 모은다.
             _artById.Clear();
-            foreach (var member in _party)
-            {
-                foreach (var entry in member.Deck.Entries)
-                {
-                    AddArt(entry.Card);
-                }
-            }
-
             foreach (var card in _enemyArtCards) AddArt(card);
         }
 
