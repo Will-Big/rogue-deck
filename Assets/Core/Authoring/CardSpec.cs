@@ -26,6 +26,14 @@ namespace FateWeaver.Core.Authoring
         public int InterventionEffectValue;
         public InterventionTargetSideRef InterventionTargetSide;
         public bool InterventionRequireAdjacent;
+
+        /// <summary>카드 풀 후보 구성용 등급. None은 등급 개념이 없는 카드(fixture 등)의 정상
+        /// 상태이므로 Side·Category와 달리 Include 처방을 쓰지 않는다 — 생략이 곧 None이라
+        /// 정보 손실이 없다.</summary>
+        public CardGrade Grade;
+
+        /// <summary>저작 분류 태그. 풀 소속 카드는 하나 이상 가져야 한다(PoolContentLoader).</summary>
+        public string[] Tags;
     }
 
     /// <summary>개입 대상 진영 제한. Any=제한 없음, Player=재촉류, Enemy=유예류.</summary>

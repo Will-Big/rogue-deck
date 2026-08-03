@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Cards;
 using FateWeaver.Unity;
 using FateWeaver.Unity.Editor;
 using NUnit.Framework;

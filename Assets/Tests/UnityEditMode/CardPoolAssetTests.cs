@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Cards;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEditor;

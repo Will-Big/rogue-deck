@@ -49,7 +49,9 @@ namespace FateWeaver.Unity
             Intervention = Intervention,
             InterventionEffectValue = InterventionEffectValue,
             InterventionTargetSide = _interventionTargetSide,
-            InterventionRequireAdjacent = _interventionRequireAdjacent
+            InterventionRequireAdjacent = _interventionRequireAdjacent,
+            Grade = _grade,
+            Tags = _tags ?? Array.Empty<string>()
         };
     }
 }
