@@ -3,9 +3,9 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-08-03
-- 상태: `active`
-- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
-- 선행 계획: [`archive/plans/2026-08-03-status-registration-consolidation.md`](../archive/plans/2026-08-03-status-registration-consolidation.md)
+- 상태: `완료` (2026-08-03 구현·머지)
+- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
+- 선행 계획: [`archive/plans/2026-08-03-status-registration-consolidation.md`](./2026-08-03-status-registration-consolidation.md)
 - 후속 계획: 3b(런타임 전환) → 3c(상태 원본 확정) · 3d(C# 카드 스펙 제거). 아래 [로드맵](#계획-3의-분할-로드맵) 참고
 - 브랜치: `feat/deck-pool-character-content`
 
@@ -79,6 +79,34 @@
 **등급·태그는 이 계획에서 다루지 않는다.** 카드에 딸린 데이터이므로 `CardSpec`으로 가야 하고,
 그 이동은 `CardPoolAsset.Validate`를 `AuthoringValidator`로 옮기는 3b의 일이다.
 
+## 구현 결과 (2026-08-03)
+
+헤드리스 **447 → 487**(추가 40), Unity 무변경. 계획대로 순수 코어 작업이었다.
+`.asset`·씬·프리팹·프로젝트 설정을 건드리지 않았다.
+
+계획과 달라진 곳 넷:
+
+1. **`ContentExportWriter`가 캐릭터 목록을 인자로 받는다.** 원본인 `PartyPrototypeRoster`가
+   `FateWeaver.Simulation` 어셈블리에 있어 `FateWeaver.Core`에서 닿지 않는다(asmdef 경계).
+   호출자가 넘기도록 `WriteAll(rootDirectory, characters)`로 만들고, 로스터를 저작 형태로
+   비추는 `PartyPrototypeCharacterSpecs`를 `Assets/Core/Simulation/`에 뒀다. 3d가 로스터와
+   함께 지운다.
+2. **덱·풀 id 상수가 `ContentExportWriter`에 있다** (`StarterDeckId`·`PartyPrototypeDeckId`·
+   `StarterPoolId`). 3d가 라이터를 지울 때 이 상수들의 거처를 정해야 한다 — JSON 파일 이름으로만
+   남으면 잠금 테스트가 문자열을 다시 박게 된다.
+3. **로더가 넷이 되면서 공용 조각 둘을 뽑았다.** 필수 키 확인은 `ContentKeys.FirstMissing`,
+   Newtonsoft 예외 문장은 `ContentJsonError.Describe`. `CardContentLoader`의 사본을 지우고
+   같은 것을 쓰게 했다.
+4. **`.meta`를 손으로 만들었다** (규칙 17: 이 워크트리는 에디터를 열지 않는다). `Assets` 전체에
+   guid 중복이 없음을 확인했다. `DeckPoolCharacterContentTests`가 `.json`마다 `.meta`가 있는지
+   잠근다.
+
+**SO 대조 결과(Task 4 Step 3): 불일치 없음.** `StarterDeck.asset` 10장·`StarterPool.asset` 22장을
+guid → `CardAsset.Id`로 풀어 JSON과 비교했고, id와 순서가 정확히 같았다. 덱의 `Count`는 전부 1이다.
+3b는 어느 쪽이 옳은지 판정할 필요가 없다.
+
+**아직 아무도 새 JSON을 읽지 않는다.** 런타임은 여전히 SO를 읽는다 — 3b가 소비자를 옮긴다.
+
 ---
 
 ## Task 1: 세 스펙 타입과 JSON 왕복을 만든다
@@ -112,12 +140,12 @@ namespace FateWeaver.Core.Authoring.Decks
 `PoolSpec`은 같은 모양이되 중복을 허용하지 않는다는 점만 로더에서 갈린다. **두 타입을 하나로
 합치지 않는다** — 검증 규칙이 다르고, 합치면 "중복 허용" 플래그라는 쓰이지 않는 칸이 생긴다.
 
-- [ ] **Step 1: 기준선을 기록한다**
+- [x] **Step 1: 기준선을 기록한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0, Passed: 447`
 
-- [ ] **Step 2: 왕복 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 2: 왕복 테스트를 먼저 쓴다 (RED)**
 
 세 타입 각각에 대해 `ContentJson.Write` → `ContentJson.Read` 왕복이 원본과 같은지 단언한다.
 **빈 목록·빈 문자열이 살아남는지도 함께 단언한다** — `DefaultValueHandling.Ignore`가 기본값을
@@ -126,12 +154,12 @@ Expected: `Failed: 0, Passed: 447`
 
 Expected: 컴파일 실패 (타입 없음)
 
-- [ ] **Step 3: 세 타입을 만든다 (GREEN)**
+- [x] **Step 3: 세 타입을 만든다 (GREEN)**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`, `Passed`가 447 + 이번에 추가한 테스트 수
 
-- [ ] **Step 4: 커밋한다**
+- [x] **Step 4: 커밋한다**
 
 ```bash
 git status --short
@@ -177,14 +205,14 @@ id를 가리키는 덱을 거부하려면 카드가 먼저 로드되어 있어�
 | 캐릭터 | 없는 덱 id를 가리킨다 | `member_a.json: unknown deck id 'ghost_deck'.` |
 | 캐릭터 | `displayName`이 비었다 | `member_a.json: requires a displayName.` |
 
-- [ ] **Step 1: 거부 경로 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 1: 거부 경로 테스트를 먼저 쓴다 (RED)**
 
 위 표의 여섯 줄 각각에 테스트를 하나씩 둔다. 성공 경로 테스트도 함께 둔다 — 카탈로그의 `Ids`가
 정렬되어 있는지(규칙 7) 확인한다.
 
 Expected: 컴파일 실패
 
-- [ ] **Step 2: 로더·카탈로그를 만든다 (GREEN)**
+- [x] **Step 2: 로더·카탈로그를 만든다 (GREEN)**
 
 `CardContentLoader`·`CardContentCatalog`를 그대로 본뜬다. 카탈로그는 정렬된 `Ids`를 노출하고
 `Get(id)`는 없으면 `KeyNotFoundException`을 던진다.
@@ -195,7 +223,7 @@ Expected: 컴파일 실패
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`, 새 테스트만큼 증가
 
-- [ ] **Step 3: 커밋한다**
+- [x] **Step 3: 커밋한다**
 
 ```bash
 git status --short
@@ -241,19 +269,19 @@ C#이다** — 시작 덱 10장은 `StarterDeckSpecs`, 풀 22장은 `StarterPool
 
 `PartyPrototypeRoster`의 멤버 B는 `PartyPrototypeDeck`(검증용 덱)을 쓰므로 덱이 둘 나온다.
 
-- [ ] **Step 1: 라이터 테스트를 먼저 쓴다 (RED)**
+- [x] **Step 1: 라이터 테스트를 먼저 쓴다 (RED)**
 
 임시 디렉터리에 `WriteAll`을 돌리고, 쓰인 파일 수와 덱 JSON의 카드 id 순서를 단언한다.
 **리포지토리의 `Assets/StreamingAssets`에 쓰지 않는다** — 테스트가 커밋된 콘텐츠를 덮어쓰면 안 된다.
 
 Expected: 컴파일 실패
 
-- [ ] **Step 2: 라이터를 만들고 익스포터를 껍데기로 줄인다 (GREEN)**
+- [x] **Step 2: 라이터를 만들고 익스포터를 껍데기로 줄인다 (GREEN)**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`
 
-- [ ] **Step 3: 리포지토리에 쓰는 실행 경로를 만든다**
+- [x] **Step 3: 리포지토리에 쓰는 실행 경로를 만든다**
 
 라이터를 실제 콘텐츠에 대고 돌릴 방법이 필요하다. 헤드리스 테스트 프로젝트에 `[Explicit]` 테스트를
 하나 둔다 — 명시적으로 지목할 때만 돌고 일반 실행에서는 건너뛴다. 저장소 루트는
@@ -265,7 +293,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
   --filter "FullyQualifiedName~ContentExportWriterTests.Export_to_repository"
 ```
 
-- [ ] **Step 4: 기존 카드·상태 JSON이 바뀌지 않았는지 확인한다**
+- [x] **Step 4: 기존 카드·상태 JSON이 바뀌지 않았는지 확인한다**
 
 위 명령을 한 번 돌린 뒤 `git diff`가 **비어야 한다** — 이번 커밋은 이동일 뿐 값을 바꾸지 않는다.
 `Content/Decks`·`Pools`·`Characters`만 새로 생긴다.
@@ -275,7 +303,7 @@ git status --short Assets/StreamingAssets/Content
 ```
 `Cards/`·`Statuses/` 아래에 수정된 파일이 하나도 없어야 한다.
 
-- [ ] **Step 5: 커밋한다** (JSON 산출물은 Task 4에서 함께 커밋한다)
+- [x] **Step 5: 커밋한다** (JSON 산출물은 Task 4에서 함께 커밋한다)
 
 ```bash
 git status --short
@@ -301,21 +329,21 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: 커밋된 덱·풀·캐릭터 JSON. 3b가 이것을 읽는다
 
-- [ ] **Step 1: 내보낸다**
+- [x] **Step 1: 내보낸다**
 
 Task 3 Step 3의 `[Explicit]` 테스트를 1회 실행한다. `.meta`는 Unity가 만들지 못하므로
 (이 워크트리는 에디터를 열지 않는다) 기존 `Cards/*.json.meta`와 같은 형태로 손으로 만든다 —
 `guid`는 파일마다 유일해야 한다(규칙 16: 새 Unity 에셋은 1:1 `.meta`와 함께 커밋한다).
 
-- [ ] **Step 2: 공인 목록과 대조하는 잠금 테스트를 쓴다**
+- [x] **Step 2: 공인 목록과 대조하는 잠금 테스트를 쓴다**
 
 리포지토리의 JSON을 로더로 읽어 다음을 단언한다. `CardContentEquivalenceJsonTests`가 저장소
 루트를 찾는 방식을 그대로 쓴다.
 
 | 단언 | 근거 |
 |---|---|
-| `Decks/starter.json`의 카드 10장이 `StarterDeckSpecs.Build()`의 id 순서와 같다 | [무작위 10장 시작 덱 설계](../specs/2026-07-30-random-starter-deck-design.md)의 공인 추첨 결과 |
-| `Pools/starter.json`의 카드 22장이 `StarterPoolSpecs.Build()`의 id 순서와 같다 | [시작 카드 풀 SO 저작](../specs/2026-07-29-starter-pool-so-authoring-design.md) |
+| `Decks/starter.json`의 카드 10장이 `StarterDeckSpecs.Build()`의 id 순서와 같다 | [무작위 10장 시작 덱 설계](../../specs/2026-07-30-random-starter-deck-design.md)의 공인 추첨 결과 |
+| `Pools/starter.json`의 카드 22장이 `StarterPoolSpecs.Build()`의 id 순서와 같다 | [시작 카드 풀 SO 저작](../../specs/2026-07-29-starter-pool-so-authoring-design.md) |
 | 캐릭터 둘의 id·표시명이 `PartyPrototypeRoster`의 상수와 같다 | 현재 파티 구성 |
 | 세 카탈로그가 카드 카탈로그와 함께 오류 없이 로드된다 | 통합 확인 |
 
@@ -325,7 +353,7 @@ Task 3 Step 3의 `[Explicit]` 테스트를 1회 실행한다. `.meta`는 Unity�
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`
 
-- [ ] **Step 3: SO와도 어긋나지 않는지 확인한다**
+- [x] **Step 3: SO와도 어긋나지 않는지 확인한다**
 
 `StarterDeck.asset`·`StarterPool.asset`은 아직 살아 있는 원본이다(3b가 지운다). 이 둘과 JSON이
 어긋나면 3b에서 조용히 카드가 바뀐다. `.asset` YAML을 눈으로 확인하거나 Unity EditMode 테스트로
@@ -338,7 +366,7 @@ Expected: `Failed: 0`
 Unity EditMode 검증이 필요하면 배치로 돌린다 (`-runTests`와 `-quit`를 함께 쓰지 않는다).
 불일치를 발견하면 **고치지 말고 기록한다** — 어느 쪽이 옳은지는 3b가 판정한다.
 
-- [ ] **Step 4: 커밋한다**
+- [x] **Step 4: 커밋한다**
 
 ```bash
 git status --short
@@ -359,11 +387,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `docs/superpowers/README.md`
 - Modify: `docs/superpowers/plans/2026-08-03-deck-pool-character-content.md` (이 문서, 상태를 `완료`로)
 
-- [ ] **Step 1: 이 계획을 완료로 표시하고 보관으로 옮긴다**
+- [x] **Step 1: 이 계획을 완료로 표시하고 보관으로 옮긴다**
 
 `docs/superpowers/archive/plans/`로 옮기고 머리말의 상태를 `완료`로 고친다 (규칙 20).
 
-- [ ] **Step 2: README를 갱신한다**
+- [x] **Step 2: README를 갱신한다**
 
 세 곳을 고친다.
 
@@ -371,7 +399,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 2. 카드 콘텐츠 흐름 표에서 3a를 **완료·머지**로, 3b를 **다음**으로 바꾸고 링크를 보관 경로로 돌린다
 3. `현재 수치` 절에 덱·풀·캐릭터 JSON 개수를 더한다
 
-- [ ] **Step 3: 최종 검증하고 커밋한다**
+- [x] **Step 3: 최종 검증하고 커밋한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 Expected: `Failed: 0`
@@ -402,7 +430,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### 3b가 먼저 풀어야 할 것 — 상태 JSON은 아직 스스로를 해석하지 못한다
 
-[`StatusSpecJsonConverter.cs:49`](../../../Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs)가
+[`StatusSpecJsonConverter.cs:49`](../../../../Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs)가
 판별자 표를 `StatusContentDefaults.Specs()`에서 만든다. 즉 `poison.json`을 `PoisonStatusSpec`으로
 읽으려면 **코드 기본값 목록이 있어야 한다.** 이걸 떼기 전까지 "JSON이 유일 원본"은 성립하지 않는다.
 

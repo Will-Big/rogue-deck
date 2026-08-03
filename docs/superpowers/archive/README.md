@@ -95,6 +95,7 @@
 - [카드 콘텐츠 JSON 직렬화·로딩 구현 기록](plans/2026-07-31-card-content-json-loading.md)
 - [상태 콘텐츠 JSON화와 카드 저작 표면 축소 구현 기록](plans/2026-08-02-status-content-and-authoring-surface.md)
 - [상태 등록 지점 통합 구현 기록](plans/2026-08-03-status-registration-consolidation.md)
+- [덱·풀·캐릭터 콘텐츠 스키마 구현 기록 (계획 3a)](plans/2026-08-03-deck-pool-character-content.md)
 
 ### 과거 런 원 사이클
 
