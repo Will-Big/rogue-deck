@@ -4,9 +4,9 @@
 
 - 날짜: 2026-07-29
 - 상태: `active`
-- 근거 스펙: [캐릭터 및 카드풀 설계 규칙 §3](../specs/2026-07-20-character-card-pools-design.md) (독 규칙),
-  [위치 대상과 카드 텍스트](../specs/2026-07-27-position-targeting-card-text-design.md),
-  [대상 선택 메타데이터 P0-C](../specs/2026-07-28-p0c-targeting-metadata-design.md)
+- 근거 스펙: [캐릭터 및 카드풀 설계 규칙 §3](../../specs/2026-07-20-character-card-pools-design.md) (독 규칙),
+  [위치 대상과 카드 텍스트](../../specs/2026-07-27-position-targeting-card-text-design.md),
+  [대상 선택 메타데이터 P0-C](../../specs/2026-07-28-p0c-targeting-metadata-design.md)
 - 카드 원본: `Tools/card-idea-notebook/시작 카드 풀.md` (22장)
 
 **Goal:** 상태이상마다 서로 다른 행동(턴 종료 발동, 사망 반응, 중첩 규칙)을 레지스트리 훅으로 구현할 수 있게 `IStatusBehavior` 표면을 확장하고, 그 위에 독 시스템과 신규 효과·조건·대상 선택·개입 제약을 얹어 시작 카드 풀 22장을 헤드리스로 동작시킨다.

@@ -4,7 +4,7 @@
 
 - 작성일: 2026-07-31
 - 상태: `archived` — 완료. 2026-08-02 master 머지(ee35fc4). 헤드리스 432, Unity EditMode 506 통과
-- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
+- 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
 - 브랜치: `claude/card-mutation-runtime-content-a65c58`
 
 **Goal:** 카드 저작 데이터를 JSON으로 직렬화·역직렬화하고, 디렉터리에서 읽어 `CardDefinition`

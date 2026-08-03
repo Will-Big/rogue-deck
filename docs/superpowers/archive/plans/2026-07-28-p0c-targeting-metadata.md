@@ -14,7 +14,7 @@
 
 **Goal:** 개입 핸들러가 대상 요구를 선언하고, 세션이 질의를 제공하고, UI는 키 해석 없이 집행하며, 코어가 최종 유효성을 판정한다. 도달 불가 유닛 대상 UI는 삭제한다.
 
-**Architecture:** 스펙 [`2026-07-28-p0c-targeting-metadata-design.md`](../specs/2026-07-28-p0c-targeting-metadata-design.md)의 선언→질의→집행→검증 4단 경로. 코어에 `TargetingRequirement` 값 타입을 추가하고 `IInterventionActionHandler`에 정식 멤버 `Targeting`을 더한다. `CardTargetRules`와 키 비교 2곳, 유닛 대상 표면 전체를 삭제한다.
+**Architecture:** 스펙 [`2026-07-28-p0c-targeting-metadata-design.md`](../../specs/2026-07-28-p0c-targeting-metadata-design.md)의 선언→질의→집행→검증 4단 경로. 코어에 `TargetingRequirement` 값 타입을 추가하고 `IInterventionActionHandler`에 정식 멤버 `Targeting`을 더한다. `CardTargetRules`와 키 비교 2곳, 유닛 대상 표면 전체를 삭제한다.
 
 **Tech Stack:** 순수 C# (Unity 6의 C# 9 제약 — record struct 금지), NUnit, Unity 6000.5.2f1 batchmode EditMode.
 
