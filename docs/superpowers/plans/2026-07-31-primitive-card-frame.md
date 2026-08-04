@@ -887,7 +887,7 @@ git commit -m "chore(ui): retire poster card frame assets"
 - Modify: `docs/superpowers/README.md`
 - Modify: `docs/superpowers/archive/README.md`
 
-- [ ] **Step 1: Run the full headless suite**
+- [x] **Step 1: Run the full headless suite**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
@@ -896,7 +896,9 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: all pass.
 
-- [ ] **Step 2: Run the full Unity EditMode suite**
+2026-08-04 result: **426/426 passed**.
+
+- [x] **Step 2: Run the full Unity EditMode suite**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -908,21 +910,40 @@ Expected: all pass.
 
 Expected: XML `result="Passed"`; no compile, missing-script/reference, or import failure.
 
-- [ ] **Step 3: Run structural audits**
+2026-08-04 result: **592 total, 585 passed, 0 failed, 7 skipped**.
+
+- [x] **Step 3: Run the full Unity PlayMode suite**
+
+The first focused run exposed a stale test fixture that still assigned removed
+`DescriptionLineView._glyphSlot`/`_glyph` fields and omitted the authored `TargetGlyphView` visuals.
+After the test-only fixture correction in commit `c73442b`, run all PlayMode tests:
+
+```bash
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
+  -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
+  -runTests -testPlatform PlayMode \
+  -testResults /private/tmp/primitive-card-frame-playmode-20260804.xml \
+  -logFile /private/tmp/primitive-card-frame-playmode-20260804.log
+```
+
+2026-08-04 result: **2/2 passed**.
+
+- [x] **Step 4: Run structural audits**
 
 ```bash
 rg -n '◇◎|◎◆|AllyDirection|EnemyDirection|_glyphSlot|_allyFill|_enemyFill' \
-  Assets/Core Assets/Unity Assets/Tests Tests/Headless
+  Assets/Core Assets/Unity --glob '!Assets/Tests/**'
 rg -n 'Resources\.Load|GameObject\.Find|FindObjectOfType' \
   Assets/Unity/CardView.cs Assets/Unity/CardPrefabCatalog.cs \
   Assets/Unity/TargetGlyphView.cs Assets/Unity/DescriptionLineView.cs
+rg --files Assets/Unity/Resources/Cards/Frame | rg 'poster_v2'
 git diff --check
 git status --short
 ```
 
-Expected: both searches empty and only intended local tool artifacts remain untracked.
+Expected: all three searches are empty and only intended local tool artifacts remain untracked.
 
-- [ ] **Step 4: Render captures for user review**
+- [x] **Step 5: Generate and inspect render captures**
 
 Run `FateWeaver.Tests.UnityEditMode.CardFrameRenderCapture`. Inspect:
 
@@ -930,13 +951,18 @@ Run `FateWeaver.Tests.UnityEditMode.CardFrameRenderCapture`. Inspect:
 - toxic reclaim with blue `◎` left and red front-one glyph right;
 - mixed five-card hands at `960×720`, `1280×800`, `1280×720`, `1680×720`.
 
-Captures stay under `/private/tmp/primitive-card-frame-captures/`. Present them to the user and wait for visual approval before archiving.
+Captures stay under `/private/tmp/primitive-card-frame-captures/`. The explicit capture run passed **9/9**
+and generated all seven requested PNGs on 2026-08-04.
 
-- [ ] **Step 5: Archive the completed plan and update indexes**
+- [ ] **Step 6: Obtain user visual approval**
+
+Present the seven captures to the user and wait for approval before archiving.
+
+- [ ] **Step 7: Archive the completed plan and update indexes**
 
 Move this file to `docs/superpowers/archive/plans/`, remove its active row from `docs/superpowers/README.md`, add the archived row to `docs/superpowers/archive/README.md`, and keep the design spec current.
 
-- [ ] **Step 6: Commit the completion record**
+- [ ] **Step 8: Commit the completion record**
 
 ```bash
 git add docs/superpowers/README.md docs/superpowers/archive/README.md \
@@ -944,7 +970,7 @@ git add docs/superpowers/README.md docs/superpowers/archive/README.md \
 git commit -m "docs: archive primitive card frame implementation"
 ```
 
-- [ ] **Step 7: Confirm branch state**
+- [ ] **Step 9: Confirm branch state**
 
 ```bash
 git status --short
