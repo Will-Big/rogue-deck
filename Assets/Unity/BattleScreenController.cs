@@ -26,14 +26,8 @@ namespace FateWeaver.Unity
         [SerializeField] private ExecutionRailView _rail;
         [SerializeField] private BattleUnitsView _units;
         [SerializeField] private BattlePilesView _piles;
-        [SerializeField] private TMP_Text _energyText;
-        [SerializeField] private TMP_Text _messageText;
-        [SerializeField] private Button _turnButton;
-        [SerializeField] private TMP_Text _turnButtonLabel;
-        [SerializeField] private Button _resetButton;
+        [SerializeField] private BattleHudView _hud;
         [SerializeField] private CardSelectionController _selection;
-        [SerializeField] private Button _emptyClickCatcher;
-        [SerializeField] private Button _dimClickCatcher;
 
         private const int FateEnergyPerTurn = 3;
         private const int Seed = 1;
@@ -45,10 +39,7 @@ namespace FateWeaver.Unity
 
         private void Start()
         {
-            _turnButton.onClick.AddListener(OnTurnButton);
-            _resetButton.onClick.AddListener(StartSession);
-            _emptyClickCatcher.onClick.AddListener(OnEmptyClicked);
-            _dimClickCatcher.onClick.AddListener(OnEmptyClicked);
+            _hud.Initialize(OnTurnButton, StartSession);
             _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
             StartSession();
         }
@@ -200,16 +191,6 @@ namespace FateWeaver.Unity
             _selection.OnTargetClicked(SelectionTargetRef.ExecutionCard(zoneIndex));
         }
 
-        private void OnEmptyClicked()
-        {
-            if (_selection.SelectionActive)
-            {
-                _selection.CancelSelection();
-                SetMessage("선택 취소.");
-                RefreshSelections();
-            }
-        }
-
         private void OnHandHovered(int handIndex, bool hovering)
         {
             if (_session == null || _selection.SelectionActive)
@@ -336,28 +317,17 @@ namespace FateWeaver.Unity
             _units.Refresh(_session.State);
             _piles.Refresh(
                 _session.DrawCount, _session.DiscardCount, _session.AllDeckCards.Count);
+            _hud.Refresh(_session.FateEnergy, _session.CurrentTurnResolved);
             RefreshSelections();
-            RefreshHudTexts();
         }
 
         private void RefreshSelections()
         {
             bool selectionActive = _selection.SelectionActive;
             _piles.SetInputEnabled(!selectionActive);
-            _resetButton.interactable = !selectionActive;
-            _turnButton.interactable = !selectionActive && !_session.IsComplete;
+            _hud.SetInputEnabled(!selectionActive, !selectionActive && !_session.IsComplete);
         }
 
-        private void RefreshHudTexts()
-        {
-            _energyText.text = "운명력 " + _session.FateEnergy;
-            _turnButtonLabel.text = _session.CurrentTurnResolved ? "다음 턴" : "턴 실행";
-            _turnButton.interactable = !_selection.SelectionActive && !_session.IsComplete;
-        }
-
-        private void SetMessage(string message)
-        {
-            if (_messageText != null) _messageText.text = message;
-        }
+        private void SetMessage(string message) => _hud.SetMessage(message);
     }
 }

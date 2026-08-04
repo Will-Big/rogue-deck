@@ -17,6 +17,10 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _confirmButton;
         [SerializeField] private TargetingArrowView _arrow;
 
+        [Tooltip("빈 곳 클릭으로 선택을 취소한다.")]
+        [SerializeField] private Button _emptyClickCatcher;
+        [SerializeField] private Button _dimClickCatcher;
+
         private readonly CardSelectionMachine _machine = new CardSelectionMachine();
         private readonly HashSet<SelectionTargetRef> _validTargets =
             new HashSet<SelectionTargetRef>();
@@ -45,6 +49,20 @@ namespace FateWeaver.Unity
             _tryApply = tryApply;
             _currentTargets = currentTargets;
             _onApplied = onApplied;
+            if (_emptyClickCatcher != null) _emptyClickCatcher.onClick.AddListener(CancelIfActive);
+            if (_dimClickCatcher != null) _dimClickCatcher.onClick.AddListener(CancelIfActive);
+        }
+
+        /// <summary>빈 곳 클릭. 선택 중이 아니면 아무 일도 하지 않는다.</summary>
+        private void CancelIfActive()
+        {
+            if (!SelectionActive)
+            {
+                return;
+            }
+
+            CancelSelection();
+            _onApplied?.Invoke();
         }
 
         public void BeginPlacement(

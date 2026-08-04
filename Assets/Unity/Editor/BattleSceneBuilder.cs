@@ -192,6 +192,8 @@ namespace FateWeaver.Unity.Editor
             selectionSo.FindProperty("_dimLayer").objectReferenceValue = dimLayer.gameObject;
             selectionSo.FindProperty("_confirmButton").objectReferenceValue = confirmButton;
             selectionSo.FindProperty("_arrow").objectReferenceValue = targetingArrow;
+            selectionSo.FindProperty("_emptyClickCatcher").objectReferenceValue = emptyClickCatcher;
+            selectionSo.FindProperty("_dimClickCatcher").objectReferenceValue = dimClickCatcher;
             selectionSo.ApplyModifiedPropertiesWithoutUndo();
 
             // --- controller wiring (field names must match BattleScreenController) ---
@@ -219,19 +221,26 @@ namespace FateWeaver.Unity.Editor
 
             presenterSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // HUD 위젯은 딤을 사이에 두고 갈라져 있다(안내 문구만 딤 위). 재부모화하면 Z-order가
+            // 바뀌므로 뷰는 참조만 드는 관리자 객체로 둔다.
+            var hudGo = new GameObject("BattleHudView");
+            hudGo.transform.SetParent(controllerGo.transform, false);
+            var hud = hudGo.AddComponent<BattleHudView>();
+            var hudSo = new SerializedObject(hud);
+            hudSo.FindProperty("_energyText").objectReferenceValue = energy;
+            hudSo.FindProperty("_messageText").objectReferenceValue = message;
+            hudSo.FindProperty("_turnButton").objectReferenceValue = turnButton;
+            hudSo.FindProperty("_turnButtonLabel").objectReferenceValue = turnLabel;
+            hudSo.FindProperty("_resetButton").objectReferenceValue = resetButton;
+            hudSo.ApplyModifiedPropertiesWithoutUndo();
+
             so.FindProperty("_presenter").objectReferenceValue = presenter;
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
             so.FindProperty("_units").objectReferenceValue = units;
             so.FindProperty("_piles").objectReferenceValue = piles;
-            so.FindProperty("_energyText").objectReferenceValue = energy;
-            so.FindProperty("_messageText").objectReferenceValue = message;
-            so.FindProperty("_turnButton").objectReferenceValue = turnButton;
-            so.FindProperty("_turnButtonLabel").objectReferenceValue = turnLabel;
-            so.FindProperty("_resetButton").objectReferenceValue = resetButton;
+            so.FindProperty("_hud").objectReferenceValue = hud;
             so.FindProperty("_selection").objectReferenceValue = selection;
-            so.FindProperty("_emptyClickCatcher").objectReferenceValue = emptyClickCatcher;
-            so.FindProperty("_dimClickCatcher").objectReferenceValue = dimClickCatcher;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
