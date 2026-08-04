@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-08-04
+- 개정일: 2026-08-05
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -75,7 +75,6 @@
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
-| [계획 3d — C# 카드 스펙 제거](plans/2026-08-05-card-spec-removal.md) | `active` | 저작 스펙 3종·카드 팩토리 2종·내보내기 3종 제거, 규칙 테스트를 합성 픽스처로·계약 테스트를 JSON 골든으로 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -90,7 +89,7 @@
 | 3a | [덱·풀·캐릭터 콘텐츠 스키마](archive/plans/2026-08-03-deck-pool-character-content.md) | **완료·머지** |
 | 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
 | 3c | [상태 원본 확정](archive/plans/2026-08-04-status-content-single-source.md) | **완료** |
-| 3d | [C# 카드 스펙 제거](plans/2026-08-05-card-spec-removal.md) | **계획 작성 완료 · 구현 대기** |
+| 3d | [C# 카드 스펙 제거](archive/plans/2026-08-05-card-spec-removal.md) | **완료** |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
@@ -102,7 +101,7 @@
 | 3a | ~~덱·풀·캐릭터 스키마·로더·JSON 산출. **순수 코어**, Unity 무변경~~ **완료** | 없음 |
 | 3b | ~~`ContentBootstrap` 신설, 소비자를 JSON으로, SO·코드 생성 제거, 등급·태그를 `CardSpec`으로~~ **완료** | 3a |
 | 3c | ~~상태 스펙 판별자를 `StatusRegistry`로, `StatusContentDefaults` 제거, `CombatState`의 코드 기본값 제거, `KoreanDescriptionCatalog.Default` 전역 제거 → 주입~~ **완료** | 3b |
-| 3d | `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·`PartyPrototypeDeck`·`ContentExportWriter`·`PartyPrototypeCharacterSpecs` 제거. 테스트를 JSON 카탈로그로 전환. (`GeneratedCards`·`ToLiteral`은 3b가 이미 지웠다) | 3b |
+| 3d | ~~`StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·`PartyPrototypeDeck`·`ContentExportWriter`·`PartyPrototypeCharacterSpecs` 제거. 테스트를 JSON 카탈로그로 전환. (`GeneratedCards`·`ToLiteral`은 3b가 이미 지웠다)~~ **완료** | 3b |
 
 계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
 (핸들러가 읽는 파라미터가 액션마다 달라, 지금은 `lock` 카드가 안 쓰는 칸 넷을 들고 있다).
@@ -136,9 +135,11 @@
 3. **카드와 상태 규칙의 원본은 이제 `Content/Cards/*.json`·`Content/Statuses/*.json`뿐이다**
    (계획 3b·3c). 배틀 씬이 `ContentBootstrap`으로 읽고, `CardAsset`·`DeckAsset`·`CardPoolAsset`과
    코드 생성 경로, `StatusContentDefaults`는 사라졌다.
-   **남은 이중성 둘:** (a) `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`가
-   골든 테스트 축으로 살아 있다 — 3d가 지운다. (b) **적 카드는 아직 JSON이 아니다** —
-   `GoblinDeck`·`WardenDeck`의 순수 C#에서 나오며, 옮기려면 적 정책·행동 패턴 설계가 딸려 온다.
+   **남은 이중성 하나:** (a) ~~`StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`가
+   골든 테스트 축으로 살아 있다~~ **계획 3d가 지웠다** — 테스트는 이제 `CardFixtures`·
+   `UnityCardFixtures` 합성 픽스처와 `TestContent`·`UnityTestContent` JSON 카탈로그, 둘로만 카드를
+   얻는다. (b) **적 카드는 아직 JSON이 아니다** — `GoblinDeck`·`WardenDeck`의 순수 C#에서 나오며,
+   옮기려면 적 정책·행동 패턴 설계가 딸려 온다(아직 계획 없음).
    그리고 **`ContentExportWriter`는 카드도 상태도 쓰지 않는다** — 저작이 JSON에만 있어 다시 쓰면
    지워지기 때문이다(`WriteAllDoesNotTouchCards`·`WriteAllDoesNotTouchStatuses`가 막는다).
 
@@ -159,12 +160,14 @@
   `StatusSpecJsonConverter`가 판별자 표를 `CombatRegistries.Statuses()`에서 만든다 — 각 행동이
   `NewSpec()`으로 자기 스펙 타입을 답하므로 코드에 값 목록이 남지 않는다.
 
-### 현재 수치 (계획 3c 완료 시점)
+### 현재 수치 (계획 3d 완료 시점, 2026-08-05 실측)
 
-헤드리스 **533/533**, Unity EditMode **682 total / 674 passed / 0 failed / 8 skipped**,
+헤드리스 **513/513**, Unity EditMode **661 total / 654 passed / 0 failed / 7 skipped**,
 카드 JSON **26**(플레이어 22 + fixture 4, 전부 등급·태그 보유), 상태 JSON **11**,
 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
+계획 3d가 대조·중복 테스트를 지우고 규칙 테스트를 합성 픽스처로 옮기면서 총계가 계획 3c 시점
+(헤드리스 533, Unity 682)보다 줄었다 — 실패가 늘어난 것이 아니라 테스트 자체가 정리된 결과다.
 
 ## 후속 작업 대기열
 

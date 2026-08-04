@@ -18,7 +18,7 @@
 | §4 | P0-B 열린 카드 저작 구조 | **완료** — [열린 카드 저작 구조 설계](../specs/2026-07-19-open-card-authoring-design.md) |
 | §4.1 | P0-B2 `CardType` 제거 | **완료** — `CardDefinitionDataTests`가 부재를 잠근다 |
 | §5 | P0-C 대상 선택 메타데이터 | **완료** — [대상 선택 메타데이터 설계](../specs/2026-07-28-p0c-targeting-metadata-design.md) |
-| §6 | P1-A SO 단일 원본화 | **대체됨** — 원본은 SO가 아니라 **JSON**이 됐다. 아래 §6 머리말 참고 |
+| §6 | P1-A SO 단일 원본화 | **대체·완료** — 원본은 SO가 아니라 **JSON**이 됐고, 계획 3d(2026-08-05)가 남은 C# 골든 목록까지 지워 잔여가 없다. 아래 §6 머리말 참고 |
 | §7 | P1-B Unity 프리팹화 | `active` — 단 `CardAsset`·`DeckAsset` 캡슐화 항목은 대상이 사라져 무효 |
 | §8 | P1-C 전투 튜닝 데이터화 | `active` |
 | §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
@@ -204,17 +204,19 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 6. P1-A — ScriptableObject를 제품 콘텐츠의 단일 원본으로 확정
 
-> **대체됨 (2026-08-04).** 이 절이 진단한 **문제**는 실재했고 해결됐지만, **해법이 뒤집혔다** —
+> **대체·완료 (2026-08-05).** 이 절이 진단한 **문제**는 실재했고 해결됐지만, **해법이 뒤집혔다** —
 > 단일 원본은 SO가 아니라 `Assets/StreamingAssets/Content/<종류>/*.json`이다. 모딩 요구(UGC)가
 > Unity 에디터 없이 편집 가능한 형식을 요구했기 때문이며, 근거는
 > [카드 변형과 런타임 콘텐츠 로딩 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5에 있다.
-> 계획 3a·3b·3c가 구현을 끝냈고 `CardAsset`·`CardPoolAsset`·`DeckAsset`·`GeneratedCards`·
-> `StatusContentDefaults`는 전부 사라졌다.
+> 계획 3a·3b·3c·3d가 구현을 끝냈다. `CardAsset`·`CardPoolAsset`·`DeckAsset`·`GeneratedCards`·
+> `StatusContentDefaults`는 3a–3c가, 골든 축으로 남아 있던 C# 목록(`StarterPoolSpecs`·
+> `StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck`·`PartyPrototypeDeck`·
+> `PartyPrototypeCharacterSpecs`·`ContentExportWriter`·`CardContentExporter`)은 계획 3d
+> ([구현 기록](../archive/plans/2026-08-05-card-spec-removal.md))가 지웠다.
 >
-> **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 남은
-> 유효한 잔여는 계획 3d가 맡는다: 골든 축으로 남은 C# 목록(`StarterPoolSpecs`·`StarterDeckSpecs`·
-> `PartyPrototypeDeckSpecs` 등) 제거, 그리고 **적 카드(`GoblinDeck`·`WardenDeck`)의 JSON 전환**은
-> 적 정책 설계가 딸려 와 아직 계획이 없다.
+> **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 남은 잔여는
+> **적 카드(`GoblinDeck`·`WardenDeck`)의 JSON 전환** 하나뿐이다 — 적 정책·행동 패턴 설계가 딸려
+> 오므로 아직 계획이 없다.
 
 ### 문제
 

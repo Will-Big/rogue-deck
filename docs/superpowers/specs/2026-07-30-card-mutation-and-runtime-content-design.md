@@ -208,9 +208,8 @@ public sealed class OwnedCard
 
 ### 4.5 저작 데이터는 JSON으로 두고 런타임에 읽어 코어 객체로 주입한다
 
-> **구현 상태 (2026-08-04):** 계획 3a·3b·3c로 **이 절은 구현됐다.** 남은 것은 계획 3d(C# 스펙
-> 목록 제거)뿐이며 아래 본문은 그 시점의 설계 의도를 그대로 둔 것이다. 완료된 부분은 인용 블록으로
-> 표시한다.
+> **구현 상태 (2026-08-05):** 계획 3a·3b·3c·3d로 **이 절은 구현됐다.** 아래 본문은 그 시점의
+> 설계 의도를 그대로 둔 것이다. 완료된 부분은 인용 블록으로 표시한다.
 
 ```
 StreamingAssets/Content/Statuses/*.json  상태당 1파일 ← 가장 먼저 읽는다
@@ -237,11 +236,19 @@ JSON으로 변환하며, 재저작은 없다.
 > `CombatState`는 상태 카탈로그를 생성자에서 요구하고, `KoreanDescriptionCatalog`의 전역
 > `Default`는 없어졌다.
 >
-> **3d에 남은 것:** 골든 테스트 축으로 살아 있는 C# 목록 —
-> `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·
-> `PartyPrototypeDeck`·`PartyPrototypeCharacterSpecs`와, 이제 덱·풀·캐릭터의 id 목록만 쓰는
-> `ContentExportWriter`. **적 카드(`GoblinDeck`·`WardenDeck`)는 3d 범위 밖이다** — 적 정책·행동
-> 패턴 설계가 딸려 오므로 별도 계획으로 남긴다.
+> **완료 (계획 3d, 2026-08-05):** 골든 테스트 축으로 살아 있던 C# 목록 —
+> `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck`·
+> `PartyPrototypeDeck`·`PartyPrototypeCharacterSpecs`·`ContentExportWriter`·`CardContentExporter`
+> — 가 전부 사라졌다. 테스트는 이제 합성 픽스처(`CardFixtures`·`UnityCardFixtures`)와 JSON
+> 카탈로그(`TestContent`·`UnityTestContent`) 둘로만 카드를 얻는다. `Assets/StreamingAssets/Content/`가
+> 플레이어 카드·상태·덱·풀·캐릭터의 유일한 원본이다.
+>
+> **남은 것은 셋이다:**
+> - **계획 3.5 (개입 액션 다형화·카드 스펙 분리)** — `CardSpec`을 실행/개입으로 쪼갠다. 지금은
+>   `lock` 카드가 안 쓰는 칸 넷을 들고 있다.
+> - **계획 4 (`CardMutation`)** — 카드 변형의 기반. `OwnedCard`가 영구·전투 변형 2목록을 갖는다.
+> - **적 카드의 JSON 전환** — 남은 마지막 C# 카드 정의(`GoblinDeck`·`WardenDeck`)이며, 아직 계획이
+>   없다. 적 정책·행동 패턴 설계가 선행돼야 한다.
 
 카드당 1파일로 쪼개는 이유는 §2.3의 diff 붕괴를 직접 해결하고, 모드가 카드 한 장만 교체할 수 있게
 하며, 모더가 기본 콘텐츠를 그대로 예제로 삼을 수 있게 하기 위해서다. 경로는 콘텐츠 루트 상수 하나만

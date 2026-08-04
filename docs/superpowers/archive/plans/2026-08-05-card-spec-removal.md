@@ -4,12 +4,13 @@
 > `superpowers:executing-plans`로 태스크 단위로 실행한다. 단계는 체크박스(`- [ ]`)로 추적한다.
 
 - 작성일: 2026-08-05
-- 상태: `active`
-- 상위 설계: [카드 변형과 런타임 콘텐츠 로딩](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
-- 선행: 계획 3b [런타임 콘텐츠 전환](../archive/plans/2026-08-03-runtime-content-switch.md) **완료**,
-  계획 3c [상태 원본 확정](../archive/plans/2026-08-04-status-content-single-source.md) **완료**
+- 상태: `archived`
+- 완료일: 2026-08-05 — 헤드리스 513/513, Unity EditMode 661 total / 654 passed / 0 failed / 7 skipped
+- 상위 설계: [카드 변형과 런타임 콘텐츠 로딩](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
+- 선행: 계획 3b [런타임 콘텐츠 전환](2026-08-03-runtime-content-switch.md) **완료**,
+  계획 3c [상태 원본 확정](2026-08-04-status-content-single-source.md) **완료**
 - 후속: P1-B 프리팹화 → 에셋 폴더 재정리 (순서는
-  [백로그 §7](2026-07-16-architecture-refactor-backlog.md)에 기록)
+  [백로그 §7](../../plans/2026-07-16-architecture-refactor-backlog.md)에 기록)
 
 **목표:** 카드 규칙을 담은 C# 코드를 전부 제거해 `Content/*/*.json`을 유일 원본으로 확정한다.
 저작 스펙 3종, 카드 팩토리 2종, 내보내기 경로 3종이 사라진다.
@@ -1012,4 +1013,4 @@ git add -A && git commit -m "refactor: 카드 규칙의 C# 원본을 지우고 J
 - **적 카드의 JSON 전환.** 위 이유로 별도 계획이다.
 - **`CardSpec`·`CardSpecMapper` 제거.** JSON 로더가 쓰는 현행 경로이며 계획 3.5의 몫이다.
 - **에셋 폴더 재정리와 P1-B 프리팹화.** 3d 이후 순서로 합의되어 있다
-  ([백로그 §7](2026-07-16-architecture-refactor-backlog.md)).
+  ([백로그 §7](../../plans/2026-07-16-architecture-refactor-backlog.md)).
