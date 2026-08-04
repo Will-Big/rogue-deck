@@ -25,7 +25,7 @@
 3. 새 상태 이름은 상태 설명 등록 1개로 확장한다.
 4. `DescriptionComposer`에서 효과·개입·상태별 중앙 분기를 제거한다.
 5. 기존 효과를 조합한 새 카드는 설명 코드를 추가하지 않는다.
-6. 설명은 계속 `EffectData`와 `InterventionActionData`에서 자동 생성하며 `CardAsset.Description`에 의존하지 않는다.
+6. 설명은 계속 `EffectData`와 `InterventionActionData`에서 자동 생성한다. 저작 데이터에 설명 문자열 필드를 두지 않는다.
 7. 미등록·중복 등록을 조기에 실패시킨다.
 8. 모든 로직은 순수 C# Simulation 레이어에 두고 헤드리스 테스트로 검증한다.
 
@@ -186,7 +186,8 @@ public interface IInterventionDescriptionHandler
 
 ## 9. 데이터 흐름
 
-1. `CardAsset.ToSpec()`이 저작 데이터를 `CardSpec`으로 변환한다.
+1. `CardContentLoader`가 `Content/Cards/*.json`을 `CardSpec`으로 읽는다
+   (계획 3b 이전에는 `CardAsset.ToSpec()`이었다).
 2. `CardSpecMapper`가 `CardDefinition`과 `EffectData`를 생성한다.
 3. `CardPresentation`이 `DescriptionComposer`에 카드 정의와 한국어 설명 카탈로그를 전달한다.
 4. Composer가 효과 키로 설명 핸들러를 조회한다.
@@ -233,7 +234,7 @@ public interface IInterventionDescriptionHandler
 8. 기본 카드 카탈로그에 설명 누락이 없는지
 9. 설명 코드에서 `EffectKeys`/`InterventionActionKeys` 중앙 분기가 제거됐는지 구조 검사
 
-Unity 레이어는 `CardPresentation`이 동일 카탈로그를 사용하고 `CardAsset.Description`을 읽지 않는지를 EditMode
+Unity 레이어는 `CardPresentation`이 동일 카탈로그를 사용하고 저작 데이터의 설명 문자열을 읽지 않는지를 EditMode
 테스트 또는 사용자 Play 검증으로 확인한다.
 
 ## 12. 마이그레이션 순서

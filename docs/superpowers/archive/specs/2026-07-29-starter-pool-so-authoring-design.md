@@ -1,9 +1,15 @@
 # Fate Weaver — 시작 카드 풀 ScriptableObject 저작 설계
 
 - 작성일: 2026-07-29
+- 보관일: 2026-08-04
 - 문서 유형: `design`
 - 주 도메인: `card-authoring`
-- 상태: `current`
+- 상태: `archived` — **현재 규칙이 아니다.** 이 문서가 설계한 `CardAsset` → `CardPoolAsset` →
+  코드 생성 파이프라인은 계획 3b(2026-08-03)가 통째로 지웠고, 상태의 코드 기본값은 계획 3c가
+  지웠다. 카드·상태·덱·풀·캐릭터의 현행 원본은 `Assets/StreamingAssets/Content/<종류>/*.json`이며
+  `ContentBootstrap.Load`가 읽는다. 현행 설계는
+  [카드 변형과 런타임 콘텐츠 로딩](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5를 본다.
+  이 문서는 22장 풀의 **설계 의도와 등급·태그 근거**를 남긴 역사 기록으로만 참고한다.
 - 카드 원본: `Tools/card-idea-notebook/시작 카드 풀.md` (22장)
 - 관련 권위 문서:
   - `docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md`

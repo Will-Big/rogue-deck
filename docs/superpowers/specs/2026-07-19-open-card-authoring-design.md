@@ -75,7 +75,9 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 
 ### 4.2 Unity 층
 
-- `CardAsset.Effects`를 `[SerializeReference] EffectSpec[]`로 전환한다.
+- ~~`CardAsset.Effects`를 `[SerializeReference] EffectSpec[]`로 전환한다.~~ **대체됨
+  (계획 3b)** — 효과는 이제 카드 JSON의 `effects[]` 배열이고, 다형성은 `"kind"` 판별자와
+  `EffectSpecJsonConverter`가 처리한다. Unity 인스펙터 저작 경로 자체가 없어졌다.
 - 에디터 전용 **서브클래스 선택 드로어 1개**를 추가한다: Effects 리스트의 + / 타입 변경 시 등록된
   spec 타입 목록(한글 표시명)을 드롭다운으로 제공하고, 선택된 타입의 필드만 그린다.
 - 드롭다운 후보는 리플렉션 스캔이 아니라 **명시적 spec 타입 등록 목록**에서 온다(사전 승인 없는
@@ -106,8 +108,8 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 
 | 시점 | 검사 | 실패 시 |
 |---|---|---|
-| 에디터 (CardAsset 인스펙터/저장) | spec.Validate — 키 등록 여부, 파라미터 값 | 인스펙터 에러 표시 |
-| 코드 생성 시 | 전체 카드 walk + Validate | 생성 중단, 에러 로그 |
+| ~~에디터 (CardAsset 인스펙터/저장)~~ **없어짐 (계획 3b)** | spec.Validate — 키 등록 여부, 파라미터 값 | ~~인스펙터 에러 표시~~ |
+| ~~코드 생성 시~~ **없어짐 (계획 3b)** | 전체 카드 walk + Validate | ~~생성 중단, 에러 로그~~ |
 | 부팅/헤드리스 테스트 | spec 타입 등록 목록 ↔ 코어 레지스트리 대조, payload 타입 검사 | 예외 (부팅 실패) |
 
 ### 4.6 샘플 신규 효과 (완료 기준 증명)

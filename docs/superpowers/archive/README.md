@@ -25,6 +25,7 @@
 | 입력 UX | [배치 비행 카드 플립](specs/2026-07-19-placement-flight-flip-design.md) |
 | 재설계 필요 | [과거 런 원 사이클 뼈대](specs/2026-07-20-run-cycle-skeleton-design.md) |
 | 완료 저작 UX | [상태 키 드롭다운](specs/2026-07-20-status-key-dropdown-authoring-design.md) |
+| 대체된 저작 | [시작 카드 풀 SO 저작](specs/2026-07-29-starter-pool-so-authoring-design.md) — 계획 3b가 `CardAsset`·`CardPoolAsset`과 코드 생성 경로를 지우면서 전 절이 무효가 됐다. 현행 저작 원본은 `Content/*/*.json`이다. |
 
 ## 보관된 구현 계획과 기록
 

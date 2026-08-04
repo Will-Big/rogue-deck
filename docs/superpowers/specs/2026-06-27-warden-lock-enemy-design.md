@@ -75,7 +75,9 @@
 
 ## 비목표 / 후속
 - **플레이어-잠금(구속, 텔레그래프) = V2.**
-- 간수 **아트/CardAsset/DeckAsset**(Unity 콘텐츠) — 사용자가 `CardSO/Enemies/Warden/`에서 수작업 중. 헤드리스 측만 본 스펙 범위.
+- 간수 **아트**(Unity 표현 자원) — 헤드리스 측만 본 스펙 범위. (2026-08-04: 원문의
+  `CardAsset`/`DeckAsset`·`CardSO/Enemies/Warden/` 경로는 계획 3b가 지웠다. 적 카드 규칙은
+  아직 `WardenDeck`의 순수 C#에 있고 JSON 전환은 별도 계획이다.)
 - 플레이테스트 컨트롤러에 간수 **인카운터 투입**(고블린 vs 간수 선택) — 별도.
 - `AdjacentCardIs` 문구 통일(선택) — plan에서 결정.
 

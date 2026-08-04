@@ -1,12 +1,28 @@
 # Fate Weaver — 확장성·하드코딩 후속 리팩토링 백로그
 
 - 작성일: 2026-07-16
-- 개정일: 2026-07-25 — 전투 시스템 전면 점검 결과를 §12로 반영
+- 개정일: 2026-08-04 — 완료·대체된 항목의 현황을 아래 표로 반영
 - 문서 유형: `active-roadmap`
 - 주 도메인: `architecture`
-- 상태: `active` — P0-C, P1, P2 후속 설계·구현 대기
+- 상태: `active` — P1-B, P1-C, P2와 §12·§13 항목이 남았다
 - 현재 범위에서 분리된 작업: 저작 구조, 효과 기반 카드 성질 합성, 대상 선택 메타데이터, RNG 통합,
   SO 단일 원본화, Unity 프리팹화
+
+## 0. 항목별 현황 (2026-08-04)
+
+각 절의 본문은 **작성 당시의 판단을 그대로 둔** 것이다. 현재 유효한지는 이 표로 먼저 확인한다.
+
+| 절 | 항목 | 현황 |
+|---|---|---|
+| §3 | P0-A RNG 단일화 | **완료** (2026-07-18) |
+| §4 | P0-B 열린 카드 저작 구조 | **완료** — [열린 카드 저작 구조 설계](../specs/2026-07-19-open-card-authoring-design.md) |
+| §4.1 | P0-B2 `CardType` 제거 | **완료** — `CardDefinitionDataTests`가 부재를 잠근다 |
+| §5 | P0-C 대상 선택 메타데이터 | **완료** — [대상 선택 메타데이터 설계](../specs/2026-07-28-p0c-targeting-metadata-design.md) |
+| §6 | P1-A SO 단일 원본화 | **대체됨** — 원본은 SO가 아니라 **JSON**이 됐다. 아래 §6 머리말 참고 |
+| §7 | P1-B Unity 프리팹화 | `active` — 단 `CardAsset`·`DeckAsset` 캡슐화 항목은 대상이 사라져 무효 |
+| §8 | P1-C 전투 튜닝 데이터화 | `active` |
+| §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
+| §12·§13 | 2026-07-25 점검, 2026-07-30 상태 이상 논의 | `active` |
 
 ## 1. 목적
 
@@ -188,6 +204,18 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 ## 6. P1-A — ScriptableObject를 제품 콘텐츠의 단일 원본으로 확정
 
+> **대체됨 (2026-08-04).** 이 절이 진단한 **문제**는 실재했고 해결됐지만, **해법이 뒤집혔다** —
+> 단일 원본은 SO가 아니라 `Assets/StreamingAssets/Content/<종류>/*.json`이다. 모딩 요구(UGC)가
+> Unity 에디터 없이 편집 가능한 형식을 요구했기 때문이며, 근거는
+> [카드 변형과 런타임 콘텐츠 로딩 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5에 있다.
+> 계획 3a·3b·3c가 구현을 끝냈고 `CardAsset`·`CardPoolAsset`·`DeckAsset`·`GeneratedCards`·
+> `StatusContentDefaults`는 전부 사라졌다.
+>
+> **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 남은
+> 유효한 잔여는 계획 3d가 맡는다: 골든 축으로 남은 C# 목록(`StarterPoolSpecs`·`StarterDeckSpecs`·
+> `PartyPrototypeDeckSpecs` 등) 제거, 그리고 **적 카드(`GoblinDeck`·`WardenDeck`)의 JSON 전환**은
+> 적 정책 설계가 딸려 와 아직 계획이 없다.
+
 ### 문제
 
 현재는 코드 정의로 SO를 seed하고, SO에서 다시 C#을 생성하며, 일부 적 카드 규칙은 코드가 원본이다. 카드 이름과
@@ -221,8 +249,11 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ### 문제
 
 `BattleUiKit`, `UnitView`, `RailCardView`, `PileView`, `ExecutionRailView`가 런타임에 GameObject와 컴포넌트를
-조립한다. 폰트와 아이콘은 `Resources.Load` 경로에 의존하며 `CardAsset`/`DeckAsset`은 public 직렬화 필드를
-사용한다.
+조립한다. 폰트와 아이콘은 `Resources.Load` 경로에 의존한다.
+
+> **2026-08-04 정정:** 원문에 있던 "`CardAsset`/`DeckAsset`은 public 직렬화 필드를 사용한다"는
+> 더 이상 성립하지 않는다 — 두 타입 모두 계획 3b가 삭제했다. 남은 ScriptableObject는
+> `CardPrefabCatalog`·`CardArtCatalog`·`CharacterAsset` 셋이며 전부 표현 자원 전용이다.
 
 ### 목표 구조
 
@@ -231,12 +262,14 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 - 런타임은 prefab 인스턴스 생성과 데이터 바인딩만 수행
 - 폰트, 아이콘, 아트는 직렬화된 asset reference로 공급
 - 에디터 builder는 필요하면 prefab/scene을 생성하는 마이그레이션 도구로만 유지
-- `CardAsset`, `DeckAsset` 필드를 `[SerializeField] private` + 읽기 전용 프로퍼티로 캡슐화
-- 사용되지 않는 `CardAsset.Description` 제거
+- ~~`CardAsset`, `DeckAsset` 필드를 `[SerializeField] private` + 읽기 전용 프로퍼티로 캡슐화~~
+  **무효** — 두 타입이 사라졌다 (계획 3b)
+- ~~사용되지 않는 `CardAsset.Description` 제거~~ **무효** — 같은 이유
 
 ### 선행 조건
 
-- P1-A SO 단일 원본화의 asset ownership 확정
+- ~~P1-A SO 단일 원본화의 asset ownership 확정~~ **해소됨** — 콘텐츠 원본이 JSON으로 확정되어
+  (계획 3b·3c) SO의 소유권 문제 자체가 없어졌다. P1-B는 이제 독립적으로 착수할 수 있다.
 
 ### 완료 조건
 
@@ -403,12 +436,14 @@ fallback 정책을 복사해 재구현하게 된다.
 **`OwnedCard`에 변형을 담을 자리가 없다.** 3계층 카드 모델의 중간 계층이 `Def`와 `OwnerId` 두
 필드뿐이라 런 중 영구 강화도, 전투 한정 일시 강화도 표현할 수 없다.
 
-**콘텐츠가 편집 시점 코드 생성으로 고정된다.** `CardCodeGenerator`가 `GeneratedCards.cs`를 만들고
-코어가 그것을 컴파일하므로, 모드가 카드를 추가하려면 재컴파일이 필요하다.
+~~**콘텐츠가 편집 시점 코드 생성으로 고정된다.** `CardCodeGenerator`가 `GeneratedCards.cs`를 만들고
+코어가 그것을 컴파일하므로, 모드가 카드를 추가하려면 재컴파일이 필요하다.~~ **해결됨 (계획 3b·3c,
+2026-08-03~04)** — 카드·상태·덱·풀·캐릭터가 전부 JSON이고 `ContentBootstrap.Load`가 부팅 시 읽는다.
 
 두 항목의 요구와 경계는
 [카드 변형과 런타임 콘텐츠 로딩 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)에
-확정되어 있다. 구현 계획은 아직 없다.
+확정되어 있다. **콘텐츠 로딩은 계획 3a·3b·3c로 구현이 끝났고 3d(C# 스펙 목록 제거)만 남았다.
+`OwnedCard` 변형은 계획 4로 아직 미착수다.**
 
 ### 13.3 P2급 — 중복
 

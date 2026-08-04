@@ -9,7 +9,12 @@
 2. **참조와 파일 경로를 하드코딩하지 않는다.** 인스펙터에서 할당하거나 프리팹을 사용한다.
 3. **런타임 문자열 탐색을 금지한다.** `GameObject.Find`, `FindObjectOfType`, 태그·레이어 이름 문자열 비교, `Resources.Load("magic/string")` 모두 사용하지 않는다.
 4. **`public` 필드 대신 `[SerializeField] private`을 쓴다.** 인스펙터 노출과 캡슐화를 분리한다.
-5. **콘텐츠는 코드가 아니라 ScriptableObject로 저작한다.** 새 카드·적을 C# 상수로 박지 말고 SO 에셋으로 만들어 로드 시 코어 데이터로 변환한다 (기존 SO 카드 저작 파이프라인을 따른다).
+5. **콘텐츠는 코드가 아니라 JSON으로 저작한다.** 카드·상태·덱·풀·캐릭터의 원본은
+   `Assets/StreamingAssets/Content/<종류>/*.json`이고, 부팅 시 `ContentBootstrap.Load`가 읽어 코어
+   데이터로 만든다. 새 카드를 C# 상수로 박지 않는다. **SO 카드 저작 파이프라인은 없다** —
+   `CardAsset`·`CardPoolAsset`·`DeckAsset`과 코드 생성 경로는 2026-08-03 계획 3b가, 상태의 코드
+   기본값은 계획 3c가 지웠다. 남은 ScriptableObject 셋(`CardPrefabCatalog`·`CardArtCatalog`·
+   `CharacterAsset`)은 **표현 자원 전용**이며 규칙 수치를 담지 않는다. 그 경계를 넘지 않는다.
 
 ## 코어 (규칙 레이어)
 

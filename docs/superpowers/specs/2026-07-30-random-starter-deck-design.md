@@ -5,13 +5,13 @@
 - 주 도메인: `card-content`
 - 상태: `current`
 - 관련 권위 문서:
-  - `docs/superpowers/specs/2026-07-29-starter-pool-so-authoring-design.md`
+  - `docs/superpowers/archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
   - `docs/superpowers/specs/2026-07-20-character-card-pools-design.md`
 
 ## 1. 목적
 
 새로 준비한 22장 `StarterPool` 가운데 역할별로 중복 없이 카드를 한 번 무작위 추첨하고, 그 결과를
-기존 10장 `StarterDeck.asset`의 고정 구성으로 사용한다. 게임 실행마다 다시 추첨하지 않으며,
+10장 시작 덱(`Decks/starter.json`, 저작 당시에는 `StarterDeck.asset`)의 고정 구성으로 사용한다. 게임 실행마다 다시 추첨하지 않으며,
 추첨 결과는 에셋과 작업 기록에 남긴다.
 
 ## 2. 승인된 덱 구성
@@ -92,48 +92,47 @@ spore_veil
 last_drop
 ```
 
-## 4. 에셋 변경
+## 4. 콘텐츠 위치
 
-현재 메인 Unity 체크아웃에는 시더가 생성한 다음 미커밋 콘텐츠가 있다.
+> **2026-08-04 갱신.** 이 절은 원래 SO 에셋(`Assets/Unity/CardSO/Player/StarterPool*`)을 가리켰다.
+> 계획 3b가 그 경로를 통째로 지웠고, 현재 위치는 아래와 같다.
 
-- `Assets/Unity/CardSO/Player/StarterPool.asset`
-- `Assets/Unity/CardSO/Player/StarterPool/` 아래 22개 `CardAsset`
-- 각 에셋과 폴더의 `.meta`
-- Inspector에서 임시로 비워진 `StarterDeck.asset`
+- `Assets/StreamingAssets/Content/Cards/*.json` — 22장 풀 카드 (+ fixture 4)
+- `Assets/StreamingAssets/Content/Pools/starter.json` — 22장 풀의 id 목록
+- `Assets/StreamingAssets/Content/Decks/starter.json` — 추첨으로 고정된 10장
 
-구현 브랜치에서는 메인 체크아웃의 생성 에셋과 `.meta`를 그대로 복사해 GUID를 보존한다. 복사 전후
-파일 해시를 비교하고, 메인 체크아웃의 사용자 변경은 삭제하거나 되돌리지 않는다.
+이 문서가 설계한 **역할별 2/2/2/4 추첨을 한 번만 돌려 고정한다**는 규칙 자체는 유효하며,
+추첨 결과가 `Decks/starter.json`에 박혀 있다는 점만 달라졌다.
 
-`StarterDeck.asset`은 다음 계약으로 완전히 다시 작성한다.
+`Decks/starter.json`의 계약은 다음과 같다. (원문의 GUID 보존·`.meta` 복사 절차는 SO 시절의 것으로,
+JSON에는 GUID가 없어 불필요해졌다.)
 
-- `Id = "starter"` 유지
-- `Entries` 정확히 10개
-- 추첨된 서로 다른 카드 참조 10개
-- 모든 `Count = 1`
-- null 참조, 중복 카드, 0 이하 장수 없음
+- `id = "starter"` 유지
+- 카드 id 정확히 10개
+- 서로 다른 카드 10종
+- 중복 id 없음
 
-`StarterPool.asset`은 22장 후보 풀로 그대로 유지하며, 실제 덱 구성을 표현하는 용도로 바꾸지 않는다.
+`Pools/starter.json`은 22장 후보 풀로 그대로 유지하며, 실제 덱 구성을 표현하는 용도로 바꾸지 않는다.
 
-## 5. 생성 C#과 런타임
+## 5. 런타임
 
-Unity의 `Fate Weaver/Generate Cards from SO` 경로로 다음 스냅샷을 갱신한다.
+> **2026-08-04 갱신.** 이 절은 원래 `Fate Weaver/Generate Cards from SO` 메뉴로 갱신하던
+> `GeneratedCards.StarterDeck()`·`StarterPool()` 스냅샷을 설명했다. 계획 3b가 코드 생성 경로를
+> 통째로 지웠으므로 갱신할 스냅샷이 없다.
 
-- `GeneratedCards.StarterDeck()` — 추첨된 10장
-- `GeneratedCards.StarterPool()` — 전체 22장
-
-Unity 런타임은 계속 `StarterDeck.asset`과 연결된 `CharacterAsset`을 사용한다. 생성 C#은 헤드리스
-검증용이며 런타임 덱 원본이 아니다.
+런타임은 `ContentBootstrap.Load`가 읽은 `GameContent.Decks`/`Pools`를 그대로 쓴다. 별도의 생성
+단계도, 헤드리스 전용 스냅샷도 없다 — 헤드리스와 Unity가 같은 JSON을 읽는다.
 
 ## 6. 검증
 
 자동 검증은 다음을 확인한다.
 
-- `StarterPool.asset`이 정확한 22개 ID를 한 번씩 포함한다.
-- `StarterDeck.asset`이 정확히 10장이고 모든 `Count`가 1이다.
+- `Pools/starter.json`이 정확한 22개 ID를 한 번씩 포함한다.
+- `Decks/starter.json`이 정확히 10장이다.
 - 덱 카드 ID가 중복되지 않는다.
 - 공격 2장, 방어 2장, 조작 2장, 독 4장이다.
-- 덱의 모든 참조가 `StarterPool.asset` 안에도 존재한다.
-- `GeneratedCards.StarterDeck()`이 SO 덱과 같은 규칙 서명을 가진다.
+- 덱의 모든 참조가 `Pools/starter.json` 안에도 존재한다.
+- 덱·풀의 모든 카드 ID가 `Cards/*.json`에 실재한다 (로더가 부팅 시 거부한다).
 - 전체 헤드리스 테스트와 Unity EditMode 테스트가 통과한다.
 
 ## 7. 범위 제외
@@ -147,9 +146,10 @@ Unity 런타임은 계속 `StarterDeck.asset`과 연결된 `CharacterAsset`을 �
 
 ## 8. 완료 조건
 
-- 추첨 결과와 추첨 키가 구현 기록에 남아 있다.
-- 10장 덱과 22장 풀이 각각의 계약을 만족한다.
-- 기존 `StarterDeck.asset`의 과거 카드 8종은 최종 덱 참조에서 제거된다.
-- 메인 체크아웃에서 생성된 GUID가 보존된다.
-- 관련 생성 C#과 자동 테스트가 동기화된다.
-- 작업 브랜치는 검증된 커밋 상태이고, 메인 병합은 사용자 승인 후에만 수행한다.
+- 추첨 결과와 추첨 키가 구현 기록(§3 표)에 남아 있다. **충족**
+- 10장 덱과 22장 풀이 각각의 계약을 만족한다. **충족** — `DeckPoolCharacterContentTests`가 잠근다
+- ~~기존 `StarterDeck.asset`의 과거 카드 8종은 최종 덱 참조에서 제거된다.~~ **충족** (에셋 자체가
+  `Decks/starter.json`으로 대체됨)
+- ~~메인 체크아웃에서 생성된 GUID가 보존된다.~~ **무효** — JSON에는 GUID가 없다 (계획 3b)
+- ~~관련 생성 C#과 자동 테스트가 동기화된다.~~ **무효** — 코드 생성 경로가 사라졌다 (계획 3b)
+- 작업 브랜치는 검증된 커밋 상태이고, 메인 병합은 사용자 승인 후에만 수행한다. **충족**

@@ -9,7 +9,7 @@
 - 관련 권위 문서:
   - `docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md`
   - `docs/superpowers/specs/2026-07-19-open-card-authoring-design.md`
-  - `docs/superpowers/specs/2026-07-29-starter-pool-so-authoring-design.md`
+  - `docs/superpowers/archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
   - `docs/superpowers/specs/2026-07-16-description-registry-design.md`
 
 ## 1. 목적
@@ -208,8 +208,14 @@ public sealed class OwnedCard
 
 ### 4.5 저작 데이터는 JSON으로 두고 런타임에 읽어 코어 객체로 주입한다
 
+> **구현 상태 (2026-08-04):** 계획 3a·3b·3c로 **이 절은 구현됐다.** 남은 것은 계획 3d(C# 스펙
+> 목록 제거)뿐이며 아래 본문은 그 시점의 설계 의도를 그대로 둔 것이다. 완료된 부분은 인용 블록으로
+> 표시한다.
+
 ```
+StreamingAssets/Content/Statuses/*.json  상태당 1파일 ← 가장 먼저 읽는다
 StreamingAssets/Content/Cards/*.json     카드당 1파일 (기본 콘텐츠 + 모드)
+StreamingAssets/Content/{Decks,Pools,Characters}/*.json
    │ 부팅(또는 모드 로드) 1회 · Newtonsoft 파싱
    ▼ AuthoringValidator — 실패 시 로드 거부 + 이유 보고
 CardSpec → CardDefinition                Dictionary<string, CardDefinition>
@@ -221,6 +227,21 @@ Unity: 초기값 저작이 아니라 표현만 담당. 카드 아트는 id → S
 `Assets/Unity/Editor/CardCodeGenerator.cs`, `Assets/Core/Simulation/Generated/GeneratedCards.cs`,
 각 `EffectSpec`의 `ToLiteral()`이 모두 제거 대상이다. 기존 카드 SO는 에디터 익스포터로 **1회**
 JSON으로 변환하며, 재저작은 없다.
+
+> **완료:** 위 셋은 계획 3b가 제거했고 `CardAsset`·`CardPoolAsset`·`DeckAsset`도 함께 사라졌다.
+> 상태의 코드 기본값(`StatusContentDefaults`)은 계획 3c가 제거했으며, 그 결과
+> `StatusSpecJsonConverter`가 판별자 표를 행동 레지스트리(`CombatRegistries.Statuses()`)에서
+> 만든다 — 각 `IStatusBehavior`가 `NewSpec()`으로 자기 스펙 타입을 답한다.
+> 부팅 진입점은 `ContentBootstrap.Load(콘텐츠루트)` 하나이며 **상태 → 카드 → 덱·풀 → 캐릭터**
+> 순서로 카탈로그 다섯을 만들어 `GameContent`로 돌려준다(카드 검증이 상태 저작을 전제한다).
+> `CombatState`는 상태 카탈로그를 생성자에서 요구하고, `KoreanDescriptionCatalog`의 전역
+> `Default`는 없어졌다.
+>
+> **3d에 남은 것:** 골든 테스트 축으로 살아 있는 C# 목록 —
+> `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·
+> `PartyPrototypeDeck`·`PartyPrototypeCharacterSpecs`와, 이제 덱·풀·캐릭터의 id 목록만 쓰는
+> `ContentExportWriter`. **적 카드(`GoblinDeck`·`WardenDeck`)는 3d 범위 밖이다** — 적 정책·행동
+> 패턴 설계가 딸려 오므로 별도 계획으로 남긴다.
 
 카드당 1파일로 쪼개는 이유는 §2.3의 diff 붕괴를 직접 해결하고, 모드가 카드 한 장만 교체할 수 있게
 하며, 모더가 기본 콘텐츠를 그대로 예제로 삼을 수 있게 하기 위해서다. 경로는 콘텐츠 루트 상수 하나만
@@ -309,6 +330,8 @@ JSON으로 변환하며, 재저작은 없다.
 - 전투 중에 얹은 영구 변형이 그 전투에 즉시 적용되고 전투 종료 이후에도 남는 테스트
 - 카드 속성 변경(비용·실행 순서) 변형이 배치와 해결에 반영되는 테스트
 - 변형 목록을 직렬화·역직렬화한 뒤 해결 결과가 동일한 테스트
-- 기존 카드 SO에서 변환한 JSON이 기존 `GeneratedCards` 스냅샷과 같은 `CardDefinition`을 만드는
-  동등성 테스트 (변환 1회 시점의 안전망)
+- ~~기존 카드 SO에서 변환한 JSON이 기존 `GeneratedCards` 스냅샷과 같은 `CardDefinition`을 만드는
+  동등성 테스트 (변환 1회 시점의 안전망)~~ **완료** — `CardContentEquivalenceJsonTests`가 이 축을
+  맡았고, `GeneratedCards`가 사라진 지금은 남은 C# 스펙 목록과 대조한다. 계획 3d가 그 목록을
+  지울 때 이 테스트는 JSON 골든 대조로 바뀐다.
 - 규칙을 위반하는 모드 콘텐츠가 로드를 거부당하고 줄 위치를 포함한 이유를 보고하는 테스트

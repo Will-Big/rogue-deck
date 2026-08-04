@@ -28,7 +28,13 @@
 ## Global Constraints
 
 - 헤드리스 테스트: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-- 착수 시점 기준선: 409 tests, 0 failed
+- ~~착수 시점 기준선: 409 tests, 0 failed~~ — **2026-08-04 기준선은 헤드리스 533, Unity EditMode
+  682(674 passed / 8 skipped)**. 착수 세션이 첫 실행에서 다시 실측할 것
+- **설명 카탈로그는 주입받는다 (2026-08-04 정정).** 계획 3c가 `KoreanDescriptionCatalog.Default`
+  전역과 무인자 `CreateDefault()`를 제거했다. 아래 코드 조각의 `Korean`·`_korean`은
+  `KoreanDescriptionCatalog.CreateDefault(<상태 카탈로그>)`로 만들어 둔 값이다 — 테스트는
+  `TestContent.Statuses()`(코어) 또는 `UnityTestContent.Statuses()`(Unity), 런타임은
+  `GameContent.Statuses`를 넘긴다
 - `FateWeaver.Core`에서 `UnityEngine`을 참조하지 않는다 (규칙 6)
 - 결정론을 깨지 않는다 — 로그 수집이 규칙 판정이나 RNG 소비 순서를 바꾸면 안 된다 (규칙 7)
 - 코어의 출력은 이벤트 타임라인뿐이다. 진단용 별도 출력 채널을 만들지 않는다 (규칙 11)
@@ -514,7 +520,7 @@ git commit -m "feat: emit status applied and expired events"
                 new TurnEnded(0, Outcome.Ongoing)
             };
 
-            var text = TimelineTextFormatter.Format(timeline, KoreanDescriptionCatalog.Default);
+            var text = TimelineTextFormatter.Format(timeline, Korean);
 
             StringAssert.Contains("취약", text);
             StringAssert.Contains("4", text);
@@ -530,7 +536,7 @@ git commit -m "feat: emit status applied and expired events"
             Assert.AreEqual(
                 string.Empty,
                 TimelineTextFormatter.Format(
-                    System.Array.Empty<ResolutionEvent>(), KoreanDescriptionCatalog.Default));
+                    System.Array.Empty<ResolutionEvent>(), Korean));
         }
 ```
 
@@ -673,7 +679,7 @@ git commit -m "feat: add korean timeline text formatter"
 ```csharp
                 _session.ResolveTurn();
                 Debug.Log(TimelineTextFormatter.Format(
-                    _session.LastTimeline, KoreanDescriptionCatalog.Default));
+                    _session.LastTimeline, _korean));
 ```
 
 - [ ] **Step 2: 플레이테스트 화면의 자체 렌더링을 교체한다**
@@ -684,7 +690,7 @@ git commit -m "feat: add korean timeline text formatter"
 ```csharp
         private void RefreshTimeline()
             => _timelineText.text = TimelineTextFormatter.Format(
-                _session.LastTimeline, KoreanDescriptionCatalog.Default);
+                _session.LastTimeline, _korean);
 ```
 
 - [ ] **Step 3: Unity에서 컴파일을 확인한다**
