@@ -1,8 +1,7 @@
-using System.Collections.Generic;
-
 namespace FateWeaver.Simulation
 {
-    /// <summary>Two-member neutral validation roster consumed by the party prototype scene.</summary>
+    /// <summary>파티 프로토타입의 id·표시명·튜닝. 로드아웃 조립은 콘텐츠가 한다 —
+    /// ContentLoadouts.For(content, id, maxHp)가 Characters/Decks/Cards JSON을 편다.</summary>
     public static class PartyPrototypeRoster
     {
         public const string MemberAId = "member_a";
@@ -11,23 +10,5 @@ namespace FateWeaver.Simulation
         public const string MemberBName = "파티원 B";
 
         public static PartyTuning Tuning => PartyTuning.Prototype;
-
-        public static IReadOnlyList<PartyMemberLoadout> Build()
-        {
-            var tuning = Tuning;
-            return new List<PartyMemberLoadout>
-            {
-                new PartyMemberLoadout(
-                    MemberAId,
-                    MemberAName,
-                    tuning.DefaultMemberMaxHp,
-                    StarterDeck.Build()),
-                new PartyMemberLoadout(
-                    MemberBId,
-                    MemberBName,
-                    tuning.DefaultMemberMaxHp,
-                    PartyPrototypeDeck.Build())
-            };
-        }
     }
 }
