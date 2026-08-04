@@ -278,6 +278,62 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 - 기존 전투 화면의 카드·유닛·레일·더미 UI Play 검증 통과
 - Unity 직렬화 마이그레이션에서 기존 asset 데이터 보존
 
+### 2026-08-04 실측과 착수 결정
+
+에셋 폴더 재정리를 검토하다 P1-B가 그 **선행 조건**임이 드러났다. `Unity/Resources/`가 폴더 이동을
+막고 있고, 그 폴더가 존재하는 이유가 코드 조립 UI이기 때문이다.
+
+**남은 코드 조립 뷰는 셋뿐이다.** 카드 프레임 작업이 카드·유닛·툴팁·설명줄을 이미 프리팹으로 옮겼다.
+
+```
+ExecutionRailView   PileView   TargetingArrowView   (+ 이들이 쓰는 BattleUiKit)
+```
+
+**`Unity/Resources/`를 붙잡는 것:**
+
+| 항목 | 잠금 요인 | 해소 방법 |
+|---|---|---|
+| `Fonts/KoreanTMP.asset` | `Resources.Load("Fonts/KoreanTMP")` — `BattleUiKit.cs:19` | `BattleUiKit` 제거로 소멸. 프리팹·씬 7곳은 이미 GUID 참조라 무영향 |
+| `Status/icon_lock.png` | `Resources.Load("Status/icon_lock")` — `PlaytestCardArt` | `CardView`·`RailCardView`에 `[SerializeField] private Sprite`로. `PlaytestCardArt` 제거 |
+| `Cards/goblins/*.png` | 없음 — `CardArt.asset`이 GUID 참조 | 지금도 이동 가능 |
+| `Cards/Player/*.png` | 없음. **참조처가 하나도 없다 — 고아 자산** | 삭제 검토 (플레이어 카드는 색상 틴트만 쓴다) |
+| `UIInputActions.inputactions` | `BattleSceneBuilder.cs:22`의 하드코딩 에디터 경로 | 파일 이동 시 상수 함께 갱신 |
+
+**폰트 처리 방식은 "프리팹화"로 결정했다.** 검토한 대안은 셋이었다 — (A) UI 테마 SO를 부팅 시
+정적 주입, (B) 팩토리 메서드 인자로 전달, (D) `TMP Settings`의 프로젝트 기본 폰트를 `KoreanTMP`로
+변경. A·B·D는 모두 코드 조립 UI를 **존치한 채** 폰트만 우회하는 중간 상태다. 프리팹화하면
+폰트가 프리팹에 직렬화되어 주입 문제 자체가 소멸하므로 중간 상태를 거치지 않는다.
+
+참고 실측: `LiberationSans`(현 TMP 기본값)를 참조하는 프리팹·씬은 **0개**, `KoreanTMP`는 **7개**다.
+이 프로젝트에서 의도적으로 다른 폰트를 쓰는 곳은 없다.
+
+**후속 작업(에셋 폴더 재정리)의 승인된 목표 구조.** P1-B가 끝나면 이 배치로 옮긴다. 유형별 축이며
+`Assets/Core` ↔ `Assets/Unity` 최상위 분리는 asmdef·규칙 6이 강제하므로 유지한다.
+
+```text
+Assets/Unity/
+  Scripts/
+    Battle/    BattleScreenController, BattlePresenter, BattleUnitsView,
+               BattlePilesView, BattleHudView
+    Cards/     CardView, CardStatusIconView, HandFanView, RailCardView,
+               TargetGlyphView …
+    Content/   CardArtCatalog, CardPrefabCatalog, CharacterAsset, UnityContentRoot
+    Text/      PlaytestKoreanText
+    Editor/    (기존 그대로)
+  Prefabs/     (기존 그대로)
+  Art/         Cards/ ← Resources/Cards,  Enemies/ (기존),  Icons/ ← Resources/Status
+  Fonts/       Pretendard ttf + KoreanTMP.asset
+  Data/        CardArt.asset, member_a/b.asset   ← 기존 CardSO/·CharacterSO/ 대체
+  Input/       UIInputActions.inputactions
+```
+
+`Unity/CardSO/`·`Unity/CharacterSO/`의 `~SO` 접미사는 SO 카드 파이프라인 시절의 이름이며 `Data/`로
+합친다. 폴더 이동은 `.meta`가 함께 움직이면 GUID가 보존되어 씬·프리팹 참조가 깨지지 않는다.
+
+**작업 분리와 순서.** 프리팹화는 레이아웃·크기를 눈으로 맞추는 저작이라 규칙 17상 사용자 몫이 크고,
+폴더 이동은 기계적이라 성격이 다르다. 두 계획으로 나눈다. 사용자 결정(2026-08-04)에 따라 순서는
+**계획 3d → P1-B 프리팹화 → 폴더 재정리**다. 3d는 순수 코어라 어느 쪽과도 의존이 없다.
+
 ## 8. P1-C — 전투 튜닝 데이터화
 
 ### 문제
