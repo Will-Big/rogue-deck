@@ -173,8 +173,8 @@ private void RefreshAll()
     _hand.SetCards(_session.Hand.Select(_presenter.For).ToList(), OnHandClicked, OnHandHovered);
     _rail.SetCards(_session.CurrentOrder.Select(_presenter.For).ToList(), OnZoneClicked);
     _units.Refresh(_session.State);
-    _piles.Refresh(_session);
-    _hud.Refresh(_session);
+    _piles.Refresh(_session.DrawCount, _session.DiscardCount, _session.AllDeckCards.Count);
+    _hud.Refresh(_session.FateEnergy, _session.CurrentTurnResolved);
     RefreshSelections();
 }
 
@@ -193,6 +193,11 @@ private void RefreshSelections()
 파일 뷰는 **내용 제공과 개수 갱신이 별개다.** 세션 시작 시 `Bind`로 지연 평가 제공자를 한 번 꽂고
 (`() => Presentations(_session.DrawPile)`), 이후 `Refresh`는 개수만 갱신한다. 지금 `BindPiles`가
 하는 일을 그대로 옮긴다.
+
+**뷰는 세션 타입을 인자로 받지 않는다.** `Refresh(int, int, int)`처럼 필요한 값만 받으므로
+`DeckCombatSession`을 모른다 — P2에서 데이터 출처가 타임라인으로 바뀌어도 뷰는 그대로다.
+`BattleUnitsView.Refresh(CombatState)`만 예외인데, 파티·적 목록을 통째로 순회해야 해서 값으로
+풀면 인자가 폭발한다. 이 예외는 P2가 정리한다.
 
 ## 6. 오류 처리
 
