@@ -24,10 +24,6 @@ namespace FateWeaver.Tests.UnityEditMode
             "Assets/Unity/Prefabs/TargetGlyphView.prefab";
         internal const string DescriptionLinePath =
             "Assets/Unity/Prefabs/DescriptionLineView.prefab";
-        internal const string GoblinPlaytestScenePath =
-            "Assets/Scenes/FateWeaverPlaytest.unity";
-        internal const string WardenPlaytestScenePath =
-            "Assets/Scenes/FateWeaverWardenPlaytest.unity";
         internal const string BattleScenePath =
             "Assets/Scenes/FateWeaverBattle.unity";
         internal const string RailCardPath =
@@ -155,53 +151,6 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
-        [TestCase(typeof(BattleScreenController))]
-        [TestCase(typeof(DeckPlaytestController))]
-        public void Battle_controller_start_validates_card_prefabs_before_other_startup_work(
-            Type controllerType)
-            => AssertCatalogValidationFailsFirst(controllerType, "Start");
-
-        [TestCase(typeof(BattleScreenController))]
-        [TestCase(typeof(DeckPlaytestController))]
-        public void Battle_controller_session_restart_still_validates_card_prefabs(
-            Type controllerType)
-            => AssertCatalogValidationFailsFirst(controllerType, "StartSession");
-
-        private static void AssertCatalogValidationFailsFirst(
-            Type controllerType,
-            string methodName)
-        {
-            var root = new GameObject("Controller");
-            var catalog = ScriptableObject.CreateInstance<CardPrefabCatalog>();
-            try
-            {
-                var controller = root.AddComponent(controllerType);
-                controllerType
-                    .GetField(
-                        "_cardPrefabs",
-                        BindingFlags.Instance | BindingFlags.NonPublic)
-                    .SetValue(controller, catalog);
-
-                var exception = Assert.Throws<TargetInvocationException>(
-                    () => controllerType
-                        .GetMethod(
-                            methodName,
-                            BindingFlags.Instance | BindingFlags.NonPublic)
-                        .Invoke(controller, null));
-
-                Assert.IsInstanceOf<InvalidOperationException>(
-                    exception.InnerException);
-                StringAssert.Contains(
-                    "Card prefab catalog validation failed",
-                    exception.InnerException.Message);
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-                Object.DestroyImmediate(catalog);
-            }
-        }
-
         [Test]
         public void Battle_scene_serializes_every_catalog_consumer_and_rail_prefab()
         {
@@ -223,9 +172,11 @@ namespace FateWeaver.Tests.UnityEditMode
                 var piles = roots
                     .SelectMany(root => root.GetComponentsInChildren<PileView>(true))
                     .ToArray();
+                var pilesView = roots
+                    .SelectMany(root => root.GetComponentsInChildren<BattlePilesView>(true))
+                    .Single();
                 var catalog = LoadCatalog();
 
-                Assert.AreSame(catalog, Field<CardPrefabCatalog>(controller, "_cardPrefabs"));
                 Assert.AreSame(hand, Field<HandFanView>(controller, "_hand"));
                 Assert.AreSame(rail, Field<ExecutionRailView>(controller, "_rail"));
                 Assert.AreEqual(3, piles.Length);
@@ -233,9 +184,9 @@ namespace FateWeaver.Tests.UnityEditMode
                     piles,
                     new[]
                     {
-                        Field<PileView>(controller, "_drawPile"),
-                        Field<PileView>(controller, "_discardPile"),
-                        Field<PileView>(controller, "_fullDeck")
+                        Field<PileView>(pilesView, "_drawPile"),
+                        Field<PileView>(pilesView, "_discardPile"),
+                        Field<PileView>(pilesView, "_fullDeck")
                 });
                 Assert.AreSame(catalog, Field<CardPrefabCatalog>(hand, "_cardPrefabs"));
                 var handContent = Field<RectTransform>(hand, "_content");
@@ -258,38 +209,6 @@ namespace FateWeaver.Tests.UnityEditMode
                         catalog,
                         Field<CardPrefabCatalog>(pile, "_cardPrefabs"));
                 }
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scene, true);
-            }
-        }
-
-        [TestCase(GoblinPlaytestScenePath)]
-        [TestCase(WardenPlaytestScenePath)]
-        public void Deck_playtest_scene_serializes_the_card_prefab_catalog(
-            string scenePath)
-        {
-            var scene = EditorSceneManager.OpenScene(
-                scenePath,
-                OpenSceneMode.Additive);
-            try
-            {
-                var controllers = scene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<DeckPlaytestController>(true))
-                    .ToArray();
-
-                Assert.AreEqual(
-                    1,
-                    controllers.Length,
-                    scenePath + " must contain exactly one DeckPlaytestController.");
-                var serialized = new SerializedObject(controllers[0]);
-                var catalog = serialized.FindProperty("_cardPrefabs")
-                    .objectReferenceValue as CardPrefabCatalog;
-                Assert.IsNotNull(
-                    catalog,
-                    scenePath + " must serialize CardPrefabCatalog.");
-                Assert.DoesNotThrow(catalog.ValidateOrThrow);
             }
             finally
             {
