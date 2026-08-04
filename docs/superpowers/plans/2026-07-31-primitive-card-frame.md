@@ -125,7 +125,7 @@ public void Releasing_multiple_active_cards_restores_original_sibling_order()
 }
 ```
 
-- [ ] **Step 2: Run the focused test and confirm RED**
+- [x] **Step 2: Run the focused test and confirm RED**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -138,7 +138,7 @@ public void Releasing_multiple_active_cards_restores_original_sibling_order()
 
 Expected: `Most_recent_active_card_remains_last_after_resize` fails because the current foreach loop reapplies list order, not activation order.
 
-- [ ] **Step 3: Preserve the pre-layout active order**
+- [x] **Step 3: Preserve the pre-layout active order**
 
 ```csharp
 // HandCardHoverEffect.cs
@@ -157,11 +157,11 @@ foreach (var effect in activeInBackToFrontOrder)
 
 Add `using System.Linq;` to `HandFanView.cs`. Do not add global/static activation counters.
 
-- [ ] **Step 4: Run focused and responsive regression tests**
+- [x] **Step 4: Run focused and responsive regression tests**
 
 Run Step 2, then `CardFrameResponsiveLayoutTests` and `HandFanResponsivePlayModeTests` in their existing test platforms. Expected: all pass and resize never changes the last-active card.
 
-- [ ] **Step 5: Commit only the responsive fix**
+- [x] **Step 5: Commit only the responsive fix**
 
 ```bash
 git add Assets/Unity/HandCardHoverEffect.cs Assets/Unity/HandFanView.cs \
@@ -185,7 +185,7 @@ git commit -m "fix(ui): preserve active hand card ordering"
 - Exact nullable `CardTargetKey?` equality is the only grouping key; `null` is one group.
 - `KoreanDescriptionGrammar.Symbol(CardTargetKey)` returns `"◆"` for every faction/range.
 
-- [ ] **Step 1: Replace the old RED expectations**
+- [x] **Step 1: Replace the old RED expectations**
 
 ```csharp
 [Test]
@@ -233,7 +233,7 @@ Update `Toxic_reclaim_separates_enemy_and_ally_self_lines` plain text to:
 [◆] 소비했다면 방어 4.
 ```
 
-- [ ] **Step 2: Run the focused headless tests and confirm RED**
+- [x] **Step 2: Run the focused headless tests and confirm RED**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
@@ -243,7 +243,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: current composer returns three lines for `Enemy → Ally → Enemy`, and `Ally/Self` still renders `◇◎`.
 
-- [ ] **Step 3: Replace adjacent append with an ordered accumulator**
+- [x] **Step 3: Replace adjacent append with an ordered accumulator**
 
 ```csharp
 private static void AppendSentence(
@@ -276,7 +276,7 @@ public string Symbol(CardTargetKey target) => "◆";
 
 Do not alter `Layout` target-entry deduplication or its `Ally` then `Enemy` sorting.
 
-- [ ] **Step 4: Update all exact goldens and run the full headless suite**
+- [x] **Step 4: Update all exact goldens and run the full headless suite**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
@@ -285,7 +285,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj \
 
 Expected: all pass; `rg -n '◇◎|◎◆' Assets/Core/Tests Tests/Headless Assets/Core/Simulation/Descriptions` has no production/golden match.
 
-- [ ] **Step 5: Commit the pure C# change**
+- [x] **Step 5: Commit the pure C# change**
 
 ```bash
 git add Assets/Core/Simulation/Descriptions/DescriptionComposer.cs \
@@ -309,7 +309,7 @@ git commit -m "refactor(sim): group descriptions by target"
 - Serialized fields are exactly `TMP_Text _text`, `Color _allySymbolColor`, `Color _enemySymbolColor`.
 - The prefab contains no `TargetGlyphView` and no fixed glyph slot.
 
-- [ ] **Step 1: Write RED binding and prefab-contract tests**
+- [x] **Step 1: Write RED binding and prefab-contract tests**
 
 ```csharp
 [TestCase(CardTargetFaction.Ally, "#5DADE2")]
@@ -377,7 +377,7 @@ public void Description_line_prefix_does_not_encode_range(CardTargetRange range)
 }
 ```
 
-- [ ] **Step 2: Run `CardFramePrefabTests` and confirm RED**
+- [x] **Step 2: Run `CardFramePrefabTests` and confirm RED**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
@@ -390,7 +390,7 @@ public void Description_line_prefix_does_not_encode_range(CardTargetRange range)
 
 Expected: current view still exposes `_glyphSlot` and `_glyph`.
 
-- [ ] **Step 3: Implement the TMP prefix without hardcoded palette constants**
+- [x] **Step 3: Implement the TMP prefix without hardcoded palette constants**
 
 ```csharp
 [SerializeField] private TMP_Text _text;
@@ -432,7 +432,7 @@ public void Bind(CardDescriptionLine line)
 
 Validate undefined factions with `ArgumentOutOfRangeException`. Do not read `Range` when choosing the prefix.
 
-- [ ] **Step 4: Pause for the user’s DescriptionLineView prefab edit**
+- [x] **Step 4: Pause for the user’s DescriptionLineView prefab edit**
 
 Codex provides these Inspector instructions and waits:
 
@@ -446,11 +446,11 @@ Codex provides these Inspector instructions and waits:
 
 Codex must not run a YAML rewrite against this prefab.
 
-- [ ] **Step 5: Verify the user-authored prefab and wrapping**
+- [x] **Step 5: Verify the user-authored prefab and wrapping**
 
 Run Step 2 plus `Description_line_wraps_to_remaining_width_and_grows_in_a_constrained_parent`. Expected: a long line wraps across the full 158-unit test parent width, and the second visual line begins beneath the symbol because symbol and body are one TMP flow.
 
-- [ ] **Step 6: Commit code, tests, and the reviewed prefab**
+- [x] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
 git add Assets/Unity/DescriptionLineView.cs \
@@ -474,7 +474,7 @@ git commit -m "refactor(ui): render inline faction symbols"
 - Serialized faction colors: `_allyColor`, `_enemyColor`.
 - `Bind(null)` activates neutral `Empty`; `Bind(key)` activates one range visual, colors every active `Graphic`, and mirrors that visual only for `Enemy`.
 
-- [ ] **Step 1: Replace old shape tests with final grammar tests**
+- [x] **Step 1: Replace old shape tests with final grammar tests**
 
 ```csharp
 [TestCase(CardTargetRange.FrontOne, "FrontOne")]
@@ -615,11 +615,11 @@ private static float ActiveGraphicBoundsWidth(Transform root)
 }
 ```
 
-- [ ] **Step 2: Run the focused test and confirm RED**
+- [x] **Step 2: Run the focused test and confirm RED**
 
 Run Task 3 Step 2 with results `/private/tmp/target-glyph-red.xml`. Expected: old direction nodes, outline/fill differences, five-rail `All`, and old serialized fields fail.
 
-- [ ] **Step 3: Implement authored visual selection and color application**
+- [x] **Step 3: Implement authored visual selection and color application**
 
 ```csharp
 [SerializeField] private RectTransform _frontOneVisual;
@@ -655,7 +655,7 @@ public void Bind(CardTargetKey? key)
 
 `VisualFor` is an exhaustive switch over six ranges. `ActivateOnly` iterates the seven serialized roots. `SetMirror` preserves the authored absolute X scale and changes only its sign. No runtime anchored-position or size mutation is allowed.
 
-- [ ] **Step 4: Pause for the user’s TargetGlyphView prefab edit**
+- [x] **Step 4: Pause for the user’s TargetGlyphView prefab edit**
 
 Codex provides these Inspector instructions and waits:
 
@@ -670,11 +670,11 @@ Codex provides these Inspector instructions and waits:
 
 Enemy orientation is produced by mirroring the canonical root, so do not author separate enemy children.
 
-- [ ] **Step 5: Verify the user-authored prefab**
+- [x] **Step 5: Verify the user-authored prefab**
 
 Run `CardFramePrefabTests` and `CardPrefabCatalogTests`. Expected: all six ranges, both faction colors, equal positional widths, self, and neutral empty glyph pass with no missing serialized reference.
 
-- [ ] **Step 6: Commit code, tests, and the reviewed prefab**
+- [x] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
 git add Assets/Unity/TargetGlyphView.cs \
@@ -698,7 +698,7 @@ git commit -m "refactor(ui): color target range glyphs"
 - `CardView` iterates `TargetEntries`, already sorted `Ally` then `Enemy`; no C# coordinate branch is added.
 - Intervention prefab has null `_targetContent` and `_targetPanel`; it never creates `TargetGlyphView` outside description lines.
 
-- [ ] **Step 1: Add RED layout-contract tests**
+- [x] **Step 1: Add RED layout-contract tests**
 
 ```csharp
 [Test]
@@ -741,7 +741,7 @@ Also assert:
 - a single target child center equals the panel center within `0.5f`;
 - zero execution targets create exactly one `Empty` visual;
 - intervention creates no target-panel glyph and no `Empty`;
-- `ExpandedDescriptionPanel.rect.height == DescriptionPanel.rect.height + SymbolOnlyTargetPanel.rect.height` within `0.5f`.
+- `ExpandedDescriptionPanel` starts at the execution target panel top and ends at the execution description panel bottom within `0.5f`, reclaiming the authored inter-panel gap as well.
 
 ```csharp
 [Test]
@@ -769,24 +769,30 @@ public void One_target_centers_and_no_target_is_execution_only()
 }
 
 [Test]
-public void Intervention_description_reclaims_the_execution_target_height()
+public void Intervention_description_reclaims_the_target_region_and_gap()
 {
     var execution = LoadExecution();
     var intervention = LoadIntervention();
-    var expected = Child(execution.transform, "DescriptionPanel").rect.height
-        + Child(execution.transform, "SymbolOnlyTargetPanel").rect.height;
+    var target = Child(execution.transform, "SymbolOnlyTargetPanel");
+    var description = Child(execution.transform, "DescriptionPanel");
+    var expanded = Child(intervention.transform, "ExpandedDescriptionPanel");
+    var gap = target.anchoredPosition.y
+        - target.rect.height
+        - description.anchoredPosition.y;
+    var expected = target.rect.height + gap + description.rect.height;
+    Assert.AreEqual(target.anchoredPosition.y, expanded.anchoredPosition.y, 0.5f);
     Assert.AreEqual(
         expected,
-        Child(intervention.transform, "ExpandedDescriptionPanel").rect.height,
+        expanded.rect.height,
         0.5f);
 }
 ```
 
-- [ ] **Step 2: Run form-factor tests and identify only authored-layout failures**
+- [x] **Step 2: Run form-factor tests and identify only authored-layout failures**
 
 Run `CardFramePrefabTests` to `/private/tmp/card-form-factor-red.xml`. Do not change `CardView.BindTargetEntries` unless a test proves its category branch violates the contract.
 
-- [ ] **Step 3: Pause for the user’s full-card prefab review**
+- [x] **Step 3: Pause for the user’s full-card prefab review**
 
 For `ExecutionCardView.prefab`, the user verifies:
 
@@ -798,16 +804,16 @@ For `ExecutionCardView.prefab`, the user verifies:
 For `InterventionCardView.prefab`, the user verifies:
 
 1. no `SymbolOnlyTargetPanel`, target-content child, or `ExecutionOrderBadge` exists;
-2. `ExpandedDescriptionPanel` begins at the same Y as the execution description region and has height `118` versus execution description `78` plus target `40`;
+2. `ExpandedDescriptionPanel` begins at the execution target region’s Y and has height `118`, reclaiming target `40` + authored gap `6` + execution description `72`; both card types end the description region at the same Y;
 3. `CardView._targetContent`, `_targetPanel`, `_executionOrderBadge` remain unassigned.
 
 The user saves only if Inspector values differ.
 
-- [ ] **Step 4: Run form-factor, catalog, and bind regression tests**
+- [x] **Step 4: Run form-factor, catalog, and bind regression tests**
 
 Run `CardFramePrefabTests`, `CardPrefabCatalogTests`, and `CardPresentationTests`. Expected: execution 0/1/2 states and intervention form factor all pass.
 
-- [ ] **Step 5: Commit only if a full-card prefab changed**
+- [x] **Step 5: Commit only if a full-card prefab changed**
 
 ```bash
 git add Assets/Unity/Prefabs/ExecutionCardView.prefab \

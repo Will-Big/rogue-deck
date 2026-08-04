@@ -491,6 +491,152 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Execution_target_panel_is_one_centered_horizontal_row()
+        {
+            var view = LoadExecution();
+            var panel = Child(view.transform, "SymbolOnlyTargetPanel");
+            var layout = panel.GetComponent<HorizontalLayoutGroup>();
+
+            Assert.IsNotNull(layout);
+            Assert.AreEqual(TextAnchor.MiddleCenter, layout.childAlignment);
+            Assert.AreEqual(8, layout.padding.left);
+            Assert.AreEqual(8, layout.padding.right);
+            Assert.AreEqual(8f, layout.spacing);
+            Assert.IsFalse(layout.childForceExpandWidth);
+            Assert.IsFalse(layout.childForceExpandHeight);
+            Assert.IsFalse(layout.reverseArrangement);
+            Assert.AreSame(
+                panel,
+                CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent"));
+            Assert.AreSame(
+                panel,
+                CardPrefabCatalogTests.Field<RectTransform>(view, "_targetPanel"));
+        }
+
+        [Test]
+        public void Two_factions_bind_ally_left_enemy_right_on_the_same_y()
+        {
+            var view = InstantiateConfigured(LoadExecution());
+            try
+            {
+                view.Bind(
+                    CardPrefabCatalogTests.Presentation(
+                        CardCategory.Execution,
+                        new[]
+                        {
+                            new CardTargetKey(
+                                CardTargetFaction.Ally,
+                                CardTargetRange.Self),
+                            new CardTargetKey(
+                                CardTargetFaction.Enemy,
+                                CardTargetRange.FrontOne)
+                        },
+                        Array.Empty<CardDescriptionLine>()),
+                    null);
+
+                var content =
+                    CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent");
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                var ally = (RectTransform)content.GetChild(0);
+                var enemy = (RectTransform)content.GetChild(1);
+
+                Assert.Less(ally.anchoredPosition.x, enemy.anchoredPosition.x);
+                Assert.AreEqual(
+                    ally.anchoredPosition.y,
+                    enemy.anchoredPosition.y,
+                    0.01f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(view.gameObject);
+            }
+        }
+
+        [Test]
+        public void One_target_centers_and_no_target_is_execution_only()
+        {
+            var execution = InstantiateConfigured(LoadExecution());
+            var intervention = InstantiateConfigured(LoadIntervention());
+            try
+            {
+                execution.Bind(
+                    CardPrefabCatalogTests.Presentation(
+                        CardCategory.Execution,
+                        new[]
+                        {
+                            new CardTargetKey(
+                                CardTargetFaction.Ally,
+                                CardTargetRange.Self)
+                        },
+                        Array.Empty<CardDescriptionLine>()),
+                    null);
+                var content = CardPrefabCatalogTests.Field<RectTransform>(
+                    execution,
+                    "_targetContent");
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                var target = (RectTransform)content.GetChild(0);
+                var targetCenter = content.InverseTransformPoint(
+                    target.TransformPoint(target.rect.center));
+                Assert.AreEqual(
+                    content.rect.center.x,
+                    targetCenter.x,
+                    0.5f);
+
+                intervention.Bind(
+                    CardPrefabCatalogTests.Presentation(
+                        CardCategory.Intervention,
+                        Array.Empty<CardTargetKey>(),
+                        new[]
+                        {
+                            new CardDescriptionLine(null, "순서를 바꾼다.")
+                        }),
+                    null);
+                Assert.IsEmpty(
+                    intervention.GetComponentsInChildren<TargetGlyphView>(true));
+            }
+            finally
+            {
+                Object.DestroyImmediate(execution.gameObject);
+                Object.DestroyImmediate(intervention.gameObject);
+            }
+        }
+
+        [Test]
+        public void Intervention_description_reclaims_the_target_region_and_gap()
+        {
+            var execution = LoadExecution();
+            var intervention = LoadIntervention();
+            var target = Child(execution.transform, "SymbolOnlyTargetPanel");
+            var description = Child(execution.transform, "DescriptionPanel");
+            var expanded = Child(
+                intervention.transform,
+                "ExpandedDescriptionPanel");
+            var targetToDescriptionGap =
+                target.anchoredPosition.y
+                - target.rect.height
+                - description.anchoredPosition.y;
+            var expectedHeight =
+                target.rect.height
+                + targetToDescriptionGap
+                + description.rect.height;
+
+            Assert.AreEqual(
+                target.anchoredPosition.y,
+                expanded.anchoredPosition.y,
+                0.5f);
+            Assert.AreEqual(
+                expectedHeight,
+                expanded.rect.height,
+                0.5f);
+            Assert.AreEqual(
+                description.anchoredPosition.y - description.rect.height,
+                expanded.anchoredPosition.y - expanded.rect.height,
+                0.5f);
+        }
+
+        [Test]
         public void Intervention_frame_omits_target_and_order_and_expands_description()
         {
             var intervention = LoadIntervention();
@@ -504,6 +650,18 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsNull(ChildOrNull(
                 intervention.transform,
                 "ExecutionOrderBadge"));
+            Assert.IsNull(
+                CardPrefabCatalogTests.Field<RectTransform>(
+                    intervention,
+                    "_targetContent"));
+            Assert.IsNull(
+                CardPrefabCatalogTests.Field<RectTransform>(
+                    intervention,
+                    "_targetPanel"));
+            Assert.IsNull(
+                CardPrefabCatalogTests.Field<RectTransform>(
+                    intervention,
+                    "_executionOrderBadge"));
             Assert.Greater(
                 Child(intervention.transform, "ExpandedDescriptionPanel").rect.height,
                 Child(execution.transform, "DescriptionPanel").rect.height);
