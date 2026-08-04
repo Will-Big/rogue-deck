@@ -3,7 +3,9 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using UnityEngine;
 
@@ -15,6 +17,16 @@ namespace FateWeaver.Tests.UnityEditMode
             "locked_jab", "잠긴 일격", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
             { EnergyCost = 0, Category = CardCategory.Execution };
+
+        [Test]
+        public void Presentation_constructor_does_not_accept_a_lossy_string_description()
+        {
+            Assert.IsNull(typeof(CardPresentation)
+                .GetConstructors()
+                .SingleOrDefault(constructor =>
+                    constructor.GetParameters().Length > 5
+                    && constructor.GetParameters()[5].ParameterType == typeof(string)));
+        }
 
         [Test]
         public void Locked_zone_card_exposes_lock_status_icon()
@@ -73,8 +85,10 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void With_execution_order_changes_only_order()
         {
+            var descriptionLayout = DescriptionComposer.Compose(
+                EnemyCard(), KoreanDescriptionCatalog.Default);
             var original = new CardPresentation(
-                "id", "name", 5, 2, Side.Player, "description", null, false,
+                "id", "name", 5, 2, Side.Player, descriptionLayout, null, false,
                 new[] { CardStatusIcon.Lock }, CardCategory.Execution,
                 "owner", Color.cyan, true);
 
@@ -86,6 +100,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual(original.EnergyCost, changed.EnergyCost);
             Assert.AreEqual(original.Side, changed.Side);
             Assert.AreEqual(original.Description, changed.Description);
+            Assert.AreSame(original.DescriptionLayout, changed.DescriptionLayout);
             Assert.AreEqual(original.StatusIcons, changed.StatusIcons);
             Assert.AreEqual(original.Category, changed.Category);
             Assert.AreEqual(original.OwnerDisplayName, changed.OwnerDisplayName);
@@ -101,8 +116,28 @@ namespace FateWeaver.Tests.UnityEditMode
                 id => null);
 
             Assert.AreEqual(
-                "소유자를 대형 전방으로 1칸 이동.",
+                "[◆] 대형 전방으로 1칸 이동.",
                 presentation.Description);
+        }
+
+        [Test]
+        public void Toxic_reclaim_presentation_keeps_structured_targets_and_lines()
+        {
+            var definition = CardSpecMapper.ToDefinition(StarterPoolSpecs.ToxicReclaim());
+            var presentation = CardPresentation.FromDefinition(definition);
+
+            Assert.AreEqual(2, presentation.DescriptionLayout.TargetEntries.Count);
+            Assert.AreEqual(2, presentation.DescriptionLayout.Lines.Count);
+            Assert.AreEqual(presentation.DescriptionLayout.PlainText, presentation.Description);
+        }
+
+        [Test]
+        public void Intervention_presentation_has_no_unit_target_entries()
+        {
+            var presentation = CardPresentation.FromDefinition(StarterDeck.PullForward());
+
+            Assert.AreEqual(CardCategory.Intervention, presentation.Category);
+            Assert.AreEqual(0, presentation.DescriptionLayout.TargetEntries.Count);
         }
     }
 }

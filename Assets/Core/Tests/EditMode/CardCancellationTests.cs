@@ -48,7 +48,7 @@ namespace FateWeaver.Tests
             state.Party.Add(new PartyMember("mage", "Mage", maxHp: 5));
             state.Enemies.Add(new Enemy("goblin", 100));
 
-            // Enemy attack (FrontMost default target) kills the warrior outright.
+            // Enemy attack (FrontOne default target) kills the warrior outright.
             var enemyStrike = Card("enemy_strike", Side.Enemy, executionOrder: 1, damage: 10, instanceId: 1);
             var warriorCard = Card("warrior_card", Side.Player, executionOrder: 2, damage: 3, ownerId: "warrior", instanceId: 2);
             var mageCard = Card("mage_card", Side.Player, executionOrder: 3, damage: 3, ownerId: "mage", instanceId: 3);

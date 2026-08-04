@@ -9,7 +9,7 @@
     {
       "kind": "damage",
       "value": 1,
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "apply_status",

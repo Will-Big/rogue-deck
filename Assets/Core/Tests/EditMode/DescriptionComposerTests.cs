@@ -18,8 +18,8 @@ namespace FateWeaver.Tests.EditMode
         {
             public EffectKey Key => EffectKeys.Damage;
 
-            public string Describe(EffectData effect, int value, DescriptionContext context)
-                => string.Empty;
+            public EffectDescriptionFragment Describe(EffectData effect, int value, DescriptionContext context)
+                => new EffectDescriptionFragment(null, string.Empty);
         }
 
         private static readonly KoreanDescriptionCatalog Korean =
@@ -33,15 +33,15 @@ namespace FateWeaver.Tests.EditMode
         public void Single_damage_effect_is_one_sentence()
         {
             var card = Execution("slash", new EffectData(EffectKeys.Damage, 4));
-            Assert.AreEqual("피해 4.", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
         public void Target_selector_prefixes_the_effect_fragment_through_the_vocabulary()
         {
             var card = Execution("aimed_slash",
-                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackMost });
-            Assert.AreEqual("가장 뒤의 대상에게 피해 4.", DescriptionComposer.Describe(card, Korean));
+                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackOne });
+            Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("quick_cut",
                 EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8));
-            Assert.AreEqual("피해 2. 첫 발동이면 피해 8.", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -58,7 +58,7 @@ namespace FateWeaver.Tests.EditMode
             var card = Execution("wrist_cut",
                 new EffectData(EffectKeys.Damage, 3),
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
-            Assert.AreEqual("피해 3. 다음 플레이어 조건 보상을 무효화.",
+            Assert.AreEqual("[◆] 피해 3.\n다음 플레이어 조건 보상을 무효화.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -67,7 +67,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("guard",
                 EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4));
-            Assert.AreEqual("방어 4.", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -81,7 +81,7 @@ namespace FateWeaver.Tests.EditMode
                         SuccessEffectValue = 7
                     });
             Assert.AreEqual(
-                "방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
+                "[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -157,9 +157,9 @@ namespace FateWeaver.Tests.EditMode
                 DescriptionComposer.Describe(card, Korean));
         }
 
-        [TestCase(-2, "소유자를 대형 전방으로 2칸 이동.")]
-        [TestCase(2, "소유자를 대형 후방으로 2칸 이동.")]
-        [TestCase(0, "소유자의 대형 위치를 유지.")]
+        [TestCase(-2, "[◆] 대형 전방으로 2칸 이동.")]
+        [TestCase(2, "[◆] 대형 후방으로 2칸 이동.")]
+        [TestCase(0, "[◆] 대형 위치 유지.")]
         public void Korean_formation_movement_uses_signed_direction(
             int distance,
             string expected)
@@ -213,27 +213,27 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_slash() =>
-            Assert.AreEqual("피해 4.",
+            Assert.AreEqual("[◆] 피해 4.",
                 DescriptionComposer.Describe(StarterDeck.Slash(), Korean));
 
         [Test]
         public void Korean_guard() =>
-            Assert.AreEqual("방어 4.",
+            Assert.AreEqual("[◆] 방어 4.",
                 DescriptionComposer.Describe(StarterDeck.Guard(), Korean));
 
         [Test]
         public void Korean_quick_cut() =>
-            Assert.AreEqual("피해 2. 첫 발동이면 피해 8.",
+            Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.",
                 DescriptionComposer.Describe(StarterDeck.QuickCut(), Korean));
 
         [Test]
         public void Korean_counter_stance() =>
-            Assert.AreEqual("피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
+            Assert.AreEqual("[◆] 피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
                 DescriptionComposer.Describe(StarterDeck.Counter(), Korean));
 
         [Test]
         public void Korean_cover() =>
-            Assert.AreEqual("방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
+            Assert.AreEqual("[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(StarterDeck.Cover(), Korean));
 
         [Test]
@@ -253,22 +253,22 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_goblin_jab() =>
-            Assert.AreEqual("피해 4.",
+            Assert.AreEqual("[◆] 피해 4.",
                 DescriptionComposer.Describe(GoblinDeck.Thrust(), Korean));
 
         [Test]
         public void Korean_crude_guard() =>
-            Assert.AreEqual("방어 3.",
+            Assert.AreEqual("[◆] 방어 3.",
                 DescriptionComposer.Describe(GoblinDeck.CrudeGuard(), Korean));
 
         [Test]
         public void Korean_sly_jab() =>
-            Assert.AreEqual("피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
+            Assert.AreEqual("[◆] 피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
                 DescriptionComposer.Describe(GoblinDeck.SlyJab(), Korean));
 
         [Test]
         public void Korean_no_following_enemy_card_condition() =>
-            Assert.AreEqual("피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
+            Assert.AreEqual("[◆] 피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
                 DescriptionComposer.Describe(
                     Execution("warden_smash",
                         EffectData.Conditional(
@@ -283,7 +283,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var tuned = new CardDefinition("slash", "베기", Side.Player, 4,
                 new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Execution };
-            Assert.AreEqual("피해 99.", DescriptionComposer.Describe(tuned, Korean));
+            Assert.AreEqual("[◆] 피해 99.", DescriptionComposer.Describe(tuned, Korean));
         }
 
         [Test]
@@ -297,7 +297,7 @@ namespace FateWeaver.Tests.EditMode
                 {
                     EffectData.ApplyStatus(StatusKeys.Slow, StatusApplyTarget.TargetEnemy, count: 2)
                 }) { Category = CardCategory.Execution };
-            Assert.AreEqual("적 둔화 (2턴).", DescriptionComposer.Describe(card, Korean));
+            Assert.AreEqual("[◆] 둔화 (2턴).", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -316,7 +316,7 @@ namespace FateWeaver.Tests.EditMode
                         }),
                         6)
                 }) { Category = CardCategory.Execution };
-            Assert.AreEqual("피해 1. 직전에 실행한 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
+            Assert.AreEqual("[◆] 피해 1. 직전에 실행한 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Korean));
         }
     }

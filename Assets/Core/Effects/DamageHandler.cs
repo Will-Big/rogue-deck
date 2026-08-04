@@ -8,13 +8,22 @@ namespace FateWeaver.Core.Effects
     /// <summary>Player cards hit an enemy target resolved by the effect's TargetSelector (position in
     /// the living formation, or All for every living enemy); with no selector, falls back to the
     /// legacy path (explicit id, else the raw first enemy) for pre-selector content. Enemy cards hit a
-    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontMost,
+    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontOne,
     /// for pre-party compat). Incoming damage is folded through the target's entity-scoped statuses
     /// (e.g. Vulnerable, Block) when a StatusRegistry is present; with no registry it applies raw. If no
     /// target can be resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
+
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+        {
+            var faction = card.Side == Side.Player
+                ? CardTargetFaction.Enemy
+                : CardTargetFaction.Ally;
+            var selector = effect.TargetSelector ?? Cards.TargetSelector.FrontOne;
+            return new CardTargetKey(faction, CardTargetSnapshot.RangeFor(selector));
+        }
 
         public void Apply(EffectContext ctx)
         {
@@ -24,6 +33,11 @@ namespace FateWeaver.Core.Effects
             }
 
             var amount = FoldOutgoing(ctx, ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus());
+            if (ctx.Targets != null)
+            {
+                ApplySnapshotTargets(ctx, amount);
+                return;
+            }
             if (ctx.Card.Def.Side == Side.Player)
             {
                 if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
@@ -109,11 +123,67 @@ namespace FateWeaver.Core.Effects
             }
         }
 
+        private static void ApplySnapshotTargets(EffectContext ctx, int amount)
+        {
+            var key = new DamageHandler().TargetFor(ctx.Card.Def, ctx.Effect).Value;
+            if (key.Faction == CardTargetFaction.Enemy)
+            {
+                var total = 0;
+                string onlyTargetId = null;
+                var affected = 0;
+                foreach (var target in ctx.Targets.EnemyTargets(key))
+                {
+                    if (target.Hp <= 0)
+                    {
+                        continue;
+                    }
+
+                    var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                    target.Hp -= dealt;
+                    total += dealt;
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+
+                ctx.DamageDealt = total;
+                ctx.TargetId = affected == 1 ? onlyTargetId : null;
+                if (affected == 0)
+                {
+                    ctx.Cancel(CardCancellationReason.NoValidTarget);
+                }
+                return;
+            }
+
+            var partyTotal = 0;
+            string partyOnlyTargetId = null;
+            var partyAffected = 0;
+            foreach (var target in ctx.Targets.PartyTargets(key))
+            {
+                if (!target.IsAlive)
+                {
+                    continue;
+                }
+
+                var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                target.TakeDamage(dealt);
+                partyTotal += dealt;
+                partyOnlyTargetId = target.Id;
+                partyAffected++;
+            }
+
+            ctx.DamageDealt = partyTotal;
+            ctx.TargetId = partyAffected == 1 ? partyOnlyTargetId : null;
+            if (partyAffected == 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+            }
+        }
+
         /// <summary>Picks the party member an enemy attack hits, via the effect's position selector
-        /// (defaulting to FrontMost) evaluated against the living party formation at execution time.</summary>
+        /// (defaulting to FrontOne) evaluated against the living party formation at execution time.</summary>
         private static PartyMember SelectPartyTarget(EffectContext ctx)
         {
-            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontOne;
             return PartyTargeting.Select(ctx.State, selector);
         }
 

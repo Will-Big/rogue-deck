@@ -37,6 +37,11 @@ namespace FateWeaver.Core.Authoring
             {
                 yield return "consume_status MaxAmount must be at least 1.";
             }
+
+            foreach (var error in ValidateSelector(Selector))
+            {
+                yield return error;
+            }
         }
     }
 }

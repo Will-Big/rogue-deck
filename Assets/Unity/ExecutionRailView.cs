@@ -14,7 +14,7 @@ namespace FateWeaver.Unity
     {
         [SerializeField] private ScrollRect _scrollRect;
         [SerializeField] private RectTransform _content;
-        [SerializeField] private CardView _previewPrefab;
+        [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private RailCardView _cardPrefab;
         [SerializeField] private RectTransform _previewLayer;
         [SerializeField] private Image _backdrop;
@@ -94,9 +94,12 @@ namespace FateWeaver.Unity
 
         /// <summary>Editor-time construction (called by BattleSceneBuilder); the built children and
         /// references serialize into the scene.</summary>
-        public void EditorBuild(CardView previewPrefab, RailCardView cardPrefab, RectTransform previewLayer)
+        public void EditorBuild(
+            CardPrefabCatalog catalog,
+            RailCardView cardPrefab,
+            RectTransform previewLayer)
         {
-            _previewPrefab = previewPrefab;
+            _cardPrefabs = catalog;
             _cardPrefab = cardPrefab;
             _previewLayer = previewLayer;
 
@@ -340,14 +343,20 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            if (_previewPrefab == null || _previewLayer == null)
+            if (_cardPrefabs == null || _previewLayer == null)
             {
                 return;
             }
 
+            if (_preview != null && _preview.PrefabCategory != data.Category)
+            {
+                Destroy(_preview.gameObject);
+                _preview = null;
+            }
+
             if (_preview == null)
             {
-                _preview = Instantiate(_previewPrefab, _previewLayer);
+                _preview = _cardPrefabs.Create(data, _previewLayer);
                 var previewRect = (RectTransform)_preview.transform;
                 previewRect.anchorMin = previewRect.anchorMax = new Vector2(0.5f, 0.5f);
                 previewRect.sizeDelta = PreviewSize;

@@ -14,7 +14,6 @@ namespace FateWeaver.Unity.Editor
     public static class BattleSceneBuilder
     {
         private const string ScenePath = "Assets/Scenes/FateWeaverBattle.unity";
-        private const string CardPrefabPath = "Assets/Unity/Prefabs/CardView.prefab";
         private const string UnitPrefabPath = "Assets/Unity/Prefabs/UnitView.prefab";
         private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
         private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
@@ -38,7 +37,15 @@ namespace FateWeaver.Unity.Editor
                 return;
             }
 
-            EnsureCardOwnerChip();
+            var catalogGuids = AssetDatabase.FindAssets("t:CardPrefabCatalog");
+            if (catalogGuids.Length != 1)
+            {
+                throw new System.InvalidOperationException(
+                    "BattleSceneBuilder requires exactly one CardPrefabCatalog asset, "
+                    + $"but found {catalogGuids.Length}.");
+            }
+
+            string catalogPath = AssetDatabase.GUIDToAssetPath(catalogGuids[0]);
             EnsureUnitPrefab();
             EnsureRailCardPrefab();
             EnsureTargetingArrowPrefab();
@@ -52,15 +59,17 @@ namespace FateWeaver.Unity.Editor
                 AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberAPath),
                 AssetDatabase.LoadAssetAtPath<CharacterAsset>(MemberBPath)
             };
-            var cardPrefab = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
+            var cardPrefabs = AssetDatabase.LoadAssetAtPath<CardPrefabCatalog>(catalogPath);
             var unitPrefab = AssetDatabase.LoadAssetAtPath<UnitView>(UnitPrefabPath);
             var railCardPrefab = AssetDatabase.LoadAssetAtPath<RailCardView>(RailCardPrefabPath);
             var targetingArrowPrefab = AssetDatabase.LoadAssetAtPath<TargetingArrowView>(TargetingArrowPrefabPath);
-            if (cardPrefab == null || unitPrefab == null || railCardPrefab == null || targetingArrowPrefab == null)
+            if (cardPrefabs == null || unitPrefab == null || railCardPrefab == null || targetingArrowPrefab == null)
             {
                 Debug.LogError("BattleSceneBuilder: missing required battle view prefab.");
                 return;
             }
+
+            cardPrefabs.ValidateOrThrow();
 
             // --- canvas + event system ---
             var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -117,15 +126,21 @@ namespace FateWeaver.Unity.Editor
             var railRect = BattleUiKit.Rect(canvasRect, "ExecutionRail");
             BattleUiKit.Anchor(railRect, 0.03f, 0.30f, 0.97f, 0.51f);
             var rail = railRect.gameObject.AddComponent<ExecutionRailView>();
-            rail.EditorBuild(cardPrefab, railCardPrefab, overlay);
+            rail.EditorBuild(cardPrefabs, railCardPrefab, overlay);
 
             // --- hand fan ---
             var handRect = BattleUiKit.Rect(canvasRect, "HandFan");
-            handRect.anchorMin = handRect.anchorMax = new Vector2(0.5f, 0f);
-            handRect.anchoredPosition = new Vector2(0f, 130f);
-            handRect.sizeDelta = new Vector2(900f, 260f);
+            handRect.anchorMin = new Vector2(0f, 0f);
+            handRect.anchorMax = new Vector2(1f, 0f);
+            handRect.anchoredPosition = new Vector2(0f, 210f);
+            handRect.sizeDelta = new Vector2(0f, 260f);
+            var handContent = BattleUiKit.Rect(handRect, "Content");
+            handContent.anchorMin = handContent.anchorMax =
+                new Vector2(0.5f, 0.5f);
+            handContent.anchoredPosition = Vector2.zero;
+            handContent.sizeDelta = Vector2.zero;
             var hand = handRect.gameObject.AddComponent<HandFanView>();
-            hand.EditorBuild(cardPrefab);
+            hand.EditorBuild(cardPrefabs, handContent);
 
             // --- HUD texts ---
             var energy = BattleUiKit.Text(canvasRect, "Energy", 34f, TextAlignmentOptions.Center);
@@ -140,11 +155,11 @@ namespace FateWeaver.Unity.Editor
             var pilesRoot = BattleUiKit.Rect(canvasRect, "Piles");
             BattleUiKit.Stretch(pilesRoot);
             var buttonSize = new Vector2(112f, 72f);
-            var drawPile = PileView.Create(pilesRoot, overlay, "뽑을 덱", cardPrefab, buttonSize);
+            var drawPile = PileView.Create(pilesRoot, overlay, "뽑을 덱", cardPrefabs, buttonSize);
             Place((RectTransform)drawPile.transform, new Vector2(0f, 0f), new Vector2(90f, 70f), buttonSize);
-            var discardPile = PileView.Create(pilesRoot, overlay, "버린 덱", cardPrefab, buttonSize);
+            var discardPile = PileView.Create(pilesRoot, overlay, "버린 덱", cardPrefabs, buttonSize);
             Place((RectTransform)discardPile.transform, new Vector2(1f, 0f), new Vector2(-90f, 70f), buttonSize);
-            var fullDeck = PileView.Create(pilesRoot, overlay, "전체 덱", cardPrefab, buttonSize);
+            var fullDeck = PileView.Create(pilesRoot, overlay, "전체 덱", cardPrefabs, buttonSize);
             Place((RectTransform)fullDeck.transform, new Vector2(1f, 1f), new Vector2(-90f, -60f), buttonSize);
 
             var piles = pilesRoot.gameObject.AddComponent<BattlePilesView>();
@@ -245,43 +260,6 @@ namespace FateWeaver.Unity.Editor
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("BattleSceneBuilder: saved " + ScenePath);
-        }
-
-        private static void EnsureCardOwnerChip()
-        {
-            var root = PrefabUtility.LoadPrefabContents(CardPrefabPath);
-            try
-            {
-                var cardView = root.GetComponent<CardView>();
-                var serialized = new SerializedObject(cardView);
-                if (serialized.FindProperty("_ownerChip").objectReferenceValue != null)
-                {
-                    return;
-                }
-
-                var chip = BattleUiKit.Rect((RectTransform)root.transform, "OwnerChip");
-                chip.anchorMin = chip.anchorMax = new Vector2(0f, 0f);
-                chip.pivot = new Vector2(0f, 0f);
-                chip.anchoredPosition = new Vector2(18f, 17f);
-                chip.sizeDelta = new Vector2(84f, 24f);
-                var background = BattleUiKit.Image(chip, "Background", new Color(0.25f, 0.4f, 0.55f, 1f));
-                BattleUiKit.Stretch(background.rectTransform);
-                background.raycastTarget = false;
-                var label = BattleUiKit.Text(chip, "Label", 12f, TextAlignmentOptions.Center);
-                BattleUiKit.Stretch(label.rectTransform);
-                label.raycastTarget = false;
-                chip.gameObject.SetActive(false);
-
-                serialized.FindProperty("_ownerChip").objectReferenceValue = chip.gameObject;
-                serialized.FindProperty("_ownerChipBackground").objectReferenceValue = background;
-                serialized.FindProperty("_ownerChipText").objectReferenceValue = label;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(root, CardPrefabPath);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(root);
-            }
         }
 
         private static void EnsureUnitPrefab()

@@ -58,7 +58,7 @@ namespace FateWeaver.Tests
                 Status = new StatusKeyRef { Id = "poison" },
                 Count = 2,
                 Target = StatusApplyTarget.TargetEnemy,
-                Selector = TargetSelectorRef.BackMost,
+                Selector = TargetSelectorRef.BackOne,
                 Condition = new ConditionSpec
                 {
                     Kind = ConditionKind.WithinNth, N = 2, SuccessEffectValue = 5, SkipOnBasic = true
@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual("poison", restored.Status.Id);
             Assert.AreEqual(2, restored.Count);
             Assert.AreEqual(StatusApplyTarget.TargetEnemy, restored.Target);
-            Assert.AreEqual(TargetSelectorRef.BackMost, restored.Selector);
+            Assert.AreEqual(TargetSelectorRef.BackOne, restored.Selector);
             Assert.AreEqual(ConditionKind.WithinNth, restored.Condition.Kind);
             Assert.AreEqual(2, restored.Condition.N);
             Assert.AreEqual(5, restored.Condition.SuccessEffectValue);
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
                 BaseExecutionOrder = 4,
                 Effects = new EffectSpec[]
                 {
-                    new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontMost },
+                    new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontOne },
                     new ApplyStatusSpec
                     {
                         Status = new StatusKeyRef { Id = "block" },

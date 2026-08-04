@@ -11,13 +11,13 @@
       "status": "poison",
       "count": 2,
       "target": "TargetEnemy",
-      "selector": "BackMost"
+      "selector": "BackOne"
     },
     {
       "kind": "apply_status",
       "status": "poison_stasis",
       "target": "TargetEnemy",
-      "selector": "BackMost"
+      "selector": "BackOne"
     }
   ],
   "grade": "Common",

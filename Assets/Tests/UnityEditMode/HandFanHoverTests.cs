@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using FateWeaver.Core.Cards;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -25,17 +26,16 @@ namespace FateWeaver.Tests.UnityEditMode
             var root = new GameObject("Hand", typeof(RectTransform));
             try
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                    "Assets/Unity/Prefabs/CardView.prefab");
-                Assert.IsNotNull(prefab);
                 var hand = root.AddComponent<HandFanView>();
-                hand.EditorBuild(prefab);
+                hand.EditorBuild(
+                    CardPrefabCatalogTests.LoadCatalog(),
+                    (RectTransform)root.transform);
                 var calls = new List<(int Index, bool Hovering)>();
                 var cards = new[]
                 {
                     new CardPresentation(
                         "execution", "execution", 3, 1, Side.Player,
-                        string.Empty, null, false)
+                        EmptyDescriptionLayout(), null, false)
                 };
                 hand.SetCards(cards, _ => { },
                     (index, hovering) => calls.Add((index, hovering)));
@@ -76,6 +76,167 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.AreEqual(hoverRotation, rect.localRotation);
                 Assert.AreEqual(Quaternion.identity, rect.localRotation);
                 Assert.AreEqual(hoverScale, rect.localScale);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Hovered_card_keeps_hover_pose_during_resize_then_restores_new_fan_pose_and_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var middleLeft = root.GetComponentsInChildren<CardView>()[1];
+                var hover = middleLeft.GetComponent<HandCardHoverEffect>();
+                var rect = (RectTransform)middleLeft.transform;
+
+                hover.OnPointerEnter(null);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
+                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
+
+                hover.OnPointerExit(null);
+
+                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.Less(
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    0.01f);
+                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(1, rect.GetSiblingIndex());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Held_card_keeps_hover_pose_during_resize_then_restores_new_fan_pose_and_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var middleLeft = root.GetComponentsInChildren<CardView>()[1];
+                var rect = (RectTransform)middleLeft.transform;
+
+                hand.SetHeld(1, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
+                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
+
+                hand.SetHeld(1, false);
+
+                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.Less(
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    0.01f);
+                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(1, rect.GetSiblingIndex());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Most_recent_active_card_remains_last_after_resize()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var views = root.GetComponentsInChildren<CardView>();
+
+                hand.SetHeld(3, true);
+                hand.SetHeld(1, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+
+                var parent = views[0].transform.parent;
+                Assert.AreEqual(3, views[3].transform.GetSiblingIndex());
+                Assert.AreEqual(2, views[4].transform.GetSiblingIndex());
+                CollectionAssert.AreEqual(
+                    new[]
+                    {
+                        views[0].transform,
+                        views[2].transform,
+                        views[4].transform,
+                        views[3].transform,
+                        views[1].transform
+                    },
+                    Enumerable.Range(0, views.Length)
+                        .Select(parent.GetChild)
+                        .ToArray());
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Releasing_multiple_active_cards_restores_original_sibling_order()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
+                var views = root.GetComponentsInChildren<CardView>();
+
+                hand.SetHeld(1, true);
+                hand.SetHeld(3, true);
+                ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
+                InvokeDimensionChange(hand);
+                hand.SetHeld(3, false);
+                hand.SetHeld(1, false);
+
+                for (int i = 0; i < views.Length; i++)
+                {
+                    Assert.AreEqual(i, views[i].transform.GetSiblingIndex(),
+                        $"Card {i} did not return to its authored sibling index.");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Hovered_card_is_last_sibling_then_restores_its_original_sibling()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                BuildHand(root, ThreeCards());
+                var views = root.GetComponentsInChildren<CardView>();
+                var middle = views[1];
+                var hover = middle.GetComponent<HandCardHoverEffect>();
+                int originalSibling = middle.transform.GetSiblingIndex();
+
+                hover.OnPointerEnter(null);
+
+                Assert.AreEqual(
+                    middle.transform.parent.childCount - 1,
+                    middle.transform.GetSiblingIndex());
+
+                hover.OnPointerExit(null);
+
+                Assert.AreEqual(originalSibling, middle.transform.GetSiblingIndex());
             }
             finally
             {
@@ -159,7 +320,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 var card = root.GetComponentsInChildren<CardView>()[0];
                 var back = card.GetComponentInChildren<CardBackView>(true);
 
-                Assert.IsNotNull(back, "CardView.prefab should carry a CardBack child");
+                Assert.IsNotNull(back, "ExecutionCardView.prefab should carry a CardBack child");
                 Assert.IsFalse(back.gameObject.activeSelf);
                 Assert.IsFalse(Field<Image>(back, "_art").enabled);
                 var fallback = Field<Image>(back, "_artFallback");
@@ -216,31 +377,128 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        [Test]
+        public void Mixed_hand_uses_distinct_category_prefabs()
+        {
+            var root = new GameObject("Hand", typeof(RectTransform));
+            try
+            {
+                BuildHand(
+                    root,
+                    new[]
+                    {
+                        Presentation(CardCategory.Execution),
+                        Presentation(CardCategory.Intervention)
+                    });
+
+                var views = root.GetComponentsInChildren<CardView>();
+
+                Assert.AreEqual(CardCategory.Execution, views[0].PrefabCategory);
+                Assert.AreEqual(CardCategory.Intervention, views[1].PrefabCategory);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Placement_flight_preserves_source_card_category()
+        {
+            var root = new GameObject("Root", typeof(RectTransform));
+            var overlay = new GameObject("Overlay", typeof(RectTransform));
+            try
+            {
+                overlay.transform.SetParent(root.transform, false);
+                var intervention = Presentation(CardCategory.Intervention);
+                var hand = BuildHand(root, new[] { intervention });
+
+                Assert.IsTrue(hand.TryPreparePlacementFlight(
+                    0,
+                    intervention,
+                    (RectTransform)overlay.transform,
+                    out var flight));
+                Assert.AreEqual(
+                    CardCategory.Intervention,
+                    flight.Card.PrefabCategory);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static HandFanView BuildHand(
             GameObject root,
             IReadOnlyList<CardPresentation> cards)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<CardView>(
-                "Assets/Unity/Prefabs/CardView.prefab");
-            Assert.IsNotNull(prefab);
             var hand = root.AddComponent<HandFanView>();
-            hand.EditorBuild(prefab);
+            hand.EditorBuild(
+                CardPrefabCatalogTests.LoadCatalog(),
+                (RectTransform)root.transform);
             hand.SetCards(cards, _ => { }, (_, __) => { });
             return hand;
         }
 
+        private static HandFanView BuildResponsiveHand(
+            GameObject root,
+            IReadOnlyList<CardPresentation> cards,
+            float width,
+            float height)
+        {
+            var rootRect = (RectTransform)root.transform;
+            rootRect.sizeDelta = new Vector2(width, height);
+            var contentObject = new GameObject("Content", typeof(RectTransform));
+            var content = (RectTransform)contentObject.transform;
+            content.SetParent(rootRect, false);
+            content.anchorMin = content.anchorMax = new Vector2(0.5f, 0.5f);
+            var hand = root.AddComponent<HandFanView>();
+            hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
+            hand.SetCards(cards, _ => { }, (_, __) => { });
+            return hand;
+        }
+
+        private static void InvokeDimensionChange(HandFanView hand)
+            => typeof(HandFanView)
+                .GetMethod(
+                    "OnRectTransformDimensionsChange",
+                    BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(hand, null);
+
         private static CardPresentation[] ThreeCards()
-            => Enumerable.Range(0, 3)
+            => Cards(3);
+
+        private static CardPresentation[] FiveCards()
+            => Cards(5);
+
+        private static CardPresentation[] Cards(int count)
+            => Enumerable.Range(0, count)
                 .Select(index => new CardPresentation(
                     "execution-" + index,
                     "execution",
                     3,
                     1,
                     Side.Player,
-                    string.Empty,
+                    EmptyDescriptionLayout(),
                     null,
                     false))
                 .ToArray();
+
+        private static CardPresentation Presentation(CardCategory category)
+            => new CardPresentation(
+                category.ToString(),
+                category.ToString(),
+                3,
+                1,
+                Side.Player,
+                EmptyDescriptionLayout(),
+                null,
+                false,
+                category: category);
+
+        private static CardDescriptionLayout EmptyDescriptionLayout()
+            => new CardDescriptionLayout(
+                Array.Empty<CardTargetKey>(), Array.Empty<CardDescriptionLine>(), string.Empty);
 
         private static T Field<T>(object target, string name)
             => (T)target.GetType()

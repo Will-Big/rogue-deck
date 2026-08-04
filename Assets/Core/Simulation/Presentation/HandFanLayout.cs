@@ -25,7 +25,8 @@ namespace FateWeaver.Simulation.Presentation
     /// Callers derive count from a non-empty hand list; no empty-count behavior is required.</summary>
     public static class HandFanLayout
     {
-        /// <summary>spacing = X per slot, anglePerCard = degrees per slot (left card tilts CCW = positive),
+        /// <summary>spacing = X per slot (including responsive spacing supplied by the view),
+        /// anglePerCard = degrees per slot (left card tilts CCW = positive),
         /// arcDrop = how far edge cards sink per squared slot distance.</summary>
         public static FanPose PoseFor(int index, int count, float spacing, float anglePerCard, float arcDrop)
         {

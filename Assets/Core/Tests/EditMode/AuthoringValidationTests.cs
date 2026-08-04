@@ -59,6 +59,27 @@ namespace FateWeaver.Tests
             Assert.IsNotEmpty(errors);
         }
 
+        [TestCase(2)]
+        [TestCase(4)]
+        public void Undefined_authored_selector_reports_the_card_id(int rawValue)
+        {
+            var spec = new CardSpec
+            {
+                Id = "legacy_selector",
+                Category = CardCategory.Execution,
+                Effects = new EffectSpec[]
+                {
+                    new DamageSpec { Value = 1, Selector = (TargetSelectorRef)rawValue }
+                }
+            };
+
+            var errors = AuthoringValidator.Validate(
+                new[] { spec }, AuthoringContext.Default());
+
+            Assert.That(errors, Has.Some.Contains("Card 'legacy_selector'"));
+            Assert.That(errors, Has.Some.Contains("unsupported target selector value " + rawValue));
+        }
+
         [Test]
         public void Unknown_intervention_key_fails()
         {

@@ -7,7 +7,15 @@ using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
-    public enum TargetSelectorRef { None, FrontMost, SecondFromFront, BackMost, Random, All }
+    public enum TargetSelectorRef
+    {
+        None = 0,
+        FrontOne = 1,
+        BackOne = 3,
+        All = 5,
+        FrontTwo = 6,
+        BackTwo = 7
+    }
 
     public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard, NoFollowingPlayerCard, ConsumedStatusAtLeast }
 
@@ -77,12 +85,24 @@ namespace FateWeaver.Core.Authoring
         {
             switch (selector)
             {
-                case TargetSelectorRef.FrontMost: return TargetSelector.FrontMost;
-                case TargetSelectorRef.SecondFromFront: return TargetSelector.SecondFromFront;
-                case TargetSelectorRef.BackMost: return TargetSelector.BackMost;
-                case TargetSelectorRef.Random: return TargetSelector.Random;
+                case TargetSelectorRef.None: return null;
+                case TargetSelectorRef.FrontOne: return TargetSelector.FrontOne;
+                case TargetSelectorRef.FrontTwo: return TargetSelector.FrontTwo;
+                case TargetSelectorRef.BackOne: return TargetSelector.BackOne;
+                case TargetSelectorRef.BackTwo: return TargetSelector.BackTwo;
                 case TargetSelectorRef.All: return TargetSelector.All;
-                default: return null;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(selector), selector, "Unsupported target selector value.");
+            }
+        }
+
+        protected IEnumerable<string> ValidateSelector(TargetSelectorRef selector)
+        {
+            if (selector != TargetSelectorRef.None
+                && !Enum.IsDefined(typeof(TargetSelectorRef), selector))
+            {
+                yield return "unsupported target selector value " + (int)selector + ".";
             }
         }
 

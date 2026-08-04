@@ -28,6 +28,11 @@ namespace FateWeaver.Core.Authoring
             {
                 yield return "trigger_status spec requires a known status key.";
             }
+
+            foreach (var error in ValidateSelector(Selector))
+            {
+                yield return error;
+            }
         }
     }
 }

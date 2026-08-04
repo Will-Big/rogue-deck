@@ -12,7 +12,7 @@ namespace FateWeaver.Core.Effects
         TargetEnemy,      // the card's target enemy (by TargetId, else the first enemy; or by TargetSelector)
         PartyMember,      // an explicitly chosen living party member (by TargetId)
         AllPartyMembers,  // every living party member, applied as independent per-member instances
-        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontMost
+        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontOne
     }
 
     /// <summary>Applies a status (key + lifetime + magnitude) to one or more holders. Magnitude rides on
@@ -23,6 +23,36 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.ApplyStatus;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
+        {
+            if (!(effect.Payload is ApplyStatusPayload payload))
+            {
+                return null;
+            }
+
+            switch (payload.Target)
+            {
+                case StatusApplyTarget.Self:
+                    return new CardTargetKey(
+                        card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
+                        CardTargetRange.Self);
+                case StatusApplyTarget.TargetEnemy:
+                    return new CardTargetKey(
+                        CardTargetFaction.Enemy,
+                        CardTargetSnapshot.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
+                case StatusApplyTarget.PartyBySelector:
+                    return new CardTargetKey(
+                        CardTargetFaction.Ally,
+                        CardTargetSnapshot.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
+                case StatusApplyTarget.AllPartyMembers:
+                    return new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.All);
+                case StatusApplyTarget.PartyMember:
+                    return null;
+                default:
+                    return null;
+            }
+        }
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)
@@ -32,6 +62,12 @@ namespace FateWeaver.Core.Effects
 
             if (!(ctx.Effect?.Payload is ApplyStatusPayload payload))
             {
+                return;
+            }
+
+            if (ctx.Targets != null && TargetFor(ctx.Card.Def, ctx.Effect).HasValue)
+            {
+                ApplySnapshotTargets(ctx, payload, TargetFor(ctx.Card.Def, ctx.Effect).Value);
                 return;
             }
 
@@ -98,6 +134,49 @@ namespace FateWeaver.Core.Effects
             }
 
             bag.Add(payload.Key, lifetime, magnitude);
+        }
+
+        private static void ApplySnapshotTargets(
+            EffectContext ctx,
+            ApplyStatusPayload payload,
+            CardTargetKey key)
+        {
+            var affected = 0;
+            string onlyTargetId = null;
+            if (key.Faction == CardTargetFaction.Ally)
+            {
+                foreach (var target in ctx.Targets.PartyTargets(key))
+                {
+                    if (!target.IsAlive)
+                    {
+                        continue;
+                    }
+
+                    ApplyTo(ctx, payload, target.Statuses);
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+            }
+            else
+            {
+                foreach (var target in ctx.Targets.EnemyTargets(key))
+                {
+                    if (target.Hp <= 0)
+                    {
+                        continue;
+                    }
+
+                    ApplyTo(ctx, payload, target.Statuses);
+                    onlyTargetId = target.Id;
+                    affected++;
+                }
+            }
+
+            ctx.TargetId = affected == 1 ? onlyTargetId : null;
+            if (affected == 0)
+            {
+                ctx.Cancel(CardCancellationReason.NoValidTarget);
+            }
         }
 
         private static void ApplySelf(EffectContext ctx, ApplyStatusPayload payload)
@@ -193,11 +272,11 @@ namespace FateWeaver.Core.Effects
             }
         }
 
-        /// <summary>아군 위치 범위: effect.TargetSelector(기본 FrontMost)로 생존 파티 대형에서 확정된
+        /// <summary>아군 위치 범위: effect.TargetSelector(기본 FrontOne)로 생존 파티 대형에서 확정된
         /// 한 명에게 적용한다.</summary>
         private static void ApplyPartyBySelector(EffectContext ctx, ApplyStatusPayload payload)
         {
-            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontMost;
+            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontOne;
             var member = PartyTargeting.Select(ctx.State, selector);
             if (member == null)
             {

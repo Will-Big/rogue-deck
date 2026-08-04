@@ -1,5 +1,6 @@
 using System;
 using FateWeaver.Core.Authoring.Statuses;
+using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
@@ -21,13 +22,22 @@ namespace FateWeaver.Simulation.Descriptions
             Interventions = interventions
                 ?? throw new ArgumentNullException(nameof(interventions));
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
-            Context = new DescriptionContext(grammar, statuses, statusContent);
+            Grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
+            StatusContent = statusContent ?? throw new ArgumentNullException(nameof(statusContent));
         }
 
         public EffectDescriptionRegistry Effects { get; }
         public InterventionDescriptionRegistry Interventions { get; }
         public StatusDescriptionRegistry Statuses { get; }
-        public DescriptionContext Context { get; }
+        public IDescriptionGrammar Grammar { get; }
+        public StatusContentCatalog StatusContent { get; }
+
+        public DescriptionContext ContextFor(CardDefinition card)
+        {
+            if (card == null) throw new ArgumentNullException(nameof(card));
+            return new DescriptionContext(
+                Grammar, Statuses, StatusContent, card.Id, card.Side);
+        }
 
         /// <summary>코드 기본값 카탈로그를 쓰는 편의 오버로드.</summary>
         public static KoreanDescriptionCatalog CreateDefault()

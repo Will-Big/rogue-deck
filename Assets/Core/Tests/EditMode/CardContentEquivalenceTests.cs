@@ -61,15 +61,15 @@ namespace FateWeaver.Tests
         private static readonly string[] GoldenStarterDeck =
         {
             "breather;숨 고르기;Player;Intervention;1;0;change_execution_order:1:1:Player:False;",
-            "delayed_strike;늦춘 일격;Player;Execution;1;5;-;damage,5,-,-,FrontMost,False,-",
+            "delayed_strike;늦춘 일격;Player;Execution;1;5;-;damage,5,-,-,FrontOne,False,-",
             "early_guard;앞선 대비;Player;Execution;1;4;-;apply_status,4,-,-,-,False,block/Self",
-            "early_onset;조기 발병;Player;Execution;2;3;-;apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|trigger_status,0,-,-,FrontMost,False,poison",
+            "early_onset;조기 발병;Player;Execution;2;3;-;apply_status,1,-,-,FrontOne,False,poison/TargetEnemy|trigger_status,0,-,-,FrontOne,False,poison",
             "hasten;재촉;Player;Intervention;1;0;change_execution_order:1:-1:Player:False;",
-            "last_drop;마지막 한 방울;Player;Execution;1;7;-;apply_status,1,NoFollowingCardOfSide { Side = Player },2,FrontMost,False,poison/TargetEnemy",
-            "probing_strike;견제타;Player;Execution;1;4;-;damage,4,-,-,FrontMost,False,-|apply_status,1,-,-,-,False,block/Self",
-            "quick_cover;빠른 엄호;Player;Execution;1;4;-;apply_status,4,-,-,FrontMost,False,block/PartyBySelector",
-            "spore_veil;포자막;Player;Execution;1;5;-;apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|apply_status,2,-,-,-,False,block/Self",
-            "toxic_reclaim;독성 환원;Player;Execution;1;5;-;consume_status,0,-,-,FrontMost,False,poison/1/0|apply_status,1,-,-,FrontMost,False,poison/TargetEnemy|apply_status,4,ConsumedStatusAtLeast { N = 1 },4,-,True,block/Self"
+            "last_drop;마지막 한 방울;Player;Execution;1;7;-;apply_status,1,NoFollowingCardOfSide { Side = Player },2,FrontOne,False,poison/TargetEnemy",
+            "probing_strike;견제타;Player;Execution;1;4;-;damage,4,-,-,FrontOne,False,-|apply_status,1,-,-,-,False,block/Self",
+            "quick_cover;빠른 엄호;Player;Execution;1;4;-;apply_status,4,-,-,FrontOne,False,block/PartyBySelector",
+            "spore_veil;포자막;Player;Execution;1;5;-;apply_status,1,-,-,FrontOne,False,poison/TargetEnemy|apply_status,2,-,-,-,False,block/Self",
+            "toxic_reclaim;독성 환원;Player;Execution;1;5;-;consume_status,0,-,-,FrontOne,False,poison/1/0|apply_status,1,-,-,FrontOne,False,poison/TargetEnemy|apply_status,4,ConsumedStatusAtLeast { N = 1 },4,-,True,block/Self"
         };
 
         private static readonly string[] GoldenPartyPrototypeHandCoded =

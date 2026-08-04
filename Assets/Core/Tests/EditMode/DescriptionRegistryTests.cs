@@ -17,8 +17,8 @@ namespace FateWeaver.Tests.EditMode
 
             public FakeEffectHandler(EffectKey key) => Key = key;
 
-            public string Describe(EffectData effect, int value, DescriptionContext context)
-                => "effect:" + value;
+            public EffectDescriptionFragment Describe(EffectData effect, int value, DescriptionContext context)
+                => new EffectDescriptionFragment(null, "effect:" + value);
         }
 
         private sealed class FakeInterventionHandler : IInterventionDescriptionHandler

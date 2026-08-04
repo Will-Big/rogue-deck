@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-08-03
+- 개정일: 2026-08-04
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -56,6 +56,8 @@
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
 | [전투 화면 컴포넌트 분해](specs/2026-08-04-battle-screen-decomposition-design.md) | `current` | 전투 화면 Unity 컴포넌트의 경계와 책임 분배 | 전투 화면에 컴포넌트·표현 추가, 캐릭터 아트 도입 |
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위와 자신, 실행 시 대상 고정, 대상 칸과 진영별 본문 | 카드 대상·설명·프레임 설계 |
+| [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
+| [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |
 | [카드 아이디어 노트](specs/2026-07-27-card-idea-notebook-design.md) | `current` | 외부 카드 초안 즉시 보존, 진영·등급, 다중 선택·편집, 개별·전체 저장, Markdown 입출력 | 카드 아이디어 도구 구현·변경 |
 
 ### 문서 관리
@@ -71,6 +73,9 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
+| [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
+| [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
+| [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -155,11 +160,22 @@
 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
 
+## 후속 작업 대기열
+
+- [ ] **카드 상태 UI의 JSON 런타임 연계** — 현재 완료된 범위는 JSON과 독립적인
+  `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
+  컴포넌트와 프리팹이다. 상태 원본 확정과 카드별 부착 상태 키 계약이 `master`에 반영된 뒤
+  [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의 Task 3–5를 재개한다.
+  JSON의 상태 키·표시 이름·설명·아이콘 키를 표시 투영에 연결하고, 손패·실행 레일·더미 팝업이 하나의
+  공유 툴팁을 쓰도록 배선한다. 카드에는 카드에 직접 붙은 상태만 표시하며, SO나 C# 문자열 임시
+  fallback은 추가하지 않는다.
+
 ## 재설계가 필요한 영역
 
 | 영역 | 상태 | 이유와 재개 기준 |
 |---|---|---|
 | 런 원 사이클 | `needs-redesign` | 과거 설계가 `재화 없음`, `사망 카드 인계 없음`, 이전 보상 모델을 전제한다. 재개 시 현재 카드풀 문서의 유산·소유권 규칙을 기준으로 새 스펙을 작성한다. |
+| 카드 유효 수치 색상 피드백 | `needs-redesign` | 카드 변형과 런·전투 상태 중앙관리 작업이 원본값·유효값의 표현 계약을 확정한 뒤 피해·방어·비용 등 변경된 텍스트 span만 색으로 표시한다. 상태 아이콘은 사용하지 않는다. |
 
 과거 런 설계와 계획은 [보관 문서 색인](archive/README.md)에서 참고할 수 있다.
 

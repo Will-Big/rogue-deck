@@ -17,7 +17,7 @@ namespace FateWeaver.Tests
                 Status = StatusKeyRef.Of(StatusKeys.Poison),
                 MaxAmount = 3,
                 DamageBonusPerConsumed = 2,
-                Selector = TargetSelectorRef.FrontMost
+                Selector = TargetSelectorRef.FrontOne
             };
             var effect = spec.ToEffectData();
 

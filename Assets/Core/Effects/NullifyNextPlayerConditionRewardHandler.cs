@@ -7,6 +7,8 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;
 
+        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect) => null;
+
         public void Apply(EffectContext ctx)
         {
             var currentIndex = ctx.ResolutionContext.IndexOf(ctx.Card);

@@ -18,6 +18,8 @@ namespace FateWeaver.Unity
         private bool _suppressed;
         private System.Action<bool> _onHover;
 
+        internal bool IsActive => _hovering || _held;
+
         public void Initialize(System.Action<bool> onHover)
         {
             _onHover = onHover;
@@ -29,6 +31,37 @@ namespace FateWeaver.Unity
             _basePosition = _rect.anchoredPosition;
             _baseRotation = _rect.localRotation;
             _baseSiblingIndex = _rect.GetSiblingIndex();
+        }
+
+        public void UpdateBaseline(
+            Vector2 position,
+            Quaternion rotation,
+            int siblingIndex)
+        {
+            if (_rect == null)
+            {
+                _rect = (RectTransform)transform;
+            }
+
+            _basePosition = position;
+            _baseRotation = rotation;
+            _baseSiblingIndex = siblingIndex;
+            if (_hovering || _held)
+            {
+                Enlarge();
+            }
+            else
+            {
+                Restore();
+            }
+        }
+
+        internal void ReapplyActiveSiblingOrder()
+        {
+            if (_hovering || _held)
+            {
+                _rect.SetAsLastSibling();
+            }
         }
 
         public void Hold(bool value)

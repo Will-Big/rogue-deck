@@ -9,7 +9,7 @@
     {
       "kind": "damage",
       "value": 5,
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     }
   ],
   "grade": "Common",

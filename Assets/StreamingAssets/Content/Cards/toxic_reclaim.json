@@ -10,14 +10,14 @@
       "kind": "consume_status",
       "status": "poison",
       "maxAmount": 1,
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "apply_status",
       "status": "poison",
       "count": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "apply_status",

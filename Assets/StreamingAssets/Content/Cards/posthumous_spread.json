@@ -9,21 +9,21 @@
     {
       "kind": "damage",
       "value": 1,
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "apply_status",
       "status": "poison",
       "count": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "apply_status",
       "status": "contagion",
       "count": 2,
       "target": "TargetEnemy",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     }
   ],
   "grade": "Common",

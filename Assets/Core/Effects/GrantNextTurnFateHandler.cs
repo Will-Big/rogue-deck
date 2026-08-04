@@ -6,6 +6,11 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.GrantNextTurnFate;
 
+        public FateWeaver.Core.Cards.CardTargetKey? TargetFor(
+            FateWeaver.Core.Cards.CardDefinition card,
+            FateWeaver.Core.Cards.EffectData effect)
+            => null;
+
         public void Apply(EffectContext ctx)
         {
             if (ctx.Card.CancellationReason != null)

@@ -11,7 +11,7 @@
       "status": "poison",
       "count": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost",
+      "selector": "FrontOne",
       "condition": {
         "kind": "NoFollowingPlayerCard",
         "successEffectValue": 2

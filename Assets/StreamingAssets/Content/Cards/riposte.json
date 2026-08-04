@@ -9,7 +9,7 @@
     {
       "kind": "damage",
       "value": 3,
-      "selector": "FrontMost",
+      "selector": "FrontOne",
       "condition": {
         "kind": "PrevExecutedIsEnemyDamageCard",
         "successEffectValue": 7

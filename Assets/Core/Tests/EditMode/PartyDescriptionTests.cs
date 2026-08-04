@@ -18,26 +18,39 @@ namespace FateWeaver.Tests
                 Category = CardCategory.Execution
             };
 
-        [TestCase(TargetSelector.FrontMost, "가장 앞의 대상에게 피해 4.")]
-        [TestCase(TargetSelector.SecondFromFront, "전열에서 두 번째 대상에게 피해 4.")]
-        [TestCase(TargetSelector.BackMost, "가장 뒤의 대상에게 피해 4.")]
-        [TestCase(TargetSelector.Random, "무작위 대상에게 피해 4.")]
-        public void Position_selector_uses_exact_target_phrase(TargetSelector selector, string expected)
+        [TestCase(TargetSelector.FrontOne, "[◆] 피해 4.")]
+        [TestCase(TargetSelector.FrontTwo, "[◆] 피해 4.")]
+        [TestCase(TargetSelector.BackOne, "[◆] 피해 4.")]
+        [TestCase(TargetSelector.BackTwo, "[◆] 피해 4.")]
+        public void Position_selector_uses_target_symbol(TargetSelector selector, string expected)
         {
             var card = Execution(new EffectData(EffectKeys.Damage, 4) { TargetSelector = selector });
 
             Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
 
-        [TestCase(StatusApplyTarget.PartyMember, "선택한 아군에게 방어 4.")]
-        [TestCase(StatusApplyTarget.AllPartyMembers, "모든 아군에게 방어 4.")]
-        public void Ally_status_target_distinguishes_direct_and_all_targets(
-            StatusApplyTarget target,
-            string expected)
+        [Test]
+        public void Party_member_status_fails_because_direct_selection_has_no_frame_schema()
         {
-            var card = Execution(EffectData.ApplyStatus(StatusKeys.Block, target, 4));
+            var card = Execution(EffectData.ApplyStatus(
+                StatusKeys.Block,
+                StatusApplyTarget.PartyMember,
+                4));
 
-            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
+            var ex = Assert.Throws<System.InvalidOperationException>(() =>
+                DescriptionComposer.Describe(card, Korean));
+            StringAssert.Contains("party_test", ex.Message);
+        }
+
+        [Test]
+        public void All_party_status_uses_ally_symbol()
+        {
+            var card = Execution(EffectData.ApplyStatus(
+                StatusKeys.Block,
+                StatusApplyTarget.AllPartyMembers,
+                4));
+
+            Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
@@ -50,7 +63,7 @@ namespace FateWeaver.Tests
                 2));
 
             Assert.AreEqual(
-                "피해 1. 직전에 실행한 카드가 적 피해 카드이면 피해 2.",
+                "[◆] 피해 1. 직전에 실행한 카드가 적 피해 카드이면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -64,7 +77,7 @@ namespace FateWeaver.Tests
                 2));
 
             Assert.AreEqual(
-                "피해 1. 앞에 배치된 카드가 플레이어 피해 카드이면 피해 2.",
+                "[◆] 피해 1. 앞에 배치된 카드가 플레이어 피해 카드이면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -78,7 +91,7 @@ namespace FateWeaver.Tests
                 2));
 
             Assert.AreEqual(
-                "피해 1. 이전에 실행한 플레이어 카드가 없으면 피해 2.",
+                "[◆] 피해 1. 이전에 실행한 플레이어 카드가 없으면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -92,7 +105,7 @@ namespace FateWeaver.Tests
                 2));
 
             Assert.AreEqual(
-                "피해 1. 뒤에 배치된 적 카드가 없으면 피해 2.",
+                "[◆] 피해 1. 뒤에 배치된 적 카드가 없으면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
     }

@@ -8,17 +8,8 @@ namespace FateWeaver.Simulation.Descriptions
 {
     public sealed class KoreanDescriptionGrammar : IDescriptionGrammar
     {
-        public string Target(TargetSelector selector)
-        {
-            switch (selector)
-            {
-                case TargetSelector.FrontMost: return "가장 앞의 대상에게";
-                case TargetSelector.SecondFromFront: return "전열에서 두 번째 대상에게";
-                case TargetSelector.BackMost: return "가장 뒤의 대상에게";
-                case TargetSelector.All: return "모두에게";
-                default: return "무작위 대상에게";
-            }
-        }
+        public string Symbol(CardTargetKey target)
+            => "◆";
 
         public string Condition(Condition condition)
         {
@@ -34,18 +25,6 @@ namespace FateWeaver.Simulation.Descriptions
                     return JoinAll(all.Conditions) + "이면";
                 default:
                     return ConditionStem(condition) + "이면";
-            }
-        }
-
-        public string StatusTargetPrefix(StatusApplyTarget target)
-        {
-            switch (target)
-            {
-                case StatusApplyTarget.TargetEnemy: return "적 ";
-                case StatusApplyTarget.PartyMember: return "선택한 아군에게 ";
-                case StatusApplyTarget.AllPartyMembers: return "모든 아군에게 ";
-                case StatusApplyTarget.PartyBySelector: return "아군 ";
-                default: return string.Empty;
             }
         }
 

@@ -11,7 +11,7 @@
       "status": "block",
       "count": 4,
       "target": "PartyBySelector",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     }
   ],
   "grade": "Common",

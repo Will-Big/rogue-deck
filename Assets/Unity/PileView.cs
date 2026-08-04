@@ -15,7 +15,7 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _labelText;
         [SerializeField] private GameObject _popup;
         [SerializeField] private RectTransform _popupContent;
-        [SerializeField] private CardView _cardPrefab;
+        [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private Button _button;
         [SerializeField] private Button _closeButton;
 
@@ -57,7 +57,7 @@ namespace FateWeaver.Unity
             Clear();
             foreach (var data in _cards())
             {
-                var view = Instantiate(_cardPrefab, _popupContent);
+                var view = _cardPrefabs.Create(data, _popupContent);
                 view.Bind(data, null);
                 _spawned.Add(view);
             }
@@ -84,7 +84,11 @@ namespace FateWeaver.Unity
         /// <summary>Editor-time construction: the pile button under <paramref name="parent"/> and its
         /// popup under <paramref name="popupLayer"/> (a full-screen overlay above everything).</summary>
         public static PileView Create(
-            RectTransform parent, RectTransform popupLayer, string title, CardView cardPrefab, Vector2 buttonSize)
+            RectTransform parent,
+            RectTransform popupLayer,
+            string title,
+            CardPrefabCatalog catalog,
+            Vector2 buttonSize)
         {
             var root = BattleUiKit.Rect(parent, "Pile_" + title);
             root.sizeDelta = buttonSize;
@@ -152,7 +156,7 @@ namespace FateWeaver.Unity
             view._labelText = label;
             view._popup = popup.gameObject;
             view._popupContent = content;
-            view._cardPrefab = cardPrefab;
+            view._cardPrefabs = catalog;
             view._button = button;
             view._closeButton = closeButton;
             return view;

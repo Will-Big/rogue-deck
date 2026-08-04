@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
@@ -14,11 +15,8 @@ namespace FateWeaver.Core.Combat
             var living = SelectAll(state);
             switch (selector)
             {
-                case TargetSelector.FrontMost: return living.Count > 0 ? living[0] : null;
-                case TargetSelector.SecondFromFront: return living.Count > 1 ? living[1] : null;
-                case TargetSelector.BackMost: return living.Count > 0 ? living[living.Count - 1] : null;
-                case TargetSelector.Random:
-                    return living.Count > 0 ? living[state.Rng.Next(living.Count)] : null;
+                case TargetSelector.FrontOne: return living.Count > 0 ? living[0] : null;
+                case TargetSelector.BackOne: return living.Count > 0 ? living[living.Count - 1] : null;
                 default: return null; // All은 다중 대상 — SelectAll을 쓴다.
             }
         }
@@ -35,6 +33,18 @@ namespace FateWeaver.Core.Combat
             }
 
             return living;
+        }
+
+        public static List<Enemy> SelectRange(CombatState state, TargetSelector selector)
+        {
+            var living = SelectAll(state);
+            var take = TakeCount(selector, living.Count);
+            if (selector == TargetSelector.BackOne || selector == TargetSelector.BackTwo)
+            {
+                return living.GetRange(living.Count - take, take);
+            }
+
+            return living.GetRange(0, take);
         }
 
         /// <summary>Legacy selection: explicit id (missing id = no target), else the first enemy
@@ -55,6 +65,19 @@ namespace FateWeaver.Core.Combat
             }
 
             return state.Enemies.Count > 0 ? state.Enemies[0] : null;
+        }
+
+        private static int TakeCount(TargetSelector selector, int livingCount)
+        {
+            switch (selector)
+            {
+                case TargetSelector.FrontOne:
+                case TargetSelector.BackOne: return Math.Min(1, livingCount);
+                case TargetSelector.FrontTwo:
+                case TargetSelector.BackTwo: return Math.Min(2, livingCount);
+                case TargetSelector.All: return livingCount;
+                default: throw new ArgumentOutOfRangeException(nameof(selector));
+            }
         }
     }
 }

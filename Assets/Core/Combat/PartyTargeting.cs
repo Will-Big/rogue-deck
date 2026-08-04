@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
@@ -14,12 +15,22 @@ namespace FateWeaver.Core.Combat
             var living = LivingInFormationOrder(state);
             return selector switch
             {
-                TargetSelector.FrontMost => living.Count > 0 ? living[0] : null,
-                TargetSelector.SecondFromFront => living.Count > 1 ? living[1] : null,
-                TargetSelector.BackMost => living.Count > 0 ? living[^1] : null,
-                TargetSelector.Random => living.Count > 0 ? living[state.Rng.Next(living.Count)] : null,
+                TargetSelector.FrontOne => living.Count > 0 ? living[0] : null,
+                TargetSelector.BackOne => living.Count > 0 ? living[^1] : null,
                 _ => null
             };
+        }
+
+        public static List<PartyMember> SelectRange(CombatState state, TargetSelector selector)
+        {
+            var living = LivingInFormationOrder(state);
+            var take = TakeCount(selector, living.Count);
+            if (selector == TargetSelector.BackOne || selector == TargetSelector.BackTwo)
+            {
+                return living.GetRange(living.Count - take, take);
+            }
+
+            return living.GetRange(0, take);
         }
 
         /// <summary>Finds a party member by id regardless of alive/dead state.</summary>
@@ -60,6 +71,19 @@ namespace FateWeaver.Core.Combat
             }
 
             return living;
+        }
+
+        private static int TakeCount(TargetSelector selector, int livingCount)
+        {
+            switch (selector)
+            {
+                case TargetSelector.FrontOne:
+                case TargetSelector.BackOne: return Math.Min(1, livingCount);
+                case TargetSelector.FrontTwo:
+                case TargetSelector.BackTwo: return Math.Min(2, livingCount);
+                case TargetSelector.All: return livingCount;
+                default: throw new ArgumentOutOfRangeException(nameof(selector));
+            }
         }
     }
 }

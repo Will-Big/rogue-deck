@@ -11,12 +11,12 @@
       "status": "poison",
       "count": 1,
       "target": "TargetEnemy",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     },
     {
       "kind": "trigger_status",
       "status": "poison",
-      "selector": "FrontMost"
+      "selector": "FrontOne"
     }
   ],
   "grade": "Common",
