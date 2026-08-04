@@ -24,9 +24,7 @@ namespace FateWeaver.Unity
         [SerializeField] private BattlePresenter _presenter;
         [SerializeField] private HandFanView _hand;
         [SerializeField] private ExecutionRailView _rail;
-        [SerializeField] private UnitView _unitPrefab;
-        [SerializeField] private RectTransform _playerUnitsRow;
-        [SerializeField] private RectTransform _enemyUnitsRow;
+        [SerializeField] private BattleUnitsView _units;
         [SerializeField] private PileView _drawPile;
         [SerializeField] private PileView _discardPile;
         [SerializeField] private PileView _fullDeck;
@@ -41,13 +39,8 @@ namespace FateWeaver.Unity
 
         private const int FateEnergyPerTurn = 3;
         private const int Seed = 1;
-        private static readonly Color EnemyUnitTint = new Color(0.55f, 0.25f, 0.25f, 1f);
-        private static readonly Color PartyOwnerColor = new Color(0.55f, 0.48f, 0.75f, 1f);
 
         private DeckCombatSession _session;
-        private readonly Dictionary<string, UnitView> _partyUnits = new Dictionary<string, UnitView>();
-        private readonly Dictionary<string, UnitView> _enemyUnits = new Dictionary<string, UnitView>();
-        private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
 
         /// <summary>부팅 1회로 만들어 상주하는 콘텐츠. 씬을 리셋해도 다시 읽지 않는다(설계 §4.5).</summary>
         private GameContent _content;
@@ -65,7 +58,7 @@ namespace FateWeaver.Unity
         private void StartSession()
         {
             _selection.CancelSelection();
-            if (_unitPrefab == null || _party == null || _party.Length == 0
+            if (_units == null || !_units.IsBound || _party == null || _party.Length == 0
                 || _party.Any(member => member == null))
             {
                 SetMessage("파티 CharacterAsset 또는 UnitView 프리팹이 연결되지 않았습니다.");
@@ -102,35 +95,13 @@ namespace FateWeaver.Unity
                 seed: Seed);
 
             _presenter.Initialize(OwnerNameOf);
-            SpawnUnits();
+            _units.Spawn(
+                _session.State,
+                _presenter.OwnerColor,
+                id => PlaytestKoreanText.EnemyName(id, id));
             BindPiles();
             SetMessage("전투 시작.");
             RefreshAll();
-        }
-
-        private void SpawnUnits()
-        {
-            foreach (Transform child in _playerUnitsRow) Destroy(child.gameObject);
-            foreach (Transform child in _enemyUnitsRow) Destroy(child.gameObject);
-            _partyUnits.Clear();
-            _enemyUnits.Clear();
-            _enemyMaxHp.Clear();
-
-            foreach (var member in _session.State.Party)
-            {
-                var view = Instantiate(_unitPrefab, _playerUnitsRow);
-                var asset = CharacterFor(member.Id);
-                view.Bind(member.Name, asset != null ? asset.Color : PartyOwnerColor);
-                _partyUnits.Add(member.Id, view);
-            }
-
-            foreach (var enemy in _session.State.Enemies)
-            {
-                var view = Instantiate(_unitPrefab, _enemyUnitsRow);
-                view.Bind(PlaytestKoreanText.EnemyName(enemy.Id, enemy.Id), EnemyUnitTint);
-                _enemyUnits.Add(enemy.Id, view);
-                _enemyMaxHp.Add(enemy.Id, enemy.Hp);
-            }
         }
 
         private void BindPiles()
@@ -340,19 +311,6 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        private CharacterAsset CharacterFor(string id)
-        {
-            foreach (var character in _party)
-            {
-                if (character != null && character.Id == id)
-                {
-                    return character;
-                }
-            }
-
-            return null;
-        }
-
         private IReadOnlyList<SelectionTargetRef> CurrentValidTargets(SelectionTargetKind kind)
         {
             if (_session == null)
@@ -380,7 +338,7 @@ namespace FateWeaver.Unity
             _rail.SetCards(
                 _session.CurrentOrder.Select(card => _presenter.For(card)).ToList(),
                 OnZoneClicked);
-            RefreshUnits();
+            _units.Refresh(_session.State);
             RefreshSelections();
             RefreshHudTexts();
         }
@@ -393,34 +351,6 @@ namespace FateWeaver.Unity
             _fullDeck.SetInputEnabled(!selectionActive);
             _resetButton.interactable = !selectionActive;
             _turnButton.interactable = !selectionActive && !_session.IsComplete;
-        }
-
-        private void RefreshUnits()
-        {
-            int partyCount = _session.State.Party.Count;
-            for (int i = 0; i < partyCount; i++)
-            {
-                var member = _session.State.Party[i];
-                if (_partyUnits.TryGetValue(member.Id, out var view))
-                {
-                    view.SetHp(member.Hp, member.MaxHp);
-                    view.SetStatuses(member.Statuses.All);
-                    view.transform.SetSiblingIndex(partyCount - 1 - i);
-                }
-            }
-
-            int enemyCount = _session.State.Enemies.Count;
-            for (int i = 0; i < enemyCount; i++)
-            {
-                var enemy = _session.State.Enemies[i];
-                if (_enemyUnits.TryGetValue(enemy.Id, out var view)
-                    && _enemyMaxHp.TryGetValue(enemy.Id, out var maxHp))
-                {
-                    view.SetHp(enemy.Hp, maxHp);
-                    view.SetStatuses(enemy.Statuses.All);
-                    view.transform.SetSiblingIndex(i);
-                }
-            }
         }
 
         private void RefreshHudTexts()

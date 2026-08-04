@@ -7,29 +7,27 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Presentation;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace FateWeaver.Tests.UnityEditMode
 {
-    public class BattleScreenUnitIdentityTests
+    /// <summary>진형이 바뀌어도 유닛 뷰가 재사용되고 내용이 따라오는지 잠근다. 대상은
+    /// BattleUnitsView다 — 스폰·갱신이 컨트롤러를 떠났다(설계 §4.6).</summary>
+    public class BattleUnitsViewIdentityTests
     {
         private GameObject _root;
         private RectTransform _partyRow;
         private RectTransform _enemyRow;
         private UnitView _unitPrefab;
-        private BattleScreenController _controller;
-        private CardSelectionController _selection;
-        private Button _confirmButton;
+        private BattleUnitsView _units;
         private DeckCombatSession _session;
 
         [SetUp]
         public void SetUp()
         {
-            _root = new GameObject("BattleScreenTestRoot", typeof(RectTransform));
+            _root = new GameObject("BattleUnitsViewTestRoot", typeof(RectTransform));
             _partyRow = ChildRect("PartyRow");
             _enemyRow = ChildRect("EnemyRow");
             var prefabRoot = ChildRect("UnitPrefabRoot");
@@ -56,13 +54,11 @@ namespace FateWeaver.Tests.UnityEditMode
                     DrawByLivingCount = new Dictionary<int, int> { { 1, 1 }, { 2, 1 }, { 3, 1 } }
                 });
 
-            _controller = _root.AddComponent<BattleScreenController>();
-            SetField(_controller, "_unitPrefab", _unitPrefab);
-            SetField(_controller, "_playerUnitsRow", _partyRow);
-            SetField(_controller, "_enemyUnitsRow", _enemyRow);
-            SetField(_controller, "_session", _session);
-            ConfigureSelectionDependencies();
-            Invoke(_controller, "SpawnUnits");
+            _units = _root.AddComponent<BattleUnitsView>();
+            SetField(_units, "_unitPrefab", _unitPrefab);
+            SetField(_units, "_playerUnitsRow", _partyRow);
+            SetField(_units, "_enemyUnitsRow", _enemyRow);
+            _units.Spawn(_session.State, _ => Color.white, id => id);
         }
 
         [TearDown]
@@ -83,13 +79,11 @@ namespace FateWeaver.Tests.UnityEditMode
             memberA.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 1);
             memberB.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 2);
             memberC.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 3);
-            Invoke(_controller, "RefreshUnits");
-            Invoke(_controller, "RefreshSelections");
+            _units.Refresh(_session.State);
             var before = PartySnapshots();
 
             ApplyMove(Side.Player, memberC.Id, -99);
-            Invoke(_controller, "RefreshUnits");
-            Invoke(_controller, "RefreshSelections");
+            _units.Refresh(_session.State);
 
             AssertViewUnchanged(before["a"], ViewById(_partyRow, "a"), expectedSibling: 1);
             AssertViewUnchanged(before["b"], ViewById(_partyRow, "b"), expectedSibling: 0);
@@ -111,11 +105,11 @@ namespace FateWeaver.Tests.UnityEditMode
             enemyA.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 1);
             enemyB.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 2);
             enemyC.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), magnitude: 3);
-            Invoke(_controller, "RefreshUnits");
+            _units.Refresh(_session.State);
             var before = EnemySnapshots();
 
             ApplyMove(Side.Enemy, enemyA.Id, 99);
-            Invoke(_controller, "RefreshUnits");
+            _units.Refresh(_session.State);
 
             AssertViewUnchanged(before["enemy_a"], ViewById(_enemyRow, "enemy_a"), expectedSibling: 2);
             AssertViewUnchanged(before["enemy_b"], ViewById(_enemyRow, "enemy_b"), expectedSibling: 0);
@@ -133,55 +127,6 @@ namespace FateWeaver.Tests.UnityEditMode
             var child = new GameObject(name, typeof(RectTransform));
             child.transform.SetParent(_root.transform, false);
             return (RectTransform)child.transform;
-        }
-
-        private void ConfigureSelectionDependencies()
-        {
-            var inactive = new GameObject("InactiveSelectionDependencies", typeof(RectTransform));
-            inactive.transform.SetParent(_root.transform, false);
-            inactive.SetActive(false);
-            var hand = inactive.AddComponent<HandFanView>();
-            var rail = inactive.AddComponent<ExecutionRailView>();
-            SetField(_controller, "_hand", hand);
-            SetField(_controller, "_rail", rail);
-            SetField(_controller, "_drawPile", Pile(inactive.transform, "Draw"));
-            SetField(_controller, "_discardPile", Pile(inactive.transform, "Discard"));
-            SetField(_controller, "_fullDeck", Pile(inactive.transform, "Full"));
-            SetField(_controller, "_resetButton", Button(inactive.transform, "Reset"));
-            SetField(_controller, "_turnButton", Button(inactive.transform, "Turn"));
-            var dim = new GameObject("Dim");
-            dim.transform.SetParent(inactive.transform, false);
-            _confirmButton = Button(inactive.transform, "Confirm");
-            var overlay = new GameObject("Overlay", typeof(RectTransform));
-            overlay.transform.SetParent(inactive.transform, false);
-            var arrow = TargetingArrowView.EditorCreate((RectTransform)overlay.transform);
-            _selection = inactive.AddComponent<CardSelectionController>();
-            SetField(_selection, "_hand", hand);
-            SetField(_selection, "_rail", rail);
-            SetField(_selection, "_dimLayer", dim);
-            SetField(_selection, "_confirmButton", _confirmButton);
-            SetField(_selection, "_arrow", arrow);
-            SetField(_controller, "_selection", _selection);
-        }
-
-        private static PileView Pile(Transform parent, string name)
-        {
-            var root = new GameObject(name, typeof(RectTransform));
-            root.transform.SetParent(parent, false);
-            var pile = root.AddComponent<PileView>();
-            SetField(pile, "_button", root.AddComponent<Button>());
-            var popup = new GameObject(name + "Popup");
-            popup.transform.SetParent(parent, false);
-            popup.SetActive(false);
-            SetField(pile, "_popup", popup);
-            return pile;
-        }
-
-        private static Button Button(Transform parent, string name)
-        {
-            var button = new GameObject(name, typeof(RectTransform), typeof(Button)).GetComponent<Button>();
-            button.transform.SetParent(parent, false);
-            return button;
         }
 
         private void ApplyMove(Side side, string ownerId, int distance)
@@ -202,17 +147,17 @@ namespace FateWeaver.Tests.UnityEditMode
         private Enemy Enemy(string id) => _session.State.Enemies.Single(enemy => enemy.Id == id);
 
         private Dictionary<string, ViewSnapshot> PartySnapshots()
-            => GetField<Dictionary<string, UnitView>>(_controller, "_partyUnits")
+            => GetField<Dictionary<string, UnitView>>(_units, "_partyUnits")
                 .ToDictionary(pair => pair.Key, pair => Snapshot(pair.Value));
 
         private Dictionary<string, ViewSnapshot> EnemySnapshots()
-            => GetField<Dictionary<string, UnitView>>(_controller, "_enemyUnits")
+            => GetField<Dictionary<string, UnitView>>(_units, "_enemyUnits")
                 .ToDictionary(pair => pair.Key, pair => Snapshot(pair.Value));
 
         private UnitView ViewById(RectTransform row, string id)
             => row == _partyRow
-                ? GetField<Dictionary<string, UnitView>>(_controller, "_partyUnits")[id]
-                : GetField<Dictionary<string, UnitView>>(_controller, "_enemyUnits")[id];
+                ? GetField<Dictionary<string, UnitView>>(_units, "_partyUnits")[id]
+                : GetField<Dictionary<string, UnitView>>(_units, "_enemyUnits")[id];
 
         private static ViewSnapshot Snapshot(UnitView view) => new ViewSnapshot(
             Text(view, "_nameText"),
@@ -233,9 +178,6 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual(before.Status, current.Status);
             Assert.AreEqual(expectedSibling, after.transform.GetSiblingIndex());
         }
-
-        private static void Invoke(object target, string methodName)
-            => target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, null);
 
         private static void SetField(object target, string fieldName, object value)
             => Field(target.GetType(), fieldName).SetValue(target, value);

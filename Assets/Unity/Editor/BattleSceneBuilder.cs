@@ -99,6 +99,12 @@ namespace FateWeaver.Unity.Editor
             BattleUiKit.Anchor(stage, 0.03f, 0.52f, 0.97f, 0.94f);
             var playerRow = UnitRow(stage, "PlayerUnits", 0f, 0.45f, TextAnchor.LowerRight);
             var enemyRow = UnitRow(stage, "EnemyUnits", 0.55f, 1f, TextAnchor.LowerLeft);
+            var units = stage.gameObject.AddComponent<BattleUnitsView>();
+            var unitsSo = new SerializedObject(units);
+            unitsSo.FindProperty("_unitPrefab").objectReferenceValue = unitPrefab;
+            unitsSo.FindProperty("_playerUnitsRow").objectReferenceValue = playerRow;
+            unitsSo.FindProperty("_enemyUnitsRow").objectReferenceValue = enemyRow;
+            unitsSo.ApplyModifiedPropertiesWithoutUndo();
 
             // --- overlay (popups + hover preview; forced last sibling below) ---
             var overlay = BattleUiKit.Rect(canvasRect, "Overlay");
@@ -206,9 +212,7 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_presenter").objectReferenceValue = presenter;
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
-            so.FindProperty("_unitPrefab").objectReferenceValue = unitPrefab;
-            so.FindProperty("_playerUnitsRow").objectReferenceValue = playerRow;
-            so.FindProperty("_enemyUnitsRow").objectReferenceValue = enemyRow;
+            so.FindProperty("_units").objectReferenceValue = units;
             so.FindProperty("_drawPile").objectReferenceValue = drawPile;
             so.FindProperty("_discardPile").objectReferenceValue = discardPile;
             so.FindProperty("_fullDeck").objectReferenceValue = fullDeck;
