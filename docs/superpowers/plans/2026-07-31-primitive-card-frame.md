@@ -827,101 +827,22 @@ If neither full-card prefab changes, include only the tests in the nearest relev
 
 ---
 
-### Task 6: Validate authored assets and retire unused poster frames
+### Task 6: Retire unused poster frames and update the visual checklist
+
+> **2026-08-04 plan correction:** the former `CardCodeGenerator`/`CardAsset` validation work is
+> superseded. The current `master` has already removed both types during JSON runtime-content
+> conversion, and [the document index](../README.md#후속-작업-대기열) defers the remaining JSON
+> status projection. Do not restore or extend the legacy SO/code-generation path on this branch.
 
 **Files:**
-- Modify: `Assets/Unity/Editor/CardCodeGenerator.cs`
-- Modify: `Assets/Tests/UnityEditMode/CardCodeGeneratorTests.cs`
 - Modify: `Assets/Unity/PLAYTEST.md`
-- Delete only after empty reference audit: seven `Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png` files and matching `.meta`
+- Delete only after an empty reference audit: seven `Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png` files and matching `.meta`
 
 **Interfaces:**
-- Editor validation errors contain card ID, asset path, and raw invalid selector value.
-- Produces: `CardCodeGenerator.ValidateCardAsset(CardAsset card, string assetPath) -> IReadOnlyList<string>`.
-- Generated card equivalence remains unchanged.
+- The primitive sprites and prefabs remain the only card-frame presentation assets.
+- No JSON, SO authoring, runtime card-status projection, scene, or prefab change belongs to this task.
 
-- [ ] **Step 1: Write RED serialized-asset validation tests**
-
-```csharp
-[Test]
-public void Card_asset_validation_reports_id_path_and_raw_selector()
-{
-    var card = ScriptableObject.CreateInstance<CardAsset>();
-    try
-    {
-        card.Id = "legacy_card";
-        card.DisplayName = "레거시";
-        card.Category = CardCategory.Execution;
-        card.Effects = new EffectSpec[]
-        {
-            new DamageSpec
-            {
-                Value = 1,
-                Selector = (TargetSelectorRef)2
-            }
-        };
-
-        var errors = CardCodeGenerator.ValidateCardAsset(
-            card,
-            "Assets/Validation/legacy_card.asset");
-
-        Assert.That(errors, Has.Some.Contains("legacy_card"));
-        Assert.That(errors, Has.Some.Contains("Assets/Validation/legacy_card.asset"));
-        Assert.That(errors, Has.Some.Contains("2"));
-    }
-    finally
-    {
-        Object.DestroyImmediate(card);
-    }
-}
-
-[Test]
-public void Every_authored_card_uses_only_defined_selector_values()
-{
-    foreach (var guid in AssetDatabase.FindAssets("t:CardAsset"))
-    {
-        var path = AssetDatabase.GUIDToAssetPath(guid);
-        var card = AssetDatabase.LoadAssetAtPath<CardAsset>(path);
-        Assert.IsEmpty(CardCodeGenerator.ValidateCardAsset(card, path), path);
-    }
-}
-```
-
-- [ ] **Step 2: Run `CardCodeGeneratorTests` and confirm RED**
-
-```bash
-/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity \
-  -batchmode -projectPath /Users/ish/Git/rogue-deck-card-frame-design \
-  -runTests -testPlatform EditMode \
-  -testFilter FateWeaver.Tests.UnityEditMode.CardCodeGeneratorTests \
-  -testResults /private/tmp/card-generator-red.xml \
-  -logFile /private/tmp/card-generator-red.log
-```
-
-- [ ] **Step 3: Add path-aware preflight**
-
-Before conversion/source emission, reuse `AuthoringValidator` and prefix each error:
-
-```csharp
-public static IReadOnlyList<string> ValidateCardAsset(
-    CardAsset card,
-    string assetPath)
-{
-    if (card == null) throw new ArgumentNullException(nameof(card));
-    if (string.IsNullOrWhiteSpace(assetPath))
-        throw new ArgumentException("Asset path is required.", nameof(assetPath));
-
-    return AuthoringValidator
-        .Validate(new[] { card.ToSpec() }, AuthoringContext.Default())
-        .Select(error =>
-            "Card '" + card.Id + "' at '" + assetPath + "': " + error)
-        .ToArray();
-}
-```
-
-Abort generation on any error; never coerce undefined values.
-
-- [ ] **Step 4: Audit poster GUID references**
+- [x] **Step 1: Audit poster GUID references**
 
 ```bash
 for meta in Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png.meta; do
@@ -930,9 +851,13 @@ for meta in Assets/Unity/Resources/Cards/Frame/fw_*_poster_v2.png.meta; do
 done
 ```
 
-Every search must be empty. If any GUID remains, replace that serialized reference with the already-approved primitive asset through the responsible prefab Inspector, repeat the search, then delete only the seven audited PNG/meta pairs.
+Every search was empty on 2026-08-04. Delete only the seven audited PNG/meta pairs.
 
-- [ ] **Step 5: Update the manual visual checklist**
+- [x] **Step 2: Delete the audited poster assets**
+
+Remove the seven tracked PNG/meta pairs. Do not delete primitive sprites or any status-grid/tooltip asset.
+
+- [x] **Step 3: Update the manual visual checklist**
 
 `PLAYTEST.md` must include:
 
@@ -946,12 +871,10 @@ Every search must be empty. If any GUID remains, replace that serialized referen
 - mixed hands at 4:3, 16:10, 16:9, 21:9;
 - latest hovered/held card remains topmost after resize.
 
-- [ ] **Step 6: Run focused tests and commit cleanup**
+- [x] **Step 4: Run focused tests and commit cleanup**
 
 ```bash
-git add Assets/Unity/Editor/CardCodeGenerator.cs \
-  Assets/Tests/UnityEditMode/CardCodeGeneratorTests.cs \
-  Assets/Unity/PLAYTEST.md Assets/Unity/Resources/Cards/Frame
+git add Assets/Unity/PLAYTEST.md Assets/Unity/Resources/Cards/Frame
 git commit -m "chore(ui): retire poster card frame assets"
 ```
 
