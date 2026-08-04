@@ -2,7 +2,6 @@ using System.IO;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
-using FateWeaver.Core.Authoring.Json;
 using FateWeaver.Simulation;
 using NUnit.Framework;
 
@@ -14,6 +13,13 @@ namespace FateWeaver.Tests
     {
         private const int StarterDeckSize = 10;
         private const int StarterPoolSize = 22;
+
+        /// <summary>Decks/starter.json·Decks/party_prototype.json·Pools/starter.json의 id
+        /// 필드를 그대로 옮겨 적은 값이다. JSON이 유일 원본이라 다른 클래스의 상수를 빌려 쓰지
+        /// 않는다.</summary>
+        private const string StarterDeckId = "starter";
+        private const string PartyPrototypeDeckId = "party_prototype";
+        private const string StarterPoolId = "starter";
 
         /// <summary>추첨으로 고정된 10장. 순서까지 계약이다 — 무작위 시작 덱 설계 §3이
         /// 역할 순서로 고정한다고 정했다. Decks/starter.json에서 그대로 옮겨 적었다.</summary>
@@ -85,7 +91,7 @@ namespace FateWeaver.Tests
         [Test]
         public void StarterDeckJsonMatchesTheGoldenTenCards()
         {
-            var cards = Decks().Get(ContentExportWriter.StarterDeckId);
+            var cards = Decks().Get(StarterDeckId);
 
             Assert.AreEqual(StarterDeckSize, cards.Count);
             CollectionAssert.AreEqual(StarterDeckGolden, cards);
@@ -96,13 +102,13 @@ namespace FateWeaver.Tests
         {
             CollectionAssert.AreEqual(
                 PartyPrototypeDeckGolden,
-                Decks().Get(ContentExportWriter.PartyPrototypeDeckId));
+                Decks().Get(PartyPrototypeDeckId));
         }
 
         [Test]
         public void StarterPoolJsonMatchesTheGoldenTwentyTwoCards()
         {
-            var cards = Pools().Get(ContentExportWriter.StarterPoolId);
+            var cards = Pools().Get(StarterPoolId);
 
             Assert.AreEqual(StarterPoolSize, cards.Count);
             CollectionAssert.AreEqual(StarterPoolGolden, cards);
@@ -130,10 +136,10 @@ namespace FateWeaver.Tests
             var characters = Characters();
 
             Assert.AreEqual(
-                ContentExportWriter.StarterDeckId,
+                StarterDeckId,
                 characters.Get(PartyPrototypeRoster.MemberAId).Deck);
             Assert.AreEqual(
-                ContentExportWriter.PartyPrototypeDeckId,
+                PartyPrototypeDeckId,
                 characters.Get(PartyPrototypeRoster.MemberBId).Deck);
         }
 
