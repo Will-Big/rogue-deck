@@ -54,6 +54,7 @@
 | 문서 | 상태 | 권위 범위 | 다음 사용 시점 |
 |---|---|---|---|
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
+| [전투 화면 컴포넌트 분해](specs/2026-08-04-battle-screen-decomposition-design.md) | `current` | 전투 화면 Unity 컴포넌트의 경계와 책임 분배 | 전투 화면에 컴포넌트·표현 추가, 캐릭터 아트 도입 |
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위와 자신, 실행 시 대상 고정, 대상 칸과 진영별 본문 | 카드 대상·설명·프레임 설계 |
 | [카드 아이디어 노트](specs/2026-07-27-card-idea-notebook-design.md) | `current` | 외부 카드 초안 즉시 보존, 진영·등급, 다중 선택·편집, 개별·전체 저장, Markdown 입출력 | 카드 아이디어 도구 구현·변경 |
 
