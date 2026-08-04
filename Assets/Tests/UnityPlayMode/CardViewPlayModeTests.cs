@@ -93,28 +93,43 @@ namespace FateWeaver.Tests.UnityPlayMode
                 typeof(TargetGlyphView));
             var targetTemplate =
                 targetTemplateObject.GetComponent<TargetGlyphView>();
+            SetField(
+                targetTemplate,
+                "_frontOneVisual",
+                ChildRect(targetTemplateObject.transform, "FrontOne"));
+            SetField(
+                targetTemplate,
+                "_frontTwoVisual",
+                ChildRect(targetTemplateObject.transform, "FrontTwo"));
+            SetField(
+                targetTemplate,
+                "_backOneVisual",
+                ChildRect(targetTemplateObject.transform, "BackOne"));
+            SetField(
+                targetTemplate,
+                "_backTwoVisual",
+                ChildRect(targetTemplateObject.transform, "BackTwo"));
+            SetField(
+                targetTemplate,
+                "_allVisual",
+                ChildRect(targetTemplateObject.transform, "All"));
+            SetField(
+                targetTemplate,
+                "_selfVisual",
+                ChildRect(targetTemplateObject.transform, "Self"));
+            SetField(
+                targetTemplate,
+                "_emptyVisual",
+                ChildRect(targetTemplateObject.transform, "Empty"));
             var lineTemplateObject = new GameObject(
                 "DescriptionLineTemplate",
                 typeof(RectTransform),
                 typeof(DescriptionLineView));
             var lineTemplate =
                 lineTemplateObject.GetComponent<DescriptionLineView>();
-            var glyphSlot = ChildRect(
-                lineTemplateObject.transform,
-                "GlyphSlot");
-            var lineGlyphObject = new GameObject(
-                "LineGlyph",
-                typeof(RectTransform),
-                typeof(TargetGlyphView));
-            lineGlyphObject.transform.SetParent(glyphSlot, false);
             var lineText = ChildText(
                 lineTemplateObject.transform,
                 "LineText");
-            SetField(lineTemplate, "_glyphSlot", glyphSlot);
-            SetField(
-                lineTemplate,
-                "_glyph",
-                lineGlyphObject.GetComponent<TargetGlyphView>());
             SetField(lineTemplate, "_text", lineText);
 
             SetField(view, "_prefabCategory", CardCategory.Execution);
