@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.IO;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Statuses;
+using FateWeaver.Core.Cards;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
@@ -38,6 +40,31 @@ namespace FateWeaver.Tests
             var result = ContentBootstrap.LoadStatuses(Root());
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             return result.Catalog;
+        }
+
+        /// <summary>저장소 JSON 전체를 읽은 콘텐츠 번들. 상태 카탈로그와 같은 이유로 호출마다
+        /// 새로 만든다 — 카탈로그의 Rules가 가변이다.</summary>
+        public static GameContent Content()
+        {
+            var result = ContentBootstrap.Load(Root());
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            return result.Content;
+        }
+
+        public static CardContentCatalog Cards() => Content().Cards;
+
+        /// <summary>Decks/starter.json이 지정한 10장을 정의 객체로 편다. 예전 StarterDeck.Build()의
+        /// 대체이며, 원본이 JSON이라는 점만 다르다.</summary>
+        public static IReadOnlyList<CardDefinition> StarterDeckCards()
+        {
+            var content = Content();
+            var cards = new List<CardDefinition>();
+            foreach (var id in content.Decks.Get("starter"))
+            {
+                cards.Add(content.Cards.Get(id));
+            }
+
+            return cards;
         }
     }
 }
