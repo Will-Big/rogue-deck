@@ -89,6 +89,7 @@ namespace FateWeaver.Unity
                 .ToList();
             var enemies = new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) };
             _session = new DeckCombatSession(
+                _content.Statuses,
                 loadouts,
                 enemies,
                 GoblinDeck.Policy(),

@@ -1,5 +1,7 @@
 using FateWeaver.Core;
+using System;
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -12,6 +14,14 @@ namespace FateWeaver.Simulation
     /// win/lose. Wires the StatusRegistry so statuses and their lifetimes are active across turns.</summary>
     public sealed class MultiTurnRunner
     {
+        private readonly StatusContentCatalog _statusContent;
+
+        public MultiTurnRunner(StatusContentCatalog statusContent)
+        {
+            _statusContent = statusContent
+                ?? throw new ArgumentNullException(nameof(statusContent));
+        }
+
         public MultiTurnComparisonResult Compare(MultiTurnScenario scenario)
         {
             var baselineScenario = WithoutInterventionPlays(scenario);
@@ -23,7 +33,7 @@ namespace FateWeaver.Simulation
 
         public MultiTurnResult Run(MultiTurnScenario scenario)
         {
-            var state = new CombatState();
+            var state = new CombatState { StatusContent = _statusContent };
             state.AddSoloPlayer(scenario.PlayerHp);
             foreach (var enemy in scenario.Enemies)
             {

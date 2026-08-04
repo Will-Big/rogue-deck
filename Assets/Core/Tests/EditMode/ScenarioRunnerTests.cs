@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Sample_swap_scenario_turns_quick_cut_into_success()
         {
-            var result = new ScenarioRunner().Run(SampleScenarios.QuickCutSwap());
+            var result = new ScenarioRunner(TestContent.Statuses()).Run(SampleScenarios.QuickCutSwap());
             var quickCut = result.Timeline.OfType<CardResolved>()
                 .Single(e => e.CardId == "quick_cut");
 
@@ -24,7 +24,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Markdown_report_includes_order_fate_resolution_and_final_state()
         {
-            var result = new ScenarioRunner().Run(SampleScenarios.QuickCutSwap());
+            var result = new ScenarioRunner(TestContent.Statuses()).Run(SampleScenarios.QuickCutSwap());
             var markdown = ScenarioReport.ToMarkdown(result);
 
             StringAssert.Contains("# Scenario: Quick Cut Swap", markdown);

@@ -1,6 +1,7 @@
 using FateWeaver.Core;
 using System;
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -21,10 +22,12 @@ namespace FateWeaver.Simulation
         public IReadOnlyList<ExecutionCardInstance> CurrentOrder => State.Zone.ResolutionOrder();
         public bool IsResolved => _timeline != null;
 
-        public PlaytestSession(ScenarioDefinition scenario)
+        public PlaytestSession(ScenarioDefinition scenario, StatusContentCatalog statusContent)
         {
             Scenario = scenario;
-            State = BuildState(scenario);
+            State = BuildState(
+                scenario,
+                statusContent ?? throw new ArgumentNullException(nameof(statusContent)));
             _interventionResolver = new InterventionPlayResolver(CombatRegistries.InterventionActions());
             _turnResolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
         }
@@ -61,9 +64,14 @@ namespace FateWeaver.Simulation
                 ? card
                 : throw new KeyNotFoundException("No playtest card found for '" + id + "'");
 
-        private CombatState BuildState(ScenarioDefinition scenario)
+        private CombatState BuildState(
+            ScenarioDefinition scenario, StatusContentCatalog statusContent)
         {
-            var state = new CombatState { FateEnergy = scenario.FateEnergy };
+            var state = new CombatState
+            {
+                StatusContent = statusContent,
+                FateEnergy = scenario.FateEnergy
+            };
             state.AddSoloPlayer(scenario.PlayerHp);
 
             foreach (var enemy in scenario.Enemies)

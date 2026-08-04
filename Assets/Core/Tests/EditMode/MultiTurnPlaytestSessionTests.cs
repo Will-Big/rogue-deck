@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Resolves_each_turn_and_advances_to_completion()
         {
-            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.Chapter8ThreeTurnOpening());
+            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.Chapter8ThreeTurnOpening(), TestContent.Statuses());
 
             Assert.AreEqual(0, session.TurnIndex);
             Assert.AreEqual(3, session.TurnCount);
@@ -40,7 +40,7 @@ namespace FateWeaver.Tests
         {
             // MarkCombo (1 turn): unmanipulated the enemy resolves first so mark stays Basic;
             // delaying the enemy by hand completes the combo.
-            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo());
+            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo(), TestContent.Statuses());
             session.ApplyInterventionAction(
                 new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 3), "goblin_jab");
 
@@ -53,7 +53,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Cannot_manipulate_after_the_turn_is_resolved()
         {
-            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo());
+            var session = new MultiTurnPlaytestSession(SampleMultiTurnScenarios.MarkCombo(), TestContent.Statuses());
             session.ResolveTurn();
 
             Assert.Throws<InvalidOperationException>(() =>

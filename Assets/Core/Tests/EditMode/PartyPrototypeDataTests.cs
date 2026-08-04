@@ -89,7 +89,7 @@ namespace FateWeaver.Tests
         public void Roster_assigns_distinct_character_owners()
         {
             var roster = PartyPrototypeRoster.Build();
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 roster,
                 Array.Empty<Enemy>(),
                 new NoEnemyTurns(),

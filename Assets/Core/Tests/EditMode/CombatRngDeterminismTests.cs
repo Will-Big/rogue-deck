@@ -20,7 +20,7 @@ namespace FateWeaver.Tests
             var policy = enemyKind == "warden" ? WardenDeck.Policy() : GoblinDeck.Policy();
             var enemyId = enemyKind == "warden" ? WardenDeck.EnemyId : GoblinDeck.EnemyId;
             var enemyHp = enemyKind == "warden" ? WardenDeck.StartingHp : GoblinDeck.StartingHp;
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 StarterDeck.Build(),
                 PlayerHp,
                 new[] { new Enemy(enemyId, enemyHp) },

@@ -1,6 +1,7 @@
 using FateWeaver.Core;
 using System;
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -21,10 +22,15 @@ namespace FateWeaver.Simulation
         private Dictionary<string, ExecutionCardInstance> _cardsById;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
 
-        public MultiTurnPlaytestSession(MultiTurnScenario scenario)
+        public MultiTurnPlaytestSession(
+            MultiTurnScenario scenario, StatusContentCatalog statusContent)
         {
             _scenario = scenario;
-            _state = new CombatState();
+            _state = new CombatState
+            {
+                StatusContent = statusContent
+                    ?? throw new ArgumentNullException(nameof(statusContent))
+            };
             _state.AddSoloPlayer(scenario.PlayerHp);
             foreach (var enemy in scenario.Enemies)
             {

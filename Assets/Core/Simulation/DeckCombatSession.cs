@@ -1,6 +1,8 @@
 using FateWeaver.Core;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -40,6 +42,7 @@ namespace FateWeaver.Simulation
         private int _nextInstanceId;
 
         public DeckCombatSession(
+            StatusContentCatalog statusContent,
             IReadOnlyList<CardDefinition> deckCards,
             int playerHp,
             IReadOnlyList<Enemy> enemies,
@@ -48,12 +51,13 @@ namespace FateWeaver.Simulation
             int handSize = 5,
             int seed = 0)
             : this(
-                WithSoloOwner(deckCards), playerHp, enemies, enemyPolicy,
+                statusContent, WithSoloOwner(deckCards), playerHp, enemies, enemyPolicy,
                 fateEnergyPerTurn, handSize, seed)
         {
         }
 
         public DeckCombatSession(
+            StatusContentCatalog statusContent,
             IReadOnlyList<OwnedCard> deckCards,
             int playerHp,
             IReadOnlyList<Enemy> enemies,
@@ -62,6 +66,7 @@ namespace FateWeaver.Simulation
             int handSize = 5,
             int seed = 0)
             : this(
+                statusContent,
                 deckCards,
                 playerHp,
                 enemies,
@@ -75,6 +80,7 @@ namespace FateWeaver.Simulation
         }
 
         public DeckCombatSession(
+            StatusContentCatalog statusContent,
             IReadOnlyList<PartyMemberLoadout> party,
             IReadOnlyList<Enemy> enemies,
             IEnemyTurnPolicy enemyPolicy,
@@ -83,6 +89,7 @@ namespace FateWeaver.Simulation
             int fateEnergyPerTurn = 3,
             int seed = 0)
             : this(
+                statusContent,
                 BuildPartyDeck(party, partyCards, tuning),
                 0,
                 enemies,
@@ -96,6 +103,7 @@ namespace FateWeaver.Simulation
         }
 
         private DeckCombatSession(
+            StatusContentCatalog statusContent,
             IReadOnlyList<OwnedCard> deckCards,
             int playerHp,
             IReadOnlyList<Enemy> enemies,
@@ -108,6 +116,8 @@ namespace FateWeaver.Simulation
         {
             _state = new CombatState
             {
+                StatusContent = statusContent
+                    ?? throw new ArgumentNullException(nameof(statusContent)),
                 FateEnergyPerTurn = fateEnergyPerTurn,
                 RngSeed = seed
             };

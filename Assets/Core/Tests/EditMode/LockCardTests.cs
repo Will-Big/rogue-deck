@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         public void Locked_enemy_card_enters_zone_locked()
         {
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { new CardDefinition("p", "p", Side.Player, 6,
                     new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
                 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
@@ -37,7 +37,7 @@ namespace FateWeaver.Tests
                 { EnergyCost = 1, Category = CardCategory.Intervention,
                   InterventionAction = new FateWeaver.Core.Intervention.InterventionActionData(
                       FateWeaver.Core.Intervention.InterventionActionKeys.ChangeExecutionOrder, 1, -2) };
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { pull }, 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
             int zoneIndex = 0;

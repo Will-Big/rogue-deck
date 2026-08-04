@@ -12,7 +12,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_can_swap_selected_cards_and_resolve_the_manipulated_turn()
         {
-            var session = new PlaytestSession(SampleScenarios.QuickCutSwap());
+            var session = new PlaytestSession(SampleScenarios.QuickCutSwap(), TestContent.Statuses());
 
             CollectionAssert.AreEqual(
                 new[] { "enemy_jab", "quick_cut" },

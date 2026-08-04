@@ -28,7 +28,7 @@ namespace FateWeaver.Tests
                 new[] { EnemyJab(false) },
                 new[] { EnemyJab(true) }
             });
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { PlayerStrike() },
                 100,
                 new[] { new Enemy("warden", 100) },

@@ -191,7 +191,7 @@ namespace FateWeaver.Tests
 
         private static DeckCombatSession NewSession(
             IReadOnlyList<CardDefinition> deck, EnemyIntent intent)
-            => new DeckCombatSession(
+            => new DeckCombatSession(TestContent.Statuses(),
                 deck, playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 100) },
                 enemyPolicy: intent, fateEnergyPerTurn: 3, handSize: 5, seed: 1);

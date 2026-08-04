@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Compare_runs_baseline_without_intervention_plays_and_scripted_with_intervention_plays()
         {
-            var comparison = new ScenarioRunner().Compare(SampleScenarios.QuickCutSwap());
+            var comparison = new ScenarioRunner(TestContent.Statuses()).Compare(SampleScenarios.QuickCutSwap());
 
             var baselineQuickCut = comparison.Baseline.Timeline.OfType<CardResolved>()
                 .Single(e => e.CardId == "quick_cut");
@@ -33,7 +33,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Comparison_report_includes_baseline_manipulated_and_hp_deltas()
         {
-            var comparison = new ScenarioRunner().Compare(SampleScenarios.QuickCutSwap());
+            var comparison = new ScenarioRunner(TestContent.Statuses()).Compare(SampleScenarios.QuickCutSwap());
             var markdown = ScenarioComparisonReport.ToMarkdown(comparison);
 
             StringAssert.Contains("# Scenario Compare: Quick Cut Swap", markdown);

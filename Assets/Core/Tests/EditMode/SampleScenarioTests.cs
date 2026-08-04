@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Reward_nullified_sample_shows_enemy_disruption_reduces_success_reward()
         {
-            var comparison = new ScenarioRunner().Compare(SampleScenarios.RewardNullified());
+            var comparison = new ScenarioRunner(TestContent.Statuses()).Compare(SampleScenarios.RewardNullified());
             var baselineQuickCut = comparison.Baseline.Timeline.OfType<CardResolved>()
                 .Single(e => e.CardId == "quick_cut");
             var manipulatedQuickCut = comparison.Manipulated.Timeline.OfType<CardResolved>()
@@ -48,7 +48,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Chapter_8_guard_requires_intervention_to_restore_the_mark_chain_combo()
         {
-            var comparison = new ScenarioRunner().Compare(
+            var comparison = new ScenarioRunner(TestContent.Statuses()).Compare(
                 SampleScenarios.Chapter8AutoComboGuard());
             var baselineMark = comparison.Baseline.Timeline.OfType<CardResolved>()
                 .Single(e => e.CardId == "mark_target");

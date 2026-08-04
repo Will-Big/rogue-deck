@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         public void Chain_re_triggers_after_a_player_action_card_within_3rd()
         {
             // prep is a player SKILL (not an attack) -> exercises the "any player execution card" adjacency.
-            var result = new MultiTurnRunner().Run(SampleMultiTurnScenarios.ChainSlash());
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(SampleMultiTurnScenarios.ChainSlash());
 
             Assert.AreEqual(6, Resolved(result, "chain").DamageDealt); // 1 + (1+4)
             Assert.AreEqual(93, result.FinalState.Enemies[0].Hp);      // 100 - 1 (prep) - 6 (chain)
@@ -46,7 +46,7 @@ namespace FateWeaver.Tests
                 new[] { new EnemySpec("goblin", 100) },
                 new[] { new TurnScript(3, new[] { enemy, chain }, new InterventionPlaySpec[0]) });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
 
             Assert.AreEqual(1, Resolved(result, "chain").DamageDealt); // prev is an enemy card -> no second hit
             Assert.AreEqual(99, result.FinalState.Enemies[0].Hp);      // only the base 1

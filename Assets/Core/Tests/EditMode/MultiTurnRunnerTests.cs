@@ -32,7 +32,7 @@ namespace FateWeaver.Tests
                     Turn(EnemyHit("e1", 3, 1), Strike("s2", 5, 2))    // player 30 -> 27, enemy 15 -> 10
                 });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
 
             Assert.AreEqual(2, result.Turns.Count);
             Assert.AreEqual(10, result.FinalState.Enemies[0].Hp);
@@ -48,7 +48,7 @@ namespace FateWeaver.Tests
                 enemies: new[] { new EnemySpec("goblin", 50) },
                 turns: new[] { Turn(Strike("alpha", 4)), Turn(Strike("beta", 4)) });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
 
             var turn0 = result.Turns[0].Timeline.OfType<CardResolved>().Select(e => e.CardId).ToArray();
             var turn1 = result.Turns[1].Timeline.OfType<CardResolved>().Select(e => e.CardId).ToArray();
@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
                     Turn(Strike("s2", 5))     // must NOT run
                 });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
 
             Assert.AreEqual(1, result.Turns.Count);  // stopped after turn 0
             Assert.AreEqual(Outcome.Lose, result.Outcome);
@@ -81,7 +81,7 @@ namespace FateWeaver.Tests
         {
             var scenario = SampleMultiTurnScenarios.Chapter8ThreeTurnOpening();
 
-            var comparison = new MultiTurnRunner().Compare(scenario);
+            var comparison = new MultiTurnRunner(TestContent.Statuses()).Compare(scenario);
 
             Assert.AreEqual(3, comparison.Baseline.Turns.Count);
             Assert.AreEqual(3, comparison.Manipulated.Turns.Count);
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Multi_turn_comparison_report_includes_each_turn_and_final_delta()
         {
-            var comparison = new MultiTurnRunner().Compare(
+            var comparison = new MultiTurnRunner(TestContent.Statuses()).Compare(
                 SampleMultiTurnScenarios.Chapter8ThreeTurnOpening());
 
             var markdown = MultiTurnComparisonReport.ToMarkdown(comparison);
@@ -137,7 +137,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Cli_report_routes_multi_turn_id_to_multi_turn_comparison()
         {
-            var markdown = ScenarioCliReport.Build("chapter-8-three-turn-opening");
+            var markdown = ScenarioCliReport.Build("chapter-8-three-turn-opening", TestContent.Statuses());
 
             StringAssert.StartsWith(
                 "# Multi-Turn Scenario Compare: Chapter 8 Three-Turn Opening",
@@ -148,7 +148,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Cli_report_keeps_existing_single_turn_route()
         {
-            var markdown = ScenarioCliReport.Build("quick-cut-swap");
+            var markdown = ScenarioCliReport.Build("quick-cut-swap", TestContent.Statuses());
 
             StringAssert.StartsWith("# Scenario Compare: Quick Cut Swap", markdown);
         }

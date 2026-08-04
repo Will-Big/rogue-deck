@@ -39,7 +39,7 @@ namespace FateWeaver.Tests
             {
                 new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 4, 0) }
             });
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 deck, playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 100) },
                 enemyPolicy: intent, fateEnergyPerTurn: 3, handSize: 5, seed: 1);

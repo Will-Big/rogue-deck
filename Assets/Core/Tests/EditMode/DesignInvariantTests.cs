@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Mark_combo_holds_invariants_1_2_and_3()
         {
-            var comparison = new MultiTurnRunner().Compare(SampleMultiTurnScenarios.MarkCombo());
+            var comparison = new MultiTurnRunner(TestContent.Statuses()).Compare(SampleMultiTurnScenarios.MarkCombo());
 
             var baselineMark = Resolved(comparison.Baseline, "mark");
             var manipulatedMark = Resolved(comparison.Manipulated, "mark");
@@ -41,7 +41,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_disruption_changes_the_conditional_reward_invariant_4()
         {
-            var comparison = new MultiTurnRunner().Compare(
+            var comparison = new MultiTurnRunner(TestContent.Statuses()).Compare(
                 SampleMultiTurnScenarios.Chapter8ThreeTurnOpening());
 
             var baselineQuickCuts = comparison.Baseline.Turns

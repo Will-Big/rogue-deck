@@ -101,7 +101,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_slow_raises_next_turn_enemy_card_executionOrder()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
             session.State.Enemies[0].Statuses.Add(StatusKeys.Slow, StatusLifetime.Turns(2));
             session.ResolveTurn();
@@ -113,7 +113,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_haste_lowers_executionOrder_of_cards_placed_after_it()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { PlayerStrike() }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
             session.State.Party[0].Statuses.Add(StatusKeys.Haste, StatusLifetime.Turns(2));
             session.PlayExecutionCard(0);
@@ -124,7 +124,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Owned_card_with_owner_id_not_matching_any_party_member_gets_no_status_bonus()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { new OwnedCard(PlayerStrike(), "warrior") },
                 playerHp: 100,
                 enemies: new[] { new Enemy("goblin", 100) },
@@ -165,7 +165,7 @@ namespace FateWeaver.Tests
         public void Playing_slow_card_slows_enemy_next_turn()
         {
             var slowCard = CardSpecMapper.ToDefinition(SlowHexFixture());
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { slowCard }, 100, new[] { new Enemy("goblin", 100) }, JabEachTurn(), 3, 5, 1);
 
             int hand = session.Hand.Select((c, i) => (c, i)).First(x => x.c.Def.Id == "slow_hex").i;

@@ -83,7 +83,7 @@ namespace FateWeaver.Tests
             IReadOnlyList<CardDefinition> partyCards = null,
             int fateEnergyPerTurn = 3,
             int seed = 1)
-            => new DeckCombatSession(
+            => new DeckCombatSession(TestContent.Statuses(),
                 party,
                 new[] { new Enemy("goblin", 100) },
                 new EnemyIntent(new IReadOnlyList<CardDefinition>[]
@@ -116,7 +116,7 @@ namespace FateWeaver.Tests
             {
                 Loadout("a", new CardDefinition[] { null })
             }, tuning: Tuning(1)));
-            Assert.Throws<ArgumentException>(() => new DeckCombatSession(
+            Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
                 new[] { Loadout("a") },
                 new[] { new Enemy("goblin", 100) },
                 new EnemyIntent(Array.Empty<IReadOnlyList<CardDefinition>>()),
@@ -206,7 +206,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Legacy_session_also_rejects_direct_target_execution_definition()
         {
-            Assert.Throws<ArgumentException>(() => new DeckCombatSession(
+            Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
                 new[] { DirectBlock() },
                 playerHp: 30,
                 enemies: Array.Empty<Enemy>(),

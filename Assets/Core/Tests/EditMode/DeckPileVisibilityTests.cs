@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
         private static DeckCombatSession NewSession()
         {
             var deck = StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition).ToList();
-            return new DeckCombatSession(
+            return new DeckCombatSession(TestContent.Statuses(),
                 deck, 30, new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
                 GoblinDeck.Policy(), 3, 5, 1);
         }

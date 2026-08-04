@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
         public void Smash_deals_success_damage_when_no_enemy_card_follows()
         {
             var smash = WardenDeck.Smash();
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { WardenDeck.Swing() },
                 100,
                 new[] { new Enemy(WardenDeck.EnemyId, WardenDeck.StartingHp) },
@@ -92,7 +92,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Smash_deals_basic_damage_when_enemy_card_follows()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { WardenDeck.Swing() },
                 100,
                 new[] { new Enemy(WardenDeck.EnemyId, WardenDeck.StartingHp) },

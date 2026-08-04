@@ -79,7 +79,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Placement_copies_owner_and_assigns_unique_instance_id()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { Owned("warrior_card", "warrior") },
                 playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 30) },
@@ -102,7 +102,7 @@ namespace FateWeaver.Tests
             var nextEnemy = session.CurrentOrder.Single(c => c.Def.Id == "enemy_card");
             Assert.Greater(nextEnemy.InstanceId, player.InstanceId);
 
-            var newSession = new DeckCombatSession(
+            var newSession = new DeckCombatSession(TestContent.Statuses(),
                 new[] { Owned("warrior_card", "warrior") },
                 playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 30) },

@@ -109,7 +109,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Spec_quick_cut_pulled_first_deals_eight()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { Def(QuickCutFixture()), Def(PullForwardFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(5, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "quick_cut"));
@@ -120,7 +120,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Spec_counter_immediately_after_enemy_attack_deals_nine()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { Def(CounterFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) },
                 Goblin(6, 4), 3, 5, 1);
@@ -131,7 +131,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Spec_cover_before_enemy_attack_absorbs()
         {
-            var session = new DeckCombatSession(
+            var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { Def(CoverFixture()) }, 30,
                 new[] { new Enemy("goblin", 100) }, Goblin(6, 3), 3, 5, 1);
             session.PlayExecutionCard(HandIndex(session, "cover"));

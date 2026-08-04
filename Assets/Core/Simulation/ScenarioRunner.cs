@@ -1,5 +1,7 @@
 using FateWeaver.Core;
+using System;
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Intervention;
@@ -8,6 +10,14 @@ namespace FateWeaver.Simulation
 {
     public sealed class ScenarioRunner
     {
+        private readonly StatusContentCatalog _statusContent;
+
+        public ScenarioRunner(StatusContentCatalog statusContent)
+        {
+            _statusContent = statusContent
+                ?? throw new ArgumentNullException(nameof(statusContent));
+        }
+
         public ScenarioComparisonResult Compare(ScenarioDefinition scenario)
         {
             var baseline = Run(WithoutInterventionPlays(scenario));
@@ -43,11 +53,15 @@ namespace FateWeaver.Simulation
                 scenario.ZoneCards,
                 new InterventionPlaySpec[0]);
 
-        private static CombatState BuildState(
+        private CombatState BuildState(
             ScenarioDefinition scenario,
             out Dictionary<string, ExecutionCardInstance> cardsById)
         {
-            var state = new CombatState { FateEnergy = scenario.FateEnergy };
+            var state = new CombatState
+            {
+                StatusContent = _statusContent,
+                FateEnergy = scenario.FateEnergy
+            };
             state.AddSoloPlayer(scenario.PlayerHp);
 
             foreach (var enemy in scenario.Enemies)

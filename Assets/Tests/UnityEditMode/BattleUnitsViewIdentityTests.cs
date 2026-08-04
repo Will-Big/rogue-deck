@@ -33,7 +33,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var prefabRoot = ChildRect("UnitPrefabRoot");
             _unitPrefab = UnitView.EditorCreate(prefabRoot, new Vector2(200f, 270f));
 
-            _session = new DeckCombatSession(
+            _session = new DeckCombatSession(UnityTestContent.Statuses(),
                 new[]
                 {
                     Loadout("a", "Member A", 10),

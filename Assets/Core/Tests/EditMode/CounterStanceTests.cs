@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Counter_fires_after_a_preceding_enemy_attack()
         {
-            var result = new MultiTurnRunner().Run(SampleMultiTurnScenarios.CounterStance());
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(SampleMultiTurnScenarios.CounterStance());
 
             Assert.AreEqual(9, Resolved(result, "counter").DamageDealt); // 7 + 2 (within 3rd)
             Assert.AreEqual(91, result.FinalState.Enemies[0].Hp);        // 100 - 9
@@ -49,7 +49,7 @@ namespace FateWeaver.Tests
                 new[] { new EnemySpec("goblin", 100) },
                 new[] { new TurnScript(3, new[] { counter, enemy }, new InterventionPlaySpec[0]) });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
 
             Assert.AreEqual(0, Resolved(result, "counter").DamageDealt); // no preceding enemy attack
             Assert.AreEqual(100, result.FinalState.Enemies[0].Hp);       // untouched

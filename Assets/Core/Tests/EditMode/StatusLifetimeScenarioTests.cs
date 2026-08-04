@@ -34,7 +34,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Block_absorbs_incoming_damage()
         {
-            var result = new MultiTurnRunner().Run(OneTurn(
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(OneTurn(
                 30, new[] { new EnemySpec("goblin", 30) },
                 Guard("guard", 1, block: 5),
                 EnemyHit("goblin_hit", 2, 4)));
@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Block_partially_absorbs_and_overflow_gets_through()
         {
-            var result = new MultiTurnRunner().Run(OneTurn(
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(OneTurn(
                 30, new[] { new EnemySpec("goblin", 30) },
                 Guard("guard", 1, block: 5),
                 EnemyHit("goblin_hit", 2, 7)));
@@ -75,7 +75,7 @@ namespace FateWeaver.Tests
                     new TurnScript(3, new[] { Strike("strike3", 1, 4) }, new InterventionPlaySpec[0])
                 });
 
-            var result = new MultiTurnRunner().Run(scenario);
+            var result = new MultiTurnRunner(TestContent.Statuses()).Run(scenario);
             int Dmg(int turn, string id) =>
                 result.Turns[turn].Timeline.OfType<CardResolved>().Single(e => e.CardId == id).DamageDealt;
 
