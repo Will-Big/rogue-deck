@@ -108,10 +108,16 @@ namespace FateWeaver.Tests.EditMode
                 .Concat(StarterPoolSpecs.Build())
                 .Concat(PartyPrototypeDeckSpecs.Build())
                 .Select(CardSpecMapper.ToDefinition)
-                .Concat(StarterDeck.Build())
+                .Concat(TestContent.StarterDeckCards())
                 .Concat(GoblinDeck.AllCards())
                 .Concat(WardenDeck.Deck())
-                .Concat(PartyPrototypeDeck.Build());
+                .Concat(new[]
+                {
+                    TestContent.Cards().Get("fixture_attack"),
+                    TestContent.Cards().Get("fixture_selected_block"),
+                    TestContent.Cards().Get("fixture_all_block"),
+                    TestContent.Cards().Get("fixture_move_forward")
+                });
             foreach (var card in cards)
             {
                 var first = DescriptionComposer.Compose(card, Korean);

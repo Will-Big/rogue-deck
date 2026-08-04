@@ -109,7 +109,7 @@ namespace FateWeaver.Tests
             var without = NewState(new Enemy("goblin", 20));
             Place(without, StarterPoolSpecs.ToxicReclaim());
             without.Zone.Add(new ExecutionCardInstance(
-                StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 7, 4))
+                CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
             Resolve(without);
             Assert.AreEqual(2, without.Enemies[0].Statuses.Get(StatusKeys.Poison).Magnitude); // 1 부여→틱 성장
@@ -120,7 +120,7 @@ namespace FateWeaver.Tests
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
             var card = Place(with, StarterPoolSpecs.ToxicReclaim());
             with.Zone.Add(new ExecutionCardInstance(
-                StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 7, 4))
+                CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
             Resolve(with);
             Assert.AreEqual(1, card.ConsumedStatusAmount);

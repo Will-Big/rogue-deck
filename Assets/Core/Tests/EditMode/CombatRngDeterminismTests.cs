@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
             var enemyId = enemyKind == "warden" ? WardenDeck.EnemyId : GoblinDeck.EnemyId;
             var enemyHp = enemyKind == "warden" ? WardenDeck.StartingHp : GoblinDeck.StartingHp;
             var session = new DeckCombatSession(TestContent.Statuses(),
-                StarterDeck.Build(),
+                TestContent.StarterDeckCards(),
                 PlayerHp,
                 new[] { new Enemy(enemyId, enemyHp) },
                 policy,

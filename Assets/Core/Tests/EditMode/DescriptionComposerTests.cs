@@ -214,42 +214,47 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_slash() =>
             Assert.AreEqual("[◆] 피해 4.",
-                DescriptionComposer.Describe(StarterDeck.Slash(), Korean));
+                DescriptionComposer.Describe(CardFixtures.Damage("fx_damage", damage: 4), Korean));
 
         [Test]
         public void Korean_guard() =>
             Assert.AreEqual("[◆] 방어 4.",
-                DescriptionComposer.Describe(StarterDeck.Guard(), Korean));
+                DescriptionComposer.Describe(CardFixtures.Block("guard_fx", magnitude: 4), Korean));
 
         [Test]
         public void Korean_quick_cut() =>
             Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.",
-                DescriptionComposer.Describe(StarterDeck.QuickCut(), Korean));
+                DescriptionComposer.Describe(
+                    CardFixtures.DamageOnFirstTrigger("fx_first", baseDamage: 2, whenFirst: 8), Korean));
 
         [Test]
         public void Korean_counter_stance() =>
             Assert.AreEqual("[◆] 피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
-                DescriptionComposer.Describe(StarterDeck.Counter(), Korean));
+                DescriptionComposer.Describe(
+                    CardFixtures.DamageAfterEnemyDamage("fx_after", baseDamage: 4, whenAfter: 9), Korean));
 
         [Test]
         public void Korean_cover() =>
             Assert.AreEqual("[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
-                DescriptionComposer.Describe(StarterDeck.Cover(), Korean));
+                DescriptionComposer.Describe(
+                    CardFixtures.BlockBeforeEnemyDamage("fx_before", baseMagnitude: 2, whenBefore: 7), Korean));
 
         [Test]
         public void Korean_pull_forward() =>
             Assert.AreEqual("한 카드의 실행 순서 -1.",
-                DescriptionComposer.Describe(StarterDeck.PullForward(), Korean));
+                DescriptionComposer.Describe(
+                    CardFixtures.ChangeExecutionOrder("pull_fx", delta: -1), Korean));
 
         [Test]
         public void Korean_push_back() =>
             Assert.AreEqual("한 카드의 실행 순서 +1.",
-                DescriptionComposer.Describe(StarterDeck.PushBack(), Korean));
+                DescriptionComposer.Describe(
+                    CardFixtures.ChangeExecutionOrder("push_fx", delta: 1), Korean));
 
         [Test]
         public void Korean_swap_positions() =>
             Assert.AreEqual("두 카드의 실행 순서를 교환.",
-                DescriptionComposer.Describe(StarterDeck.SwapPositions(), Korean));
+                DescriptionComposer.Describe(CardFixtures.SwapExecutionOrder("swap_fx"), Korean));
 
         [Test]
         public void Korean_goblin_jab() =>

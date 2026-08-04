@@ -37,7 +37,7 @@ namespace FateWeaver.Tests
             };
             var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[]
             {
-                new[] { StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 4, 0) }
+                new[] { CardFixtures.EnemyAttack("goblin_jab", 4, 0) }
             });
             var session = new DeckCombatSession(TestContent.Statuses(),
                 deck, playerHp: 30,

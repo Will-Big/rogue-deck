@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
         public void Riposte_after_enemy_damage_card_deals_boosted_damage()
         {
             var state = NewState();
-            var enemyJab = StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 4, 1);
+            var enemyJab = CardFixtures.EnemyAttack("goblin_jab", 4, 1);
             state.Zone.Add(new ExecutionCardInstance(enemyJab) { OwnerId = "goblin" });
             state.Zone.Add(new ExecutionCardInstance(
                 CardSpecMapper.ToDefinition(StarterPoolSpecs.Riposte()))
@@ -42,7 +42,7 @@ namespace FateWeaver.Tests
             state.Party.Add(new PartyMember("front", "F", 20));
             state.Party.Add(new PartyMember("back", "B", 20));
             state.Enemies.Add(new Enemy("goblin", 30));
-            var enemyJab = StarterDeck.EnemyAttack("goblin_jab", "고블린 찌르기", 9, 4);
+            var enemyJab = CardFixtures.EnemyAttack("goblin_jab", 9, 4);
             state.Zone.Add(new ExecutionCardInstance(enemyJab) { OwnerId = "goblin" });
             state.Zone.Add(new ExecutionCardInstance(
                 CardSpecMapper.ToDefinition(StarterPoolSpecs.QuickCover()))

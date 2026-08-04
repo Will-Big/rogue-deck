@@ -13,11 +13,23 @@ namespace FateWeaver.Tests.EditMode
     public class DescriptionCatalogValidatorTests
     {
         private static IReadOnlyList<CardDefinition> DefaultCards()
-            => StarterDeck.Build()
+            => TestContent.StarterDeckCards()
                 .Concat(GoblinDeck.AllCards())
                 .Concat(WardenDeck.Deck())
-                .Concat(PartyPrototypeDeck.Build())
+                .Concat(PartyPrototypeCards())
                 .ToArray();
+
+        private static IReadOnlyList<CardDefinition> PartyPrototypeCards()
+        {
+            var cards = TestContent.Cards();
+            return new[]
+            {
+                cards.Get("fixture_attack"),
+                cards.Get("fixture_selected_block"),
+                cards.Get("fixture_all_block"),
+                cards.Get("fixture_move_forward")
+            };
+        }
 
         [Test]
         public void Every_default_card_has_runtime_and_description_registrations()
