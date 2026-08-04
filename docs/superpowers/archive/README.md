@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-08-03
+- 개정일: 2026-08-04
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -66,6 +66,7 @@
 - [카드 외곽선과 곡선 비행](plans/2026-07-19-card-outline-and-curved-placement-flight.md)
 - [카드 선택과 배치 모션](plans/2026-07-19-card-selection-placement-motion.md)
 - [배치 비행 카드 플립](plans/2026-07-19-placement-flight-flip.md)
+- [전투 화면 컴포넌트 분해 (구현 기록 포함)](plans/2026-08-04-battle-screen-decomposition.md)
 
 ### 아키텍처 개선 P0
 

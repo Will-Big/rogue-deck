@@ -3,9 +3,38 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-08-04
-- 상태: `active`
-- 권위 문서: [`specs/2026-08-04-battle-screen-decomposition-design.md`](../specs/2026-08-04-battle-screen-decomposition-design.md)
+- 완료일: 2026-08-04
+- 상태: `완료`
+- 권위 문서: [`specs/2026-08-04-battle-screen-decomposition-design.md`](../../specs/2026-08-04-battle-screen-decomposition-design.md)
 - 브랜치: `refactor/battle-screen-decomposition`
+
+## 구현 결과
+
+`BattleScreenController` **467줄 → 347줄**, `[SerializeField]` **18개 → 8개**
+(`_party`·`_presenter`·`_hand`·`_rail`·`_units`·`_piles`·`_hud`·`_selection`).
+설계 §8이 예상한 약 190줄에는 못 미친다 — 입력 핸들러 다섯(`OnHandClicked`·`OnHandHovered`·
+`OnZoneClicked`·`TryApplySelection`·`OnTurnButton`)이 설계 §4.1대로 P2까지 남기 때문이다.
+새 컴포넌트는 `BattlePresenter` 93줄, `BattleUnitsView` 82줄, `BattlePilesView` 41줄,
+`BattleHudView` 41줄.
+
+검증: 헤드리스 **499/499**, Unity EditMode **562/563**(skipped 1 = `[Explicit]`).
+`BattlePresenter` 테스트가 5개 늘었다(소유자 분기 셋 + 아트 없음 + 유닛 틴트 폴백).
+**Play 검증은 아직 받지 않았다** — 아래 "사용자 확인이 필요한 것" 표를 따른다.
+
+### 계획에서 어긋난 곳
+
+계획 초안의 오류와 누락을 구현 중에 고쳤다.
+
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| Task 1 코드가 `CardPresentation.From`/`FromDefinition`을 뒤바꿔 씀 | 원본 매핑 유지 | 뒤바꾸면 컴파일되지 않는다 — `From`은 `ExecutionCardInstance`, `FromDefinition`은 `CardDefinition`을 받는다 |
+| Task 1에서 `SpawnUnits`의 캐릭터 색을 공용 색으로 임시 퇴화 | 퇴화 없음 | `_party`가 로드아웃 때문에 컨트롤러에 남으므로 `CharacterFor`도 남길 수 있다. Task 2가 두 조각을 함께 걷어갔다 |
+| (언급 없음) | `BattleScreenUnitIdentityTests` → `BattleUnitsViewIdentityTests` | 이 테스트가 리플렉션으로 컨트롤러의 `_unitPrefab`·`_partyUnits`·`SpawnUnits`·`RefreshUnits`를 찔렀다. 대상이 옮겨갔으므로 함께 옮겼다 |
+| Task 4에서 HUD 위젯 넷을 `hudRoot`로 재부모화 | 재부모화하지 않고 관리자 객체가 참조만 든다 | 안내 문구만 `SelectionDim` **위**에 있고 나머지 HUD는 아래다. 한 컨테이너로 몰면 대상 선택 중 안내 문구가 딤에 덮인다 |
+| Task 5 가드를 `StartSession`에 | `Start`의 첫 줄에 | `_hud`가 비면 `StartSession`에 닿기 전 `_hud.Initialize`에서 이미 터진다 |
+
+`BattlePilesView`의 컨테이너는 계획대로 만들었다 — 파일 셋이 캔버스 자식으로 연속해 있었고
+컨테이너가 그 자리를 그대로 차지하므로 Z-order가 바뀌지 않는다.
 
 **Goal:** `BattleScreenController` 467줄을 컴포넌트 넷으로 나눠, 캐릭터 아트 도입과 표현 변경이
 한 컴포넌트만 건드리게 만든다.

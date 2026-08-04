@@ -71,7 +71,6 @@
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
-| [전투 화면 컴포넌트 분해](plans/2026-08-04-battle-screen-decomposition.md) | `active` | BattleScreenController 467줄을 컴포넌트 넷으로. 씬 재생성은 빌더가 한다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -141,17 +140,17 @@
   인자 없는 `CreateDefault()`와 전역 `Default` 싱글턴은 여전히 코드 기본값을 쓴다.
 - ~~**`CardSO`의 규칙 필드가 검증 없이 남아 있다.**~~ **계획 3b가 해결했다.** `CardAsset` 자체가
   사라졌다. `CardArtCatalog`(id → Sprite, 항목 3개)만 남고 규칙은 전부 JSON이다.
-- **`BattleScreenController`에 책임이 몰려 있다** (2026-08-03 실측: 467줄, `[SerializeField]` 18개).
-  덩어리 다섯 — 부팅·세션 생성 / 표현 변환 / 유닛 레지스트리 / 입력 / 렌더 갱신. 앞의 둘은
-  `[SerializeField]`를 안 써서 **씬 변경 없이** 평범한 C# 클래스로 뽑을 수 있고, 뒤의 셋은
-  인스펙터 참조를 들고 있어 MonoBehaviour로 쪼개면 18개 필드 재배선과 `.unity` YAML 이동이 따른다
-  (함정 1의 영역). 전용 계획으로 다룬다.
+- ~~**`BattleScreenController`에 책임이 몰려 있다.**~~ **[전투 화면 컴포넌트 분해 계획](archive/plans/2026-08-04-battle-screen-decomposition.md)이
+  해결했다** (2026-08-04). 467줄 → 347줄, `[SerializeField]` 18개 → 8개. 표현 변환은
+  `BattlePresenter`, 유닛은 `BattleUnitsView`, 파일 셋은 `BattlePilesView`, HUD는 `BattleHudView`가
+  가져갔고 씬은 `BattleSceneBuilder`가 재생성했다. **남은 후속:** 입력 핸들러 다섯이 아직
+  컨트롤러에 있다 — 설계 §4.1대로 P2(코어 이벤트 확충) 이후로 미룬다.
 - **상태 JSON이 코드 기본값 없이는 파싱되지 않는다.** `StatusSpecJsonConverter`가 판별자 표를
   `StatusContentDefaults.Specs()`에서 만든다. 계획 3c가 이 표를 `StatusRegistry`로 옮긴다.
 
-### 현재 수치 (계획 3b 완료 시점)
+### 현재 수치 (전투 화면 분해 완료 시점)
 
-헤드리스 **499/499**, Unity EditMode **557/558**(skipped 1 = `[Explicit]` 내보내기),
+헤드리스 **499/499**, Unity EditMode **562/563**(skipped 1 = `[Explicit]` 내보내기),
 카드 JSON **26**(플레이어 22 + fixture 4, 전부 등급·태그 보유), 상태 JSON **11**,
 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
