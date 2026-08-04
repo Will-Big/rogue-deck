@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
@@ -28,6 +27,9 @@ namespace FateWeaver.Core.Authoring
                 Payload = new ApplyStatusPayload(Status.ToKey(), Target)
             }) with { TargetSelector = ToSelector(Selector) };
 
+        /// <summary>저작 콘텐츠 존재 여부는 검사하지 않는다. StatusContentLoader가 "등록된 모든
+        /// 상태에 저작이 있다"를 요구하고 부팅이 상태를 카드보다 먼저 읽으므로, 여기 도달한
+        /// 시점에는 HasStatus가 곧 저작 존재다 — 가드를 두면 같은 불변식을 두 곳에서 지키게 된다.</summary>
         public override IEnumerable<string> Validate(AuthoringContext context)
         {
             if (Status.IsEmpty)
@@ -37,13 +39,6 @@ namespace FateWeaver.Core.Authoring
             else if (!context.HasStatus(Status.ToKey()))
             {
                 yield return "Unknown status key '" + Status.Id + "'.";
-            }
-            else if (!StatusContentDefaults.HasContent(Status.ToKey()))
-            {
-                // 행동 레지스트리에는 있지만(HasStatus 통과) 저작 카탈로그에는 없는 상태 —
-                // ApplyStatusHandler가 해결 시점에 StatusContentCatalog.LifetimeOf를 호출하므로
-                // 여기서 막지 않으면 KeyNotFoundException으로 죽는다.
-                yield return "status '" + Status.Id + "' has no authored content.";
             }
         }
     }

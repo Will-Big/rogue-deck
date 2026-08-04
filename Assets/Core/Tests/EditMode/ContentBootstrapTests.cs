@@ -1,5 +1,6 @@
 using System.IO;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Status;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
@@ -45,6 +46,27 @@ namespace FateWeaver.Tests
             {
                 Assert.IsTrue(content.Cards.Cards.ContainsKey(cardId), cardId + "가 없다.");
             }
+        }
+
+        [Test]
+        public void BootstrapLoadsTheStatusCatalog()
+        {
+            var content = ContentBootstrap.Load(ContentRoot()).Content;
+
+            Assert.AreEqual(11, content.Statuses.Keys.Count);
+            Assert.AreEqual("독", content.Statuses.DisplayNameOf(StatusKeys.Poison));
+            Assert.AreEqual(1, content.Statuses.GrowthPerTurnOf(StatusKeys.Poison));
+            Assert.AreEqual(2, content.Statuses.ExecutionOrderDeltaOf(StatusKeys.Slow));
+        }
+
+        [Test]
+        public void BootstrapReportsMissingStatusesBeforeReadingCards()
+        {
+            var result = ContentBootstrap.Load(
+                Path.Combine(Path.GetTempPath(), "fate-weaver-no-such-content"));
+
+            Assert.IsFalse(result.Succeeded);
+            StringAssert.Contains("Statuses", string.Join("\n", result.Errors));
         }
 
         [Test]
