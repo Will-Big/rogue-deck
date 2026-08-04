@@ -39,18 +39,32 @@ namespace FateWeaver.Unity
 
         private void Start()
         {
+            // 배선 검사는 첫 위임보다 앞서야 한다 — _hud가 비어 있으면 Initialize에서 이미
+            // 터지고, SetMessage도 못 쓴다. 그래서 여기서는 콘솔로만 보고한다(설계 §6).
+            if (!IsWired())
+            {
+                Debug.LogError("전투 화면 컴포넌트 배선이 비어 있습니다.");
+                return;
+            }
+
             _hud.Initialize(OnTurnButton, StartSession);
             _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
             StartSession();
         }
 
+        private bool IsWired()
+            => _presenter != null
+                && _units != null && _units.IsBound
+                && _piles != null && _piles.IsBound
+                && _hud != null && _hud.IsBound
+                && _hand != null && _rail != null && _selection != null;
+
         private void StartSession()
         {
             _selection.CancelSelection();
-            if (_units == null || !_units.IsBound || _party == null || _party.Length == 0
-                || _party.Any(member => member == null))
+            if (_party == null || _party.Length == 0 || _party.Any(member => member == null))
             {
-                SetMessage("파티 CharacterAsset 또는 UnitView 프리팹이 연결되지 않았습니다.");
+                SetMessage("파티 CharacterAsset이 연결되지 않았습니다.");
                 return;
             }
 
