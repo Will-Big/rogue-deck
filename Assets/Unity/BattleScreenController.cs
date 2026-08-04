@@ -19,10 +19,9 @@ namespace FateWeaver.Unity
     {
         [Header("Data")]
         [SerializeField] private CharacterAsset[] _party = Array.Empty<CharacterAsset>();
-        [Tooltip("id → Sprite 매핑. 카드 규칙은 JSON이 갖고 여기는 표현만 담당한다.")]
-        [SerializeField] private CardArtCatalog _cardArt;
 
         [Header("Views")]
+        [SerializeField] private BattlePresenter _presenter;
         [SerializeField] private HandFanView _hand;
         [SerializeField] private ExecutionRailView _rail;
         [SerializeField] private UnitView _unitPrefab;
@@ -102,6 +101,7 @@ namespace FateWeaver.Unity
                 fateEnergyPerTurn: FateEnergyPerTurn,
                 seed: Seed);
 
+            _presenter.Initialize(OwnerNameOf);
             SpawnUnits();
             BindPiles();
             SetMessage("전투 시작.");
@@ -142,7 +142,21 @@ namespace FateWeaver.Unity
         }
 
         private IReadOnlyList<CardPresentation> Presentations(IReadOnlyList<OwnedCard> cards)
-            => cards.Select(PresentationFor).ToList();
+            => cards.Select(card => _presenter.For(card)).ToList();
+
+        /// <summary>표시명은 콘텐츠에서 왔고 세션이 들고 있다.</summary>
+        private string OwnerNameOf(string ownerId)
+        {
+            foreach (var member in _session.State.Party)
+            {
+                if (member.Id == ownerId)
+                {
+                    return member.Name;
+                }
+            }
+
+            return null;
+        }
 
         private void OnHandClicked(int handIndex)
         {
@@ -174,7 +188,7 @@ namespace FateWeaver.Unity
                     return;
                 }
 
-                var presentation = PresentationFor(card)
+                var presentation = _presenter.For(card)
                     .WithExecutionOrder(placement.ExecutionOrder);
                 _selection.BeginPlacement(
                     handIndex, presentation, placement.InsertionIndex);
@@ -258,7 +272,7 @@ namespace FateWeaver.Unity
 
             _selection.ShowPlacementHover(
                 handIndex,
-                PresentationFor(card).WithExecutionOrder(placement.ExecutionOrder),
+                _presenter.For(card).WithExecutionOrder(placement.ExecutionOrder),
                 placement.InsertionIndex);
         }
 
@@ -326,57 +340,6 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        /// <summary>아트는 표현이므로 카탈로그가 갖는다. 플레이어 카드는 아트가 없고(색상 틴트
-        /// 아트 방향) 적 카드 셋만 항목을 갖는다.</summary>
-        private Sprite ArtFor(string id) => _cardArt != null ? _cardArt.ArtFor(id) : null;
-
-        private CardPresentation PresentationFor(OwnedCard card)
-        {
-            OwnerPresentation(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.FromDefinition(card.Def, ArtFor, name, color, isPartyOwned);
-        }
-
-        private CardPresentation PresentationFor(ExecutionCardInstance card)
-        {
-            OwnerPresentation(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.From(card, ArtFor, name, color, isPartyOwned);
-        }
-
-        private void OwnerPresentation(string ownerId, Side side, out string name, out Color color, out bool isPartyOwned)
-        {
-            name = null;
-            color = default;
-            isPartyOwned = false;
-            if (side == Side.Enemy)
-            {
-                return;
-            }
-
-            if (ownerId == null)
-            {
-                name = PlaytestKoreanText.PartyOwnerName();
-                color = PartyOwnerColor;
-                isPartyOwned = true;
-                return;
-            }
-
-            // 표시명은 콘텐츠에서 온다(세션이 JSON으로 만든 것). CharacterAsset은 색만 갖는다.
-            foreach (var member in _session.State.Party)
-            {
-                if (member.Id == ownerId)
-                {
-                    name = member.Name;
-                    break;
-                }
-            }
-
-            var character = CharacterFor(ownerId);
-            if (character != null)
-            {
-                color = character.Color;
-            }
-        }
-
         private CharacterAsset CharacterFor(string id)
         {
             foreach (var character in _party)
@@ -411,10 +374,12 @@ namespace FateWeaver.Unity
         private void RefreshAll()
         {
             _hand.SetCards(
-                _session.Hand.Select(PresentationFor).ToList(),
+                _session.Hand.Select(card => _presenter.For(card)).ToList(),
                 OnHandClicked,
                 OnHandHovered);
-            _rail.SetCards(_session.CurrentOrder.Select(PresentationFor).ToList(), OnZoneClicked);
+            _rail.SetCards(
+                _session.CurrentOrder.Select(card => _presenter.For(card)).ToList(),
+                OnZoneClicked);
             RefreshUnits();
             RefreshSelections();
             RefreshHudTexts();

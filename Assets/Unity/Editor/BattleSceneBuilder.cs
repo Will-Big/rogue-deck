@@ -188,9 +188,22 @@ namespace FateWeaver.Unity.Editor
             {
                 serializedParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
             }
-            so.FindProperty("_cardArt").objectReferenceValue =
+            var presenterGo = new GameObject("BattlePresenter");
+            presenterGo.transform.SetParent(controllerGo.transform, false);
+            var presenter = presenterGo.AddComponent<BattlePresenter>();
+            var presenterSo = new SerializedObject(presenter);
+            presenterSo.FindProperty("_cardArt").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<CardArtCatalog>(CardArtCatalogPath);
+            var presenterParty = presenterSo.FindProperty("_party");
+            presenterParty.arraySize = party.Length;
+            for (int i = 0; i < party.Length; i++)
+            {
+                presenterParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
+            }
 
+            presenterSo.ApplyModifiedPropertiesWithoutUndo();
+
+            so.FindProperty("_presenter").objectReferenceValue = presenter;
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
             so.FindProperty("_unitPrefab").objectReferenceValue = unitPrefab;
