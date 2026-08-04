@@ -9,17 +9,7 @@ namespace FateWeaver.Tests
     /// 잠근다. 리포지토리의 실제 콘텐츠를 읽는다.</summary>
     public class ContentBootstrapTests
     {
-        private static string ContentRoot()
-        {
-            var directory = TestContext.CurrentContext.TestDirectory;
-            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
-            return Path.Combine(directory, "Assets", "StreamingAssets", "Content");
-        }
+        private static string ContentRoot() => TestContent.Root();
 
         [Test]
         public void BootstrapLoadsEveryCatalog()

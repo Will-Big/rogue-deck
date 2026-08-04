@@ -156,17 +156,9 @@ namespace FateWeaver.Tests
         {
             WriteAll();
 
-            var directory = TestContext.CurrentContext.TestDirectory;
-            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
             var cards = CardContentLoader.Load(
                 CardContentFiles.ReadDirectory(Path.Combine(
-                    directory, "Assets", "StreamingAssets", "Content",
-                    CardContentFiles.CardsFolderName)),
+                    TestContent.Root(), CardContentFiles.CardsFolderName)),
                 AuthoringContext.Default());
             Assert.IsTrue(cards.Succeeded, string.Join("\n", cards.Errors));
 
@@ -199,14 +191,7 @@ namespace FateWeaver.Tests
         [Explicit]
         public void Export_to_repository()
         {
-            var directory = TestContext.CurrentContext.TestDirectory;
-            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
-            var root = Path.Combine(directory, "Assets", "StreamingAssets", "Content");
+            var root = TestContent.Root();
 
             var written = ContentExportWriter.WriteAll(root, PartyPrototypeCharacterSpecs.Build());
 

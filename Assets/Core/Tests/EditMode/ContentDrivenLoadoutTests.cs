@@ -1,4 +1,3 @@
-using System.IO;
 using System.Linq;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation;
@@ -14,15 +13,7 @@ namespace FateWeaver.Tests
 
         private static GameContent Content()
         {
-            var directory = TestContext.CurrentContext.TestDirectory;
-            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
-            var result = ContentBootstrap.Load(
-                Path.Combine(directory, "Assets", "StreamingAssets", "Content"));
+            var result = ContentBootstrap.Load(TestContent.Root());
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             return result.Content;
         }

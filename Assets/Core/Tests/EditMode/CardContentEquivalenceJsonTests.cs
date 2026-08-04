@@ -14,16 +14,7 @@ namespace FateWeaver.Tests
     public class CardContentEquivalenceJsonTests
     {
         private static string ContentDirectory()
-        {
-            var directory = TestContext.CurrentContext.TestDirectory;
-            while (directory != null && !Directory.Exists(Path.Combine(directory, "Assets")))
-            {
-                directory = Path.GetDirectoryName(directory);
-            }
-
-            Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
-            return Path.Combine(directory, "Assets", "StreamingAssets", "Content", "Cards");
-        }
+            => Path.Combine(TestContent.Root(), CardContentFiles.CardsFolderName);
 
         private static CardContentCatalog Catalog()
         {
