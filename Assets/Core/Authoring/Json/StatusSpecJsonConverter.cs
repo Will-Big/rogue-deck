@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Authoring.Statuses;
+using FateWeaver.Core.Status;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -12,7 +13,8 @@ namespace FateWeaver.Core.Authoring.Json
     {
         public const string KeyProperty = "key";
 
-        private static readonly Dictionary<string, Func<StatusSpec>> FactoryByKey = BuildFactories();
+        private static readonly Dictionary<string, Func<StatusSpec>> FactoryByKey =
+            BuildFactories(CombatRegistries.Statuses());
 
         public override StatusSpec ReadJson(
             JsonReader reader, Type objectType, StatusSpec existingValue,
@@ -43,23 +45,19 @@ namespace FateWeaver.Core.Authoring.Json
         public override void WriteJson(JsonWriter writer, StatusSpec value, JsonSerializer serializer)
             => JObject.FromObject(value, ContentJson.Plain).WriteTo(writer);
 
-        private static Dictionary<string, Func<StatusSpec>> BuildFactories()
+        /// <summary>판별자의 원본은 행동 레지스트리다. 등록된 상태만 저작될 수 있고, 스펙 타입은
+        /// 행동이 답한다 — 코드에 값 목록을 두지 않고도 다형 역직렬화가 성립한다.</summary>
+        internal static Dictionary<string, Func<StatusSpec>> BuildFactories(StatusRegistry behaviors)
         {
             var table = new Dictionary<string, Func<StatusSpec>>();
-            foreach (var spec in StatusContentDefaults.Specs())
+            foreach (var key in behaviors.RegisteredKeys)
             {
-                var key = spec.Key.Id;
-                if (table.ContainsKey(key))
+                var behavior = behaviors.Resolve(key);
+                var keyRef = StatusKeyRef.Of(key);
+                table.Add(key.Id, () =>
                 {
-                    throw new InvalidOperationException(
-                        "Duplicate status key '" + key + "' in StatusContentDefaults.");
-                }
-
-                var prototype = spec;
-                table.Add(key, () =>
-                {
-                    var created = prototype.NewInstance();
-                    created.Key = prototype.Key;
+                    var created = behavior.NewSpec();
+                    created.Key = keyRef;
                     return created;
                 });
             }

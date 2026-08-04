@@ -1,3 +1,5 @@
+using FateWeaver.Core.Authoring.Statuses;
+
 namespace FateWeaver.Core.Status
 {
     /// <summary>취약: the holder takes more damage, by the multiplier in this combat's StatusRules
@@ -7,6 +9,8 @@ namespace FateWeaver.Core.Status
     {
         public override StatusKey Key => StatusKeys.Vulnerable;
         public override StatusScope Scope => StatusScope.Entity;
+
+        public override StatusSpec NewSpec() => new MultiplierStatusSpec();
 
         public override int ModifyIncomingDamage(int damage, StatusContext ctx)
             => ctx.Rules.For(Key).Apply(damage);

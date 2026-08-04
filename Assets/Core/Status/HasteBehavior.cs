@@ -1,3 +1,5 @@
+using FateWeaver.Core.Authoring.Statuses;
+
 namespace FateWeaver.Core.Status
 {
     /// <summary>가속: the holder's cards resolve sooner (executionOrder -= the status's own delta, from
@@ -6,6 +8,8 @@ namespace FateWeaver.Core.Status
     {
         public override StatusKey Key => StatusKeys.Haste;
         public override StatusScope Scope => StatusScope.Entity;
+
+        public override StatusSpec NewSpec() => new ExecutionOrderStatusSpec();
 
         public override int ModifyExecutionOrder(int executionOrder, StatusContext ctx)
             => executionOrder + ctx.Content.ExecutionOrderDeltaOf(Key);

@@ -1,3 +1,5 @@
+using FateWeaver.Core.Authoring.Statuses;
+
 namespace FateWeaver.Core.Status
 {
     /// <summary>약화: the holder deals less damage, by the multiplier in this combat's StatusRules
@@ -8,6 +10,8 @@ namespace FateWeaver.Core.Status
     {
         public override StatusKey Key => StatusKeys.Weak;
         public override StatusScope Scope => StatusScope.Entity;
+
+        public override StatusSpec NewSpec() => new MultiplierStatusSpec();
 
         public override int ModifyOutgoingDamage(int damage, StatusContext ctx)
             => ctx.Rules.For(Key).Apply(damage);

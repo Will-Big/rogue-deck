@@ -25,6 +25,27 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void SpecTypeComesFromTheBehaviorRegistry()
+        {
+            var behaviors = CombatRegistries.Statuses();
+
+            Assert.AreEqual(
+                typeof(PoisonStatusSpec), behaviors.Resolve(StatusKeys.Poison).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(ExecutionOrderStatusSpec), behaviors.Resolve(StatusKeys.Slow).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(ExecutionOrderStatusSpec), behaviors.Resolve(StatusKeys.Haste).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(MultiplierStatusSpec), behaviors.Resolve(StatusKeys.Vulnerable).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(MultiplierStatusSpec), behaviors.Resolve(StatusKeys.Weak).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(MultiplierStatusSpec), behaviors.Resolve(StatusKeys.Damaged).NewSpec().GetType());
+            Assert.AreEqual(
+                typeof(StatusSpec), behaviors.Resolve(StatusKeys.Block).NewSpec().GetType());
+        }
+
+        [Test]
         public void RoundTripsPoisonGrowth()
         {
             var original = new PoisonStatusSpec

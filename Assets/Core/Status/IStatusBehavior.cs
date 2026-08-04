@@ -81,6 +81,11 @@ namespace FateWeaver.Core.Status
         /// <summary>이번 턴 이 상태의 발동을 막는다. trigger_status가 즉시 발동시킨 뒤 호출하며,
         /// 어떤 마커를 쓰는지는 상태 자신만 안다 — 카드가 알 필요가 없다.</summary>
         void SuppressThisTurn(StatusBag holderBag);
+
+        /// <summary>이 상태를 저작할 때 쓰는 스펙 타입의 빈 인스턴스. JSON 판별자가 이걸로
+        /// "poison → PoisonStatusSpec"을 안다 — 스펙 **모양**은 코드가, **값**은 JSON이 갖는다.
+        /// 리플렉션 대신 각 행동이 스스로 답한다 (규칙 9).</summary>
+        Authoring.Statuses.StatusSpec NewSpec();
     }
 
     /// <summary>Base class with no-op hook defaults. Concrete statuses override what they use.
@@ -102,5 +107,8 @@ namespace FateWeaver.Core.Status
         public virtual void OnTurnEnd(StatusTickContext ctx) { }
         public virtual void OnHolderDied(StatusDeathContext ctx) { }
         public virtual void SuppressThisTurn(StatusBag holderBag) { }
+
+        public virtual Authoring.Statuses.StatusSpec NewSpec()
+            => new Authoring.Statuses.StatusSpec();
     }
 }

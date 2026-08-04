@@ -1,3 +1,4 @@
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Events;
 
 namespace FateWeaver.Core.Status
@@ -12,6 +13,8 @@ namespace FateWeaver.Core.Status
         public override StatusKey Key => StatusKeys.Poison;
         public override StatusScope Scope => StatusScope.Entity;
         public override bool StacksMagnitude => true;
+
+        public override StatusSpec NewSpec() => new PoisonStatusSpec();
 
         public override void OnTurnEnd(StatusTickContext ctx)
         {
