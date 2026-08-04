@@ -67,7 +67,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_executed_condition_skips_owner_died_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("ally", "Ally", maxHp: 3));
             state.Enemies.Add(new Enemy("goblin", 100));
@@ -100,7 +100,7 @@ namespace FateWeaver.Tests
         {
             // --- NoValidTarget case ---
             {
-                var state = new CombatState();
+                var state = new CombatState(TestContent.Statuses());
                 state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
@@ -125,7 +125,7 @@ namespace FateWeaver.Tests
 
             // --- StatusIntercepted case ---
             {
-                var state = new CombatState();
+                var state = new CombatState(TestContent.Statuses());
                 state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
@@ -153,7 +153,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Next_adjacent_condition_keeps_existing_frozen_order_semantics()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 
@@ -181,7 +181,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Same_target_uses_last_executed_player_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblinA", 100));
 
@@ -208,7 +208,7 @@ namespace FateWeaver.Tests
         [Test]
         public void No_preceding_ignores_cancelled_cards_but_no_following_keeps_frozen_future_slots()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 

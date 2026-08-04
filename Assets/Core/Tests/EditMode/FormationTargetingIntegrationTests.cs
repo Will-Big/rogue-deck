@@ -55,7 +55,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Later_effect_does_not_promote_a_new_enemy_after_captured_front_two_die()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(MemberHp);
             state.Enemies.Add(new Enemy("a", 2));
             state.Enemies.Add(new Enemy("b", 2));
@@ -89,7 +89,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_move_changes_only_party_order()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("validation_party_a", "[검증] A", MemberHp));
             state.Party.Add(new PartyMember("validation_party_b", "[검증] B", MemberHp));
@@ -110,7 +110,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_move_changes_only_enemy_order()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("validation_party_a", "[검증] A", MemberHp));
             state.Party.Add(new PartyMember("validation_party_b", "[검증] B", MemberHp));
@@ -131,7 +131,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Movement_clamps_to_own_formation_bounds()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("validation_party_a", "[검증] A", MemberHp));
             state.Party.Add(new PartyMember("validation_party_b", "[검증] B", MemberHp));
@@ -156,7 +156,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Later_frontmost_attack_uses_formation_after_earlier_move()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var memberA = new PartyMember("validation_party_a", "[검증] A", MemberHp);
             var memberB = new PartyMember("validation_party_b", "[검증] B", MemberHp);
@@ -200,7 +200,7 @@ namespace FateWeaver.Tests
 
         private static void AssertInvalidPlayerOwnerDoesNotMove(string ownerId, bool deadOwner)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var front = new PartyMember("validation_party_front", "[검증] 전열", MemberHp);
             state.Party.Add(front);
@@ -234,7 +234,7 @@ namespace FateWeaver.Tests
 
         private static void AssertInvalidEnemyOwnerDoesNotMove(string ownerId, bool deadOwner)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var front = new Enemy("validation_enemy_front", MemberHp);
             state.Enemies.Add(front);
             if (deadOwner)

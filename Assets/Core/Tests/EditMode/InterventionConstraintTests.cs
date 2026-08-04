@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     {
         private static CombatState StateWithZone(params ExecutionCardInstance[] cards)
         {
-            var state = new CombatState { FateEnergy = 10 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 10 };
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             foreach (var card in cards)

@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
         [Test]
         public void ChangeExecutionOrder_spends_cost_and_changes_target_executionOrder()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
         [Test]
         public void ChangeExecutionOrder_rejects_when_fate_energy_is_insufficient()
         {
-            var state = new CombatState { FateEnergy = 0 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 0 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
@@ -61,7 +61,7 @@ namespace FateWeaver.Tests
         [Test]
         public void ChangeExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
@@ -100,7 +100,7 @@ namespace FateWeaver.Tests
         [Test]
         public void SwapExecutionOrder_spends_cost_and_swaps_two_target_executionOrders()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
             var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
@@ -123,7 +123,7 @@ namespace FateWeaver.Tests
         [Test]
         public void SwapExecutionOrder_can_turn_basic_condition_into_success_before_resolution()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var enemy = Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1));
@@ -161,7 +161,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Lock_spends_cost_and_locks_target_card()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 2, new EffectData(EffectKeys.Damage, 2));
             var action = new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1, effectValue: 0);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
@@ -176,7 +176,7 @@ namespace FateWeaver.Tests
         [Test]
         public void ChangeExecutionOrder_rejects_locked_target()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             card.IsLocked = true;
             var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
@@ -193,7 +193,7 @@ namespace FateWeaver.Tests
         [Test]
         public void SwapExecutionOrder_rejects_when_either_target_is_locked()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
             second.IsLocked = true;
@@ -217,7 +217,7 @@ namespace FateWeaver.Tests
 
         private static CombatState CloneStateForResolution(CombatState source)
         {
-            var clone = new CombatState
+            var clone = new CombatState(source.StatusContent)
             {
                 FateEnergy = source.FateEnergy,
                 FateEnergyPerTurn = source.FateEnergyPerTurn,

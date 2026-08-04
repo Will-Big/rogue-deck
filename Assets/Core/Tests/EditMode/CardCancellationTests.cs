@@ -42,7 +42,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Owner_death_marks_only_pending_cards_owned_by_that_member()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("warrior", "Warrior", maxHp: 5));
             state.Party.Add(new PartyMember("mage", "Mage", maxHp: 5));
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Cancelled_card_emits_no_card_resolved_event()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             // No enemies -> the player card's target can never resolve.
             var strike = Card("strike", Side.Player, executionOrder: 1, damage: 4);
@@ -90,7 +90,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Card_cancelled_event_contains_instance_owner_and_reason()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var card = Card("sealed_blade", Side.Player, executionOrder: 1, damage: 4, ownerId: "warrior", instanceId: 42);
             // Pre-cancelled before resolution starts (step 6, part 1 of the death-sweep order).
@@ -109,7 +109,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Hp_reaching_exactly_one_without_spending_a_charge_emits_no_deaths_door_event()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
             state.Party.Add(hero);
@@ -128,7 +128,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Charge_decrease_emits_deaths_door_even_when_hp_was_already_one_before_a_later_effect()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
             state.Party.Add(hero);
@@ -155,7 +155,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Kill_then_no_target_emits_cancellation_before_death_and_owner_cancellation()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var memberA = new PartyMember("a", "A", maxHp: 5, surviveCharges: 0);
             state.Party.Add(memberA);
@@ -206,7 +206,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Duplicate_card_ids_are_distinguished_by_instance_id()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 100));
 

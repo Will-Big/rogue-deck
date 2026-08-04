@@ -36,7 +36,7 @@ namespace FateWeaver.Tests
             var statuses = new StatusRegistry();
             statuses.Register(recorder);
 
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 3));
             state.Enemies[0].Statuses.Add(RecorderKey, StatusLifetime.Permanent);
@@ -62,7 +62,7 @@ namespace FateWeaver.Tests
             statuses.Register(recorder);
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 2));
             state.Enemies[0].Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
@@ -85,7 +85,7 @@ namespace FateWeaver.Tests
             statuses.Register(recorder);
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var member = state.AddSoloPlayer(3);
             member.Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
             member.Statuses.Add(RecorderKey, StatusLifetime.Permanent);

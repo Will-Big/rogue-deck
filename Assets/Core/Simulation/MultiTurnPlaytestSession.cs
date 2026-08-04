@@ -26,11 +26,7 @@ namespace FateWeaver.Simulation
             MultiTurnScenario scenario, StatusContentCatalog statusContent)
         {
             _scenario = scenario;
-            _state = new CombatState
-            {
-                StatusContent = statusContent
-                    ?? throw new ArgumentNullException(nameof(statusContent))
-            };
+            _state = new CombatState(statusContent);
             _state.AddSoloPlayer(scenario.PlayerHp);
             foreach (var enemy in scenario.Enemies)
             {

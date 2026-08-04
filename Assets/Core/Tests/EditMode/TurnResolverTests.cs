@@ -28,7 +28,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Resolves_in_executionOrder_order_and_emits_timeline()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             // player card has higher executionOrder (2) than enemy card (1) => enemy resolves first
@@ -53,7 +53,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Reports_win_when_all_enemies_dead()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 4));
             state.Zone.Add(Card("strike", Side.Player, 1, 5));
@@ -66,7 +66,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Reports_lose_when_player_dead()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(3);
             state.Enemies.Add(new Enemy("goblin", 12));
             state.Zone.Add(Card("jab", Side.Enemy, 1, 5)); // 5 >= 3 player HP
@@ -80,7 +80,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Empty_zone_still_brackets_turn()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
 
@@ -97,7 +97,7 @@ namespace FateWeaver.Tests
         {
             CombatState Build()
             {
-                var s = new CombatState();
+                var s = new CombatState(TestContent.Statuses());
                 s.AddSoloPlayer(30);
                 s.Enemies.Add(new Enemy("goblin", 12));
                 s.Zone.Add(Card("strike", Side.Player, 2, 5));
@@ -116,7 +116,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Multi_target_effect_clears_a_previous_single_target_from_card_resolved()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("front", 12));
             state.Enemies.Add(new Enemy("back", 12));

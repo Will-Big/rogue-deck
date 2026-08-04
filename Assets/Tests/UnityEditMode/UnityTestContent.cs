@@ -9,18 +9,13 @@ namespace FateWeaver.Tests.UnityEditMode
     /// 루트는 프로덕션의 UnityContentRoot에서 받는다 — 경로 상수를 새로 만들지 않는다.</summary>
     public static class UnityTestContent
     {
-        private static StatusContentCatalog _statuses;
-
+        /// <summary>호출마다 새로 만든다 — 코어의 TestContent와 같은 이유로(가변 Rules) 인스턴스를
+        /// 공유하지 않는다.</summary>
         public static StatusContentCatalog Statuses()
         {
-            if (_statuses == null)
-            {
-                var result = ContentBootstrap.LoadStatuses(UnityContentRoot.Path);
-                Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-                _statuses = result.Catalog;
-            }
-
-            return _statuses;
+            var result = ContentBootstrap.LoadStatuses(UnityContentRoot.Path);
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            return result.Catalog;
         }
     }
 }

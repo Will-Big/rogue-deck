@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Back_two_returns_up_to_two_distinct_living_enemies_in_formation_order()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Enemies.Add(new Enemy("a", 10));
             state.Enemies.Add(new Enemy("b", 10));
             state.Enemies.Add(new Enemy("c", 10));
@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
         [TestCase(TargetSelector.All)]
         public void One_living_enemy_range_returns_that_enemy_once(TargetSelector selector)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var only = new Enemy("only", 10);
             state.Enemies.Add(only);
 
@@ -57,7 +57,7 @@ namespace FateWeaver.Tests
 
         private static CombatState TwoEnemies()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("front", 10));
             state.Enemies.Add(new Enemy("back", 10));
@@ -98,7 +98,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_all_selector_damages_every_living_party_member_and_sums_damage_dealt()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Add(new PartyMember("a", "A", 10));
             state.Party.Add(new PartyMember("b", "B", 10));
             var dead = new PartyMember("c", "C", 10);
@@ -146,7 +146,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Party_by_selector_applies_status_to_front_ally()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Add(new PartyMember("a", "A", 20));
             state.Party.Add(new PartyMember("b", "B", 20));
             state.Enemies.Add(new Enemy("goblin", 10));
@@ -168,7 +168,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Block_applications_stack_within_a_turn()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             var block3 = new CardDefinition("b3", "방어3", Side.Player, 4,

@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Turn_end_tick_damages_enemy_and_emits_event_before_turn_ended()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             state.Enemies[0].Statuses.Add(TickKey, StatusLifetime.Permanent, 3);
@@ -66,7 +66,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Dead_holder_is_excluded_from_ticks()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("dead", 0));   // 이미 사망
             state.Enemies[0].Statuses.Add(TickKey, StatusLifetime.Permanent, 3);
@@ -81,7 +81,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Party_ticks_run_before_enemy_ticks()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var member = state.AddSoloPlayer(20);
             member.Statuses.Add(TickKey, StatusLifetime.Permanent, 1);
             member.Statuses.Add(MarkerKey, StatusLifetime.ThisTurn);

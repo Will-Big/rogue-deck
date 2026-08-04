@@ -37,7 +37,7 @@ namespace FateWeaver.Tests
         [Test]
         public void AdjacentCardHasEffect_matches_damage_in_a_composite_card_only()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var subject = Card("subject", Side.Player, 1, Block());
             var hybrid = Card("hybrid", Side.Enemy, 2,
                 new EffectData(EffectKeys.Damage, 3), Block());
@@ -55,7 +55,7 @@ namespace FateWeaver.Tests
         [Test]
         public void PreviousExecutedCardHasEffect_rejects_a_block_only_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var blockOnly = Card("block", Side.Player, 1, Block());
             var subject = Card("subject", Side.Player, 2,
                 new EffectData(EffectKeys.Damage, 1));
@@ -73,7 +73,7 @@ namespace FateWeaver.Tests
         [Test]
         public void BeforeNextEnemyDamageCard_ignores_an_earlier_block_only_enemy_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var blockOnly = Card("block", Side.Enemy, 1, Block());
             var subject = Card("subject", Side.Player, 2,
                 new EffectData(EffectKeys.Damage, 1));
@@ -88,7 +88,7 @@ namespace FateWeaver.Tests
         [Test]
         public void FirstToTrigger_succeeds_only_for_first_resolving_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var early = Card("early", Side.Player, 1);
             var late = Card("late", Side.Player, 2);
             state.Zone.Add(late);
@@ -102,7 +102,7 @@ namespace FateWeaver.Tests
         [Test]
         public void WithinNth_succeeds_for_cards_before_the_nth_slot()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var first = Card("first", Side.Player, 1);
             var second = Card("second", Side.Player, 2);
             var third = Card("third", Side.Player, 3);
@@ -119,7 +119,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Side_only_conditions_match_the_requested_side()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var setup = Card("setup", Side.Player, 1);
             var strike = Card("strike", Side.Player, 2);
             var enemy = Card("jab", Side.Enemy, 3);
@@ -146,7 +146,7 @@ namespace FateWeaver.Tests
         [Test]
         public void BeforeNextEnemyDamageCard_returns_basic_when_an_enemy_damage_card_already_resolved()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var enemy = Card("jab", Side.Enemy, 1);
             var player = Card("counter", Side.Player, 2);
             state.Zone.Add(player);
@@ -160,7 +160,7 @@ namespace FateWeaver.Tests
         [Test]
         public void SameTarget_succeeds_when_previous_player_card_targets_same_entity()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var mark = Card("mark", Side.Player, 1, targetId: "goblin");
             var strike = Card("strike", Side.Player, 2, targetId: "goblin");
             var other = Card("other", Side.Player, 3, targetId: "slime");
@@ -177,7 +177,7 @@ namespace FateWeaver.Tests
         [Test]
         public void NoPrecedingCardOfSide_checks_all_earlier_cards()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var enemyGuard = Card("enemy_guard", Side.Enemy, 1);
             var slyJab = Card("sly_jab", Side.Enemy, 2);
             var player = Card("slash", Side.Player, 3);
@@ -197,7 +197,7 @@ namespace FateWeaver.Tests
         [Test]
         public void NoFollowingCardOfSide_checks_all_later_cards()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var enemyGuard = Card("enemy_guard", Side.Enemy, 1);
             var smash = Card("warden_smash", Side.Enemy, 2);
             var player = Card("slash", Side.Player, 3);
@@ -222,7 +222,7 @@ namespace FateWeaver.Tests
         [Test]
         public void AllOf_uses_the_lowest_tier_from_its_child_conditions()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var mark = Card("mark", Side.Player, 1);
             var chain = Card("chain", Side.Player, 2);
             state.Zone.Add(mark);

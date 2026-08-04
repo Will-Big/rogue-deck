@@ -67,11 +67,7 @@ namespace FateWeaver.Simulation
         private CombatState BuildState(
             ScenarioDefinition scenario, StatusContentCatalog statusContent)
         {
-            var state = new CombatState
-            {
-                StatusContent = statusContent,
-                FateEnergy = scenario.FateEnergy
-            };
+            var state = new CombatState(statusContent) { FateEnergy = scenario.FateEnergy };
             state.AddSoloPlayer(scenario.PlayerHp);
 
             foreach (var enemy in scenario.Enemies)

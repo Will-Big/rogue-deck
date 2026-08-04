@@ -17,7 +17,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_damage_hits_first_enemy()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var ctx = new EffectContext { Card = Card(Side.Player, 5), State = state, EffectValue = 5 };
@@ -32,7 +32,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Player_damage_honors_card_target_id()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("a", 10));
             state.Enemies.Add(new Enemy("b", 10));
@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_damage_hits_player()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var ctx = new EffectContext { Card = Card(Side.Enemy, 4), State = state, EffectValue = 4 };

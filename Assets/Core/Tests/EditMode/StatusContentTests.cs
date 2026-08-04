@@ -208,7 +208,7 @@ namespace FateWeaver.Tests
         {
             public static CombatState WithStatusContent()
             {
-                var state = new CombatState();
+                var state = new CombatState(TestContent.Statuses());
                 state.AddSoloPlayer(20);
                 state.Enemies.Add(new Enemy("enemy", 20));
                 return state;

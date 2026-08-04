@@ -36,7 +36,7 @@ namespace FateWeaver.Tests
         public void Early_onset_ticks_now_and_suppresses_the_turn_end_tick()
         {
             // 조기 발병 모양: 독 1 부여 → 즉시 발동 → 이번 턴 종료에는 발동 없음.
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("early_onset", "조기 발병", Side.Player, 3, new[]
@@ -63,7 +63,7 @@ namespace FateWeaver.Tests
         {
             // 마커(PoisonDormant)는 ThisTurn이라 EndOfTurn 정리에서 사라진다 — TurnResolver.Resolve로
             // 턴 전체를 돌리면 심어졌는지 확인할 수 없으므로, 핸들러를 직접 호출해 정리 전 상태를 본다.
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             var enemy = new Enemy("goblin", 20);
             state.Enemies.Add(enemy);

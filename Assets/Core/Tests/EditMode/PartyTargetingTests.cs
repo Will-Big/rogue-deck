@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Front_two_returns_up_to_two_distinct_living_members_in_order()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var deadFront = new PartyMember("a", "A", maxHp: 10) { Hp = 0 };
             state.Party.Add(deadFront);
             state.Party.Add(new PartyMember("b", "B", maxHp: 10));
@@ -31,7 +31,7 @@ namespace FateWeaver.Tests
         [TestCase(TargetSelector.All)]
         public void One_living_member_range_returns_that_member_once(TargetSelector selector)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var only = new PartyMember("only", "Only", maxHp: 10);
             state.Party.Add(only);
 
@@ -57,7 +57,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Dead_explicit_ally_does_not_fall_back_to_owner_or_front()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 10);
             var b = new PartyMember("b", "B", maxHp: 10);
@@ -83,7 +83,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Missing_owner_in_multi_party_self_effect_does_not_fall_back_to_front()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 10);
             var b = new PartyMember("b", "B", maxHp: 10);
@@ -105,7 +105,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Enemies.Add(new Enemy("goblin", 20));
 
             var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3);
@@ -122,7 +122,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_self_without_owner_cancels_when_multiple_enemies_exist()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Enemies.Add(new Enemy("a", 20));
             state.Enemies.Add(new Enemy("b", 20));
 
@@ -140,7 +140,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Single_party_member_self_effect_resolves_without_an_owner_id()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var hero = new PartyMember("hero", "Hero", maxHp: 10); // not the solo "player" id
             state.Party.Add(hero);
             state.Enemies.Add(new Enemy("goblin", 20));
@@ -162,7 +162,7 @@ namespace FateWeaver.Tests
         [Test]
         public void All_party_status_creates_independent_instances()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 20);
             var b = new PartyMember("b", "B", maxHp: 20);
@@ -194,7 +194,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Block_and_vulnerable_on_a_do_not_modify_damage_to_b()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 20);
             var b = new PartyMember("b", "B", maxHp: 20);
@@ -222,7 +222,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Position_selector_ignores_dead_members_without_reindexing_the_other_side()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 10);
             var b = new PartyMember("b", "B", maxHp: 10);
@@ -273,7 +273,7 @@ namespace FateWeaver.Tests
         [Test]
         public void IsValidExplicitAllyTarget_rejects_dead_or_missing_ids()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             var a = new PartyMember("a", "A", maxHp: 10);
             var b = new PartyMember("b", "B", maxHp: 10);

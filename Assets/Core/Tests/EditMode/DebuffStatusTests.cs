@@ -58,7 +58,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Weak_reduces_outgoing_damage_by_the_rule_multiplier()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             var enemy = new Enemy("goblin", 30);
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Weak_floors_and_does_not_guarantee_minimum_damage()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             var enemy = new Enemy("goblin", 30);
@@ -90,7 +90,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Weak_stacking_extends_duration_not_intensity()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(4)); // 재부여 = 수명 갱신
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Weak_then_vulnerable_floors_at_each_stage()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             var enemy = new Enemy("goblin", 30);
@@ -124,7 +124,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Weak_on_the_target_does_not_reduce_damage_it_receives()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2)); // 대상 쪽 약화는 무관
@@ -139,7 +139,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Damaged_reduces_block_gained_by_the_rule_multiplier()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
             state.Enemies.Add(new Enemy("goblin", 30));
@@ -153,7 +153,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Damaged_does_not_reduce_other_gained_statuses()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
             state.Enemies.Add(new Enemy("goblin", 30));
@@ -172,7 +172,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Damaged_on_someone_else_does_not_reduce_the_block_this_holder_gains()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));

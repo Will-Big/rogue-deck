@@ -33,7 +33,7 @@ namespace FateWeaver.Simulation
 
         public MultiTurnResult Run(MultiTurnScenario scenario)
         {
-            var state = new CombatState { StatusContent = _statusContent };
+            var state = new CombatState(_statusContent);
             state.AddSoloPlayer(scenario.PlayerHp);
             foreach (var enemy in scenario.Enemies)
             {

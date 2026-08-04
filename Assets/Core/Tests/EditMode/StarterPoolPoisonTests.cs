@@ -13,7 +13,7 @@ namespace FateWeaver.Tests
     {
         private static CombatState NewState(params Enemy[] enemies)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             foreach (var enemy in enemies) state.Enemies.Add(enemy);
             return state;

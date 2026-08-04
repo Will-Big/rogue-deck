@@ -31,7 +31,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Conditional_damage_uses_success_amount_when_condition_succeeds()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             state.Zone.Add(Card(
@@ -51,7 +51,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Conditional_damage_uses_default_amount_when_condition_is_basic()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             state.Zone.Add(Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1)));
@@ -72,7 +72,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_disruption_reward_nullified_is_consumed_after_downgrading_player()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             var enemy = Card("wrist_cut", Side.Enemy, 1,
@@ -91,7 +91,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Reward_nullified_card_uses_default_amount_even_when_condition_would_succeed()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
             state.Zone.Add(Card("wrist_cut", Side.Enemy, 1,
@@ -110,7 +110,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Mark_success_skips_block_only_card_and_bonuses_next_damage_card()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var mark = new ExecutionCardInstance(new CardDefinition(
@@ -160,7 +160,7 @@ namespace FateWeaver.Tests
             // Pinning test for the deliberate rule (DamageHandler.Apply, All branch): a pending
             // damage-card bonus raises the CARD's damage value, so with TargetSelector.All it applies
             // to every target independently, not as a one-time pool split across hits.
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("a", 20));
             state.Enemies.Add(new Enemy("b", 20));

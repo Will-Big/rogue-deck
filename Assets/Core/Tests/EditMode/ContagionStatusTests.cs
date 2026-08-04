@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Killing_a_contagious_poisoned_enemy_transfers_poison_to_front_living_enemy()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("victim", 2));
             state.Enemies.Add(new Enemy("next", 10));
@@ -54,7 +54,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Contagion_without_poison_does_nothing()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("victim", 2));
             state.Enemies.Add(new Enemy("next", 10));
@@ -73,7 +73,7 @@ namespace FateWeaver.Tests
         [Test]
         public void No_living_recipient_means_no_transfer()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("victim", 2));   // 유일한 적
             state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 4);

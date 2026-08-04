@@ -104,7 +104,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Heal_card_restores_owner_party_member_hp_through_turn_resolver()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             var def = new CardDefinition(
                 "heal_touch", "치유의 손길", Side.Player, 1,

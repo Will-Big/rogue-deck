@@ -114,10 +114,8 @@ namespace FateWeaver.Simulation
             IReadOnlyList<PartyMemberLoadout> party,
             PartyTuning partyTuning)
         {
-            _state = new CombatState
+            _state = new CombatState(statusContent)
             {
-                StatusContent = statusContent
-                    ?? throw new ArgumentNullException(nameof(statusContent)),
                 FateEnergyPerTurn = fateEnergyPerTurn,
                 RngSeed = seed
             };

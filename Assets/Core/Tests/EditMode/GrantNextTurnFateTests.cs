@@ -12,7 +12,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Effect_banks_fate_for_the_next_player_turn()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             var def = new CardDefinition("distill", "증류", Side.Player, 5,

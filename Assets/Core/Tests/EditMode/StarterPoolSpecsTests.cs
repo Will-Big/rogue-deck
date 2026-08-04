@@ -38,7 +38,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Quick_cover_blocks_the_front_ally_not_the_owner()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.Party.Add(new PartyMember("front", "F", 20));
             state.Party.Add(new PartyMember("back", "B", 20));
             state.Enemies.Add(new Enemy("goblin", 30));
@@ -78,7 +78,7 @@ namespace FateWeaver.Tests
 
         private static CombatState NewState()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 30));
             return state;

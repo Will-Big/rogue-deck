@@ -80,7 +80,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_turns_based_modifies_hit_without_being_consumed()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
@@ -98,7 +98,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_until_consumed_applies_once_then_is_gone()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.UntilConsumed(1));
@@ -116,7 +116,7 @@ namespace FateWeaver.Tests
         [Test]
         public void CardInstance_status_until_consumed_nullifies_one_resolution_then_is_gone()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var card = Card("strike", Side.Player, 1, 5);
@@ -134,7 +134,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Without_status_registry_incoming_damage_is_unmodified()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 20);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(1));
@@ -149,7 +149,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_multiplies_before_block_absorbs_when_block_applied_first()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, 5);   // 방어가 먼저
@@ -168,7 +168,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_and_block_result_is_independent_of_apply_order()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2)); // 취약이 먼저
@@ -185,7 +185,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_multiplier_comes_from_the_combat_status_rules()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.StatusRules.Set(StatusKeys.Vulnerable, new StatusRule { MultiplierPercent = 200 });
             var enemy = new Enemy("goblin", 30);
@@ -215,7 +215,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_multiplier_floors_odd_damage()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             var enemy = new Enemy("goblin", 30);
             enemy.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));

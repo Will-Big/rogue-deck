@@ -20,7 +20,7 @@ namespace FateWeaver.Tests
 
         private static CombatState OneEnemy(int hp = 20)
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", hp));
             return state;

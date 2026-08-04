@@ -26,7 +26,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Applies_multiple_fate_plays_in_order()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
@@ -46,7 +46,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Stops_on_insufficient_fate_energy_and_keeps_previous_changes()
         {
-            var state = new CombatState { FateEnergy = 1 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 1 };
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
@@ -66,7 +66,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Can_apply_swap_executionOrder_play_through_resolver()
         {
-            var state = new CombatState { FateEnergy = 2 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 2 };
             var first = Card("first", 1);
             var second = Card("second", 5);
             var registry = Registry();
@@ -88,7 +88,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Stops_when_a_play_targets_a_locked_card_and_keeps_previous_changes()
         {
-            var state = new CombatState { FateEnergy = 3 };
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var first = Card("first", 5);
             var second = Card("second", 3);
             var plays = new[]

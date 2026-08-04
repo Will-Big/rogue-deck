@@ -28,12 +28,18 @@ namespace FateWeaver.Core.Combat
         public int PendingNextTurnFateEnergy { get; set; }
         public int RngSeed { get; set; }
 
-        /// <summary>이 전투의 상태 저작 콘텐츠. 규칙(배율)과 수명 종류의 단일 출처다. 전투 단위로
-        /// 존재하므로 전투 중 변경이 런으로 새지 않는다. 런 지속 변경(유물 등)은 전투 시작 시 이 값을
-        /// 시딩해 반영한다. 파일 없이 도는 헤드리스 테스트와 하니스는 StatusContentDefaults.Catalog()로
-        /// 폴백한다; Unity 런타임은 로더가 파일에서 만든 카탈로그를 주입한다.</summary>
-        public Authoring.Statuses.StatusContentCatalog StatusContent { get; set; }
-            = Authoring.Statuses.StatusContentDefaults.Catalog();
+        /// <summary>이 전투의 상태 저작 콘텐츠. 규칙(배율)과 수명 종류의 단일 출처이며 원본은
+        /// Content/Statuses/*.json이다. 전투 단위로 존재하므로 전투 중 변경이 런으로 새지 않는다 —
+        /// 런 지속 변경(유물 등)은 전투 시작 전에 카탈로그를 만들어 넘기는 방식으로 반영한다.</summary>
+        public Authoring.Statuses.StatusContentCatalog StatusContent { get; }
+
+        /// <summary>상태 콘텐츠 없이는 전투가 성립하지 않는다 — 규칙 수치가 전부 거기 있다.
+        /// 기본값을 두면 코드가 JSON과 같은 값을 두 벌 갖게 되므로 생성자에서 요구한다.</summary>
+        public CombatState(Authoring.Statuses.StatusContentCatalog statusContent)
+        {
+            StatusContent = statusContent
+                ?? throw new ArgumentNullException(nameof(statusContent));
+        }
 
         public Status.StatusRuleSet StatusRules => StatusContent.Rules;
 
