@@ -136,13 +136,23 @@ namespace FateWeaver.Unity.Editor
             Place((RectTransform)message.transform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(760f, 36f));
 
             // --- piles: draw bottom-left, discard bottom-right, full deck top-right (spec §2) ---
+            // 컨테이너를 캔버스와 정확히 같은 사각형으로 늘려 자식 앵커 계산이 바뀌지 않게 한다.
+            var pilesRoot = BattleUiKit.Rect(canvasRect, "Piles");
+            BattleUiKit.Stretch(pilesRoot);
             var buttonSize = new Vector2(112f, 72f);
-            var drawPile = PileView.Create(canvasRect, overlay, "뽑을 덱", cardPrefab, buttonSize);
+            var drawPile = PileView.Create(pilesRoot, overlay, "뽑을 덱", cardPrefab, buttonSize);
             Place((RectTransform)drawPile.transform, new Vector2(0f, 0f), new Vector2(90f, 70f), buttonSize);
-            var discardPile = PileView.Create(canvasRect, overlay, "버린 덱", cardPrefab, buttonSize);
+            var discardPile = PileView.Create(pilesRoot, overlay, "버린 덱", cardPrefab, buttonSize);
             Place((RectTransform)discardPile.transform, new Vector2(1f, 0f), new Vector2(-90f, 70f), buttonSize);
-            var fullDeck = PileView.Create(canvasRect, overlay, "전체 덱", cardPrefab, buttonSize);
+            var fullDeck = PileView.Create(pilesRoot, overlay, "전체 덱", cardPrefab, buttonSize);
             Place((RectTransform)fullDeck.transform, new Vector2(1f, 1f), new Vector2(-90f, -60f), buttonSize);
+
+            var piles = pilesRoot.gameObject.AddComponent<BattlePilesView>();
+            var pilesSo = new SerializedObject(piles);
+            pilesSo.FindProperty("_drawPile").objectReferenceValue = drawPile;
+            pilesSo.FindProperty("_discardPile").objectReferenceValue = discardPile;
+            pilesSo.FindProperty("_fullDeck").objectReferenceValue = fullDeck;
+            pilesSo.ApplyModifiedPropertiesWithoutUndo();
 
             // --- buttons ---
             var turnButton = MakeButton(canvasRect, "TurnButton", "턴 실행", 24f, out var turnLabel);
@@ -213,9 +223,7 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_hand").objectReferenceValue = hand;
             so.FindProperty("_rail").objectReferenceValue = rail;
             so.FindProperty("_units").objectReferenceValue = units;
-            so.FindProperty("_drawPile").objectReferenceValue = drawPile;
-            so.FindProperty("_discardPile").objectReferenceValue = discardPile;
-            so.FindProperty("_fullDeck").objectReferenceValue = fullDeck;
+            so.FindProperty("_piles").objectReferenceValue = piles;
             so.FindProperty("_energyText").objectReferenceValue = energy;
             so.FindProperty("_messageText").objectReferenceValue = message;
             so.FindProperty("_turnButton").objectReferenceValue = turnButton;

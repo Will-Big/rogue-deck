@@ -25,9 +25,7 @@ namespace FateWeaver.Unity
         [SerializeField] private HandFanView _hand;
         [SerializeField] private ExecutionRailView _rail;
         [SerializeField] private BattleUnitsView _units;
-        [SerializeField] private PileView _drawPile;
-        [SerializeField] private PileView _discardPile;
-        [SerializeField] private PileView _fullDeck;
+        [SerializeField] private BattlePilesView _piles;
         [SerializeField] private TMP_Text _energyText;
         [SerializeField] private TMP_Text _messageText;
         [SerializeField] private Button _turnButton;
@@ -99,17 +97,14 @@ namespace FateWeaver.Unity
                 _session.State,
                 _presenter.OwnerColor,
                 id => PlaytestKoreanText.EnemyName(id, id));
-            BindPiles();
+            _piles.Bind(
+                () => Presentations(_session.DrawPile)
+                    .OrderBy(presentation => presentation.DisplayName, StringComparer.Ordinal)
+                    .ToList(),
+                () => Presentations(_session.DiscardPile),
+                () => Presentations(_session.AllDeckCards));
             SetMessage("전투 시작.");
             RefreshAll();
-        }
-
-        private void BindPiles()
-        {
-            _drawPile.Bind(() => Presentations(_session.DrawPile)
-                .OrderBy(presentation => presentation.DisplayName, StringComparer.Ordinal).ToList());
-            _discardPile.Bind(() => Presentations(_session.DiscardPile));
-            _fullDeck.Bind(() => Presentations(_session.AllDeckCards));
         }
 
         private IReadOnlyList<CardPresentation> Presentations(IReadOnlyList<OwnedCard> cards)
@@ -339,6 +334,8 @@ namespace FateWeaver.Unity
                 _session.CurrentOrder.Select(card => _presenter.For(card)).ToList(),
                 OnZoneClicked);
             _units.Refresh(_session.State);
+            _piles.Refresh(
+                _session.DrawCount, _session.DiscardCount, _session.AllDeckCards.Count);
             RefreshSelections();
             RefreshHudTexts();
         }
@@ -346,9 +343,7 @@ namespace FateWeaver.Unity
         private void RefreshSelections()
         {
             bool selectionActive = _selection.SelectionActive;
-            _drawPile.SetInputEnabled(!selectionActive);
-            _discardPile.SetInputEnabled(!selectionActive);
-            _fullDeck.SetInputEnabled(!selectionActive);
+            _piles.SetInputEnabled(!selectionActive);
             _resetButton.interactable = !selectionActive;
             _turnButton.interactable = !selectionActive && !_session.IsComplete;
         }
@@ -356,9 +351,6 @@ namespace FateWeaver.Unity
         private void RefreshHudTexts()
         {
             _energyText.text = "운명력 " + _session.FateEnergy;
-            _drawPile.SetCount(_session.DrawCount);
-            _discardPile.SetCount(_session.DiscardCount);
-            _fullDeck.SetCount(_session.AllDeckCards.Count);
             _turnButtonLabel.text = _session.CurrentTurnResolved ? "다음 턴" : "턴 실행";
             _turnButton.interactable = !_selection.SelectionActive && !_session.IsComplete;
         }
