@@ -17,5 +17,15 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             return result.Catalog;
         }
+
+        /// <summary>저장소 JSON 전체. 상태와 같은 이유로 호출마다 새로 만든다.</summary>
+        public static GameContent Content()
+        {
+            var result = ContentBootstrap.Load(UnityContentRoot.Path);
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            return result.Content;
+        }
+
+        public static CardContentCatalog Cards() => Content().Cards;
     }
 }

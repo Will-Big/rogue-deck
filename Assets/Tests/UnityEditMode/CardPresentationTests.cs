@@ -3,8 +3,6 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
-using FateWeaver.Core.Authoring;
-using FateWeaver.Simulation;
 using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using UnityEngine;
@@ -114,7 +112,7 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Formation_card_uses_the_registered_dynamic_description()
         {
             var presentation = CardPresentation.FromDefinition(
-                PartyPrototypeDeck.MoveForward(),
+                UnityTestContent.Cards().Get("fixture_move_forward"),
                 Korean,
                 id => null);
 
@@ -126,7 +124,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Toxic_reclaim_presentation_keeps_structured_targets_and_lines()
         {
-            var definition = CardSpecMapper.ToDefinition(StarterPoolSpecs.ToxicReclaim());
+            var definition = UnityTestContent.Cards().Get("toxic_reclaim");
             var presentation = CardPresentation.FromDefinition(definition, Korean);
 
             Assert.AreEqual(2, presentation.DescriptionLayout.TargetEntries.Count);
@@ -137,7 +135,8 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Intervention_presentation_has_no_unit_target_entries()
         {
-            var presentation = CardPresentation.FromDefinition(StarterDeck.PullForward(), Korean);
+            var presentation = CardPresentation.FromDefinition(
+                UnityCardFixtures.ChangeExecutionOrder("pull_fx", delta: -1), Korean);
 
             Assert.AreEqual(CardCategory.Intervention, presentation.Category);
             Assert.AreEqual(0, presentation.DescriptionLayout.TargetEntries.Count);
