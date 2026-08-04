@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Status;
 using TMPro;
@@ -40,7 +41,8 @@ namespace FateWeaver.Unity
             _portrait.color = current > 0 ? _aliveTint : DeadTint;
         }
 
-        public void SetStatuses(IReadOnlyList<StatusInstance> statuses)
+        public void SetStatuses(
+            IReadOnlyList<StatusInstance> statuses, Func<StatusKey, string> nameFor)
         {
             if (_statusText == null)
             {
@@ -53,7 +55,7 @@ namespace FateWeaver.Unity
                 foreach (var status in statuses)
                 {
                     int value = status.Magnitude > 0 ? status.Magnitude : status.Count;
-                    var name = PlaytestKoreanText.StatusName(status.Key);
+                    var name = nameFor(status.Key);
                     parts.Add(value > 0 ? name + "(" + value + ")" : name);
                 }
             }

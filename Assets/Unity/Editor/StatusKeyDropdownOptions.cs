@@ -36,13 +36,16 @@ namespace FateWeaver.Unity.Editor
     {
         private const string PlaceholderLabel = "(상태 선택)";
 
+        /// <summary>라벨의 원본도 JSON이다. 상태만 필요하므로 부팅 전체가 아니라
+        /// ContentBootstrap.LoadStatuses를 쓴다.</summary>
         public static StatusKeyDropdownModel CreateDefault(string currentId)
         {
             var authoring = AuthoringContext.Default();
+            var statuses = ContentBootstrap.LoadStatuses(UnityContentRoot.Path);
             return Create(
                 currentId,
                 authoring.RegisteredStatusKeys,
-                KoreanDescriptionCatalog.Default.Statuses);
+                KoreanDescriptionCatalog.CreateDefault(statuses.Catalog).Statuses);
         }
 
         public static StatusKeyDropdownModel Create(

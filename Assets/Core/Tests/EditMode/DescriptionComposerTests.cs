@@ -23,7 +23,7 @@ namespace FateWeaver.Tests.EditMode
         }
 
         private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault();
+            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
 
         private static CardDefinition Execution(string id, params EffectData[] effects)
             => new CardDefinition(id, id, Side.Player, 5, effects)

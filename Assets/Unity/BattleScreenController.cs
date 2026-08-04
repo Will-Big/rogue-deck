@@ -6,6 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Presentation;
 using TMPro;
 using UnityEngine;
@@ -98,11 +99,13 @@ namespace FateWeaver.Unity
                 fateEnergyPerTurn: FateEnergyPerTurn,
                 seed: Seed);
 
-            _presenter.Initialize(OwnerNameOf);
+            var korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
+            _presenter.Initialize(OwnerNameOf, korean);
             _units.Spawn(
                 _session.State,
                 _presenter.OwnerColor,
-                id => PlaytestKoreanText.EnemyName(id, id));
+                id => PlaytestKoreanText.EnemyName(id, id),
+                key => _content.Statuses.DisplayNameOf(key));
             _piles.Bind(
                 () => Presentations(_session.DrawPile)
                     .OrderBy(presentation => presentation.DisplayName, StringComparer.Ordinal)

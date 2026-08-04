@@ -25,7 +25,7 @@ namespace FateWeaver.Tests.EditMode
             Assert.DoesNotThrow(() =>
                 DescriptionCatalogValidator.ValidateDefault(
                     DefaultCards(),
-                    KoreanDescriptionCatalog.CreateDefault()));
+                    KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses())));
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace FateWeaver.Tests.EditMode
             Assert.Throws<KeyNotFoundException>(() =>
                 DescriptionCatalogValidator.ValidateDefault(
                     new[] { card },
-                    KoreanDescriptionCatalog.CreateDefault()));
+                    KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses())));
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace FateWeaver.Tests.EditMode
             Assert.Throws<KeyNotFoundException>(() =>
                 DescriptionCatalogValidator.ValidateDefault(
                     new[] { card },
-                    KoreanDescriptionCatalog.CreateDefault()));
+                    KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses())));
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace FateWeaver.Tests.EditMode
             Assert.Throws<ArgumentException>(() =>
                 DescriptionCatalogValidator.ValidateDefault(
                     new[] { card },
-                    KoreanDescriptionCatalog.CreateDefault()));
+                    KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses())));
         }
     }
 }

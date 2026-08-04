@@ -9,8 +9,6 @@ namespace FateWeaver.Simulation.Descriptions
 {
     public sealed class KoreanDescriptionCatalog
     {
-        public static readonly KoreanDescriptionCatalog Default = CreateDefault();
-
         public KoreanDescriptionCatalog(
             EffectDescriptionRegistry effects,
             InterventionDescriptionRegistry interventions,
@@ -38,10 +36,6 @@ namespace FateWeaver.Simulation.Descriptions
             return new DescriptionContext(
                 Grammar, Statuses, StatusContent, card.Id, card.Side);
         }
-
-        /// <summary>코드 기본값 카탈로그를 쓰는 편의 오버로드.</summary>
-        public static KoreanDescriptionCatalog CreateDefault()
-            => CreateDefault(StatusContentDefaults.Catalog());
 
         /// <summary>상태 이름을 넘겨받은 콘텐츠에서 읽는다. 로더가 파일에서 만든 카탈로그를 넘기면
         /// 카드 텍스트와 전투 규칙이 같은 상태 콘텐츠를 보게 된다 — 인자 없는 오버로드만 있으면

@@ -69,6 +69,7 @@ namespace FateWeaver.Unity
         /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
         public static CardPresentation From(
             ExecutionCardInstance card,
+            KoreanDescriptionCatalog korean,
             Func<string, Sprite> art = null,
             string ownerDisplayName = null,
             Color ownerColor = default,
@@ -81,7 +82,7 @@ namespace FateWeaver.Unity
                 card.ExecutionOrder,
                 def.EnergyCost,
                 def.Side,
-                DescriptionComposer.Compose(def, KoreanDescriptionCatalog.Default),
+                DescriptionComposer.Compose(def, korean),
                 ResolveArt(def.Id, art),
                 card.IsLocked,
                 StatusIconsFor(card),
@@ -94,6 +95,7 @@ namespace FateWeaver.Unity
         /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
         public static CardPresentation FromDefinition(
             CardDefinition def,
+            KoreanDescriptionCatalog korean,
             Func<string, Sprite> art = null,
             string ownerDisplayName = null,
             Color ownerColor = default,
@@ -105,7 +107,7 @@ namespace FateWeaver.Unity
                 def.BaseExecutionOrder,
                 def.EnergyCost,
                 def.Side,
-                DescriptionComposer.Compose(def, KoreanDescriptionCatalog.Default),
+                DescriptionComposer.Compose(def, korean),
                 ResolveArt(def.Id, art),
                 false,
                 Array.Empty<CardStatusIcon>(),

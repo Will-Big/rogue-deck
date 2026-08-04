@@ -58,7 +58,8 @@ namespace FateWeaver.Tests.UnityEditMode
             SetField(_units, "_unitPrefab", _unitPrefab);
             SetField(_units, "_playerUnitsRow", _partyRow);
             SetField(_units, "_enemyUnitsRow", _enemyRow);
-            _units.Spawn(_session.State, _ => Color.white, id => id);
+            _units.Spawn(
+                _session.State, _ => Color.white, id => id, key => key.Id);
         }
 
         [TearDown]

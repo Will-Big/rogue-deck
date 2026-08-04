@@ -1,14 +1,13 @@
-using System.Collections.Generic;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Intervention;
-using FateWeaver.Core.Status;
 using FateWeaver.Unity;
 
 namespace FateWeaver.Tests.UnityEditMode
 {
+    /// <summary>상태·개입 라벨은 더 이상 여기서 나오지 않는다 — 계획 3c가 전역 설명 카탈로그를
+    /// 없애면서 StatusName·InterventionActionName을 지웠고, 상태 이름은 부팅 콘텐츠에서 주입된다.</summary>
     public class PlaytestKoreanTextTests
     {
         [Test]
@@ -23,8 +22,6 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual("플레이어", PlaytestKoreanText.SideName(Side.Player));
             Assert.AreEqual("성공", PlaytestKoreanText.ConditionName(ConditionTier.Success));
             Assert.AreEqual("승리", PlaytestKoreanText.OutcomeName(Outcome.Win));
-            Assert.AreEqual("방어", PlaytestKoreanText.StatusName(StatusKeys.Block));
-            Assert.AreEqual("실행 순서 변경", PlaytestKoreanText.InterventionActionName(InterventionActionKeys.ChangeExecutionOrder));
             Assert.AreEqual("fallback", PlaytestKoreanText.CardName("unknown", "fallback"));
         }
 
@@ -32,18 +29,6 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Party_owner_name_has_one_localized_source()
         {
             Assert.AreEqual("파티", PlaytestKoreanText.PartyOwnerName());
-        }
-
-        [Test]
-        public void Registered_labels_share_the_description_catalog()
-        {
-            Assert.AreEqual("방어", PlaytestKoreanText.StatusName(StatusKeys.Block));
-            Assert.AreEqual(
-                "실행 순서 변경",
-                PlaytestKoreanText.InterventionActionName(
-                    InterventionActionKeys.ChangeExecutionOrder));
-            Assert.Throws<KeyNotFoundException>(() =>
-                PlaytestKoreanText.StatusName(new StatusKey("unknown_status")));
         }
     }
 }

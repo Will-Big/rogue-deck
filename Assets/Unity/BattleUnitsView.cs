@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Status;
 using UnityEngine;
 
 namespace FateWeaver.Unity
@@ -21,14 +22,21 @@ namespace FateWeaver.Unity
             new Dictionary<string, UnitView>();
         private readonly Dictionary<string, int> _enemyMaxHp = new Dictionary<string, int>();
 
+        private Func<StatusKey, string> _statusNameFor;
+
         public bool IsBound => _unitPrefab != null
             && _playerUnitsRow != null && _enemyUnitsRow != null;
 
-        /// <summary>기존 유닛을 지우고 상태에 맞춰 다시 만든다. 색과 적 이름은 표현 관심사라
-        /// 바깥에서 받는다.</summary>
+        /// <summary>기존 유닛을 지우고 상태에 맞춰 다시 만든다. 색·적 이름·상태 이름은 표현
+        /// 관심사라 바깥에서 받는다. 상태 이름 조회는 UnitView의 유일한 호출자인 여기서 소유한다
+        /// (설계 §4.6).</summary>
         public void Spawn(
-            CombatState state, Func<string, Color> colorFor, Func<string, string> enemyNameFor)
+            CombatState state,
+            Func<string, Color> colorFor,
+            Func<string, string> enemyNameFor,
+            Func<StatusKey, string> statusNameFor)
         {
+            _statusNameFor = statusNameFor;
             foreach (Transform child in _playerUnitsRow) Destroy(child.gameObject);
             foreach (Transform child in _enemyUnitsRow) Destroy(child.gameObject);
             _partyUnits.Clear();
@@ -60,7 +68,7 @@ namespace FateWeaver.Unity
                 if (_partyUnits.TryGetValue(member.Id, out var view))
                 {
                     view.SetHp(member.Hp, member.MaxHp);
-                    view.SetStatuses(member.Statuses.All);
+                    view.SetStatuses(member.Statuses.All, _statusNameFor);
                     view.transform.SetSiblingIndex(partyCount - 1 - i);
                 }
             }
@@ -73,7 +81,7 @@ namespace FateWeaver.Unity
                     && _enemyMaxHp.TryGetValue(enemy.Id, out var maxHp))
                 {
                     view.SetHp(enemy.Hp, maxHp);
-                    view.SetStatuses(enemy.Statuses.All);
+                    view.SetStatuses(enemy.Statuses.All, _statusNameFor);
                     view.transform.SetSiblingIndex(i);
                 }
             }

@@ -13,6 +13,9 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class CardPresentationTests
     {
+        private static readonly KoreanDescriptionCatalog Korean =
+            KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses());
+
         private static CardDefinition EnemyCard() => new CardDefinition(
             "locked_jab", "잠긴 일격", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) })
@@ -33,7 +36,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var instance = new ExecutionCardInstance(EnemyCard()) { IsLocked = true };
 
-            var presentation = CardPresentation.From(instance);
+            var presentation = CardPresentation.From(instance, Korean);
 
             CollectionAssert.AreEqual(new[] { CardStatusIcon.Lock }, presentation.StatusIcons.ToArray());
         }
@@ -41,7 +44,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Unlocked_hand_card_has_no_status_icons()
         {
-            var presentation = CardPresentation.FromDefinition(EnemyCard());
+            var presentation = CardPresentation.FromDefinition(EnemyCard(), Korean);
 
             Assert.AreEqual(0, presentation.StatusIcons.Count);
         }
@@ -56,9 +59,9 @@ namespace FateWeaver.Tests.UnityEditMode
             var ownerColor = new Color(0.35f, 0.65f, 0.95f, 1f);
 
             var hand = CardPresentation.FromDefinition(
-                definition, null, "파티원 A", ownerColor, false);
+                definition, Korean, null, "파티원 A", ownerColor, false);
             var rail = CardPresentation.From(
-                instance, null, "파티원 A", ownerColor, false);
+                instance, Korean, null, "파티원 A", ownerColor, false);
 
             Assert.AreEqual("파티원 A", hand.OwnerDisplayName);
             Assert.AreEqual(ownerColor, hand.OwnerColor);
@@ -76,7 +79,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 new[] { new EffectData(EffectKeys.Damage, 0) });
 
             var presentation = CardPresentation.FromDefinition(
-                definition, null, PlaytestKoreanText.PartyOwnerName(), Color.white, true);
+                definition, Korean, null, PlaytestKoreanText.PartyOwnerName(), Color.white, true);
 
             Assert.AreEqual("파티", presentation.OwnerDisplayName);
             Assert.IsTrue(presentation.IsPartyOwned);
@@ -85,8 +88,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void With_execution_order_changes_only_order()
         {
-            var descriptionLayout = DescriptionComposer.Compose(
-                EnemyCard(), KoreanDescriptionCatalog.Default);
+            var descriptionLayout = DescriptionComposer.Compose(EnemyCard(), Korean);
             var original = new CardPresentation(
                 "id", "name", 5, 2, Side.Player, descriptionLayout, null, false,
                 new[] { CardStatusIcon.Lock }, CardCategory.Execution,
@@ -113,6 +115,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var presentation = CardPresentation.FromDefinition(
                 PartyPrototypeDeck.MoveForward(),
+                Korean,
                 id => null);
 
             Assert.AreEqual(
@@ -124,7 +127,7 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Toxic_reclaim_presentation_keeps_structured_targets_and_lines()
         {
             var definition = CardSpecMapper.ToDefinition(StarterPoolSpecs.ToxicReclaim());
-            var presentation = CardPresentation.FromDefinition(definition);
+            var presentation = CardPresentation.FromDefinition(definition, Korean);
 
             Assert.AreEqual(2, presentation.DescriptionLayout.TargetEntries.Count);
             Assert.AreEqual(2, presentation.DescriptionLayout.Lines.Count);
@@ -134,7 +137,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Intervention_presentation_has_no_unit_target_entries()
         {
-            var presentation = CardPresentation.FromDefinition(StarterDeck.PullForward());
+            var presentation = CardPresentation.FromDefinition(StarterDeck.PullForward(), Korean);
 
             Assert.AreEqual(CardCategory.Intervention, presentation.Category);
             Assert.AreEqual(0, presentation.DescriptionLayout.TargetEntries.Count);

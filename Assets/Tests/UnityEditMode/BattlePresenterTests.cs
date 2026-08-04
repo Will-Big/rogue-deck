@@ -1,5 +1,6 @@
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
+using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEngine;
@@ -45,7 +46,9 @@ namespace FateWeaver.Tests.UnityEditMode
             party.GetArrayElementAtIndex(0).objectReferenceValue = _member;
             presenterSo.ApplyModifiedPropertiesWithoutUndo();
 
-            _presenter.Initialize(id => id == MemberId ? "파티원 A" : null);
+            _presenter.Initialize(
+                id => id == MemberId ? "파티원 A" : null,
+                KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses()));
         }
 
         [TearDown]

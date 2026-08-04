@@ -13,7 +13,7 @@ namespace FateWeaver.Tests.EditMode
     public class StructuredCardDescriptionTests
     {
         private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault();
+            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
 
         [Test]
         public void Toxic_reclaim_separates_enemy_and_ally_self_lines()

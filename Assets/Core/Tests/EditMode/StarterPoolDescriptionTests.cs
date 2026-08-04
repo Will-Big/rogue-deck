@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     /// once with no bare "이면".</summary>
     public class StarterPoolDescriptionTests
     {
-        private static readonly KoreanDescriptionCatalog Korean = KoreanDescriptionCatalog.CreateDefault();
+        private static readonly KoreanDescriptionCatalog Korean = KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
 
         private static string Describe(CardSpec spec)
             => DescriptionComposer.Describe(CardSpecMapper.ToDefinition(spec), Korean);

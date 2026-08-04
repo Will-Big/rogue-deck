@@ -1,6 +1,7 @@
 using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Simulation.Descriptions;
 using UnityEngine;
 
 namespace FateWeaver.Unity
@@ -18,21 +19,26 @@ namespace FateWeaver.Unity
         private static readonly Color PartyOwnerColor = new Color(0.55f, 0.48f, 0.75f, 1f);
 
         private Func<string, string> _ownerName;
+        private KoreanDescriptionCatalog _korean;
 
-        /// <summary>세션의 파티에서 표시명을 읽는 델리게이트를 주입한다. 없으면 소유자 이름이
-        /// 비어 있는 표현이 나온다.</summary>
-        public void Initialize(Func<string, string> ownerName) => _ownerName = ownerName;
+        /// <summary>세션의 파티에서 표시명을 읽는 델리게이트와, 부팅 콘텐츠로 만든 설명 카탈로그를
+        /// 주입한다. 카드 본문의 상태 이름이 전투 규칙과 같은 JSON에서 오게 하는 지점이다.</summary>
+        public void Initialize(Func<string, string> ownerName, KoreanDescriptionCatalog korean)
+        {
+            _ownerName = ownerName;
+            _korean = korean;
+        }
 
         public CardPresentation For(OwnedCard card)
         {
             Resolve(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.FromDefinition(card.Def, ArtFor, name, color, isPartyOwned);
+            return CardPresentation.FromDefinition(card.Def, _korean, ArtFor, name, color, isPartyOwned);
         }
 
         public CardPresentation For(ExecutionCardInstance card)
         {
             Resolve(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.From(card, ArtFor, name, color, isPartyOwned);
+            return CardPresentation.From(card, _korean, ArtFor, name, color, isPartyOwned);
         }
 
         /// <summary>유닛 틴트. 카드 표현과 폴백이 다르다 — 원본 SpawnUnits는 캐릭터를 못 찾으면

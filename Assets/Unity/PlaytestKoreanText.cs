@@ -2,10 +2,7 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Core.Intervention;
-using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
-using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Unity
 {
@@ -84,10 +81,5 @@ namespace FateWeaver.Unity
             }
         }
 
-        public static string StatusName(StatusKey key)
-            => KoreanDescriptionCatalog.Default.Statuses.Resolve(key);
-
-        public static string InterventionActionName(InterventionActionKey key)
-            => KoreanDescriptionCatalog.Default.Interventions.Resolve(key).DisplayName;
     }
 }

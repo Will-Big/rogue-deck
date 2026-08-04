@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     public class PartyDescriptionTests
     {
         private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault();
+            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
 
         private static CardDefinition Execution(params EffectData[] effects) =>
             new CardDefinition("party_test", "파티 테스트", Side.Player, 0, effects)
