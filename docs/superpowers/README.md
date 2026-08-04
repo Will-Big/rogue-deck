@@ -75,6 +75,7 @@
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
+| [계획 3d — C# 카드 스펙 제거](plans/2026-08-05-card-spec-removal.md) | `active` | 저작 스펙 3종·카드 팩토리 2종·내보내기 3종 제거, 규칙 테스트를 합성 픽스처로·계약 테스트를 JSON 골든으로 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -89,7 +90,7 @@
 | 3a | [덱·풀·캐릭터 콘텐츠 스키마](archive/plans/2026-08-03-deck-pool-character-content.md) | **완료·머지** |
 | 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
 | 3c | [상태 원본 확정](archive/plans/2026-08-04-status-content-single-source.md) | **완료** |
-| 3d | C# 카드 스펙 제거 (미작성) | 대기 |
+| 3d | [C# 카드 스펙 제거](plans/2026-08-05-card-spec-removal.md) | **계획 작성 완료 · 구현 대기** |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
