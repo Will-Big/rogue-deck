@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests
@@ -11,31 +14,38 @@ namespace FateWeaver.Tests
     public class StarterPoolDescriptionTests
     {
         private static readonly KoreanDescriptionCatalog Korean = KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+        private static readonly CardContentCatalog Pool = TestContent.Cards();
 
-        private static string Describe(CardSpec spec)
-            => DescriptionComposer.Describe(CardSpecMapper.ToDefinition(spec), Korean);
+        private static string Describe(CardDefinition definition)
+            => DescriptionComposer.Describe(definition, Korean);
+
+        private static IReadOnlyList<CardDefinition> StarterPoolCards()
+        {
+            var content = TestContent.Content();
+            return content.Pools.Get("starter").Select(id => content.Cards.Get(id)).ToList();
+        }
 
         [Test]
         public void Every_pool_card_composes_a_non_empty_description()
         {
-            foreach (var spec in StarterPoolSpecs.Build())
+            foreach (var card in StarterPoolCards())
             {
-                var text = Describe(spec);
-                Assert.IsFalse(string.IsNullOrWhiteSpace(text), spec.Id + " composed an empty description.");
+                var text = Describe(card);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(text), card.Id + " composed an empty description.");
             }
         }
 
         [Test]
         public void Spread_culture_never_falls_back_to_random_wording()
         {
-            StringAssert.DoesNotContain("무작위", Describe(StarterPoolSpecs.SpreadCulture()));
+            StringAssert.DoesNotContain("무작위", Describe(Pool.Get("spread_culture")));
         }
 
         [Test]
         public void Toxic_reclaim_and_distill_render_the_consumed_condition_stem_without_a_bare_condition()
         {
-            var toxic = Describe(StarterPoolSpecs.ToxicReclaim());
-            var distill = Describe(StarterPoolSpecs.Distill());
+            var toxic = Describe(Pool.Get("toxic_reclaim"));
+            var distill = Describe(Pool.Get("distill"));
 
             StringAssert.Contains("소비했다면", toxic);
             StringAssert.Contains("소비했다면", distill);
@@ -48,10 +58,10 @@ namespace FateWeaver.Tests
         {
             // Before the DescriptionComposer fix, a SkipOnBasic effect rendered its basic fragment
             // AND the success fragment with identical wording ("방어 4. 소비했다면 방어 4.").
-            var toxic = Describe(StarterPoolSpecs.ToxicReclaim());
+            var toxic = Describe(Pool.Get("toxic_reclaim"));
             Assert.AreEqual(1, CountOccurrences(toxic, "방어 4"));
 
-            var distill = Describe(StarterPoolSpecs.Distill());
+            var distill = Describe(Pool.Get("distill"));
             Assert.AreEqual(1, CountOccurrences(distill, "운명력 1 획득"));
         }
 
@@ -59,25 +69,25 @@ namespace FateWeaver.Tests
         public void Korean_spread_culture() =>
             Assert.AreEqual(
                 "[◆] 피해 2. 독 1.",
-                Describe(StarterPoolSpecs.SpreadCulture()));
+                Describe(Pool.Get("spread_culture")));
 
         [Test]
         public void Korean_toxic_reclaim() =>
             Assert.AreEqual(
                 "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 4.",
-                Describe(StarterPoolSpecs.ToxicReclaim()));
+                Describe(Pool.Get("toxic_reclaim")));
 
         [Test]
         public void Korean_distill() =>
             Assert.AreEqual(
                 "[◆] 독 최대 1 소비. 독 1.\n소비했다면 다음 사용 턴에 운명력 1 획득.",
-                Describe(StarterPoolSpecs.Distill()));
+                Describe(Pool.Get("distill")));
 
         [Test]
         public void Korean_quick_cover() =>
             Assert.AreEqual(
                 "[◆] 방어 4.",
-                Describe(StarterPoolSpecs.QuickCover()));
+                Describe(Pool.Get("quick_cover")));
 
         private static int CountOccurrences(string haystack, string needle)
         {

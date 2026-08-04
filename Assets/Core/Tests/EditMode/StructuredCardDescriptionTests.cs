@@ -4,7 +4,6 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
-using FateWeaver.Core.Authoring;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Descriptions;
 
@@ -18,7 +17,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Toxic_reclaim_separates_enemy_and_ally_self_lines()
         {
-            var definition = CardSpecMapper.ToDefinition(StarterPoolSpecs.ToxicReclaim());
+            var definition = TestContent.Cards().Get("toxic_reclaim");
 
             var layout = DescriptionComposer.Compose(definition, Korean);
 
@@ -104,20 +103,12 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Every_default_and_generated_card_composes_deterministically()
         {
-            var cards = StarterDeckSpecs.Build()
-                .Concat(StarterPoolSpecs.Build())
-                .Concat(PartyPrototypeDeckSpecs.Build())
-                .Select(CardSpecMapper.ToDefinition)
-                .Concat(TestContent.StarterDeckCards())
+            // TestContent.Cards().Cards.Values는 Content/Cards/*.json 전부다 — 시작 풀 22장과
+            // fixture_* 4종을 모두 포함한다(합 26장, 파일 개수와 실측 일치). 적 카드(GoblinDeck·
+            // WardenDeck)는 아직 JSON이 아니므로(범위 밖) 따로 붙인다.
+            var cards = TestContent.Cards().Cards.Values
                 .Concat(GoblinDeck.AllCards())
-                .Concat(WardenDeck.Deck())
-                .Concat(new[]
-                {
-                    TestContent.Cards().Get("fixture_attack"),
-                    TestContent.Cards().Get("fixture_selected_block"),
-                    TestContent.Cards().Get("fixture_all_block"),
-                    TestContent.Cards().Get("fixture_move_forward")
-                });
+                .Concat(WardenDeck.Deck());
             foreach (var card in cards)
             {
                 var first = DescriptionComposer.Compose(card, Korean);

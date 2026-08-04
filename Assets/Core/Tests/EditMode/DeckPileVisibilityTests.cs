@@ -4,7 +4,6 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Simulation;
-using FateWeaver.Core.Authoring;
 
 namespace FateWeaver.Tests
 {
@@ -12,7 +11,7 @@ namespace FateWeaver.Tests
     {
         private static DeckCombatSession NewSession()
         {
-            var deck = StarterDeckSpecs.Build().Select(CardSpecMapper.ToDefinition).ToList();
+            var deck = TestContent.StarterDeckCards();
             return new DeckCombatSession(TestContent.Statuses(),
                 deck, 30, new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
                 GoblinDeck.Policy(), 3, 5, 1);
@@ -36,7 +35,7 @@ namespace FateWeaver.Tests
         [Test]
         public void All_deck_cards_survive_construction()
         {
-            Assert.AreEqual(StarterDeckSpecs.Build().Count, NewSession().AllDeckCards.Count);
+            Assert.AreEqual(10, NewSession().AllDeckCards.Count);
         }
 
         [Test]

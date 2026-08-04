@@ -11,6 +11,8 @@ namespace FateWeaver.Tests
 {
     public class StarterPoolPoisonTests
     {
+        private static readonly CardContentCatalog Pool = TestContent.Cards();
+
         private static CombatState NewState(params Enemy[] enemies)
         {
             var state = new CombatState(TestContent.Statuses());
@@ -19,9 +21,9 @@ namespace FateWeaver.Tests
             return state;
         }
 
-        private static ExecutionCardInstance Place(CombatState state, CardSpec spec)
+        private static ExecutionCardInstance Place(CombatState state, CardDefinition definition)
         {
-            var card = new ExecutionCardInstance(CardSpecMapper.ToDefinition(spec))
+            var card = new ExecutionCardInstance(definition)
                 { OwnerId = CombatState.SoloPlayerId };
             state.Zone.Add(card);
             return card;
@@ -32,18 +34,10 @@ namespace FateWeaver.Tests
                 .Resolve(state, 0);
 
         [Test]
-        public void Build_contains_all_22_cards_and_validates()
-        {
-            Assert.AreEqual(22, StarterPoolSpecs.Build().Count);
-            CollectionAssert.IsEmpty(AuthoringValidator.Validate(
-                StarterPoolSpecs.Build(), AuthoringContext.Default()));
-        }
-
-        [Test]
         public void Venom_thrust_deals_2_applies_poison_1_which_ticks_and_grows()
         {
             var state = NewState(new Enemy("goblin", 20));
-            Place(state, StarterPoolSpecs.VenomThrust());
+            Place(state, Pool.Get("venom_thrust"));
 
             var events = Resolve(state);
 
@@ -57,8 +51,8 @@ namespace FateWeaver.Tests
         public void Last_drop_applies_2_when_no_player_card_follows()
         {
             var state = NewState(new Enemy("goblin", 20));
-            Place(state, StarterPoolSpecs.VanguardSlash()); // 순서 3, 먼저
-            Place(state, StarterPoolSpecs.LastDrop());      // 순서 7, 마지막 → 독 2
+            Place(state, Pool.Get("vanguard_slash")); // 순서 3, 먼저
+            Place(state, Pool.Get("last_drop"));      // 순서 7, 마지막 → 독 2
 
             Resolve(state);
 
@@ -71,7 +65,7 @@ namespace FateWeaver.Tests
         public void Spread_culture_hits_and_poisons_every_living_enemy()
         {
             var state = NewState(new Enemy("front", 20), new Enemy("back", 20));
-            Place(state, StarterPoolSpecs.SpreadCulture());
+            Place(state, Pool.Get("spread_culture"));
 
             Resolve(state);
 
@@ -88,7 +82,7 @@ namespace FateWeaver.Tests
         {
             var state = NewState(new Enemy("goblin", 30));
             state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 4);
-            Place(state, StarterPoolSpecs.CondensedBurst());
+            Place(state, Pool.Get("condensed_burst"));
 
             var events = Resolve(state);
 
@@ -107,7 +101,7 @@ namespace FateWeaver.Tests
 
             // 독 없음: 방어 없음 → 뒤이은 공격 4가 그대로 적중.
             var without = NewState(new Enemy("goblin", 20));
-            Place(without, StarterPoolSpecs.ToxicReclaim());
+            Place(without, Pool.Get("toxic_reclaim"));
             without.Zone.Add(new ExecutionCardInstance(
                 CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
@@ -118,7 +112,7 @@ namespace FateWeaver.Tests
             // 독 있음: 1 소비 후 재부여, 자신 방어 4 → 뒤이은 공격 4를 흡수.
             var with = NewState(new Enemy("goblin", 20));
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
-            var card = Place(with, StarterPoolSpecs.ToxicReclaim());
+            var card = Place(with, Pool.Get("toxic_reclaim"));
             with.Zone.Add(new ExecutionCardInstance(
                 CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
@@ -132,12 +126,12 @@ namespace FateWeaver.Tests
         {
             var with = NewState(new Enemy("goblin", 20));
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
-            Place(with, StarterPoolSpecs.Distill());
+            Place(with, Pool.Get("distill"));
             Resolve(with);
             Assert.AreEqual(1, with.PendingNextTurnFateEnergy);
 
             var without = NewState(new Enemy("goblin", 20));
-            Place(without, StarterPoolSpecs.Distill());
+            Place(without, Pool.Get("distill"));
             Resolve(without);
             Assert.AreEqual(0, without.PendingNextTurnFateEnergy);
         }
@@ -146,7 +140,7 @@ namespace FateWeaver.Tests
         public void Early_onset_moves_the_tick_earlier_without_adding_one()
         {
             var state = NewState(new Enemy("goblin", 20));
-            Place(state, StarterPoolSpecs.EarlyOnset());
+            Place(state, Pool.Get("early_onset"));
 
             var events = Resolve(state);
 
@@ -159,7 +153,7 @@ namespace FateWeaver.Tests
         public void Stable_culture_poisons_the_back_enemy_without_growth_this_turn()
         {
             var state = NewState(new Enemy("front", 20), new Enemy("back", 20));
-            Place(state, StarterPoolSpecs.StableCulture());
+            Place(state, Pool.Get("stable_culture"));
 
             Resolve(state);
 
@@ -176,8 +170,8 @@ namespace FateWeaver.Tests
             // now-dead corpse (the legacy ByIdOrFront fallback would return raw Enemies[0] regardless
             // of HP).
             var state = NewState(new Enemy("front", 3), new Enemy("back", 20));
-            Place(state, StarterPoolSpecs.VanguardSlash()); // 순서 3, 피해 5 → front(3) 처치
-            Place(state, StarterPoolSpecs.VenomThrust());   // 순서 4, 새 전열(back)을 타격해야 함
+            Place(state, Pool.Get("vanguard_slash")); // 순서 3, 피해 5 → front(3) 처치
+            Place(state, Pool.Get("venom_thrust"));   // 순서 4, 새 전열(back)을 타격해야 함
 
             var events = Resolve(state);
 
@@ -217,8 +211,8 @@ namespace FateWeaver.Tests
         public void Posthumous_spread_marks_the_target_for_on_death_transfer()
         {
             var state = NewState(new Enemy("victim", 2), new Enemy("next", 20));
-            Place(state, StarterPoolSpecs.PosthumousSpread());  // 순서 4, 먼저 → 피해 1 + 독 1 + 전염
-            Place(state, StarterPoolSpecs.DelayedStrike());     // 순서 5, 나중 → 피해 5 → 처치
+            Place(state, Pool.Get("posthumous_spread"));  // 순서 4, 먼저 → 피해 1 + 독 1 + 전염
+            Place(state, Pool.Get("delayed_strike"));     // 순서 5, 나중 → 피해 5 → 처치
 
             var events = Resolve(state);
 

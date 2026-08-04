@@ -16,11 +16,6 @@ namespace FateWeaver.Tests
         };
 
         [Test]
-        public void Valid_starter_content_passes()
-            => Assert.IsEmpty(AuthoringValidator.Validate(
-                StarterDeckSpecs.Build(), AuthoringContext.Default()));
-
-        [Test]
         public void Unknown_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(
