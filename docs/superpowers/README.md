@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-08-03
+- 개정일: 2026-08-04
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -73,7 +73,7 @@
 | [상태 규칙 파라미터화와 3종 디버프](plans/2026-07-30-status-rule-and-debuffs.md) | `active` | 방어 흡수 층 분리, 상태 배율의 런타임 조절, 약화·취약·손상 |
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
-| [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | JSON 표시 투영 경계, 4열 하향 그리드, 공유 호버 툴팁, 사용자 수치 조정 체크포인트 |
+| [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -85,21 +85,38 @@
 | 1 | [카드 콘텐츠 JSON 직렬화·로딩](archive/plans/2026-07-31-card-content-json-loading.md) | **완료·머지** |
 | 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
 | 2.5 | [상태 등록 지점 통합](archive/plans/2026-08-03-status-registration-consolidation.md) | **완료·머지** |
-| 3 | 콘텐츠 원본 전환 (계획 문서 미작성) | **다음** |
+| 3a | [덱·풀·캐릭터 콘텐츠 스키마](archive/plans/2026-08-03-deck-pool-character-content.md) | **완료·머지** |
+| 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
+| 3c | 상태 원본 확정 (미작성) | **다음** |
+| 3d | C# 카드 스펙 제거 (미작성) | 대기 |
 | 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
-계획 3은 소비자를 JSON으로 돌리고 `CardCodeGenerator`·`GeneratedCards.cs`·`CardAsset`의 규칙 필드를
-제거한다. 계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
+설계 §4.5의 "콘텐츠 원본 전환"은 한 계획으로 담기에 커서 넷으로 나눴다. 각각 독립 실행 가능하고,
+끝난 시점의 트리가 일관된다. 3c와 3d는 서로 독립이라 순서를 바꿔도 된다.
+
+| | 범위 | 선행 |
+|---|---|---|
+| 3a | ~~덱·풀·캐릭터 스키마·로더·JSON 산출. **순수 코어**, Unity 무변경~~ **완료** | 없음 |
+| 3b | ~~`ContentBootstrap` 신설, 소비자를 JSON으로, SO·코드 생성 제거, 등급·태그를 `CardSpec`으로~~ **완료** | 3a |
+| 3c | 상태 스펙 판별자를 `StatusRegistry`로, `StatusContentDefaults` 제거, `CombatState`의 코드 기본값 제거, `KoreanDescriptionCatalog.Default` 전역 제거 → 주입 | 3b |
+| 3d | `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·`PartyPrototypeDeck`·`ContentExportWriter`·`PartyPrototypeCharacterSpecs` 제거. 테스트를 JSON 카탈로그로 전환. (`GeneratedCards`·`ToLiteral`은 3b가 이미 지웠다) | 3b |
+
+계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
 (핸들러가 읽는 파라미터가 액션마다 달라, 지금은 `lock` 카드가 안 쓰는 칸 넷을 들고 있다).
 
-**계획 3에 착수하는 세션이 먼저 할 일:** 계획 문서가 아직 없다. 설계
-[§4.5](specs/2026-07-30-card-mutation-and-runtime-content-design.md)를 근거로 계획을 먼저 쓴다.
-그 계획은 최소한 이 셋을 다뤄야 한다 — (1) 부팅에서 `CardContentLoader`·`StatusContentLoader`를
-배선해 `BattleScreenController`가 SO 대신 JSON을 읽게 하고, (2) 그때 만든 `StatusContentCatalog`를
-`KoreanDescriptionCatalog.CreateDefault(catalog)`에 넘겨 텍스트와 규칙이 같은 콘텐츠를 보게 하며,
-(3) `CardCodeGenerator`·`GeneratedCards.cs`·`CardSO`의 규칙 필드를 제거한다. 계획 2.5가 (2)의
-진입점을 미리 뚫어놨다.
+**3c가 3b에서 물려받는 것:** 런타임이 JSON을 읽는다. `ContentBootstrap.Load(콘텐츠루트)`가
+카드 → 덱·풀 → 캐릭터 순서로 카탈로그 넷을 만들어 `GameContent`로 돌려주고, `BattleScreenController`가
+그것을 부팅 1회로 상주시킨다. Unity 쪽 경로 상수는 `UnityContentRoot.Path` 하나뿐이다.
+**상태 카탈로그는 아직 `GameContent`에 없다** — 아래 이유 때문이며 3c가 그것을 푼 뒤 넣어야 한다.
+
+**3c에 착수하는 세션이 먼저 알아야 할 것:** 상태 JSON은 아직 스스로를 해석하지 못한다.
+`StatusSpecJsonConverter`가 판별자 표를 `StatusContentDefaults.Specs()`에서 만들기 때문에,
+`poison.json`을 `PoisonStatusSpec`으로 읽으려면 코드 기본값 목록이 있어야 한다. 3c가 이걸 뗀다 —
+그전까지 상태 JSON은 "유일 원본"이 아니다. 그리고 3c가 만들 `StatusContentCatalog`를
+`KoreanDescriptionCatalog.CreateDefault(catalog)`에 넘겨야 카드 텍스트와 규칙이 같은 콘텐츠를 본다
+(계획 2.5가 이 진입점을 미리 뚫어놨다). 인자 없는 `CreateDefault()`와 전역 `Default` 싱글턴은 여전히
+코드 기본값을 쓴다.
 
 ### 새 세션이 먼저 알아야 할 함정 셋
 
@@ -110,24 +127,46 @@
 2. **`DefaultValueHandling.Ignore`가 열거형 0번 값을 지운다.** `Side.Player`·`CardCategory.Execution`·
    `StatusLifetimeKind.Permanent`가 전부 0이라 JSON에서 사라졌다. 생략이 위험한 필드에는
    `[JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]`를 붙인다.
-3. **런타임은 아직 JSON을 읽지 않는다.** 배틀 씬은 `BattleScreenController.cs`의
-   `member.Deck.ToSpecs()`로 **CardSO 에셋에서** 카드를 만든다. `CardContentLoader`·
-   `StatusContentLoader`는 테스트에서만 불린다. 계획 3이 이 전환을 한다 — 그전까지 SO는 살아 있는
-   원본이다.
+3. **카드 규칙의 원본은 이제 `Content/Cards/*.json` 하나다** (계획 3b). 배틀 씬이
+   `ContentBootstrap`으로 읽고, `CardAsset`·`DeckAsset`·`CardPoolAsset`과 코드 생성 경로는 사라졌다.
+   **남은 이중성 둘:** (a) `StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`가
+   골든 테스트 축으로 살아 있다 — 3d가 지운다. (b) **적 카드는 아직 JSON이 아니다** —
+   `GoblinDeck`·`WardenDeck`의 순수 C#에서 나오며, 옮기려면 적 정책·행동 패턴 설계가 딸려 온다.
+   그리고 **`ContentExportWriter`는 더 이상 카드를 쓰지 않는다** — 등급·태그가 JSON에만 있어
+   다시 쓰면 지워지기 때문이다(`WriteAllDoesNotTouchCards`가 이 회귀를 막는다).
 
 ### 넘어온 부채
 
 - ~~설명 카탈로그가 전투와 다른 `StatusContentCatalog` 인스턴스를 읽는다.~~ **계획 2.5가 해결했다.**
-  `KoreanDescriptionCatalog.CreateDefault(StatusContentCatalog)` 오버로드가 생겼다. 계획 3이 로더를
+  `KoreanDescriptionCatalog.CreateDefault(StatusContentCatalog)` 오버로드가 생겼다. 계획 3b가 로더를
   부팅에 배선할 때 **그 카탈로그를 이 오버로드에 넘겨야** 카드 텍스트와 규칙이 같은 콘텐츠를 본다 —
   인자 없는 `CreateDefault()`와 전역 `Default` 싱글턴은 여전히 코드 기본값을 쓴다.
-- **`CardSO`의 규칙 필드가 검증 없이 남아 있다.** SO→코드생성 일치를 지키던 스냅샷 테스트는
-  복원했지만, 설계 §4.5대로 계획 3이 SO의 규칙 필드를 지우면 이 축 전체가 사라진다.
+- ~~**`CardSO`의 규칙 필드가 검증 없이 남아 있다.**~~ **계획 3b가 해결했다.** `CardAsset` 자체가
+  사라졌다. `CardArtCatalog`(id → Sprite, 항목 3개)만 남고 규칙은 전부 JSON이다.
+- **`BattleScreenController`에 책임이 몰려 있다** (2026-08-03 실측: 467줄, `[SerializeField]` 18개).
+  덩어리 다섯 — 부팅·세션 생성 / 표현 변환 / 유닛 레지스트리 / 입력 / 렌더 갱신. 앞의 둘은
+  `[SerializeField]`를 안 써서 **씬 변경 없이** 평범한 C# 클래스로 뽑을 수 있고, 뒤의 셋은
+  인스펙터 참조를 들고 있어 MonoBehaviour로 쪼개면 18개 필드 재배선과 `.unity` YAML 이동이 따른다
+  (함정 1의 영역). 전용 계획으로 다룬다.
+- **상태 JSON이 코드 기본값 없이는 파싱되지 않는다.** `StatusSpecJsonConverter`가 판별자 표를
+  `StatusContentDefaults.Specs()`에서 만든다. 계획 3c가 이 표를 `StatusRegistry`로 옮긴다.
 
-### 현재 수치 (계획 2.5 완료 시점)
+### 현재 수치 (계획 3b 완료 시점)
 
-헤드리스 **447/447**, Unity EditMode **521/521**, 카드 JSON **26**, 상태 JSON **11**(전부 `displayName` 보유).
+헤드리스 **499/499**, Unity EditMode **557/558**(skipped 1 = `[Explicit]` 내보내기),
+카드 JSON **26**(플레이어 22 + fixture 4, 전부 등급·태그 보유), 상태 JSON **11**,
+덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
+
+## 후속 작업 대기열
+
+- [ ] **카드 상태 UI의 JSON 런타임 연계** — 현재 완료된 범위는 JSON과 독립적인
+  `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
+  컴포넌트와 프리팹이다. 상태 원본 확정과 카드별 부착 상태 키 계약이 `master`에 반영된 뒤
+  [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의 Task 3–5를 재개한다.
+  JSON의 상태 키·표시 이름·설명·아이콘 키를 표시 투영에 연결하고, 손패·실행 레일·더미 팝업이 하나의
+  공유 툴팁을 쓰도록 배선한다. 카드에는 카드에 직접 붙은 상태만 표시하며, SO나 C# 문자열 임시
+  fallback은 추가하지 않는다. 이 브랜치에는 사용자가 최신 `master` 반영을 승인한 뒤 가져온다.
 
 ## 재설계가 필요한 영역
 
