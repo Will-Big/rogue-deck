@@ -9,15 +9,9 @@ using FateWeaver.Core.Authoring;
 
 namespace FateWeaver.Tests
 {
-    public class StarterPoolSpecsTests
+    public class StarterPoolCardRuleTests
     {
-        [Test]
-        public void All_pool_specs_validate_against_default_registries()
-        {
-            var errors = AuthoringValidator.Validate(
-                StarterPoolSpecs.Build(), AuthoringContext.Default());
-            CollectionAssert.IsEmpty(errors);
-        }
+        private static readonly CardContentCatalog Pool = TestContent.Cards();
 
         [Test]
         public void Riposte_after_enemy_damage_card_deals_boosted_damage()
@@ -25,8 +19,7 @@ namespace FateWeaver.Tests
             var state = NewState();
             var enemyJab = CardFixtures.EnemyAttack("goblin_jab", 4, 1);
             state.Zone.Add(new ExecutionCardInstance(enemyJab) { OwnerId = "goblin" });
-            state.Zone.Add(new ExecutionCardInstance(
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Riposte()))
+            state.Zone.Add(new ExecutionCardInstance(Pool.Get("riposte"))
                 { OwnerId = CombatState.SoloPlayerId });
 
             var events = Resolve(state);
@@ -44,8 +37,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 30));
             var enemyJab = CardFixtures.EnemyAttack("goblin_jab", 9, 4);
             state.Zone.Add(new ExecutionCardInstance(enemyJab) { OwnerId = "goblin" });
-            state.Zone.Add(new ExecutionCardInstance(
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.QuickCover()))
+            state.Zone.Add(new ExecutionCardInstance(Pool.Get("quick_cover"))
                 { OwnerId = "back" });
 
             Resolve(state);
@@ -56,7 +48,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Crossover_swaps_only_adjacent_unlocked_cards()
         {
-            var def = CardSpecMapper.ToDefinition(StarterPoolSpecs.Crossover());
+            var def = Pool.Get("crossover");
             Assert.AreEqual(CardCategory.Intervention, def.Category);
             Assert.IsTrue(def.InterventionAction.RequireAdjacentTargets);
         }
@@ -65,15 +57,15 @@ namespace FateWeaver.Tests
         public void Hasten_targets_player_cards_and_delay_targets_enemy_cards()
         {
             Assert.AreEqual(Side.Player,
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Hasten()).InterventionAction.TargetSide);
+                Pool.Get("hasten").InterventionAction.TargetSide);
             Assert.AreEqual(-1,
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Hasten()).InterventionAction.EffectValue);
+                Pool.Get("hasten").InterventionAction.EffectValue);
             Assert.AreEqual(Side.Enemy,
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Delay()).InterventionAction.TargetSide);
+                Pool.Get("delay").InterventionAction.TargetSide);
             Assert.AreEqual(Side.Player,
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Breather()).InterventionAction.TargetSide);
+                Pool.Get("breather").InterventionAction.TargetSide);
             Assert.AreEqual(1,
-                CardSpecMapper.ToDefinition(StarterPoolSpecs.Breather()).InterventionAction.EffectValue);
+                Pool.Get("breather").InterventionAction.EffectValue);
         }
 
         private static CombatState NewState()

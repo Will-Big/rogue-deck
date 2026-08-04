@@ -1,36 +1,42 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
-using FateWeaver.Core.Authoring;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
 {
     public class PartyPrototypeDataTests
     {
-        private sealed class NoEnemyTurns : IEnemyTurnPolicy
+        private static readonly GameContent Content = TestContent.Content();
+
+        private static IReadOnlyList<CardDefinition> PrototypeDeckCards()
         {
-            public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex, Random rng)
-                => Array.Empty<CardDefinition>();
+            var cards = new List<CardDefinition>();
+            foreach (var id in Content.Decks.Get("party_prototype"))
+            {
+                cards.Add(Content.Cards.Get(id));
+            }
+
+            return cards;
         }
 
         [Test]
         public void Prototype_deck_contains_only_validation_prefixed_cards()
         {
             Assert.That(
-                PartyPrototypeDeck.Build(),
+                PrototypeDeckCards(),
                 Is.All.Matches<CardDefinition>(card => card.Name.StartsWith("[검증]")));
         }
 
         [Test]
         public void Prototype_deck_has_six_cards_and_expected_duplicates()
         {
-            var cards = PartyPrototypeDeck.Build();
+            var cards = PrototypeDeckCards();
             var attacks = cards.Where(card => card.Id == "fixture_attack").ToList();
             var move = cards.Single(card => card.Id == "fixture_move_forward");
 
@@ -46,24 +52,9 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Hand_coded_and_authored_specs_map_to_equal_definitions()
-        {
-            var handCoded = PartyPrototypeDeck.Build();
-            var authored = PartyPrototypeDeckSpecs.Build()
-                .Select(CardSpecMapper.ToDefinition)
-                .ToList();
-
-            Assert.AreEqual(handCoded.Count, authored.Count);
-            for (var i = 0; i < handCoded.Count; i++)
-            {
-                AssertDefinitionsEqual(handCoded[i], authored[i]);
-            }
-        }
-
-        [Test]
         public void Owner_block_uses_self_without_direct_target_selection()
         {
-            var ownerBlock = PartyPrototypeDeck.Build()
+            var ownerBlock = PrototypeDeckCards()
                 .First(card => card.Id == "fixture_selected_block");
 
             Assert.IsTrue(PartyTargetRules.IsValidBaseExecutionDefinition(ownerBlock));
@@ -76,7 +67,7 @@ namespace FateWeaver.Tests
         [Test]
         public void All_block_does_not_open_direct_target_selection()
         {
-            var allBlock = PartyPrototypeDeck.Build()
+            var allBlock = PrototypeDeckCards()
                 .Single(card => card.Id == "fixture_all_block");
 
             Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(allBlock));
@@ -86,42 +77,17 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Roster_assigns_distinct_character_owners()
+        public void ContentAssignsDistinctCharacterOwners()
         {
-            var roster = PartyPrototypeRoster.Build();
-            var session = new DeckCombatSession(TestContent.Statuses(),
-                roster,
-                Array.Empty<Enemy>(),
-                new NoEnemyTurns(),
-                PartyPrototypeRoster.Tuning);
+            var content = TestContent.Content();
+            var tuning = PartyPrototypeRoster.Tuning;
 
-            Assert.AreEqual(2, roster.Count);
-            Assert.AreEqual("member_a", roster[0].Id);
-            Assert.AreEqual("파티원 A", roster[0].Name);
-            Assert.AreEqual("member_b", roster[1].Id);
-            Assert.AreEqual("파티원 B", roster[1].Name);
-            CollectionAssert.AreEqual(
-                StarterDeck.Build().Select(card => card.Id),
-                roster[0].Cards.Select(card => card.Id));
-            CollectionAssert.AreEqual(
-                new[] { "member_a", "member_b" },
-                session.AllDeckCards.Select(card => card.OwnerId).Distinct());
-            Assert.AreEqual(StarterDeck.Build().Count, session.AllDeckCards.Count(card => card.OwnerId == "member_a"));
-            Assert.AreEqual(6, session.AllDeckCards.Count(card => card.OwnerId == "member_b"));
-            Assert.IsTrue(roster.All(member => member.MaxHp == PartyPrototypeRoster.Tuning.DefaultMemberMaxHp));
-        }
+            var memberA = ContentLoadouts.For(content, "member_a", tuning.DefaultMemberMaxHp);
+            var memberB = ContentLoadouts.For(content, "member_b", tuning.DefaultMemberMaxHp);
 
-        private static void AssertDefinitionsEqual(CardDefinition expected, CardDefinition actual)
-        {
-            Assert.AreEqual(expected.Id, actual.Id);
-            Assert.AreEqual(expected.Name, actual.Name);
-            Assert.AreEqual(expected.Side, actual.Side);
-            Assert.AreEqual(expected.Category, actual.Category);
-            Assert.AreEqual(expected.EnergyCost, actual.EnergyCost);
-            Assert.AreEqual(expected.BaseExecutionOrder, actual.BaseExecutionOrder);
-            CollectionAssert.AreEqual(expected.Effects, actual.Effects);
-            Assert.AreEqual(expected.InterventionAction, actual.InterventionAction);
-            Assert.AreEqual(expected.StartsLocked, actual.StartsLocked);
+            Assert.AreNotEqual(memberA.Id, memberB.Id);
+            Assert.AreEqual("파티원 A", memberA.Name);
+            Assert.AreEqual("파티원 B", memberB.Name);
         }
     }
 }

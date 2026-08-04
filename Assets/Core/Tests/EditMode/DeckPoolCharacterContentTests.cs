@@ -1,5 +1,4 @@
 using System.IO;
-using System.Linq;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
@@ -9,13 +8,37 @@ using NUnit.Framework;
 
 namespace FateWeaver.Tests
 {
-    /// <summary>커밋된 덱·풀·캐릭터 JSON을 공인 목록과 대조해 잠근다. 지금은 두 원본(C# 스펙과
-    /// JSON)이 공존하므로 교차 대조가 가능하다 — 계획 3d가 C# 스펙을 지울 때 이 테스트는 골든
-    /// 문자열 배열로 바뀐다.</summary>
+    /// <summary>커밋된 덱·풀·캐릭터 JSON을 골든 문자열 배열과 대조해 잠근다. JSON이 유일 원본이므로
+    /// 골든은 JSON 파일 자체에서 옮겨 적은 값이다 — C# 스펙과는 더 이상 대조하지 않는다.</summary>
     public class DeckPoolCharacterContentTests
     {
         private const int StarterDeckSize = 10;
         private const int StarterPoolSize = 22;
+
+        /// <summary>추첨으로 고정된 10장. 순서까지 계약이다 — 무작위 시작 덱 설계 §3이
+        /// 역할 순서로 고정한다고 정했다. Decks/starter.json에서 그대로 옮겨 적었다.</summary>
+        private static readonly string[] StarterDeckGolden =
+        {
+            "probing_strike", "delayed_strike", "quick_cover", "early_guard", "breather",
+            "hasten", "toxic_reclaim", "early_onset", "spore_veil", "last_drop"
+        };
+
+        /// <summary>fixture_* 6장. Decks/party_prototype.json에서 그대로 옮겨 적었다.</summary>
+        private static readonly string[] PartyPrototypeDeckGolden =
+        {
+            "fixture_attack", "fixture_attack", "fixture_selected_block", "fixture_selected_block",
+            "fixture_all_block", "fixture_move_forward"
+        };
+
+        /// <summary>풀 22장. Pools/starter.json에서 그대로 옮겨 적었다.</summary>
+        private static readonly string[] StarterPoolGolden =
+        {
+            "vanguard_slash", "parry_strike", "hasten", "probing_strike", "quick_cover",
+            "delay", "delayed_strike", "early_guard", "crossover", "riposte", "foresight",
+            "breather", "venom_thrust", "last_drop", "spore_veil", "spread_culture",
+            "toxic_reclaim", "condensed_burst", "distill", "early_onset", "stable_culture",
+            "posthumous_spread"
+        };
 
         private static string Folder(string name) => Path.Combine(TestContent.Root(), name);
 
@@ -60,31 +83,29 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void StarterDeckJsonMatchesTheAuthoredTenCards()
+        public void StarterDeckJsonMatchesTheGoldenTenCards()
         {
             var cards = Decks().Get(ContentExportWriter.StarterDeckId);
 
             Assert.AreEqual(StarterDeckSize, cards.Count);
-            CollectionAssert.AreEqual(
-                StarterDeckSpecs.Build().Select(spec => spec.Id).ToArray(), cards);
+            CollectionAssert.AreEqual(StarterDeckGolden, cards);
         }
 
         [Test]
-        public void PartyPrototypeDeckJsonMatchesTheAuthoredDeck()
+        public void PartyPrototypeDeckJsonMatchesTheGoldenDeck()
         {
             CollectionAssert.AreEqual(
-                PartyPrototypeDeckSpecs.Build().Select(spec => spec.Id).ToArray(),
+                PartyPrototypeDeckGolden,
                 Decks().Get(ContentExportWriter.PartyPrototypeDeckId));
         }
 
         [Test]
-        public void StarterPoolJsonMatchesTheAuthoredTwentyTwoCards()
+        public void StarterPoolJsonMatchesTheGoldenTwentyTwoCards()
         {
             var cards = Pools().Get(ContentExportWriter.StarterPoolId);
 
             Assert.AreEqual(StarterPoolSize, cards.Count);
-            CollectionAssert.AreEqual(
-                StarterPoolSpecs.Build().Select(spec => spec.Id).ToArray(), cards);
+            CollectionAssert.AreEqual(StarterPoolGolden, cards);
         }
 
         [Test]
