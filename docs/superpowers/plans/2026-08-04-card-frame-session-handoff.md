@@ -33,12 +33,33 @@
 
 ### Relevant checkpoint commits
 
+- `913e95f fix(ui): integrate card prefabs with battle screen`
+- `5f3e58e merge: card frame design checkpoint`
+- `51938e6 docs: hand off card frame follow-up`
+- `6943dbf fix(ui): improve execution order badge visibility`
 - `f6c6668 docs: record card frame verification checkpoint`
 - `c73442b test(ui): update playmode card fixture`
 - `335a6c3 chore(ui): retire poster card frame assets`
 - `1bb65c8 test(ui): lock card form factor layouts`
 - `13fb2eb docs: defer JSON card status integration`
 - `a9c1d4f refactor(ui): author generic card status prefabs`
+
+### Merge handoff update (2026-08-04)
+
+- The user-approved checkpoint was merged to `master` as `5f3e58e`, preserving the newer JSON
+  content pipeline and decomposed battle-screen architecture.
+- `913e95f` regenerated `FateWeaverBattle.unity` from the merged `BattleSceneBuilder` and updated
+  the prefab-catalog scene contract after the obsolete deck-playtest controllers were removed.
+- `master` and `refactor/card-frame-design` were synchronized at the final handoff commit; continue
+  in the existing card-frame worktree and branch named in Global Constraints.
+- Final merged verification before this document update:
+  - headless: **530/530 passed**;
+  - Unity EditMode: **680 total, 672 passed, 0 failed, 8 skipped**;
+  - Unity PlayMode: **2/2 passed**;
+  - results: `/private/tmp/card-frame-merged-editmode-20260804.xml` and
+    `/private/tmp/card-frame-merged-playmode-20260804.xml`.
+- The main checkout's pre-existing `graphify-out` changes and the feature worktree's local
+  `.superpowers/`/`graphify-out` scratch artifacts remain intentionally uncommitted.
 
 ---
 
