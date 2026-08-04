@@ -4,9 +4,11 @@
 > `superpowers:executing-plans`로 태스크 단위로 실행한다. 단계는 체크박스(`- [ ]`)로 추적한다.
 
 - 작성일: 2026-08-04
-- 상태: `active`
-- 상위 설계: [카드 변형과 런타임 콘텐츠 로딩](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
-- 선행: 계획 3b [런타임 콘텐츠 전환](../archive/plans/2026-08-03-runtime-content-switch.md) **완료**
+- 완료일: 2026-08-04
+- 상태: `archived`
+- 완료 시점 실측: 헤드리스 **533/533**, Unity EditMode **682 total / 674 passed / 0 failed / 8 skipped**
+- 상위 설계: [카드 변형과 런타임 콘텐츠 로딩](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
+- 선행: 계획 3b [런타임 콘텐츠 전환](2026-08-03-runtime-content-switch.md) **완료**
 - 독립: 계획 3d(C# 카드 스펙 제거)와 순서를 바꿔도 된다
 
 **목표:** 상태 규칙의 유일한 원본을 `Assets/StreamingAssets/Content/Statuses/*.json`으로 확정하고,
@@ -99,7 +101,7 @@ JSON이 `StatusContentDefaults` 없이 스스로를 해석하게 만드는 태�
   `StatusSpecJsonConverter.BuildFactories(StatusRegistry) → Dictionary<string, Func<StatusSpec>>`
   (`internal`)
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `Assets/Core/Tests/EditMode/StatusContentTests.cs`에 추가한다 (파일 상단에
 `using FateWeaver.Core;`, `using FateWeaver.Core.Status;`가 없으면 함께 추가):
@@ -127,7 +129,7 @@ public void SpecTypeComesFromTheBehaviorRegistry()
 }
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter FullyQualifiedName~StatusContentTests
@@ -135,7 +137,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 컴파일 실패 — `IStatusBehavior`에 `NewSpec` 정의가 없다.
 
-- [ ] **Step 3: 행동이 자기 스펙 타입을 답하게 한다**
+- [x] **Step 3: 행동이 자기 스펙 타입을 답하게 한다**
 
 `Assets/Core/Status/IStatusBehavior.cs`의 `IStatusBehavior` 인터페이스에 추가한다:
 
@@ -153,7 +155,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
             => new Authoring.Statuses.StatusSpec();
 ```
 
-- [ ] **Step 4: 파라미터가 있는 여섯 상태가 재정의한다**
+- [x] **Step 4: 파라미터가 있는 여섯 상태가 재정의한다**
 
 `PoisonBehavior.cs`의 클래스 안에 추가한다 (파일 상단에
 `using FateWeaver.Core.Authoring.Statuses;` 추가):
@@ -177,7 +179,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 나머지 다섯(`Block`, `Contagion`, `PoisonDormant`, `PoisonStasis`, `RewardSuppression`)은
 파라미터가 없으므로 재정의하지 않는다 — 기본 구현이 `StatusSpec`을 준다.
 
-- [ ] **Step 5: 컨버터가 레지스트리에서 표를 만든다**
+- [x] **Step 5: 컨버터가 레지스트리에서 표를 만든다**
 
 `Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs`의 `using`에 `FateWeaver.Core;`와
 `FateWeaver.Core.Status;`를 추가하고, `FactoryByKey` 필드와 `BuildFactories`를 통째로 바꾼다:
@@ -211,7 +213,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 사전이라 중복이 성립하지 않는다. `using FateWeaver.Core.Authoring.Statuses;`는 `StatusSpec`
 때문에 남는다.
 
-- [ ] **Step 6: 통과를 확인한다**
+- [x] **Step 6: 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -219,7 +221,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 실패 0 (기준선 530 + 이 태스크의 새 테스트 1개). `StatusContentDefaults`는 아직 살아 있지만 컨버터는 더 이상 그것을 읽지 않는다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Assets/Core/Status Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs Assets/Core/Tests/EditMode/StatusContentTests.cs && git commit -m "refactor: 상태 스펙 판별자를 행동 레지스트리에서 만든다"
@@ -240,7 +242,7 @@ git add Assets/Core/Status Assets/Core/Authoring/Json/StatusSpecJsonConverter.cs
 - Produces: `ContentBootstrap.LoadStatuses(string contentRoot) → StatusContentLoadResult`,
   `GameContent.Statuses → StatusContentCatalog`
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `Assets/Core/Tests/EditMode/ContentBootstrapTests.cs`에 추가한다 (상단에
 `using FateWeaver.Core.Status;` 추가):
@@ -268,7 +270,7 @@ public void BootstrapReportsMissingStatusesBeforeReadingCards()
 }
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter FullyQualifiedName~ContentBootstrapTests
@@ -276,7 +278,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 컴파일 실패 — `GameContent`에 `Statuses`가 없다.
 
-- [ ] **Step 3: `GameContent`가 상태를 갖는다**
+- [x] **Step 3: `GameContent`가 상태를 갖는다**
 
 `Assets/Core/Authoring/GameContent.cs`를 다음으로 바꾼다 (문서 주석의 "아직 묶지 않는다" 설명은
 사라진다 — 계획 3c가 그 이유를 없앴다):
@@ -315,7 +317,7 @@ namespace FateWeaver.Core.Authoring
 }
 ```
 
-- [ ] **Step 4: 부팅 순서를 상태 → 카드 → 덱·풀 → 캐릭터로 바꾼다**
+- [x] **Step 4: 부팅 순서를 상태 → 카드 → 덱·풀 → 캐릭터로 바꾼다**
 
 `Assets/Core/Authoring/ContentBootstrap.cs`의 `using`에
 `FateWeaver.Core.Authoring.Statuses;`를 추가하고, `Load`의 맨 앞에 상태 단계를 넣는다:
@@ -360,7 +362,7 @@ namespace FateWeaver.Core.Authoring
         }
 ```
 
-- [ ] **Step 5: 카드 쪽 중복 가드를 없앤다**
+- [x] **Step 5: 카드 쪽 중복 가드를 없앤다**
 
 `Assets/Core/Authoring/Specs/ApplyStatusSpec.cs`의 `Validate`에서 마지막 `else if` 분기를 지운다.
 `using FateWeaver.Core.Authoring.Statuses;`도 함께 지운다. 결과:
@@ -382,7 +384,7 @@ namespace FateWeaver.Core.Authoring
         }
 ```
 
-- [ ] **Step 6: 통과를 확인한다**
+- [x] **Step 6: 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -395,7 +397,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 /usr/bin/grep -rn "has no authored content" --include='*.cs' Assets
 ```
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Assets/Core/Authoring Assets/Core/Tests/EditMode/ContentBootstrapTests.cs && git commit -m "feat: 부팅이 상태 카탈로그를 가장 먼저 읽는다"
@@ -421,7 +423,7 @@ git add Assets/Core/Authoring Assets/Core/Tests/EditMode/ContentBootstrapTests.c
 - Produces: `TestContent.Root() → string`, `TestContent.Statuses() → StatusContentCatalog`,
   `UnityTestContent.Statuses() → StatusContentCatalog`
 
-- [ ] **Step 1: 코어 테스트 헬퍼를 만든다**
+- [x] **Step 1: 코어 테스트 헬퍼를 만든다**
 
 `Assets/Core/Tests/EditMode/TestContent.cs`:
 
@@ -469,7 +471,7 @@ namespace FateWeaver.Tests
 }
 ```
 
-- [ ] **Step 2: Unity 테스트 헬퍼를 만든다**
+- [x] **Step 2: Unity 테스트 헬퍼를 만든다**
 
 `Assets/Tests/UnityEditMode/UnityTestContent.cs`:
 
@@ -502,7 +504,7 @@ namespace FateWeaver.Tests.UnityEditMode
 }
 ```
 
-- [ ] **Step 3: 중복된 `ContentRoot()`를 걷어낸다**
+- [x] **Step 3: 중복된 `ContentRoot()`를 걷어낸다**
 
 다음 다섯 파일에서 각자의 `private static string ContentRoot()`(또는 같은 걷기 로직)를 지우고
 호출부를 `TestContent.Root()`로 바꾼다:
@@ -513,7 +515,7 @@ namespace FateWeaver.Tests.UnityEditMode
 
 `ContentExportWriterTests`의 `[Explicit]` 내보내기 테스트도 같은 헬퍼를 쓴다.
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -521,7 +523,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 실패 0, 총계는 기준선 530 그대로 (동작 변경 없음, 경로 조회 경로만 하나로 모였다).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Assets/Core/Tests/EditMode Assets/Tests/UnityEditMode && git commit -m "test: 콘텐츠 루트 조회를 TestContent 하나로 모은다"
@@ -565,7 +567,7 @@ public MultiTurnPlaytestSession(MultiTurnScenario scenario, StatusContentCatalog
 public static string ScenarioCliReport.Build(string scenarioId, StatusContentCatalog statusContent)
 ```
 
-- [ ] **Step 1: `DeckCombatSession`이 카탈로그를 받는다**
+- [x] **Step 1: `DeckCombatSession`이 카탈로그를 받는다**
 
 두 공개 생성자와 비공개 생성자에 `StatusContentCatalog statusContent`를 첫 파라미터로 추가하고
 (`using FateWeaver.Core.Authoring.Statuses;` 추가), 비공개 생성자의 상태 생성을 바꾼다:
@@ -582,7 +584,7 @@ public static string ScenarioCliReport.Build(string scenarioId, StatusContentCat
 
 두 공개 생성자의 `: this(...)` 전달 목록 맨 앞에도 `statusContent`를 넣는다.
 
-- [ ] **Step 2: 하니스 넷이 카탈로그를 받는다**
+- [x] **Step 2: 하니스 넷이 카탈로그를 받는다**
 
 `ScenarioRunner`·`MultiTurnRunner`는 생성자와 `private readonly StatusContentCatalog _statusContent;`
 필드를 추가하고, `new CombatState { ... }`에 `StatusContent = _statusContent,`를 넣는다.
@@ -607,7 +609,7 @@ public static string ScenarioCliReport.Build(string scenarioId, StatusContentCat
         }
 ```
 
-- [ ] **Step 3: Unity 런타임이 부팅 카탈로그를 넘긴다**
+- [x] **Step 3: Unity 런타임이 부팅 카탈로그를 넘긴다**
 
 `Assets/Unity/BattleScreenController.cs`의 `StartSession`에서 세션 생성을 바꾼다:
 
@@ -623,7 +625,7 @@ public static string ScenarioCliReport.Build(string scenarioId, StatusContentCat
                 seed: Seed);
 ```
 
-- [ ] **Step 4: 테스트 호출부를 기계적으로 고친다**
+- [x] **Step 4: 테스트 호출부를 기계적으로 고친다**
 
 저장소 루트에서 실행한다 (macOS `sed`이므로 `-i ''`):
 
@@ -643,7 +645,7 @@ public static string ScenarioCliReport.Build(string scenarioId, StatusContentCat
 컴파일 오류를 보고 손으로 고친다. 줄바꿈된 `new DeckCombatSession(` 호출에서 인자가 첫 줄에
 붙어 어색해지면 포맷만 정리한다 — 동작은 그대로다.
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -652,7 +654,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 예상: 실패 0. 이 시점에도 `CombatState`의 기본값은 살아 있고, 주입된 카탈로그가 그것을
 덮어쓴다 — 값이 같으므로 동작은 변하지 않는다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add Assets && git commit -m "refactor: 세션과 하니스가 상태 카탈로그를 주입받는다"
@@ -670,7 +672,7 @@ git add Assets && git commit -m "refactor: 세션과 하니스가 상태 카탈�
 - Produces: `CombatState(StatusContentCatalog statusContent)` — 유일한 생성자.
   `StatusContent`는 읽기 전용 프로퍼티가 된다.
 
-- [ ] **Step 1: 생성자를 필수로 만든다**
+- [x] **Step 1: 생성자를 필수로 만든다**
 
 `Assets/Core/Combat/CombatState.cs`에서 `StatusContent` 프로퍼티를 바꾸고 생성자를 추가한다:
 
@@ -689,7 +691,7 @@ git add Assets && git commit -m "refactor: 세션과 하니스가 상태 카탈�
         }
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -697,13 +699,13 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 컴파일 실패 다수 — `new CombatState()`에 인자가 없다.
 
-- [ ] **Step 3: 하니스·세션을 고친다**
+- [x] **Step 3: 하니스·세션을 고친다**
 
 Task 4에서 이미 필드로 들고 있으므로 생성만 바꾼다. 다섯 파일에서
 `new CombatState { StatusContent = X, ... }` → `new CombatState(X) { ... }`,
 `new CombatState()` → `new CombatState(X)` (X는 각 클래스가 주입받은 카탈로그).
 
-- [ ] **Step 4: 테스트 호출부를 기계적으로 고친다**
+- [x] **Step 4: 테스트 호출부를 기계적으로 고친다**
 
 ```bash
 /usr/bin/grep -rl "new CombatState" Assets/Core/Tests/EditMode | xargs sed -i '' -e 's/new CombatState()/new CombatState(TestContent.Statuses())/g' -e 's/new CombatState {/new CombatState(TestContent.Statuses()) {/g'
@@ -720,7 +722,7 @@ Task 4에서 이미 필드로 들고 있으므로 생성만 바꾼다. 다섯 �
 /usr/bin/grep -rn "new CombatState" --include='*.cs' Assets | /usr/bin/grep -v "TestContent.Statuses()\|_statusContent\|statusContent"
 ```
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -728,7 +730,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 실패 0. 이제 전투 규칙 수치는 JSON에서만 온다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add Assets && git commit -m "refactor: CombatState가 상태 콘텐츠를 생성자에서 요구한다"
@@ -758,7 +760,7 @@ git add Assets && git commit -m "refactor: CombatState가 상태 콘텐츠를 �
   - `BattleUnitsView.Spawn(CombatState state, Func<string, Color> colorFor, Func<string, string> enemyNameFor, Func<StatusKey, string> statusNameFor)`
   - `UnitView.SetStatuses(IReadOnlyList<StatusInstance> statuses, Func<StatusKey, string> nameFor)`
 
-- [ ] **Step 1: 전역과 무인자 오버로드를 지운다**
+- [x] **Step 1: 전역과 무인자 오버로드를 지운다**
 
 `KoreanDescriptionCatalog.cs`에서 다음 둘을 삭제한다:
 
@@ -774,7 +776,7 @@ git add Assets && git commit -m "refactor: CombatState가 상태 콘텐츠를 �
 
 `using FateWeaver.Core.Authoring.Statuses;`는 파라미터 타입 때문에 남는다.
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -782,7 +784,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 컴파일 실패 — 코어 테스트 6파일이 무인자 `CreateDefault()`를 부른다.
 
-- [ ] **Step 3: 코어 테스트를 카탈로그 주입으로 바꾼다**
+- [x] **Step 3: 코어 테스트를 카탈로그 주입으로 바꾼다**
 
 ```bash
 /usr/bin/grep -rl "KoreanDescriptionCatalog.CreateDefault()" Assets/Core/Tests/EditMode | xargs sed -i '' 's/KoreanDescriptionCatalog.CreateDefault()/KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses())/g'
@@ -795,7 +797,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 /usr/bin/grep -rn "CreateDefault()" --include='*.cs' Assets
 ```
 
-- [ ] **Step 4: 카드 표현이 카탈로그를 받는다**
+- [x] **Step 4: 카드 표현이 카탈로그를 받는다**
 
 `Assets/Unity/CardPresentation.cs`의 두 팩토리에 `KoreanDescriptionCatalog korean`을 두 번째
 파라미터로 추가하고, 본문의 `KoreanDescriptionCatalog.Default`를 `korean`으로 바꾼다:
@@ -833,7 +835,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 (합성 진입점은 카드 프레임 작업이 `Describe`에서 `Compose`로 바꿨다. 착수 시점에
 `DescriptionComposer`의 현재 메서드 이름을 확인한다.)
 
-- [ ] **Step 5: `BattlePresenter`가 카탈로그를 들고 넘긴다**
+- [x] **Step 5: `BattlePresenter`가 카탈로그를 들고 넘긴다**
 
 `Assets/Unity/BattlePresenter.cs`에 필드와 초기화를 추가한다 (`using FateWeaver.Simulation.Descriptions;` 추가):
 
@@ -859,7 +861,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
             return CardPresentation.From(card, _korean, ArtFor, name, color, isPartyOwned);
 ```
 
-- [ ] **Step 6: 유닛의 상태 이름을 주입으로 바꾼다**
+- [x] **Step 6: 유닛의 상태 이름을 주입으로 바꾼다**
 
 `Assets/Unity/PlaytestKoreanText.cs`에서 두 메서드를 삭제한다:
 
@@ -930,7 +932,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 (`using FateWeaver.Core.Status;` 추가.)
 
-- [ ] **Step 7: 컨트롤러가 부팅 콘텐츠로 배선한다**
+- [x] **Step 7: 컨트롤러가 부팅 콘텐츠로 배선한다**
 
 `Assets/Unity/BattleScreenController.cs`의 `StartSession`에서 세션 생성 뒤 배선을 바꾼다
 (`using FateWeaver.Simulation.Descriptions;` 추가):
@@ -945,7 +947,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
                 key => _content.Statuses.DisplayNameOf(key));
 ```
 
-- [ ] **Step 8: 에디터 드롭다운이 JSON을 읽는다**
+- [x] **Step 8: 에디터 드롭다운이 JSON을 읽는다**
 
 `Assets/Unity/Editor/StatusKeyDropdownOptions.cs`의 `CreateDefault`를 바꾼다
 (`using FateWeaver.Unity;` 추가):
@@ -967,7 +969,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 로드 실패 시 `statuses.Catalog`가 `null`이라 `CreateDefault`가 던진다 — 에디터에서 콘텐츠가
 깨졌다는 사실이 드러나야 하므로 삼키지 않는다.
 
-- [ ] **Step 9: Unity 테스트를 고친다**
+- [x] **Step 9: Unity 테스트를 고친다**
 
 `Assets/Tests/UnityEditMode/CardPresentationTests.cs`의 여덟 호출에 카탈로그를 넣는다.
 카탈로그는 **둘째** 인자이므로 일괄 치환이 아니라 손으로 고친다 — 첫 인자가 카드다.
@@ -988,7 +990,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
             var presentation = CardPresentation.FromDefinition(EnemyCard(), Korean);
 ```
 
-- [ ] **Step 10: 헤드리스와 Unity EditMode를 모두 돌린다**
+- [x] **Step 10: 헤드리스와 Unity EditMode를 모두 돌린다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -1001,7 +1003,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 예상: 헤드리스 실패 0, Unity EditMode는 삭제한 `InterventionActionName` 케이스 수만큼 총계가
 줄고 failed=0. 실행 뒤 `git status`로 폰트 아틀라스 같은 런타임 부산물이 섞이지 않았는지 확인한다.
 
-- [ ] **Step 11: 커밋**
+- [x] **Step 11: 커밋**
 
 ```bash
 git add Assets && git commit -m "refactor: 설명 카탈로그를 전역 대신 주입으로 받는다"
@@ -1018,7 +1020,7 @@ git add Assets && git commit -m "refactor: 설명 카탈로그를 전역 대신 
   `StatusTests.cs`, `DescriptionComposerTests.cs`, `ContentExportWriterTests.cs`
 - Modify: `docs/superpowers/README.md`, `docs/superpowers/plans/2026-08-04-status-content-single-source.md`
 
-- [ ] **Step 1: 남은 참조를 테스트 헬퍼로 바꾼다**
+- [x] **Step 1: 남은 참조를 테스트 헬퍼로 바꾼다**
 
 ```bash
 /usr/bin/grep -rn "StatusContentDefaults" --include='*.cs' Assets
@@ -1031,7 +1033,7 @@ git add Assets && git commit -m "refactor: 설명 카탈로그를 전역 대신 
 - `ContentExportWriterTests.cs:56,87` → 상태를 더 이상 내보내지 않으므로 해당 단언을 지우고,
   아래 Step 2의 새 단언으로 대체한다.
 
-- [ ] **Step 2: 내보내기에서 상태를 뺀다**
+- [x] **Step 2: 내보내기에서 상태를 뺀다**
 
 `Assets/Core/Authoring/Json/ContentExportWriter.cs`의 `WriteAll`에서 상태 루프를 지운다:
 
@@ -1066,13 +1068,13 @@ public void WriteAllDoesNotTouchStatuses()
 (`NewTempDirectory()`·`Characters()`는 기존 테스트의 헬퍼 이름에 맞춘다. 없으면 기존 테스트가
 쓰는 방식 그대로 임시 디렉터리와 캐릭터 목록을 만든다.)
 
-- [ ] **Step 3: 파일을 지운다**
+- [x] **Step 3: 파일을 지운다**
 
 ```bash
 git rm Assets/Core/Authoring/Statuses/StatusContentDefaults.cs Assets/Core/Authoring/Statuses/StatusContentDefaults.cs.meta
 ```
 
-- [ ] **Step 4: 잔여가 없음을 확인한다**
+- [x] **Step 4: 잔여가 없음을 확인한다**
 
 ```bash
 /usr/bin/grep -rn "StatusContentDefaults" --include='*.cs' Assets
@@ -1080,7 +1082,7 @@ git rm Assets/Core/Authoring/Statuses/StatusContentDefaults.cs Assets/Core/Autho
 
 예상: 출력 없음.
 
-- [ ] **Step 5: 헤드리스와 Unity EditMode를 모두 돌린다**
+- [x] **Step 5: 헤드리스와 Unity EditMode를 모두 돌린다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -1092,7 +1094,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 둘 다 failed=0. 실제 총계를 다음 단계에서 문서에 적는다.
 
-- [ ] **Step 6: 문서를 갱신한다 (규칙 20)**
+- [x] **Step 6: 문서를 갱신한다 (규칙 20)**
 
 `docs/superpowers/README.md`에서:
 - "진행 중인 작업 흐름" 표의 3c 행을 **완료**로 바꾸고 이 계획 문서를
@@ -1105,7 +1107,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 이 계획 문서를 `docs/superpowers/archive/plans/`로 옮기고 머리말의 상태를 `archived`로 바꾼다.
 `docs/superpowers/archive/README.md`에도 한 줄 추가한다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add -A && git commit -m "refactor: 상태 규칙의 코드 기본값을 지우고 JSON을 유일 원본으로 확정한다"
@@ -1125,7 +1127,7 @@ git add -A && git commit -m "refactor: 상태 규칙의 코드 기본값을 지�
 
 - **계획 3d (C# 카드 스펙 제거)** — 독립이지만, `ContentExportWriter`가 상태를 잃으면서
   덱·풀·캐릭터 세 항목만 남아 삭제 범위가 좁아진다.
-- **[상태 규칙 파라미터화와 3종 디버프](2026-07-30-status-rule-and-debuffs.md)** — 새 상태를
+- **[상태 규칙 파라미터화와 3종 디버프](../../plans/2026-07-30-status-rule-and-debuffs.md)** — 새 상태를
   JSON 파일 하나 + 행동 클래스 하나로 추가하게 된다. 코드에 값을 두 벌 적지 않는다.
 - **런 지속 변경(유물)** — `CombatState`가 카탈로그를 생성자에서 받으므로, 전투 시작 전에
   수정한 카탈로그를 넘기는 것만으로 런 단위 규칙 변경이 성립한다.
@@ -1135,5 +1137,5 @@ git add -A && git commit -m "refactor: 상태 규칙의 코드 기본값을 지�
 - **적 카드의 JSON 전환.** `GoblinDeck`·`WardenDeck`은 여전히 순수 C#이다. 적 정책·행동 패턴
   설계가 딸려 오므로 별도 계획이다.
 - **`StatusRule`의 확장.** 방어 흡수 층 분리와 배율의 런타임 조절은
-  [상태 규칙 파라미터화 계획](2026-07-30-status-rule-and-debuffs.md)의 몫이다.
+  [상태 규칙 파라미터화 계획](../../plans/2026-07-30-status-rule-and-debuffs.md)의 몫이다.
 - **`ContentExportWriter` 삭제.** 계획 3d가 한다.

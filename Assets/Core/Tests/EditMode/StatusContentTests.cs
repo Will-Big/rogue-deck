@@ -13,14 +13,21 @@ namespace FateWeaver.Tests
 {
     public class StatusContentTests
     {
+        /// <summary>등록된 모든 상태가 자기 스펙 타입으로 되돌아오는지 본다. 목록의 원본은 행동
+        /// 레지스트리다 — 코드 기본값 목록이 사라졌으므로 "존재하는 상태"는 레지스트리만 안다.</summary>
         [Test]
         public void RoundTripsEveryRegisteredStatusSpecKind()
         {
-            foreach (var spec in StatusContentDefaults.Specs())
+            var behaviors = CombatRegistries.Statuses();
+
+            foreach (var key in behaviors.RegisteredKeys)
             {
+                var spec = behaviors.Resolve(key).NewSpec();
+                spec.Key = StatusKeyRef.Of(key);
+
                 var restored = ContentJson.Read<StatusSpec>(ContentJson.Write(spec));
 
-                Assert.AreEqual(spec.GetType(), restored.GetType(), spec.Key.Id);
+                Assert.AreEqual(spec.GetType(), restored.GetType(), key.Id);
             }
         }
 
@@ -77,16 +84,21 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void EveryCatalogEntryHasADistinctKey()
+        public void EveryCatalogEntryHasADistinctKeyAndDisplayName()
         {
-            CollectionAssert.AllItemsAreUnique(
-                StatusContentDefaults.Specs().Select(spec => spec.Key.Id).ToList());
+            var catalog = TestContent.Statuses();
+
+            CollectionAssert.AllItemsAreUnique(catalog.Keys.ToList());
+            foreach (var id in catalog.Keys)
+            {
+                Assert.IsNotEmpty(catalog.DisplayNameOf(new StatusKey(id)), id);
+            }
         }
 
         [Test]
         public void StatusContentCarriesItsDisplayName()
         {
-            var catalog = StatusContentDefaults.Catalog();
+            var catalog = TestContent.Statuses();
 
             Assert.AreEqual("약화", catalog.DisplayNameOf(StatusKeys.Weak));
             Assert.AreEqual("독", catalog.DisplayNameOf(StatusKeys.Poison));

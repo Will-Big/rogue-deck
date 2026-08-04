@@ -53,8 +53,7 @@ namespace FateWeaver.Tests
             var written = WriteAll();
 
             Assert.AreEqual(
-                StatusContentDefaults.Specs().Count
-                    + 2 // Decks/starter.json, Decks/party_prototype.json
+                2 // Decks/starter.json, Decks/party_prototype.json
                     + 1 // Pools/starter.json
                     + PartyPrototypeCharacterSpecs.Build().Count,
                 written.Count,
@@ -78,14 +77,22 @@ namespace FateWeaver.Tests
                 "카드를 다시 쓰면 등급·태그가 지워진다.");
         }
 
+        /// <summary>계획 3c 이후 상태도 같다 — 표시명·수명·배율·성장치의 원본이 JSON뿐이다.</summary>
+        [Test]
+        public void WriteAllDoesNotTouchStatuses()
+        {
+            WriteAll();
+
+            Assert.IsFalse(
+                Directory.Exists(Path.Combine(_root, CardContentFiles.StatusesFolderName)),
+                "상태의 원본은 JSON이다 — 다시 쓰면 저작이 지워진다.");
+        }
+
         [Test]
         public void WriteAllFillsEveryContentFolder()
         {
             WriteAll();
 
-            Assert.AreEqual(
-                StatusContentDefaults.Specs().Count,
-                JsonIn(Path.Combine(_root, CardContentFiles.StatusesFolderName)).Length);
             CollectionAssert.AreEqual(
                 new[] { "party_prototype.json", "starter.json" },
                 JsonIn(Path.Combine(_root, CardContentFiles.DecksFolderName)));

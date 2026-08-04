@@ -14,8 +14,8 @@ namespace FateWeaver.Tests
     public class SlowHasteStatusTests
     {
         // Task 4: slow/haste no longer carry their own strength on the StatusInstance's Magnitude —
-        // the catalog is the only source (StatusContentDefaults: slow +2, haste -2 executionOrder).
-        private static readonly StatusContentCatalog Content = StatusContentDefaults.Catalog();
+        // the catalog is the only source (Content/Statuses: slow +2, haste -2 executionOrder).
+        private static readonly StatusContentCatalog Content = TestContent.Statuses();
 
         private static StatusContext Ctx(StatusKey key) =>
             new StatusContext { Instance = new StatusInstance(key, StatusLifetime.Turns(2)), Content = Content };

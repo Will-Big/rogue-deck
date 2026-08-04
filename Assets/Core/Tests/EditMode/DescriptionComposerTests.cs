@@ -192,7 +192,7 @@ namespace FateWeaver.Tests.EditMode
                 new InterventionDescriptionRegistry(),
                 new StatusDescriptionRegistry(),
                 new KoreanDescriptionGrammar(),
-                StatusContentDefaults.Catalog());
+                TestContent.Statuses());
 
             Assert.Throws<InvalidOperationException>(() =>
                 DescriptionComposer.Describe(

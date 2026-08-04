@@ -82,7 +82,7 @@ namespace FateWeaver.Tests
             var context = new DescriptionContext(
                 new KoreanDescriptionGrammar(),
                 new StatusDescriptionRegistry(),
-                StatusContentDefaults.Catalog(),
+                TestContent.Statuses(),
                 card.Id,
                 card.Side);
             Assert.AreEqual("치유 5",

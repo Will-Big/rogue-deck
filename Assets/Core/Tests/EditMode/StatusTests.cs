@@ -201,14 +201,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Vulnerable_multiplier_defaults_to_one_hundred_fifty_percent()
         {
-            var rules = StatusContentDefaults.Catalog().Rules;
+            var rules = TestContent.Statuses().Rules;
             Assert.AreEqual(150, rules.For(StatusKeys.Vulnerable).MultiplierPercent);
         }
 
         [Test]
         public void Unregistered_status_rule_is_a_neutral_multiplier()
         {
-            var rules = StatusContentDefaults.Catalog().Rules;
+            var rules = TestContent.Statuses().Rules;
             Assert.AreEqual(100, rules.For(new StatusKey("no_such_status")).MultiplierPercent);
         }
 
