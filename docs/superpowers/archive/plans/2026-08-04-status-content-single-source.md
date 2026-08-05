@@ -1127,7 +1127,7 @@ git add -A && git commit -m "refactor: 상태 규칙의 코드 기본값을 지�
 
 - **계획 3d (C# 카드 스펙 제거)** — 독립이지만, `ContentExportWriter`가 상태를 잃으면서
   덱·풀·캐릭터 세 항목만 남아 삭제 범위가 좁아진다.
-- **[상태 규칙 파라미터화와 3종 디버프](../../plans/2026-07-30-status-rule-and-debuffs.md)** — 새 상태를
+- **[상태 규칙 파라미터화와 3종 디버프](2026-07-30-status-rule-and-debuffs.md)** — 새 상태를
   JSON 파일 하나 + 행동 클래스 하나로 추가하게 된다. 코드에 값을 두 벌 적지 않는다.
 - **런 지속 변경(유물)** — `CombatState`가 카탈로그를 생성자에서 받으므로, 전투 시작 전에
   수정한 카탈로그를 넘기는 것만으로 런 단위 규칙 변경이 성립한다.
@@ -1137,5 +1137,5 @@ git add -A && git commit -m "refactor: 상태 규칙의 코드 기본값을 지�
 - **적 카드의 JSON 전환.** `GoblinDeck`·`WardenDeck`은 여전히 순수 C#이다. 적 정책·행동 패턴
   설계가 딸려 오므로 별도 계획이다.
 - **`StatusRule`의 확장.** 방어 흡수 층 분리와 배율의 런타임 조절은
-  [상태 규칙 파라미터화 계획](../../plans/2026-07-30-status-rule-and-debuffs.md)의 몫이다.
+  [상태 규칙 파라미터화 계획](2026-07-30-status-rule-and-debuffs.md)의 몫이다.
 - **`ContentExportWriter` 삭제.** 계획 3d가 한다.

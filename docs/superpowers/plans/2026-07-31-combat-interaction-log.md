@@ -4,7 +4,7 @@
 
 - 작성일: 2026-07-31
 - 상태: `active` — 미착수
-- 선행: [상태 규칙 파라미터화와 3종 디버프](2026-07-30-status-rule-and-debuffs.md) (Task 1~4 완료)
+- 선행: [상태 규칙 파라미터화와 3종 디버프](../archive/plans/2026-07-30-status-rule-and-debuffs.md) **완료·보관 (2026-08-05)**
 
 **Goal:** 전투에서 일어난 모든 상호작용을 결정론적 이벤트로 남기고, 턴 해석 직후 개발용 Console에
 사람이 읽을 수 있는 형태로 덤프한다.
@@ -30,6 +30,10 @@
 - 헤드리스 테스트: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 - ~~착수 시점 기준선: 409 tests, 0 failed~~ — **2026-08-04 기준선은 헤드리스 533, Unity EditMode
   682(674 passed / 8 skipped)**. 착수 세션이 첫 실행에서 다시 실측할 것
+- **`CombatState`는 상태 카탈로그를 생성자에서 요구한다 (2026-08-05 정정).** 계획 3c가 코드
+  기본값을 없앴으므로 `new CombatState()`는 컴파일되지 않는다. 아래 코드 조각은
+  `new CombatState(TestContent.Statuses())` 형태로 고쳐 두었다 — Unity EditMode에서는
+  `UnityTestContent.Statuses()`, 런타임에서는 `GameContent.Statuses`를 넘긴다.
 - **설명 카탈로그는 주입받는다 (2026-08-04 정정).** 계획 3c가 `KoreanDescriptionCatalog.Default`
   전역과 무인자 `CreateDefault()`를 제거했다. 아래 코드 조각의 `Korean`·`_korean`은
   `KoreanDescriptionCatalog.CreateDefault(<상태 카탈로그>)`로 만들어 둔 값이다 — 테스트는
@@ -139,7 +143,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Damage_steps_record_weak_then_vulnerable_then_block()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             var enemy = new Enemy("goblin", 30);
@@ -167,7 +171,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Damage_steps_name_the_holder_of_each_status()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(2));
             var enemy = new Enemy("goblin", 30);
@@ -188,7 +192,7 @@ namespace FateWeaver.Tests
         [Test]
         public void A_card_with_no_status_involved_records_no_steps()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 30));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
@@ -336,7 +340,7 @@ git commit -m "feat: record per-status damage steps on CardResolved"
         [Test]
         public void Applying_a_status_emits_status_applied_with_the_folded_magnitude()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
             state.Enemies.Add(new Enemy("goblin", 30));
@@ -358,7 +362,7 @@ git commit -m "feat: record per-status damage steps on CardResolved"
         [Test]
         public void A_status_that_runs_out_of_turns_emits_status_expired()
         {
-            var state = new CombatState();
+            var state = new CombatState(TestContent.Statuses());
             var player = state.AddSoloPlayer(30);
             player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(1)); // 이번 턴 끝에 만료
             state.Enemies.Add(new Enemy("goblin", 30));

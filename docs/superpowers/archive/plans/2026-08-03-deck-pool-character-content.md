@@ -343,7 +343,7 @@ Task 3 Step 3의 `[Explicit]` 테스트를 1회 실행한다. `.meta`는 Unity�
 | 단언 | 근거 |
 |---|---|
 | `Decks/starter.json`의 카드 10장이 `StarterDeckSpecs.Build()`의 id 순서와 같다 | [무작위 10장 시작 덱 설계](../../specs/2026-07-30-random-starter-deck-design.md)의 공인 추첨 결과 |
-| `Pools/starter.json`의 카드 22장이 `StarterPoolSpecs.Build()`의 id 순서와 같다 | [시작 카드 풀 SO 저작](../../specs/2026-07-29-starter-pool-so-authoring-design.md) |
+| `Pools/starter.json`의 카드 22장이 `StarterPoolSpecs.Build()`의 id 순서와 같다 | [시작 카드 풀 SO 저작](../specs/2026-07-29-starter-pool-so-authoring-design.md) |
 | 캐릭터 둘의 id·표시명이 `PartyPrototypeRoster`의 상수와 같다 | 현재 파티 구성 |
 | 세 카탈로그가 카드 카탈로그와 함께 오류 없이 로드된다 | 통합 확인 |
 

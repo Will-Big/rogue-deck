@@ -7,7 +7,7 @@
   519/520 — 남은 1건은 progress.md 참고)
 - 권위 문서: [`specs/2026-07-30-card-mutation-and-runtime-content-design.md`](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md)
 - 선행 계획: [`2026-07-31-card-content-json-loading.md`](2026-07-31-card-content-json-loading.md) (완료)
-- 관련 계획: [`../../plans/2026-07-30-status-rule-and-debuffs.md`](../../plans/2026-07-30-status-rule-and-debuffs.md) (`active`)
+- 관련 계획: [`../../plans/2026-07-30-status-rule-and-debuffs.md`](2026-07-30-status-rule-and-debuffs.md) (`active`)
 - 브랜치: `claude/card-mutation-runtime-content-a65c58`
 
 **Goal:** 상태 이상의 규칙을 JSON 콘텐츠로 옮기고, 카드가 상태에 대해 적는 것을 숫자 하나(`count`)로

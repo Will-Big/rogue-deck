@@ -3,7 +3,16 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-07-30
-- 상태: `active` — Task 1~4 구현 완료(409 tests 통과), Unity 표시 확인과 count 단일화가 남았다
+- 보관일: 2026-08-05
+- 상태: `archived` — Task 1~5 구현 완료. 2026-08-05 감사에서 계획이 만들기로 한 파일 9개 중 8개가
+  실재하고, 나머지 하나(`StatusRuleCatalog.cs`)는 **계획 3c가 더 나은 형태로 대체**했음을 확인했다 —
+  배율이 코드 카탈로그가 아니라 `Content/Statuses/*.json`의 `multiplierPercent`에서 오고
+  `MultiplierStatusSpec.ToRule()`이 규칙으로 바꾼다. 런타임 조절은 `StatusRuleSet.Set`이 그대로 한다.
+  `WeakBehavior`·`DamagedBehavior`·`VulnerableBehavior`와 `StatusDamageLayer{Multiplier,Absorb}`,
+  `DebuffStatusTests`(8개)가 전부 존재한다.
+- 남긴 잔여 (README 후속 작업 대기열로 옮김): Unity 화면의 디버프 표시 시각 확인,
+  그리고 §의 `StatusLifetime` count 단일화 — 후자는 본 계획이 애초에 "별도 계획으로 분리한다"고
+  명시한 항목이다.
 - 브랜치: `claude/brave-nash-3974c5`
 
 **Goal:** 약화(주는 피해 −25%), 취약(받는 피해 +50%), 손상(방어도 획득 −25%)을 추가하고, 세 배율을
