@@ -19,7 +19,7 @@ namespace FateWeaver.Unity.Editor
         private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
         private const string MemberAPath = "Assets/Unity/Data/member_a.asset";
         private const string MemberBPath = "Assets/Unity/Data/member_b.asset";
-        private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
+        private const string InputActionsPath = "Assets/Unity/Input/UIInputActions.inputactions";
 
         private const string CardArtCatalogPath = "Assets/Unity/Data/CardArt.asset";
 
