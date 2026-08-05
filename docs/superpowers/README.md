@@ -115,8 +115,9 @@
 판별자 표를 `CombatRegistries.Statuses()`에서 만들고(각 행동이 `NewSpec()`으로 자기 스펙 타입을
 답한다), `CombatState`는 카탈로그를 **생성자에서 요구**하며, `KoreanDescriptionCatalog`의 전역
 `Default`와 무인자 `CreateDefault()`는 사라졌다 — 설명 카탈로그는 부팅 콘텐츠로 만들어 주입된다.
-`ContentExportWriter`는 카드도 상태도 쓰지 않는다(`WriteAllDoesNotTouchCards`·
-`WriteAllDoesNotTouchStatuses`가 이 회귀를 막는다).
+카드·상태를 코드에서 JSON으로 내보내는 경로는 아예 없다 — 저작은 JSON에서 시작해 JSON으로 끝나며,
+그 경로를 지키던 `ContentExportWriter`와 가드 테스트(`WriteAllDoesNotTouchCards`·
+`WriteAllDoesNotTouchStatuses`)는 계획 3d(커밋 `ec12b47`)가 함께 지웠다.
 
 **테스트가 콘텐츠를 읽는 진입점은 둘이다:** 코어는 `TestContent.Statuses()`, Unity EditMode는
 `UnityTestContent.Statuses()`. **둘 다 호출마다 카탈로그를 새로 만든다** — `StatusContentCatalog.Rules`가
@@ -140,8 +141,10 @@
    `UnityCardFixtures` 합성 픽스처와 `TestContent`·`UnityTestContent` JSON 카탈로그, 둘로만 카드를
    얻는다. (b) **적 카드는 아직 JSON이 아니다** — `GoblinDeck`·`WardenDeck`의 순수 C#에서 나오며,
    옮기려면 적 정책·행동 패턴 설계가 딸려 온다(아직 계획 없음).
-   그리고 **`ContentExportWriter`는 카드도 상태도 쓰지 않는다** — 저작이 JSON에만 있어 다시 쓰면
-   지워지기 때문이다(`WriteAllDoesNotTouchCards`·`WriteAllDoesNotTouchStatuses`가 막는다).
+   그리고 ~~`ContentExportWriter`는 카드도 상태도 쓰지 않는다 — 저작이 JSON에만 있어 다시 쓰면
+   지워지기 때문이다(`WriteAllDoesNotTouchCards`·`WriteAllDoesNotTouchStatuses`가 막는다)~~
+   **계획 3d가 지웠다** — 코드에서 JSON으로 내보내는 경로 자체가 없다. 저작은 JSON에서 시작해
+   JSON으로 끝난다.
 
 ### 넘어온 부채
 
