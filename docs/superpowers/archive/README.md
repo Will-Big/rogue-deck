@@ -77,7 +77,6 @@
 - [P0-B2 `CardType` 제거 계획](plans/2026-07-19-card-type-removal.md)
 - [P0-B2 구현 기록](plans/2026-07-19-p0b2-implementation-record.md)
 - [상태 키 드롭다운 저작](plans/2026-07-20-status-key-dropdown-authoring.md)
-- [에셋 폴더 재정리 1단계 구현 기록](plans/2026-08-05-asset-folder-reorg.md)
 
 ### 전투 시스템 정합성 정리
 
@@ -102,6 +101,10 @@
 - [런타임 콘텐츠 전환 구현 기록 (계획 3b)](plans/2026-08-03-runtime-content-switch.md)
 - [상태 원본 확정 구현 기록 (계획 3c)](plans/2026-08-04-status-content-single-source.md)
 - [C# 카드 스펙 제거 구현 기록 (계획 3d)](plans/2026-08-05-card-spec-removal.md)
+
+### P1-B 선행 — 에셋 폴더 재정리
+
+- [에셋 폴더 재정리 1단계 구현 기록](plans/2026-08-05-asset-folder-reorg.md)
 
 ### 과거 런 원 사이클
 

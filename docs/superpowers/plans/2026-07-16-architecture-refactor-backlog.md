@@ -334,6 +334,13 @@ Assets/Unity/
 
 **2026-08-05 진행 결과 — 1단계(폴더 재정리) 완료.** 위 목표 구조대로 스크립트·데이터 에셋·카드
 아트·입력 에셋을 옮겼다(계획: `docs/superpowers/archive/plans/2026-08-05-asset-folder-reorg.md`).
+**단 `Editor/`는 예외다.** 위 스케치는 `Scripts/Editor/`로 `Scripts/` 아래 중첩했지만, 실제 구현은
+`Assets/Unity/Editor/`를 루트에 그대로 두었다 — 그 폴더는 자체 `.asmdef`
+(`FateWeaver.Unity.Editor.asmdef`)를 가지고 있고, Unity는 이름이 `Editor`인 폴더를 트리의 어느
+깊이에 있든 특별 취급(에디터 전용 컴파일)하므로 중첩해도 실질적 이익이 없다. 스케치 당시엔 이 점을
+반영하지 못했고, 실측(2026-08-05)에서야 as-built 배치가 스케치와 다르다는 것이 드러났다. 위 목표
+구조 블록은 최초 스케치 그대로 남기고, 여기서만 실제 배치와의 차이를 기록한다.
+
 `Unity/Resources/`는 아직 완전히 비지 않았다 — `Fonts/KoreanTMP.asset`과 `Status/icon_lock.png`
 두 파일만 남아 있으며, 이 표의 잠금 요인대로 `BattleUiKit`(`Resources.Load("Fonts/KoreanTMP")`)과
 `PlaytestCardArt`(`Resources.Load("Status/icon_lock")`)가 아직 코드 조립 방식으로 참조하고 있기

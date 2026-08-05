@@ -85,7 +85,7 @@ Assets/Unity/
   FateWeaver.Unity.asmdef        (제자리)
   Scripts/
     Battle/    전투 화면의 컨트롤러·프레젠터·뷰 11개
-    Cards/     카드 표현 13개
+    Cards/     카드 표현 14개
     Content/   콘텐츠 카탈로그·경로 4개
     Text/      한국어 텍스트 1개
   Editor/                        (제자리, 자체 asmdef)
@@ -94,7 +94,7 @@ Assets/Unity/
     Cards/Enemies/  ← Resources/Cards/goblins
     Enemies/                     (제자리)
   Fonts/                         (제자리, Pretendard ttf + OFL)
-  Data/          ← CardSO/ + CharacterSO/
+  Data/          ← CardSO/ + CharacterSO/ + CardPrefabCatalog.asset(루트에서 최종 정리 커밋으로 합류)
   Input/         ← Resources/UIInputActions.inputactions
   Resources/
     Fonts/KoreanTMP.asset        (P1-B까지 잠김)
@@ -111,8 +111,9 @@ Assets/Unity/
 | `Assets/Unity/Resources/Cards/Player/` | **삭제** — 7개 PNG 전부 참조처 0 |
 | `Assets/Unity/Resources/Cards/Frame/` | **삭제** — 빈 폴더 + 추적된 `.meta` |
 | `Assets/Unity/Resources/UIInputActions.inputactions` | `Input/`으로 이동 |
-| `Assets/Unity/Editor/BattleSceneBuilder.cs` | 경로 상수 3개 갱신 |
-| `Assets/Unity/Editor/KoreanTmpFontCreator.cs` | 경로 상수 1개 갱신 |
+| `Assets/Unity/CardPrefabCatalog.asset` | `Data/`로 이동 (병합 전 최종 정리 커밋, 다른 데이터 에셋 3개와 뒤늦게 합류) |
+| `Assets/Unity/Editor/BattleSceneBuilder.cs` | 경로 상수 4개 갱신 |
+| `Assets/Unity/Editor/KoreanTmpFontCreator.cs` | 변화 없음 (`Fonts/`·`Resources/Fonts` 모두 제자리) |
 | `docs/superpowers/README.md`, 백로그 §7 | 완료 반영 |
 
 ## 하드코딩된 에디터 경로 (실측 2026-08-05)
@@ -145,7 +146,7 @@ GUID로 참조하므로 `.meta`만 따라가면 배선이 유지된다.
 **Interfaces:**
 - Produces: `Assets/Unity/Scripts/{Battle,Cards,Content,Text}/` 네 폴더
 
-- [ ] **Step 1: 워크트리를 만들고 기준선을 실측한다**
+- [x] **Step 1: 워크트리를 만들고 기준선을 실측한다**
 
 ```bash
 cd /Users/ish/Git/rogue-deck
@@ -156,7 +157,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 예상: 511/511. 다르면 계획의 기준선이 낡은 것이므로 실제 수치를 기록하고 진행한다.
 
-- [ ] **Step 2: 이동 전 파일 수를 세어 둔다**
+- [x] **Step 2: 이동 전 파일 수를 세어 둔다**
 
 ```bash
 ls Assets/Unity/*.cs | wc -l
@@ -164,7 +165,7 @@ ls Assets/Unity/*.cs | wc -l
 
 예상: 30. 이 수가 Step 4 뒤에 하위 폴더 합계와 같아야 한다.
 
-- [ ] **Step 3: 네 폴더를 만든다**
+- [x] **Step 3: 네 폴더를 만든다**
 
 ```bash
 mkdir -p Assets/Unity/Scripts/Battle Assets/Unity/Scripts/Cards Assets/Unity/Scripts/Content Assets/Unity/Scripts/Text
@@ -173,7 +174,7 @@ mkdir -p Assets/Unity/Scripts/Battle Assets/Unity/Scripts/Cards Assets/Unity/Scr
 폴더 `.meta`는 만들지 않는다 — Unity가 다음 임포트에서 생성하고, Task 5의 배치 실행이 그것을
 커밋 대상으로 드러낸다.
 
-- [ ] **Step 4: 파일을 옮긴다**
+- [x] **Step 4: 파일을 옮긴다**
 
 각 파일과 `.meta`를 한 쌍으로 옮긴다. 아래 스크립트가 `.meta`를 자동으로 동반한다:
 
@@ -208,7 +209,7 @@ mv_pair PlaytestKoreanText Assets/Unity/Scripts/Text
 카드 한 장의 표현과 손패 배치, `Content/`는 콘텐츠 자원을 들고 있는 SO와 경로 상수, `Text/`는
 한국어 문자열 매핑이다. `PlaytestCardArt`는 카드 상태 아이콘을 푸므로 `Cards/`에 둔다(P1-B가 지운다).
 
-- [ ] **Step 5: 남은 것이 없는지 확인한다**
+- [x] **Step 5: 남은 것이 없는지 확인한다**
 
 ```bash
 ls Assets/Unity/*.cs 2>/dev/null && echo "남았다 — 위 목록에 빠진 파일이 있다" || echo "이동 완료"
@@ -218,7 +219,7 @@ find Assets/Unity/Scripts -name '*.cs' | wc -l
 예상: "이동 완료"와 `30`. 수가 안 맞으면 Step 4의 목록에 빠진 파일이 있으므로 `git status`로 찾아
 같은 방식으로 옮긴다.
 
-- [ ] **Step 6: `.meta` 짝을 검사한다**
+- [x] **Step 6: `.meta` 짝을 검사한다**
 
 ```bash
 find Assets/Unity/Scripts -type f ! -name '*.meta' | while read f; do [ -f "$f.meta" ] || echo "meta 없음: $f"; done
@@ -227,7 +228,7 @@ find Assets/Unity/Scripts -name '*.meta' | while read m; do [ -e "${m%.meta}" ] 
 
 예상: 출력 없음.
 
-- [ ] **Step 7: 헤드리스로 회귀가 없음을 확인한다**
+- [x] **Step 7: 헤드리스로 회귀가 없음을 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -236,7 +237,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 예상: 511/511. 헤드리스는 `Assets/Core`만 컴파일하므로 이 이동에 영향받지 않는다 — 숫자가
 변했다면 잘못된 파일을 옮긴 것이다.
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add -A Assets/Unity && git commit -m "refactor(ui): Unity 스크립트를 역할별 폴더로 나눈다"
@@ -258,7 +259,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): Unity 스크립트를 �
 **Interfaces:**
 - Produces: `Assets/Unity/Data/{CardArt,member_a,member_b}.asset`
 
-- [ ] **Step 1: 옮긴다**
+- [x] **Step 1: 옮긴다**
 
 ```bash
 mkdir -p Assets/Unity/Data
@@ -272,7 +273,7 @@ git rm Assets/Unity/CardSO.meta Assets/Unity/CharacterSO.meta
 rmdir Assets/Unity/CardSO Assets/Unity/CharacterSO 2>/dev/null || true
 ```
 
-- [ ] **Step 2: 에디터 경로 상수를 고친다**
+- [x] **Step 2: 에디터 경로 상수를 고친다**
 
 `Assets/Unity/Editor/BattleSceneBuilder.cs`에서 세 줄을 바꾼다:
 
@@ -285,7 +286,7 @@ rmdir Assets/Unity/CardSO Assets/Unity/CharacterSO 2>/dev/null || true
         private const string CardArtCatalogPath = "Assets/Unity/Data/CardArt.asset";
 ```
 
-- [ ] **Step 3: 낡은 경로가 남지 않았는지 확인한다**
+- [x] **Step 3: 낡은 경로가 남지 않았는지 확인한다**
 
 ```bash
 /usr/bin/grep -rn "CardSO\|CharacterSO" --include='*.cs' Assets
@@ -293,7 +294,7 @@ rmdir Assets/Unity/CardSO Assets/Unity/CharacterSO 2>/dev/null || true
 
 예상: 출력 없음. 남으면 그 줄도 `Data/`로 고친다.
 
-- [ ] **Step 4: `.meta` 짝을 검사한다**
+- [x] **Step 4: `.meta` 짝을 검사한다**
 
 ```bash
 find Assets/Unity/Data -type f ! -name '*.meta' | while read f; do [ -f "$f.meta" ] || echo "meta 없음: $f"; done
@@ -302,7 +303,7 @@ find Assets -name '*.meta' | while read m; do [ -e "${m%.meta}" ] || echo "고�
 
 예상: 출력 없음.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add -A Assets/Unity && git commit -m "refactor(ui): SO 시절 폴더 이름을 Data로 합친다"
@@ -321,7 +322,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): SO 시절 폴더 이름�
 - Delete: `Assets/Unity/Resources/Cards/Frame.meta` (폴더가 비어 있다)
 - Delete: `Assets/Unity/Resources/Cards.meta`, `Cards/goblins.meta`
 
-- [ ] **Step 1: 삭제 전에 참조가 정말 없는지 재확인한다**
+- [x] **Step 1: 삭제 전에 참조가 정말 없는지 재확인한다**
 
 ```bash
 cd /Users/ish/Git/rogue-deck-asset-folders
@@ -334,7 +335,7 @@ done
 예상: 7줄 전부 파일명 뒤가 비어 있다(참조 없음). **하나라도 참조가 나오면 그 파일은 지우지 말고
 보고한다** — 2026-08-05 실측에서는 전부 참조 0이었다.
 
-- [ ] **Step 2: 고블린 아트를 옮긴다**
+- [x] **Step 2: 고블린 아트를 옮긴다**
 
 ```bash
 mkdir -p Assets/Unity/Art/Cards/Enemies
@@ -344,7 +345,7 @@ for f in goblin_jab goblin_sly_jab goblin_crude_guard; do
 done
 ```
 
-- [ ] **Step 3: 고아 자산과 빈 폴더를 지운다**
+- [x] **Step 3: 고아 자산과 빈 폴더를 지운다**
 
 ```bash
 git rm -r Assets/Unity/Resources/Cards/Player
@@ -355,7 +356,7 @@ git rm Assets/Unity/Resources/Cards.meta
 rmdir Assets/Unity/Resources/Cards/Frame Assets/Unity/Resources/Cards/goblins Assets/Unity/Resources/Cards 2>/dev/null || true
 ```
 
-- [ ] **Step 4: `CardArt.asset`의 참조가 살아 있는지 확인한다**
+- [x] **Step 4: `CardArt.asset`의 참조가 살아 있는지 확인한다**
 
 GUID 참조이므로 이동해도 유지되어야 한다. 고블린 아트 GUID 셋이 여전히 `CardArt.asset`에 있는지 본다:
 
@@ -368,7 +369,7 @@ done
 
 예상: 세 줄 모두 `✓`. 하나라도 `✗`면 `.meta`가 따라오지 않은 것이므로 되돌리고 다시 옮긴다.
 
-- [ ] **Step 5: Resources에 남은 것을 확인한다**
+- [x] **Step 5: Resources에 남은 것을 확인한다**
 
 ```bash
 find Assets/Unity/Resources -type f | sort
@@ -376,7 +377,7 @@ find Assets/Unity/Resources -type f | sort
 
 예상: `Fonts/KoreanTMP.asset`, `Status/icon_lock.png`와 각 `.meta`, 그리고 두 폴더의 `.meta`뿐이다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add -A Assets/Unity && git commit -m "refactor(ui): 카드 아트를 Resources 밖으로 옮기고 고아 자산을 지운다"
@@ -393,7 +394,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): 카드 아트를 Resourc
 - Move: `Assets/Unity/Resources/UIInputActions.inputactions` (+ `.meta`) → `Assets/Unity/Input/`
 - Modify: `Assets/Unity/Editor/BattleSceneBuilder.cs:22`
 
-- [ ] **Step 1: 옮긴다**
+- [x] **Step 1: 옮긴다**
 
 ```bash
 mkdir -p Assets/Unity/Input
@@ -401,7 +402,7 @@ git mv Assets/Unity/Resources/UIInputActions.inputactions Assets/Unity/Input/UII
 git mv Assets/Unity/Resources/UIInputActions.inputactions.meta Assets/Unity/Input/UIInputActions.inputactions.meta
 ```
 
-- [ ] **Step 2: 에디터 경로 상수를 고친다**
+- [x] **Step 2: 에디터 경로 상수를 고친다**
 
 `Assets/Unity/Editor/BattleSceneBuilder.cs`:
 
@@ -409,7 +410,7 @@ git mv Assets/Unity/Resources/UIInputActions.inputactions.meta Assets/Unity/Inpu
         private const string InputActionsPath = "Assets/Unity/Input/UIInputActions.inputactions";
 ```
 
-- [ ] **Step 3: 씬의 참조가 살아 있는지 확인한다**
+- [x] **Step 3: 씬의 참조가 살아 있는지 확인한다**
 
 ```bash
 G=$(/usr/bin/grep -h "guid" Assets/Unity/Input/UIInputActions.inputactions.meta | sed 's/.*guid: \([a-f0-9]*\).*/\1/')
@@ -418,7 +419,7 @@ G=$(/usr/bin/grep -h "guid" Assets/Unity/Input/UIInputActions.inputactions.meta 
 
 예상: `✓`.
 
-- [ ] **Step 4: 낡은 Resources 경로가 코드에 남지 않았는지 확인한다**
+- [x] **Step 4: 낡은 Resources 경로가 코드에 남지 않았는지 확인한다**
 
 ```bash
 /usr/bin/grep -rn "Resources/UIInputActions\|Resources/Cards" --include='*.cs' Assets
@@ -426,7 +427,7 @@ G=$(/usr/bin/grep -h "guid" Assets/Unity/Input/UIInputActions.inputactions.meta 
 
 예상: 출력 없음.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add -A Assets/Unity && git commit -m "refactor(ui): 입력 에셋을 Input 폴더로 옮긴다"
@@ -444,7 +445,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): 입력 에셋을 Input �
 - Modify: `docs/superpowers/README.md`, `docs/superpowers/plans/2026-07-16-architecture-refactor-backlog.md`
 - Move: 이 문서를 `docs/superpowers/archive/plans/`로
 
-- [ ] **Step 1: Unity EditMode를 포그라운드로 돌린다**
+- [x] **Step 1: Unity EditMode를 포그라운드로 돌린다**
 
 ```bash
 /Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/ish/Git/rogue-deck-asset-folders -runTests -testPlatform EditMode -testResults /private/tmp/asset-folders.xml -logFile /private/tmp/asset-folders.log
@@ -458,7 +459,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): 입력 에셋을 Input �
 추가·삭제하지 않으므로 **총계가 변하면 무언가 컴파일에서 빠진 것이다** — 그 경우 로그에서 원인을
 찾아 보고한다.
 
-- [ ] **Step 2: 임포트 경고를 확인한다**
+- [x] **Step 2: 임포트 경고를 확인한다**
 
 ```bash
 /usr/bin/grep -E "error CS|can't be found|Missing|orphan" /private/tmp/asset-folders.log | sort -u | head -10
@@ -467,7 +468,7 @@ git add -A Assets/Unity && git commit -m "refactor(ui): 입력 에셋을 Input �
 예상: 출력 없음. `A meta data file (.meta) exists but its folder ... can't be found`가 나오면 폴더
 `.meta`를 지우지 않고 남긴 것이므로 해당 `.meta`를 `git rm`한다.
 
-- [ ] **Step 3: 생성된 폴더 `.meta`를 커밋에 넣는다**
+- [x] **Step 3: 생성된 폴더 `.meta`를 커밋에 넣는다**
 
 ```bash
 git status --short
@@ -476,7 +477,7 @@ git status --short
 새 폴더의 `.meta`만 나와야 한다. 폰트 아틀라스(`KoreanTMP.asset`) 같은 런타임 부산물이 섞였으면
 `git checkout --` 으로 되돌린다 — 그것은 소스 변경이 아니다(규칙 17).
 
-- [ ] **Step 4: 참조 무결성을 마지막으로 검사한다**
+- [x] **Step 4: 참조 무결성을 마지막으로 검사한다**
 
 ```bash
 find Assets -type f ! -name '*.meta' | while read f; do [ -f "$f.meta" ] || echo "meta 없음: $f"; done
@@ -485,13 +486,13 @@ find Assets -name '*.meta' | while read m; do [ -e "${m%.meta}" ] || echo "고�
 
 예상: 출력 없음.
 
-- [ ] **Step 5: 씬 빌더가 여전히 도는지 확인한다**
+- [x] **Step 5: 씬 빌더가 여전히 도는지 확인한다**
 
 경로 상수를 넷 고쳤으므로 씬 빌더 메뉴가 자산을 찾는지 확인한다. 배치로 실행할 수 없으면
 로그에 경고가 없는 것으로 갈음하고, **사용자에게 `Fate Weaver/Build Battle Scene` 메뉴를 한 번
 실행해 달라고 보고에 적는다** — 눈으로 판단할 것은 사용자 몫이다(규칙 17).
 
-- [ ] **Step 6: 문서를 갱신한다 (규칙 20)**
+- [x] **Step 6: 문서를 갱신한다 (규칙 20)**
 
 `docs/superpowers/plans/2026-07-16-architecture-refactor-backlog.md` §7의 "2026-08-04 실측과 착수
 결정" 절에서 목표 구조 블록 아래에 결과를 적는다 — 1단계가 끝났고, `Unity/Resources/`에 두 파일만
@@ -503,7 +504,7 @@ find Assets -name '*.meta' | while read m; do [ -e "${m%.meta}" ] || echo "고�
 수치를 적는다. `docs/superpowers/archive/README.md`에 한 줄 추가한다. **문서를 옮기면 그 안의
 `../` 상대 경로 깊이가 달라지므로** 모든 링크가 해결되는지 확인한다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add -A && git commit -m "refactor(ui): 에셋 폴더 재정리 1단계를 마치고 문서를 갱신한다"

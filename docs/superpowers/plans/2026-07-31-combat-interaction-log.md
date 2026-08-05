@@ -76,7 +76,7 @@
 | `Assets/Core/Effects/ApplyStatusHandler.cs` | `StatusApplied` 발행 |
 | `Assets/Core/Combat/TurnResolver.cs` | 내역을 `CardResolved`에 첨부, 만료 이벤트 발행 |
 | `Assets/Core/Simulation/Descriptions/TimelineTextFormatter.cs` (신규) | 타임라인 → 한국어 여러 줄 |
-| `Assets/Unity/BattleScreenController.cs` | 턴 해석 직후 포매터 호출 (임시 계측 대체) |
+| `Assets/Unity/Scripts/Battle/BattleScreenController.cs` | 턴 해석 직후 포매터 호출 (임시 계측 대체) |
 | `Assets/Unity/DeckPlaytestController.cs` | 자체 `RefreshTimeline`을 포매터로 교체 |
 
 테스트: `Assets/Core/Tests/EditMode/CombatLogTests.cs` (신규), 기존 인덱스 의존 테스트 갱신.
@@ -672,7 +672,7 @@ git commit -m "feat: add korean timeline text formatter"
 ### Task 4: Unity 화면에 배선하고 임시 계측을 걷어낸다
 
 **Files:**
-- Modify: `Assets/Unity/BattleScreenController.cs`, `Assets/Unity/DeckPlaytestController.cs`
+- Modify: `Assets/Unity/Scripts/Battle/BattleScreenController.cs`, `Assets/Unity/DeckPlaytestController.cs`
 
 - [ ] **Step 1: 배틀 화면이 포매터를 쓰게 한다**
 
