@@ -165,7 +165,7 @@
 
 ### 현재 수치 (계획 3d 완료 시점, 2026-08-05 실측)
 
-헤드리스 **513/513**, Unity EditMode **661 total / 654 passed / 0 failed / 7 skipped**,
+헤드리스 **511/511**, Unity EditMode **659 total / 652 passed / 0 failed / 7 skipped**,
 카드 JSON **26**(플레이어 22 + fixture 4, 전부 등급·태그 보유), 상태 JSON **11**,
 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.

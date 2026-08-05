@@ -5,7 +5,8 @@
 
 - 작성일: 2026-08-05
 - 상태: `archived`
-- 완료일: 2026-08-05 — 헤드리스 513/513, Unity EditMode 661 total / 654 passed / 0 failed / 7 skipped
+- 완료일: 2026-08-05 — 헤드리스 511/511, Unity EditMode 659 total / 652 passed / 0 failed / 7 skipped
+  (최종 리뷰 지적 수정 후 실측. 수정 전 값은 513/661이었다.)
 - 상위 설계: [카드 변형과 런타임 콘텐츠 로딩](../../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.5
 - 선행: 계획 3b [런타임 콘텐츠 전환](2026-08-03-runtime-content-switch.md) **완료**,
   계획 3c [상태 원본 확정](2026-08-04-status-content-single-source.md) **완료**
