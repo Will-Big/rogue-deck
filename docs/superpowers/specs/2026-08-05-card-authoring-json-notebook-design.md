@@ -1,0 +1,299 @@
+# Fate Weaver — 카드 저작 노트북 JSON 전환 설계
+
+- 작성일: 2026-08-05
+- 문서 유형: `tool-design`
+- 주 도메인: `card-authoring`
+- 하위 유형: `static-web-tool`, `json-round-trip`, `generated-schema`, `pool-composition`
+- 관련 규칙:
+  [플레이어 캐릭터 및 카드풀](2026-07-20-character-card-pools-design.md),
+  [위치 대상과 카드 텍스트](2026-07-27-position-targeting-card-text-design.md),
+  [카드 변형과 런타임 콘텐츠 로딩](2026-07-30-card-mutation-and-runtime-content-design.md)
+- 대체: [카드 아이디어 노트](2026-07-27-card-idea-notebook-design.md)
+- 상태: `current` — 설계 확정, 구현 전
+- 범위: 노트북의 저작 원본을 Markdown에서 콘텐츠 JSON으로 전환, 구조화 효과 편집기,
+  저장소 직접 읽기·쓰기, 풀 편성, 저작 스키마 생성, 라운드트립 보장
+
+## 1. 목적
+
+`Tools/card-idea-notebook/index.html`은 카드 초안을 Markdown으로 내보내는 도구였다. 그 Markdown은
+게임이 읽지 않았고, 실제 반영에는 사람이 에디터에서 ScriptableObject로 다시 저작하는 단계가
+필요했다.
+
+2026-08-03 계획 3b·3c와 2026-08-05 계획 3d가 SO 저작 파이프라인과 C# 카드 스펙을 제거하면서, 카드
+규칙의 원본은 `Assets/StreamingAssets/Content/`의 JSON 하나가 되었다. 부팅 시
+`ContentBootstrap.Load`가 이것을 읽는다. 따라서 노트북이 그 JSON을 직접 읽고 쓰면 **재저작 단계가
+통째로 사라진다.**
+
+이 문서는 그 전환을 정의한다. 전환 후 노트북은 "AI에게 넘길 초안을 쓰는 곳"이 아니라 **게임이 읽는
+데이터를 저작하는 곳**이다.
+
+```text
+전환 전:  노트북 → Markdown → 사람/AI가 읽음 → 에디터에서 SO 저작 → 게임
+전환 후:  노트북 → Content/Cards/*.json → 게임
+```
+
+## 2. 전환의 대가
+
+Markdown 저작의 자유 문장(`- [적군] 피해 5.`)은 구조화 효과(`{"kind":"damage","value":5,
+"selector":"FrontOne"}`)로 기계 변환되지 않는다. 조건(`condition.kind`·`successEffectValue`·
+`skipOnBasic`), 상태 부여의 `target`, `consume_status`의 `maxAmount` 같은 정보가 문장에 애초에
+담기지 않기 때문이다. 저장소의 `riposte`·`foresight`·`toxic_reclaim`이 그 예다.
+
+그러므로 **자유 문장 저작은 유지되지 않는다.** 능력은 구조화 효과 행으로 저작한다. 이것은 표현력의
+축소가 아니라 대상의 변경이다 — 노트북이 다루는 것이 아이디어에서 데이터로 바뀐다.
+
+설명 문장은 코어의 컴포저가 `EffectData`에서 자동 생성하므로(규칙 10) 노트북이 문장을 들고 있을
+이유도 없어진다.
+
+## 3. 기술 형태
+
+도구는 여전히 `Tools/card-idea-notebook/index.html` 하나로 완결되는 정적 웹 페이지다. 빌드 단계도
+번들러도 없고, 파일을 브라우저로 열면 동작한다.
+
+저장소 접근은 File System Access API를 쓴다. 사용자가 **저장소 루트를 한 번 고르면** 그 디렉터리
+핸들을 IndexedDB에 기억하고, 이후에는 버튼 하나로 읽고 쓴다. 노트북이 아는 경로는 넷이다.
+
+| 경로 | 방향 | 용도 |
+|---|---|---|
+| `Tools/card-idea-notebook/authoring-schema.json` | 읽기 | 폼 구조 |
+| `Assets/StreamingAssets/Content/Statuses/` | 읽기 | 상태 드롭다운 |
+| `Assets/StreamingAssets/Content/Cards/` | 읽기·쓰기 | 카드 |
+| `Assets/StreamingAssets/Content/Pools/` | 읽기·쓰기 | 풀 편성 |
+
+`showDirectoryPicker`는 Chrome·Edge 전용이다. 미지원 브라우저에서는 안내만 띄우고 폴백을 두지
+않는다 — 폴더 쓰기의 폴백은 결국 ZIP 수작업이고, 그것은 이 전환이 없애려는 수작업이다.
+
+## 4. 저작 스키마 생성
+
+노트북은 효과 8종의 파라미터 구조를 알아야 폼을 만들 수 있다. 그 구조는 C#의 `EffectSpecCatalog`와
+`Assets/Core/Authoring/Specs/*.cs`에 있다.
+
+**노트북에 표를 복제해 두지 않는다.** 복제하면 C#이 늘 때마다 손으로 맞춰야 하고, 어긋나도 조용하다.
+**노트북이 C# 소스를 직접 읽지도 않는다.** 그러면 파일 위치와 C# 문법 양쪽에 결합되어, 폴더를
+재정리하거나 필드를 프로퍼티로 바꾸면 깨진다.
+
+대신 **C# 쪽 테스트가 스키마 파일을 생성한다.** 생성기는 경로가 아니라 타입을 보므로 소스가 어디로
+옮겨가든 따라간다.
+
+```text
+EffectSpecCatalog.All()  ──리플렉션──▶  Tools/card-idea-notebook/authoring-schema.json  ──▶  노트북 폼
+        (C#)                                        (커밋되는 생성물)                        (JSON만 읽음)
+```
+
+`AuthoringSchemaExportTests`가 스키마를 만들어 커밋된 파일과 비교한다. 다르면 **파일을 갱신하고 한 번
+실패한다.** 재실행하면 통과한다. 갱신 절차를 외울 필요가 없고, 규칙 12에 따라 어차피 돌리는
+`dotnet test`가 그 자리를 맡는다.
+
+스키마가 담는 것:
+
+| 항목 | 출처 |
+|---|---|
+| `effects[]` — `kind`, `label`, `fields[{name, type, options?}]` | `EffectSpecCatalog`, 각 스펙 타입의 public 필드 |
+| `condition` — `fields[]`, `kinds[]` | `ConditionSpec`, `ConditionKind` |
+| `cardFields[]` — 이름과 **선언 순서** | `CardSpec` |
+| `sides`, `categories`, `grades` | `Side`, `CardCategory`, `CardGrade` |
+| `selectors`, `statusTargets` | `TargetSelectorRef`, `StatusApplyTarget` |
+| `interventions`, `interventionSides` | `InterventionActionRegistry`, `InterventionTargetSideRef` |
+
+`cardFields`의 순서가 직렬화 키 순서를 정한다(§8).
+
+상태 목록은 스키마에 넣지 않는다. `Content/Statuses/*.json`이 원본이고 노트북이 그것을 직접 읽는다.
+
+## 5. 카드 모델
+
+노트북의 내부 모델을 `CardSpec`에 맞춘다.
+
+```js
+{
+  uid,                                    // 노트북 내부 식별자. 파일에 나가지 않는다
+  id, name, side, category,               // id는 슬러그이자 파일명: Cards/<id>.json
+  energyCost, baseExecutionOrder,
+  effects: [{ kind, params: {…}, condition: {…} }],
+  intervention, interventionEffectValue,
+  interventionTargetSide, interventionRequireAdjacent,
+  grade, tags,
+  origin: "repo" | "new",
+  createdAt, updatedAt
+}
+```
+
+사라지는 개념:
+
+| 사라지는 것 | 이유 |
+|---|---|
+| `faction` (아군/적군) | `side`(Player/Enemy)로 대체. UI 표기만 한국어 유지 |
+| `role`의 "미정" | `category`는 `Execution`·`Intervention` 둘뿐이다. 미완성 표시는 기존 배지가 계속 맡는다 |
+| `targets.ally` / `targets.enemy` | 위치 범위는 카드 단위가 아니라 **효과 단위** `selector`다 |
+| `abilities.{ally,enemy,none}` | 구조화 효과 행으로 대체 |
+| `notes` | `CardSpec`에 대응 필드가 없고, `MissingMemberHandling.Error`라 넣으면 부팅이 실패한다 |
+
+`uid`를 남기는 이유는 `id`가 저작 중에 바뀌기 때문이다. 선택 상태와 목록 순서는 바뀌지 않는 키에
+매달려 있어야 한다.
+
+## 6. 효과 편집기
+
+`능력 문장`과 `위치 범위` 두 섹션이 `효과` 하나로 합쳐진다. 행 하나가 효과 하나이며 추가·삭제·복제와
+드래그 재정렬이 가능하다. 효과 순서는 실행 순서이므로 파일에 그대로 남는다.
+
+```text
+효과
+ ⠿ [상태 부여 ▾]  상태[독 ▾]  개수[1]  대상[TargetEnemy ▾]  범위[앞 하나 ▾] ◆━━━━   조건 ▾
+ ⠿ [상태 부여 ▾]  상태[방어 ▾]  개수[2]  대상[Self ▾]        범위[없음 ▾]              조건 ▾
+                                                                        [ + 효과 추가 ]
+```
+
+파라미터 컨트롤은 스키마의 필드 타입이 정한다.
+
+| 타입 | 컨트롤 | 출처 |
+|---|---|---|
+| `int` | 숫자 입력 | — |
+| `bool` | 체크박스 | — |
+| `StatusKey` | 드롭다운 | `Content/Statuses/*.json`의 `key`·`displayName` |
+| `enum` | 드롭다운 | 스키마의 `options` |
+
+조건은 기본으로 접혀 있고, 펼치면 `kind`·`n`·`successEffectValue`·`skipOnBasic`이 나온다.
+`condition.kind`가 `None`이면 직렬화에서 통째로 생략된다.
+
+`category`가 `Intervention`이면 효과 섹션이 숨고 개입 섹션이 대신 나온다 —
+`intervention`(등록된 키 드롭다운)·`interventionEffectValue`·`interventionTargetSide`·
+`interventionRequireAdjacent`. `AuthoringValidator`가 개입 카드의 `effects`를 아예 보지 않으므로
+(`continue`) 두 섹션은 배타적이다.
+
+위치 범위의 글리프 표기(`◆━━━━`)는 `selector` 드롭다운 옆에 남긴다. 기존 도구에서 검증된 표기이고,
+방향 감각을 숫자보다 잘 전달한다.
+
+## 7. 풀 편성
+
+풀과 덱은 파일 모양이 같지만(`{id, cards[]}`) 역할이 다르다. **풀은 캐릭터가 소유한 오리지널 카드의
+집합**이고 유저가 선택할 수 있는 후보다. **덱은 런 중에 선별·변형된 결과물**이다. 이번 범위는 풀만
+다룬다.
+
+참조는 단방향이다 — 풀이 카드 id를 나열하고, 카드는 풀을 모른다. 노트북도 그 방향을 지킨다:
+**편성의 소유자는 풀이다.**
+
+**풀 편성 화면** — 편집은 전부 여기서 한다. 카드를 담고 빼고 순서를 드래그로 정한다. 순서를 보존하는
+이유는 `PoolContentCatalog.Get()`이 저작 순서를 그대로 돌려주기 때문이고, 순서가 흔들리면 diff에
+잡음이 생기기 때문이다.
+
+**풀 관점 검증** — `PoolContentLoader`가 거부하는 것을 먼저 잡는다: 없는 카드 id, 풀 안 중복, 그리고
+**풀에 담겼기 때문에 생기는** 등급 필수·태그 1개 이상·태그 중복 금지. 이 규칙들은 카드 자체의 규칙이
+아니므로 풀 화면에 둔다.
+
+**풀 관점 요약** — 등급·태그·비용·실행순서 분포를 보여준다. 풀은 후보 집합이라 밸런스를 집합 단위로
+봐야 한다.
+
+**카드 화면의 소속 표시** — 카드 화면에는 폴더에서 읽은 풀 전체를 체크박스로 노출한다.
+
+```text
+소속 풀
+  ☑ starter        (소속)      ← 이미 소속. 체크된 채 비활성
+  ☐ mycologist
+  ☐ vanguard
+                         [ 선택한 풀에 담기 ]
+```
+
+목록은 `Content/Pools/`를 훑어 만들므로 풀이 늘면 체크박스도 함께 늘어난다. 2026-08-05 현재 풀은
+`starter` 하나뿐이고, 위 예시의 나머지 둘은 앞으로 캐릭터가 늘었을 때의 모습이다.
+
+이 버튼은 **선택한 풀들의 맨 끝에 붙이기만** 한다. 위치 조정과 제거는 풀 화면에서만 가능하므로
+소유권은 풀에 남는다. 이미 소속된 풀을 체크된 채 비활성으로 두면 한 컨트롤이 "현재 상태"와 "이번에
+담을 곳"을 동시에 보여주고, 체크 해제로 제거되는 사고가 없다.
+
+**한 카드가 여러 풀에 속하는 것을 허용하고 경고하지 않는다.** 저작 흐름이 "능력이 비슷한 카드를 여러
+풀에 한 번에 넣고 풀마다 변주를 준다"이기 때문이다. 이는
+[플레이어 캐릭터 및 카드풀](2026-07-20-character-card-pools-design.md) §1의 "모든 카드는 정확히 한
+캐릭터가 개별적으로 소유한다"와 충돌하므로, **그 규칙을 저작 중 공유를 허용하고 변주로 분화하는
+취지로 개정한다.** 로더는 풀 사이의 중복을 보지 않으므로 코드 변경은 없다.
+
+**고아 카드 표시** — 어느 풀에도 없는 아군 카드를 목록에 표시한다. `fixture_*` 넷은 정상적으로
+고아지만, 새로 만든 카드가 풀에 안 들어가면 게임에 나오지 않는다.
+
+## 8. 직렬화와 라운드트립
+
+노트북의 출력은 `ContentJson`의 출력과 **바이트 단위로 같아야 한다.** 다르면 저작하지 않은 카드까지
+diff에 뜨고, 그러면 diff가 리뷰 도구로서 쓸모를 잃는다.
+
+재현할 규칙:
+
+- camelCase 키, 2칸 들여쓰기(`Formatting.Indented`)
+- 기본값인 멤버 생략(`DefaultValueHandling.Ignore`)
+- 열거형은 이름 문자열(`StringEnumConverter`)
+- `StatusKeyRef`·`InterventionKeyRef`는 중첩 객체가 아니라 평범한 문자열
+- 키 순서는 C# 필드 선언 순서 = 스키마의 `cardFields` 순서. 효과는 `kind`가 맨 앞이고, 파생 클래스
+  필드 다음에 기반 클래스의 `condition`이 온다
+- 예외: `side`·`category`는 기본값이어도 항상 쓴다. 생략하면 로더가 "키 존재"로 하는 무결성 검사를
+  통과하지 못한다
+
+이것을 **라운드트립 테스트로 잠근다**(§10).
+
+## 9. 검증
+
+노트북은 로더가 거부할 것을 내보내기 전에 잡는다. 통과가 부팅 성공을 보장하지는 않지만, 실패가
+발견되는 시점을 게임 실행에서 저작 중으로 당긴다.
+
+**내보내기를 막는 것**
+
+| 검사 | 근거 |
+|---|---|
+| `id` 없음·형식 위반(`^[a-z0-9_]+$`)·중복 | `CardContentLoader`의 필수 키와 중복 판정 |
+| `name`·`side`·`category` 없음 | `CardContentLoader.RequiredKeys` |
+| 개입 카드의 키 없음·미등록 키 | `AuthoringValidator` |
+| 등록되지 않은 상태 키 | `ApplyStatusSpec`·`ConsumeStatusSpec`·`TriggerStatusSpec`의 `Validate` |
+| `consume_status`의 `maxAmount < 1` | `ConsumeStatusSpec.Validate` |
+| 풀의 없는 카드 id·풀 안 중복 | `PoolContentLoader` |
+| 풀 소속 카드의 등급 없음·태그 0개·빈 태그·중복 태그 | `PoolContentLoader.ValidateGradeAndTags` |
+
+**경고만 하는 것** — 효과가 0개인 실행 카드, 어느 풀에도 없는 아군 카드.
+
+## 10. 쓰기 정책
+
+**노트북은 파일을 지우지 않는다.** 지우면 Unity의 `.meta`가 고아로 남는다. 내보내기는 쓰기와
+덮어쓰기만 한다.
+
+내보내기 전에 diff 요약을 보여준다.
+
+```text
+신규 3 · 수정 5 · 변경 없음 18 · 저장소에만 있음 2 (지우지 않음)
+```
+
+"저장소에만 있음"은 이름을 나열하고 사용자가 직접 지운다.
+
+## 11. 테스트
+
+**`Tools/card-idea-notebook/index.test.mjs`** — 축은 라운드트립 바이트 동일성이다. 저장소의 카드
+26장과 풀 1개를 읽어 모델로 바꾸고 다시 직렬화해 원본 문자열과 비교한다. 이것이 통과하면 §8의 재현이
+맞다는 뜻이다. 여기에 스키마로부터의 폼 생성, §9의 검증 규칙별 케이스, 풀 담기·빼기·재정렬을 더한다.
+Markdown 관련 테스트는 지운다.
+
+**`Assets/Core/Tests/EditMode/AuthoringSchemaExportTests.cs`** — 스키마 골든 비교와 자동 갱신,
+그리고 스키마가 `EffectSpecCatalog`의 전부를 담는지. `Tests/Headless`의 csproj가 이 폴더를 포함하므로
+`dotnet test`와 Unity EditMode 양쪽에서 같은 소스가 돈다. 저장소 루트 탐색은 `TestContent`에
+`RepoRoot()`를 더해 공유한다.
+
+## 12. 마이그레이션
+
+**브라우저 로컬 데이터** — `SCHEMA_VERSION` 6 → 7. 옛 데이터는 능력이 자유 텍스트라 자동 변환이
+불가능하다. 지우지 않고 백업 키로 옮긴 뒤 새 상태로 시작하고 안내를 띄운다. 저장소의 26장을
+역수입하면 대부분 복원된다.
+
+**저장소의 Markdown** — `시작 카드 풀.md`는 지운다. 22장 전부가 이미 `Content/Cards/`에 있다.
+`적 타입 A.md`는 남긴다. 적 카드 7장은 아직 JSON에 반영되지 않은 아이디어이고, 노트북이 더 이상
+Markdown을 읽지 않으므로 참고 메모로 둔다.
+
+## 13. 범위 밖
+
+| 제외 | 이유 |
+|---|---|
+| 덱(`Decks/`)·캐릭터(`Characters/`) 저작 | 풀과 역할이 다르다(§7). 별도 판단이 필요하다 |
+| 상태(`Statuses/`) 쓰기 | 읽기만 한다. 상태 저작은 수명·성장치 등 별도 모델이다 |
+| 카드 아트 | `CardArtCatalog`의 `Sprite`가 GUID 참조라 브라우저가 다룰 수 없고, 눈으로 맞추는 일이라 규칙 17상 Unity 인스펙터 몫이다. 현재 항목 3개(`goblin_jab`·`crude_guard`·`sly_jab`)가 전부 대응 카드 없는 고아인데, 그 정리도 이번 범위가 아니다 |
+| Chrome·Edge 외 브라우저 지원 | §3 |
+
+## 14. 검수 기준
+
+1. 저장소의 카드 26장과 풀 1개를 읽어 그대로 내보내면 `git status`가 깨끗하다.
+2. 노트북에서 새 카드를 만들어 내보낸 뒤 `dotnet test`가 통과한다.
+3. `EffectSpecCatalog`에 효과를 추가하면 `dotnet test`가 스키마를 갱신하고 한 번 실패하며, 재실행
+   시 통과하고, 노트북 폼에 새 효과가 나타난다 — 노트북 소스는 건드리지 않는다.
+4. 등급 없는 카드를 풀에 담으면 노트북이 내보내기를 막고, 같은 문구를 `PoolContentLoader`도 낸다.
+5. 노트북이 카드 파일을 지우지 않는다.
