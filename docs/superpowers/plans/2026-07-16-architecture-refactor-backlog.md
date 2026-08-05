@@ -486,8 +486,9 @@ fallback 정책을 복사해 재구현하게 된다.
 5층 우선순위와 같은 구조다.
 
 영향 범위가 넓다 — `StatusBag`, `ApplyStatusPayload`, `ApplyStatusSpec`, 저작 콘텐츠
-(`StarterPoolSpecs`, `StarterDeckSpecs`, `PartyPrototypeDeckSpecs`, `GoblinDeck`, `WardenDeck`,
-`GeneratedCards.cs`), 설명 문법의 `LifetimeSuffix`. 별도 계획으로 분리한다.
+(`Content/Cards/*.json`, 그리고 아직 C#으로 남은 적 덱 `GoblinDeck`·`WardenDeck`), 설명 문법의
+`LifetimeSuffix`. 별도 계획으로 분리한다. (2026-08-05 갱신: 원문의 `StarterPoolSpecs`·
+`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`GeneratedCards.cs`는 계획 3b·3d가 제거했다.)
 
 ### 13.2 P1급 — 플레이어 카드와 콘텐츠 로딩
 

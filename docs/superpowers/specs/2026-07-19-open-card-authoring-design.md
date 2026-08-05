@@ -102,7 +102,9 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 
 - `CardCodeGenerator`가 다형 리터럴을 생성한다: `new DamageSpec { Value = 4, Condition = ... }`.
   Unity SO와 헤드리스 export가 같은 스키마(같은 클래스)를 사용한다는 원칙은 그대로다.
-- 손저작 spec(`StarterDeckSpecs`, `PartyPrototypeDeckSpecs`)도 새 모델로 이전한다.
+- ~~손저작 spec(`StarterDeckSpecs`, `PartyPrototypeDeckSpecs`)도 새 모델로 이전한다.~~
+  **무효 (계획 3d, 2026-08-05)** — 손저작 spec 자체가 사라졌다. 카드 저작의 원본은
+  `Content/Cards/*.json`이다.
 
 ### 4.5 검증 흐름
 

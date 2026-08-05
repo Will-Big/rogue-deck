@@ -52,9 +52,10 @@
 
 - 3종은 모두 count = 남은 턴이므로 현재 `StatusLifetime.Turns(N)`으로 **정확히 표현된다.** 먼저
   단일화하지 않아도 rework가 발생하지 않는다.
-- `StatusLifetime` 제거는 저작 콘텐츠(`StarterPoolSpecs`, `StarterDeckSpecs`,
-  `PartyPrototypeDeckSpecs`, `GoblinDeck`, `WardenDeck`, `GeneratedCards.cs`), 저작 스펙
-  (`ApplyStatusSpec`), 설명 문법(`LifetimeSuffix`)까지 약 20개 파일에 걸친다. 3종과 한 계획에
+- `StatusLifetime` 제거는 저작 콘텐츠(`Content/Cards/*.json`과 아직 C#인 적 덱
+  `GoblinDeck`·`WardenDeck`), 저작 스펙(`ApplyStatusSpec`), 설명 문법(`LifetimeSuffix`)에 걸친다.
+  (2026-08-05 갱신: 원문이 함께 적었던 `StarterPoolSpecs`·`StarterDeckSpecs`·
+  `PartyPrototypeDeckSpecs`·`GeneratedCards.cs`는 계획 3b·3d가 제거했다.) 3종과 한 계획에
   묶으면 회귀 원인을 가릴 수 있다.
 - 3종이 들어간 뒤 단일화하면 마이그레이션 검증 대상이 늘어 더 촘촘해진다.
 
