@@ -332,6 +332,15 @@ Assets/Unity/
 `Unity/CardSO/`·`Unity/CharacterSO/`의 `~SO` 접미사는 SO 카드 파이프라인 시절의 이름이며 `Data/`로
 합친다. 폴더 이동은 `.meta`가 함께 움직이면 GUID가 보존되어 씬·프리팹 참조가 깨지지 않는다.
 
+**2026-08-05 진행 결과 — 1단계(폴더 재정리) 완료.** 위 목표 구조대로 스크립트·데이터 에셋·카드
+아트·입력 에셋을 옮겼다(계획: `docs/superpowers/archive/plans/2026-08-05-asset-folder-reorg.md`).
+`Unity/Resources/`는 아직 완전히 비지 않았다 — `Fonts/KoreanTMP.asset`과 `Status/icon_lock.png`
+두 파일만 남아 있으며, 이 표의 잠금 요인대로 `BattleUiKit`(`Resources.Load("Fonts/KoreanTMP")`)과
+`PlaytestCardArt`(`Resources.Load("Status/icon_lock")`)가 아직 코드 조립 방식으로 참조하고 있기
+때문이다. P1-B 프리팹화가 이 두 호출자를 없애면 `Unity/Resources/` 폴더 자체가 사라지고, 남은
+두 파일은 목표대로 `Fonts/KoreanTMP.asset` → `Unity/Fonts/`, `Status/icon_lock.png` →
+`Unity/Art/Icons/`로 옮긴다.
+
 **작업 분리와 순서.** 프리팹화는 레이아웃·크기를 눈으로 맞추는 저작이라 규칙 17상 사용자 몫이 크고,
 폴더 이동은 기계적이라 성격이 다르다. 두 계획으로 나눈다. 사용자 결정(2026-08-04)에 따라 순서는
 **계획 3d → P1-B 프리팹화 → 폴더 재정리**다. 3d는 순수 코어라 어느 쪽과도 의존이 없다.

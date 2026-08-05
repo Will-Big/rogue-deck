@@ -4,10 +4,11 @@
 > `superpowers:executing-plans`로 태스크 단위로 실행한다. 단계는 체크박스(`- [ ]`)로 추적한다.
 
 - 작성일: 2026-08-05
-- 상태: `active`
-- 근거: [백로그 §7 P1-B](2026-07-16-architecture-refactor-backlog.md)의 "2026-08-04 실측과 착수 결정"
-  절에 기록된 **승인된 목표 구조**
-- 선행: 계획 3d [C# 카드 스펙 제거](../archive/plans/2026-08-05-card-spec-removal.md) **완료·머지**
+- 상태: `archived` — 2026-08-05 완료·머지. 헤드리스 511/511, Unity EditMode 659 total / 652 passed /
+  0 failed / 7 skipped (기준선과 동일)
+- 근거: [백로그 §7 P1-B](../../plans/2026-07-16-architecture-refactor-backlog.md)의 "2026-08-04
+  실측과 착수 결정" 절에 기록된 **승인된 목표 구조**
+- 선행: 계획 3d [C# 카드 스펙 제거](2026-08-05-card-spec-removal.md) **완료·머지**
 
 **목표:** `Assets/Unity/`를 유형별 구조로 재배치하고, 고아 자산과 SO 시절의 폴더 이름을 없앤다.
 **프리팹화(P1-B)를 기다리지 않고 지금 옮길 수 있는 전부**를 옮긴다.

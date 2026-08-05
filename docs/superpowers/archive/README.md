@@ -77,6 +77,7 @@
 - [P0-B2 `CardType` 제거 계획](plans/2026-07-19-card-type-removal.md)
 - [P0-B2 구현 기록](plans/2026-07-19-p0b2-implementation-record.md)
 - [상태 키 드롭다운 저작](plans/2026-07-20-status-key-dropdown-authoring.md)
+- [에셋 폴더 재정리 1단계 구현 기록](plans/2026-08-05-asset-folder-reorg.md)
 
 ### 전투 시스템 정합성 정리
 

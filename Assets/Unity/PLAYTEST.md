@@ -8,19 +8,12 @@
      OS 상관없이(macOS/Windows/Linux) 동작한다. 생성 애셋은 씬이 참조하는 guid에 자동으로 핀되어 별도 배선이 필요 없다.
    - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 위 Pretendard TTF를 Source로,
      Atlas Population Mode = **Dynamic**으로 생성해 `Assets/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
-3. 필요 시 `Fate Weaver ▸ Seed Starter Card Assets`, `Fate Weaver ▸ Seed Enemy Card Assets`,
-   `Fate Weaver ▸ Generate Cards from SO`를 실행해 카드 SO와 생성 코드를 갱신한다.
-4. 22장 시작 카드 후보 풀은 병합 후 메인 Unity 체크아웃에서
-   `Fate Weaver ▸ Seed Starter Pool Assets`를 한 번 실행해 생성한다.
-   - `Assets/Unity/CardSO/Player/StarterPool/`에는 없는 카드만 생성하며, 재실행해도 기존 카드의 규칙,
-     등급, 태그, 아트, 설명을 덮어쓰지 않는다.
-   - `Assets/Unity/CardSO/Player/StarterPool.asset`은 후보 22장의 참조만 담는다.
-     기존 `StarterDeck.asset`과 시작 덱 카드 장수는 바꾸지 않는다.
-   - 이후 `Generate Cards from SO`를 실행하면 유효한 풀은 헤드리스용 `StarterPool()` 스냅샷으로 함께
-     내보낸다. 풀 에셋이 아직 없으면 기존 `StarterDeck()`만 생성하고 경고를 남긴다.
-
 > `Resources/Fonts/`(생성된 동적 아틀라스)만 gitignore 대상이다. Pretendard TTF는 커밋되어 있으니
-> 머신마다 2번(과 필요 시 3번)만 다시 실행하면 된다.
+> 머신마다 2번만 다시 실행하면 된다.
+
+카드·시작 덱·시작 카드 풀은 더 이상 SO 시딩 메뉴로 생성하지 않는다. 콘텐츠 원본이 JSON으로
+확정된 뒤(계획 3b·3d) `ContentBootstrap`(`Assets/Core/Authoring/ContentBootstrap.cs`)이 부팅 시
+JSON을 직접 읽어 로드하므로 별도 세팅 단계가 없다.
 
 ## 실행
 
