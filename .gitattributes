@@ -40,4 +40,6 @@
 *.a         binary
 *.aseprite  binary
 *.ase       binary
-graphify-out/graph.json merge=graphify
+
+# graphify-out/graph.json is no longer tracked (see .gitignore), so the union
+# merge driver it needed is gone with it.
