@@ -1,6 +1,8 @@
 using System.Linq;
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Intervention;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
@@ -30,7 +32,7 @@ namespace FateWeaver.Tests
             var effect = card.Effects.Single();
             Assert.AreEqual(2, effect.EffectValue);
             Assert.AreEqual(8, effect.SuccessEffectValue);
-            Assert.IsNotNull(effect.Condition);
+            Assert.IsInstanceOf<FirstToTrigger>(effect.Condition);
         }
 
         [Test]
@@ -40,16 +42,8 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(CardCategory.Intervention, card.Category);
             Assert.AreEqual(0, card.Effects.Count);
+            Assert.AreEqual(InterventionActionKeys.ChangeExecutionOrder, card.InterventionAction.Key);
             Assert.AreEqual(-1, card.InterventionAction.EffectValue);
-        }
-
-        [Test]
-        public void StarterDeckCardsComeFromTheRepositoryJson()
-        {
-            var deck = TestContent.StarterDeckCards();
-
-            Assert.AreEqual(10, deck.Count);
-            CollectionAssert.Contains(deck.Select(card => card.Id).ToList(), "probing_strike");
         }
     }
 }

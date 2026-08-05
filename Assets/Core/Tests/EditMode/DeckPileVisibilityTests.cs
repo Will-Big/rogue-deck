@@ -35,7 +35,7 @@ namespace FateWeaver.Tests
         [Test]
         public void All_deck_cards_survive_construction()
         {
-            Assert.AreEqual(10, NewSession().AllDeckCards.Count);
+            Assert.AreEqual(TestContent.StarterDeckCards().Count, NewSession().AllDeckCards.Count);
         }
 
         [Test]

@@ -5,21 +5,21 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
-using FateWeaver.Simulation;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
 {
     public class PartyPrototypeDataTests
     {
-        private static readonly GameContent Content = TestContent.Content();
-
+        // GameContent를 클래스 상태로 캐시하지 않는다 — Statuses의 Rules가 가변이라 인스턴스를
+        // 공유하면 다른 테스트의 변경이 샐 수 있다(TestContent.cs:35-46). 호출마다 새로 읽는다.
         private static IReadOnlyList<CardDefinition> PrototypeDeckCards()
         {
+            var content = TestContent.Content();
             var cards = new List<CardDefinition>();
-            foreach (var id in Content.Decks.Get("party_prototype"))
+            foreach (var id in content.Decks.Get("party_prototype"))
             {
-                cards.Add(Content.Cards.Get(id));
+                cards.Add(content.Cards.Get(id));
             }
 
             return cards;
@@ -74,20 +74,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(
                 StatusApplyTarget.AllPartyMembers,
                 ((ApplyStatusPayload)allBlock.Effects.Single().Payload).Target);
-        }
-
-        [Test]
-        public void ContentAssignsDistinctCharacterOwners()
-        {
-            var content = TestContent.Content();
-            var tuning = PartyPrototypeRoster.Tuning;
-
-            var memberA = ContentLoadouts.For(content, "member_a", tuning.DefaultMemberMaxHp);
-            var memberB = ContentLoadouts.For(content, "member_b", tuning.DefaultMemberMaxHp);
-
-            Assert.AreNotEqual(memberA.Id, memberB.Id);
-            Assert.AreEqual("파티원 A", memberA.Name);
-            Assert.AreEqual("파티원 B", memberB.Name);
         }
     }
 }

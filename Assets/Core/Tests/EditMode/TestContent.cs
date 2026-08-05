@@ -53,8 +53,8 @@ namespace FateWeaver.Tests
 
         public static CardContentCatalog Cards() => Content().Cards;
 
-        /// <summary>Decks/starter.json이 지정한 10장을 정의 객체로 편다. 예전 StarterDeck.Build()의
-        /// 대체이며, 원본이 JSON이라는 점만 다르다.</summary>
+        /// <summary>Decks/starter.json이 지정한 10장을 정의 객체로 편다. 과거에는 C# 코드가 시작
+        /// 덱을 조립했지만, 이제 원본이 JSON이라는 점만 다르다.</summary>
         public static IReadOnlyList<CardDefinition> StarterDeckCards()
         {
             var content = Content();

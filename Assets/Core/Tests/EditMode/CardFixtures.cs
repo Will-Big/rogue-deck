@@ -15,8 +15,8 @@ namespace FateWeaver.Tests
     /// 실제 카드의 동작을 검증하려면 픽스처가 아니라 TestContent.Cards()를 쓴다.</summary>
     public static class CardFixtures
     {
-        /// <summary>플레이어 카드의 기본 실행 순서. 예전 StarterDeck.DefaultExecutionOrder와 같은
-        /// 값 5를 쓴다.</summary>
+        /// <summary>플레이어 카드의 기본 실행 순서. 과거 시작 덱을 조립하던 C# 코드가 쓰던 것과
+        /// 같은 값 5를 쓴다.</summary>
         public const int DefaultExecutionOrder = 5;
 
         public static CardDefinition Damage(

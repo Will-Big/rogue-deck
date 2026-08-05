@@ -214,7 +214,7 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_slash() =>
             Assert.AreEqual("[◆] 피해 4.",
-                DescriptionComposer.Describe(CardFixtures.Damage("fx_damage", damage: 4), Korean));
+                DescriptionComposer.Describe(CardFixtures.Damage("slash_fx", damage: 4), Korean));
 
         [Test]
         public void Korean_guard() =>
@@ -225,19 +225,19 @@ namespace FateWeaver.Tests.EditMode
         public void Korean_quick_cut() =>
             Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.",
                 DescriptionComposer.Describe(
-                    CardFixtures.DamageOnFirstTrigger("fx_first", baseDamage: 2, whenFirst: 8), Korean));
+                    CardFixtures.DamageOnFirstTrigger("quick_fx", baseDamage: 2, whenFirst: 8), Korean));
 
         [Test]
         public void Korean_counter_stance() =>
             Assert.AreEqual("[◆] 피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
                 DescriptionComposer.Describe(
-                    CardFixtures.DamageAfterEnemyDamage("fx_after", baseDamage: 4, whenAfter: 9), Korean));
+                    CardFixtures.DamageAfterEnemyDamage("counter_fx", baseDamage: 4, whenAfter: 9), Korean));
 
         [Test]
         public void Korean_cover() =>
             Assert.AreEqual("[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(
-                    CardFixtures.BlockBeforeEnemyDamage("fx_before", baseMagnitude: 2, whenBefore: 7), Korean));
+                    CardFixtures.BlockBeforeEnemyDamage("cover_fx", baseMagnitude: 2, whenBefore: 7), Korean));
 
         [Test]
         public void Korean_pull_forward() =>

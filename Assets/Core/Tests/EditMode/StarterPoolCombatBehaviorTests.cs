@@ -9,7 +9,7 @@ using FateWeaver.Core.Authoring;
 
 namespace FateWeaver.Tests
 {
-    public class StarterPoolCardRuleTests
+    public class StarterPoolCombatBehaviorTests
     {
         private static readonly CardContentCatalog Pool = TestContent.Cards();
 
