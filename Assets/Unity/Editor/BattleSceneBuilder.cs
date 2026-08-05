@@ -17,11 +17,11 @@ namespace FateWeaver.Unity.Editor
         private const string UnitPrefabPath = "Assets/Unity/Prefabs/UnitView.prefab";
         private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
         private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
-        private const string MemberAPath = "Assets/Unity/CharacterSO/member_a.asset";
-        private const string MemberBPath = "Assets/Unity/CharacterSO/member_b.asset";
+        private const string MemberAPath = "Assets/Unity/Data/member_a.asset";
+        private const string MemberBPath = "Assets/Unity/Data/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Resources/UIInputActions.inputactions";
 
-        private const string CardArtCatalogPath = "Assets/Unity/CardSO/CardArt.asset";
+        private const string CardArtCatalogPath = "Assets/Unity/Data/CardArt.asset";
 
         [MenuItem("Fate Weaver/Build Battle Scene")]
         public static void Build()
