@@ -39,7 +39,6 @@ namespace FateWeaver.Core.Authoring.Json
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StatusKeyRefJsonConverter());
-            settings.Converters.Add(new InterventionKeyRefJsonConverter());
             if (includePolymorphic)
             {
                 if (includeCardSpec)
