@@ -1948,3 +1948,158 @@ test("깨진 풀은 이유를 준다", () => {
   assert.equal(missing.pool, null);
   assert.ok(missing.errors.some((message) => message.includes("cards")));
 });
+
+function cardOf(core, schema, overrides) {
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
+  }, null, 2), schema);
+  return card;
+}
+
+function poolOf(core, cards) {
+  return core.readPoolJson(JSON.stringify({ id: "starter", cards })).pool;
+}
+
+const STATUS_KEYS = ["poison", "block", "haste"];
+
+test("id 형식과 중복을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const bad = core.validateContent({
+    cards: [cardOf(core, schema, { id: "Vanguard Slash" })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(bad.errors.some((e) => e.message.includes("형식")));
+
+  const dupe = core.validateContent({
+    cards: [cardOf(core, schema, {}), cardOf(core, schema, {})],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(dupe.errors.some((e) => e.message.includes("중복")));
+});
+
+test("개입 카드의 액션을 검사한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const missing = core.validateContent({
+    cards: [cardOf(core, schema, { category: "Intervention" })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(missing.errors.some((e) => e.message.includes("개입 액션")));
+
+  const unknown = core.validateContent({
+    cards: [cardOf(core, schema, {
+      category: "Intervention", intervention: { kind: "teleport" },
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(unknown.errors.some((e) => e.message.includes("teleport")));
+});
+
+test("등록되지 않은 상태 키를 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, {
+      effects: [{ kind: "apply_status", status: "posion", count: 1 }],
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("posion")));
+});
+
+test("consume_status의 maxAmount 하한을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, {
+      effects: [{ kind: "consume_status", status: "poison", maxAmount: 0 }],
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("maxAmount")));
+});
+
+test("풀 소속 카드에만 등급과 태그를 요구한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const card = cardOf(core, schema, { tags: [] });
+
+  const free = core.validateContent({
+    cards: [card], pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.deepEqual(free.errors, [], "풀에 없으면 등급·태그가 없어도 정상이다");
+
+  const pooled = core.validateContent({
+    cards: [card], pools: [poolOf(core, ["probe"])], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(pooled.errors.some((e) => e.message.includes("등급")));
+  assert.ok(pooled.errors.some((e) => e.message.includes("태그")));
+});
+
+test("풀의 없는 카드와 중복을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { grade: "Common", tags: ["시작"] })],
+    pools: [poolOf(core, ["probe", "probe", "ghost"])],
+    statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("ghost")));
+  assert.ok(result.errors.some((e) => e.message.includes("중복")));
+});
+
+test("효과 없는 실행 카드와 고아 카드는 경고에 그친다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { effects: [] })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.deepEqual(result.errors, []);
+  assert.ok(result.warnings.length >= 2, "효과 0개 경고와 고아 경고");
+});
+
+test("모르는 최상위 키는 부팅 거부라고 알린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2), schema);
+  const result = core.validateContent({
+    cards: [card], pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("flavour")));
+});
+
+test("풀 소속 카드의 중복 태그와 빈 태그를 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { grade: "Common", tags: ["시작", "시작", " "] })],
+    pools: [poolOf(core, ["probe"])],
+    statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("중복 태그")));
+  assert.ok(result.errors.some((e) => e.message.includes("빈 태그")));
+});
+
+test("저장소의 실제 콘텐츠가 검증을 통과한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const statusesDir = new URL("../../Assets/StreamingAssets/Content/Statuses/", import.meta.url);
+  const statusKeys = readdirSync(fileURLToPath(statusesDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => JSON.parse(readFileSync(fileURLToPath(new URL(n, statusesDir)), "utf8")).key);
+
+  const cards = readdirSync(fileURLToPath(cardsDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => core.readCardJson(readCardFile(n), schema).card);
+  const pools = readdirSync(fileURLToPath(poolsDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => core.readPoolJson(
+      readFileSync(fileURLToPath(new URL(n, poolsDir)), "utf8")).pool);
+
+  const result = core.validateContent({ cards, pools, statusKeys, schema });
+  assert.deepEqual(result.errors, [], "부팅이 받아들이는 콘텐츠는 오류가 없어야 한다");
+});
