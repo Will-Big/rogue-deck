@@ -9,10 +9,10 @@ namespace FateWeaver.Simulation.Descriptions
         public string DisplayName => "실행 순서 변경";
 
         public string Describe(InterventionActionData action, DescriptionContext context)
-            => "한 카드의 실행 순서 "
-                + (action.EffectValue >= 0
-                    ? "+" + action.EffectValue
-                    : action.EffectValue.ToString());
+        {
+            var delta = (action.Payload as ChangeExecutionOrderPayload)?.Delta ?? 0;
+            return "한 카드의 실행 순서 " + (delta >= 0 ? "+" + delta : delta.ToString());
+        }
     }
 
     public sealed class SwapExecutionOrderDescriptionHandler

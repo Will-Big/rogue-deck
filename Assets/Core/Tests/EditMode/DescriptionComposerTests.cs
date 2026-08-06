@@ -100,7 +100,9 @@ namespace FateWeaver.Tests.EditMode
                 new EffectData[0])
             {
                 Category = CardCategory.Intervention,
-                InterventionAction = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, 1, -2)
+                InterventionAction = new InterventionActionData(
+                    InterventionActionKeys.ChangeExecutionOrder, 1,
+                    new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null))
             };
             Assert.AreEqual("한 카드의 실행 순서 -2.",
                 DescriptionComposer.Describe(card, Korean));
@@ -138,7 +140,7 @@ namespace FateWeaver.Tests.EditMode
                 InterventionAction = new InterventionActionData(
                     InterventionActionKeys.ChangeExecutionOrder,
                     1,
-                    -2)
+                    new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null))
             };
 
             Assert.Throws<ArgumentException>(() =>

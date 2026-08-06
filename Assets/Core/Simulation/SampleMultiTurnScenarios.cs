@@ -109,7 +109,7 @@ namespace FateWeaver.Simulation
                         interventionPlays: new[]
                         {
                             new InterventionPlaySpec(
-                                new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 3),
+                                new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: 3, TargetSide: null)),
                                 "goblin_jab")
                         })
                 });
@@ -215,7 +215,7 @@ namespace FateWeaver.Simulation
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2),
+                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)),
                         quickCutId)
                 });
         }
@@ -242,7 +242,7 @@ namespace FateWeaver.Simulation
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2),
+                        new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)),
                         quickCutId)
                 });
         }

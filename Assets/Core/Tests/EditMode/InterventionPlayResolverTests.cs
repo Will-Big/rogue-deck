@@ -30,8 +30,8 @@ namespace FateWeaver.Tests
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2), card),
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: 1), card)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), card),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: 1, TargetSide: null)), card)
             };
 
             var result = new InterventionPlayResolver(Registry()).Resolve(state, plays);
@@ -50,8 +50,8 @@ namespace FateWeaver.Tests
             var card = Card("quick_cut", 5);
             var plays = new[]
             {
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2), card),
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2), card)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), card),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), card)
             };
 
             var result = new InterventionPlayResolver(Registry()).Resolve(state, plays);
@@ -73,7 +73,7 @@ namespace FateWeaver.Tests
             registry.Register(new SwapExecutionOrderHandler());
             var plays = new[]
             {
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0), first, second)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)), first, second)
             };
 
             var result = new InterventionPlayResolver(registry).Resolve(state, plays);
@@ -93,9 +93,9 @@ namespace FateWeaver.Tests
             var second = Card("second", 3);
             var plays = new[]
             {
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2), first),
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1, effectValue: 0), first),
-                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0), first, second)
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), first),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1), first),
+                new InterventionPlay(new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)), first, second)
             };
             var registry = Registry();
             registry.Register(new SwapExecutionOrderHandler());

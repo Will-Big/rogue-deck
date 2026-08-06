@@ -14,7 +14,7 @@ namespace FateWeaver.Tests
         [Test]
         public void WritesEnumsAsNamesAndCamelCaseKeys()
         {
-            var json = ContentJson.Write(new CardSpec
+            var json = ContentJson.Write(new ExecutionCardSpec
             {
                 Id = "slash",
                 Name = "베기",
@@ -31,9 +31,18 @@ namespace FateWeaver.Tests
         [Test]
         public void OmitsDefaultValuedMembers()
         {
-            var json = ContentJson.Write(new CardSpec { Id = "x", Name = "x" });
+            var json = ContentJson.Write(new ExecutionCardSpec { Id = "x", Name = "x" });
 
-            StringAssert.DoesNotContain("interventionEffectValue", json);
+            StringAssert.DoesNotContain("energyCost", json);
+            StringAssert.DoesNotContain("baseExecutionOrder", json);
+            StringAssert.DoesNotContain("effects", json);
+            StringAssert.DoesNotContain("grade", json);
+            StringAssert.DoesNotContain("tags", json);
+
+            // side·category는 0번 열거값이어도 Include 처방 때문에 반드시 남는다. 이 둘이 생략되면
+            // CardContentLoader의 필수 키 검사가 "키가 있다"로 통과해 카드가 조용히 기본값을 갖는다.
+            StringAssert.Contains("\"side\": \"Player\"", json);
+            StringAssert.Contains("\"category\": \"Execution\"", json);
         }
 
         [Test]
@@ -97,7 +106,7 @@ namespace FateWeaver.Tests
         [Test]
         public void RoundTripsAnExecutionCardWithMultipleEffects()
         {
-            var original = new CardSpec
+            var original = new ExecutionCardSpec
             {
                 Id = "probing_strike",
                 Name = "견제타",
@@ -117,7 +126,7 @@ namespace FateWeaver.Tests
                 }
             };
 
-            var restored = ContentJson.Read<CardSpec>(ContentJson.Write(original));
+            var restored = (ExecutionCardSpec)ContentJson.Read<CardSpec>(ContentJson.Write(original));
 
             Assert.AreEqual("probing_strike", restored.Id);
             Assert.AreEqual("견제타", restored.Name);
@@ -132,31 +141,31 @@ namespace FateWeaver.Tests
         [Test]
         public void RoundTripsAnInterventionCardIncludingTargetRestrictions()
         {
-            var original = new CardSpec
+            var original = new InterventionCardSpec
             {
                 Id = "hasten",
                 Name = "재촉",
                 Side = Side.Player,
                 Category = CardCategory.Intervention,
                 EnergyCost = 1,
-                Intervention = new InterventionKeyRef { Id = "change_execution_order" },
-                InterventionEffectValue = -2,
-                InterventionTargetSide = InterventionTargetSideRef.Player,
-                InterventionRequireAdjacent = true
+                Intervention = new SwapExecutionOrderSpec
+                {
+                    TargetSide = InterventionTargetSideRef.Player,
+                    RequireAdjacent = true
+                }
             };
 
-            var restored = ContentJson.Read<CardSpec>(ContentJson.Write(original));
+            var restored = (InterventionCardSpec)ContentJson.Read<CardSpec>(ContentJson.Write(original));
+            var swap = (SwapExecutionOrderSpec)restored.Intervention;
 
-            Assert.AreEqual("change_execution_order", restored.Intervention.Id);
-            Assert.AreEqual(-2, restored.InterventionEffectValue);
-            Assert.AreEqual(InterventionTargetSideRef.Player, restored.InterventionTargetSide);
-            Assert.IsTrue(restored.InterventionRequireAdjacent);
+            Assert.AreEqual(InterventionTargetSideRef.Player, swap.TargetSide);
+            Assert.IsTrue(swap.RequireAdjacent);
         }
 
         [Test]
         public void RoundTrippedCardProducesAnIdenticalDefinition()
         {
-            var original = new CardSpec
+            var original = new ExecutionCardSpec
             {
                 Id = "delayed_strike",
                 Name = "늦춘 일격",
@@ -180,5 +189,68 @@ namespace FateWeaver.Tests
             Assert.AreEqual(before.Effects[0].Key, after.Effects[0].Key);
             Assert.AreEqual(before.Effects[0].EffectValue, after.Effects[0].EffectValue);
         }
+
+        [Test]
+        public void Category_picks_the_concrete_card_spec_type()
+        {
+            var execution = ContentJson.Read<CardSpec>(
+                "{\"id\":\"a\",\"name\":\"a\",\"side\":\"Player\",\"category\":\"Execution\"}");
+            var intervention = ContentJson.Read<CardSpec>(
+                "{\"id\":\"b\",\"name\":\"b\",\"side\":\"Player\",\"category\":\"Intervention\"}");
+
+            Assert.IsInstanceOf<ExecutionCardSpec>(execution);
+            Assert.IsInstanceOf<InterventionCardSpec>(intervention);
+        }
+
+        [Test]
+        public void Execution_card_rejects_intervention_keys()
+        {
+            Assert.Throws<JsonSerializationException>(() => ContentJson.Read<CardSpec>(
+                "{\"id\":\"a\",\"name\":\"a\",\"side\":\"Player\",\"category\":\"Execution\","
+                + "\"intervention\":\"lock\"}"));
+        }
+
+        [Test]
+        public void Intervention_kind_picks_the_concrete_intervention_spec()
+        {
+            var spec = (InterventionCardSpec)ContentJson.Read<CardSpec>(
+                "{\"id\":\"d\",\"name\":\"d\",\"side\":\"Player\",\"category\":\"Intervention\","
+                + "\"energyCost\":1,\"intervention\":{\"kind\":\"change_execution_order\","
+                + "\"delta\":1,\"targetSide\":\"Enemy\"}}");
+
+            var change = (ChangeExecutionOrderSpec)spec.Intervention;
+            Assert.AreEqual(1, change.Delta);
+            Assert.AreEqual(InterventionTargetSideRef.Enemy, change.TargetSide);
+        }
+
+        [Test]
+        public void Swap_spec_rejects_a_parameter_it_does_not_own()
+        {
+            Assert.Throws<JsonSerializationException>(() => ContentJson.Read<CardSpec>(
+                "{\"id\":\"c\",\"name\":\"c\",\"side\":\"Player\",\"category\":\"Intervention\","
+                + "\"energyCost\":1,\"intervention\":{\"kind\":\"swap_execution_order\","
+                + "\"delta\":1}}"));
+        }
+
+        [Test]
+        public void Repository_cards_round_trip_byte_identically()
+        {
+            var directory = System.IO.Path.Combine(TestContent.Root(), "Cards");
+
+            foreach (var path in System.IO.Directory.GetFiles(directory, "*.json"))
+            {
+                var original = System.IO.File.ReadAllText(path);
+                var rewritten = ContentJson.Write(ContentJson.Read<CardSpec>(original));
+
+                Assert.AreEqual(
+                    Normalize(original), Normalize(rewritten),
+                    System.IO.Path.GetFileName(path) + "의 왕복이 원본과 다르다.");
+            }
+        }
+
+        /// <summary>줄바꿈과 파일 끝 공백만 맞춘다. 키 순서·들여쓰기·값은 그대로 비교한다 —
+        /// 그것이 이 테스트가 잠그려는 것이기 때문이다.</summary>
+        private static string Normalize(string json)
+            => json.Replace("\r\n", "\n").TrimEnd();
     }
 }

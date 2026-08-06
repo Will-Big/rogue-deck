@@ -43,7 +43,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(CardCategory.Intervention, card.Category);
             Assert.AreEqual(0, card.Effects.Count);
             Assert.AreEqual(InterventionActionKeys.ChangeExecutionOrder, card.InterventionAction.Key);
-            Assert.AreEqual(-1, card.InterventionAction.EffectValue);
+            Assert.AreEqual(-1, ((ChangeExecutionOrderPayload)card.InterventionAction.Payload).Delta);
         }
     }
 }

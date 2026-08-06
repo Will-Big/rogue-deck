@@ -3,6 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
+using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Core.Authoring;
@@ -50,22 +51,22 @@ namespace FateWeaver.Tests
         {
             var def = Pool.Get("crossover");
             Assert.AreEqual(CardCategory.Intervention, def.Category);
-            Assert.IsTrue(def.InterventionAction.RequireAdjacentTargets);
+            Assert.IsTrue(((SwapExecutionOrderPayload)def.InterventionAction.Payload).RequireAdjacent);
         }
 
         [Test]
         public void Hasten_targets_player_cards_and_delay_targets_enemy_cards()
         {
             Assert.AreEqual(Side.Player,
-                Pool.Get("hasten").InterventionAction.TargetSide);
+                ((ChangeExecutionOrderPayload)Pool.Get("hasten").InterventionAction.Payload).TargetSide);
             Assert.AreEqual(-1,
-                Pool.Get("hasten").InterventionAction.EffectValue);
+                ((ChangeExecutionOrderPayload)Pool.Get("hasten").InterventionAction.Payload).Delta);
             Assert.AreEqual(Side.Enemy,
-                Pool.Get("delay").InterventionAction.TargetSide);
+                ((ChangeExecutionOrderPayload)Pool.Get("delay").InterventionAction.Payload).TargetSide);
             Assert.AreEqual(Side.Player,
-                Pool.Get("breather").InterventionAction.TargetSide);
+                ((ChangeExecutionOrderPayload)Pool.Get("breather").InterventionAction.Payload).TargetSide);
             Assert.AreEqual(1,
-                Pool.Get("breather").InterventionAction.EffectValue);
+                ((ChangeExecutionOrderPayload)Pool.Get("breather").InterventionAction.Payload).Delta);
         }
 
         private static CombatState NewState()

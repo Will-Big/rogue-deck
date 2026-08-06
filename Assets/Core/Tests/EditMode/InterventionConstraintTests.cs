@@ -32,8 +32,8 @@ namespace FateWeaver.Tests
             var enemyCard = Card("theirs", Side.Enemy, 5);
             var state = StateWithZone(playerCard, enemyCard);
             var action = new InterventionActionData(
-                InterventionActionKeys.ChangeExecutionOrder, 1, -1,
-                targetSide: Side.Player, requireAdjacentTargets: false);
+                InterventionActionKeys.ChangeExecutionOrder, 1,
+                new ChangeExecutionOrderPayload(Delta: -1, TargetSide: Side.Player));
             var resolver = new InterventionPlayResolver(NewActions());
 
             var rejected = resolver.Resolve(state, new[] { new InterventionPlay(action, enemyCard) });
@@ -54,8 +54,8 @@ namespace FateWeaver.Tests
             var c = Card("c", Side.Player, 7);
             var state = StateWithZone(a, b, c);
             var action = new InterventionActionData(
-                InterventionActionKeys.SwapExecutionOrder, 1, 0,
-                targetSide: null, requireAdjacentTargets: true);
+                InterventionActionKeys.SwapExecutionOrder, 1,
+                new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: true));
             var resolver = new InterventionPlayResolver(NewActions());
 
             // a(0)와 c(2)는 비인접 → 거부.
@@ -77,7 +77,8 @@ namespace FateWeaver.Tests
             var a = Card("a", Side.Player, 3);
             var c = Card("c", Side.Player, 7);
             var state = StateWithZone(a, c);
-            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, 1, 0);
+            var action = new InterventionActionData(
+                InterventionActionKeys.SwapExecutionOrder, 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false));
 
             var applied = new InterventionPlayResolver(NewActions())
                 .Resolve(state, new[] { new InterventionPlay(action, a, c) });

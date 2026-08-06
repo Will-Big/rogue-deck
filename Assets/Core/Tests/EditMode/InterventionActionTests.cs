@@ -28,11 +28,41 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void ChangeExecutionOrder_reads_delta_from_payload()
+        {
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
+            var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
+            var action = new InterventionActionData(
+                InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1,
+                new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
+
+            new ChangeExecutionOrderHandler().Apply(ctx);
+
+            Assert.AreEqual(2, card.ExecutionOrder);
+            Assert.AreEqual(2, state.FateEnergy);
+        }
+
+        [Test]
+        public void Lock_needs_no_payload()
+        {
+            var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
+            var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
+            var action = new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1);
+            var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
+
+            new LockHandler().Apply(ctx);
+
+            Assert.IsTrue(card.IsLocked);
+            Assert.IsNull(action.Payload);
+        }
+
+        [Test]
         public void ChangeExecutionOrder_spends_cost_and_changes_target_executionOrder()
         {
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             new ChangeExecutionOrderHandler().Apply(ctx);
@@ -47,7 +77,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 0 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             Assert.IsFalse(new ChangeExecutionOrderHandler().CanApply(ctx));
@@ -82,7 +112,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
             Assert.AreEqual(2, before.DamageDealt);
 
-            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
             var intervention = new InterventionActionRegistry();
             intervention.Register(new ChangeExecutionOrderHandler());
             intervention.Resolve(InterventionActionKeys.ChangeExecutionOrder)
@@ -103,7 +133,7 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false));
             var ctx = new InterventionPlayContext
             {
                 State = state,
@@ -139,7 +169,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
-            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false));
             new SwapExecutionOrderHandler().Apply(new InterventionPlayContext
             {
                 State = state,
@@ -163,7 +193,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 2, new EffectData(EffectKeys.Damage, 2));
-            var action = new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1, effectValue: 0);
+            var action = new InterventionActionData(InterventionActionKeys.Lock, interventionCost: 1);
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             new LockHandler().Apply(ctx);
@@ -179,7 +209,7 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", Side.Player, 4, new EffectData(EffectKeys.Damage, 2));
             card.IsLocked = true;
-            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
             var ctx = new InterventionPlayContext { State = state, Target = card, Intervention = action };
 
             Assert.IsFalse(new ChangeExecutionOrderHandler().CanApply(ctx));
@@ -197,7 +227,7 @@ namespace FateWeaver.Tests
             var first = Card("first", Side.Player, 1, new EffectData(EffectKeys.Damage, 2));
             var second = Card("second", Side.Player, 5, new EffectData(EffectKeys.Damage, 2));
             second.IsLocked = true;
-            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0);
+            var action = new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false));
             var ctx = new InterventionPlayContext
             {
                 State = state,

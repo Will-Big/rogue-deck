@@ -24,7 +24,7 @@ namespace FateWeaver.Tests
             var specs = new Dictionary<string, CardSpec>();
             foreach (var id in ids)
             {
-                var spec = new CardSpec
+                var spec = new ExecutionCardSpec
                 {
                     Id = id,
                     Name = id,

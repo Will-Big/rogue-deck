@@ -17,7 +17,8 @@ namespace FateWeaver.Tests.UnityEditMode
                     Category = CardCategory.Intervention,
                     InterventionAction = new InterventionActionData(
                         InterventionActionKeys.ChangeExecutionOrder,
-                        interventionCost: cost, effectValue: delta)
+                        interventionCost: cost,
+                        new ChangeExecutionOrderPayload(Delta: delta, TargetSide: null))
                 };
     }
 }

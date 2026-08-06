@@ -23,25 +23,4 @@ namespace FateWeaver.Core.Authoring.Json
         public override void WriteJson(JsonWriter writer, StatusKeyRef value, JsonSerializer serializer)
             => writer.WriteValue(value.Id);
     }
-
-    /// <summary>InterventionKeyRef도 같은 이유로 평범한 문자열로 쓴다.</summary>
-    public sealed class InterventionKeyRefJsonConverter : JsonConverter<InterventionKeyRef>
-    {
-        public override InterventionKeyRef ReadJson(
-            JsonReader reader, Type objectType, InterventionKeyRef existingValue,
-            bool hasExistingValue, JsonSerializer serializer)
-        {
-            if (reader.TokenType != JsonToken.String)
-            {
-                throw new JsonSerializationException(
-                    "Intervention key must be a string, got " + reader.TokenType + ".");
-            }
-
-            return new InterventionKeyRef { Id = (string)reader.Value };
-        }
-
-        public override void WriteJson(
-            JsonWriter writer, InterventionKeyRef value, JsonSerializer serializer)
-            => writer.WriteValue(value.Id);
-    }
 }

@@ -25,21 +25,31 @@ namespace FateWeaver.Core.Authoring
                     errors.Add("Card spec requires an id.");
                 }
 
-                if (spec.Category == CardCategory.Intervention)
+                if (spec is InterventionCardSpec intervention)
                 {
-                    if (spec.Intervention.IsEmpty)
+                    if (intervention.Intervention == null)
                     {
-                        errors.Add("Card '" + spec.Id + "': intervention card requires an action key.");
+                        errors.Add("Card '" + spec.Id + "': intervention card requires an intervention spec.");
+                        continue;
                     }
-                    else if (!context.HasIntervention(spec.Intervention.ToKey()))
+
+                    if (!context.HasIntervention(intervention.Intervention.Key))
                     {
-                        errors.Add("Card '" + spec.Id + "': unknown intervention key '" + spec.Intervention.Id + "'.");
+                        errors.Add("Card '" + spec.Id + "': unknown intervention key '"
+                            + intervention.Intervention.Key.Id + "'.");
+                        continue;
+                    }
+
+                    foreach (var error in intervention.Intervention.Validate(context))
+                    {
+                        errors.Add("Card '" + spec.Id + "': " + error);
                     }
 
                     continue;
                 }
 
-                foreach (var effect in spec.Effects ?? System.Array.Empty<EffectSpec>())
+                var execution = (ExecutionCardSpec)spec;
+                foreach (var effect in execution.Effects ?? System.Array.Empty<EffectSpec>())
                 {
                     if (effect == null)
                     {

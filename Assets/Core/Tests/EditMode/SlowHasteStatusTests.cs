@@ -145,7 +145,7 @@ namespace FateWeaver.Tests
 
         // 예전 C# 카드 저작 스펙에 있던 slow_hex 카드의 값을 그대로 옮긴 픽스처. Slow는 Turns
         // 종류라 카드가 주는 count는 지속(2턴)뿐이다.
-        private static CardSpec SlowHexFixture() => new CardSpec
+        private static ExecutionCardSpec SlowHexFixture() => new ExecutionCardSpec
         {
             Id = "slow_hex",
             Name = "slow_hex",

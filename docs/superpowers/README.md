@@ -91,7 +91,7 @@
 | 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
 | 3c | [상태 원본 확정](archive/plans/2026-08-04-status-content-single-source.md) | **완료** |
 | 3d | [C# 카드 스펙 제거](archive/plans/2026-08-05-card-spec-removal.md) | **완료** |
-| 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
+| 3.5 | [개입 액션 다형화·카드 스펙 분리](archive/plans/2026-08-06-intervention-action-polymorphism.md) | **완료** |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
 설계 §4.5의 "콘텐츠 원본 전환"은 한 계획으로 담기에 커서 넷으로 나눴다. 각각 독립 실행 가능하고,
@@ -104,8 +104,10 @@
 | 3c | ~~상태 스펙 판별자를 `StatusRegistry`로, `StatusContentDefaults` 제거, `CombatState`의 코드 기본값 제거, `KoreanDescriptionCatalog.Default` 전역 제거 → 주입~~ **완료** | 3b |
 | 3d | ~~`StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck.Build()`·`PartyPrototypeDeck`·`ContentExportWriter`·`PartyPrototypeCharacterSpecs` 제거. 테스트를 JSON 카탈로그로 전환. (`GeneratedCards`·`ToLiteral`은 3b가 이미 지웠다)~~ **완료** | 3b |
 
-계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갠다
-(핸들러가 읽는 파라미터가 액션마다 달라, 지금은 `lock` 카드가 안 쓰는 칸 넷을 들고 있다).
+계획 3.5는 개입 액션을 `EffectSpec`처럼 다형화하고 `CardSpec`을 실행/개입으로 쪼갰다. 저작은
+`InterventionSpec` + `InterventionSpecCatalog` + 컨버터, 런타임은 `IInterventionPayload`이며
+(효과의 `IEffectPayload`와 같은 형태), `lock` 카드가 들고 있던 빈 칸 넷이 사라졌다. 카드 한 장은
+개입 액션을 하나만 갖는다 — 복수 개입은 대상 묶기 규칙과 비용 귀속 설계가 딸려 오므로 범위 밖이다.
 
 **3d가 3b·3c에서 물려받는 것:** 런타임이 JSON을 읽는다. `ContentBootstrap.Load(콘텐츠루트)`가
 **상태** → 카드 → 덱·풀 → 캐릭터 순서로 카탈로그 다섯을 만들어 `GameContent`로 돌려주고,

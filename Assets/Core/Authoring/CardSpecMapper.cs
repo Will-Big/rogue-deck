@@ -11,36 +11,29 @@ namespace FateWeaver.Core.Authoring
     {
         public static CardDefinition ToDefinition(CardSpec spec)
         {
-            if (spec.Category == CardCategory.Intervention)
+            if (spec is InterventionCardSpec intervention)
             {
                 return new CardDefinition(spec.Id, spec.Name, spec.Side, 0, Array.Empty<EffectData>())
                 {
                     EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
                     InterventionAction = new InterventionActionData(
-                        spec.Intervention.ToKey(), spec.EnergyCost, spec.InterventionEffectValue,
-                        ToTargetSide(spec.InterventionTargetSide), spec.InterventionRequireAdjacent)
+                        intervention.Intervention.Key,
+                        spec.EnergyCost,
+                        intervention.Intervention.ToPayload())
                 };
             }
 
-            var effects = (spec.Effects ?? Array.Empty<EffectSpec>())
+            var execution = (ExecutionCardSpec)spec;
+            var effects = (execution.Effects ?? Array.Empty<EffectSpec>())
                 .Select(e => e.ToEffectData())
                 .ToArray();
-            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.BaseExecutionOrder, effects)
+            return new CardDefinition(
+                spec.Id, spec.Name, spec.Side, execution.BaseExecutionOrder, effects)
             {
                 EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution
             };
-        }
-
-        private static Side? ToTargetSide(InterventionTargetSideRef side)
-        {
-            switch (side)
-            {
-                case InterventionTargetSideRef.Player: return Side.Player;
-                case InterventionTargetSideRef.Enemy: return Side.Enemy;
-                default: return null;
-            }
         }
     }
 }

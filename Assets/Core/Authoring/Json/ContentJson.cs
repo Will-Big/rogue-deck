@@ -16,13 +16,19 @@ namespace FateWeaver.Core.Authoring.Json
         internal static JsonSerializer Plain { get; } =
             JsonSerializer.Create(Build(includePolymorphic: false));
 
+        /// <summary>카드 컨버터만 뺀 설정. CardSpecJsonConverter가 중첩된 EffectSpec을 다형으로
+        /// 다루면서도 자기 자신을 재귀 호출하지 않기 위해 쓴다. 외부에서 직접 쓰지 않는다.</summary>
+        internal static JsonSerializer Nested { get; } =
+            JsonSerializer.Create(Build(includePolymorphic: true, includeCardSpec: false));
+
         public static string Write(object value)
             => JsonConvert.SerializeObject(value, Settings);
 
         public static T Read<T>(string json)
             => JsonConvert.DeserializeObject<T>(json, Settings);
 
-        private static JsonSerializerSettings Build(bool includePolymorphic)
+        private static JsonSerializerSettings Build(
+            bool includePolymorphic, bool includeCardSpec = true)
         {
             var settings = new JsonSerializerSettings
             {
@@ -33,11 +39,16 @@ namespace FateWeaver.Core.Authoring.Json
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StatusKeyRefJsonConverter());
-            settings.Converters.Add(new InterventionKeyRefJsonConverter());
             if (includePolymorphic)
             {
+                if (includeCardSpec)
+                {
+                    settings.Converters.Add(new CardSpecJsonConverter());
+                }
+
                 settings.Converters.Add(new EffectSpecJsonConverter());
                 settings.Converters.Add(new StatusSpecJsonConverter());
+                settings.Converters.Add(new InterventionSpecJsonConverter());
             }
 
             return settings;

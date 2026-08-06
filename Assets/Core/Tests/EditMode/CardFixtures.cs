@@ -64,14 +64,16 @@ namespace FateWeaver.Tests
                 id, cost,
                 new InterventionActionData(
                     InterventionActionKeys.ChangeExecutionOrder,
-                    interventionCost: cost, effectValue: delta));
+                    interventionCost: cost,
+                    new ChangeExecutionOrderPayload(Delta: delta, TargetSide: null)));
 
         public static CardDefinition SwapExecutionOrder(string id, int cost = 1)
             => Intervention(
                 id, cost,
                 new InterventionActionData(
                     InterventionActionKeys.SwapExecutionOrder,
-                    interventionCost: cost, effectValue: 0));
+                    interventionCost: cost,
+                    new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)));
 
         /// <summary>적 의도 카드. 적 카드는 아직 JSON이 아니므로(별도 계획) 픽스처가 필요하다.</summary>
         public static CardDefinition EnemyAttack(string id, int executionOrder, int damage)

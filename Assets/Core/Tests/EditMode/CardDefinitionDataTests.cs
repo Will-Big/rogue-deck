@@ -38,7 +38,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Intervention_card_carries_an_intervention_action()
         {
-            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, effectValue: -2);
+            var action = new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null));
             var card = new CardDefinition(
                 "pull", "앞당김", Side.Player, 0, Array.Empty<EffectData>())
                 { EnergyCost = 1, Category = CardCategory.Intervention, InterventionAction = action };

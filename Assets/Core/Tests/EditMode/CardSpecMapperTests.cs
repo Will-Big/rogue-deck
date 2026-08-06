@@ -29,7 +29,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Maps_flat_damage_action()
         {
-            var def = CardSpecMapper.ToDefinition(new CardSpec
+            var def = CardSpecMapper.ToDefinition(new ExecutionCardSpec
             {
                 Id = "slash", Name = "베기", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
@@ -47,7 +47,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Maps_conditional_damage()
         {
-            var def = CardSpecMapper.ToDefinition(new CardSpec
+            var def = CardSpecMapper.ToDefinition(new ExecutionCardSpec
             {
                 Id = "quick_cut", Name = "찰나의 베기", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
@@ -64,7 +64,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Maps_conditional_apply_status()
         {
-            var def = CardSpecMapper.ToDefinition(new CardSpec
+            var def = CardSpecMapper.ToDefinition(new ExecutionCardSpec
             {
                 Id = "cover", Name = "엄호", Side = Side.Player,
                 Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
@@ -88,19 +88,18 @@ namespace FateWeaver.Tests
         [Test]
         public void Maps_fate_card()
         {
-            var def = CardSpecMapper.ToDefinition(new CardSpec
+            var def = CardSpecMapper.ToDefinition(new InterventionCardSpec
             {
                 Id = "pull_forward", Name = "앞당김", Side = Side.Player,
                 Category = CardCategory.Intervention, EnergyCost = 1,
-                Intervention = InterventionKeyRef.Of(InterventionActionKeys.ChangeExecutionOrder),
-                InterventionEffectValue = -2
+                Intervention = new ChangeExecutionOrderSpec { Delta = -2 }
             });
 
             Assert.AreEqual(CardCategory.Intervention, def.Category);
             Assert.AreEqual(0, def.Effects.Count);
             Assert.AreEqual(InterventionActionKeys.ChangeExecutionOrder, def.InterventionAction.Key);
             Assert.AreEqual(1, def.InterventionAction.InterventionCost);
-            Assert.AreEqual(-2, def.InterventionAction.EffectValue);
+            Assert.AreEqual(-2, ((ChangeExecutionOrderPayload)def.InterventionAction.Payload).Delta);
         }
 
         [Test]
