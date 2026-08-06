@@ -101,7 +101,7 @@ Node `node:test` + `node:vm`
 
 **계획 B(별도 문서, 계획 A 완료 후 작성)가 맡을 것:**
 설계 §6 효과 편집기 UI, §7 풀 편성 화면, §11 화면 구성, §12 쓰기 정책의 diff 요약과 파일 쓰기,
-§13 마이그레이션(`SCHEMA_VERSION` 7), Markdown 경로 제거, `시작 카드 풀.md` 삭제,
+§14 마이그레이션(`SCHEMA_VERSION` 7), Markdown 경로 제거, `시작 카드 풀.md` 삭제,
 `2026-07-20-character-card-pools-design.md` §1 개정, 옛 노트북 스펙 `archive/` 이동.
 
 나누는 이유는 라운드트립 바이트 동일성이 이 전환에서 가장 깨지기 쉬운 지점이고, UI를 뒤엎기 전에
@@ -277,7 +277,7 @@ namespace FateWeaver.Tests
 
             File.WriteAllText(path, expected);
             Assert.Fail(
-                "authoring-schema.json이 EffectSpecCatalog와 달라 갱신했다. 커밋에 포함하고 "
+                "authoring-schema.json이 저작 명부와 달라 갱신했다. 커밋에 포함하고 "
                 + "테스트를 다시 실행하라. 경로: " + path);
         }
 
@@ -466,7 +466,7 @@ namespace FateWeaver.Tests
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter SchemaFileMatchesCatalog
 ```
 
-기대: **FAIL**, 메시지 `authoring-schema.json이 EffectSpecCatalog와 달라 갱신했다`.
+기대: **FAIL**, 메시지 `authoring-schema.json이 저작 명부와 달라 갱신했다`.
 그리고 `Tools/card-idea-notebook/authoring-schema.json`이 **생겨 있어야 한다.**
 
 - [ ] **Step 4: 생성된 스키마를 눈으로 검수한다**
