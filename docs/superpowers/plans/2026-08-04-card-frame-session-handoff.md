@@ -107,7 +107,7 @@ git commit -m "fix(ui): improve execution order badge visibility"
 
 **Files:**
 - Modify after design approval: `Assets/Core/Simulation/Presentation/HandFanLayout.cs`
-- Modify after design approval: `Assets/Unity/HandFanView.cs`
+- Modify after design approval: `Assets/Unity/Scripts/Cards/HandFanView.cs`
 - Modify after design approval: `docs/superpowers/specs/2026-07-31-primitive-card-frame-design.md`
 - Test: `Assets/Core/Tests/EditMode/HandFanLayoutTests.cs`
 - Test: `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`

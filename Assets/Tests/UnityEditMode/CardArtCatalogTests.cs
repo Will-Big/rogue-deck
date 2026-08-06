@@ -9,7 +9,7 @@ namespace FateWeaver.Tests.UnityEditMode
     /// 적 카드 아트가 사라진다.</summary>
     public class CardArtCatalogTests
     {
-        private const string AssetPath = "Assets/Unity/CardSO/CardArt.asset";
+        private const string AssetPath = "Assets/Unity/Data/CardArt.asset";
         private const int EnemyArtCount = 3;
 
         private static CardArtCatalog Load()

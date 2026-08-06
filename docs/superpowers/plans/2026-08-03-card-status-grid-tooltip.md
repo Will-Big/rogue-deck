@@ -27,20 +27,20 @@
 
 ## File Map
 
-- Create `Assets/Unity/CardStatusPresentation.cs`: UI에 전달되는 불변 상태 표시 값.
-- Create `Assets/Unity/CardStatusIconView.cs`: 아이콘 표시와 pointer enter/exit 전달.
-- Create `Assets/Unity/CardStatusTooltipView.cs`: 공유 패널의 제목·본문·위치·소유자 수명 관리.
+- Create `Assets/Unity/Scripts/Cards/CardStatusPresentation.cs`: UI에 전달되는 불변 상태 표시 값.
+- Create `Assets/Unity/Scripts/Cards/CardStatusIconView.cs`: 아이콘 표시와 pointer enter/exit 전달.
+- Create `Assets/Unity/Scripts/Cards/CardStatusTooltipView.cs`: 공유 패널의 제목·본문·위치·소유자 수명 관리.
 - Create `Assets/Unity/CardStatusPresentationFactory.cs`: JSON 표시 데이터와 Sprite 카탈로그의 유일한 결합점.
 - Create `Assets/Unity/StatusIconCatalog.cs`: `iconKey -> Sprite` 인스펙터 매핑과 부팅 검증.
 - Create `Assets/Unity/StatusIconCatalog.asset`: 기본 `lock` iconKey의 Sprite 참조.
 - Create `Assets/Unity/Prefabs/CardStatusTooltipView.prefab`: Canvas 오버레이에 하나만 생성되는 툴팁.
-- Modify `Assets/Unity/CardPresentation.cs`: 상태 enum 목록을 `CardStatusPresentation` 목록으로 교체.
-- Modify `Assets/Unity/CardView.cs`: 일반 템플릿 복제, 재바인딩 정리, 툴팁 전달.
-- Modify `Assets/Unity/CardPrefabCatalog.cs`: tooltip/status icon 표현 프리팹·카탈로그 검증.
-- Modify `Assets/Unity/HandFanView.cs`, `ExecutionRailView.cs`, `PileView.cs`: 같은 툴팁 인스턴스를 전체 카드에 전달.
-- Modify `Assets/Unity/BattleScreenController.cs`, `Assets/Unity/Editor/BattleSceneBuilder.cs`, `Assets/Scenes/FateWeaverBattle.unity`: JSON 표시 source와 Canvas overlay 툴팁 조립.
+- Modify `Assets/Unity/Scripts/Cards/CardPresentation.cs`: 상태 enum 목록을 `CardStatusPresentation` 목록으로 교체.
+- Modify `Assets/Unity/Scripts/Cards/CardView.cs`: 일반 템플릿 복제, 재바인딩 정리, 툴팁 전달.
+- Modify `Assets/Unity/Scripts/Content/CardPrefabCatalog.cs`: tooltip/status icon 표현 프리팹·카탈로그 검증.
+- Modify `Assets/Unity/Scripts/Cards/HandFanView.cs`, `ExecutionRailView.cs`, `PileView.cs`: 같은 툴팁 인스턴스를 전체 카드에 전달.
+- Modify `Assets/Unity/Scripts/Battle/BattleScreenController.cs`, `Assets/Unity/Editor/BattleSceneBuilder.cs`, `Assets/Scenes/FateWeaverBattle.unity`: JSON 표시 source와 Canvas overlay 툴팁 조립.
 - Modify `Assets/Unity/Prefabs/ExecutionCardView.prefab`, `InterventionCardView.prefab`: 일반 4열 상태 그리드와 비활성 템플릿.
-- Delete after replacement: `Assets/Unity/CardStatusIcon.cs`와 `.meta`.
+- Delete after replacement: `Assets/Unity/Scripts/Cards/CardStatusIcon.cs`와 `.meta`.
 - Test `Assets/Tests/UnityEditMode/CardStatusTooltipViewTests.cs`, `CardPresentationTests.cs`, `CardFramePrefabTests.cs`, `CardPrefabCatalogTests.cs`.
 
 ---
@@ -48,9 +48,9 @@
 ### Task 1: Build source-independent status icon and tooltip components
 
 **Files:**
-- Create: `Assets/Unity/CardStatusPresentation.cs`
-- Create: `Assets/Unity/CardStatusIconView.cs`
-- Create: `Assets/Unity/CardStatusTooltipView.cs`
+- Create: `Assets/Unity/Scripts/Cards/CardStatusPresentation.cs`
+- Create: `Assets/Unity/Scripts/Cards/CardStatusIconView.cs`
+- Create: `Assets/Unity/Scripts/Cards/CardStatusTooltipView.cs`
 - Test: `Assets/Tests/UnityEditMode/CardStatusTooltipViewTests.cs`
 
 **Interfaces:**
@@ -148,9 +148,9 @@ public interface ICardStatusDisplaySource
 Run Step 2 and expect PASS.
 
 ```bash
-git add Assets/Unity/CardStatusPresentation.cs Assets/Unity/CardStatusPresentation.cs.meta \
-  Assets/Unity/CardStatusIconView.cs Assets/Unity/CardStatusIconView.cs.meta \
-  Assets/Unity/CardStatusTooltipView.cs Assets/Unity/CardStatusTooltipView.cs.meta \
+git add Assets/Unity/Scripts/Cards/CardStatusPresentation.cs Assets/Unity/Scripts/Cards/CardStatusPresentation.cs.meta \
+  Assets/Unity/Scripts/Cards/CardStatusIconView.cs Assets/Unity/Scripts/Cards/CardStatusIconView.cs.meta \
+  Assets/Unity/Scripts/Cards/CardStatusTooltipView.cs Assets/Unity/Scripts/Cards/CardStatusTooltipView.cs.meta \
   Assets/Tests/UnityEditMode/CardStatusTooltipViewTests.cs \
   Assets/Tests/UnityEditMode/CardStatusTooltipViewTests.cs.meta
 git commit -m "feat(ui): add card status tooltip components"
@@ -251,7 +251,7 @@ If the merged catalog uses different type names, only the `ICardStatusDisplaySou
 - Create: `Assets/Unity/StatusIconCatalog.cs`
 - Create: `Assets/Unity/StatusIconCatalog.asset`
 - Create: `Assets/Unity/CardStatusPresentationFactory.cs`
-- Modify: `Assets/Unity/CardPrefabCatalog.cs`
+- Modify: `Assets/Unity/Scripts/Content/CardPrefabCatalog.cs`
 - Test: `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
 
 **Interfaces:**
@@ -303,7 +303,7 @@ Expected: projection and missing/duplicate icon-key validation pass.
 git add Assets/Unity/StatusIconCatalog.cs Assets/Unity/StatusIconCatalog.cs.meta \
   Assets/Unity/StatusIconCatalog.asset Assets/Unity/StatusIconCatalog.asset.meta \
   Assets/Unity/CardStatusPresentationFactory.cs Assets/Unity/CardStatusPresentationFactory.cs.meta \
-  Assets/Unity/CardPrefabCatalog.cs \
+  Assets/Unity/Scripts/Content/CardPrefabCatalog.cs \
   Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs
 git commit -m "refactor(ui): project JSON card status content"
 ```
@@ -313,17 +313,17 @@ git commit -m "refactor(ui): project JSON card status content"
 ### Task 4: Wire one overlay tooltip through every full-card host
 
 **Files:**
-- Modify: `Assets/Unity/CardPresentation.cs`
-- Modify: `Assets/Unity/CardView.cs`
-- Modify: `Assets/Unity/CardPrefabCatalog.cs`
-- Modify: `Assets/Unity/PlaytestCardArt.cs`
-- Modify: `Assets/Unity/HandFanView.cs`
-- Modify: `Assets/Unity/ExecutionRailView.cs`
-- Modify: `Assets/Unity/PileView.cs`
-- Modify: `Assets/Unity/BattleScreenController.cs`
+- Modify: `Assets/Unity/Scripts/Cards/CardPresentation.cs`
+- Modify: `Assets/Unity/Scripts/Cards/CardView.cs`
+- Modify: `Assets/Unity/Scripts/Content/CardPrefabCatalog.cs`
+- Modify: `Assets/Unity/Scripts/Cards/PlaytestCardArt.cs`
+- Modify: `Assets/Unity/Scripts/Cards/HandFanView.cs`
+- Modify: `Assets/Unity/Scripts/Battle/ExecutionRailView.cs`
+- Modify: `Assets/Unity/Scripts/Battle/PileView.cs`
+- Modify: `Assets/Unity/Scripts/Battle/BattleScreenController.cs`
 - Modify: `Assets/Unity/Editor/BattleSceneBuilder.cs`
 - Modify: `Assets/Scenes/FateWeaverBattle.unity`
-- Delete: `Assets/Unity/CardStatusIcon.cs`, `Assets/Unity/CardStatusIcon.cs.meta`
+- Delete: `Assets/Unity/Scripts/Cards/CardStatusIcon.cs`, `Assets/Unity/Scripts/Cards/CardStatusIcon.cs.meta`
 - Test: `Assets/Tests/UnityEditMode/CardPresentationTests.cs`
 - Test: `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
 - Test: `Assets/Tests/UnityEditMode/CardStatusTooltipViewTests.cs`
@@ -371,12 +371,12 @@ Replace `CardPresentation.StatusIcons` with the display-ready list, remove the `
 - [ ] **Step 4: Run focused tests and commit**
 
 ```bash
-git add Assets/Unity/CardPresentation.cs Assets/Unity/CardView.cs \
-  Assets/Unity/CardPrefabCatalog.cs Assets/Unity/PlaytestCardArt.cs \
-  Assets/Unity/CardStatusIcon.cs Assets/Unity/CardStatusIcon.cs.meta \
-  Assets/Unity/HandFanView.cs \
-  Assets/Unity/ExecutionRailView.cs Assets/Unity/PileView.cs \
-  Assets/Unity/BattleScreenController.cs Assets/Unity/Editor/BattleSceneBuilder.cs \
+git add Assets/Unity/Scripts/Cards/CardPresentation.cs Assets/Unity/Scripts/Cards/CardView.cs \
+  Assets/Unity/Scripts/Content/CardPrefabCatalog.cs Assets/Unity/Scripts/Cards/PlaytestCardArt.cs \
+  Assets/Unity/Scripts/Cards/CardStatusIcon.cs Assets/Unity/Scripts/Cards/CardStatusIcon.cs.meta \
+  Assets/Unity/Scripts/Cards/HandFanView.cs \
+  Assets/Unity/Scripts/Battle/ExecutionRailView.cs Assets/Unity/Scripts/Battle/PileView.cs \
+  Assets/Unity/Scripts/Battle/BattleScreenController.cs Assets/Unity/Editor/BattleSceneBuilder.cs \
   Assets/Scenes/FateWeaverBattle.unity \
   Assets/Tests/UnityEditMode/CardPresentationTests.cs \
   Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs \

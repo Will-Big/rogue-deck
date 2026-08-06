@@ -102,6 +102,10 @@
 - [상태 원본 확정 구현 기록 (계획 3c)](plans/2026-08-04-status-content-single-source.md)
 - [C# 카드 스펙 제거 구현 기록 (계획 3d)](plans/2026-08-05-card-spec-removal.md)
 
+### P1-B 선행 — 에셋 폴더 재정리
+
+- [에셋 폴더 재정리 1단계 구현 기록](plans/2026-08-05-asset-folder-reorg.md)
+
 ### 과거 런 원 사이클
 
 - [런 계획 인덱스](plans/2026-07-20-run-cycle-plan-index.md)

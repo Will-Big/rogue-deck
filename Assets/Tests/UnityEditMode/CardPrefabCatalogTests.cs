@@ -15,7 +15,7 @@ namespace FateWeaver.Tests.UnityEditMode
     public class CardPrefabCatalogTests
     {
         internal const string CatalogPath =
-            "Assets/Unity/CardPrefabCatalog.asset";
+            "Assets/Unity/Data/CardPrefabCatalog.asset";
         internal const string ExecutionPath =
             "Assets/Unity/Prefabs/ExecutionCardView.prefab";
         internal const string InterventionPath =

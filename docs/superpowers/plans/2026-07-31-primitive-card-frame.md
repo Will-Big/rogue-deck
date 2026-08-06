@@ -52,8 +52,8 @@
 
 ### Responsive hand
 
-- Modify `Assets/Unity/HandCardHoverEffect.cs`: 활성 여부를 노출하고 authored sibling 복원 계약을 유지한다.
-- Modify `Assets/Unity/HandFanView.cs`: resize 전에 활성 카드의 현재 z-order를 캡처하고 그 순서대로 다시 올린다.
+- Modify `Assets/Unity/Scripts/Cards/HandCardHoverEffect.cs`: 활성 여부를 노출하고 authored sibling 복원 계약을 유지한다.
+- Modify `Assets/Unity/Scripts/Cards/HandFanView.cs`: resize 전에 활성 카드의 현재 z-order를 캡처하고 그 순서대로 다시 올린다.
 - Test `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`.
 
 ### Structured descriptions
@@ -64,9 +64,9 @@
 
 ### Unity description and target views
 
-- Modify `Assets/Unity/DescriptionLineView.cs`: TMP 한 흐름의 색상 심볼 접두사.
+- Modify `Assets/Unity/Scripts/Cards/DescriptionLineView.cs`: TMP 한 흐름의 색상 심볼 접두사.
 - User-modify `Assets/Unity/Prefabs/DescriptionLineView.prefab`: glyph 슬롯 제거, full-width TMP와 두 직렬화 색 할당.
-- Modify `Assets/Unity/TargetGlyphView.cs`: 범위별 authored visual 선택, 미러링, 색 적용.
+- Modify `Assets/Unity/Scripts/Cards/TargetGlyphView.cs`: 범위별 authored visual 선택, 미러링, 색 적용.
 - User-modify `Assets/Unity/Prefabs/TargetGlyphView.prefab`: 범위별 동일 폭 프리미티브 계층.
 - User-review `ExecutionCardView.prefab`, `InterventionCardView.prefab`: 한 행 중앙 정렬과 확장 설명 영역.
 - Modify `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`, `CardPrefabCatalogTests.cs`.
@@ -83,8 +83,8 @@
 ### Task 1: Finish responsive active-card sibling ordering
 
 **Files:**
-- Modify: `Assets/Unity/HandCardHoverEffect.cs`
-- Modify: `Assets/Unity/HandFanView.cs`
+- Modify: `Assets/Unity/Scripts/Cards/HandCardHoverEffect.cs`
+- Modify: `Assets/Unity/Scripts/Cards/HandFanView.cs`
 - Test: `Assets/Tests/UnityEditMode/HandFanHoverTests.cs`
 
 **Interfaces:**
@@ -164,7 +164,7 @@ Run Step 2, then `CardFrameResponsiveLayoutTests` and `HandFanResponsivePlayMode
 - [x] **Step 5: Commit only the responsive fix**
 
 ```bash
-git add Assets/Unity/HandCardHoverEffect.cs Assets/Unity/HandFanView.cs \
+git add Assets/Unity/Scripts/Cards/HandCardHoverEffect.cs Assets/Unity/Scripts/Cards/HandFanView.cs \
   Assets/Tests/UnityEditMode/HandFanHoverTests.cs
 git commit -m "fix(ui): preserve active hand card ordering"
 ```
@@ -299,7 +299,7 @@ git commit -m "refactor(sim): group descriptions by target"
 ### Task 3: Render description faction symbols in one TMP flow
 
 **Files:**
-- Modify: `Assets/Unity/DescriptionLineView.cs`
+- Modify: `Assets/Unity/Scripts/Cards/DescriptionLineView.cs`
 - User-modify: `Assets/Unity/Prefabs/DescriptionLineView.prefab`
 - Modify: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
 - Modify: affected assertions in `Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs`
@@ -453,7 +453,7 @@ Run Step 2 plus `Description_line_wraps_to_remaining_width_and_grows_in_a_constr
 - [x] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
-git add Assets/Unity/DescriptionLineView.cs \
+git add Assets/Unity/Scripts/Cards/DescriptionLineView.cs \
   Assets/Unity/Prefabs/DescriptionLineView.prefab \
   Assets/Tests/UnityEditMode/CardFramePrefabTests.cs \
   Assets/Tests/UnityEditMode/CardPrefabCatalogTests.cs
@@ -465,7 +465,7 @@ git commit -m "refactor(ui): render inline faction symbols"
 ### Task 4: Replace faction-shaped target glyphs with colored range visuals
 
 **Files:**
-- Modify: `Assets/Unity/TargetGlyphView.cs`
+- Modify: `Assets/Unity/Scripts/Cards/TargetGlyphView.cs`
 - User-modify: `Assets/Unity/Prefabs/TargetGlyphView.prefab`
 - Modify: `Assets/Tests/UnityEditMode/CardFramePrefabTests.cs`
 
@@ -677,7 +677,7 @@ Run `CardFramePrefabTests` and `CardPrefabCatalogTests`. Expected: all six range
 - [x] **Step 6: Commit code, tests, and the reviewed prefab**
 
 ```bash
-git add Assets/Unity/TargetGlyphView.cs \
+git add Assets/Unity/Scripts/Cards/TargetGlyphView.cs \
   Assets/Unity/Prefabs/TargetGlyphView.prefab \
   Assets/Tests/UnityEditMode/CardFramePrefabTests.cs
 git commit -m "refactor(ui): color target range glyphs"
@@ -934,8 +934,8 @@ After the test-only fixture correction in commit `c73442b`, run all PlayMode tes
 rg -n '◇◎|◎◆|AllyDirection|EnemyDirection|_glyphSlot|_allyFill|_enemyFill' \
   Assets/Core Assets/Unity --glob '!Assets/Tests/**'
 rg -n 'Resources\.Load|GameObject\.Find|FindObjectOfType' \
-  Assets/Unity/CardView.cs Assets/Unity/CardPrefabCatalog.cs \
-  Assets/Unity/TargetGlyphView.cs Assets/Unity/DescriptionLineView.cs
+  Assets/Unity/Scripts/Cards/CardView.cs Assets/Unity/Scripts/Content/CardPrefabCatalog.cs \
+  Assets/Unity/Scripts/Cards/TargetGlyphView.cs Assets/Unity/Scripts/Cards/DescriptionLineView.cs
 rg --files Assets/Unity/Resources/Cards/Frame | rg 'poster_v2'
 git diff --check
 git status --short
