@@ -7,6 +7,13 @@
 - 상태: `active`
 - 설계: [카드 저작 노트북 JSON 전환](../specs/2026-08-05-card-authoring-json-notebook-design.md)
 
+> **2026-08-06 계획 3.5로 무효가 된 부분** — 이 계획은 개입을 평평한 네 필드
+> (`intervention`·`interventionEffectValue`·`interventionTargetSide`·`interventionRequireAdjacent`)로
+> 전제한다. 계획 3.5가 그것을 `{"kind": …, …}` 중첩 스펙으로 바꿨으므로 다음이 갱신되어야 한다:
+> 스키마의 `cardFields`와 `BuildInterventions`, 노트북 카드 모델의 개입 네 필드, 개입 카드 테스트.
+> 스키마의 `interventions`는 이제 `InterventionSpecCatalog`에서 `{kind, label, fields[]}`로 뽑으며,
+> 그러면 노트북 개입 폼이 효과 행 렌더러를 그대로 재사용할 수 있다.
+
 **목표:** 저작 스키마 생성기와 노트북의 JSON 읽기·쓰기·검증 코어를 만든다. UI는 건드리지 않는다.
 
 **아키텍처:** C# 헤드리스 테스트가 `EffectSpecCatalog`를 리플렉션해

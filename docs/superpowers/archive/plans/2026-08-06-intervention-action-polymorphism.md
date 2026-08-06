@@ -1,7 +1,7 @@
 # 개입 액션 다형화·카드 스펙 분리 구현 계획 (계획 3.5)
 
 - 작성일: 2026-08-06
-- 상태: `active`
+- 상태: `완료`
 - 범위: 개입 액션 파라미터를 저작·런타임 두 층에서 액션별로 분리, `CardSpec`을 실행·개입 두 타입으로
   분리, 개입 카드 JSON 4장 마이그레이션
 - 선행: 계획 3b·3c·3d (완료·머지)
@@ -1538,7 +1538,7 @@ git commit -m "refactor(core): 개입 저작을 액션별 스펙으로 바꾸고
 (규칙 17, 그리고 색인의 "함정 1"). 이 워크트리 경로로 실행하고 로그는 `/private/tmp`에 남긴다.
 
 ```bash
-/Applications/Unity/Hub/Editor/6000.0.26f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath "$PWD" -runTests -testPlatform EditMode -testResults /private/tmp/3-5-editmode.xml -logFile /private/tmp/3-5-editmode.log
+/Applications/Unity/Hub/Editor/6000.5.2f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath "$PWD" -runTests -testPlatform EditMode -testResults /private/tmp/3-5-editmode.xml -logFile /private/tmp/3-5-editmode.log
 ```
 
 `-quit`를 함께 쓰지 않는다 — 테스트 없이 exit 0이 된다.
