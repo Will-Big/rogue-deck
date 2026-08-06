@@ -2234,3 +2234,121 @@ test("깨진 상태 파일과 키 없는 상태는 이유를 준다", () => {
   assert.equal(missing.status, null);
   assert.ok(missing.errors.some((message) => message.includes("key")));
 });
+
+function cardsByIdOf(core, schema, specs) {
+  const map = new Map();
+  for (const spec of specs) {
+    const { card } = core.readCardJson(JSON.stringify({
+      id: spec.id, name: spec.id, side: "Player", category: spec.category ?? "Execution",
+      ...spec,
+    }, null, 2), schema);
+    map.set(card.id, card);
+  }
+  return map;
+}
+
+test("풀의 등급·태그를 개수 내림차순으로 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", grade: "Common", tags: ["시작", "공격"] },
+    { id: "b", grade: "Common", tags: ["시작"] },
+    { id: "c", grade: "Rare", tags: ["시작", "공격"] },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b","c"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.grades, [
+    { value: "Common", count: 2 },
+    { value: "Rare", count: 1 },
+  ]);
+  assert.deepEqual(distribution.tags, [
+    { value: "시작", count: 3 },
+    { value: "공격", count: 2 },
+  ]);
+});
+
+test("비용과 실행 순서는 값 오름차순으로 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", energyCost: 2, baseExecutionOrder: 5 },
+    { id: "b", energyCost: 1, baseExecutionOrder: 3 },
+    { id: "c", energyCost: 1, baseExecutionOrder: 5 },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b","c"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.costs, [
+    { value: 1, count: 2 },
+    { value: 2, count: 1 },
+  ]);
+  assert.deepEqual(distribution.orders, [
+    { value: 3, count: 1 },
+    { value: 5, count: 2 },
+  ]);
+});
+
+test("개입 카드는 실행 순서 분포에서 빠진다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", baseExecutionOrder: 4 },
+    { id: "b", category: "Intervention", intervention: { kind: "lock" } },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.orders, [{ value: 4, count: 1 }],
+    "개입 카드에는 baseExecutionOrder가 없다");
+  assert.equal(distribution.total, 2, "그래도 편성 장수에는 들어간다");
+});
+
+test("없는 카드는 세지 않고 따로 담는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [{ id: "a", grade: "Common", tags: ["시작"] }]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","ghost"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.equal(distribution.total, 2);
+  assert.equal(distribution.present, 1);
+  assert.deepEqual(distribution.missing, ["ghost"]);
+  assert.deepEqual(distribution.grades, [{ value: "Common", count: 1 }],
+    "없는 카드를 분포에 섞으면 집계가 거짓이 된다");
+});
+
+test("저장소의 starter를 없는 카드 없이 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = new Map();
+  for (const name of readdirSync(fileURLToPath(cardsDir)).filter((n) => n.endsWith(".json"))) {
+    const { card } = core.readCardJson(readCardFile(name), schema);
+    cardsById.set(card.id, card);
+  }
+  const { pool } = core.readPoolJson(
+    readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8"));
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.missing, [], "저장소 풀에는 없는 카드가 없어야 한다");
+  assert.equal(distribution.present, distribution.total);
+  assert.equal(distribution.total, pool.cards.length);
+  assert.ok(distribution.tags.length > 0);
+  assert.equal(distribution.grades.reduce((sum, e) => sum + e.count, 0), distribution.present,
+    "등급 개수의 합이 카드 수와 같아야 한다");
+});
+
+test("카드 소속 풀을 역방향 표로 만든다", () => {
+  const core = loadCore();
+  const pools = [
+    core.readPoolJson('{"id":"starter","cards":["a","b"]}').pool,
+    core.readPoolJson('{"id":"mycologist","cards":["b","b","c"]}').pool,
+  ];
+
+  const membership = core.poolMembership(pools);
+  assert.deepEqual(membership.get("a"), ["starter"]);
+  assert.deepEqual(membership.get("b"), ["starter", "mycologist"],
+    "같은 풀 안의 중복은 한 번만 센다");
+  assert.deepEqual(membership.get("c"), ["mycologist"]);
+  assert.equal(membership.get("ghost"), undefined);
+});

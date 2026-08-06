@@ -1950,9 +1950,72 @@
       };
     }
 
+    /// 집계 결과를 화면이 다시 정렬하지 않도록 여기서 순서를 끝낸다.
+    /// order === "value"면 값 오름차순(비용·순서), 아니면 개수 내림차순 후 값 오름차순(등급·태그).
+    function countEntries(counts, order) {
+      const entries = [];
+      for (const [value, count] of counts) entries.push({ value, count });
+
+      const byValue = (a, b) => (a.value < b.value ? -1 : a.value > b.value ? 1 : 0);
+      entries.sort(order === "value" ? byValue : (a, b) => b.count - a.count || byValue(a, b));
+      return entries;
+    }
+
+    /// 풀 하나를 집합으로 본 모습(설계 11.4). 없는 카드는 세지 않고 missing에 담는다 -
+    /// 분포에 섞으면 집계가 거짓이 되고, 버리면 노트북을 열었다 닫는 것만으로 편성이 바뀐다.
+    function poolDistribution({ pool, cardsById }) {
+      const grades = new Map();
+      const tags = new Map();
+      const costs = new Map();
+      const orders = new Map();
+      const missing = [];
+      const bump = (counts, key) => counts.set(key, (counts.get(key) ?? 0) + 1);
+
+      for (const cardId of pool.cards) {
+        const card = cardsById.get(cardId);
+        if (!card) {
+          missing.push(cardId);
+          continue;
+        }
+
+        bump(grades, card.grade);
+        for (const tag of card.tags ?? []) bump(tags, tag);
+        bump(costs, card.energyCost);
+        if (card.category === "Execution") bump(orders, card.baseExecutionOrder);
+      }
+
+      return {
+        total: pool.cards.length,
+        present: pool.cards.length - missing.length,
+        missing,
+        grades: countEntries(grades, "count"),
+        tags: countEntries(tags, "count"),
+        costs: countEntries(costs, "value"),
+        orders: countEntries(orders, "value"),
+      };
+    }
+
+    /// 카드 id로 소속 풀을 찾는 역방향 표. 참조는 풀→카드 단방향이므로(설계 7) 역방향이
+    /// 필요한 화면은 이 표를 만들어 쓴다. 풀 안의 중복은 한 번만 센다 - 중복 자체는
+    /// 검증기가 오류로 잡고, 소속 여부는 그것과 별개다.
+    function poolMembership(pools) {
+      const membership = new Map();
+      for (const pool of pools) {
+        for (const cardId of pool.cards) {
+          const owners = membership.get(cardId);
+          if (!owners) membership.set(cardId, [pool.id]);
+          else if (!owners.includes(pool.id)) owners.push(pool.id);
+        }
+      }
+
+      return membership;
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       CONTENT_PATHS,
       readStatusJson,
+      poolDistribution,
+      poolMembership,
       parseAuthoringSchema,
       readCardJson,
       writeCardJson,
