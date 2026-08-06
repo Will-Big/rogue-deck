@@ -2171,3 +2171,66 @@ test("풀도 같은 다섯 상태로 판정한다", () => {
   assert.equal(core.resolvePoolState({ stored: moved, pending: edited }), "conflict");
   assert.equal(core.resolvePoolState({ stored: moved, pending: pool }), "same");
 });
+
+const statusesDir = new URL("../../Assets/StreamingAssets/Content/Statuses/", import.meta.url);
+
+function readStatusFile(name) {
+  return readFileSync(fileURLToPath(new URL(name, statusesDir)), "utf8");
+}
+
+test("콘텐츠 경로 넷을 세그먼트 배열로 노출한다", () => {
+  const core = loadCore();
+  assert.deepEqual(core.CONTENT_PATHS.schema,
+    ["Tools", "card-idea-notebook", "authoring-schema.json"]);
+  assert.deepEqual(core.CONTENT_PATHS.statuses,
+    ["Assets", "StreamingAssets", "Content", "Statuses"]);
+  assert.deepEqual(core.CONTENT_PATHS.cards,
+    ["Assets", "StreamingAssets", "Content", "Cards"]);
+  assert.deepEqual(core.CONTENT_PATHS.pools,
+    ["Assets", "StreamingAssets", "Content", "Pools"]);
+});
+
+test("상태 파일에서 키와 표시 이름만 읽는다", () => {
+  const core = loadCore();
+  const { status, errors } = core.readStatusJson(readStatusFile("poison.json"));
+  assert.deepEqual(errors, []);
+  assert.equal(status.key, "poison");
+  assert.equal(status.displayName, "독");
+  assert.equal(status.base, readStatusFile("poison.json"));
+  assert.deepEqual(Object.keys(status), ["key", "displayName", "base"],
+    "수명·성장치는 읽지 않는다 - 노트북이 상태를 쓰지 않는다");
+});
+
+test("표시 이름이 없으면 키를 대신 쓴다", () => {
+  const core = loadCore();
+  const { status } = core.readStatusJson('{"key":"mystery"}');
+  assert.equal(status.displayName, "mystery");
+});
+
+test("저장소의 상태 열한 개를 전부 읽는다", () => {
+  const core = loadCore();
+  const names = readdirSync(fileURLToPath(statusesDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 11, `상태가 11개 이상이어야 한다. 실제 ${names.length}`);
+
+  const keys = [];
+  for (const name of names) {
+    const { status, errors } = core.readStatusJson(readStatusFile(name));
+    assert.deepEqual(errors, [], name);
+    keys.push(status.key);
+  }
+
+  assert.ok(keys.includes("poison"));
+  assert.ok(keys.includes("block"));
+  assert.equal(new Set(keys).size, keys.length, "상태 키가 중복이면 안 된다");
+});
+
+test("깨진 상태 파일과 키 없는 상태는 이유를 준다", () => {
+  const core = loadCore();
+  const broken = core.readStatusJson("{ 아님");
+  assert.equal(broken.status, null);
+  assert.equal(broken.errors.length, 1);
+
+  const missing = core.readStatusJson('{"displayName":"독"}');
+  assert.equal(missing.status, null);
+  assert.ok(missing.errors.some((message) => message.includes("key")));
+});

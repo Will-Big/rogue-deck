@@ -1917,7 +1917,42 @@
       return "same";
     }
 
+    /// 노트북이 아는 저장소 경로 넷(설계 3). 세그먼트 배열인 것은 File System Access API가
+    /// 경로 문자열이 아니라 디렉터리 핸들을 한 칸씩 타고 내려가기 때문이다.
+    const CONTENT_PATHS = Object.freeze({
+      schema: Object.freeze(["Tools", "card-idea-notebook", "authoring-schema.json"]),
+      statuses: Object.freeze(["Assets", "StreamingAssets", "Content", "Statuses"]),
+      cards: Object.freeze(["Assets", "StreamingAssets", "Content", "Cards"]),
+      pools: Object.freeze(["Assets", "StreamingAssets", "Content", "Pools"]),
+    });
+
+    /// 상태 파일에서 드롭다운 재료만 뽑는다(설계 11.5). 수명·성장치를 들고 있지 않는 것은
+    /// 노트북이 상태를 쓰지 않기 때문이다 - 읽지 않는 값을 모델에 두면 언젠가 되쓰게 된다.
+    function readStatusJson(text) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        return { status: null, errors: [`JSON을 읽을 수 없습니다: ${error.message}`] };
+      }
+
+      if (!raw || typeof raw !== "object" || !raw.key) {
+        return { status: null, errors: ["필수 키 'key'가 없습니다."] };
+      }
+
+      return {
+        status: {
+          key: String(raw.key),
+          displayName: String(raw.displayName ?? raw.key),
+          base: text,
+        },
+        errors: [],
+      };
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
+      CONTENT_PATHS,
+      readStatusJson,
       parseAuthoringSchema,
       readCardJson,
       writeCardJson,
