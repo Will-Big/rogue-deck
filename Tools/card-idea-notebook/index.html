@@ -1738,10 +1738,56 @@
       return `${JSON.stringify(out, null, 2)}\n`;
     }
 
+    const POOL_REQUIRED_KEYS = Object.freeze(["id", "cards"]);
+    const POOL_FIELDS = Object.freeze(["id", "cards"]);
+
+    function readPoolJson(text) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        return { pool: null, errors: [`JSON을 읽을 수 없습니다: ${error.message}`] };
+      }
+
+      const errors = [];
+      for (const key of POOL_REQUIRED_KEYS) {
+        if (!Object.hasOwn(raw, key)) errors.push(`필수 키 '${key}'가 없습니다.`);
+      }
+      if (errors.length) return { pool: null, errors };
+
+      const known = new Set(POOL_FIELDS);
+      const unknownKeys = [];
+      const extra = {};
+      for (const key of Object.keys(raw)) {
+        if (known.has(key)) continue;
+        unknownKeys.push(key);
+        extra[key] = raw[key];
+      }
+
+      return {
+        pool: {
+          id: String(raw.id),
+          cards: Array.isArray(raw.cards) ? raw.cards.map(String) : [],
+          unknownKeys,
+          extra,
+          base: text,
+        },
+        errors: [],
+      };
+    }
+
+    function writePoolJson(pool) {
+      const out = { id: pool.id, cards: [...pool.cards] };
+      for (const key of pool.unknownKeys) out[key] = pool.extra[key];
+      return `${JSON.stringify(out, null, 2)}\n`;
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       parseAuthoringSchema,
       readCardJson,
       writeCardJson,
+      readPoolJson,
+      writePoolJson,
       emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,

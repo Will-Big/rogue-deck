@@ -1907,3 +1907,44 @@ test("모르는 최상위 키를 원본 그대로 되돌린다", () => {
   const { card } = core.readCardJson(original, schema);
   assert.equal(core.writeCardJson(card, schema), original);
 });
+
+const poolsDir = new URL("../../Assets/StreamingAssets/Content/Pools/", import.meta.url);
+
+test("풀을 읽고 카드 순서를 그대로 보존한다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool, errors } = core.readPoolJson(text);
+  assert.deepEqual(errors, []);
+  assert.equal(pool.id, "starter");
+  assert.equal(pool.cards.length, 22);
+  assert.equal(pool.cards[0], "vanguard_slash");
+  assert.equal(pool.cards[21], "posthumous_spread");
+});
+
+test("저장소의 모든 풀이 바이트 그대로 왕복한다", () => {
+  const core = loadCore();
+  const names = readdirSync(fileURLToPath(poolsDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 1);
+  for (const name of names) {
+    const original = readFileSync(fileURLToPath(new URL(name, poolsDir)), "utf8");
+    const { pool } = core.readPoolJson(original);
+    assert.equal(core.writePoolJson(pool), original, name);
+  }
+});
+
+test("중복 카드를 지우지 않고 그대로 들고 있는다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","a","b"]}');
+  assert.deepEqual(pool.cards, ["a", "a", "b"]);
+});
+
+test("깨진 풀은 이유를 준다", () => {
+  const core = loadCore();
+  const broken = core.readPoolJson("{ 아님");
+  assert.equal(broken.pool, null);
+  assert.equal(broken.errors.length, 1);
+
+  const missing = core.readPoolJson('{"id":"p"}');
+  assert.equal(missing.pool, null);
+  assert.ok(missing.errors.some((message) => message.includes("cards")));
+});
