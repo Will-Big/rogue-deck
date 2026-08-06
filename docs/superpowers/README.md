@@ -76,6 +76,7 @@
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 저작 노트북 JSON 코어 (계획 A)](plans/2026-08-05-notebook-json-core.md) | `active` | 저작 스키마 생성기와 노트북의 JSON 읽기·쓰기·검증 코어. 순수 추가라 진행 중에도 노트북이 동작한다. UI 개편은 계획 B |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
+| [개입 액션 다형화·카드 스펙 분리](plans/2026-08-06-intervention-action-polymorphism.md) | `active` | 계획 3.5. 개입 파라미터를 저작·런타임 양쪽에서 액션별로 분리, `CardSpec` 실행·개입 타입 분리, 개입 카드 JSON 4장 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -91,7 +92,7 @@
 | 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
 | 3c | [상태 원본 확정](archive/plans/2026-08-04-status-content-single-source.md) | **완료** |
 | 3d | [C# 카드 스펙 제거](archive/plans/2026-08-05-card-spec-removal.md) | **완료** |
-| 3.5 | 개입 액션 다형화·카드 스펙 분리 (미작성) | 대기 |
+| 3.5 | [개입 액션 다형화·카드 스펙 분리](plans/2026-08-06-intervention-action-polymorphism.md) | 계획 작성 |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
 설계 §4.5의 "콘텐츠 원본 전환"은 한 계획으로 담기에 커서 넷으로 나눴다. 각각 독립 실행 가능하고,
