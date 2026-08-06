@@ -8,7 +8,7 @@ namespace FateWeaver.Tests
 {
     public class AuthoringValidationTests
     {
-        private static CardSpec Execution(params EffectSpec[] effects) => new CardSpec
+        private static CardSpec Execution(params EffectSpec[] effects) => new ExecutionCardSpec
         {
             Id = "t", Name = "t", Side = Side.Player,
             Category = CardCategory.Execution, EnergyCost = 1, BaseExecutionOrder = 5,
@@ -58,7 +58,7 @@ namespace FateWeaver.Tests
         [TestCase(4)]
         public void Undefined_authored_selector_reports_the_card_id(int rawValue)
         {
-            var spec = new CardSpec
+            var spec = new ExecutionCardSpec
             {
                 Id = "legacy_selector",
                 Category = CardCategory.Execution,
@@ -79,7 +79,7 @@ namespace FateWeaver.Tests
         public void Unknown_intervention_key_fails()
         {
             var errors = AuthoringValidator.Validate(
-                new[] { new CardSpec {
+                new[] { new InterventionCardSpec {
                     Id = "t", Name = "t", Side = Side.Player,
                     Category = CardCategory.Intervention, EnergyCost = 1,
                     Intervention = new InterventionKeyRef { Id = "no_such_action" } } },

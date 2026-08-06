@@ -11,21 +11,23 @@ namespace FateWeaver.Core.Authoring
     {
         public static CardDefinition ToDefinition(CardSpec spec)
         {
-            if (spec.Category == CardCategory.Intervention)
+            if (spec is InterventionCardSpec intervention)
             {
                 return new CardDefinition(spec.Id, spec.Name, spec.Side, 0, Array.Empty<EffectData>())
                 {
                     EnergyCost = spec.EnergyCost,
                     Category = CardCategory.Intervention,
                     InterventionAction = new InterventionActionData(
-                        spec.Intervention.ToKey(), spec.EnergyCost, ToPayload(spec))
+                        intervention.Intervention.ToKey(), spec.EnergyCost, ToPayload(intervention))
                 };
             }
 
-            var effects = (spec.Effects ?? Array.Empty<EffectSpec>())
+            var execution = (ExecutionCardSpec)spec;
+            var effects = (execution.Effects ?? Array.Empty<EffectSpec>())
                 .Select(e => e.ToEffectData())
                 .ToArray();
-            return new CardDefinition(spec.Id, spec.Name, spec.Side, spec.BaseExecutionOrder, effects)
+            return new CardDefinition(
+                spec.Id, spec.Name, spec.Side, execution.BaseExecutionOrder, effects)
             {
                 EnergyCost = spec.EnergyCost,
                 Category = CardCategory.Execution
@@ -45,7 +47,7 @@ namespace FateWeaver.Core.Authoring
         /// <summary>계획 3.5 Task 1의 임시 다리. 저작이 아직 평평해서 키를 보고 페이로드를 만든다.
         /// Task 4가 InterventionSpec.ToPayload()로 옮기며 이 메서드를 제거한다 — 그때까지만 존재하는
         /// 규칙 9 예외다.</summary>
-        private static IInterventionPayload ToPayload(CardSpec spec)
+        private static IInterventionPayload ToPayload(InterventionCardSpec spec)
         {
             var key = spec.Intervention.ToKey();
             if (key == InterventionActionKeys.ChangeExecutionOrder)

@@ -9,7 +9,7 @@ namespace FateWeaver.Tests
     /// 생략되지만 그것이 정상 상태다 — fixture 카드는 등급을 갖지 않는다.</summary>
     public class CardSpecGradeTagTests
     {
-        private static CardSpec Base() => new CardSpec
+        private static ExecutionCardSpec Base() => new ExecutionCardSpec
         {
             Id = "sample", Name = "표본", Side = Side.Player, Category = CardCategory.Execution
         };
