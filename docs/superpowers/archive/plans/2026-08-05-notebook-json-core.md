@@ -2,7 +2,8 @@
 
 - 작성일: 2026-08-05
 - 개정일: 2026-08-06 — 계획 3.5(개입 다형화·카드 스펙 분리)에 맞춰 다시 썼다
-- 상태: `active`
+- 완료일: 2026-08-07 — Task 1~7 전부 실행. 실행 중 발견한 편차는 맨 아래 "실행 기록"에 있다
+- 상태: `completed`
 - 설계: [카드 저작 노트북 JSON 전환](../specs/2026-08-05-card-authoring-json-notebook-design.md)
 
 ## 설계 개요 (사람 검수용)
@@ -199,7 +200,7 @@ node --test Tools/card-idea-notebook/
 > `InterventionActionRegistry.RegisteredKeys` 추가 단계는 **필요 없어져 삭제했다** — 두 목록이
 > 어긋나는지는 `InterventionSpecCatalogTests`가 이미 검사한다.
 
-- [ ] **Step 1: `TestContent`에 저장소 루트를 노출한다**
+- [x] **Step 1: `TestContent`에 저장소 루트를 노출한다**
 
 `Assets/Core/Tests/EditMode/TestContent.cs`의 `_root` 필드와 `Root()`를 통째로 바꾼다:
 
@@ -232,7 +233,7 @@ node --test Tools/card-idea-notebook/
                 RepoRoot(), "Assets", "StreamingAssets", "Content"));
 ```
 
-- [ ] **Step 2: 실패하는 테스트를 쓴다**
+- [x] **Step 2: 실패하는 테스트를 쓴다**
 
 `Assets/Core/Tests/EditMode/AuthoringSchemaExportTests.cs`를 만든다. 첫 실행에서는 파일이 없으므로
 반드시 실패한다.
@@ -457,7 +458,7 @@ namespace FateWeaver.Tests
 }
 ```
 
-- [ ] **Step 3: 실패를 확인한다**
+- [x] **Step 3: 실패를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter SchemaFileMatchesCatalog
@@ -466,7 +467,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 기대: **FAIL**, 메시지 `authoring-schema.json이 저작 명부와 달라 갱신했다`.
 그리고 `Tools/card-idea-notebook/authoring-schema.json`이 **생겨 있어야 한다.**
 
-- [ ] **Step 4: 생성된 스키마를 눈으로 검수한다**
+- [x] **Step 4: 생성된 스키마를 눈으로 검수한다**
 
 ```bash
 cat Tools/card-idea-notebook/authoring-schema.json
@@ -497,7 +498,7 @@ cat Tools/card-idea-notebook/authoring-schema.json
 `interventionSides`라는 최상위 키는 **없다.** 진영 제한은 이제 개입 스펙 안의 필드이므로 3번의
 `options`로 나온다 — 효과의 열거 필드와 똑같은 취급이다.
 
-- [ ] **Step 5: 다시 실행해 통과를 확인한다**
+- [x] **Step 5: 다시 실행해 통과를 확인한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
@@ -505,7 +506,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 기대: **Passed! - Failed: 0, Passed: 526** (기준선 525 + 신규 1).
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add Assets/Core/Tests/EditMode/TestContent.cs Assets/Core/Tests/EditMode/AuthoringSchemaExportTests.cs Tools/card-idea-notebook/authoring-schema.json
@@ -548,7 +549,7 @@ git commit -m "feat(core): 카드 저작 스키마를 저작 명부에서 생성
 **효과와 개입을 같은 모양으로 푸는 것이 요점이다.** 둘 다 `{kind, label, fields[]}`이므로 계획 B의
 폼 렌더러 하나가 양쪽을 그린다. 옛 판의 `interventions`(문자열 배열)와 `interventionSides`는 없다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `Tools/card-idea-notebook/index.test.mjs`의 맨 끝에 붙인다. 파일 상단의 `loadCore()`와
 `htmlUrl`은 이미 있으므로 그대로 쓴다.
@@ -618,7 +619,7 @@ test("스키마가 깨지면 이유를 던진다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -626,7 +627,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.parseAuthoringSchema is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `index.html`의 코어 스크립트에서 `globalThis.CardIdeaNotebook = Object.freeze({` **바로 위**에
 넣는다:
@@ -702,7 +703,7 @@ node --test Tools/card-idea-notebook/
       ROLE_LABELS,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -710,7 +711,7 @@ node --test Tools/card-idea-notebook/
 
 기대: 새 테스트 6개 PASS, 기존 테스트 전부 PASS(회귀 없음).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -772,7 +773,7 @@ authoring-schema.json에서 가져온다. 효과와 개입이 같은 모양이�
 따르므로, 실행 카드의 `intervention`이나 개입 카드의 `effects`는 키 목록에 없어 그냥 건너뛴다.
 계획 3.5가 C# 쪽에서 타입으로 갈라놓은 것을 노트북은 키 목록으로 지킨다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `index.test.mjs` 끝에 붙인다.
 
@@ -883,7 +884,7 @@ test("필수 키가 빠지면 이유를 준다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -891,7 +892,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.readCardJson is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `parseAuthoringSchema` 아래에 넣는다:
 
@@ -1006,7 +1007,7 @@ export 블록에 두 줄을 더한다:
       emptyConditionValue,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1014,7 +1015,7 @@ node --test Tools/card-idea-notebook/
 
 기대: 새 테스트 10개 PASS, 기존 테스트 회귀 없음.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1041,7 +1042,7 @@ null 배열과 빈 배열을 구분해 들고, 모르는 효과 kind와 모르�
 - Consumes: Task 3의 `readCardJson`, Task 2의 스키마
 - Produces: `writeCardJson(card, schema)` → 파일에 쓸 문자열(끝에 개행 포함)
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `index.test.mjs` 끝에 붙인다. `readdirSync`가 필요하므로 파일 상단 import를 고친다:
 
@@ -1138,7 +1139,7 @@ test("모르는 최상위 키를 원본 그대로 되돌린다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1146,7 +1147,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.writeCardJson is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `readCardJson` 아래에 넣는다. 생략 규칙이 이 함수의 전부다 — 위 "실측한 직렬화 규칙" 표를
 코드로 옮긴 것이다.
@@ -1255,7 +1256,7 @@ export 블록에 한 줄 더한다:
       writeCardJson,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1274,7 +1275,7 @@ node -e "const {readFileSync}=require('fs');const a=readFileSync('Assets/Streami
 흔한 원인 넷: 스키마의 필드 순서가 틀림(Task 1 Step 4로 돌아간다), 생략 규칙이 어긋남,
 파일 끝 개행 처리, 그리고 **분류별 키 목록을 안 쓰고 한 목록을 공용으로 쓴 경우**.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1297,7 +1298,7 @@ git commit -m "feat(tools): 노트북이 카드 모델을 JSON으로 되돌린�
 - Produces: `readPoolJson(text)` → `{ pool, errors }`, `writePoolJson(pool)` → 문자열.
   풀 모델은 `{ id, cards: [...], unknownKeys: [], extra: {}, base: "" }`.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 const poolsDir = new URL("../../Assets/StreamingAssets/Content/Pools/", import.meta.url);
@@ -1342,7 +1343,7 @@ test("깨진 풀은 이유를 준다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1350,7 +1351,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.readPoolJson is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 ```js
     const POOL_REQUIRED_KEYS = Object.freeze(["id", "cards"]);
@@ -1405,13 +1406,13 @@ export 블록에 두 줄 더한다:
       writePoolJson,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
 ```
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1437,7 +1438,7 @@ git commit -m "feat(tools): 노트북이 풀 JSON을 읽고 되돌린다
 
 설계 §9의 표를 그대로 옮긴다. 각 규칙의 근거는 C# 로더에 있으므로 메시지를 비슷하게 맞춘다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 function cardOf(core, schema, overrides) {
@@ -1564,7 +1565,7 @@ test("모르는 최상위 키는 부팅 거부라고 알린다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1572,7 +1573,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.validateContent is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 ```js
     const CARD_ID_PATTERN = /^[a-z0-9_]+$/;
@@ -1684,13 +1685,13 @@ export 블록에 한 줄 더한다:
       validateContent,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
 ```
 
-- [ ] **Step 5: 저장소 콘텐츠가 실제로 통과하는지 확인한다**
+- [x] **Step 5: 저장소 콘텐츠가 실제로 통과하는지 확인한다**
 
 검증이 진짜인지 보는 가장 좋은 방법은 부팅이 받아들이는 콘텐츠에 걸어보는 것이다.
 `index.test.mjs` 끝에 하나 더 붙인다:
@@ -1724,7 +1725,7 @@ node --test Tools/card-idea-notebook/
 기대: PASS. **실패하면 검증이 너무 엄격한 것이다** — 부팅은 이 콘텐츠를 받아들이므로
 노트북도 받아들여야 한다. 규칙을 C# 로더에 맞춰 완화한다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1751,7 +1752,7 @@ id 형식·중복, 개입 키, 상태 키, maxAmount 하한, 그리고 풀에 �
 설계 §10.3의 표를 그대로 옮긴다. `stored`는 저장소에서 방금 읽은 문자열(없으면 `null`),
 `pending`은 노트북이 들고 있는 카드 모델(없으면 `null`).
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 test("저장소와 같으면 same이다", () => {
@@ -1827,7 +1828,7 @@ test("풀도 같은 다섯 상태로 판정한다", () => {
 **조용히 갱신하고 `base`를 새로 잡는다**(설계 §10.3). 호출부가 그 갱신을 하고, 이 함수는
 "충돌 아님"만 알려준다.
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1835,7 +1836,7 @@ node --test Tools/card-idea-notebook/
 
 기대: **FAIL**, `core.resolveCardState is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 ```js
     /// 카드 하나의 읽기 상태(설계 10.3). base는 마지막으로 저장소에서 읽은 원본이고,
@@ -1869,7 +1870,7 @@ node --test Tools/card-idea-notebook/
     }
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test Tools/card-idea-notebook/
@@ -1878,7 +1879,7 @@ node --test Tools/card-idea-notebook/
 다섯 번째 테스트가 통과하는 이유를 확인할 것: `dirty`가 false이므로 `moved`가 true여도
 `"same"`이 나온다. 호출부는 그때 `base`를 `stored`로 갈아끼운다.
 
-- [ ] **Step 5: export하고 커밋**
+- [x] **Step 5: export하고 커밋**
 
 export 블록에 한 줄 더한다:
 
@@ -1920,3 +1921,52 @@ git commit -m "feat(tools): 노트북이 카드의 읽기 상태를 판정한다
 ## 다음
 
 계획 A가 머지되면 계획 B를 작성한다. 범위는 이 문서 "이 계획의 경계" 절에 적어 두었다.
+
+---
+
+## 실행 기록 (2026-08-07)
+
+Task 1~7을 순서대로 실행했다. 완료 기준 다섯을 전부 실측으로 확인했다.
+
+| 기준 | 결과 |
+|---|---|
+| 헤드리스 526/526 | ✅ (기준선 525 + `SchemaFileMatchesCatalog`) |
+| 노트북 테스트 | ✅ **102/102** (기준선 58 + 신규 44) |
+| 스키마 커밋, 효과 8종·개입 3종 | ✅ 키 순서가 `vanguard_slash`·`spore_veil`·`delay`·`crossover`와 일치 |
+| 브라우저에서 지금과 똑같이 동작 | ✅ 콘솔 오류 0. 카드 생성 → 이름 편집 → Markdown 미리보기 재생성 확인 |
+| 카드 26장·풀 1개 왕복 바이트 동일 | ✅ `저장소의 모든 카드가 바이트 그대로 왕복한다` 통과 |
+
+### 계획과 달라진 것 넷
+
+1. **검증 명령을 바꿨다.** 계획의 `node --test Tools/card-idea-notebook/`이 **Node 24에서
+   `MODULE_NOT_FOUND`로 죽는다** — 디렉터리 인자를 모듈 경로로 해석한다. 대체 명령:
+
+   ```bash
+   node --test "Tools/card-idea-notebook/*.test.mjs"
+   ```
+
+2. **테스트 하니스의 realm을 하나로 합쳤다.** `loadCore()`가 `vm.runInNewContext`로 코어를 별도
+   realm에서 돌리고 있었는데, 거기서 만든 배열·객체는 호스트의 `Array.prototype`을 갖지 않는다.
+   `node:assert/strict`의 `deepEqual`은 프로토타입 동일성까지 보므로 **값이 같아도 실패한다**
+   (`Values have same structure but are not reference-equal`). 기존 58개가 통과하던 건 비교 대상이
+   호스트 `JSON.parse`에서 나왔거나 테스트가 `[...card.tags]`로 우회했기 때문이다. Task 3~7의
+   테스트는 `errors`·`params`처럼 코어가 **새로 만드는** 값을 비교하므로 구현으로는 우회할 수 없다.
+   `new Function("globalThis", …)`로 이 realm에서 실행하도록 고쳤다. DOM 접근 차단은 Node에
+   `document`·`window`가 없다는 사실이 그대로 맡는다.
+
+3. **계획 코드의 중복 판정 결함을 고쳤다.** `validateContent`가 `if (!seen.add(cardId))`로
+   중복을 판정했는데 **`Set.prototype.add`는 불리언이 아니라 Set 자신을 돌려준다.** 항상 truthy라
+   `!`가 언제나 false이고, 풀 안 중복과 중복 태그가 영원히 검출되지 않았다. 같은 함수의 `seenIds`는
+   `has` 후 `add`로 옳게 쓰고 있었으니 계획 내부의 불일치다. 두 자리 모두 `has` + `add`로 고쳤고,
+   계획이 덮지 않던 **중복 태그·빈 태그 테스트를 더해 잠갔다.**
+
+4. **`.meta` 파일을 하나 더 만들었다.** `AuthoringSchemaExportTests.cs.meta` — 계획에 없지만
+   `Assets/Core/Tests/EditMode/`의 모든 `.cs`가 1:1 `.meta`를 갖는 관례이고, 없으면 Unity가
+   나중에 커밋되지 않은 산출물을 남긴다(규칙 18).
+
+### 계획 B에 넘기는 것
+
+이 계획의 경계 절 그대로다. 코어 함수 여덟(`parseAuthoringSchema`·`readCardJson`·`writeCardJson`·
+`readPoolJson`·`writePoolJson`·`validateContent`·`resolveCardState`·`resolvePoolState`)이
+`CardIdeaNotebook` export에 얹혀 있고 **아직 아무도 호출하지 않는다.** Markdown 저작 경로는
+손대지 않았다.

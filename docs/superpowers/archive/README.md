@@ -128,3 +128,4 @@
 - [카드 노트 자신 대상](plans/2026-07-28-card-notebook-self-target.md)
 - [카드 노트 진영과 명시적 저장](plans/2026-07-28-card-notebook-faction-save.md)
 - [카드 노트 등급과 다중 편집](plans/2026-07-29-card-notebook-grade-bulk-edit.md)
+- [카드 저작 노트북 JSON 코어 구현 기록 (계획 A)](plans/2026-08-05-notebook-json-core.md)

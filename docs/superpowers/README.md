@@ -58,7 +58,7 @@
 | [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
 | [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |
 | [카드 아이디어 노트](specs/2026-07-27-card-idea-notebook-design.md) | `superseded` | Markdown 저작 시절의 노트북. 아래 JSON 전환 설계가 대체한다 — 구현 완료 시 `archive/`로 옮긴다 | 참조 전용 |
-| [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마 | 카드 저작 도구 구현·변경 |
+| [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마. **계획 A(코어) 완료, 계획 B(UI) 미작성** | 카드 저작 도구 구현·변경 |
 
 ### 문서 관리
 
@@ -74,7 +74,6 @@
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
-| [카드 저작 노트북 JSON 코어 (계획 A)](plans/2026-08-05-notebook-json-core.md) | `active` | 저작 스키마 생성기와 노트북의 JSON 읽기·쓰기·검증 코어. 순수 추가라 진행 중에도 노트북이 동작한다. UI 개편은 계획 B |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
@@ -169,20 +168,49 @@
   `StatusSpecJsonConverter`가 판별자 표를 `CombatRegistries.Statuses()`에서 만든다 — 각 행동이
   `NewSpec()`으로 자기 스펙 타입을 답하므로 코드에 값 목록이 남지 않는다.
 
-### 현재 수치 (계획 3.5 완료 시점, 2026-08-06 실측, master `a5b3a72`)
+### 현재 수치 (계획 A 완료 시점, 2026-08-07 실측)
 
-헤드리스 **525/525**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**,
+헤드리스 **526/526**, 노트북 **102/102**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
+(EditMode는 계획 3.5 시점 수치이며 계획 A 이후 재측정하지 않았다 — 신규 테스트는 `Tests/Headless`가
+포함하는 EditMode 폴더에 있으므로 Unity 쪽도 1 늘어날 것이다).
 카드 JSON **26**(실행 22 + 개입 4 중 fixture 4, 플레이어 카드는 전부 등급·태그 보유), 상태 JSON **11**,
 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. 프로젝트 씬은 `FateWeaverBattle`·`SampleScene` 둘
 (`Settings/Scenes/URP2DSceneTemplate`은 URP 템플릿 자산이며 프로젝트 씬이 아니다).
-헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
+
+검증 명령 둘:
+
+```bash
+dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
+```
+
+```bash
+node --test "Tools/card-idea-notebook/*.test.mjs"
+```
+
+노트북 명령에 **글로브가 필요하다.** `node --test Tools/card-idea-notebook/`처럼 디렉터리를 주면
+Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(2026-08-07 실측, Node v24.13.1).
 
 계획 3d가 대조·중복 테스트를 지우고 규칙 테스트를 합성 픽스처로 옮기면서 총계가 계획 3c 시점
 (헤드리스 533, Unity 682)보다 줄었고, 계획 3.5가 다형화 검증과 **저장소 카드 26장의 왕복 바이트
 동일성 테스트**를 더하며 다시 늘었다(헤드리스 511 → 525). 그 왕복 테스트는 카드 JSON의 키 순서와
 생략 규칙을 통째로 잠그므로, C# 저작 타입의 필드를 재배치하면 여기서 먼저 실패한다.
 
+계획 A는 헤드리스에 `AuthoringSchemaExportTests` 하나(525 → 526)를, 노트북에 44개(58 → 102)를
+더했다. 노트북 쪽의 축은 **저장소 카드 26장·풀 1개의 왕복 바이트 동일성**이며, C# 왕복 테스트와
+같은 것을 브라우저 쪽에서 잠근다 — 둘이 어긋나면 노트북이 저작하지 않은 카드까지 diff에 띄운다.
+
 ## 후속 작업 대기열
+
+- [ ] **노트북 UI 개편 (계획 B) — 문서를 아직 쓰지 않았다.** 선행인
+  [계획 A](archive/plans/2026-08-05-notebook-json-core.md)가 2026-08-07 완료되어, 노트북 코어에
+  순수 함수 여덟(`parseAuthoringSchema`·`readCardJson`·`writeCardJson`·`readPoolJson`·
+  `writePoolJson`·`validateContent`·`resolveCardState`·`resolvePoolState`)이 올라가 있다.
+  **아직 아무도 호출하지 않으며 노트북은 여전히 Markdown 저작 도구로 동작한다.** 계획 B의 범위는
+  설계 §6 효과 편집기 UI, §7 풀 편성 화면, §11 화면 구성, §12 쓰기 정책의 diff 요약과 파일 쓰기
+  (File System Access API), §14 마이그레이션(`SCHEMA_VERSION` 7), Markdown 경로 제거,
+  `시작 카드 풀.md` 삭제, [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md)
+  §1 개정(저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
+  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을 끝냈고 **2·4·5·6·8이 남아 있다.**
 
 - [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
   `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
