@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -1821,4 +1821,89 @@ test("필수 키가 빠지면 이유를 준다", () => {
   const { card, errors } = core.readCardJson('{"id":"x","name":"y"}', loadSchema());
   assert.equal(card, null);
   assert.ok(errors.some((message) => message.includes("side")));
+});
+
+test("저장소의 모든 카드가 바이트 그대로 왕복한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const names = readdirSync(fileURLToPath(cardsDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 26, `카드가 26장 이상이어야 한다. 실제 ${names.length}`);
+
+  const broken = [];
+  for (const name of names) {
+    const original = readCardFile(name);
+    const { card, errors } = core.readCardJson(original, schema);
+    if (errors.length) {
+      broken.push(`${name}: ${errors.join(", ")}`);
+      continue;
+    }
+    const written = core.writeCardJson(card, schema);
+    if (written !== original) broken.push(name);
+  }
+
+  assert.deepEqual(broken, [], "왕복에서 바뀐 카드가 없어야 한다");
+});
+
+test("파일 끝에 개행을 하나 붙인다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const written = core.writeCardJson(card, schema);
+  assert.ok(written.endsWith("}\n"));
+  assert.ok(!written.endsWith("}\n\n"));
+});
+
+test("기본값 멤버를 생략하되 side와 category는 항상 쓴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution",
+  }, null, 2), schema);
+  const written = JSON.parse(core.writeCardJson(card, schema));
+  assert.deepEqual(Object.keys(written), ["id", "name", "side", "category"]);
+});
+
+test("분류에 없는 키는 모델에 있어도 나가지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  // 실행 카드 모델에 개입을 억지로 넣어도 실행 카드의 키 목록에 없으므로 무시된다.
+  card.intervention = { kind: "lock", params: {}, raw: null };
+  const written = JSON.parse(core.writeCardJson(card, schema));
+
+  assert.equal(written.intervention, undefined);
+  assert.ok(written.effects, "실행 카드의 효과는 그대로 나간다");
+});
+
+test("파라미터 없는 개입은 kind만 쓴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    energyCost: 1, intervention: { kind: "lock" },
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
+});
+
+test("모르는 효과 kind를 원본 그대로 되돌린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution",
+    effects: [{ kind: "teleport", distance: 3 }],
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
+});
+
+test("모르는 최상위 키를 원본 그대로 되돌린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
 });
