@@ -29,7 +29,7 @@ namespace FateWeaver.Core.Authoring
                 {
                     if (intervention.Intervention == null)
                     {
-                        errors.Add("Card '" + spec.Id + "': intervention card requires an action key.");
+                        errors.Add("Card '" + spec.Id + "': intervention card requires an intervention spec.");
                         continue;
                     }
 

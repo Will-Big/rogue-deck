@@ -3,6 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Intervention;
+using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests
 {
@@ -20,6 +21,22 @@ namespace FateWeaver.Tests
                 Assert.IsTrue(
                     context.HasIntervention(info.Create().Key),
                     "저작 명부의 '" + info.DisplayName + "'에 런타임 핸들러가 없다.");
+            }
+        }
+
+        /// <summary>런타임 핸들러 짝(위 테스트)만으로는 부족하다 — 설명 핸들러가 없으면 카드는
+        /// 실행되지만 텍스트를 합성할 때 KeyNotFoundException을 던진다. 부팅이 아니라 표시
+        /// 시점에 터지므로 여기서 미리 잠근다.</summary>
+        [Test]
+        public void Every_authored_spec_has_a_registered_description_handler()
+        {
+            var catalog = KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+
+            foreach (var info in InterventionSpecCatalog.All())
+            {
+                Assert.IsTrue(
+                    catalog.Interventions.Contains(info.Create().Key),
+                    "저작 명부의 '" + info.DisplayName + "'에 설명 핸들러가 없다.");
             }
         }
 

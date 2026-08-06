@@ -94,7 +94,7 @@ namespace FateWeaver.Tests
                     Category = CardCategory.Intervention, EnergyCost = 1 } },
                 AuthoringContext.Default());
 
-            Assert.IsTrue(errors.Any(e => e.Contains("requires an action key")));
+            Assert.IsTrue(errors.Any(e => e.Contains("requires an intervention spec")));
         }
 
         [Test]
