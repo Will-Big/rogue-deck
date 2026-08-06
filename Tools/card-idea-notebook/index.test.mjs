@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const htmlUrl = new URL("./index.html", import.meta.url);
@@ -12,15 +11,12 @@ function loadCore() {
   const match = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/);
   assert.ok(match, "index.html must expose the card idea core script");
 
-  const context = {
-    console,
-    Date,
-    JSON,
-    Math,
-    structuredClone,
-  };
-  context.globalThis = context;
-  vm.runInNewContext(match[1], context, { filename: "card-idea-core.js" });
+  // 코어를 이 realm에서 돌린다. vm.runInNewContext는 별도 realm을 만들어 코어가 만든 배열·객체가
+  // 호스트의 Array.prototype·Object.prototype을 갖지 않고, node:assert/strict의 deepEqual이
+  // 프로토타입 동일성까지 보므로 값이 같아도 실패한다. globalThis를 인자로 가려 코어의 export만
+  // 받아내면 realm은 하나로 유지되고, DOM 접근 차단은 Node에 document·window가 없다는 사실이 맡는다.
+  const context = { CardIdeaNotebook: null };
+  new Function("globalThis", `${match[1]}\n//# sourceURL=card-idea-core.js`)(context);
   assert.ok(context.CardIdeaNotebook, "core script must expose CardIdeaNotebook");
   return context.CardIdeaNotebook;
 }
@@ -1657,4 +1653,521 @@ test("failed immediate persistence keeps memory state until retry succeeds", () 
     JSON.parse(storage.getItem(core.STORAGE_KEY)).cards[0].name,
     "새 카드",
   );
+});
+
+const schemaUrl = new URL("./authoring-schema.json", import.meta.url);
+
+function loadSchema() {
+  const core = loadCore();
+  return core.parseAuthoringSchema(readFileSync(fileURLToPath(schemaUrl), "utf8"));
+}
+
+test("생성된 스키마에서 효과 여덟 종을 읽는다", () => {
+  const schema = loadSchema();
+  assert.equal(schema.effectOrder.length, 8);
+  assert.ok(schema.effects.apply_status, "apply_status가 있어야 한다");
+  assert.equal(schema.effects.apply_status.label, "상태 부여");
+});
+
+test("효과 필드의 이름과 순서를 저작 파일과 같게 읽는다", () => {
+  const schema = loadSchema();
+  const names = schema.effects.apply_status.fields.map((field) => field.name);
+  assert.deepEqual(names, ["status", "count", "target", "selector"]);
+});
+
+test("필드 타입과 열거 항목을 읽는다", () => {
+  const schema = loadSchema();
+  const fields = schema.effects.apply_status.fields;
+  assert.equal(fields.find((f) => f.name === "count").type, "int");
+  assert.equal(fields.find((f) => f.name === "status").type, "status");
+  const target = fields.find((f) => f.name === "target");
+  assert.equal(target.type, "enum");
+  assert.ok(target.options.includes("TargetEnemy"));
+});
+
+test("분류별 카드 키 순서를 저작 파일과 같게 읽는다", () => {
+  const schema = loadSchema();
+  assert.deepEqual(schema.cardFields.Execution, [
+    "id", "name", "side", "category", "energyCost", "baseExecutionOrder",
+    "effects", "grade", "tags",
+  ]);
+  assert.deepEqual(schema.cardFields.Intervention, [
+    "id", "name", "side", "category", "energyCost", "intervention", "grade", "tags",
+  ]);
+});
+
+test("개입 세 종을 효과와 같은 모양으로 읽는다", () => {
+  const schema = loadSchema();
+  assert.deepEqual(schema.interventionOrder,
+    ["change_execution_order", "swap_execution_order", "lock"]);
+
+  const change = schema.interventions.change_execution_order;
+  assert.equal(change.label, "실행 순서 변경");
+  assert.deepEqual(change.fields.map((f) => f.name), ["delta", "targetSide"]);
+  assert.equal(change.fields.find((f) => f.name === "delta").type, "int");
+  assert.deepEqual(change.fields.find((f) => f.name === "targetSide").options,
+    ["Any", "Player", "Enemy"]);
+
+  assert.deepEqual(schema.interventions.lock.fields, [],
+    "lock은 파라미터가 없다 — 계획 3.5의 결과다");
+});
+
+test("스키마가 깨지면 이유를 던진다", () => {
+  const core = loadCore();
+  assert.throws(() => core.parseAuthoringSchema("{}"), /effects/);
+  assert.throws(() => core.parseAuthoringSchema("not json"), /스키마/);
+});
+
+const cardsDir = new URL("../../Assets/StreamingAssets/Content/Cards/", import.meta.url);
+
+function readCardFile(name) {
+  return readFileSync(fileURLToPath(new URL(name, cardsDir)), "utf8");
+}
+
+test("실행 카드를 모델로 읽는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card, errors } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  assert.deepEqual(errors, []);
+  assert.equal(card.id, "vanguard_slash");
+  assert.equal(card.name, "선봉 베기");
+  assert.equal(card.side, "Player");
+  assert.equal(card.category, "Execution");
+  assert.equal(card.energyCost, 1);
+  assert.equal(card.baseExecutionOrder, 3);
+  assert.equal(card.grade, "Common");
+  assert.deepEqual(card.tags, ["시작", "공격"]);
+  assert.equal(card.effects.length, 1);
+  assert.deepEqual(card.effects[0].params, { value: 5, selector: "FrontOne" });
+  assert.equal(card.effects[0].condition, null);
+});
+
+test("조건부 효과의 조건을 읽는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("riposte.json"), loadSchema());
+  assert.deepEqual(card.effects[0].condition, {
+    kind: "PrevExecutedIsEnemyDamageCard", n: 0, successEffectValue: 7, skipOnBasic: false,
+  });
+});
+
+test("개입 카드를 중첩 스펙으로 읽는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("hasten.json"), loadSchema());
+  assert.equal(card.category, "Intervention");
+  assert.equal(card.effects, null, "개입 카드에는 effects가 없다");
+  assert.equal(card.intervention.kind, "change_execution_order");
+  assert.deepEqual(card.intervention.params, { delta: -1, targetSide: "Player" });
+});
+
+test("파라미터가 없는 개입도 읽는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = JSON.stringify({
+    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    energyCost: 1, intervention: { kind: "lock" },
+  }, null, 2);
+  const { card, errors } = core.readCardJson(text, schema);
+  assert.deepEqual(errors, []);
+  assert.equal(card.intervention.kind, "lock");
+  assert.deepEqual(card.intervention.params, {});
+});
+
+test("생략된 개입 파라미터는 모델에 나타나지 않는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("crossover.json"), loadSchema());
+  assert.equal(card.intervention.kind, "swap_execution_order");
+  assert.deepEqual(card.intervention.params, { requireAdjacent: true },
+    "targetSide는 Any라 파일에 없고 모델에도 없어야 한다");
+});
+
+test("빈 배열과 없는 배열을 구분한다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("fixture_attack.json"), loadSchema());
+  assert.deepEqual(card.tags, [], "tags는 빈 배열로 저작되어 있다");
+  assert.equal(card.grade, "None", "grade는 생략되어 있다");
+});
+
+test("모르는 효과 kind를 버리지 않고 보존한다", () => {
+  const core = loadCore();
+  const text = JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution",
+    effects: [{ kind: "teleport", distance: 3 }],
+  }, null, 2);
+  const { card, errors } = core.readCardJson(text, loadSchema());
+  assert.deepEqual(errors, []);
+  assert.equal(card.effects[0].kind, "teleport");
+  assert.deepEqual(card.effects[0].raw, { kind: "teleport", distance: 3 });
+});
+
+test("모르는 최상위 키를 보존하고 이름을 알려준다", () => {
+  const core = loadCore();
+  const text = JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2);
+  const { card } = core.readCardJson(text, loadSchema());
+  assert.deepEqual(card.unknownKeys, ["flavour"]);
+  assert.equal(card.extra.flavour, "설명");
+});
+
+test("깨진 JSON은 카드를 만들지 않고 이유를 준다", () => {
+  const core = loadCore();
+  const { card, errors } = core.readCardJson("{ 이건 JSON이 아니다", loadSchema());
+  assert.equal(card, null);
+  assert.equal(errors.length, 1);
+});
+
+test("필수 키가 빠지면 이유를 준다", () => {
+  const core = loadCore();
+  const { card, errors } = core.readCardJson('{"id":"x","name":"y"}', loadSchema());
+  assert.equal(card, null);
+  assert.ok(errors.some((message) => message.includes("side")));
+});
+
+test("저장소의 모든 카드가 바이트 그대로 왕복한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const names = readdirSync(fileURLToPath(cardsDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 26, `카드가 26장 이상이어야 한다. 실제 ${names.length}`);
+
+  const broken = [];
+  for (const name of names) {
+    const original = readCardFile(name);
+    const { card, errors } = core.readCardJson(original, schema);
+    if (errors.length) {
+      broken.push(`${name}: ${errors.join(", ")}`);
+      continue;
+    }
+    const written = core.writeCardJson(card, schema);
+    if (written !== original) broken.push(name);
+  }
+
+  assert.deepEqual(broken, [], "왕복에서 바뀐 카드가 없어야 한다");
+});
+
+test("파일 끝에 개행을 하나 붙인다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const written = core.writeCardJson(card, schema);
+  assert.ok(written.endsWith("}\n"));
+  assert.ok(!written.endsWith("}\n\n"));
+});
+
+test("기본값 멤버를 생략하되 side와 category는 항상 쓴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution",
+  }, null, 2), schema);
+  const written = JSON.parse(core.writeCardJson(card, schema));
+  assert.deepEqual(Object.keys(written), ["id", "name", "side", "category"]);
+});
+
+test("분류에 없는 키는 모델에 있어도 나가지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  // 실행 카드 모델에 개입을 억지로 넣어도 실행 카드의 키 목록에 없으므로 무시된다.
+  card.intervention = { kind: "lock", params: {}, raw: null };
+  const written = JSON.parse(core.writeCardJson(card, schema));
+
+  assert.equal(written.intervention, undefined);
+  assert.ok(written.effects, "실행 카드의 효과는 그대로 나간다");
+});
+
+test("파라미터 없는 개입은 kind만 쓴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    energyCost: 1, intervention: { kind: "lock" },
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
+});
+
+test("모르는 효과 kind를 원본 그대로 되돌린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution",
+    effects: [{ kind: "teleport", distance: 3 }],
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
+});
+
+test("모르는 최상위 키를 원본 그대로 되돌린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original);
+});
+
+const poolsDir = new URL("../../Assets/StreamingAssets/Content/Pools/", import.meta.url);
+
+test("풀을 읽고 카드 순서를 그대로 보존한다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool, errors } = core.readPoolJson(text);
+  assert.deepEqual(errors, []);
+  assert.equal(pool.id, "starter");
+  assert.equal(pool.cards.length, 22);
+  assert.equal(pool.cards[0], "vanguard_slash");
+  assert.equal(pool.cards[21], "posthumous_spread");
+});
+
+test("저장소의 모든 풀이 바이트 그대로 왕복한다", () => {
+  const core = loadCore();
+  const names = readdirSync(fileURLToPath(poolsDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 1);
+  for (const name of names) {
+    const original = readFileSync(fileURLToPath(new URL(name, poolsDir)), "utf8");
+    const { pool } = core.readPoolJson(original);
+    assert.equal(core.writePoolJson(pool), original, name);
+  }
+});
+
+test("중복 카드를 지우지 않고 그대로 들고 있는다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","a","b"]}');
+  assert.deepEqual(pool.cards, ["a", "a", "b"]);
+});
+
+test("깨진 풀은 이유를 준다", () => {
+  const core = loadCore();
+  const broken = core.readPoolJson("{ 아님");
+  assert.equal(broken.pool, null);
+  assert.equal(broken.errors.length, 1);
+
+  const missing = core.readPoolJson('{"id":"p"}');
+  assert.equal(missing.pool, null);
+  assert.ok(missing.errors.some((message) => message.includes("cards")));
+});
+
+function cardOf(core, schema, overrides) {
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
+  }, null, 2), schema);
+  return card;
+}
+
+function poolOf(core, cards) {
+  return core.readPoolJson(JSON.stringify({ id: "starter", cards })).pool;
+}
+
+const STATUS_KEYS = ["poison", "block", "haste"];
+
+test("id 형식과 중복을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const bad = core.validateContent({
+    cards: [cardOf(core, schema, { id: "Vanguard Slash" })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(bad.errors.some((e) => e.message.includes("형식")));
+
+  const dupe = core.validateContent({
+    cards: [cardOf(core, schema, {}), cardOf(core, schema, {})],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(dupe.errors.some((e) => e.message.includes("중복")));
+});
+
+test("개입 카드의 액션을 검사한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const missing = core.validateContent({
+    cards: [cardOf(core, schema, { category: "Intervention" })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(missing.errors.some((e) => e.message.includes("개입 액션")));
+
+  const unknown = core.validateContent({
+    cards: [cardOf(core, schema, {
+      category: "Intervention", intervention: { kind: "teleport" },
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(unknown.errors.some((e) => e.message.includes("teleport")));
+});
+
+test("등록되지 않은 상태 키를 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, {
+      effects: [{ kind: "apply_status", status: "posion", count: 1 }],
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("posion")));
+});
+
+test("consume_status의 maxAmount 하한을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, {
+      effects: [{ kind: "consume_status", status: "poison", maxAmount: 0 }],
+    })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("maxAmount")));
+});
+
+test("풀 소속 카드에만 등급과 태그를 요구한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const card = cardOf(core, schema, { tags: [] });
+
+  const free = core.validateContent({
+    cards: [card], pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.deepEqual(free.errors, [], "풀에 없으면 등급·태그가 없어도 정상이다");
+
+  const pooled = core.validateContent({
+    cards: [card], pools: [poolOf(core, ["probe"])], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(pooled.errors.some((e) => e.message.includes("등급")));
+  assert.ok(pooled.errors.some((e) => e.message.includes("태그")));
+});
+
+test("풀의 없는 카드와 중복을 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { grade: "Common", tags: ["시작"] })],
+    pools: [poolOf(core, ["probe", "probe", "ghost"])],
+    statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("ghost")));
+  assert.ok(result.errors.some((e) => e.message.includes("중복")));
+});
+
+test("효과 없는 실행 카드와 고아 카드는 경고에 그친다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { effects: [] })],
+    pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.deepEqual(result.errors, []);
+  assert.ok(result.warnings.length >= 2, "효과 0개 경고와 고아 경고");
+});
+
+test("모르는 최상위 키는 부팅 거부라고 알린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2), schema);
+  const result = core.validateContent({
+    cards: [card], pools: [], statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("flavour")));
+});
+
+test("풀 소속 카드의 중복 태그와 빈 태그를 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const result = core.validateContent({
+    cards: [cardOf(core, schema, { grade: "Common", tags: ["시작", "시작", " "] })],
+    pools: [poolOf(core, ["probe"])],
+    statusKeys: STATUS_KEYS, schema,
+  });
+  assert.ok(result.errors.some((e) => e.message.includes("중복 태그")));
+  assert.ok(result.errors.some((e) => e.message.includes("빈 태그")));
+});
+
+test("저장소의 실제 콘텐츠가 검증을 통과한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const statusesDir = new URL("../../Assets/StreamingAssets/Content/Statuses/", import.meta.url);
+  const statusKeys = readdirSync(fileURLToPath(statusesDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => JSON.parse(readFileSync(fileURLToPath(new URL(n, statusesDir)), "utf8")).key);
+
+  const cards = readdirSync(fileURLToPath(cardsDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => core.readCardJson(readCardFile(n), schema).card);
+  const pools = readdirSync(fileURLToPath(poolsDir))
+    .filter((n) => n.endsWith(".json"))
+    .map((n) => core.readPoolJson(
+      readFileSync(fileURLToPath(new URL(n, poolsDir)), "utf8")).pool);
+
+  const result = core.validateContent({ cards, pools, statusKeys, schema });
+  assert.deepEqual(result.errors, [], "부팅이 받아들이는 콘텐츠는 오류가 없어야 한다");
+});
+
+test("저장소와 같으면 same이다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  assert.equal(core.resolveCardState({ stored: text, pending: card, schema }), "same");
+});
+
+test("노트북 쪽이 다르면 modified다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  card.name = "바뀐 이름";
+  assert.equal(core.resolveCardState({ stored: text, pending: card, schema }), "modified");
+});
+
+test("저장소에 없으면 new다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  card.base = null;
+  assert.equal(core.resolveCardState({ stored: null, pending: card, schema }), "new");
+});
+
+test("양쪽이 다 바뀌었으면 conflict다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  card.name = "내 변경";
+  const stored = text.replace("선봉 베기", "남의 변경");
+  assert.equal(core.resolveCardState({ stored, pending: card, schema }), "conflict");
+});
+
+test("저장소만 바뀌었고 미반영이 없으면 same으로 받아들인다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  const stored = text.replace("선봉 베기", "남의 변경");
+  assert.equal(core.resolveCardState({ stored, pending: card, schema }), "same");
+});
+
+test("노트북에 없고 저장소에만 있으면 missing이다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  assert.equal(core.resolveCardState({ stored: text, pending: null, schema }), "missing");
+});
+
+test("풀도 같은 다섯 상태로 판정한다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool } = core.readPoolJson(text);
+
+  assert.equal(core.resolvePoolState({ stored: text, pending: pool }), "same");
+  assert.equal(core.resolvePoolState({ stored: text, pending: null }), "missing");
+
+  const edited = core.readPoolJson(text).pool;
+  edited.cards.push("새_카드");
+  assert.equal(core.resolvePoolState({ stored: text, pending: edited }), "modified");
+
+  const moved = text.replace("vanguard_slash", "남이_바꾼_카드");
+  assert.equal(core.resolvePoolState({ stored: moved, pending: edited }), "conflict");
+  assert.equal(core.resolvePoolState({ stored: moved, pending: pool }), "same");
 });

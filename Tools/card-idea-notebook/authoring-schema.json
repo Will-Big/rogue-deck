@@ -1,0 +1,277 @@
+{
+  "effects": [
+    {
+      "kind": "damage",
+      "label": "피해",
+      "fields": [
+        {
+          "name": "value",
+          "type": "int"
+        },
+        {
+          "name": "selector",
+          "type": "enum",
+          "options": [
+            "None",
+            "FrontOne",
+            "BackOne",
+            "All",
+            "FrontTwo",
+            "BackTwo"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "apply_status",
+      "label": "상태 부여",
+      "fields": [
+        {
+          "name": "status",
+          "type": "status"
+        },
+        {
+          "name": "count",
+          "type": "int"
+        },
+        {
+          "name": "target",
+          "type": "enum",
+          "options": [
+            "Self",
+            "TargetEnemy",
+            "PartyMember",
+            "AllPartyMembers",
+            "PartyBySelector"
+          ]
+        },
+        {
+          "name": "selector",
+          "type": "enum",
+          "options": [
+            "None",
+            "FrontOne",
+            "BackOne",
+            "All",
+            "FrontTwo",
+            "BackTwo"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "grant_next_player_damage_card_bonus",
+      "label": "다음 피해 카드 강화",
+      "fields": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "kind": "nullify_next_player_condition_reward",
+      "label": "다음 보상 무효화",
+      "fields": []
+    },
+    {
+      "kind": "move_formation",
+      "label": "대형 이동",
+      "fields": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "kind": "consume_status",
+      "label": "상태 소비",
+      "fields": [
+        {
+          "name": "status",
+          "type": "status"
+        },
+        {
+          "name": "maxAmount",
+          "type": "int"
+        },
+        {
+          "name": "damageBonusPerConsumed",
+          "type": "int"
+        },
+        {
+          "name": "selector",
+          "type": "enum",
+          "options": [
+            "None",
+            "FrontOne",
+            "BackOne",
+            "All",
+            "FrontTwo",
+            "BackTwo"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "trigger_status",
+      "label": "상태 즉시 발동",
+      "fields": [
+        {
+          "name": "status",
+          "type": "status"
+        },
+        {
+          "name": "selector",
+          "type": "enum",
+          "options": [
+            "None",
+            "FrontOne",
+            "BackOne",
+            "All",
+            "FrontTwo",
+            "BackTwo"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "grant_next_turn_fate",
+      "label": "다음 턴 운명력",
+      "fields": [
+        {
+          "name": "value",
+          "type": "int"
+        }
+      ]
+    }
+  ],
+  "interventions": [
+    {
+      "kind": "change_execution_order",
+      "label": "실행 순서 변경",
+      "fields": [
+        {
+          "name": "delta",
+          "type": "int"
+        },
+        {
+          "name": "targetSide",
+          "type": "enum",
+          "options": [
+            "Any",
+            "Player",
+            "Enemy"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "swap_execution_order",
+      "label": "실행 순서 교환",
+      "fields": [
+        {
+          "name": "targetSide",
+          "type": "enum",
+          "options": [
+            "Any",
+            "Player",
+            "Enemy"
+          ]
+        },
+        {
+          "name": "requireAdjacent",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "kind": "lock",
+      "label": "고정",
+      "fields": []
+    }
+  ],
+  "condition": {
+    "kinds": [
+      "None",
+      "FirstToTrigger",
+      "WithinNth",
+      "BeforeNextEnemyDamageCard",
+      "PrevExecutedIsPlayerDamageCard",
+      "NextIsEnemyDamageCard",
+      "PrevExecutedIsEnemyDamageCard",
+      "NoPrecedingPlayerCard",
+      "NoFollowingEnemyCard",
+      "NoFollowingPlayerCard",
+      "ConsumedStatusAtLeast"
+    ],
+    "fields": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "successEffectValue",
+        "type": "int"
+      },
+      {
+        "name": "skipOnBasic",
+        "type": "bool"
+      }
+    ]
+  },
+  "cardFields": {
+    "Execution": [
+      "id",
+      "name",
+      "side",
+      "category",
+      "energyCost",
+      "baseExecutionOrder",
+      "effects",
+      "grade",
+      "tags"
+    ],
+    "Intervention": [
+      "id",
+      "name",
+      "side",
+      "category",
+      "energyCost",
+      "intervention",
+      "grade",
+      "tags"
+    ]
+  },
+  "sides": [
+    "Player",
+    "Enemy"
+  ],
+  "categories": [
+    "Execution",
+    "Intervention"
+  ],
+  "grades": [
+    "None",
+    "Common",
+    "Advanced",
+    "Rare",
+    "Other"
+  ],
+  "selectors": [
+    "None",
+    "FrontOne",
+    "BackOne",
+    "All",
+    "FrontTwo",
+    "BackTwo"
+  ],
+  "statusTargets": [
+    "Self",
+    "TargetEnemy",
+    "PartyMember",
+    "AllPartyMembers",
+    "PartyBySelector"
+  ]
+}

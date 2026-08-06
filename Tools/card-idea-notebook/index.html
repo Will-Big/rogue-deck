@@ -1484,7 +1484,449 @@
       return { kind: "ready" };
     }
 
+    /// 생성된 저작 스키마를 폼이 쓸 형태로 바꾼다. 이 파일은 헤드리스 테스트가 만들므로
+    /// 손으로 고치지 않는다 - 내용이 이상하면 dotnet test를 돌린다.
+    function parseAuthoringSchema(text) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        throw new Error(`저작 스키마를 읽을 수 없습니다: ${error.message}`);
+      }
+
+      if (!Array.isArray(raw.effects) || !raw.effects.length) {
+        throw new Error("저작 스키마에 effects 배열이 없습니다.");
+      }
+      if (!Array.isArray(raw.interventions) || !raw.interventions.length) {
+        throw new Error("저작 스키마에 interventions 배열이 없습니다.");
+      }
+      if (!raw.cardFields || !Array.isArray(raw.cardFields.Execution)) {
+        throw new Error("저작 스키마에 분류별 cardFields가 없습니다.");
+      }
+
+      /// 효과와 개입은 스키마에서 같은 모양이므로 같은 함수로 색인한다.
+      function indexByKind(entries) {
+        const byKind = {};
+        const order = [];
+        for (const entry of entries) {
+          byKind[entry.kind] = Object.freeze({
+            kind: entry.kind,
+            label: entry.label,
+            fields: Object.freeze(entry.fields.map((field) => Object.freeze({ ...field }))),
+          });
+          order.push(entry.kind);
+        }
+
+        return { byKind: Object.freeze(byKind), order: Object.freeze(order) };
+      }
+
+      const effects = indexByKind(raw.effects);
+      const interventions = indexByKind(raw.interventions);
+      const cardFields = {};
+      for (const [category, names] of Object.entries(raw.cardFields)) {
+        cardFields[category] = Object.freeze([...names]);
+      }
+
+      return Object.freeze({
+        effects: effects.byKind,
+        effectOrder: effects.order,
+        interventions: interventions.byKind,
+        interventionOrder: interventions.order,
+        condition: Object.freeze({
+          kinds: Object.freeze([...raw.condition.kinds]),
+          fields: Object.freeze(raw.condition.fields.map((f) => Object.freeze({ ...f }))),
+        }),
+        cardFields: Object.freeze(cardFields),
+        sides: Object.freeze([...raw.sides]),
+        categories: Object.freeze([...raw.categories]),
+        grades: Object.freeze([...raw.grades]),
+        selectors: Object.freeze([...raw.selectors]),
+        statusTargets: Object.freeze([...raw.statusTargets]),
+      });
+    }
+
+    const CARD_REQUIRED_KEYS = Object.freeze(["id", "name", "side", "category"]);
+
+    function emptyConditionValue() {
+      return { kind: "None", n: 0, successEffectValue: 0, skipOnBasic: false };
+    }
+
+    /// 스키마가 아는 파라미터만 골라 담는다. 파일에 없는 키는 모델에도 넣지 않는다 -
+    /// 생략된 기본값을 되살려 넣으면 왕복에서 없던 키가 생긴다.
+    function readParams(entry, known) {
+      const params = {};
+      for (const field of known.fields) {
+        if (Object.hasOwn(entry, field.name)) params[field.name] = entry[field.name];
+      }
+
+      return params;
+    }
+
+    /// 효과 하나를 모델 행으로. 스키마에 없는 kind는 원본을 통째로 들고 있는다(설계 §10.2).
+    function readEffectEntry(entry, schema) {
+      const kind = String(entry?.kind ?? "");
+      const known = schema.effects[kind];
+      if (!known) {
+        return { kind, params: {}, condition: null, raw: entry };
+      }
+
+      let condition = null;
+      if (entry.condition) {
+        condition = { ...emptyConditionValue(), ...entry.condition };
+      }
+
+      return { kind, params: readParams(entry, known), condition, raw: null };
+    }
+
+    /// 개입 하나를 모델 행으로. 효과와 같되 조건이 없다 - 개입에는 조건 시스템이 없다.
+    function readInterventionEntry(entry, schema) {
+      const kind = String(entry?.kind ?? "");
+      const known = schema.interventions[kind];
+      if (!known) {
+        return { kind, params: {}, raw: entry };
+      }
+
+      return { kind, params: readParams(entry, known), raw: null };
+    }
+
+    function readCardJson(text, schema) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        return { card: null, errors: [`JSON을 읽을 수 없습니다: ${error.message}`] };
+      }
+
+      const errors = [];
+      for (const key of CARD_REQUIRED_KEYS) {
+        if (!Object.hasOwn(raw, key)) errors.push(`필수 키 '${key}'가 없습니다.`);
+      }
+      if (errors.length) return { card: null, errors };
+
+      /// 모르는 키의 기준이 분류마다 다르다 - 실행 카드의 intervention은 모르는 키다.
+      const category = String(raw.category);
+      const fields = schema.cardFields[category];
+      if (!fields) {
+        return { card: null, errors: [`모르는 카드 분류입니다: '${category}'`] };
+      }
+
+      const known = new Set(fields);
+      const unknownKeys = [];
+      const extra = {};
+      for (const key of Object.keys(raw)) {
+        if (known.has(key)) continue;
+        unknownKeys.push(key);
+        extra[key] = raw[key];
+      }
+
+      const card = {
+        uid: "",
+        id: String(raw.id),
+        name: String(raw.name),
+        side: String(raw.side),
+        category,
+        energyCost: Number(raw.energyCost ?? 0),
+        baseExecutionOrder: Number(raw.baseExecutionOrder ?? 0),
+        effects: Array.isArray(raw.effects)
+          ? raw.effects.map((entry) => readEffectEntry(entry, schema))
+          : null,
+        intervention: raw.intervention
+          ? readInterventionEntry(raw.intervention, schema)
+          : null,
+        grade: String(raw.grade ?? schema.grades[0]),
+        tags: Array.isArray(raw.tags) ? [...raw.tags] : null,
+        unknownKeys,
+        extra,
+        base: text,
+      };
+
+      return { card, errors: [] };
+    }
+
+    /// 기본값이면 생략한다. C#의 DefaultValueHandling.Ignore를 그대로 옮긴 것이다.
+    /// 배열은 null일 때만 생략한다 - string[]의 기본값이 null이라 []는 기본값이 아니다.
+    function isDefaultValue(value, type, schema) {
+      if (value === null || value === undefined) return true;
+      if (Array.isArray(value)) return false;
+      if (type === "int") return Number(value) === 0;
+      if (type === "bool") return value !== true;
+      if (type === "status") return String(value) === "";
+      if (type === "enum") return value === schema[0];
+      return false;
+    }
+
+    /// 파라미터 블록 하나를 파일 형태로. 효과와 개입이 스키마에서 같은 모양이라 함께 쓴다.
+    function writeParams(entry, known) {
+      const out = { kind: entry.kind };
+      for (const field of known.fields) {
+        const value = entry.params[field.name];
+        const fallback = field.type === "enum" ? field.options : null;
+        if (isDefaultValue(value, field.type, fallback)) continue;
+        out[field.name] = value;
+      }
+
+      return out;
+    }
+
+    function writeEffectEntry(effect, schema) {
+      if (effect.raw) return effect.raw;
+
+      const entry = writeParams(effect, schema.effects[effect.kind]);
+      if (effect.condition && effect.condition.kind !== schema.condition.kinds[0]) {
+        const condition = { kind: effect.condition.kind };
+        for (const field of schema.condition.fields) {
+          const value = effect.condition[field.name];
+          if (isDefaultValue(value, field.type, null)) continue;
+          condition[field.name] = value;
+        }
+        entry.condition = condition;
+      }
+
+      return entry;
+    }
+
+    /// 개입은 효과에서 조건만 뺀 것이다.
+    function writeInterventionEntry(intervention, schema) {
+      if (intervention.raw) return intervention.raw;
+      return writeParams(intervention, schema.interventions[intervention.kind]);
+    }
+
+    /// 카드 하나를 저장소 파일과 바이트가 같은 문자열로. 키 순서와 어떤 키가 나갈지는 둘 다
+    /// 스키마의 분류별 cardFields가 정한다 - 그래서 실행 카드에 intervention이, 개입 카드에
+    /// effects가 실릴 수 없다(설계 8, 계획 3.5의 타입 분리).
+    function writeCardJson(card, schema) {
+      const always = new Set(["side", "category"]);
+      const enumOf = { side: schema.sides, category: schema.categories, grade: schema.grades };
+      const typeOf = {
+        id: "string", name: "string",
+        side: "enum", category: "enum", grade: "enum",
+        energyCost: "int", baseExecutionOrder: "int",
+      };
+
+      const fields = schema.cardFields[card.category];
+      if (!fields) throw new Error(`모르는 카드 분류입니다: '${card.category}'`);
+
+      const out = {};
+      for (const key of fields) {
+        if (key === "effects") {
+          if (card.effects !== null) {
+            out.effects = card.effects.map((effect) => writeEffectEntry(effect, schema));
+          }
+          continue;
+        }
+        if (key === "intervention") {
+          if (card.intervention !== null) {
+            out.intervention = writeInterventionEntry(card.intervention, schema);
+          }
+          continue;
+        }
+        if (key === "tags") {
+          if (card.tags !== null) out.tags = [...card.tags];
+          continue;
+        }
+
+        const value = card[key];
+        const type = typeOf[key] ?? "string";
+        if (!always.has(key) && isDefaultValue(value, type, enumOf[key] ?? null)) continue;
+        out[key] = value;
+      }
+
+      for (const key of card.unknownKeys) {
+        out[key] = card.extra[key];
+      }
+
+      return `${JSON.stringify(out, null, 2)}\n`;
+    }
+
+    const POOL_REQUIRED_KEYS = Object.freeze(["id", "cards"]);
+    const POOL_FIELDS = Object.freeze(["id", "cards"]);
+
+    function readPoolJson(text) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        return { pool: null, errors: [`JSON을 읽을 수 없습니다: ${error.message}`] };
+      }
+
+      const errors = [];
+      for (const key of POOL_REQUIRED_KEYS) {
+        if (!Object.hasOwn(raw, key)) errors.push(`필수 키 '${key}'가 없습니다.`);
+      }
+      if (errors.length) return { pool: null, errors };
+
+      const known = new Set(POOL_FIELDS);
+      const unknownKeys = [];
+      const extra = {};
+      for (const key of Object.keys(raw)) {
+        if (known.has(key)) continue;
+        unknownKeys.push(key);
+        extra[key] = raw[key];
+      }
+
+      return {
+        pool: {
+          id: String(raw.id),
+          cards: Array.isArray(raw.cards) ? raw.cards.map(String) : [],
+          unknownKeys,
+          extra,
+          base: text,
+        },
+        errors: [],
+      };
+    }
+
+    function writePoolJson(pool) {
+      const out = { id: pool.id, cards: [...pool.cards] };
+      for (const key of pool.unknownKeys) out[key] = pool.extra[key];
+      return `${JSON.stringify(out, null, 2)}\n`;
+    }
+
+    const CARD_ID_PATTERN = /^[a-z0-9_]+$/;
+
+    /// 로더가 거부할 것을 내보내기 전에 잡는다(설계 9). 통과가 부팅 성공을 보장하지는 않지만,
+    /// 실패가 드러나는 시점을 게임 실행에서 저작 중으로 당긴다.
+    function validateContent({ cards, pools, statusKeys, schema }) {
+      const errors = [];
+      const warnings = [];
+      const statuses = new Set(statusKeys);
+      const fail = (id, message) => errors.push({ scope: "card", id, message });
+      const warn = (id, message) => warnings.push({ scope: "card", id, message });
+
+      const seenIds = new Set();
+      const byId = new Map();
+      for (const card of cards) {
+        if (!card.id) fail(card.id, "id가 없습니다.");
+        else if (!CARD_ID_PATTERN.test(card.id)) {
+          fail(card.id, `id 형식이 잘못되었습니다. 소문자·숫자·밑줄만 씁니다: '${card.id}'`);
+        } else if (seenIds.has(card.id)) {
+          fail(card.id, `id가 중복입니다: '${card.id}'`);
+        } else {
+          seenIds.add(card.id);
+        }
+        byId.set(card.id, card);
+
+        if (!card.name) fail(card.id, "이름이 없습니다.");
+
+        for (const key of card.unknownKeys) {
+          fail(card.id, `모르는 키 '${key}'가 있어 부팅이 이 카드를 거부합니다.`);
+        }
+
+        if (card.category === "Intervention") {
+          if (!card.intervention) {
+            fail(card.id, "개입 카드에는 개입 액션이 필요합니다.");
+          } else if (card.intervention.raw) {
+            fail(card.id, `노트북이 모르는 개입입니다: '${card.intervention.kind}'`);
+          }
+          continue;
+        }
+
+        const effects = card.effects ?? [];
+        if (!effects.length) warn(card.id, "실행 카드인데 효과가 없습니다.");
+
+        for (const effect of effects) {
+          if (effect.raw) {
+            fail(card.id, `노트북이 모르는 효과입니다: '${effect.kind}'`);
+            continue;
+          }
+
+          const status = effect.params.status;
+          if (status !== undefined && !statuses.has(status)) {
+            fail(card.id, `등록되지 않은 상태 키입니다: '${status}'`);
+          }
+          if (effect.kind === "consume_status" && Number(effect.params.maxAmount ?? 0) < 1) {
+            fail(card.id, "consume_status의 maxAmount는 1 이상이어야 합니다.");
+          }
+        }
+      }
+
+      const pooled = new Set();
+      for (const pool of pools) {
+        const seen = new Set();
+        for (const cardId of pool.cards) {
+          pooled.add(cardId);
+          const card = byId.get(cardId);
+          if (!card) {
+            errors.push({ scope: "pool", id: pool.id, message: `없는 카드입니다: '${cardId}'` });
+            continue;
+          }
+          if (seen.has(cardId)) {
+            errors.push({ scope: "pool", id: pool.id, message: `카드가 중복입니다: '${cardId}'` });
+            continue;
+          }
+          seen.add(cardId);
+
+          if (card.grade === schema.grades[0]) {
+            errors.push({ scope: "pool", id: pool.id, message: `'${cardId}'에 등급이 없습니다.` });
+          }
+
+          const tags = card.tags ?? [];
+          if (!tags.length) {
+            errors.push({ scope: "pool", id: pool.id, message: `'${cardId}'에 태그가 없습니다.` });
+          }
+
+          const seenTags = new Set();
+          for (const tag of tags) {
+            if (!String(tag).trim()) {
+              errors.push({ scope: "pool", id: pool.id, message: `'${cardId}'에 빈 태그가 있습니다.` });
+            } else if (seenTags.has(tag)) {
+              errors.push({ scope: "pool", id: pool.id, message: `'${cardId}'에 중복 태그 '${tag}'가 있습니다.` });
+            } else {
+              seenTags.add(tag);
+            }
+          }
+        }
+      }
+
+      for (const card of cards) {
+        if (card.side === schema.sides[0] && !pooled.has(card.id)) {
+          warn(card.id, "어느 풀에도 없습니다.");
+        }
+      }
+
+      return { errors, warnings };
+    }
+
+    /// 카드 하나의 읽기 상태(설계 10.3). base는 마지막으로 저장소에서 읽은 원본이고,
+    /// 지금 쓰면 나올 문자열과 base를 비교해 미반영 여부를 판정한다.
+    function resolveCardState({ stored, pending, schema }) {
+      if (!pending) return "missing";
+      if (stored === null || stored === undefined) return "new";
+      if (!pending.base) return "new";
+
+      const current = writeCardJson(pending, schema);
+      const dirty = current !== pending.base;
+      const moved = stored !== pending.base;
+
+      if (dirty && moved) return "conflict";
+      if (dirty) return "modified";
+      return "same";
+    }
+
+    /// 풀도 같은 계약이다. 스키마가 필요 없다는 것만 다르다 - 풀 직렬화는 키가 둘뿐이다.
+    function resolvePoolState({ stored, pending }) {
+      if (!pending) return "missing";
+      if (stored === null || stored === undefined) return "new";
+      if (!pending.base) return "new";
+
+      const dirty = writePoolJson(pending) !== pending.base;
+      const moved = stored !== pending.base;
+
+      if (dirty && moved) return "conflict";
+      if (dirty) return "modified";
+      return "same";
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
+      parseAuthoringSchema,
+      readCardJson,
+      writeCardJson,
+      readPoolJson,
+      writePoolJson,
+      validateContent,
+      resolveCardState,
+      resolvePoolState,
+      emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,
       GRADE_LABELS,

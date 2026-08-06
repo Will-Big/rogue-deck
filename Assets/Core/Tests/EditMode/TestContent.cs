@@ -12,14 +12,15 @@ namespace FateWeaver.Tests
     public static class TestContent
     {
         private static string _root;
+        private static string _repoRoot;
 
-        /// <summary>Assets 폴더가 보일 때까지 올라가 콘텐츠 루트를 찾는다. 테스트 실행 디렉터리는
+        /// <summary>Assets 폴더가 보일 때까지 올라가 저장소 루트를 찾는다. 테스트 실행 디렉터리는
         /// 헤드리스(bin/...)와 Unity(Library/...)가 다르므로 경로를 박지 않는다.</summary>
-        public static string Root()
+        public static string RepoRoot()
         {
-            if (_root != null)
+            if (_repoRoot != null)
             {
-                return _root;
+                return _repoRoot;
             }
 
             var directory = TestContext.CurrentContext.TestDirectory;
@@ -29,8 +30,13 @@ namespace FateWeaver.Tests
             }
 
             Assert.IsNotNull(directory, "저장소 루트를 찾지 못했다.");
-            return _root = Path.Combine(directory, "Assets", "StreamingAssets", "Content");
+            return _repoRoot = directory;
         }
+
+        /// <summary>콘텐츠 루트.</summary>
+        public static string Root()
+            => _root ?? (_root = Path.Combine(
+                RepoRoot(), "Assets", "StreamingAssets", "Content"));
 
         /// <summary>파일에서 만든 상태 카탈로그. **호출마다 새로 만든다** — 카탈로그의 Rules는
         /// 가변이고(StatusRuleSet.Set) 그것을 바꿔 보는 테스트가 있으므로, 인스턴스를 공유하면
