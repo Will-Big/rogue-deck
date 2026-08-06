@@ -967,30 +967,56 @@ namespace FateWeaver.Core.Authoring.Json
             var spec = create();
             using (var subReader = entry.CreateReader())
             {
-                ContentJson.Plain.Populate(subReader, spec);
+                ContentJson.Nested.Populate(subReader, spec);
             }
 
             return spec;
         }
 
         public override void WriteJson(JsonWriter writer, CardSpec value, JsonSerializer serializer)
-            => JObject.FromObject(value, ContentJson.Plain).WriteTo(writer);
+            => JObject.FromObject(value, ContentJson.Nested).WriteTo(writer);
     }
 }
 ```
 
-- [ ] **Step 5: 컨버터를 등록한다**
+**`Plain`이 아니라 `Nested`인 이유** — 카드는 다른 다형 타입(`EffectSpec[]`, 나중에
+`InterventionSpec`)을 품는 유일한 스펙이다. `Plain`으로 populate하면 효과 배열이 추상 타입을
+만들지 못해 터지고, 반대로 전체 `Settings`를 쓰면 `JObject.FromObject`가 이 컨버터를 다시 불러
+무한 재귀에 빠진다. `Nested`는 **자기만 뺀** 설정이라 둘 다 피한다.
 
-`Assets/Core/Authoring/Json/ContentJson.cs`의 `Build`에서 다형 블록에 한 줄을 더한다.
+- [ ] **Step 5: 컨버터를 등록하고 `Nested` 설정을 만든다**
+
+`Assets/Core/Authoring/Json/ContentJson.cs`에서 `Plain` 아래에 `Nested`를 추가하고 `Build`의
+시그니처와 다형 블록을 바꾼다.
+
+```csharp
+        /// <summary>카드 컨버터만 뺀 설정. CardSpecJsonConverter가 중첩된 EffectSpec을 다형으로
+        /// 다루면서도 자기 자신을 재귀 호출하지 않기 위해 쓴다. 외부에서 직접 쓰지 않는다.</summary>
+        internal static JsonSerializer Nested { get; } =
+            JsonSerializer.Create(Build(includePolymorphic: true, includeCardSpec: false));
+```
+
+```csharp
+        private static JsonSerializerSettings Build(
+            bool includePolymorphic, bool includeCardSpec = true)
+        {
+```
 
 ```csharp
             if (includePolymorphic)
             {
-                settings.Converters.Add(new CardSpecJsonConverter());
+                if (includeCardSpec)
+                {
+                    settings.Converters.Add(new CardSpecJsonConverter());
+                }
+
                 settings.Converters.Add(new EffectSpecJsonConverter());
                 settings.Converters.Add(new StatusSpecJsonConverter());
             }
 ```
+
+`Plain`의 기존 정의(`Build(includePolymorphic: false)`)는 그대로 둔다 — `includeCardSpec`의 기본값이
+`true`지만 다형 블록 자체를 건너뛰므로 영향이 없다.
 
 - [ ] **Step 6: 매퍼와 검증기를 타입으로 분기시킨다**
 
@@ -1255,10 +1281,22 @@ namespace FateWeaver.Core.Authoring.Json
 
 - [ ] **Step 4: 컨버터를 등록한다**
 
-`ContentJson.Build`의 다형 블록에 한 줄을 더한다.
+`ContentJson.Build`의 다형 블록에서 **`includeCardSpec` 분기 바깥**에 한 줄을 더한다. 조건 밖에
+두어야 `Settings`와 `Nested` 양쪽에 들어가고, 그래야 카드 컨버터가 중첩된 개입 스펙을 다형으로
+읽고 쓸 수 있다.
 
 ```csharp
+            if (includePolymorphic)
+            {
+                if (includeCardSpec)
+                {
+                    settings.Converters.Add(new CardSpecJsonConverter());
+                }
+
+                settings.Converters.Add(new EffectSpecJsonConverter());
+                settings.Converters.Add(new StatusSpecJsonConverter());
                 settings.Converters.Add(new InterventionSpecJsonConverter());
+            }
 ```
 
 - [ ] **Step 5: 개입 카드 스펙을 중첩으로 접는다**
