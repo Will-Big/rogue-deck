@@ -2480,3 +2480,23 @@ test("요약을 두 줄 문장으로 만든다", () => {
     "오류 0 · 충돌 0 · 미반영 0",
   ]);
 });
+
+test("저장소 모드 전환과 연결 버튼이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="mode-repo"/);
+  assert.match(html, /id="mode-markdown"/);
+  assert.match(html, /id="repo-connect"/);
+  assert.match(html, /id="repo-reload"/);
+  assert.match(html, /id="repo-unsupported"/);
+});
+
+test("저장소 UI 스크립트가 코어와 분리되어 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /<script data-repo-ui>/);
+
+  const core = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/)[1];
+  assert.equal(core.includes("showDirectoryPicker"), false,
+    "브라우저 API는 코어에 들어가지 않는다 - 코어는 node:test가 돌린다");
+  assert.equal(core.includes("document."), false,
+    "DOM도 코어에 들어가지 않는다");
+});

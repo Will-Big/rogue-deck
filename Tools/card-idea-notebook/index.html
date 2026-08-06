@@ -364,6 +364,18 @@
     }
     .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 
+    /* .workspace의 display: grid가 작성자 스타일이라 브라우저 기본 [hidden]을 이긴다.
+       이 규칙이 없으면 hidden을 걸어도 화면이 그대로 보인다(2026-08-07 실측). */
+    .workspace[hidden] { display: none; }
+    .mode-switch { display: flex; gap: 4px; }
+    .mode-button { padding: 6px 12px; font-size: 12px; }
+    .mode-button.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
+    .repo-hint { margin-bottom: 8px; color: var(--warning); font-size: 12px; line-height: 1.5; }
+    .repo-list { display: grid; gap: 7px; padding: 0 10px 10px; }
+    .repo-summary { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .repo-summary p { margin: 0 0 4px; color: var(--muted); }
+    .repo-detail { padding: 14px 16px; }
+
     @media (max-width: 1280px) {
       body { min-width: 920px; }
       .workspace { grid-template-columns: 230px minmax(440px, 1.25fr) minmax(310px, .9fr); }
@@ -378,6 +390,10 @@
         <h1>Fate Weaver 카드 아이디어 노트</h1>
         <p class="subtitle">아이디어를 정리하고 AI 저작용 Markdown으로 내보냅니다.</p>
       </div>
+    </div>
+    <div class="mode-switch" role="group" aria-label="작업 모드">
+      <button type="button" id="mode-markdown" class="mode-button is-active">아이디어</button>
+      <button type="button" id="mode-repo" class="mode-button">저장소</button>
     </div>
     <p class="header-status" id="storage-status">브라우저 로컬 저장 · 즉시 보존</p>
   </header>
@@ -539,6 +555,46 @@
         <div class="preview-wrap">
           <pre class="markdown-preview" id="markdown-preview"></pre>
         </div>
+      </div>
+    </aside>
+  </main>
+
+  <main class="workspace repo-workspace" id="repo-workspace" hidden>
+    <aside class="pane library-pane" aria-label="저장소 목록">
+      <div class="pane-scroll">
+        <div class="pane-header">
+          <div class="pane-title">
+            <strong>저장소</strong>
+            <span class="count" id="repo-count">–</span>
+          </div>
+          <button type="button" class="primary" id="repo-connect">폴더 연결</button>
+        </div>
+        <div class="library-tools">
+          <p class="repo-hint" id="repo-unsupported" hidden>
+            이 브라우저는 폴더 연결을 지원하지 않습니다. Chrome이나 Edge로 열어 주세요.
+          </p>
+          <button type="button" id="repo-reload" disabled>저장소 다시 읽기</button>
+        </div>
+        <div class="repo-list" id="repo-list"></div>
+      </div>
+    </aside>
+
+    <section class="pane editor-pane" aria-label="선택한 항목">
+      <div class="pane-scroll">
+        <div class="pane-header">
+          <div class="pane-title"><strong id="repo-detail-title">선택된 항목 없음</strong></div>
+        </div>
+        <div class="repo-summary" id="repo-summary"></div>
+        <div class="repo-detail" id="repo-detail"></div>
+      </div>
+    </section>
+
+    <aside class="pane preview-pane" aria-label="JSON 원문">
+      <div class="pane-scroll">
+        <div class="pane-header">
+          <div class="pane-title"><strong id="repo-source-title">JSON 원문</strong></div>
+        </div>
+        <pre class="markdown-preview" id="repo-source"></pre>
       </div>
     </aside>
   </main>
@@ -2920,6 +2976,285 @@
 
     renderAll();
     if (core.supportsSavePicker(window)) loadLastExportHandle();
+  })();
+  </script>
+
+  <script data-repo-ui>
+  (() => {
+    "use strict";
+
+    const core = globalThis.CardIdeaNotebook;
+    const byId = (id) => document.getElementById(id);
+    const elements = {
+      modeMarkdown: byId("mode-markdown"),
+      modeRepo: byId("mode-repo"),
+      markdownWorkspace: document.querySelector("main.workspace:not(.repo-workspace)"),
+      repoWorkspace: byId("repo-workspace"),
+      connect: byId("repo-connect"),
+      reload: byId("repo-reload"),
+      unsupported: byId("repo-unsupported"),
+      count: byId("repo-count"),
+      list: byId("repo-list"),
+      summary: byId("repo-summary"),
+      detailTitle: byId("repo-detail-title"),
+      detail: byId("repo-detail"),
+      sourceTitle: byId("repo-source-title"),
+      source: byId("repo-source"),
+    };
+
+    const HANDLE_DB_NAME = `${core.STORAGE_KEY}.handles`;
+    const HANDLE_STORE = "handles";
+    const REPO_HANDLE_KEY = "repoRoot";
+
+    const repoStore = {
+      connected: false,
+      root: null,
+      schema: null,
+      statuses: [],
+      cards: [],
+      pools: [],
+      cardsById: new Map(),
+      membership: new Map(),
+      quarantined: [],
+      validation: { errors: [], warnings: [] },
+      cardStates: new Map(),
+      poolStates: new Map(),
+      message: "",
+    };
+
+    // 기존 UI 스크립트와 같은 저장소를 쓰되 키가 다르다. 같은 헬퍼를 복제하는 이유는 두
+    // 스크립트가 서로를 참조하지 않게 하기 위해서다 - 계획 C가 옛 스크립트를 통째로 지운다.
+    function openHandleDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(HANDLE_DB_NAME, 1);
+        request.onupgradeneeded = () => request.result.createObjectStore(HANDLE_STORE);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+        request.onblocked = () => reject(new Error("폴더 기억 저장소를 열 수 없습니다."));
+      });
+    }
+
+    async function withHandleStore(mode, run) {
+      const db = await openHandleDb();
+      try {
+        return await new Promise((resolve, reject) => {
+          const request = run(db.transaction(HANDLE_STORE, mode).objectStore(HANDLE_STORE));
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      } finally {
+        db.close();
+      }
+    }
+
+    async function rememberRoot(handle) {
+      try {
+        await withHandleStore("readwrite", (store) => store.put(handle, REPO_HANDLE_KEY));
+      } catch {
+        /* 다음에 폴더를 다시 고르게 될 뿐 읽은 결과에는 영향이 없다. */
+      }
+    }
+
+    async function recallRoot() {
+      try {
+        return (await withHandleStore("readonly", (store) => store.get(REPO_HANDLE_KEY))) ?? null;
+      } catch {
+        return null;
+      }
+    }
+
+    /// 기억한 핸들은 새 탭에서 권한이 만료된다. 조용히 다시 묻지 않고 false를 돌려주면
+    /// 호출부가 버튼을 누르게 한다 - 권한 요청은 사용자 제스처를 요구한다.
+    async function hasReadPermission(handle, interactive) {
+      const options = { mode: "read" };
+      if ((await handle.queryPermission(options)) === "granted") return true;
+      if (!interactive) return false;
+      return (await handle.requestPermission(options)) === "granted";
+    }
+
+    async function directoryAt(root, segments) {
+      let handle = root;
+      for (const segment of segments) handle = await handle.getDirectoryHandle(segment);
+      return handle;
+    }
+
+    async function fileTextAt(root, segments) {
+      const directory = await directoryAt(root, segments.slice(0, -1));
+      const handle = await directory.getFileHandle(segments[segments.length - 1]);
+      return (await handle.getFile()).text();
+    }
+
+    /// 폴더의 *.json을 이름순으로 읽는다. 읽기에 실패한 파일은 던지지 않고 failures에 담는다 -
+    /// 카드 한 장이 깨졌다고 도구가 열리지 않으면 그 카드를 고칠 수단도 사라진다(설계 10.2).
+    async function readJsonFolder(root, segments) {
+      const directory = await directoryAt(root, segments);
+      const names = [];
+      for await (const [name, entry] of directory.entries()) {
+        if (entry.kind === "file" && name.endsWith(".json")) names.push(name);
+      }
+      names.sort();
+
+      const files = [];
+      const failures = [];
+      for (const name of names) {
+        try {
+          const handle = await directory.getFileHandle(name);
+          files.push({ name, text: await (await handle.getFile()).text() });
+        } catch (error) {
+          failures.push({ scope: "file", name, messages: [String(error?.message ?? error)] });
+        }
+      }
+
+      return { files, failures };
+    }
+
+    /// 파싱 실패한 파일은 격리하고 나머지를 연다(설계 10.2). 읽는 순서는 상태 → 카드 → 풀이며,
+    /// 풀이 카드 id 배열이라 카드에 의존하기 때문이다(설계 10.1, ContentBootstrap과 같은 이유).
+    async function loadRepo(root) {
+      const schema = core.parseAuthoringSchema(await fileTextAt(root, core.CONTENT_PATHS.schema));
+      const quarantined = [];
+
+      const statusFolder = await readJsonFolder(root, core.CONTENT_PATHS.statuses);
+      const statuses = [];
+      for (const file of statusFolder.files) {
+        const { status, errors } = core.readStatusJson(file.text);
+        if (status) statuses.push(status);
+        else quarantined.push({ scope: "status", name: file.name, messages: errors });
+      }
+
+      const cardFolder = await readJsonFolder(root, core.CONTENT_PATHS.cards);
+      const cards = [];
+      for (const file of cardFolder.files) {
+        const { card, errors } = core.readCardJson(file.text, schema);
+        if (card) cards.push(card);
+        else quarantined.push({ scope: "card", name: file.name, messages: errors });
+      }
+
+      const poolFolder = await readJsonFolder(root, core.CONTENT_PATHS.pools);
+      const pools = [];
+      for (const file of poolFolder.files) {
+        const { pool, errors } = core.readPoolJson(file.text);
+        if (pool) pools.push(pool);
+        else quarantined.push({ scope: "pool", name: file.name, messages: errors });
+      }
+
+      quarantined.push(
+        ...statusFolder.failures, ...cardFolder.failures, ...poolFolder.failures);
+
+      const cardsById = new Map();
+      for (const card of cards) cardsById.set(card.id, card);
+
+      const cardStates = new Map();
+      for (const card of cards) {
+        cardStates.set(card.id,
+          core.resolveCardState({ stored: card.base, pending: card, schema }));
+      }
+
+      const poolStates = new Map();
+      for (const pool of pools) {
+        poolStates.set(pool.id, core.resolvePoolState({ stored: pool.base, pending: pool }));
+      }
+
+      return {
+        schema,
+        statuses,
+        cards,
+        pools,
+        cardsById,
+        membership: core.poolMembership(pools),
+        quarantined,
+        validation: core.validateContent({
+          cards, pools, statusKeys: statuses.map((status) => status.key), schema,
+        }),
+        cardStates,
+        poolStates,
+      };
+    }
+
+    function applyLoaded(root, loaded) {
+      Object.assign(repoStore, loaded, { connected: true, root, message: "" });
+      render();
+    }
+
+    function failWith(error) {
+      repoStore.connected = false;
+      repoStore.message = `저장소를 읽지 못했습니다: ${error?.message ?? error}`;
+      render();
+    }
+
+    async function connectRepo() {
+      try {
+        const root = await window.showDirectoryPicker({
+          id: "fateWeaverRepoRoot",
+          mode: "read",
+        });
+        await rememberRoot(root);
+        applyLoaded(root, await loadRepo(root));
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        failWith(error);
+      }
+    }
+
+    async function reloadRepo() {
+      if (!repoStore.root) return;
+      try {
+        applyLoaded(repoStore.root, await loadRepo(repoStore.root));
+      } catch (error) {
+        failWith(error);
+      }
+    }
+
+    /// 이 계획에서는 요약 한 줄만 그린다. 목록·상세·원문은 Task 6~8이 채운다.
+    function render() {
+      elements.reload.disabled = !repoStore.connected;
+      elements.count.textContent = repoStore.connected
+        ? String(repoStore.cards.length)
+        : "–";
+      elements.summary.textContent = repoStore.message
+        || (repoStore.connected ? "읽었습니다." : "폴더를 연결하세요.");
+    }
+
+    function setMode(mode) {
+      const repo = mode === "repo";
+      elements.repoWorkspace.hidden = !repo;
+      elements.markdownWorkspace.hidden = repo;
+      elements.modeRepo.classList.toggle("is-active", repo);
+      elements.modeMarkdown.classList.toggle("is-active", !repo);
+    }
+
+    async function restoreRoot() {
+      const root = await recallRoot();
+      if (!root) return;
+
+      // 권한이 살아 있을 때만 조용히 읽는다. 만료됐으면 버튼을 누르게 둔다.
+      if (!(await hasReadPermission(root, false))) {
+        repoStore.root = root;
+        repoStore.message = "폴더 권한이 만료되었습니다. 폴더 연결을 다시 눌러 주세요.";
+        render();
+        return;
+      }
+
+      try {
+        applyLoaded(root, await loadRepo(root));
+      } catch (error) {
+        failWith(error);
+      }
+    }
+
+    if (typeof window.showDirectoryPicker !== "function") {
+      elements.unsupported.hidden = false;
+      elements.connect.disabled = true;
+    } else {
+      elements.connect.addEventListener("click", connectRepo);
+      restoreRoot();
+    }
+
+    elements.reload.addEventListener("click", reloadRepo);
+    elements.modeMarkdown.addEventListener("click", () => setMode("markdown"));
+    elements.modeRepo.addEventListener("click", () => setMode("repo"));
+
+    render();
   })();
   </script>
 </body>
