@@ -2500,3 +2500,9 @@ test("저장소 UI 스크립트가 코어와 분리되어 있다", () => {
   assert.equal(core.includes("document."), false,
     "DOM도 코어에 들어가지 않는다");
 });
+
+test("요약과 문제 목록 자리가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="repo-summary"/);
+  assert.match(html, /id="repo-problems"/);
+});

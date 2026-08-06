@@ -375,6 +375,21 @@
     .repo-summary { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
     .repo-summary p { margin: 0 0 4px; color: var(--muted); }
     .repo-detail { padding: 14px 16px; }
+    .repo-problems { padding: 0 16px 14px; display: grid; gap: 6px; }
+    .repo-problem {
+      display: grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #191b18;
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .repo-problem .where { color: var(--muted); font-size: 11px; }
+    .repo-problem.is-error { border-color: var(--danger); }
+    .repo-problem.is-warning { border-color: var(--warning); }
 
     @media (max-width: 1280px) {
       body { min-width: 920px; }
@@ -585,6 +600,7 @@
           <div class="pane-title"><strong id="repo-detail-title">선택된 항목 없음</strong></div>
         </div>
         <div class="repo-summary" id="repo-summary"></div>
+        <div class="repo-problems" id="repo-problems"></div>
         <div class="repo-detail" id="repo-detail"></div>
       </div>
     </section>
@@ -2996,6 +3012,7 @@
       count: byId("repo-count"),
       list: byId("repo-list"),
       summary: byId("repo-summary"),
+      problems: byId("repo-problems"),
       detailTitle: byId("repo-detail-title"),
       detail: byId("repo-detail"),
       sourceTitle: byId("repo-source-title"),
@@ -3205,14 +3222,108 @@
       }
     }
 
-    /// 이 계획에서는 요약 한 줄만 그린다. 목록·상세·원문은 Task 6~8이 채운다.
+    const PROBLEM_LABELS = Object.freeze({
+      card: "카드",
+      pool: "풀",
+      status: "상태",
+      file: "파일",
+    });
+
+    let selection = { scope: "", id: "" };
+
+    function selectEntry(scope, id) {
+      selection = { scope, id };
+      render();
+    }
+
+    function problemButton({ level, scope, id, message }) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `repo-problem is-${level}`;
+
+      const where = document.createElement("span");
+      where.className = "where";
+      where.textContent = `${PROBLEM_LABELS[scope] ?? scope} · ${id}`;
+      button.append(where);
+
+      const text = document.createElement("span");
+      text.textContent = message;
+      button.append(text);
+
+      button.addEventListener("click", () => selectEntry(scope, id));
+      return button;
+    }
+
+    /// 격리된 파일을 오류보다 먼저 보여준다. 그 파일들은 아예 읽히지 않아 검증기가 보지도
+    /// 못했으므로, 검증 오류 0이라고 안심하면 안 되기 때문이다(설계 10.2).
+    function renderProblems() {
+      elements.problems.replaceChildren();
+      if (!repoStore.connected) return;
+
+      for (const entry of repoStore.quarantined) {
+        elements.problems.append(problemButton({
+          level: "error",
+          scope: entry.scope,
+          id: entry.name,
+          message: `${entry.messages.join(" ")} (읽지 못해 격리했습니다)`,
+        }));
+      }
+
+      for (const error of repoStore.validation.errors) {
+        elements.problems.append(problemButton({ level: "error", ...error }));
+      }
+
+      for (const warning of repoStore.validation.warnings) {
+        elements.problems.append(problemButton({ level: "warning", ...warning }));
+      }
+    }
+
+    function renderSummary() {
+      elements.summary.replaceChildren();
+
+      if (repoStore.message) {
+        const line = document.createElement("p");
+        line.textContent = repoStore.message;
+        elements.summary.append(line);
+        return;
+      }
+      if (!repoStore.connected) {
+        const line = document.createElement("p");
+        line.textContent = "폴더를 연결하세요.";
+        elements.summary.append(line);
+        return;
+      }
+
+      const summary = core.contentSummary({
+        cards: repoStore.cards,
+        pools: repoStore.pools,
+        statuses: repoStore.statuses,
+        validation: repoStore.validation,
+        cardStates: repoStore.cardStates,
+        poolStates: repoStore.poolStates,
+      });
+
+      for (const text of core.summaryLines(summary)) {
+        const line = document.createElement("p");
+        line.textContent = text;
+        elements.summary.append(line);
+      }
+
+      // 상태가 0이면 폴더 선택이 잘못됐다는 신호다(설계 11.5).
+      if (!repoStore.statuses.length) {
+        const line = document.createElement("p");
+        line.textContent = "상태를 하나도 읽지 못했습니다. 저장소 루트를 고른 것이 맞나요?";
+        elements.summary.append(line);
+      }
+    }
+
     function render() {
       elements.reload.disabled = !repoStore.connected;
       elements.count.textContent = repoStore.connected
         ? String(repoStore.cards.length)
         : "–";
-      elements.summary.textContent = repoStore.message
-        || (repoStore.connected ? "읽었습니다." : "폴더를 연결하세요.");
+      renderSummary();
+      renderProblems();
     }
 
     function setMode(mode) {
