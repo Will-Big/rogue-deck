@@ -1484,7 +1484,69 @@
       return { kind: "ready" };
     }
 
+    /// 생성된 저작 스키마를 폼이 쓸 형태로 바꾼다. 이 파일은 헤드리스 테스트가 만들므로
+    /// 손으로 고치지 않는다 - 내용이 이상하면 dotnet test를 돌린다.
+    function parseAuthoringSchema(text) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        throw new Error(`저작 스키마를 읽을 수 없습니다: ${error.message}`);
+      }
+
+      if (!Array.isArray(raw.effects) || !raw.effects.length) {
+        throw new Error("저작 스키마에 effects 배열이 없습니다.");
+      }
+      if (!Array.isArray(raw.interventions) || !raw.interventions.length) {
+        throw new Error("저작 스키마에 interventions 배열이 없습니다.");
+      }
+      if (!raw.cardFields || !Array.isArray(raw.cardFields.Execution)) {
+        throw new Error("저작 스키마에 분류별 cardFields가 없습니다.");
+      }
+
+      /// 효과와 개입은 스키마에서 같은 모양이므로 같은 함수로 색인한다.
+      function indexByKind(entries) {
+        const byKind = {};
+        const order = [];
+        for (const entry of entries) {
+          byKind[entry.kind] = Object.freeze({
+            kind: entry.kind,
+            label: entry.label,
+            fields: Object.freeze(entry.fields.map((field) => Object.freeze({ ...field }))),
+          });
+          order.push(entry.kind);
+        }
+
+        return { byKind: Object.freeze(byKind), order: Object.freeze(order) };
+      }
+
+      const effects = indexByKind(raw.effects);
+      const interventions = indexByKind(raw.interventions);
+      const cardFields = {};
+      for (const [category, names] of Object.entries(raw.cardFields)) {
+        cardFields[category] = Object.freeze([...names]);
+      }
+
+      return Object.freeze({
+        effects: effects.byKind,
+        effectOrder: effects.order,
+        interventions: interventions.byKind,
+        interventionOrder: interventions.order,
+        condition: Object.freeze({
+          kinds: Object.freeze([...raw.condition.kinds]),
+          fields: Object.freeze(raw.condition.fields.map((f) => Object.freeze({ ...f }))),
+        }),
+        cardFields: Object.freeze(cardFields),
+        sides: Object.freeze([...raw.sides]),
+        categories: Object.freeze([...raw.categories]),
+        grades: Object.freeze([...raw.grades]),
+        selectors: Object.freeze([...raw.selectors]),
+        statusTargets: Object.freeze([...raw.statusTargets]),
+      });
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
+      parseAuthoringSchema,
       ROLE_LABELS,
       FACTION_LABELS,
       GRADE_LABELS,

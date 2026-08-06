@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 const htmlUrl = new URL("./index.html", import.meta.url);
@@ -12,15 +11,12 @@ function loadCore() {
   const match = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/);
   assert.ok(match, "index.html must expose the card idea core script");
 
-  const context = {
-    console,
-    Date,
-    JSON,
-    Math,
-    structuredClone,
-  };
-  context.globalThis = context;
-  vm.runInNewContext(match[1], context, { filename: "card-idea-core.js" });
+  // 코어를 이 realm에서 돌린다. vm.runInNewContext는 별도 realm을 만들어 코어가 만든 배열·객체가
+  // 호스트의 Array.prototype·Object.prototype을 갖지 않고, node:assert/strict의 deepEqual이
+  // 프로토타입 동일성까지 보므로 값이 같아도 실패한다. globalThis를 인자로 가려 코어의 export만
+  // 받아내면 realm은 하나로 유지되고, DOM 접근 차단은 Node에 document·window가 없다는 사실이 맡는다.
+  const context = { CardIdeaNotebook: null };
+  new Function("globalThis", `${match[1]}\n//# sourceURL=card-idea-core.js`)(context);
   assert.ok(context.CardIdeaNotebook, "core script must expose CardIdeaNotebook");
   return context.CardIdeaNotebook;
 }
@@ -1657,4 +1653,67 @@ test("failed immediate persistence keeps memory state until retry succeeds", () 
     JSON.parse(storage.getItem(core.STORAGE_KEY)).cards[0].name,
     "새 카드",
   );
+});
+
+const schemaUrl = new URL("./authoring-schema.json", import.meta.url);
+
+function loadSchema() {
+  const core = loadCore();
+  return core.parseAuthoringSchema(readFileSync(fileURLToPath(schemaUrl), "utf8"));
+}
+
+test("생성된 스키마에서 효과 여덟 종을 읽는다", () => {
+  const schema = loadSchema();
+  assert.equal(schema.effectOrder.length, 8);
+  assert.ok(schema.effects.apply_status, "apply_status가 있어야 한다");
+  assert.equal(schema.effects.apply_status.label, "상태 부여");
+});
+
+test("효과 필드의 이름과 순서를 저작 파일과 같게 읽는다", () => {
+  const schema = loadSchema();
+  const names = schema.effects.apply_status.fields.map((field) => field.name);
+  assert.deepEqual(names, ["status", "count", "target", "selector"]);
+});
+
+test("필드 타입과 열거 항목을 읽는다", () => {
+  const schema = loadSchema();
+  const fields = schema.effects.apply_status.fields;
+  assert.equal(fields.find((f) => f.name === "count").type, "int");
+  assert.equal(fields.find((f) => f.name === "status").type, "status");
+  const target = fields.find((f) => f.name === "target");
+  assert.equal(target.type, "enum");
+  assert.ok(target.options.includes("TargetEnemy"));
+});
+
+test("분류별 카드 키 순서를 저작 파일과 같게 읽는다", () => {
+  const schema = loadSchema();
+  assert.deepEqual(schema.cardFields.Execution, [
+    "id", "name", "side", "category", "energyCost", "baseExecutionOrder",
+    "effects", "grade", "tags",
+  ]);
+  assert.deepEqual(schema.cardFields.Intervention, [
+    "id", "name", "side", "category", "energyCost", "intervention", "grade", "tags",
+  ]);
+});
+
+test("개입 세 종을 효과와 같은 모양으로 읽는다", () => {
+  const schema = loadSchema();
+  assert.deepEqual(schema.interventionOrder,
+    ["change_execution_order", "swap_execution_order", "lock"]);
+
+  const change = schema.interventions.change_execution_order;
+  assert.equal(change.label, "실행 순서 변경");
+  assert.deepEqual(change.fields.map((f) => f.name), ["delta", "targetSide"]);
+  assert.equal(change.fields.find((f) => f.name === "delta").type, "int");
+  assert.deepEqual(change.fields.find((f) => f.name === "targetSide").options,
+    ["Any", "Player", "Enemy"]);
+
+  assert.deepEqual(schema.interventions.lock.fields, [],
+    "lock은 파라미터가 없다 — 계획 3.5의 결과다");
+});
+
+test("스키마가 깨지면 이유를 던진다", () => {
+  const core = loadCore();
+  assert.throws(() => core.parseAuthoringSchema("{}"), /effects/);
+  assert.throws(() => core.parseAuthoringSchema("not json"), /스키마/);
 });
