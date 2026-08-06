@@ -1887,6 +1887,36 @@
       return { errors, warnings };
     }
 
+    /// 카드 하나의 읽기 상태(설계 10.3). base는 마지막으로 저장소에서 읽은 원본이고,
+    /// 지금 쓰면 나올 문자열과 base를 비교해 미반영 여부를 판정한다.
+    function resolveCardState({ stored, pending, schema }) {
+      if (!pending) return "missing";
+      if (stored === null || stored === undefined) return "new";
+      if (!pending.base) return "new";
+
+      const current = writeCardJson(pending, schema);
+      const dirty = current !== pending.base;
+      const moved = stored !== pending.base;
+
+      if (dirty && moved) return "conflict";
+      if (dirty) return "modified";
+      return "same";
+    }
+
+    /// 풀도 같은 계약이다. 스키마가 필요 없다는 것만 다르다 - 풀 직렬화는 키가 둘뿐이다.
+    function resolvePoolState({ stored, pending }) {
+      if (!pending) return "missing";
+      if (stored === null || stored === undefined) return "new";
+      if (!pending.base) return "new";
+
+      const dirty = writePoolJson(pending) !== pending.base;
+      const moved = stored !== pending.base;
+
+      if (dirty && moved) return "conflict";
+      if (dirty) return "modified";
+      return "same";
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       parseAuthoringSchema,
       readCardJson,
@@ -1894,6 +1924,8 @@
       readPoolJson,
       writePoolJson,
       validateContent,
+      resolveCardState,
+      resolvePoolState,
       emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,

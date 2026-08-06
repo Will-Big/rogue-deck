@@ -2103,3 +2103,71 @@ test("저장소의 실제 콘텐츠가 검증을 통과한다", () => {
   const result = core.validateContent({ cards, pools, statusKeys, schema });
   assert.deepEqual(result.errors, [], "부팅이 받아들이는 콘텐츠는 오류가 없어야 한다");
 });
+
+test("저장소와 같으면 same이다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  assert.equal(core.resolveCardState({ stored: text, pending: card, schema }), "same");
+});
+
+test("노트북 쪽이 다르면 modified다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  card.name = "바뀐 이름";
+  assert.equal(core.resolveCardState({ stored: text, pending: card, schema }), "modified");
+});
+
+test("저장소에 없으면 new다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  card.base = null;
+  assert.equal(core.resolveCardState({ stored: null, pending: card, schema }), "new");
+});
+
+test("양쪽이 다 바뀌었으면 conflict다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  card.name = "내 변경";
+  const stored = text.replace("선봉 베기", "남의 변경");
+  assert.equal(core.resolveCardState({ stored, pending: card, schema }), "conflict");
+});
+
+test("저장소만 바뀌었고 미반영이 없으면 same으로 받아들인다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(text, schema);
+  const stored = text.replace("선봉 베기", "남의 변경");
+  assert.equal(core.resolveCardState({ stored, pending: card, schema }), "same");
+});
+
+test("노트북에 없고 저장소에만 있으면 missing이다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = readCardFile("vanguard_slash.json");
+  assert.equal(core.resolveCardState({ stored: text, pending: null, schema }), "missing");
+});
+
+test("풀도 같은 다섯 상태로 판정한다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool } = core.readPoolJson(text);
+
+  assert.equal(core.resolvePoolState({ stored: text, pending: pool }), "same");
+  assert.equal(core.resolvePoolState({ stored: text, pending: null }), "missing");
+
+  const edited = core.readPoolJson(text).pool;
+  edited.cards.push("새_카드");
+  assert.equal(core.resolvePoolState({ stored: text, pending: edited }), "modified");
+
+  const moved = text.replace("vanguard_slash", "남이_바꾼_카드");
+  assert.equal(core.resolvePoolState({ stored: moved, pending: edited }), "conflict");
+  assert.equal(core.resolvePoolState({ stored: moved, pending: pool }), "same");
+});
