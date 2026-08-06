@@ -2437,3 +2437,46 @@ test("필터 목록을 노출한다", () => {
   assert.deepEqual([...core.CARD_FILTERS],
     ["all", "modified", "conflict", "error", "orphan"]);
 });
+
+test("읽은 수치와 문제 개수를 센다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: [{}, {}, {}],
+    pools: [{}],
+    statuses: [{}, {}],
+    validation: { errors: [{ message: "x" }], warnings: [{ message: "y" }, { message: "z" }] },
+    cardStates: new Map([["a", "same"], ["b", "modified"], ["c", "conflict"]]),
+    poolStates: new Map([["starter", "new"]]),
+  });
+
+  assert.deepEqual(summary.counts, { cards: 3, pools: 1, statuses: 2 });
+  assert.equal(summary.errors, 1);
+  assert.equal(summary.warnings, 2);
+  assert.equal(summary.conflicts, 1);
+  assert.equal(summary.pending, 2, "modified와 new가 미반영이다");
+});
+
+test("상태 표가 없어도 0으로 센다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: [], pools: [], statuses: [],
+    validation: { errors: [], warnings: [] },
+  });
+  assert.equal(summary.conflicts, 0);
+  assert.equal(summary.pending, 0);
+});
+
+test("요약을 두 줄 문장으로 만든다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: new Array(26).fill({}),
+    pools: [{}],
+    statuses: new Array(11).fill({}),
+    validation: { errors: [], warnings: [] },
+  });
+
+  assert.deepEqual(core.summaryLines(summary), [
+    "카드 26 · 풀 1 · 상태 11 을 읽었습니다",
+    "오류 0 · 충돌 0 · 미반영 0",
+  ]);
+});

@@ -2062,6 +2062,42 @@
       return rows;
     }
 
+    /// 읽은 직후 화면(설계 11.2)이 쓰는 수치. 읽기와 검증이 이미 끝난 결과만 세므로
+    /// 이 함수는 파일도 스키마도 모른다.
+    function contentSummary({ cards, pools, statuses, validation, cardStates, poolStates }) {
+      const tally = (states) => {
+        let conflict = 0;
+        let pending = 0;
+        for (const state of (states ?? new Map()).values()) {
+          if (state === "conflict") conflict += 1;
+          else if (state === "modified" || state === "new") pending += 1;
+        }
+
+        return { conflict, pending };
+      };
+
+      const card = tally(cardStates);
+      const pool = tally(poolStates);
+
+      return {
+        counts: { cards: cards.length, pools: pools.length, statuses: statuses.length },
+        errors: validation.errors.length,
+        warnings: validation.warnings.length,
+        conflicts: card.conflict + pool.conflict,
+        pending: card.pending + pool.pending,
+      };
+    }
+
+    /// 요약 두 줄. 문장을 코어에 두면 테스트가 문구까지 잠근다 - 화면 문자열이 흩어지면
+    /// 바뀐 것을 아무도 모른다.
+    function summaryLines(summary) {
+      return [
+        `카드 ${summary.counts.cards} · 풀 ${summary.counts.pools} `
+        + `· 상태 ${summary.counts.statuses} 을 읽었습니다`,
+        `오류 ${summary.errors} · 충돌 ${summary.conflicts} · 미반영 ${summary.pending}`,
+      ];
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       CONTENT_PATHS,
       readStatusJson,
@@ -2069,6 +2105,8 @@
       poolMembership,
       CARD_FILTERS,
       cardListView,
+      contentSummary,
+      summaryLines,
       parseAuthoringSchema,
       readCardJson,
       writeCardJson,
