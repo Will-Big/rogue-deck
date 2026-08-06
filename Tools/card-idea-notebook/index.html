@@ -1545,8 +1545,108 @@
       });
     }
 
+    const CARD_REQUIRED_KEYS = Object.freeze(["id", "name", "side", "category"]);
+
+    function emptyConditionValue() {
+      return { kind: "None", n: 0, successEffectValue: 0, skipOnBasic: false };
+    }
+
+    /// 스키마가 아는 파라미터만 골라 담는다. 파일에 없는 키는 모델에도 넣지 않는다 -
+    /// 생략된 기본값을 되살려 넣으면 왕복에서 없던 키가 생긴다.
+    function readParams(entry, known) {
+      const params = {};
+      for (const field of known.fields) {
+        if (Object.hasOwn(entry, field.name)) params[field.name] = entry[field.name];
+      }
+
+      return params;
+    }
+
+    /// 효과 하나를 모델 행으로. 스키마에 없는 kind는 원본을 통째로 들고 있는다(설계 §10.2).
+    function readEffectEntry(entry, schema) {
+      const kind = String(entry?.kind ?? "");
+      const known = schema.effects[kind];
+      if (!known) {
+        return { kind, params: {}, condition: null, raw: entry };
+      }
+
+      let condition = null;
+      if (entry.condition) {
+        condition = { ...emptyConditionValue(), ...entry.condition };
+      }
+
+      return { kind, params: readParams(entry, known), condition, raw: null };
+    }
+
+    /// 개입 하나를 모델 행으로. 효과와 같되 조건이 없다 - 개입에는 조건 시스템이 없다.
+    function readInterventionEntry(entry, schema) {
+      const kind = String(entry?.kind ?? "");
+      const known = schema.interventions[kind];
+      if (!known) {
+        return { kind, params: {}, raw: entry };
+      }
+
+      return { kind, params: readParams(entry, known), raw: null };
+    }
+
+    function readCardJson(text, schema) {
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (error) {
+        return { card: null, errors: [`JSON을 읽을 수 없습니다: ${error.message}`] };
+      }
+
+      const errors = [];
+      for (const key of CARD_REQUIRED_KEYS) {
+        if (!Object.hasOwn(raw, key)) errors.push(`필수 키 '${key}'가 없습니다.`);
+      }
+      if (errors.length) return { card: null, errors };
+
+      /// 모르는 키의 기준이 분류마다 다르다 - 실행 카드의 intervention은 모르는 키다.
+      const category = String(raw.category);
+      const fields = schema.cardFields[category];
+      if (!fields) {
+        return { card: null, errors: [`모르는 카드 분류입니다: '${category}'`] };
+      }
+
+      const known = new Set(fields);
+      const unknownKeys = [];
+      const extra = {};
+      for (const key of Object.keys(raw)) {
+        if (known.has(key)) continue;
+        unknownKeys.push(key);
+        extra[key] = raw[key];
+      }
+
+      const card = {
+        uid: "",
+        id: String(raw.id),
+        name: String(raw.name),
+        side: String(raw.side),
+        category,
+        energyCost: Number(raw.energyCost ?? 0),
+        baseExecutionOrder: Number(raw.baseExecutionOrder ?? 0),
+        effects: Array.isArray(raw.effects)
+          ? raw.effects.map((entry) => readEffectEntry(entry, schema))
+          : null,
+        intervention: raw.intervention
+          ? readInterventionEntry(raw.intervention, schema)
+          : null,
+        grade: String(raw.grade ?? schema.grades[0]),
+        tags: Array.isArray(raw.tags) ? [...raw.tags] : null,
+        unknownKeys,
+        extra,
+        base: text,
+      };
+
+      return { card, errors: [] };
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       parseAuthoringSchema,
+      readCardJson,
+      emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,
       GRADE_LABELS,

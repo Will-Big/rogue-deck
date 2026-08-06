@@ -1717,3 +1717,108 @@ test("스키마가 깨지면 이유를 던진다", () => {
   assert.throws(() => core.parseAuthoringSchema("{}"), /effects/);
   assert.throws(() => core.parseAuthoringSchema("not json"), /스키마/);
 });
+
+const cardsDir = new URL("../../Assets/StreamingAssets/Content/Cards/", import.meta.url);
+
+function readCardFile(name) {
+  return readFileSync(fileURLToPath(new URL(name, cardsDir)), "utf8");
+}
+
+test("실행 카드를 모델로 읽는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card, errors } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  assert.deepEqual(errors, []);
+  assert.equal(card.id, "vanguard_slash");
+  assert.equal(card.name, "선봉 베기");
+  assert.equal(card.side, "Player");
+  assert.equal(card.category, "Execution");
+  assert.equal(card.energyCost, 1);
+  assert.equal(card.baseExecutionOrder, 3);
+  assert.equal(card.grade, "Common");
+  assert.deepEqual(card.tags, ["시작", "공격"]);
+  assert.equal(card.effects.length, 1);
+  assert.deepEqual(card.effects[0].params, { value: 5, selector: "FrontOne" });
+  assert.equal(card.effects[0].condition, null);
+});
+
+test("조건부 효과의 조건을 읽는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("riposte.json"), loadSchema());
+  assert.deepEqual(card.effects[0].condition, {
+    kind: "PrevExecutedIsEnemyDamageCard", n: 0, successEffectValue: 7, skipOnBasic: false,
+  });
+});
+
+test("개입 카드를 중첩 스펙으로 읽는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("hasten.json"), loadSchema());
+  assert.equal(card.category, "Intervention");
+  assert.equal(card.effects, null, "개입 카드에는 effects가 없다");
+  assert.equal(card.intervention.kind, "change_execution_order");
+  assert.deepEqual(card.intervention.params, { delta: -1, targetSide: "Player" });
+});
+
+test("파라미터가 없는 개입도 읽는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = JSON.stringify({
+    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    energyCost: 1, intervention: { kind: "lock" },
+  }, null, 2);
+  const { card, errors } = core.readCardJson(text, schema);
+  assert.deepEqual(errors, []);
+  assert.equal(card.intervention.kind, "lock");
+  assert.deepEqual(card.intervention.params, {});
+});
+
+test("생략된 개입 파라미터는 모델에 나타나지 않는다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("crossover.json"), loadSchema());
+  assert.equal(card.intervention.kind, "swap_execution_order");
+  assert.deepEqual(card.intervention.params, { requireAdjacent: true },
+    "targetSide는 Any라 파일에 없고 모델에도 없어야 한다");
+});
+
+test("빈 배열과 없는 배열을 구분한다", () => {
+  const core = loadCore();
+  const { card } = core.readCardJson(readCardFile("fixture_attack.json"), loadSchema());
+  assert.deepEqual(card.tags, [], "tags는 빈 배열로 저작되어 있다");
+  assert.equal(card.grade, "None", "grade는 생략되어 있다");
+});
+
+test("모르는 효과 kind를 버리지 않고 보존한다", () => {
+  const core = loadCore();
+  const text = JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution",
+    effects: [{ kind: "teleport", distance: 3 }],
+  }, null, 2);
+  const { card, errors } = core.readCardJson(text, loadSchema());
+  assert.deepEqual(errors, []);
+  assert.equal(card.effects[0].kind, "teleport");
+  assert.deepEqual(card.effects[0].raw, { kind: "teleport", distance: 3 });
+});
+
+test("모르는 최상위 키를 보존하고 이름을 알려준다", () => {
+  const core = loadCore();
+  const text = JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+  }, null, 2);
+  const { card } = core.readCardJson(text, loadSchema());
+  assert.deepEqual(card.unknownKeys, ["flavour"]);
+  assert.equal(card.extra.flavour, "설명");
+});
+
+test("깨진 JSON은 카드를 만들지 않고 이유를 준다", () => {
+  const core = loadCore();
+  const { card, errors } = core.readCardJson("{ 이건 JSON이 아니다", loadSchema());
+  assert.equal(card, null);
+  assert.equal(errors.length, 1);
+});
+
+test("필수 키가 빠지면 이유를 준다", () => {
+  const core = loadCore();
+  const { card, errors } = core.readCardJson('{"id":"x","name":"y"}', loadSchema());
+  assert.equal(card, null);
+  assert.ok(errors.some((message) => message.includes("side")));
+});
