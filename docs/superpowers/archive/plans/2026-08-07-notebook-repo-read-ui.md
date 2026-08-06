@@ -1,7 +1,8 @@
 # 카드 저작 노트북 저장소 읽기 UI 구현 계획 (계획 B)
 
 - 작성일: 2026-08-07
-- 상태: `active`
+- 완료일: 2026-08-07 — Task 1~8 전부 실행. 실행 기록은 맨 아래에 있다
+- 상태: `completed`
 - 설계: [카드 저작 노트북 JSON 전환](../specs/2026-08-05-card-authoring-json-notebook-design.md)
 - 선행: [노트북 JSON 코어 (계획 A)](../archive/plans/2026-08-05-notebook-json-core.md) — 2026-08-07 완료·머지
 
@@ -158,7 +159,7 @@ python3 -m http.server 8765 --directory /Users/ish/Git/rogue-deck
 상태는 효과 편집기의 드롭다운 재료라 `key`와 `displayName`만 필요하다(설계 §11.5). 수명·성장치는
 읽지 않는다 — 이 계획도 계획 C도 상태를 쓰지 않으므로 모델에 들고 있을 이유가 없다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `index.test.mjs` 끝에 붙인다.
 
@@ -228,7 +229,7 @@ test("깨진 상태 파일과 키 없는 상태는 이유를 준다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -237,7 +238,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: **FAIL 5개.** `Cannot read properties of undefined (reading 'schema')`와
 `core.readStatusJson is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `index.html`의 코어 블록에서 `globalThis.CardIdeaNotebook = Object.freeze({` **바로 위**에
 넣는다.
@@ -286,7 +287,7 @@ export 블록의 `parseAuthoringSchema` 위에 두 줄 더한다:
       parseAuthoringSchema,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -294,7 +295,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **107/107** (기준선 102 + 신규 5).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -330,7 +331,7 @@ git commit -m "feat(tools): 노트북이 상태 파일과 콘텐츠 경로를 �
 `missing`을 세지 않고 따로 담는 이유는 설계 §10.4다 — 없는 카드를 분포에 섞으면 집계가 거짓이
 되고, 버리면 노트북을 열었다 닫는 것만으로 편성이 바뀐다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 정확값은 **합성 픽스처**로 검사한다. 저장소의 `starter`에는 카드가 늘어도 깨지지 않는 거친 검사만
 건다 — 콘텐츠가 바뀔 때마다 실패하는 테스트는 신호가 아니라 잡음이다.
@@ -456,7 +457,7 @@ test("카드 소속 풀을 역방향 표로 만든다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -464,7 +465,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 6개.** `core.poolDistribution is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `readStatusJson` 아래에 넣는다.
 
@@ -539,7 +540,7 @@ export 블록에 두 줄 더한다:
       poolMembership,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -547,7 +548,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **113/113** (107 + 신규 6).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -583,7 +584,7 @@ git commit -m "feat(tools): 노트북이 풀을 집합으로 집계한다
 때문인데, 이 계획에는 편집이 없어 `id`가 파일명 그대로 고정이다. **계획 C가 편집을 붙일 때 색인
 키를 `uid`로 바꾼다.**
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -673,7 +674,7 @@ test("필터 목록을 노출한다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -681,7 +682,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 5개.** `core.cardListView is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `poolMembership` 아래에 넣는다.
 
@@ -746,7 +747,7 @@ export 블록에 두 줄 더한다:
       cardListView,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -754,7 +755,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **118/118** (113 + 신규 5).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -784,7 +785,7 @@ git commit -m "feat(tools): 노트북이 카드 목록을 검색하고 거른다
 설계 §11.2의 두 줄을 만든다. 문장을 코어에 두는 이유는 테스트가 문구까지 잠글 수 있어서다 —
 화면 문자열이 코드 여기저기 흩어지면 바뀐 것을 아무도 모른다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -832,7 +833,7 @@ test("요약을 두 줄 문장으로 만든다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -840,7 +841,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 3개.** `core.contentSummary is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `cardListView` 아래에 넣는다.
 
@@ -890,7 +891,7 @@ export 블록에 두 줄 더한다:
       summaryLines,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -898,7 +899,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **121/121** (118 + 신규 3).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -926,7 +927,7 @@ git commit -m "feat(tools): 노트북이 읽은 결과를 요약한다
 마크업 존재는 단위 테스트가, 동작은 아래 수동 검수 절차가 맡는다. **읽기 파이프라인의 규칙은
 전부 Task 1~4의 순수 함수에 있으므로**, 여기 남는 것은 파일을 문자열로 가져오는 배관뿐이다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -951,7 +952,7 @@ test("저장소 UI 스크립트가 코어와 분리되어 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -959,7 +960,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 2개.** `id="mode-repo"`를 찾지 못한다.
 
-- [ ] **Step 3: 헤더에 모드 전환을 넣는다**
+- [x] **Step 3: 헤더에 모드 전환을 넣는다**
 
 `index.html`의 `<header class="app-header">` 블록(374~383줄)에서 `<p class="header-status" …>`
 **바로 앞**에 넣는다.
@@ -971,7 +972,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     </div>
 ```
 
-- [ ] **Step 4: 저장소 화면의 골격 마크업을 넣는다**
+- [x] **Step 4: 저장소 화면의 골격 마크업을 넣는다**
 
 `</main>`(기존 Markdown 작업 영역의 끝, 544줄) **바로 뒤**에 넣는다. 이 태스크에서는
 연결 상태와 요약 자리만 만들고, 세 판의 내용은 Task 6~8이 채운다.
@@ -1018,7 +1019,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
   </main>
 ```
 
-- [ ] **Step 5: 최소한의 CSS를 넣는다**
+- [x] **Step 5: 최소한의 CSS를 넣는다**
 
 `<style>` 안, `.toast.visible` 규칙(365줄) **바로 뒤**에 넣는다. 규칙 17에 따라 배치가
 성립하는 최소치만 넣는다 — 색·여백의 최종 조정은 사용자 몫이다.
@@ -1039,7 +1040,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     .repo-detail { padding: 14px 16px; }
 ```
 
-- [ ] **Step 6: 저장소 UI 스크립트를 신설한다**
+- [x] **Step 6: 저장소 UI 스크립트를 신설한다**
 
 기존 UI 스크립트의 닫는 `</script>`(파일 끝 `</body>` 직전) **바로 뒤**에 새 블록을 통째로
 넣는다. 기존 두 스크립트는 건드리지 않는다.
@@ -1325,7 +1326,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
   </script>
 ```
 
-- [ ] **Step 7: 단위 테스트 통과를 확인한다**
+- [x] **Step 7: 단위 테스트 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1334,7 +1335,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: **123/123** (121 + 신규 2). 기존 테스트 회귀 없음 — 특히
 `exposes every card grade in the authoring form`이 계속 통과해야 한다.
 
-- [ ] **Step 8: 브라우저에서 수동 검수한다**
+- [x] **Step 8: 브라우저에서 수동 검수한다**
 
 ```bash
 python3 -m http.server 8765 --directory /Users/ish/Git/rogue-deck
@@ -1354,7 +1355,7 @@ Chrome이나 Edge로 `http://localhost:8765/Tools/card-idea-notebook/index.html`
 **3번에서 개수가 26이 아니면 멈추고 원인을 찾는다.** 폴더를 잘못 골랐거나(저장소 루트여야 한다)
 격리가 일어난 것이다.
 
-- [ ] **Step 9: 커밋**
+- [x] **Step 9: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1387,7 +1388,7 @@ File System Access API로 저장소 루트를 한 번 고르면 핸들을 Indexe
 설계 §11.2 그대로다 — 오류나 충돌이 있으면 그 목록이 요약 자리를 차지하고, 항목을 누르면 해당
 카드·풀로 이동한다. `selectEntry`는 이 태스크에서 선택만 기록하고, 실제 이동은 Task 7·8이 채운다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -1398,7 +1399,7 @@ test("요약과 문제 목록 자리가 마크업에 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1406,7 +1407,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 1개.** `id="repo-problems"`를 찾지 못한다.
 
-- [ ] **Step 3: 마크업에 문제 목록 자리를 넣는다**
+- [x] **Step 3: 마크업에 문제 목록 자리를 넣는다**
 
 Task 5가 넣은 `<div class="repo-summary" id="repo-summary"></div>` **바로 뒤**에 넣는다.
 
@@ -1434,7 +1435,7 @@ Task 5가 넣은 `<div class="repo-summary" id="repo-summary"></div>` **바로 �
     .repo-problem.is-warning { border-color: var(--warning); }
 ```
 
-- [ ] **Step 4: 요약 렌더러를 쓴다**
+- [x] **Step 4: 요약 렌더러를 쓴다**
 
 `<script data-repo-ui>` 안, `render()` **바로 위**에 넣는다.
 
@@ -1535,7 +1536,7 @@ Task 5가 넣은 `<div class="repo-summary" id="repo-summary"></div>` **바로 �
     }
 ```
 
-- [ ] **Step 5: `elements`와 `render()`를 잇는다**
+- [x] **Step 5: `elements`와 `render()`를 잇는다**
 
 `elements` 객체에서 `summary: byId("repo-summary"),` **바로 뒤**에 한 줄 더한다.
 
@@ -1556,7 +1557,7 @@ Task 5가 넣은 `<div class="repo-summary" id="repo-summary"></div>` **바로 �
     }
 ```
 
-- [ ] **Step 6: 통과를 확인한다**
+- [x] **Step 6: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1564,7 +1565,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **124/124** (123 + 신규 1).
 
-- [ ] **Step 7: 브라우저에서 수동 검수한다**
+- [x] **Step 7: 브라우저에서 수동 검수한다**
 
 Task 5 Step 8과 같은 방법으로 열고 폴더를 연결한 뒤 확인한다.
 
@@ -1589,7 +1590,7 @@ Task 5 Step 8과 같은 방법으로 열고 폴더를 연결한 뒤 확인한다
 
    **`git status`가 깨끗해야 한다.** 그렇지 않으면 복원이 안 된 것이므로 멈추고 고친다.
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1617,7 +1618,7 @@ git commit -m "feat(tools): 노트북이 읽은 결과와 문제를 요약한다
 설계 §11.3의 목록 줄 셋이 기준이다 — 이름과 `id`, 그 아래 속성 줄, 그리고 태그와 상태 배지.
 편집기는 계획 C이므로 **중앙 판에는 읽기 전용 요약만** 넣고, 원문은 우측이 맡는다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -1633,7 +1634,7 @@ test("저장소 탭과 검색·필터가 마크업에 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1641,7 +1642,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 1개.** `id="repo-tab-cards"`를 찾지 못한다.
 
-- [ ] **Step 3: 마크업에 탭과 검색·필터를 넣는다**
+- [x] **Step 3: 마크업에 탭과 검색·필터를 넣는다**
 
 Task 5가 넣은 `<button type="button" id="repo-reload" disabled>저장소 다시 읽기</button>`
 **바로 뒤**에 넣는다.
@@ -1697,7 +1698,7 @@ Task 5가 넣은 `<button type="button" id="repo-reload" disabled>저장소 다�
     .repo-fields dt { min-width: 84px; color: var(--muted); }
 ```
 
-- [ ] **Step 4: 카드 목록과 상세 렌더러를 쓴다**
+- [x] **Step 4: 카드 목록과 상세 렌더러를 쓴다**
 
 `<script data-repo-ui>` 안, `render()` **바로 위**에 넣는다.
 
@@ -1833,7 +1834,7 @@ Task 5가 넣은 `<button type="button" id="repo-reload" disabled>저장소 다�
     }
 ```
 
-- [ ] **Step 5: `render()`에 목록·상세를 잇는다**
+- [x] **Step 5: `render()`에 목록·상세를 잇는다**
 
 `render()`를 통째로 바꾼다.
 
@@ -1901,7 +1902,7 @@ Task 5가 넣은 `<button type="button" id="repo-reload" disabled>저장소 다�
     }
 ```
 
-- [ ] **Step 6: 통과를 확인한다**
+- [x] **Step 6: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1909,7 +1910,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **125/125** (124 + 신규 1).
 
-- [ ] **Step 7: 브라우저에서 수동 검수한다**
+- [x] **Step 7: 브라우저에서 수동 검수한다**
 
 폴더를 연결한 뒤 확인한다.
 
@@ -1921,7 +1922,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
    **원문이 저장소 파일과 한 글자도 다르지 않아야 한다.**
 5. 요약의 경고를 누르면 그 카드가 선택된다.
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1950,7 +1951,7 @@ git commit -m "feat(tools): 노트북이 저장소 카드를 목록과 원문으
 설계 §11.4 그대로다. 편성·분포·오류 세 덩어리이며 **드래그 재정렬과 담기·빼기는 계획 C**다.
 분포를 편성 바로 아래 두는 이유는 풀이 후보 집합이라 밸런스를 집합 단위로 봐야 하기 때문이다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -1961,7 +1962,7 @@ test("풀 편성·분포 자리의 스타일이 마크업에 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1969,7 +1970,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 1개.** `.pool-roster`를 찾지 못한다.
 
-- [ ] **Step 3: CSS를 넣는다**
+- [x] **Step 3: CSS를 넣는다**
 
 `<style>`의 `.repo-fields dt` 뒤에 넣는다.
 
@@ -1994,7 +1995,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     .pool-distribution dt { min-width: 48px; color: var(--muted); }
 ```
 
-- [ ] **Step 4: 풀 렌더러를 쓴다**
+- [x] **Step 4: 풀 렌더러를 쓴다**
 
 `renderCardDetail` **바로 뒤**에 넣는다.
 
@@ -2107,7 +2108,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     }
 ```
 
-- [ ] **Step 5: `render()`에 풀을 잇는다**
+- [x] **Step 5: `render()`에 풀을 잇는다**
 
 `render()`의 마지막 두 블록을 바꾼다.
 
@@ -2140,7 +2141,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     }
 ```
 
-- [ ] **Step 6: 통과를 확인한다**
+- [x] **Step 6: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -2149,7 +2150,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 기대: 노트북 **126/126** (125 + 신규 1), 헤드리스 **526/526** (이 계획은 C#을 건드리지 않는다).
 
-- [ ] **Step 7: 브라우저에서 최종 검수한다**
+- [x] **Step 7: 브라우저에서 최종 검수한다**
 
 폴더를 연결한 뒤 확인한다.
 
@@ -2178,7 +2179,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
    **`git status`가 깨끗해야 한다.**
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -2210,6 +2211,55 @@ git commit -m "feat(tools): 노트북이 풀 편성과 분포를 보여준다
 설계 §16 검수 기준 중 이 계획이 담당하는 것은 **6**(깨진 파일에도 도구가 열린다)과
 **8의 절반**(없는 카드 id를 유지한다 — 내보내기 차단은 계획 C)이다. 나머지(2·4·5, 8의 나머지)는
 편집과 쓰기가 필요하므로 계획 C가 맡는다.
+
+---
+
+## 실행 기록 (2026-08-07)
+
+Task 1~8을 순서대로 실행했다. **노트북 126/126, 헤드리스 526/526.**
+
+### 검수 방법 — 가짜 디렉터리 핸들
+
+브라우저 수동 검수 단계는 폴더 선택이 **OS 네이티브 대화상자**라 자동화할 수 없다. 그래서
+`window.showDirectoryPicker`만 `fetch`로 뒷받침하는 가짜 핸들로 바꿔치기하고 나머지는 전부 진짜
+코드를 태웠다 — `loadRepo`·`directoryAt`·`readJsonFolder`·`hasReadPermission`과 렌더러 전부가
+실제로 돌았다. 임시 로컬 서버(`python3 -m http.server`)로 열고 검수 후 정리했다.
+
+이 방식의 이점은 **저장소 파일을 한 번도 쓰지 않았다는 것**이다. 깨진 카드와 없는 카드 id는
+`window.fetch`를 가로채 응답만 바꿔 만들었으므로 `git status`가 내내 깨끗했다.
+
+**남은 미검증 셋** — 실제 폴더 선택 한 번으로 덮인다:
+- `showDirectoryPicker`가 진짜 핸들을 돌려주는 경로
+- 실제 권한 만료·재승인 흐름(`queryPermission`/`requestPermission`)
+- 실제 `FileSystemDirectoryHandle.entries()` (가짜는 같은 계약을 구현했다)
+
+### 실측한 검수 결과
+
+| 항목 | 결과 |
+|---|---|
+| 요약 | `카드 26 · 풀 1 · 상태 11 을 읽었습니다` / `오류 0 · 충돌 0 · 미반영 0` |
+| 경고 | 넷 — `fixture_*`의 `어느 풀에도 없습니다.` |
+| 카드 목록 | `26/26`, 검색 `독` → `10/26`, 필터 `고아만` → `4/26`(fixture 넷) |
+| 카드 원문 | 저장소 파일과 **바이트 동일**(`textContent === 파일 내용`) |
+| 풀 편성 | 22줄, 저작 순서 그대로(1 `vanguard_slash` … 22 `posthumous_spread`) |
+| 풀 분포 | 등급 `Common 22` · 비용 `1: 19 · 2: 3` · 순서 `3: 2 · 4: 5 · 5: 8 · 6: 2 · 7: 1` |
+| 깨진 카드 | 도구가 열린 채 카드 25로 줄고 격리 항목이 목록 맨 위, 그 아래 풀의 `없는 카드입니다` |
+| 없는 카드 id | 편성 23번 줄에 붉게 남고 **분포의 등급 합은 22 그대로** |
+| 아이디어 모드 | 계획 A 시점과 동일하게 동작 |
+
+### 계획과 달라진 것 없음
+
+Task 1~8이 계획대로 통과했다. 계획을 쓰는 단계에서 미리 잡아 둔 것이 둘 있었고 그대로 유효했다:
+
+1. **`.workspace[hidden] { display: none; }`이 실제로 필요했다.** 이 규칙 없이는 모드 전환이
+   동작하지 않는다 — 작성자 스타일의 `display: grid`가 브라우저 기본 `[hidden]`을 이긴다.
+   계획 작성 중 `getComputedStyle`로 확인해 CSS 첫 줄에 넣어 뒀다.
+2. **분포의 기대값을 미리 계산해 뒀다.** 실행 결과가 그 값과 정확히 일치했다.
+
+### 계획 C에 넘기는 것
+
+"다음" 절 그대로다. 저장소 UI 스크립트(`<script data-repo-ui>`)에 편집기를 얹고, 옛 Markdown
+스크립트와 모드 전환을 지운다.
 
 ## 다음
 
