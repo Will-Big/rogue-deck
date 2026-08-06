@@ -2352,3 +2352,88 @@ test("카드 소속 풀을 역방향 표로 만든다", () => {
   assert.deepEqual(membership.get("c"), ["mycologist"]);
   assert.equal(membership.get("ghost"), undefined);
 });
+
+function viewCards(core, schema, specs) {
+  return specs.map((spec) => core.readCardJson(JSON.stringify({
+    id: spec.id, name: spec.name ?? spec.id, side: spec.side ?? "Player",
+    category: "Execution", ...spec,
+  }, null, 2), schema).card);
+}
+
+test("검색이 이름·id·태그를 훑는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [
+    { id: "vanguard_slash", name: "선봉 베기", tags: ["시작", "공격"] },
+    { id: "spore_veil", name: "포자 장막", tags: ["독"] },
+  ]);
+  const view = (query) => core.cardListView({ cards, query, filter: "all" })
+    .map((row) => row.card.id);
+
+  assert.deepEqual(view("선봉"), ["vanguard_slash"], "이름으로 찾는다");
+  assert.deepEqual(view("spore"), ["spore_veil"], "id로 찾는다");
+  assert.deepEqual(view("독"), ["spore_veil"], "태그로 찾는다");
+  assert.deepEqual(view("VANGUARD"), ["vanguard_slash"], "대소문자를 무시한다");
+  assert.deepEqual(view("  "), ["vanguard_slash", "spore_veil"], "공백만이면 거르지 않는다");
+  assert.deepEqual(view("없는말"), []);
+});
+
+test("필터가 상태·오류·고아를 가른다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [
+    { id: "same_card" }, { id: "edited" }, { id: "clashing" },
+    { id: "broken" }, { id: "enemy_card", side: "Enemy" },
+  ]);
+  const states = new Map([["edited", "modified"], ["clashing", "conflict"]]);
+  const errorIds = new Set(["broken"]);
+  const membership = new Map([["same_card", ["starter"]]]);
+  const view = (filter) => core.cardListView({ cards, states, errorIds, membership, filter })
+    .map((row) => row.card.id);
+
+  assert.deepEqual(view("all"),
+    ["same_card", "edited", "clashing", "broken", "enemy_card"]);
+  assert.deepEqual(view("modified"), ["edited"]);
+  assert.deepEqual(view("conflict"), ["clashing"]);
+  assert.deepEqual(view("error"), ["broken"]);
+  assert.deepEqual(view("orphan"), ["edited", "clashing", "broken"],
+    "적군 카드는 고아가 아니다 - 풀은 아군 것이다");
+});
+
+test("풀별 필터가 소속만 남긴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [{ id: "a" }, { id: "b" }]);
+  const membership = new Map([["a", ["starter"]], ["b", ["mycologist"]]]);
+
+  const rows = core.cardListView({ cards, membership, filter: "all", poolId: "starter" });
+  assert.deepEqual(rows.map((row) => row.card.id), ["a"]);
+});
+
+test("줄마다 상태·오류·소속을 붙여 준다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [{ id: "a" }]);
+
+  const [plain] = core.cardListView({ cards, filter: "all" });
+  assert.equal(plain.state, "same", "상태를 모르면 저장소와 같은 것으로 본다");
+  assert.equal(plain.hasError, false);
+  assert.deepEqual(plain.pools, []);
+
+  const [marked] = core.cardListView({
+    cards,
+    states: new Map([["a", "conflict"]]),
+    errorIds: new Set(["a"]),
+    membership: new Map([["a", ["starter", "mycologist"]]]),
+    filter: "all",
+  });
+  assert.equal(marked.state, "conflict");
+  assert.equal(marked.hasError, true);
+  assert.deepEqual(marked.pools, ["starter", "mycologist"]);
+});
+
+test("필터 목록을 노출한다", () => {
+  const core = loadCore();
+  assert.deepEqual([...core.CARD_FILTERS],
+    ["all", "modified", "conflict", "error", "orphan"]);
+});

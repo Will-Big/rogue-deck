@@ -2011,11 +2011,64 @@
       return membership;
     }
 
+    const CARD_FILTERS = Object.freeze([
+      "all", "modified", "conflict", "error", "orphan",
+    ]);
+
+    /// 검색은 이름·id·태그를 훑는다(설계 11.3). id가 파일명이자 풀이 참조하는 키라
+    /// 이름만큼 자주 찾는 대상이다.
+    function matchesQuery(card, query) {
+      const needle = String(query ?? "").trim().toLocaleLowerCase();
+      if (!needle) return true;
+
+      const haystack = [card.name, card.id, ...(card.tags ?? [])];
+      return haystack.some((value) => String(value).toLocaleLowerCase().includes(needle));
+    }
+
+    /// 고아는 "어느 풀에도 없는 아군 카드"다(설계 7). 적군 카드는 풀에 담기지 않으므로
+    /// 고아일 수 없다 - 풀은 플레이어 캐릭터의 것이다.
+    function matchesFilter(row, filter) {
+      if (filter === "modified") return row.state === "modified";
+      if (filter === "conflict") return row.state === "conflict";
+      if (filter === "error") return row.hasError;
+      if (filter === "orphan") return row.card.side === "Player" && row.pools.length === 0;
+      return true;
+    }
+
+    /// 목록 한 줄이 알아야 하는 것을 카드마다 계산하고 걸러 준다. 화면은 이 배열만 반복하므로
+    /// 검색·필터 규칙이 DOM을 모른다.
+    /// states는 카드 id로 색인한다 - 이 계획에는 편집이 없어 id가 파일명 그대로 고정이다.
+    /// 계획 C가 편집을 붙이면 id가 저작 중에 바뀌므로 색인 키를 uid로 바꾼다(설계 5).
+    function cardListView({ cards, states, errorIds, membership, query, filter, poolId }) {
+      const stateOf = states ?? new Map();
+      const failing = errorIds ?? new Set();
+      const owners = membership ?? new Map();
+      const rows = [];
+
+      for (const card of cards) {
+        const row = {
+          card,
+          state: stateOf.get(card.id) ?? "same",
+          hasError: failing.has(card.id),
+          pools: owners.get(card.id) ?? [],
+        };
+
+        if (poolId && !row.pools.includes(poolId)) continue;
+        if (!matchesQuery(card, query)) continue;
+        if (!matchesFilter(row, filter)) continue;
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
       CONTENT_PATHS,
       readStatusJson,
       poolDistribution,
       poolMembership,
+      CARD_FILTERS,
+      cardListView,
       parseAuthoringSchema,
       readCardJson,
       writeCardJson,
