@@ -415,6 +415,24 @@
     .repo-fields { display: grid; gap: 6px; font-size: 13px; }
     .repo-fields div { display: flex; gap: 10px; }
     .repo-fields dt { min-width: 84px; color: var(--muted); }
+    .pool-section { margin-top: 16px; }
+    .pool-section h4 { margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    .pool-roster { display: grid; gap: 5px; font-size: 12px; }
+    .pool-roster .slot {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: baseline;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+    .pool-roster .slot.is-missing { border-color: var(--danger); color: var(--danger); }
+    .pool-roster .slot .index { color: var(--dim); }
+    .pool-roster .slot .tail { color: var(--muted); font-size: 11px; }
+    .pool-distribution { display: grid; gap: 6px; font-size: 12px; }
+    .pool-distribution div { display: flex; gap: 10px; }
+    .pool-distribution dt { min-width: 48px; color: var(--muted); }
 
     @media (max-width: 1280px) {
       body { min-width: 920px; }
@@ -3278,8 +3296,16 @@
 
     let selection = { scope: "", id: "" };
 
+    /// 요약의 문제 항목에서도 부르므로 대상에 맞는 탭으로 옮긴다 - 풀 오류를 눌렀는데
+    /// 카드 목록이 그대로면 어디로 갔는지 알 수 없다.
     function selectEntry(scope, id) {
       selection = { scope, id };
+      if (scope === "card" || scope === "pool") {
+        const next = scope === "card" ? "cards" : "pools";
+        tab = next;
+        elements.tabCards.classList.toggle("is-active", next === "cards");
+        elements.tabPools.classList.toggle("is-active", next === "pools");
+      }
       render();
     }
 
@@ -3494,6 +3520,113 @@
       elements.source.textContent = card.base;
     }
 
+    function poolEntry(pool) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "repo-entry";
+      if (selection.scope === "pool" && selection.id === pool.id) {
+        button.classList.add("is-selected");
+      }
+
+      const headline = document.createElement("div");
+      headline.className = "headline";
+      const name = document.createElement("span");
+      name.textContent = pool.id;
+      const count = document.createElement("span");
+      count.className = "id";
+      count.textContent = `${pool.cards.length}장`;
+      headline.append(name, count);
+      button.append(headline);
+
+      const state = repoStore.poolStates.get(pool.id) ?? "same";
+      const badge = document.createElement("div");
+      badge.className = `badge is-${state}`;
+      badge.textContent = STATE_BADGES[state] ?? state;
+      button.append(badge);
+
+      button.addEventListener("click", () => selectEntry("pool", pool.id));
+      return button;
+    }
+
+    function renderPoolList() {
+      elements.count.textContent = String(repoStore.pools.length);
+      for (const pool of repoStore.pools) elements.list.append(poolEntry(pool));
+    }
+
+    function distributionRow(term, entries, format) {
+      return fieldRow(term, entries.length
+        ? entries.map((entry) => format(entry)).join(" · ")
+        : "없음");
+    }
+
+    function poolSection(title, body) {
+      const section = document.createElement("section");
+      section.className = "pool-section";
+      const heading = document.createElement("h4");
+      heading.textContent = title;
+      section.append(heading, body);
+      return section;
+    }
+
+    /// 편성 · 분포 · 오류 세 덩어리(설계 11.4). 분포가 편성 바로 아래인 이유는 풀이 후보
+    /// 집합이라 밸런스를 집합 단위로 봐야 하기 때문이다.
+    /// 드래그 재정렬과 담기·빼기는 계획 C다.
+    function renderPoolDetail(pool) {
+      const distribution = core.poolDistribution({ pool, cardsById: repoStore.cardsById });
+      elements.detailTitle.textContent = `${pool.id} · ${distribution.total}장`;
+
+      const roster = document.createElement("div");
+      roster.className = "pool-roster";
+      pool.cards.forEach((cardId, index) => {
+        const card = repoStore.cardsById.get(cardId);
+        const slot = document.createElement("div");
+        slot.className = card ? "slot" : "slot is-missing";
+
+        const order = document.createElement("span");
+        order.className = "index";
+        order.textContent = String(index + 1);
+
+        const label = document.createElement("span");
+        label.textContent = card ? `${card.name}  ${cardId}` : `⚠ 없는 카드  ${cardId}`;
+
+        const tail = document.createElement("span");
+        tail.className = "tail";
+        tail.textContent = card ? [card.grade, ...(card.tags ?? [])].join(" · ") : "";
+
+        slot.append(order, label, tail);
+        roster.append(slot);
+      });
+      elements.detail.append(poolSection("편성", roster));
+
+      const stats = document.createElement("dl");
+      stats.className = "pool-distribution";
+      stats.append(
+        distributionRow("등급", distribution.grades, (e) => `${e.value} ${e.count}`),
+        distributionRow("태그", distribution.tags, (e) => `${e.value} ${e.count}`),
+        distributionRow("비용", distribution.costs, (e) => `${e.value}: ${e.count}`),
+        distributionRow("순서", distribution.orders, (e) => `${e.value}: ${e.count}`),
+      );
+      elements.detail.append(poolSection("분포", stats));
+
+      const failures = repoStore.validation.errors
+        .filter((error) => error.scope === "pool" && error.id === pool.id);
+      const problems = document.createElement("div");
+      problems.className = "repo-problems";
+      if (failures.length) {
+        for (const error of failures) {
+          problems.append(problemButton({ level: "error", ...error }));
+        }
+      } else {
+        const none = document.createElement("p");
+        none.textContent = "없음";
+        problems.append(none);
+      }
+      elements.detail.append(poolSection("오류", problems));
+
+      elements.sourceTitle.textContent = `Pools/${pool.id}.json`;
+      elements.source.textContent = pool.base;
+    }
+
     function render() {
       elements.reload.disabled = !repoStore.connected;
       elements.list.replaceChildren();
@@ -3511,10 +3644,15 @@
       }
 
       if (tab === "cards") renderCardList();
+      else renderPoolList();
 
       if (selection.scope === "card") {
         const card = repoStore.cardsById.get(selection.id);
         if (card) renderCardDetail(card);
+      }
+      if (selection.scope === "pool") {
+        const pool = repoStore.pools.find((entry) => entry.id === selection.id);
+        if (pool) renderPoolDetail(pool);
       }
     }
 

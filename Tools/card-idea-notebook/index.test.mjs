@@ -2517,3 +2517,9 @@ test("저장소 탭과 검색·필터가 마크업에 있다", () => {
     assert.match(html, new RegExp(`>${label}<\\/option>`));
   }
 });
+
+test("풀 편성·분포 자리의 스타일이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /\.pool-roster\b/);
+  assert.match(html, /\.pool-distribution\b/);
+});
