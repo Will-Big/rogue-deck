@@ -9,10 +9,61 @@
   [위치 대상과 카드 텍스트](2026-07-27-position-targeting-card-text-design.md),
   [카드 변형과 런타임 콘텐츠 로딩](2026-07-30-card-mutation-and-runtime-content-design.md)
 - 대체: [카드 아이디어 노트](2026-07-27-card-idea-notebook-design.md)
+- 개정일: 2026-08-06 — 계획 3.5(개입 다형화·카드 스펙 분리)에 맞춰 §4·§5·§6·§8·§9·§16을 고쳤다
 - 상태: `current` — 설계 확정, 구현 전
 - 범위: 노트북의 저작 원본을 Markdown에서 콘텐츠 JSON으로 전환, 구조화 효과 편집기,
   저장소 직접 읽기·쓰기와 그 정책, 카드·풀 화면 구성, 풀 편성, 저작 스키마 생성,
   라운드트립 보장
+
+## 설계 개요 (사람 검수용)
+
+이 절만 읽고 구조를 승인할 수 있어야 한다. 아래 `## 상세` 이후는 세션 인계용이며 사람은 읽지
+않아도 된다.
+
+**무엇을 만드나** — 카드 저작 노트북이 다루는 대상을 "AI에게 넘길 아이디어"에서 **게임이 실제로
+읽는 데이터**로 바꾼다. 노트북이 저장소의 콘텐츠 JSON을 직접 읽고 쓰므로, 지금까지 필요했던
+"사람이 에디터에서 다시 저작하는 단계"가 통째로 사라진다.
+
+**구조**
+
+| 객체 | 책임 (한 줄) | 이 객체가 모르는 것 |
+|---|---|---|
+| 저작 스키마 | 저작 가능한 효과·개입 종류와 각각의 파라미터 구조를 담는다 | 카드의 값, 화면 배치 |
+| 카드 편집기 | 카드 한 장의 필드와 효과·개입 행을 편집한다 | 풀 소속, 파일 입출력 |
+| 풀 편성기 | 풀 하나의 카드 목록과 순서를 정한다 | 카드의 내용, 카드의 유효성 |
+| 읽기 정책 | 저장소 원본과 미반영 편집분의 관계를 판정한다 | 무엇을 편집할지, 충돌을 어떻게 풀지 |
+| 쓰기 정책 | 무엇을 파일로 내보낼지 정한다 | 값이 유효한지 |
+| 검증기 | 게임 로더가 거부할 것을 내보내기 전에 잡는다 | 화면 표시, 파일 입출력 |
+
+**의존 방향** — `C# 저작 타입 → 저작 스키마 → 카드 편집기·풀 편성기 → 읽기·쓰기 정책 → Content/*.json`
+
+**확장 축**
+- *갈아끼울 수 있는 것* — 효과와 개입의 종류. C#에 스펙을 더하면 스키마가 따라오고 폼이 저절로
+  생긴다. 풀의 개수도 폴더를 훑어 만들므로 캐릭터가 늘면 함께 는다.
+- *한번 정하면 고정되는 것* — 저작 원본이 JSON 하나다. 자유 문장 저작은 없다. 브라우저가
+  Chrome·Edge로 묶인다. 덱·캐릭터·상태·카드 아트는 범위 밖이다(§15).
+
+**대안과 기각 이유**
+1. *Markdown 저작을 유지하고 변환기를 붙인다* — 기각. 조건·상태 대상 같은 정보가 문장에 애초에
+   담기지 않아 기계 변환이 성립하지 않는다(§2).
+2. *노트북이 C# 소스를 직접 읽어 폼을 만든다* — 기각. 파일 위치와 C# 문법 양쪽에 결합되어 폴더를
+   재정리하거나 필드를 프로퍼티로 바꾸면 깨진다. 스키마를 경유하면 타입만 보게 된다(§4).
+
+**이 선택으로 나중에 어려워지는 것**
+- **자유 문장 저작이 사라진다.** "떠오른 걸 한 줄 적어두는" 용도로는 더 못 쓰며, 아이디어 메모는
+  다른 자리가 필요하다. 이것은 표현력의 축소가 아니라 도구가 다루는 대상의 변경이다(§2).
+- 노트북이 저장소를 직접 쓰므로 **저작 실수가 곧바로 게임 콘텐츠가 된다.** 안전망은 git뿐이고,
+  그래서 §12가 "파일을 지우지 않는다"를 규칙으로 못박는다.
+- File System Access API가 Chrome·Edge 전용이라 폴백을 두지 않는다(§3). 다른 브라우저를 쓰는
+  사람은 이 도구를 쓸 수 없다.
+- 카드가 실행·개입 두 타입으로 갈려 폼도 배타적 두 갈래다. 셋째 분류가 생기면 스키마·모델·폼을
+  함께 열어야 한다.
+
+---
+
+## 상세 (세션 인계용)
+
+위 `## 설계 개요`에 이 문서의 구조 요약이 있다. 실행 근거는 이 절 이후에만 있다.
 
 ## 1. 목적
 
@@ -66,8 +117,8 @@ Markdown 저작의 자유 문장(`- [적군] 피해 5.`)은 구조화 효과(`{"
 
 ## 4. 저작 스키마 생성
 
-노트북은 효과 8종의 파라미터 구조를 알아야 폼을 만들 수 있다. 그 구조는 C#의 `EffectSpecCatalog`와
-`Assets/Core/Authoring/Specs/*.cs`에 있다.
+노트북은 효과 8종과 개입 3종의 파라미터 구조를 알아야 폼을 만들 수 있다. 그 구조는 C#의
+`EffectSpecCatalog`·`InterventionSpecCatalog`와 `Assets/Core/Authoring/Specs/*.cs`에 있다.
 
 **노트북에 표를 복제해 두지 않는다.** 복제하면 C#이 늘 때마다 손으로 맞춰야 하고, 어긋나도 조용하다.
 **노트북이 C# 소스를 직접 읽지도 않는다.** 그러면 파일 위치와 C# 문법 양쪽에 결합되어, 폴더를
@@ -77,8 +128,10 @@ Markdown 저작의 자유 문장(`- [적군] 피해 5.`)은 구조화 효과(`{"
 옮겨가든 따라간다.
 
 ```text
-EffectSpecCatalog.All()  ──리플렉션──▶  Tools/card-idea-notebook/authoring-schema.json  ──▶  노트북 폼
-        (C#)                                        (커밋되는 생성물)                        (JSON만 읽음)
+EffectSpecCatalog.All()        ─┐
+                                ├─리플렉션──▶  Tools/card-idea-notebook/authoring-schema.json  ──▶  노트북 폼
+InterventionSpecCatalog.All()  ─┘                      (커밋되는 생성물)                          (JSON만 읽음)
+        (C#)
 ```
 
 `AuthoringSchemaExportTests`가 스키마를 만들어 커밋된 파일과 비교한다. 다르면 **파일을 갱신하고 한 번
@@ -90,33 +143,44 @@ EffectSpecCatalog.All()  ──리플렉션──▶  Tools/card-idea-notebook/a
 | 항목 | 출처 |
 |---|---|
 | `effects[]` — `kind`, `label`, `fields[{name, type, options?}]` | `EffectSpecCatalog`, 각 스펙 타입의 public 필드 |
+| `interventions[]` — **효과와 같은 모양** | `InterventionSpecCatalog`, 각 스펙 타입의 public 필드 |
 | `condition` — `fields[]`, `kinds[]` | `ConditionSpec`, `ConditionKind` |
-| `cardFields[]` — 이름과 **선언 순서** | `CardSpec` |
+| `cardFields` — **분류별** 이름 목록 | `ExecutionCardSpec`, `InterventionCardSpec` |
 | `sides`, `categories`, `grades` | `Side`, `CardCategory`, `CardGrade` |
 | `selectors`, `statusTargets` | `TargetSelectorRef`, `StatusApplyTarget` |
-| `interventions`, `interventionSides` | `InterventionActionRegistry`, `InterventionTargetSideRef` |
 
-`cardFields`의 순서가 직렬화 키 순서를 정한다(§8).
+개입이 효과와 같은 모양인 것은 우연이 아니다. 2026-08-06 계획 3.5가 개입 액션을 `EffectSpec`처럼
+다형화했으므로, **노트북의 개입 폼은 효과 행 렌더러를 그대로 재사용한다.** 진영 제한처럼 액션마다
+다른 파라미터는 그 액션의 `fields`에 실려 나오며 별도 최상위 키를 두지 않는다.
+
+`cardFields`가 분류별인 것도 같은 계획의 결과다 — `CardSpec`이 추상 기반과 실행·개입 두 파생으로
+갈렸고, 분류마다 키 목록과 순서가 다르다. 그 순서가 직렬화 키 순서를 정한다(§8).
 
 상태 목록은 스키마에 넣지 않는다. `Content/Statuses/*.json`이 원본이고 노트북이 그것을 직접 읽는다.
 
 ## 5. 카드 모델
 
-노트북의 내부 모델을 `CardSpec`에 맞춘다.
+노트북의 내부 모델을 `CardSpec` 계열에 맞춘다. `CardSpec`은 추상 기반이고 실행·개입 두 파생이
+있지만(계획 3.5), 노트북은 **모델 하나에 양쪽 필드를 다 두고 분류에 없는 것은 내보내지 않는다** —
+편집 중 분류를 바꿔도 값이 사라지지 않게 하기 위해서다.
 
 ```js
 {
   uid,                                    // 노트북 내부 식별자. 파일에 나가지 않는다
   id, name, side, category,               // id는 슬러그이자 파일명: Cards/<id>.json
-  energyCost, baseExecutionOrder,
-  effects: [{ kind, params: {…}, condition: {…} }],
-  intervention, interventionEffectValue,
-  interventionTargetSide, interventionRequireAdjacent,
+  energyCost,
+  baseExecutionOrder,                     // 실행 카드에서만 파일로 나간다
+  effects: [{ kind, params: {…}, condition: {…} }],   // 실행 카드에서만
+  intervention: { kind, params: {…} },                // 개입 카드에서만. 액션 하나
   grade, tags,
   base,                                   // 저장소에서 읽은 원본 문자열. 신규 카드는 null (§10)
   createdAt, updatedAt
 }
 ```
+
+**개입 행이 효과 행과 같은 모양이고 조건만 없다.** 개입에는 조건 시스템이 없기 때문이다.
+어떤 키가 파일로 나가는지는 §4 스키마의 분류별 `cardFields`가 정하므로, 실행 카드의 `intervention`과
+개입 카드의 `effects`는 모델에 남아 있어도 파일에 실리지 않는다.
 
 사라지는 개념:
 
@@ -155,10 +219,22 @@ EffectSpecCatalog.All()  ──리플렉션──▶  Tools/card-idea-notebook/a
 조건은 기본으로 접혀 있고, 펼치면 `kind`·`n`·`successEffectValue`·`skipOnBasic`이 나온다.
 `condition.kind`가 `None`이면 직렬화에서 통째로 생략된다.
 
-`category`가 `Intervention`이면 효과 섹션이 숨고 개입 섹션이 대신 나온다 —
-`intervention`(등록된 키 드롭다운)·`interventionEffectValue`·`interventionTargetSide`·
-`interventionRequireAdjacent`. `AuthoringValidator`가 개입 카드의 `effects`를 아예 보지 않으므로
-(`continue`) 두 섹션은 배타적이다.
+`category`가 `Intervention`이면 효과 섹션이 숨고 개입 섹션이 대신 나온다. **개입 섹션은 효과 행과
+같은 컨트롤이며 행이 하나뿐이고 조건이 없다** — 액션 드롭다운 하나와, 그 액션의 파라미터 칸들이
+스키마의 `fields`에서 나온다.
+
+```text
+개입
+   [실행 순서 변경 ▾]  값[+1]  대상 진영[적군 ▾]
+```
+
+액션을 바꾸면 파라미터 칸이 통째로 바뀐다. `실행 순서 교환`은 `대상 진영`과 `인접 필요`를,
+`고정`은 **아무 칸도** 내지 않는다. 이것이 계획 3.5가 만든 구조다 — 파라미터가 액션에 속하므로
+쓰지 않는 칸이 화면에 남지 않는다.
+
+두 섹션이 배타적인 근거는 이제 검증기가 아니라 **타입**이다. `ExecutionCardSpec`에는 개입 필드가,
+`InterventionCardSpec`에는 효과 필드가 아예 없고, `MissingMemberHandling.Error`가 잘못 실린 키를
+부팅에서 거부한다.
 
 위치 범위의 글리프 표기(`◆━━━━`)는 `selector` 드롭다운 옆에 남긴다. 기존 도구에서 검증된 표기이고,
 방향 감각을 숫자보다 잘 전달한다.
@@ -219,11 +295,18 @@ diff에 뜨고, 그러면 diff가 리뷰 도구로서 쓸모를 잃는다.
 - camelCase 키, 2칸 들여쓰기(`Formatting.Indented`)
 - 기본값인 멤버 생략(`DefaultValueHandling.Ignore`)
 - 열거형은 이름 문자열(`StringEnumConverter`)
-- `StatusKeyRef`·`InterventionKeyRef`는 중첩 객체가 아니라 평범한 문자열
-- 키 순서는 C# 필드 선언 순서 = 스키마의 `cardFields` 순서. 효과는 `kind`가 맨 앞이고, 파생 클래스
-  필드 다음에 기반 클래스의 `condition`이 온다
+- `StatusKeyRef`는 중첩 객체가 아니라 평범한 문자열 (`InterventionKeyRef`는 계획 3.5가 삭제했다)
+- 개입은 `{"kind": …, …파라미터}` 중첩 객체 하나. 효과 항목과 같은 모양이고 조건만 없다
+- **키 순서는 선언 순서가 아니다.** 스키마의 분류별 `cardFields`가 정하며, 효과·개입은 `kind`가
+  맨 앞이고 효과의 `condition`이 맨 뒤다
 - 예외: `side`·`category`는 기본값이어도 항상 쓴다. 생략하면 로더가 "키 존재"로 하는 무결성 검사를
   통과하지 못한다
+
+**키 순서를 노트북에 상수로 박지 않는다.** 2026-08-06 계획 3.5가 실측한 바로는, Newtonsoft는
+`Order ?? -1`로 안정 정렬하고 리플렉션이 **파생 클래스 필드를 기반보다 먼저** 돌려준다 — "기반
+먼저"라는 직관과 반대다. 그래서 `CardSpec`의 기반 필드에는 명시적 `Order`가 붙어 있다. 스키마
+생성기가 빈 인스턴스를 직렬화해 순서를 읽어 싣고, 노트북은 그것을 따르기만 한다. C# 쪽이 필드를
+재배치하면 스키마가 따라 바뀌고 골든 비교가 한 번 실패해 알려준다.
 
 이것을 **라운드트립 테스트로 잠근다**(§12).
 
@@ -238,7 +321,7 @@ diff에 뜨고, 그러면 diff가 리뷰 도구로서 쓸모를 잃는다.
 |---|---|
 | `id` 없음·형식 위반(`^[a-z0-9_]+$`)·중복 | `CardContentLoader`의 필수 키와 중복 판정 |
 | `name`·`side`·`category` 없음 | `CardContentLoader.RequiredKeys` |
-| 개입 카드의 키 없음·미등록 키 | `AuthoringValidator` |
+| 개입 카드의 액션 없음·모르는 액션 종류 | `AuthoringValidator`, `InterventionSpecJsonConverter` |
 | 등록되지 않은 상태 키 | `ApplyStatusSpec`·`ConsumeStatusSpec`·`TriggerStatusSpec`의 `Validate` |
 | `consume_status`의 `maxAmount < 1` | `ConsumeStatusSpec.Validate` |
 | 풀의 없는 카드 id·풀 안 중복 | `PoolContentLoader` |
@@ -477,8 +560,9 @@ Markdown을 읽지 않으므로 참고 메모로 둔다.
 
 1. 저장소의 카드 26장과 풀 1개를 읽어 그대로 내보내면 `git status`가 깨끗하다.
 2. 노트북에서 새 카드를 만들어 내보낸 뒤 `dotnet test`가 통과한다.
-3. `EffectSpecCatalog`에 효과를 추가하면 `dotnet test`가 스키마를 갱신하고 한 번 실패하며, 재실행
-   시 통과하고, 노트북 폼에 새 효과가 나타난다 — 노트북 소스는 건드리지 않는다.
+3. `EffectSpecCatalog`나 `InterventionSpecCatalog`에 항목을 추가하면 `dotnet test`가 스키마를
+   갱신하고 한 번 실패하며, 재실행 시 통과하고, 노트북 폼에 새 항목이 나타난다 — 노트북 소스는
+   건드리지 않는다.
 4. 등급 없는 카드를 풀에 담으면 노트북이 내보내기를 막고, 같은 문구를 `PoolContentLoader`도 낸다.
 5. 노트북이 카드 파일을 지우지 않는다.
 6. 카드 파일 하나를 일부러 깨뜨려도 노트북이 열리고, 그 파일은 오류로 표시되며 쓰기 대상에서
