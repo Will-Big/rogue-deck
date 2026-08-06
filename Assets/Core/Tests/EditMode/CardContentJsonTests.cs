@@ -33,7 +33,16 @@ namespace FateWeaver.Tests
         {
             var json = ContentJson.Write(new ExecutionCardSpec { Id = "x", Name = "x" });
 
-            StringAssert.DoesNotContain("interventionEffectValue", json);
+            StringAssert.DoesNotContain("energyCost", json);
+            StringAssert.DoesNotContain("baseExecutionOrder", json);
+            StringAssert.DoesNotContain("effects", json);
+            StringAssert.DoesNotContain("grade", json);
+            StringAssert.DoesNotContain("tags", json);
+
+            // side·category는 0번 열거값이어도 Include 처방 때문에 반드시 남는다. 이 둘이 생략되면
+            // CardContentLoader의 필수 키 검사가 "키가 있다"로 통과해 카드가 조용히 기본값을 갖는다.
+            StringAssert.Contains("\"side\": \"Player\"", json);
+            StringAssert.Contains("\"category\": \"Execution\"", json);
         }
 
         [Test]
