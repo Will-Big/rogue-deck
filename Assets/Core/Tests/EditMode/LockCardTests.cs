@@ -36,7 +36,8 @@ namespace FateWeaver.Tests
                 System.Array.Empty<EffectData>())
                 { EnergyCost = 1, Category = CardCategory.Intervention,
                   InterventionAction = new FateWeaver.Core.Intervention.InterventionActionData(
-                      FateWeaver.Core.Intervention.InterventionActionKeys.ChangeExecutionOrder, 1, -2) };
+                      FateWeaver.Core.Intervention.InterventionActionKeys.ChangeExecutionOrder, 1,
+                      new FateWeaver.Core.Intervention.ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)) };
             var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { pull }, 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 

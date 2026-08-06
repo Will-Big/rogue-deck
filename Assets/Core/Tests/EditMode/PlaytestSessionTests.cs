@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
                 session.CurrentOrder.Select(card => card.Def.Id).ToArray());
 
             var interventionResult = session.ApplyInterventionAction(
-                new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0),
+                new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)),
                 "enemy_jab",
                 "quick_cut");
 

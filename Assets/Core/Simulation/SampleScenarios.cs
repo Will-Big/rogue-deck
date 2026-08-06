@@ -60,7 +60,7 @@ namespace FateWeaver.Simulation
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0),
+                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)),
                         "enemy_jab",
                         "quick_cut")
                 });
@@ -103,7 +103,7 @@ namespace FateWeaver.Simulation
                 interventionPlays: new[]
                 {
                     new InterventionPlaySpec(
-                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, effectValue: 0),
+                        new InterventionActionData(InterventionActionKeys.SwapExecutionOrder, interventionCost: 1, new SwapExecutionOrderPayload(TargetSide: null, RequireAdjacent: false)),
                         "quick_cut",
                         "wrist_cut")
                 });
@@ -174,7 +174,7 @@ namespace FateWeaver.Simulation
                     new InterventionPlaySpec(
                         new InterventionActionData(
                             InterventionActionKeys.ChangeExecutionOrder,
-                            interventionCost: 1, effectValue: 2),
+                            interventionCost: 1, new ChangeExecutionOrderPayload(Delta: 2, TargetSide: null)),
                         "wrist_cut")
                 });
         }

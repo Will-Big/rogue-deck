@@ -29,7 +29,7 @@ namespace FateWeaver.Tests.EditMode
             public FakeInterventionHandler(InterventionActionKey key) => Key = key;
 
             public string Describe(InterventionActionData action, DescriptionContext context)
-                => "action:" + action.EffectValue;
+                => "action:" + action.Payload;
         }
 
         [Test]

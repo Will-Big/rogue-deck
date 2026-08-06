@@ -7,19 +7,19 @@ namespace FateWeaver.Core.Intervention
         public TargetingRequirement Targeting => TargetingRequirement.RailCards(2);
 
         public bool CanApply(InterventionPlayContext ctx)
-            => ctx != null
-                && ctx.State != null
+        {
+            var payload = PayloadOf(ctx);
+            return payload != null
                 && ctx.Target != null
                 && ctx.SecondaryTarget != null
-                && ctx.Intervention != null
-                && ctx.Intervention.Key == Key
                 && !ctx.Target.IsLocked
                 && !ctx.SecondaryTarget.IsLocked
                 && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost
-                && (ctx.Intervention.TargetSide == null
-                    || (ctx.Target.Def.Side == ctx.Intervention.TargetSide
-                        && ctx.SecondaryTarget.Def.Side == ctx.Intervention.TargetSide))
-                && AreAdjacentIfRequired(ctx);
+                && (payload.TargetSide == null
+                    || (ctx.Target.Def.Side == payload.TargetSide
+                        && ctx.SecondaryTarget.Def.Side == payload.TargetSide))
+                && AreAdjacentIfRequired(ctx, payload);
+        }
 
         public void Apply(InterventionPlayContext ctx)
         {
@@ -36,9 +36,16 @@ namespace FateWeaver.Core.Intervention
             ctx.SecondaryTarget.ExecutionOrder = executionOrder;
         }
 
-        private static bool AreAdjacentIfRequired(InterventionPlayContext ctx)
+        private SwapExecutionOrderPayload PayloadOf(InterventionPlayContext ctx)
+            => ctx != null && ctx.State != null && ctx.Intervention != null
+                && ctx.Intervention.Key == Key
+                    ? ctx.Intervention.Payload as SwapExecutionOrderPayload
+                    : null;
+
+        private static bool AreAdjacentIfRequired(
+            InterventionPlayContext ctx, SwapExecutionOrderPayload payload)
         {
-            if (!ctx.Intervention.RequireAdjacentTargets)
+            if (!payload.RequireAdjacent)
             {
                 return true;
             }

@@ -100,7 +100,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(0, def.Effects.Count);
             Assert.AreEqual(InterventionActionKeys.ChangeExecutionOrder, def.InterventionAction.Key);
             Assert.AreEqual(1, def.InterventionAction.InterventionCost);
-            Assert.AreEqual(-2, def.InterventionAction.EffectValue);
+            Assert.AreEqual(-2, ((ChangeExecutionOrderPayload)def.InterventionAction.Payload).Delta);
         }
 
         [Test]
