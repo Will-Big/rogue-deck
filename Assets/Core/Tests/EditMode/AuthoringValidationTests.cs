@@ -3,6 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Status;
 using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Authoring.Json;
 
 namespace FateWeaver.Tests
 {
@@ -76,15 +77,24 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Unknown_intervention_key_fails()
+        public void Unknown_intervention_kind_is_rejected_while_reading()
+        {
+            Assert.Throws<Newtonsoft.Json.JsonSerializationException>(
+                () => ContentJson.Read<CardSpec>(
+                    "{\"id\":\"t\",\"name\":\"t\",\"side\":\"Player\",\"category\":\"Intervention\","
+                    + "\"intervention\":{\"kind\":\"no_such_action\"}}"));
+        }
+
+        [Test]
+        public void Intervention_card_without_an_action_fails()
         {
             var errors = AuthoringValidator.Validate(
                 new[] { new InterventionCardSpec {
                     Id = "t", Name = "t", Side = Side.Player,
-                    Category = CardCategory.Intervention, EnergyCost = 1,
-                    Intervention = new InterventionKeyRef { Id = "no_such_action" } } },
+                    Category = CardCategory.Intervention, EnergyCost = 1 } },
                 AuthoringContext.Default());
-            Assert.IsTrue(errors.Any(e => e.Contains("no_such_action")));
+
+            Assert.IsTrue(errors.Any(e => e.Contains("requires an action key")));
         }
 
         [Test]

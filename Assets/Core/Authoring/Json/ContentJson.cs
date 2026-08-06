@@ -49,6 +49,7 @@ namespace FateWeaver.Core.Authoring.Json
 
                 settings.Converters.Add(new EffectSpecJsonConverter());
                 settings.Converters.Add(new StatusSpecJsonConverter());
+                settings.Converters.Add(new InterventionSpecJsonConverter());
             }
 
             return settings;

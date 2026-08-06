@@ -139,18 +139,18 @@ namespace FateWeaver.Tests
                 Side = Side.Player,
                 Category = CardCategory.Intervention,
                 EnergyCost = 1,
-                Intervention = new InterventionKeyRef { Id = "change_execution_order" },
-                InterventionEffectValue = -2,
-                InterventionTargetSide = InterventionTargetSideRef.Player,
-                InterventionRequireAdjacent = true
+                Intervention = new SwapExecutionOrderSpec
+                {
+                    TargetSide = InterventionTargetSideRef.Player,
+                    RequireAdjacent = true
+                }
             };
 
             var restored = (InterventionCardSpec)ContentJson.Read<CardSpec>(ContentJson.Write(original));
+            var swap = (SwapExecutionOrderSpec)restored.Intervention;
 
-            Assert.AreEqual("change_execution_order", restored.Intervention.Id);
-            Assert.AreEqual(-2, restored.InterventionEffectValue);
-            Assert.AreEqual(InterventionTargetSideRef.Player, restored.InterventionTargetSide);
-            Assert.IsTrue(restored.InterventionRequireAdjacent);
+            Assert.AreEqual(InterventionTargetSideRef.Player, swap.TargetSide);
+            Assert.IsTrue(swap.RequireAdjacent);
         }
 
         [Test]
@@ -199,6 +199,28 @@ namespace FateWeaver.Tests
             Assert.Throws<JsonSerializationException>(() => ContentJson.Read<CardSpec>(
                 "{\"id\":\"a\",\"name\":\"a\",\"side\":\"Player\",\"category\":\"Execution\","
                 + "\"intervention\":\"lock\"}"));
+        }
+
+        [Test]
+        public void Intervention_kind_picks_the_concrete_intervention_spec()
+        {
+            var spec = (InterventionCardSpec)ContentJson.Read<CardSpec>(
+                "{\"id\":\"d\",\"name\":\"d\",\"side\":\"Player\",\"category\":\"Intervention\","
+                + "\"energyCost\":1,\"intervention\":{\"kind\":\"change_execution_order\","
+                + "\"delta\":1,\"targetSide\":\"Enemy\"}}");
+
+            var change = (ChangeExecutionOrderSpec)spec.Intervention;
+            Assert.AreEqual(1, change.Delta);
+            Assert.AreEqual(InterventionTargetSideRef.Enemy, change.TargetSide);
+        }
+
+        [Test]
+        public void Swap_spec_rejects_a_parameter_it_does_not_own()
+        {
+            Assert.Throws<JsonSerializationException>(() => ContentJson.Read<CardSpec>(
+                "{\"id\":\"c\",\"name\":\"c\",\"side\":\"Player\",\"category\":\"Intervention\","
+                + "\"energyCost\":1,\"intervention\":{\"kind\":\"swap_execution_order\","
+                + "\"delta\":1}}"));
         }
 
         [Test]

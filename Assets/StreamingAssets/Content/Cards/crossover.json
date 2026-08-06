@@ -4,8 +4,10 @@
   "side": "Player",
   "category": "Intervention",
   "energyCost": 1,
-  "intervention": "swap_execution_order",
-  "interventionRequireAdjacent": true,
+  "intervention": {
+    "kind": "swap_execution_order",
+    "requireAdjacent": true
+  },
   "grade": "Common",
   "tags": [
     "시작",

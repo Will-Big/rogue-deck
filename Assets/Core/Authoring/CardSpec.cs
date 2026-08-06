@@ -7,11 +7,12 @@ namespace FateWeaver.Core.Authoring
     /// 가지므로, 개입 카드가 실행 순서를·실행 카드가 개입 키를 드는 오저작을 타입이 막는다
     /// (ContentJson의 MissingMemberHandling.Error가 부팅에서 거부한다).
     ///
-    /// 모든 필드에 명시적 Order가 붙어 있다: .NET 리플렉션이 Type.GetFields를 파생 타입
-    /// 선언분부터 반환하기 때문에(실측: Derived.C, Derived.D, Base.A, Base.B 순), Order 없이는
-    /// 파생 클래스의 무순서 필드(BaseExecutionOrder·Effects 등)가 이 기반 필드들보다 먼저
-    /// 직렬화된다. Order가 없는 필드끼리는 이 발견 순서로 동률이 갈린다 — 그래서 기반 필드
-    /// 전부에 음수 Order를 줘 파생 필드(무순서, 기본값 -1)보다 앞서게 고정한다.</summary>
+    /// 이 기반 클래스의 필드에는 모두 명시적 Order가 붙어 있다(파생 클래스의 필드는 그렇지 않다):
+    /// .NET 리플렉션이 Type.GetFields를 파생 타입 선언분부터 반환하기 때문에(실측: Derived.C,
+    /// Derived.D, Base.A, Base.B 순), Order 없이는 파생 클래스의 무순서 필드(BaseExecutionOrder·
+    /// Effects 등)가 이 기반 필드들보다 먼저 직렬화된다. Order가 없는 필드끼리는 이 발견 순서로
+    /// 동률이 갈린다 — 그래서 기반 필드 전부에 음수 Order를 줘 파생 필드(무순서, 기본값 -1)보다
+    /// 앞서게 고정한다.</summary>
     public abstract class CardSpec
     {
         [JsonProperty(Order = -10)]
@@ -52,13 +53,11 @@ namespace FateWeaver.Core.Authoring
         public EffectSpec[] Effects;
     }
 
-    /// <summary>개입 카드의 저작 데이터. 레일 위 카드를 조작하며 효과 목록을 갖지 않는다.</summary>
+    /// <summary>개입 카드의 저작 데이터. 액션별 파라미터는 InterventionSpec이 소유하므로 이 클래스는
+    /// 액션이 늘어도 자라지 않는다 — 계획 3.5 이전에는 lock 카드가 쓰지 않는 칸 셋을 들고 있었다.</summary>
     public sealed class InterventionCardSpec : CardSpec
     {
-        public InterventionKeyRef Intervention;
-        public int InterventionEffectValue;
-        public InterventionTargetSideRef InterventionTargetSide;
-        public bool InterventionRequireAdjacent;
+        public InterventionSpec Intervention;
     }
 
     /// <summary>개입 대상 진영 제한. Any=제한 없음, Player=재촉류, Enemy=유예류.</summary>
