@@ -390,6 +390,31 @@
     .repo-problem .where { color: var(--muted); font-size: 11px; }
     .repo-problem.is-error { border-color: var(--danger); }
     .repo-problem.is-warning { border-color: var(--warning); }
+    .repo-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+    .repo-entry {
+      display: grid;
+      gap: 3px;
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel);
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .repo-entry.is-selected { border-color: var(--gold); }
+    .repo-entry .headline { display: flex; justify-content: space-between; gap: 8px; }
+    .repo-entry .headline .id { color: var(--muted); font-size: 11px; }
+    .repo-entry .meta { color: var(--muted); font-size: 11px; }
+    .repo-entry .badge { font-size: 11px; }
+    .repo-entry .badge.is-conflict { color: var(--danger); }
+    .repo-entry .badge.is-modified,
+    .repo-entry .badge.is-new { color: var(--warning); }
+    .repo-entry .badge.is-error { color: var(--danger); }
+    .repo-fields { display: grid; gap: 6px; font-size: 13px; }
+    .repo-fields div { display: flex; gap: 10px; }
+    .repo-fields dt { min-width: 84px; color: var(--muted); }
 
     @media (max-width: 1280px) {
       body { min-width: 920px; }
@@ -589,6 +614,24 @@
             이 브라우저는 폴더 연결을 지원하지 않습니다. Chrome이나 Edge로 열어 주세요.
           </p>
           <button type="button" id="repo-reload" disabled>저장소 다시 읽기</button>
+          <div class="repo-tabs" role="group" aria-label="목록 종류">
+            <button type="button" id="repo-tab-cards" class="mode-button is-active">카드</button>
+            <button type="button" id="repo-tab-pools" class="mode-button">풀</button>
+          </div>
+          <label>
+            검색
+            <input id="repo-search" type="search" placeholder="이름 · id · 태그">
+          </label>
+          <label>
+            필터
+            <select id="repo-filter">
+              <option value="all">전체</option>
+              <option value="modified">수정됨만</option>
+              <option value="conflict">충돌만</option>
+              <option value="error">오류만</option>
+              <option value="orphan">고아만</option>
+            </select>
+          </label>
         </div>
         <div class="repo-list" id="repo-list"></div>
       </div>
@@ -3011,6 +3054,10 @@
       unsupported: byId("repo-unsupported"),
       count: byId("repo-count"),
       list: byId("repo-list"),
+      tabCards: byId("repo-tab-cards"),
+      tabPools: byId("repo-tab-pools"),
+      search: byId("repo-search"),
+      filter: byId("repo-filter"),
       summary: byId("repo-summary"),
       problems: byId("repo-problems"),
       detailTitle: byId("repo-detail-title"),
@@ -3317,13 +3364,158 @@
       }
     }
 
+    const STATE_BADGES = Object.freeze({
+      same: "● 저장소와 동일",
+      modified: "✎ 수정됨",
+      new: "＋ 신규",
+      conflict: "⚠ 충돌",
+      missing: "− 저장소에만 있음",
+    });
+    const SIDE_LABELS = Object.freeze({ Player: "아군", Enemy: "적군" });
+    const CATEGORY_LABELS = Object.freeze({ Execution: "실행", Intervention: "개입" });
+
+    let tab = "cards";
+    let query = "";
+    let filter = "all";
+
+    /// 검증 오류가 붙은 카드 id. 목록의 `오류만` 필터와 줄 배지가 같은 판정을 쓰도록
+    /// 한 곳에서 만든다.
+    function erroredCardIds() {
+      const ids = new Set();
+      for (const error of repoStore.validation.errors) {
+        if (error.scope === "card") ids.add(error.id);
+      }
+      for (const entry of repoStore.quarantined) {
+        if (entry.scope === "card") ids.add(entry.name.replace(/\.json$/, ""));
+      }
+
+      return ids;
+    }
+
+    function cardEntry(row) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "repo-entry";
+      if (selection.scope === "card" && selection.id === row.card.id) {
+        button.classList.add("is-selected");
+      }
+
+      const headline = document.createElement("div");
+      headline.className = "headline";
+      const name = document.createElement("span");
+      name.textContent = row.card.name || "(이름 없음)";
+      const id = document.createElement("span");
+      id.className = "id";
+      id.textContent = row.card.id || "(id 없음)";
+      headline.append(name, id);
+      button.append(headline);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const parts = [
+        SIDE_LABELS[row.card.side] ?? row.card.side,
+        CATEGORY_LABELS[row.card.category] ?? row.card.category,
+        `비용${row.card.energyCost}`,
+      ];
+      if (row.card.category === "Execution") parts.push(`순서${row.card.baseExecutionOrder}`);
+      if (row.pools.length) parts.push(row.pools.join("·"));
+      meta.textContent = parts.join(" · ");
+      button.append(meta);
+
+      const badge = document.createElement("div");
+      badge.className = `badge is-${row.hasError ? "error" : row.state}`;
+      const tags = (row.card.tags ?? []).join(" · ");
+      badge.textContent = row.hasError
+        ? `⚠ 오류${tags ? ` — ${tags}` : ""}`
+        : `${STATE_BADGES[row.state] ?? row.state}${tags ? ` — ${tags}` : ""}`;
+      button.append(badge);
+
+      button.addEventListener("click", () => selectEntry("card", row.card.id));
+      return button;
+    }
+
+    function renderCardList() {
+      const rows = core.cardListView({
+        cards: repoStore.cards,
+        states: repoStore.cardStates,
+        errorIds: erroredCardIds(),
+        membership: repoStore.membership,
+        query,
+        filter,
+      });
+
+      elements.count.textContent = `${rows.length}/${repoStore.cards.length}`;
+      for (const row of rows) elements.list.append(cardEntry(row));
+    }
+
+    function fieldRow(term, value) {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt");
+      dt.textContent = term;
+      const dd = document.createElement("dd");
+      dd.textContent = value;
+      row.append(dt, dd);
+      return row;
+    }
+
+    /// 편집기는 계획 C다. 여기서는 카드가 무엇인지 읽을 수 있을 만큼만 보여주고,
+    /// 실제 값의 원본은 우측 원문이 맡는다.
+    function renderCardDetail(card) {
+      elements.detailTitle.textContent = `${card.name} · ${card.id}`;
+
+      const fields = document.createElement("dl");
+      fields.className = "repo-fields";
+      fields.append(
+        fieldRow("진영", SIDE_LABELS[card.side] ?? card.side),
+        fieldRow("분류", CATEGORY_LABELS[card.category] ?? card.category),
+        fieldRow("비용", String(card.energyCost)),
+        fieldRow("등급", card.grade),
+        fieldRow("태그", (card.tags ?? []).join(" · ") || "없음"),
+        fieldRow("소속 풀", (repoStore.membership.get(card.id) ?? []).join(" · ") || "없음"),
+      );
+
+      if (card.category === "Execution") {
+        fields.append(
+          fieldRow("실행 순서", String(card.baseExecutionOrder)),
+          fieldRow("효과", card.effects === null
+            ? "없음"
+            : card.effects.map((effect) => effect.kind).join(" → ") || "0개"),
+        );
+      } else {
+        fields.append(fieldRow("개입", card.intervention?.kind ?? "없음"));
+      }
+
+      if (card.unknownKeys.length) {
+        fields.append(fieldRow("모르는 키", card.unknownKeys.join(" · ")));
+      }
+
+      elements.detail.append(fields);
+      elements.sourceTitle.textContent = `Cards/${card.id}.json`;
+      elements.source.textContent = card.base;
+    }
+
     function render() {
       elements.reload.disabled = !repoStore.connected;
-      elements.count.textContent = repoStore.connected
-        ? String(repoStore.cards.length)
-        : "–";
+      elements.list.replaceChildren();
+      elements.detail.replaceChildren();
+      elements.detailTitle.textContent = "선택된 항목 없음";
+      elements.sourceTitle.textContent = "JSON 원문";
+      elements.source.textContent = "";
+
       renderSummary();
       renderProblems();
+
+      if (!repoStore.connected) {
+        elements.count.textContent = "–";
+        return;
+      }
+
+      if (tab === "cards") renderCardList();
+
+      if (selection.scope === "card") {
+        const card = repoStore.cardsById.get(selection.id);
+        if (card) renderCardDetail(card);
+      }
     }
 
     function setMode(mode) {
@@ -3332,6 +3524,16 @@
       elements.markdownWorkspace.hidden = repo;
       elements.modeRepo.classList.toggle("is-active", repo);
       elements.modeMarkdown.classList.toggle("is-active", !repo);
+    }
+
+    /// 탭은 좌측 목록만 바꾼다. 중앙과 우측은 선택한 대상을 따라가므로(설계 11.1)
+    /// 탭을 옮길 때 선택을 비운다 - 카드 탭에서 고른 카드가 풀 탭에 남으면 어긋난다.
+    function setTab(next) {
+      tab = next;
+      selection = { scope: "", id: "" };
+      elements.tabCards.classList.toggle("is-active", next === "cards");
+      elements.tabPools.classList.toggle("is-active", next === "pools");
+      render();
     }
 
     async function restoreRoot() {
@@ -3362,6 +3564,16 @@
     }
 
     elements.reload.addEventListener("click", reloadRepo);
+    elements.search.addEventListener("input", () => {
+      query = elements.search.value;
+      render();
+    });
+    elements.filter.addEventListener("change", () => {
+      filter = elements.filter.value;
+      render();
+    });
+    elements.tabCards.addEventListener("click", () => setTab("cards"));
+    elements.tabPools.addEventListener("click", () => setTab("pools"));
     elements.modeMarkdown.addEventListener("click", () => setMode("markdown"));
     elements.modeRepo.addEventListener("click", () => setMode("repo"));
 

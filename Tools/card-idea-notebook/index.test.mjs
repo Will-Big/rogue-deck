@@ -2506,3 +2506,14 @@ test("요약과 문제 목록 자리가 마크업에 있다", () => {
   assert.match(html, /id="repo-summary"/);
   assert.match(html, /id="repo-problems"/);
 });
+
+test("저장소 탭과 검색·필터가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="repo-tab-cards"/);
+  assert.match(html, /id="repo-tab-pools"/);
+  assert.match(html, /id="repo-search"/);
+  assert.match(html, /id="repo-filter"/);
+  for (const label of ["전체", "수정됨만", "충돌만", "오류만", "고아만"]) {
+    assert.match(html, new RegExp(`>${label}<\\/option>`));
+  }
+});
