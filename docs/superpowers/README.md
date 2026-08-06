@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-08-05
+- 개정일: 2026-08-06
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
@@ -109,6 +109,9 @@
 (효과의 `IEffectPayload`와 같은 형태), `lock` 카드가 들고 있던 빈 칸 넷이 사라졌다. 카드 한 장은
 개입 액션을 하나만 갖는다 — 복수 개입은 대상 묶기 규칙과 비용 귀속 설계가 딸려 오므로 범위 밖이다.
 
+**계획 4의 선행은 2026-08-06 기준 전부 풀렸다.** 3a~3d와 3.5가 끝나 콘텐츠 원본이 JSON 하나로
+확정됐으므로, 이 흐름에서 남은 것은 계획 4를 쓰는 일뿐이다.
+
 **3d가 3b·3c에서 물려받는 것:** 런타임이 JSON을 읽는다. `ContentBootstrap.Load(콘텐츠루트)`가
 **상태** → 카드 → 덱·풀 → 캐릭터 순서로 카탈로그 다섯을 만들어 `GameContent`로 돌려주고,
 `BattleScreenController`가 그것을 부팅 1회로 상주시킨다. Unity 쪽 경로 상수는 `UnityContentRoot.Path`
@@ -166,30 +169,46 @@
   `StatusSpecJsonConverter`가 판별자 표를 `CombatRegistries.Statuses()`에서 만든다 — 각 행동이
   `NewSpec()`으로 자기 스펙 타입을 답하므로 코드에 값 목록이 남지 않는다.
 
-### 현재 수치 (계획 3d 완료 시점, 2026-08-05 실측)
+### 현재 수치 (계획 3.5 완료 시점, 2026-08-06 실측, master `a5b3a72`)
 
-헤드리스 **511/511**, Unity EditMode **659 total / 652 passed / 0 failed / 7 skipped**,
-카드 JSON **26**(플레이어 22 + fixture 4, 전부 등급·태그 보유), 상태 JSON **11**,
-덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. Unity 씬은 `FateWeaverBattle`·`SampleScene` 둘.
+헤드리스 **525/525**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**,
+카드 JSON **26**(실행 22 + 개입 4 중 fixture 4, 플레이어 카드는 전부 등급·태그 보유), 상태 JSON **11**,
+덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. 프로젝트 씬은 `FateWeaverBattle`·`SampleScene` 둘
+(`Settings/Scenes/URP2DSceneTemplate`은 URP 템플릿 자산이며 프로젝트 씬이 아니다).
 헤드리스 명령은 `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`.
+
 계획 3d가 대조·중복 테스트를 지우고 규칙 테스트를 합성 픽스처로 옮기면서 총계가 계획 3c 시점
-(헤드리스 533, Unity 682)보다 줄었다 — 실패가 늘어난 것이 아니라 테스트 자체가 정리된 결과다.
+(헤드리스 533, Unity 682)보다 줄었고, 계획 3.5가 다형화 검증과 **저장소 카드 26장의 왕복 바이트
+동일성 테스트**를 더하며 다시 늘었다(헤드리스 511 → 525). 그 왕복 테스트는 카드 JSON의 키 순서와
+생략 규칙을 통째로 잠그므로, C# 저작 타입의 필드를 재배치하면 여기서 먼저 실패한다.
 
 ## 후속 작업 대기열
 
-- [ ] **카드 상태 UI의 JSON 런타임 연계** — 현재 완료된 범위는 JSON과 독립적인
+- [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
   `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
-  컴포넌트와 프리팹이다. 상태 원본 확정은 계획 3c가 끝냈고(`master` 머지는 사용자 승인 대기),
-  카드별 부착 상태 키 계약까지 `master`에 반영된 뒤
-  [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의 Task 3–5를 재개한다.
-  JSON의 상태 키·표시 이름·설명·아이콘 키를 표시 투영에 연결하고, 손패·실행 레일·더미 팝업이 하나의
-  공유 툴팁을 쓰도록 배선한다. 카드에는 카드에 직접 붙은 상태만 표시하며, SO나 C# 문자열 임시
-  fallback은 추가하지 않는다.
+  컴포넌트와 프리팹이다. 상태 원본 확정(계획 3c)은 `master`에 들어갔다.
+  **막고 있는 것은 "카드별 부착 상태 키 계약"이며, 그것이 아직 존재하지 않는다** — 2026-08-06 확인
+  결과 `Content/Cards/*.json` 26장 어디에도 부착 상태를 적는 키가 없다. 그 계약을 설계하는 작업은
+  계획도 스펙도 없으므로, [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의
+  Task 3–5는 **재개 조건이 스스로 충족되지 않는다.** 계약을 설계하기로 정하거나, 이 항목을 정리하거나
+  둘 중 하나를 먼저 결정해야 한다.
+  (재개하게 되면: JSON의 상태 키·표시 이름·설명·아이콘 키를 표시 투영에 연결하고, 손패·실행 레일·
+  더미 팝업이 하나의 공유 툴팁을 쓰도록 배선한다. 카드에는 카드에 직접 붙은 상태만 표시하며, SO나
+  C# 문자열 임시 fallback은 추가하지 않는다.)
 
 - [ ] **디버프 3종의 Unity 표시 확인** — 약화·취약·손상은 코어에 구현되어 있고
   [보관된 계획](archive/plans/2026-07-30-status-rule-and-debuffs.md)이 헤드리스로 검증했다. 남은 것은
   전투 화면에서 세 상태가 유닛에 옳게 표시되는지 **눈으로** 보는 것뿐이다(규칙 17: 시각 확인은
   사용자 몫). 표시가 어긋나면 그때 별도 작업으로 잡는다.
+- [ ] **계획 3.5가 남긴 콘텐츠·구조 항목 셋** — 전부 코드는 준비돼 있고 결정만 남았다.
+  (a) **복수 개입** — 카드 한 장에 개입 액션 여럿. `InterventionPlayResolver`는 이미 리스트를 받지만,
+  `CardDefinition.InterventionAction`이 단수이고 `DeckCombatSession`이 카드당 `TargetingRequirement`
+  하나만 뽑으며 비용이 액션마다 차감되므로, 대상 묶기 규칙과 비용 귀속을 함께 설계해야 한다.
+  (b) **`lock` 개입 카드와 `SwapExecutionOrderSpec.TargetSide`를 쓰는 카드가 없다** — 액션은 등록돼
+  있고 테스트도 덮지만 대응 콘텐츠가 없다. 카드 디자인 결정이다.
+  (c) **`BattleScreenController`의 입력 핸들러 다섯** — 전투 화면 분해가 남긴 후속이며 설계 §4.1대로
+  백로그 P2(코어 이벤트 확충) 이후로 미룬다.
+
 - [ ] **`StatusLifetime` count 의미 단일화** — 상태마다 `count`가 "남은 턴"인지 "세기"인지 다르고,
   지금은 상태 콘텐츠의 수명 종류가 그것을 정한다. 보관된 상태 규칙 계획이 "영향 범위가 넓어 별도
   계획으로 분리한다"고 명시하고 미뤄둔 항목이다. `StatusBag`·`ApplyStatusPayload`·`ApplyStatusSpec`·
