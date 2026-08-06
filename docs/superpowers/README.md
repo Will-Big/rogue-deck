@@ -74,6 +74,7 @@
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
+| [노트북 저장소 읽기 UI (계획 B)](plans/2026-08-07-notebook-repo-read-ui.md) | `active` | 폴더 연결과 읽기, 탭·3분할 골격, 요약과 문제 목록, 카드 목록·원문, 풀 편성·분포. **읽기 전용** — 편집과 파일 쓰기는 계획 C |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
@@ -201,16 +202,15 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 
 ## 후속 작업 대기열
 
-- [ ] **노트북 UI 개편 (계획 B) — 문서를 아직 쓰지 않았다.** 선행인
-  [계획 A](archive/plans/2026-08-05-notebook-json-core.md)가 2026-08-07 완료되어, 노트북 코어에
-  순수 함수 여덟(`parseAuthoringSchema`·`readCardJson`·`writeCardJson`·`readPoolJson`·
-  `writePoolJson`·`validateContent`·`resolveCardState`·`resolvePoolState`)이 올라가 있다.
-  **아직 아무도 호출하지 않으며 노트북은 여전히 Markdown 저작 도구로 동작한다.** 계획 B의 범위는
-  설계 §6 효과 편집기 UI, §7 풀 편성 화면, §11 화면 구성, §12 쓰기 정책의 diff 요약과 파일 쓰기
-  (File System Access API), §14 마이그레이션(`SCHEMA_VERSION` 7), Markdown 경로 제거,
-  `시작 카드 풀.md` 삭제, [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md)
-  §1 개정(저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
-  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을 끝냈고 **2·4·5·6·8이 남아 있다.**
+- [ ] **노트북 편집·쓰기 (계획 C) — 문서를 아직 쓰지 않았다.**
+  [계획 B](plans/2026-08-07-notebook-repo-read-ui.md)가 머지되면 쓴다. 범위는 설계 §6 효과·개입
+  편집기, 카드 기본 필드 폼, §7 풀 편성 조작과 카드 화면의 소속 풀 체크박스, 미반영 저장과
+  §14 마이그레이션(`SCHEMA_VERSION` 7), §10.3 충돌 해결 UI, §12 diff 요약과 파일 쓰기(폴더 권한을
+  `readwrite`로 승격), Markdown 경로와 그 UI 스크립트 제거, `시작 카드 풀.md` 삭제,
+  [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md) §1 개정
+  (저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
+  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을, 계획 B가 6과 8의 절반을 맡고, **2·4·5와 8의
+  나머지가 계획 C 몫이다.**
 
 - [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
   `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
