@@ -168,9 +168,9 @@
   `StatusSpecJsonConverter`가 판별자 표를 `CombatRegistries.Statuses()`에서 만든다 — 각 행동이
   `NewSpec()`으로 자기 스펙 타입을 답하므로 코드에 값 목록이 남지 않는다.
 
-### 현재 수치 (계획 A 완료 시점, 2026-08-07 실측)
+### 현재 수치 (계획 B 완료 시점, 2026-08-07 실측)
 
-헤드리스 **526/526**, 노트북 **102/102**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
+헤드리스 **526/526**, 노트북 **126/126**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
 (EditMode는 계획 3.5 시점 수치이며 계획 A 이후 재측정하지 않았다 — 신규 테스트는 `Tests/Headless`가
 포함하는 EditMode 폴더에 있으므로 Unity 쪽도 1 늘어날 것이다).
 카드 JSON **26**(실행 22 + 개입 4 중 fixture 4, 플레이어 카드는 전부 등급·태그 보유), 상태 JSON **11**,
@@ -198,19 +198,21 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 계획 A는 헤드리스에 `AuthoringSchemaExportTests` 하나(525 → 526)를, 노트북에 44개(58 → 102)를
 더했다. 노트북 쪽의 축은 **저장소 카드 26장·풀 1개의 왕복 바이트 동일성**이며, C# 왕복 테스트와
 같은 것을 브라우저 쪽에서 잠근다 — 둘이 어긋나면 노트북이 저작하지 않은 카드까지 diff에 띄운다.
+계획 B는 노트북에 24개를 더했다(102 → 126). 집계·검색·요약 규칙은 코어의 순수 함수라 단위
+테스트가 덮고, 브라우저 API와 DOM은 마크업 존재 검사만 자동화된다.
 
 ## 후속 작업 대기열
 
-- [ ] **노트북 UI 개편 (계획 B) — 문서를 아직 쓰지 않았다.** 선행인
-  [계획 A](archive/plans/2026-08-05-notebook-json-core.md)가 2026-08-07 완료되어, 노트북 코어에
-  순수 함수 여덟(`parseAuthoringSchema`·`readCardJson`·`writeCardJson`·`readPoolJson`·
-  `writePoolJson`·`validateContent`·`resolveCardState`·`resolvePoolState`)이 올라가 있다.
-  **아직 아무도 호출하지 않으며 노트북은 여전히 Markdown 저작 도구로 동작한다.** 계획 B의 범위는
-  설계 §6 효과 편집기 UI, §7 풀 편성 화면, §11 화면 구성, §12 쓰기 정책의 diff 요약과 파일 쓰기
-  (File System Access API), §14 마이그레이션(`SCHEMA_VERSION` 7), Markdown 경로 제거,
-  `시작 카드 풀.md` 삭제, [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md)
-  §1 개정(저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
-  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을 끝냈고 **2·4·5·6·8이 남아 있다.**
+- [ ] **노트북 편집·쓰기 (계획 C) — 문서를 아직 쓰지 않았다.**
+  [계획 B](archive/plans/2026-08-07-notebook-repo-read-ui.md)가 2026-08-07 완료되어 노트북이
+  저장소를 **읽고 보여주는** 데까지 왔다. 범위는 설계 §6 효과·개입
+  편집기, 카드 기본 필드 폼, §7 풀 편성 조작과 카드 화면의 소속 풀 체크박스, 미반영 저장과
+  §14 마이그레이션(`SCHEMA_VERSION` 7), §10.3 충돌 해결 UI, §12 diff 요약과 파일 쓰기(폴더 권한을
+  `readwrite`로 승격), Markdown 경로와 그 UI 스크립트 제거, `시작 카드 풀.md` 삭제,
+  [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md) §1 개정
+  (저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
+  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을, 계획 B가 6과 8의 절반을 맡고, **2·4·5와 8의
+  나머지가 계획 C 몫이다.**
 
 - [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
   `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁

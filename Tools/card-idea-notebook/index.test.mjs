@@ -2171,3 +2171,355 @@ test("풀도 같은 다섯 상태로 판정한다", () => {
   assert.equal(core.resolvePoolState({ stored: moved, pending: edited }), "conflict");
   assert.equal(core.resolvePoolState({ stored: moved, pending: pool }), "same");
 });
+
+const statusesDir = new URL("../../Assets/StreamingAssets/Content/Statuses/", import.meta.url);
+
+function readStatusFile(name) {
+  return readFileSync(fileURLToPath(new URL(name, statusesDir)), "utf8");
+}
+
+test("콘텐츠 경로 넷을 세그먼트 배열로 노출한다", () => {
+  const core = loadCore();
+  assert.deepEqual(core.CONTENT_PATHS.schema,
+    ["Tools", "card-idea-notebook", "authoring-schema.json"]);
+  assert.deepEqual(core.CONTENT_PATHS.statuses,
+    ["Assets", "StreamingAssets", "Content", "Statuses"]);
+  assert.deepEqual(core.CONTENT_PATHS.cards,
+    ["Assets", "StreamingAssets", "Content", "Cards"]);
+  assert.deepEqual(core.CONTENT_PATHS.pools,
+    ["Assets", "StreamingAssets", "Content", "Pools"]);
+});
+
+test("상태 파일에서 키와 표시 이름만 읽는다", () => {
+  const core = loadCore();
+  const { status, errors } = core.readStatusJson(readStatusFile("poison.json"));
+  assert.deepEqual(errors, []);
+  assert.equal(status.key, "poison");
+  assert.equal(status.displayName, "독");
+  assert.equal(status.base, readStatusFile("poison.json"));
+  assert.deepEqual(Object.keys(status), ["key", "displayName", "base"],
+    "수명·성장치는 읽지 않는다 - 노트북이 상태를 쓰지 않는다");
+});
+
+test("표시 이름이 없으면 키를 대신 쓴다", () => {
+  const core = loadCore();
+  const { status } = core.readStatusJson('{"key":"mystery"}');
+  assert.equal(status.displayName, "mystery");
+});
+
+test("저장소의 상태 열한 개를 전부 읽는다", () => {
+  const core = loadCore();
+  const names = readdirSync(fileURLToPath(statusesDir)).filter((n) => n.endsWith(".json"));
+  assert.ok(names.length >= 11, `상태가 11개 이상이어야 한다. 실제 ${names.length}`);
+
+  const keys = [];
+  for (const name of names) {
+    const { status, errors } = core.readStatusJson(readStatusFile(name));
+    assert.deepEqual(errors, [], name);
+    keys.push(status.key);
+  }
+
+  assert.ok(keys.includes("poison"));
+  assert.ok(keys.includes("block"));
+  assert.equal(new Set(keys).size, keys.length, "상태 키가 중복이면 안 된다");
+});
+
+test("깨진 상태 파일과 키 없는 상태는 이유를 준다", () => {
+  const core = loadCore();
+  const broken = core.readStatusJson("{ 아님");
+  assert.equal(broken.status, null);
+  assert.equal(broken.errors.length, 1);
+
+  const missing = core.readStatusJson('{"displayName":"독"}');
+  assert.equal(missing.status, null);
+  assert.ok(missing.errors.some((message) => message.includes("key")));
+});
+
+function cardsByIdOf(core, schema, specs) {
+  const map = new Map();
+  for (const spec of specs) {
+    const { card } = core.readCardJson(JSON.stringify({
+      id: spec.id, name: spec.id, side: "Player", category: spec.category ?? "Execution",
+      ...spec,
+    }, null, 2), schema);
+    map.set(card.id, card);
+  }
+  return map;
+}
+
+test("풀의 등급·태그를 개수 내림차순으로 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", grade: "Common", tags: ["시작", "공격"] },
+    { id: "b", grade: "Common", tags: ["시작"] },
+    { id: "c", grade: "Rare", tags: ["시작", "공격"] },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b","c"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.grades, [
+    { value: "Common", count: 2 },
+    { value: "Rare", count: 1 },
+  ]);
+  assert.deepEqual(distribution.tags, [
+    { value: "시작", count: 3 },
+    { value: "공격", count: 2 },
+  ]);
+});
+
+test("비용과 실행 순서는 값 오름차순으로 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", energyCost: 2, baseExecutionOrder: 5 },
+    { id: "b", energyCost: 1, baseExecutionOrder: 3 },
+    { id: "c", energyCost: 1, baseExecutionOrder: 5 },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b","c"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.costs, [
+    { value: 1, count: 2 },
+    { value: 2, count: 1 },
+  ]);
+  assert.deepEqual(distribution.orders, [
+    { value: 3, count: 1 },
+    { value: 5, count: 2 },
+  ]);
+});
+
+test("개입 카드는 실행 순서 분포에서 빠진다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [
+    { id: "a", baseExecutionOrder: 4 },
+    { id: "b", category: "Intervention", intervention: { kind: "lock" } },
+  ]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.orders, [{ value: 4, count: 1 }],
+    "개입 카드에는 baseExecutionOrder가 없다");
+  assert.equal(distribution.total, 2, "그래도 편성 장수에는 들어간다");
+});
+
+test("없는 카드는 세지 않고 따로 담는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = cardsByIdOf(core, schema, [{ id: "a", grade: "Common", tags: ["시작"] }]);
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","ghost"]}');
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.equal(distribution.total, 2);
+  assert.equal(distribution.present, 1);
+  assert.deepEqual(distribution.missing, ["ghost"]);
+  assert.deepEqual(distribution.grades, [{ value: "Common", count: 1 }],
+    "없는 카드를 분포에 섞으면 집계가 거짓이 된다");
+});
+
+test("저장소의 starter를 없는 카드 없이 집계한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cardsById = new Map();
+  for (const name of readdirSync(fileURLToPath(cardsDir)).filter((n) => n.endsWith(".json"))) {
+    const { card } = core.readCardJson(readCardFile(name), schema);
+    cardsById.set(card.id, card);
+  }
+  const { pool } = core.readPoolJson(
+    readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8"));
+
+  const distribution = core.poolDistribution({ pool, cardsById });
+  assert.deepEqual(distribution.missing, [], "저장소 풀에는 없는 카드가 없어야 한다");
+  assert.equal(distribution.present, distribution.total);
+  assert.equal(distribution.total, pool.cards.length);
+  assert.ok(distribution.tags.length > 0);
+  assert.equal(distribution.grades.reduce((sum, e) => sum + e.count, 0), distribution.present,
+    "등급 개수의 합이 카드 수와 같아야 한다");
+});
+
+test("카드 소속 풀을 역방향 표로 만든다", () => {
+  const core = loadCore();
+  const pools = [
+    core.readPoolJson('{"id":"starter","cards":["a","b"]}').pool,
+    core.readPoolJson('{"id":"mycologist","cards":["b","b","c"]}').pool,
+  ];
+
+  const membership = core.poolMembership(pools);
+  assert.deepEqual(membership.get("a"), ["starter"]);
+  assert.deepEqual(membership.get("b"), ["starter", "mycologist"],
+    "같은 풀 안의 중복은 한 번만 센다");
+  assert.deepEqual(membership.get("c"), ["mycologist"]);
+  assert.equal(membership.get("ghost"), undefined);
+});
+
+function viewCards(core, schema, specs) {
+  return specs.map((spec) => core.readCardJson(JSON.stringify({
+    id: spec.id, name: spec.name ?? spec.id, side: spec.side ?? "Player",
+    category: "Execution", ...spec,
+  }, null, 2), schema).card);
+}
+
+test("검색이 이름·id·태그를 훑는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [
+    { id: "vanguard_slash", name: "선봉 베기", tags: ["시작", "공격"] },
+    { id: "spore_veil", name: "포자 장막", tags: ["독"] },
+  ]);
+  const view = (query) => core.cardListView({ cards, query, filter: "all" })
+    .map((row) => row.card.id);
+
+  assert.deepEqual(view("선봉"), ["vanguard_slash"], "이름으로 찾는다");
+  assert.deepEqual(view("spore"), ["spore_veil"], "id로 찾는다");
+  assert.deepEqual(view("독"), ["spore_veil"], "태그로 찾는다");
+  assert.deepEqual(view("VANGUARD"), ["vanguard_slash"], "대소문자를 무시한다");
+  assert.deepEqual(view("  "), ["vanguard_slash", "spore_veil"], "공백만이면 거르지 않는다");
+  assert.deepEqual(view("없는말"), []);
+});
+
+test("필터가 상태·오류·고아를 가른다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [
+    { id: "same_card" }, { id: "edited" }, { id: "clashing" },
+    { id: "broken" }, { id: "enemy_card", side: "Enemy" },
+  ]);
+  const states = new Map([["edited", "modified"], ["clashing", "conflict"]]);
+  const errorIds = new Set(["broken"]);
+  const membership = new Map([["same_card", ["starter"]]]);
+  const view = (filter) => core.cardListView({ cards, states, errorIds, membership, filter })
+    .map((row) => row.card.id);
+
+  assert.deepEqual(view("all"),
+    ["same_card", "edited", "clashing", "broken", "enemy_card"]);
+  assert.deepEqual(view("modified"), ["edited"]);
+  assert.deepEqual(view("conflict"), ["clashing"]);
+  assert.deepEqual(view("error"), ["broken"]);
+  assert.deepEqual(view("orphan"), ["edited", "clashing", "broken"],
+    "적군 카드는 고아가 아니다 - 풀은 아군 것이다");
+});
+
+test("풀별 필터가 소속만 남긴다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [{ id: "a" }, { id: "b" }]);
+  const membership = new Map([["a", ["starter"]], ["b", ["mycologist"]]]);
+
+  const rows = core.cardListView({ cards, membership, filter: "all", poolId: "starter" });
+  assert.deepEqual(rows.map((row) => row.card.id), ["a"]);
+});
+
+test("줄마다 상태·오류·소속을 붙여 준다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const cards = viewCards(core, schema, [{ id: "a" }]);
+
+  const [plain] = core.cardListView({ cards, filter: "all" });
+  assert.equal(plain.state, "same", "상태를 모르면 저장소와 같은 것으로 본다");
+  assert.equal(plain.hasError, false);
+  assert.deepEqual(plain.pools, []);
+
+  const [marked] = core.cardListView({
+    cards,
+    states: new Map([["a", "conflict"]]),
+    errorIds: new Set(["a"]),
+    membership: new Map([["a", ["starter", "mycologist"]]]),
+    filter: "all",
+  });
+  assert.equal(marked.state, "conflict");
+  assert.equal(marked.hasError, true);
+  assert.deepEqual(marked.pools, ["starter", "mycologist"]);
+});
+
+test("필터 목록을 노출한다", () => {
+  const core = loadCore();
+  assert.deepEqual([...core.CARD_FILTERS],
+    ["all", "modified", "conflict", "error", "orphan"]);
+});
+
+test("읽은 수치와 문제 개수를 센다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: [{}, {}, {}],
+    pools: [{}],
+    statuses: [{}, {}],
+    validation: { errors: [{ message: "x" }], warnings: [{ message: "y" }, { message: "z" }] },
+    cardStates: new Map([["a", "same"], ["b", "modified"], ["c", "conflict"]]),
+    poolStates: new Map([["starter", "new"]]),
+  });
+
+  assert.deepEqual(summary.counts, { cards: 3, pools: 1, statuses: 2 });
+  assert.equal(summary.errors, 1);
+  assert.equal(summary.warnings, 2);
+  assert.equal(summary.conflicts, 1);
+  assert.equal(summary.pending, 2, "modified와 new가 미반영이다");
+});
+
+test("상태 표가 없어도 0으로 센다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: [], pools: [], statuses: [],
+    validation: { errors: [], warnings: [] },
+  });
+  assert.equal(summary.conflicts, 0);
+  assert.equal(summary.pending, 0);
+});
+
+test("요약을 두 줄 문장으로 만든다", () => {
+  const core = loadCore();
+  const summary = core.contentSummary({
+    cards: new Array(26).fill({}),
+    pools: [{}],
+    statuses: new Array(11).fill({}),
+    validation: { errors: [], warnings: [] },
+  });
+
+  assert.deepEqual(core.summaryLines(summary), [
+    "카드 26 · 풀 1 · 상태 11 을 읽었습니다",
+    "오류 0 · 충돌 0 · 미반영 0",
+  ]);
+});
+
+test("저장소 모드 전환과 연결 버튼이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="mode-repo"/);
+  assert.match(html, /id="mode-markdown"/);
+  assert.match(html, /id="repo-connect"/);
+  assert.match(html, /id="repo-reload"/);
+  assert.match(html, /id="repo-unsupported"/);
+});
+
+test("저장소 UI 스크립트가 코어와 분리되어 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /<script data-repo-ui>/);
+
+  const core = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/)[1];
+  assert.equal(core.includes("showDirectoryPicker"), false,
+    "브라우저 API는 코어에 들어가지 않는다 - 코어는 node:test가 돌린다");
+  assert.equal(core.includes("document."), false,
+    "DOM도 코어에 들어가지 않는다");
+});
+
+test("요약과 문제 목록 자리가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="repo-summary"/);
+  assert.match(html, /id="repo-problems"/);
+});
+
+test("저장소 탭과 검색·필터가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /id="repo-tab-cards"/);
+  assert.match(html, /id="repo-tab-pools"/);
+  assert.match(html, /id="repo-search"/);
+  assert.match(html, /id="repo-filter"/);
+  for (const label of ["전체", "수정됨만", "충돌만", "오류만", "고아만"]) {
+    assert.match(html, new RegExp(`>${label}<\\/option>`));
+  }
+});
+
+test("풀 편성·분포 자리의 스타일이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /\.pool-roster\b/);
+  assert.match(html, /\.pool-distribution\b/);
+});
