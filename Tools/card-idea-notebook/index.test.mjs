@@ -3012,3 +3012,9 @@ test("효과 편집기의 스타일이 마크업에 있다", () => {
   assert.match(html, /\.effect-params\b/);
   assert.match(html, /\.effect-condition\b/);
 });
+
+test("풀 담기와 소속 표시의 스타일이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /\.pool-membership\b/);
+  assert.match(html, /\.pool-picker\b/);
+});
