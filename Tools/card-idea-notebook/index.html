@@ -446,6 +446,13 @@
       color: var(--ink); background: #191b18; }
     .repo-form .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
+    .repo-conflict {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      margin: 0 0 10px; padding: 9px 11px;
+      border: 1px solid #8a5a2a; border-radius: 6px; background: rgba(160, 100, 40, .14);
+      color: #e8c79a; font-size: 12px;
+    }
+    .repo-conflict strong { color: var(--gold-bright); }
     .effect-list { display: grid; gap: 8px; }
     .effect-row {
       display: grid;
@@ -4404,6 +4411,65 @@
       }
     }
 
+    function conflictBanner({ message, onStored, onMine }) {
+      const banner = document.createElement("div");
+      banner.className = "repo-conflict";
+
+      const label = document.createElement("strong");
+      label.textContent = "⚠ 충돌";
+      const text = document.createElement("span");
+      text.textContent = message;
+      banner.append(label, text);
+
+      const stored = document.createElement("button");
+      stored.type = "button";
+      stored.textContent = "저장소 것으로 되돌리기";
+      stored.addEventListener("click", onStored);
+
+      const mine = document.createElement("button");
+      mine.type = "button";
+      mine.className = "primary";
+      mine.textContent = "내 변경 유지";
+      mine.addEventListener("click", onMine);
+
+      banner.append(stored, mine);
+      return banner;
+    }
+
+    /// 되돌리기는 미반영에서 빼는 것과 같다. 저장소 원문은 이미 storedCardText에 새로 들어와
+    /// 있으므로, 미반영만 사라지면 화면이 저장소 것을 그대로 보여준다(설계 10.3).
+    function revertCardToStored(card) {
+      pending = core.dropPendingCard(pending, card.uid);
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    /// 유지는 base를 새 저장소 원문으로 갈아 끼우는 것이다. 그래야 충돌이 '수정됨'으로 내려가고,
+    /// 우측 diff가 "내 것 ↔ 새 저장소 원문"을 비교한다.
+    function keepCardMine(card) {
+      const stored = repoStore.storedCardText.get(card.uid) ?? null;
+      pending = core.putPendingCard(pending, { ...card, base: stored });
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    function revertPoolToStored(pool) {
+      pending = core.dropPendingPool(pending, pool.id);
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    function keepPoolMine(pool) {
+      const stored = repoStore.storedPoolText.get(pool.id) ?? null;
+      pending = core.putPendingPool(pending, { ...pool, base: stored });
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
     function renderCardDetail(card) {
       elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
       renderSource({
@@ -4419,6 +4485,14 @@
           + " 부팅이 이 카드를 거부하므로 그 키를 손으로 지운 뒤 다시 읽어 주세요.";
         elements.detail.append(note);
         return;
+      }
+
+      if ((repoStore.cardStates.get(card.uid) ?? "same") === "conflict") {
+        elements.detail.append(conflictBanner({
+          message: "이 카드를 편집하는 동안 저장소 파일도 바뀌었습니다.",
+          onStored: () => revertCardToStored(card),
+          onMine: () => keepCardMine(card),
+        }));
       }
 
       const form = document.createElement("div");
@@ -4519,6 +4593,14 @@
     function renderPoolDetail(pool) {
       const distribution = core.poolDistribution({ pool, cardsById: repoStore.cardsById });
       elements.detailTitle.textContent = `${pool.id} · ${distribution.total}장`;
+
+      if ((repoStore.poolStates.get(pool.id) ?? "same") === "conflict") {
+        elements.detail.append(conflictBanner({
+          message: "이 풀을 편집하는 동안 저장소 파일도 바뀌었습니다.",
+          onStored: () => revertPoolToStored(pool),
+          onMine: () => keepPoolMine(pool),
+        }));
+      }
 
       const roster = document.createElement("div");
       roster.className = "pool-roster";

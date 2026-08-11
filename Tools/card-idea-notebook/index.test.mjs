@@ -3085,3 +3085,52 @@ test("우측 창은 선택이 사라지면 원문 자리로 돌아간다", () =>
   assert.match(ui[1], /elements\.sourceDiff\.hidden = true;/);
   assert.match(html, /#repo-source-toggle\.is-active/);
 });
+
+const repoRoot = new URL("../../", import.meta.url);
+const repoCardPath = (id) =>
+  fileURLToPath(new URL(`Assets/StreamingAssets/Content/Cards/${id}.json`, repoRoot));
+const repoSchema = () => loadCore().parseAuthoringSchema(
+  readFileSync(fileURLToPath(new URL("./authoring-schema.json", htmlUrl)), "utf8"));
+
+test("저장소 것으로 되돌리면 미반영이 사라진다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const mine = core.setCardField(card, "name", "내가 고친 이름");
+  const outside = storedText.replace(/"energyCost": \d+/, '"energyCost": 9');
+
+  assert.equal(
+    core.resolveCardState({ stored: outside, pending: mine, schema }), "conflict");
+
+  const pending = core.dropPendingCard(core.putPendingCard(core.emptyPending(), mine), mine.uid);
+  const { card: reread } = core.readCardJson(outside, schema);
+
+  assert.deepEqual(pending.cards, {});
+  assert.equal(core.resolveCardState({ stored: outside, pending: reread, schema }), "same");
+});
+
+test("내 변경을 유지하면 새 원본 위에서 수정됨이 된다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const mine = core.setCardField(card, "name", "내가 고친 이름");
+  const outside = storedText.replace(/"energyCost": \d+/, '"energyCost": 9');
+
+  const kept = { ...mine, base: outside };
+
+  assert.equal(core.resolveCardState({ stored: outside, pending: kept, schema }), "modified");
+});
+
+test("충돌 해결 버튼이 저장소 UI에 배선된다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui, "저장소 UI 스크립트가 있어야 한다");
+  assert.match(ui[1], /저장소 것으로 되돌리기/);
+  assert.match(ui[1], /내 변경 유지/);
+  assert.match(ui[1], /function revertCardToStored/);
+  assert.match(ui[1], /function keepCardMine/);
+  assert.match(html, /\.repo-conflict/);
+});
