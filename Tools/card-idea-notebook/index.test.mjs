@@ -3389,3 +3389,27 @@ test("상태 JSON은 카드로 읽히지 않는다", () => {
   assert.equal(card, null);
   assert.ok(errors.some((message) => message.includes("id")));
 });
+
+test("내보내기 버튼과 요약 다이얼로그가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="repo-export"/);
+  assert.match(html, /id="repo-export-dialog"/);
+  assert.match(html, /id="repo-export-summary"/);
+  assert.match(html, /id="repo-export-confirm"/);
+  assert.match(html, /미참조 파일/);
+});
+
+test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /function exportToRepo/);
+  assert.match(ui[1], /function writePlanFiles/);
+  assert.match(ui[1], /mode: "readwrite"/);
+
+  // 재읽기가 계획보다 먼저여야 외부 변경을 덮어쓰지 않는다(설계 10.1).
+  const body = ui[1].slice(ui[1].indexOf("async function exportToRepo"));
+  assert.ok(body.indexOf("await loadRepo") < body.indexOf("core.exportPlan"));
+});

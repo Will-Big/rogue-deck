@@ -348,6 +348,12 @@
     .dialog-body h2 { margin-bottom: 10px; font: 19px Georgia, "Noto Serif KR", serif; }
     .dialog-body p { color: var(--muted); line-height: 1.65; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); }
+    #repo-export-dialog .dialog-body { min-width: 420px; max-height: 62vh; overflow: auto; }
+    .export-line { margin: 0 0 8px; color: var(--gold-bright); font-size: 13px; }
+    .export-group { margin: 0 0 10px; }
+    .export-group h3 { margin: 0 0 4px; font-size: 12px; color: #cfc9b6; }
+    .export-group ul { margin: 0; padding-left: 18px; color: #9a958a; font-size: 12px; }
+    .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
 
     .toast {
       position: fixed;
@@ -680,6 +686,7 @@
           </div>
           <div class="repo-header-actions">
             <button type="button" id="repo-new-card">＋ 새 카드</button>
+            <button type="button" id="repo-export" disabled>저장소에 반영</button>
             <button type="button" class="primary" id="repo-connect">폴더 연결</button>
           </div>
         </div>
@@ -734,6 +741,17 @@
       </div>
     </aside>
   </main>
+
+  <dialog id="repo-export-dialog">
+    <div class="dialog-body">
+      <h2>저장소에 반영</h2>
+      <div id="repo-export-summary"></div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="ghost" data-repo-export-action="cancel">취소</button>
+      <button type="button" class="primary" id="repo-export-confirm">반영</button>
+    </div>
+  </dialog>
 
   <dialog id="delete-dialog">
     <div class="dialog-body">
@@ -3665,6 +3683,10 @@
       source: byId("repo-source"),
       sourceToggle: byId("repo-source-toggle"),
       sourceDiff: byId("repo-source-diff"),
+      export: byId("repo-export"),
+      exportDialog: byId("repo-export-dialog"),
+      exportSummary: byId("repo-export-summary"),
+      exportConfirm: byId("repo-export-confirm"),
     };
 
     const HANDLE_DB_NAME = `${core.STORAGE_KEY}.handles`;
@@ -3735,8 +3757,10 @@
 
     /// 기억한 핸들은 새 탭에서 권한이 만료된다. 조용히 다시 묻지 않고 false를 돌려주면
     /// 호출부가 버튼을 누르게 한다 - 권한 요청은 사용자 제스처를 요구한다.
-    async function hasReadPermission(handle, interactive) {
-      const options = { mode: "read" };
+    /// 폴더는 처음부터 readwrite로 연다. 쓰기 시점에 승격하면 권한 요청이 사용자 제스처를
+    /// 요구해 내보내기 흐름이 두 번 끊긴다. 대신 연결 단계에서 한 번만 묻는다.
+    async function hasWritePermission(handle, interactive) {
+      const options = { mode: "readwrite" };
       if ((await handle.queryPermission(options)) === "granted") return true;
       if (!interactive) return false;
       return (await handle.requestPermission(options)) === "granted";
@@ -3963,7 +3987,7 @@
       try {
         const root = await window.showDirectoryPicker({
           id: "fateWeaverRepoRoot",
-          mode: "read",
+          mode: "readwrite",
         });
         await rememberRoot(root);
         applyLoaded(root, await loadRepo(root));
@@ -3971,6 +3995,136 @@
         if (error?.name === "AbortError") return;
         failWith(error);
       }
+    }
+
+    /// §12: 노트북은 파일을 지우지 않는다. createWritable은 자르고 다시 쓰므로 덮어쓰기만 한다.
+    async function writePlanFiles(root, writes) {
+      for (const entry of writes) {
+        const folder = await directoryAt(root, entry.segments.slice(0, -1));
+        const handle = await folder.getFileHandle(entry.name, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(entry.text);
+        await writable.close();
+      }
+    }
+
+    function fileGroup(title, names, note) {
+      if (!names.length) return null;
+      const group = document.createElement("div");
+      group.className = "export-group";
+      const heading = document.createElement("h3");
+      heading.textContent = note ? `${title} ${names.length} — ${note}` : `${title} ${names.length}`;
+      const list = document.createElement("ul");
+      for (const name of names) {
+        const item = document.createElement("li");
+        item.textContent = name;
+        list.append(item);
+      }
+      group.append(heading, list);
+      return group;
+    }
+
+    function renderExportSummary(plan) {
+      elements.exportSummary.replaceChildren();
+
+      for (const reason of plan.blocked) {
+        const line = document.createElement("p");
+        line.className = "export-blocked";
+        line.textContent = `⚠ ${reason}`;
+        elements.exportSummary.append(line);
+      }
+
+      const line = document.createElement("p");
+      line.className = "export-line";
+      line.textContent = plan.summaryLine;
+      elements.exportSummary.append(line);
+
+      const groups = [
+        fileGroup("신규", plan.created),
+        fileGroup("수정", plan.updated),
+        fileGroup("읽기 오류", plan.readErrors, "고쳐야 내보낼 수 있습니다"),
+        fileGroup("미참조 파일", plan.unreferenced,
+          "노트북은 지우지 않습니다. 그대로 두어도 됩니다"),
+      ];
+      for (const group of groups) if (group) elements.exportSummary.append(group);
+
+      elements.exportConfirm.disabled = plan.blocked.length > 0 || plan.writes.length === 0;
+    }
+
+    let plannedExport = null;
+
+    async function exportToRepo() {
+      if (!repoStore.root) return;
+
+      // 권한을 먼저 확보한다 - await가 사용자 제스처를 소진하므로 재읽기보다 앞이어야 한다.
+      if (!(await hasWritePermission(repoStore.root, true))) {
+        repoStore.message = "쓰기 권한을 얻지 못했습니다. 폴더 연결을 다시 눌러 주세요.";
+        render();
+        return;
+      }
+
+      // 내보내기 직전에 다시 읽는다(설계 10.1). 외부 편집을 덮어쓰는 사고를 여기서 막는다.
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+      } catch (error) {
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
+
+      plannedExport = currentExportPlan();
+      renderExportSummary(plannedExport);
+      elements.exportDialog.showModal();
+    }
+
+    // exportToRepo 뒤에 둔다 - 함수 선언은 끌어올려지므로 위 호출과 무관하게 동작이 같고,
+    // 재읽기(await loadRepo)가 계획 계산(core.exportPlan)보다 먼저라는 순서를 소스 텍스트에서도
+    // 드러낸다(설계 10.1).
+    function currentExportPlan() {
+      return core.exportPlan({
+        cards: repoStore.cards,
+        pools: repoStore.pools,
+        storedCards: repoStore.storedCards,
+        storedPools: repoStore.storedPools,
+        cardStates: repoStore.cardStates,
+        poolStates: repoStore.poolStates,
+        readErrors: repoStore.readErrors,
+        validation: repoStore.validation,
+        schema: repoStore.schema,
+      });
+    }
+
+    /// 쓴 파일의 미반영을 비운다. 다시 읽으면 base가 방금 쓴 내용이 되므로 상태가 '저장소와 동일'로
+    /// 내려가지만, 미반영을 남겨 두면 localStorage가 영원히 자라고 다음 세션에서 되살아난다.
+    async function confirmExport() {
+      if (!plannedExport || plannedExport.blocked.length) return;
+
+      elements.exportConfirm.disabled = true;
+      try {
+        await writePlanFiles(repoStore.root, plannedExport.writes);
+      } catch (error) {
+        repoStore.message = `저장소에 쓰지 못했습니다: ${error?.message ?? error}`;
+        elements.exportDialog.close();
+        render();
+        return;
+      }
+
+      const written = plannedExport.writes.length;
+      elements.exportDialog.close();
+      plannedExport = null;
+      pending = core.emptyPending();
+      persistPending();
+
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+        repoStore.message = `${written}개 파일을 저장소에 반영했습니다.`;
+      } catch (error) {
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
     }
 
     async function reloadRepo() {
@@ -4916,6 +5070,7 @@
     }
 
     function render() {
+      elements.export.disabled = !repoStore.connected;
       elements.reload.disabled = !repoStore.connected;
       elements.list.replaceChildren();
       elements.detail.replaceChildren();
@@ -4980,7 +5135,7 @@
       if (!root) return;
 
       // 권한이 살아 있을 때만 조용히 읽는다. 만료됐으면 버튼을 누르게 둔다.
-      if (!(await hasReadPermission(root, false))) {
+      if (!(await hasWritePermission(root, false))) {
         repoStore.root = root;
         repoStore.message = "폴더 권한이 만료되었습니다. 폴더 연결을 다시 눌러 주세요.";
         render();
@@ -5020,6 +5175,14 @@
     elements.tabPools.addEventListener("click", () => setTab("pools"));
     elements.modeMarkdown.addEventListener("click", () => setMode("markdown"));
     elements.modeRepo.addEventListener("click", () => setMode("repo"));
+    elements.export.addEventListener("click", exportToRepo);
+    elements.exportConfirm.addEventListener("click", confirmExport);
+    elements.exportDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-repo-export-action]")) {
+        plannedExport = null;
+        elements.exportDialog.close();
+      }
+    });
 
     const restored = core.readPending(window.localStorage);
     pending = restored.pending;
