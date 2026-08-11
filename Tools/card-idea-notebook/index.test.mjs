@@ -3283,3 +3283,65 @@ test("풀도 카드와 같은 규칙으로 나간다", () => {
     ["Assets", "StreamingAssets", "Content", "Pools", "starter.json"]);
   assert.equal(plan.writes[0].text, core.writePoolJson(edited));
 });
+
+test("카드와 풀이 같은 id를 가져도 미참조를 놓치지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const sharedId = card.id;
+  const sharedPool = { ...pool, id: sharedId };
+  const renamedPool = { ...sharedPool, id: `${sharedId}_renamed` };
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [renamedPool], storedCards: [card], storedPools: [sharedPool],
+    cardStates: new Map([[card.uid, "same"]]),
+    poolStates: new Map([[renamedPool.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.unreferenced, [`${sharedId}.json`]);
+  assert.deepEqual(plan.unchanged, [`${sharedId}.json`]);
+});
+
+test("충돌 카드는 쓰기 목록에 들어가지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "conflict"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes, []);
+  assert.deepEqual(plan.created, []);
+  assert.deepEqual(plan.updated, []);
+  assert.deepEqual(plan.unchanged, []);
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /충돌 1개/);
+});
+
+test("카드를 풀보다 먼저 쓴다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const editedCard = core.setCardField(card, "name", "고친 이름");
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const editedPool = core.removeFromPool(pool, 0);
+
+  const plan = core.exportPlan({
+    cards: [editedCard], pools: [editedPool], storedCards: [card], storedPools: [pool],
+    cardStates: new Map([[editedCard.uid, "modified"]]),
+    poolStates: new Map([[editedPool.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes.map((entry) => entry.name),
+    ["vanguard_slash.json", "starter.json"]);
+});
