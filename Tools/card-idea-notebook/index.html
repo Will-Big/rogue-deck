@@ -483,8 +483,9 @@
       });
     }
 
-    const SCHEMA_VERSION = 6;
+    const SCHEMA_VERSION = 7;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
+    const LEGACY_BACKUP_KEY = `${STORAGE_KEY}.v6-backup`;
     const CARD_REQUIRED_KEYS = Object.freeze(["id", "name", "side", "category"]);
 
     function emptyConditionValue() {
@@ -1431,10 +1432,32 @@
     /// STORAGE_KEY와 별개다. STORAGE_KEY는 이제 HANDLE_DB_NAME의 이름 공간 접두사로만 쓰이므로,
     /// 미반영은 자체 키와 자체 버전을 쓴다.
     const PENDING_STORAGE_KEY = "fate-weaver.card-idea-notebook.pending";
-    const PENDING_VERSION = 1;
+
+    /// 설계 14: 옛 데이터는 능력이 자유 텍스트라 자동 변환이 불가능하다. 지우지 않고 옮긴 뒤
+    /// 안내한다 - 저장소의 카드 26장을 읽으면 대부분 복원된다.
+    /// 백업이 이미 있으면 아무것도 하지 않는다. 두 번째 백업으로 첫 백업을 덮으면 정작 지키려던
+    /// 것을 잃는다.
+    const LEGACY_MIGRATION_NOTE =
+      "Markdown 시절의 저작 데이터를 백업으로 옮겼습니다."
+      + " 노트북은 이제 저장소 JSON만 저작합니다 - 폴더를 연결해 주세요.";
+
+    function migrateLegacyStore(storage) {
+      const legacy = storage.getItem(STORAGE_KEY);
+      if (legacy === null) return { moved: false, note: "" };
+      if (storage.getItem(LEGACY_BACKUP_KEY) !== null) return { moved: false, note: "" };
+
+      try {
+        storage.setItem(LEGACY_BACKUP_KEY, legacy);
+        storage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        return { moved: false, note: `옛 데이터를 옮기지 못했습니다: ${error?.message ?? error}` };
+      }
+
+      return { moved: true, note: LEGACY_MIGRATION_NOTE };
+    }
 
     function emptyPending() {
-      return { version: PENDING_VERSION, cards: {}, pools: {} };
+      return { version: SCHEMA_VERSION, cards: {}, pools: {} };
     }
 
     function readPending(storage) {
@@ -1451,7 +1474,9 @@
         };
       }
 
-      if (!saved || saved.version !== PENDING_VERSION) {
+      /// 계획 C가 쓴 버전 1은 모양이 지금과 같다. 거부하면 그때의 미반영 편집이 조용히 사라지므로
+      /// 받아들이고 올린다.
+      if (!saved || ![1, SCHEMA_VERSION].includes(saved.version)) {
         return {
           pending: emptyPending(),
           errors: [`지원하지 않는 미반영 데이터 버전: ${saved?.version}`],
@@ -1460,7 +1485,7 @@
 
       return {
         pending: {
-          version: PENDING_VERSION,
+          version: SCHEMA_VERSION,
           cards: { ...(saved.cards ?? {}) },
           pools: { ...(saved.pools ?? {}) },
         },
@@ -1529,6 +1554,8 @@
 
     globalThis.CardIdeaNotebook = Object.freeze({
       PENDING_STORAGE_KEY,
+      LEGACY_BACKUP_KEY,
+      migrateLegacyStore,
       emptyPending,
       readPending,
       writePending,
@@ -3163,9 +3190,14 @@
       plannedExport = null;
     });
 
+    const migration = core.migrateLegacyStore(window.localStorage);
+    if (migration.note) pendingNote = migration.note;
+
     const restored = core.readPending(window.localStorage);
     pending = restored.pending;
-    if (restored.errors.length) pendingNote = restored.errors.join(" ");
+    if (restored.errors.length) {
+      pendingNote = [pendingNote, ...restored.errors].filter(Boolean).join(" ");
+    }
 
     render();
   })();

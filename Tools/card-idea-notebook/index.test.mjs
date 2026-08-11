@@ -1003,6 +1003,76 @@ test("저장에 실패해도 던지지 않고 알린다", () => {
   assert.ok(result.error.includes("quota"));
 });
 
+function fakeStorage(seed = {}) {
+  const map = new Map(Object.entries(seed));
+  return {
+    getItem: (key) => (map.has(key) ? map.get(key) : null),
+    setItem: (key, value) => { map.set(key, String(value)); },
+    removeItem: (key) => { map.delete(key); },
+    snapshot: () => Object.fromEntries(map),
+  };
+}
+
+test("스키마 버전이 7이다", () => {
+  const core = loadCore();
+
+  assert.equal(core.SCHEMA_VERSION, 7);
+});
+
+test("옛 Markdown 데이터를 백업 키로 옮기고 지운다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.STORAGE_KEY]: JSON.stringify({ schemaVersion: 6, cards: [{ name: "옛 카드" }] }),
+  });
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, true);
+  assert.match(result.note, /백업/);
+  assert.equal(storage.getItem(core.STORAGE_KEY), null);
+  assert.match(storage.getItem(core.LEGACY_BACKUP_KEY), /옛 카드/);
+});
+
+test("옛 데이터가 없으면 아무것도 하지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage();
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, false);
+  assert.equal(result.note, "");
+  assert.deepEqual(storage.snapshot(), {});
+});
+
+test("백업이 이미 있으면 덮어쓰지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.STORAGE_KEY]: JSON.stringify({ schemaVersion: 6 }),
+    [core.LEGACY_BACKUP_KEY]: "먼저 백업된 것",
+  });
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, false);
+  assert.equal(storage.getItem(core.LEGACY_BACKUP_KEY), "먼저 백업된 것");
+  assert.notEqual(storage.getItem(core.STORAGE_KEY), null);
+});
+
+test("계획 C 시절 미반영(버전 1)을 버리지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.PENDING_STORAGE_KEY]: JSON.stringify({
+      version: 1, cards: { "repo:x": { id: "x" } }, pools: {},
+    }),
+  });
+
+  const result = core.readPending(storage);
+
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.pending.version, 7);
+  assert.deepEqual(Object.keys(result.pending.cards), ["repo:x"]);
+});
+
 test("저장소에서 읽은 카드에 파일 uid를 붙인다", () => {
   const core = loadCore();
   const schema = loadSchema();
