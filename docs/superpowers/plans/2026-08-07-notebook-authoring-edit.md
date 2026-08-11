@@ -716,9 +716,15 @@ id는 저작 중에 바뀌지만 uid는 바뀌지 않으므로 선택과 미반�
 
 **Interfaces:**
 - Consumes: Task 2의 `newUid`
-- Produces: `EDITABLE_CARD_FIELDS`, `editCardField(card, field, value)` → 새 카드,
-  `createCard({ schema, uid })` → 빈 카드, `parseTagsInput(text)` → 태그 배열.
+- Produces: `EDITABLE_CARD_FIELDS`, `setCardField(card, field, value)` → 새 카드,
+  `createCardModel({ schema, uid })` → 빈 카드, `parseTagsInput(text)` → 태그 배열.
   Task 6의 폼이 쓴다.
+
+**이름이 `editCardField`·`createCard`가 아닌 이유:** 그 둘은 **Markdown 경로가 이미 쓰고 있다**
+(`index.html`의 코어 블록 앞부분). 같은 스코프에 다시 선언하면 함수 선언이 호이스팅으로 옛 것을
+가려 Markdown 저작이 그 자리에서 깨진다 — 2026-08-07 실행 중 실측으로 확인했고, Markdown 관련
+테스트 여섯이 한꺼번에 실패했다. 계획 D가 옛 경로를 지우면 이름을 되돌릴 수 있지만, 그때도
+되돌릴 이유는 없다.
 
 값 변환을 명령이 맡는 이유는 폼이 언제나 문자열을 주기 때문이다. 화면마다 `Number()`를 부르면
 한 곳이 빠졌을 때 조용히 문자열이 모델에 들어가고, 그러면 `writeCardJson`이 `"1"`을 써서 왕복이
@@ -740,14 +746,14 @@ test("숫자 필드를 문자열로 받아도 숫자로 넣는다", () => {
   const schema = loadSchema();
   const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
 
-  const edited = core.editCardField(card, "energyCost", "3");
+  const edited = core.setCardField(card, "energyCost", "3");
   assert.equal(edited.energyCost, 3);
   assert.equal(typeof edited.energyCost, "number");
 
-  assert.equal(core.editCardField(card, "energyCost", "").energyCost, 0,
+  assert.equal(core.setCardField(card, "energyCost", "").energyCost, 0,
     "빈 값은 0이다 - 기본값이라 파일에서 생략된다");
-  assert.equal(core.editCardField(card, "baseExecutionOrder", "-2").baseExecutionOrder, -2);
-  assert.equal(core.editCardField(card, "energyCost", "abc").energyCost, 0,
+  assert.equal(core.setCardField(card, "baseExecutionOrder", "-2").baseExecutionOrder, -2);
+  assert.equal(core.setCardField(card, "energyCost", "abc").energyCost, 0,
     "숫자가 아니면 0으로 떨어뜨린다 - NaN이 모델에 들어가면 왕복이 깨진다");
 });
 
@@ -764,15 +770,15 @@ test("문자열 필드는 다듬어 넣는다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
-  assert.equal(core.editCardField(card, "name", "  새 이름  ").name, "새 이름");
-  assert.equal(core.editCardField(card, "id", " new_id ").id, "new_id");
+  assert.equal(core.setCardField(card, "name", "  새 이름  ").name, "새 이름");
+  assert.equal(core.setCardField(card, "id", " new_id ").id, "new_id");
 });
 
 test("모르는 필드는 무시하고 원본을 그대로 준다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
-  assert.equal(core.editCardField(card, "flavour", "설명"), card);
+  assert.equal(core.setCardField(card, "flavour", "설명"), card);
 });
 
 test("편집은 원본을 제자리에서 고치지 않는다", () => {
@@ -780,7 +786,7 @@ test("편집은 원본을 제자리에서 고치지 않는다", () => {
   const schema = loadSchema();
   const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
 
-  const edited = core.editCardField(card, "name", "바뀐 이름");
+  const edited = core.setCardField(card, "name", "바뀐 이름");
   assert.equal(card.name, "선봉 베기");
   assert.equal(edited.uid, card.uid, "uid는 편집으로 바뀌지 않는다");
 });
@@ -790,7 +796,7 @@ test("분류를 바꿔도 반대쪽 값이 사라지지 않는다", () => {
   const schema = loadSchema();
   const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
 
-  const asIntervention = core.editCardField(card, "category", "Intervention");
+  const asIntervention = core.setCardField(card, "category", "Intervention");
   assert.equal(asIntervention.category, "Intervention");
   assert.equal(asIntervention.effects.length, 1,
     "효과가 모델에 남는다 - 되돌릴 때 값이 살아 있어야 한다(설계 5)");
@@ -802,7 +808,7 @@ test("분류를 바꿔도 반대쪽 값이 사라지지 않는다", () => {
 test("새 카드는 스키마의 기본값으로 시작한다", () => {
   const core = loadCore();
   const schema = loadSchema();
-  const card = core.createCard({ schema, uid: core.newUid(1) });
+  const card = core.createCardModel({ schema, uid: core.newUid(1) });
 
   assert.equal(card.uid, "new:1");
   assert.equal(card.id, "");
@@ -823,7 +829,7 @@ test("새 카드는 스키마의 기본값으로 시작한다", () => {
 node --test "Tools/card-idea-notebook/*.test.mjs"
 ```
 
-기대: **FAIL 8개.** `core.editCardField is not a function`.
+기대: **FAIL 8개.** `core.setCardField is not a function`.
 
 - [ ] **Step 3: 최소 구현을 쓴다**
 
@@ -854,7 +860,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
     /// 필드 하나를 바꾼 새 카드. 제자리에서 고치지 않는 이유는 resolveCardState가 base와
     /// "지금 쓰면 나올 문자열"을 비교하기 때문이다 - 모델을 뒤집으면 비교 대상이 함께 바뀐다.
-    function editCardField(card, field, value) {
+    function setCardField(card, field, value) {
       if (!EDITABLE_CARD_FIELDS.includes(field)) return card;
 
       if (field === "tags") return { ...card, tags: parseTagsInput(value) };
@@ -864,7 +870,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
     /// 빈 카드. 분류에 없는 쪽 필드도 채워 두는 이유는 설계 5 그대로다 - 편집 중 분류를
     /// 바꿔도 값이 사라지지 않아야 하고, 어차피 라이터가 분류별 키 목록만 내보낸다.
-    function createCard({ schema, uid }) {
+    function createCardModel({ schema, uid }) {
       return {
         uid,
         id: "",
@@ -889,9 +895,9 @@ export 블록에 네 줄 더한다:
 ```js
       readCardJson,
       EDITABLE_CARD_FIELDS,
-      editCardField,
+      setCardField,
       parseTagsInput,
-      createCard,
+      createCardModel,
       writeCardJson,
 ```
 
@@ -1109,7 +1115,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 - [ ] **Step 3: 최소 구현을 쓴다**
 
-`createCard` **바로 아래**에 넣는다.
+`createCardModel` **바로 아래**에 넣는다.
 
 ```js
     /// 스키마 필드 하나의 빈 값. writeCardJson의 isDefaultValue와 짝이 맞아야 한다 -
@@ -1261,7 +1267,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 export 블록에 열 줄 더한다:
 
 ```js
-      createCard,
+      createCardModel,
       addEffect,
       removeEffect,
       duplicateEffect,
@@ -1608,7 +1614,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
     function newCard() {
       newCardSequence += 1;
-      const card = core.createCard({
+      const card = core.createCardModel({
         schema: repoStore.schema,
         uid: core.newUid(newCardSequence),
       });
@@ -1724,7 +1730,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
       const form = document.createElement("div");
       form.className = "repo-form";
-      const edit = (field) => (value) => applyCardEdit(core.editCardField(card, field, value));
+      const edit = (field) => (value) => applyCardEdit(core.setCardField(card, field, value));
 
       const identity = document.createElement("div");
       identity.className = "row";

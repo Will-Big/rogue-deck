@@ -2696,3 +2696,91 @@ test("왕복은 uid에 영향받지 않는다", () => {
   assert.equal(core.writeCardJson(card, schema), original,
     "uid는 노트북 내부 식별자이고 파일에 나가지 않는다");
 });
+
+test("편집 가능한 기본 필드 목록을 노출한다", () => {
+  const core = loadCore();
+  assert.deepEqual([...core.EDITABLE_CARD_FIELDS], [
+    "id", "name", "side", "category", "energyCost", "baseExecutionOrder", "grade", "tags",
+  ]);
+});
+
+test("숫자 필드를 문자열로 받아도 숫자로 넣는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  const edited = core.setCardField(card, "energyCost", "3");
+  assert.equal(edited.energyCost, 3);
+  assert.equal(typeof edited.energyCost, "number");
+
+  assert.equal(core.setCardField(card, "energyCost", "").energyCost, 0,
+    "빈 값은 0이다 - 기본값이라 파일에서 생략된다");
+  assert.equal(core.setCardField(card, "baseExecutionOrder", "-2").baseExecutionOrder, -2);
+  assert.equal(core.setCardField(card, "energyCost", "abc").energyCost, 0,
+    "숫자가 아니면 0으로 떨어뜨린다 - NaN이 모델에 들어가면 왕복이 깨진다");
+});
+
+test("태그를 쉼표와 줄바꿈으로 나눈다", () => {
+  const core = loadCore();
+  assert.deepEqual(core.parseTagsInput("시작, 공격\n독"), ["시작", "공격", "독"]);
+  assert.deepEqual(core.parseTagsInput("  시작 ,, 공격  "), ["시작", "공격"]);
+  assert.deepEqual(core.parseTagsInput(""), []);
+  assert.deepEqual(core.parseTagsInput("시작, 시작"), ["시작", "시작"],
+    "중복을 여기서 지우지 않는다 - 검증기가 오류로 잡아 사용자가 고친다");
+});
+
+test("문자열 필드는 다듬어 넣는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  assert.equal(core.setCardField(card, "name", "  새 이름  ").name, "새 이름");
+  assert.equal(core.setCardField(card, "id", " new_id ").id, "new_id");
+});
+
+test("모르는 필드는 무시하고 원본을 그대로 준다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  assert.equal(core.setCardField(card, "flavour", "설명"), card);
+});
+
+test("편집은 원본을 제자리에서 고치지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  const edited = core.setCardField(card, "name", "바뀐 이름");
+  assert.equal(card.name, "선봉 베기");
+  assert.equal(edited.uid, card.uid, "uid는 편집으로 바뀌지 않는다");
+});
+
+test("분류를 바꿔도 반대쪽 값이 사라지지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  const asIntervention = core.setCardField(card, "category", "Intervention");
+  assert.equal(asIntervention.category, "Intervention");
+  assert.equal(asIntervention.effects.length, 1,
+    "효과가 모델에 남는다 - 되돌릴 때 값이 살아 있어야 한다(설계 5)");
+
+  const written = JSON.parse(core.writeCardJson(asIntervention, schema));
+  assert.equal(written.effects, undefined, "그래도 파일에는 나가지 않는다");
+});
+
+test("새 카드는 스키마의 기본값으로 시작한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const card = core.createCardModel({ schema, uid: core.newUid(1) });
+
+  assert.equal(card.uid, "new:1");
+  assert.equal(card.id, "");
+  assert.equal(card.side, "Player");
+  assert.equal(card.category, "Execution");
+  assert.equal(card.grade, "None");
+  assert.deepEqual(card.effects, []);
+  assert.equal(card.intervention, null);
+  assert.deepEqual(card.tags, []);
+  assert.equal(card.base, null, "저장소에 없으므로 base가 없다");
+  assert.equal(core.resolveCardState({ stored: null, pending: card, schema }), "new");
+});

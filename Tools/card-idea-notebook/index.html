@@ -1776,6 +1776,59 @@
       return { card, errors: [] };
     }
 
+    const EDITABLE_CARD_FIELDS = Object.freeze([
+      "id", "name", "side", "category", "energyCost", "baseExecutionOrder", "grade", "tags",
+    ]);
+
+    const NUMBER_CARD_FIELDS = Object.freeze(["energyCost", "baseExecutionOrder"]);
+
+    /// 폼은 언제나 문자열을 준다. 화면마다 Number()를 부르면 한 곳이 빠졌을 때 조용히 문자열이
+    /// 모델에 들어가고, 그러면 writeCardJson이 "1"을 써서 왕복이 깨진다.
+    function toCardNumber(value) {
+      const parsed = Number(String(value).trim());
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    /// 중복 태그를 여기서 지우지 않는다 - 검증기가 오류로 잡아 사용자가 고치는 편이,
+    /// 입력이 조용히 달라지는 것보다 낫다.
+    function parseTagsInput(text) {
+      return String(text ?? "")
+        .split(/[,\n]/)
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+    }
+
+    /// 필드 하나를 바꾼 새 카드. 제자리에서 고치지 않는 이유는 resolveCardState가 base와
+    /// "지금 쓰면 나올 문자열"을 비교하기 때문이다 - 모델을 뒤집으면 비교 대상이 함께 바뀐다.
+    function setCardField(card, field, value) {
+      if (!EDITABLE_CARD_FIELDS.includes(field)) return card;
+
+      if (field === "tags") return { ...card, tags: parseTagsInput(value) };
+      if (NUMBER_CARD_FIELDS.includes(field)) return { ...card, [field]: toCardNumber(value) };
+      return { ...card, [field]: String(value).trim() };
+    }
+
+    /// 빈 카드. 분류에 없는 쪽 필드도 채워 두는 이유는 설계 5 그대로다 - 편집 중 분류를
+    /// 바꿔도 값이 사라지지 않아야 하고, 어차피 라이터가 분류별 키 목록만 내보낸다.
+    function createCardModel({ schema, uid }) {
+      return {
+        uid,
+        id: "",
+        name: "",
+        side: schema.sides[0],
+        category: schema.categories[0],
+        energyCost: 0,
+        baseExecutionOrder: 0,
+        effects: [],
+        intervention: null,
+        grade: schema.grades[0],
+        tags: [],
+        unknownKeys: [],
+        extra: {},
+        base: null,
+      };
+    }
+
     /// 기본값이면 생략한다. C#의 DefaultValueHandling.Ignore를 그대로 옮긴 것이다.
     /// 배열은 null일 때만 생략한다 - string[]의 기본값이 null이라 []는 기본값이 아니다.
     function isDefaultValue(value, type, schema) {
@@ -2372,6 +2425,10 @@
       summaryLines,
       parseAuthoringSchema,
       readCardJson,
+      EDITABLE_CARD_FIELDS,
+      setCardField,
+      parseTagsInput,
+      createCardModel,
       writeCardJson,
       readPoolJson,
       writePoolJson,
