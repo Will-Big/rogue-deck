@@ -2231,7 +2231,116 @@
       ];
     }
 
+    /// Markdown 경로의 STORAGE_KEY와 별개다. 그쪽은 아직 살아 있고 SCHEMA_VERSION을 올리면
+    /// 그 자리에서 깨지므로, 미반영은 자체 키와 자체 버전을 쓴다. 설계 14의 6 → 7 전환은
+    /// Markdown 경로를 지우는 계획 D가 맡는다.
+    const PENDING_STORAGE_KEY = "fate-weaver.card-idea-notebook.pending";
+    const PENDING_VERSION = 1;
+
+    function emptyPending() {
+      return { version: PENDING_VERSION, cards: {}, pools: {} };
+    }
+
+    function readPending(storage) {
+      const raw = storage.getItem(PENDING_STORAGE_KEY);
+      if (!raw) return { pending: emptyPending(), errors: [] };
+
+      let saved;
+      try {
+        saved = JSON.parse(raw);
+      } catch (error) {
+        return {
+          pending: emptyPending(),
+          errors: [`미반영 편집분을 읽을 수 없습니다: ${error.message}`],
+        };
+      }
+
+      if (!saved || saved.version !== PENDING_VERSION) {
+        return {
+          pending: emptyPending(),
+          errors: [`지원하지 않는 미반영 데이터 버전: ${saved?.version}`],
+        };
+      }
+
+      return {
+        pending: {
+          version: PENDING_VERSION,
+          cards: { ...(saved.cards ?? {}) },
+          pools: { ...(saved.pools ?? {}) },
+        },
+        errors: [],
+      };
+    }
+
+    /// 던지지 않는다. 용량 초과는 저작 중에 실제로 일어나고, 그때 편집을 막는 것보다
+    /// 알리고 계속 쓰게 하는 편이 낫다 - 화면의 모델은 여전히 살아 있다.
+    function writePending(storage, pending) {
+      try {
+        storage.setItem(PENDING_STORAGE_KEY, JSON.stringify(pending));
+        return { persisted: true, error: "" };
+      } catch (error) {
+        return { persisted: false, error: String(error?.message ?? error) };
+      }
+    }
+
+    function putPendingCard(pending, card) {
+      return { ...pending, cards: { ...pending.cards, [card.uid]: card } };
+    }
+
+    function dropPendingCard(pending, uid) {
+      const cards = { ...pending.cards };
+      delete cards[uid];
+      return { ...pending, cards };
+    }
+
+    function putPendingPool(pending, pool) {
+      return { ...pending, pools: { ...pending.pools, [pool.id]: pool } };
+    }
+
+    function dropPendingPool(pending, id) {
+      const pools = { ...pending.pools };
+      delete pools[id];
+      return { ...pending, pools };
+    }
+
+    /// 설계 10.1의 한 줄: 저장소 파일 + 미반영 편집분 = 화면에 보이는 것.
+    /// 저장소에 있는 것은 대체하고, 저장소에 없는 미반영은 뒤에 덧붙인다.
+    function applyPending({ cards, pools, pending }) {
+      const usedCardUids = new Set();
+      const mergedCards = cards.map((card) => {
+        const edited = pending.cards[card.uid];
+        if (!edited) return card;
+        usedCardUids.add(card.uid);
+        return edited;
+      });
+      for (const [uid, card] of Object.entries(pending.cards)) {
+        if (!usedCardUids.has(uid)) mergedCards.push(card);
+      }
+
+      const usedPoolIds = new Set();
+      const mergedPools = pools.map((pool) => {
+        const edited = pending.pools[pool.id];
+        if (!edited) return pool;
+        usedPoolIds.add(pool.id);
+        return edited;
+      });
+      for (const [id, pool] of Object.entries(pending.pools)) {
+        if (!usedPoolIds.has(id)) mergedPools.push(pool);
+      }
+
+      return { cards: mergedCards, pools: mergedPools };
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
+      PENDING_STORAGE_KEY,
+      emptyPending,
+      readPending,
+      writePending,
+      putPendingCard,
+      dropPendingCard,
+      putPendingPool,
+      dropPendingPool,
+      applyPending,
       CONTENT_PATHS,
       readStatusJson,
       poolDistribution,

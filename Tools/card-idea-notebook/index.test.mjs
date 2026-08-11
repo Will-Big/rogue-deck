@@ -2523,3 +2523,114 @@ test("풀 편성·분포 자리의 스타일이 마크업에 있다", () => {
   assert.match(html, /\.pool-roster\b/);
   assert.match(html, /\.pool-distribution\b/);
 });
+
+function pendingStorage() {
+  const items = new Map();
+  return {
+    getItem: (key) => (items.has(key) ? items.get(key) : null),
+    setItem: (key, value) => { items.set(key, String(value)); },
+    removeItem: (key) => { items.delete(key); },
+  };
+}
+
+test("미반영이 없으면 빈 상태를 준다", () => {
+  const core = loadCore();
+  const { pending, errors } = core.readPending(pendingStorage());
+  assert.deepEqual(errors, []);
+  assert.deepEqual(pending.cards, {});
+  assert.deepEqual(pending.pools, {});
+});
+
+test("미반영을 쓰고 다시 읽는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const storage = pendingStorage();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  card.name = "바뀐 이름";
+
+  const written = core.writePending(storage, core.putPendingCard(core.emptyPending(), card));
+  assert.equal(written.persisted, true);
+
+  const { pending } = core.readPending(storage);
+  assert.equal(pending.cards[card.uid].name, "바뀐 이름");
+});
+
+test("미반영에서 항목을 뺀다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+
+  const added = core.putPendingCard(core.emptyPending(), card);
+  assert.equal(Object.keys(added.cards).length, 1);
+
+  const removed = core.dropPendingCard(added, card.uid);
+  assert.deepEqual(removed.cards, {});
+  assert.equal(Object.keys(added.cards).length, 1, "원본을 제자리에서 고치지 않는다");
+});
+
+test("미반영 편집분을 저장소 위에 얹는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const edited = { ...card, name: "덮어쓴 이름" };
+  const fresh = { ...card, uid: "new:1", id: "brand_new", name: "새 카드", base: null };
+
+  const merged = core.applyPending({
+    cards: [card],
+    pools: [],
+    pending: core.putPendingCard(core.putPendingCard(core.emptyPending(), edited), fresh),
+  });
+
+  assert.equal(merged.cards.length, 2);
+  assert.equal(merged.cards[0].name, "덮어쓴 이름", "같은 uid는 대체한다");
+  assert.equal(merged.cards[1].id, "brand_new", "저장소에 없는 미반영은 뒤에 붙인다");
+});
+
+test("풀도 같은 방식으로 얹는다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool } = core.readPoolJson(text);
+  const edited = { ...pool, cards: [...pool.cards, "새_카드"] };
+
+  const merged = core.applyPending({
+    cards: [],
+    pools: [pool],
+    pending: core.putPendingPool(core.emptyPending(), edited),
+  });
+
+  assert.equal(merged.pools.length, 1);
+  assert.equal(merged.pools[0].cards.length, pool.cards.length + 1);
+});
+
+test("깨진 미반영 데이터는 버리고 이유를 준다", () => {
+  const core = loadCore();
+  const storage = pendingStorage();
+  storage.setItem(core.PENDING_STORAGE_KEY, "{ 아님");
+
+  const { pending, errors } = core.readPending(storage);
+  assert.deepEqual(pending.cards, {});
+  assert.equal(errors.length, 1);
+});
+
+test("모르는 미반영 버전은 버리고 이유를 준다", () => {
+  const core = loadCore();
+  const storage = pendingStorage();
+  storage.setItem(core.PENDING_STORAGE_KEY, JSON.stringify({ version: 99, cards: {}, pools: {} }));
+
+  const { pending, errors } = core.readPending(storage);
+  assert.deepEqual(pending.cards, {});
+  assert.ok(errors.some((message) => message.includes("99")));
+});
+
+test("저장에 실패해도 던지지 않고 알린다", () => {
+  const core = loadCore();
+  const storage = {
+    getItem: () => null,
+    setItem: () => { throw new Error("quota"); },
+    removeItem: () => {},
+  };
+
+  const result = core.writePending(storage, core.emptyPending());
+  assert.equal(result.persisted, false);
+  assert.ok(result.error.includes("quota"));
+});
