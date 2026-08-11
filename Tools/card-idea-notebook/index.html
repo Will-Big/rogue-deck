@@ -1829,6 +1829,151 @@
       };
     }
 
+    /// 스키마 필드 하나의 빈 값. writeCardJson의 isDefaultValue와 짝이 맞아야 한다 -
+    /// 여기서 낸 값이 곧 "파일에서 생략되는 값"이다.
+    function defaultParamValue(field) {
+      if (field.type === "int") return 0;
+      if (field.type === "bool") return false;
+      if (field.type === "status") return "";
+      return field.options[0];
+    }
+
+    function coerceParamValue(field, value) {
+      if (field.type === "int") return toCardNumber(value);
+      if (field.type === "bool") return value === true || value === "true";
+      return String(value);
+    }
+
+    /// 효과와 개입이 스키마에서 같은 모양이라 한 함수가 둘을 만든다(계획 3.5의 결과).
+    function emptyParams(spec) {
+      const params = {};
+      for (const field of spec.fields) params[field.name] = defaultParamValue(field);
+      return params;
+    }
+
+    function replaceEffects(card, effects) {
+      return { ...card, effects };
+    }
+
+    function addEffect(card, kind, schema) {
+      const spec = schema.effects[kind];
+      if (!spec) return card;
+
+      return replaceEffects(card, [
+        ...(card.effects ?? []),
+        { kind, params: emptyParams(spec), condition: null, raw: null },
+      ]);
+    }
+
+    function removeEffect(card, index) {
+      const effects = [...(card.effects ?? [])];
+      if (index < 0 || index >= effects.length) return card;
+
+      effects.splice(index, 1);
+      return replaceEffects(card, effects);
+    }
+
+    /// 파라미터를 얕은 복사한다. 같은 객체를 가리키면 한쪽을 고칠 때 둘 다 바뀐다.
+    function duplicateEffect(card, index) {
+      const effects = [...(card.effects ?? [])];
+      const source = effects[index];
+      if (!source) return card;
+
+      effects.splice(index + 1, 0, {
+        ...source,
+        params: { ...source.params },
+        condition: source.condition ? { ...source.condition } : null,
+      });
+      return replaceEffects(card, effects);
+    }
+
+    function moveEffect(card, from, to) {
+      const effects = [...(card.effects ?? [])];
+      if (from < 0 || from >= effects.length) return card;
+
+      const [moved] = effects.splice(from, 1);
+      effects.splice(Math.max(0, Math.min(to, effects.length)), 0, moved);
+      return replaceEffects(card, effects);
+    }
+
+    /// 종류가 바뀌면 파라미터가 통째로 갈린다 - 계획 3.5가 파라미터를 액션에 소속시켰으므로
+    /// 쓰지 않는 칸이 남을 자리가 없다. 조건은 효과 종류와 독립이라 유지한다.
+    function setEffectKind(card, index, kind, schema) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      const spec = schema.effects[kind];
+      if (!current || current.raw || !spec) return card;
+
+      effects[index] = { kind, params: emptyParams(spec), condition: current.condition, raw: null };
+      return replaceEffects(card, effects);
+    }
+
+    function setEffectParam(card, index, name, value, schema) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      if (!current || current.raw) return card;
+
+      const field = schema.effects[current.kind]?.fields.find((entry) => entry.name === name);
+      if (!field) return card;
+
+      effects[index] = {
+        ...current,
+        params: { ...current.params, [name]: coerceParamValue(field, value) },
+      };
+      return replaceEffects(card, effects);
+    }
+
+    /// patch가 null이면 조건을 뗀다. 아니면 있는 조건 위에 얹는다 - 폼이 칸 하나씩 보내므로
+    /// 나머지 칸이 유지되어야 한다.
+    function setEffectCondition(card, index, patch) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      if (!current || current.raw) return card;
+
+      if (patch === null) {
+        effects[index] = { ...current, condition: null };
+        return replaceEffects(card, effects);
+      }
+
+      const merged = { ...emptyConditionValue(), ...current.condition, ...patch };
+      effects[index] = {
+        ...current,
+        condition: {
+          kind: String(merged.kind),
+          n: toCardNumber(merged.n),
+          successEffectValue: toCardNumber(merged.successEffectValue),
+          skipOnBasic: merged.skipOnBasic === true || merged.skipOnBasic === "true",
+        },
+      };
+      return replaceEffects(card, effects);
+    }
+
+    /// 개입은 효과에서 조건을 뺀 것이고 행이 하나뿐이다. kind가 비면 뗀다.
+    function setIntervention(card, kind, schema) {
+      if (!kind) return { ...card, intervention: null };
+
+      const spec = schema.interventions[kind];
+      if (!spec) return card;
+      return { ...card, intervention: { kind, params: emptyParams(spec), raw: null } };
+    }
+
+    function setInterventionParam(card, name, value, schema) {
+      const current = card.intervention;
+      if (!current || current.raw) return card;
+
+      const field = schema.interventions[current.kind]?.fields
+        .find((entry) => entry.name === name);
+      if (!field) return card;
+
+      return {
+        ...card,
+        intervention: {
+          ...current,
+          params: { ...current.params, [name]: coerceParamValue(field, value) },
+        },
+      };
+    }
+
     /// 기본값이면 생략한다. C#의 DefaultValueHandling.Ignore를 그대로 옮긴 것이다.
     /// 배열은 null일 때만 생략한다 - string[]의 기본값이 null이라 []는 기본값이 아니다.
     function isDefaultValue(value, type, schema) {
@@ -2429,6 +2574,15 @@
       setCardField,
       parseTagsInput,
       createCardModel,
+      addEffect,
+      removeEffect,
+      duplicateEffect,
+      moveEffect,
+      setEffectKind,
+      setEffectParam,
+      setEffectCondition,
+      setIntervention,
+      setInterventionParam,
       writeCardJson,
       readPoolJson,
       writePoolJson,

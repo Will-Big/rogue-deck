@@ -2784,3 +2784,156 @@ test("새 카드는 스키마의 기본값으로 시작한다", () => {
   assert.equal(card.base, null, "저장소에 없으므로 base가 없다");
   assert.equal(core.resolveCardState({ stored: null, pending: card, schema }), "new");
 });
+
+function probeCard(core, schema, overrides) {
+  const { card } = core.readCardJson(JSON.stringify({
+    id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
+  }, null, 2), schema);
+  return card;
+}
+
+test("새 효과 행은 스키마의 기본값으로 시작한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const added = core.addEffect(probeCard(core, schema, {}), "apply_status", schema);
+
+  assert.equal(added.effects.length, 1);
+  assert.deepEqual(added.effects[0].params,
+    { status: "", count: 0, target: "Self", selector: "None" });
+  assert.equal(added.effects[0].condition, null);
+  assert.equal(added.effects[0].raw, null);
+});
+
+test("기본값뿐인 효과는 kind만 파일로 나간다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const added = core.addEffect(probeCard(core, schema, {}), "apply_status", schema);
+  const written = JSON.parse(core.writeCardJson(added, schema));
+
+  assert.deepEqual(written.effects, [{ kind: "apply_status" }],
+    "기본값은 생략된다 - 폼이 값을 다 채워도 왕복 규칙은 그대로다");
+});
+
+test("효과를 삭제·복제·이동한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = probeCard(core, schema, {
+    effects: [{ kind: "damage", value: 5 }, { kind: "grant_next_turn_fate", value: 1 }],
+  });
+
+  assert.deepEqual(core.removeEffect(base, 0).effects.map((e) => e.kind),
+    ["grant_next_turn_fate"]);
+
+  const duplicated = core.duplicateEffect(base, 0);
+  assert.deepEqual(duplicated.effects.map((e) => e.kind),
+    ["damage", "damage", "grant_next_turn_fate"]);
+  assert.notEqual(duplicated.effects[0], duplicated.effects[1],
+    "복제본이 같은 객체를 가리키면 한쪽을 고칠 때 둘 다 바뀐다");
+
+  assert.deepEqual(core.moveEffect(base, 0, 1).effects.map((e) => e.kind),
+    ["grant_next_turn_fate", "damage"]);
+  assert.deepEqual(core.moveEffect(base, 0, 9).effects.map((e) => e.kind),
+    ["grant_next_turn_fate", "damage"], "범위를 넘으면 끝으로 보낸다");
+  assert.equal(base.effects.length, 2, "원본을 제자리에서 고치지 않는다");
+});
+
+test("효과 종류를 바꾸면 파라미터가 통째로 갈린다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = probeCard(core, schema, {
+    effects: [{ kind: "damage", value: 5, selector: "FrontOne" }],
+  });
+
+  const changed = core.setEffectKind(base, 0, "grant_next_turn_fate", schema);
+  assert.equal(changed.effects[0].kind, "grant_next_turn_fate");
+  assert.deepEqual(changed.effects[0].params, { value: 0 },
+    "새 종류의 필드만 남는다 - selector는 이 효과에 없다");
+});
+
+test("효과 종류를 바꿔도 조건은 남는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = probeCard(core, schema, {
+    effects: [{ kind: "damage", value: 5, condition: { kind: "FirstToTrigger" } }],
+  });
+
+  const changed = core.setEffectKind(base, 0, "move_formation", schema);
+  assert.equal(changed.effects[0].condition.kind, "FirstToTrigger",
+    "조건은 효과 종류와 독립이다");
+});
+
+test("파라미터를 타입에 맞게 넣는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = core.addEffect(probeCard(core, schema, {}), "consume_status", schema);
+
+  assert.equal(core.setEffectParam(base, 0, "maxAmount", "3", schema)
+    .effects[0].params.maxAmount, 3);
+  assert.equal(core.setEffectParam(base, 0, "status", "poison", schema)
+    .effects[0].params.status, "poison");
+  assert.equal(core.setEffectParam(base, 0, "selector", "All", schema)
+    .effects[0].params.selector, "All");
+
+  const swap = core.addEffect(probeCard(core, schema, {}), "damage", schema);
+  assert.equal(core.setEffectParam(swap, 0, "value", "abc", schema).effects[0].params.value, 0);
+});
+
+test("불리언 파라미터를 넣는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = core.setIntervention(
+    probeCard(core, schema, { category: "Intervention" }), "swap_execution_order", schema);
+
+  assert.equal(base.intervention.params.requireAdjacent, false);
+  assert.equal(core.setInterventionParam(base, "requireAdjacent", true, schema)
+    .intervention.params.requireAdjacent, true);
+});
+
+test("조건을 붙이고 뗀다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = core.addEffect(probeCard(core, schema, {}), "damage", schema);
+
+  const withCondition = core.setEffectCondition(base, 0, { kind: "WithinNth", n: "3" });
+  assert.deepEqual(withCondition.effects[0].condition,
+    { kind: "WithinNth", n: 3, successEffectValue: 0, skipOnBasic: false });
+
+  const bumped = core.setEffectCondition(withCondition, 0, { successEffectValue: "7" });
+  assert.equal(bumped.effects[0].condition.kind, "WithinNth", "다른 칸은 유지된다");
+  assert.equal(bumped.effects[0].condition.successEffectValue, 7);
+
+  assert.equal(core.setEffectCondition(withCondition, 0, null).effects[0].condition, null);
+});
+
+test("개입을 걸고 종류를 바꾸고 뗀다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = probeCard(core, schema, { category: "Intervention" });
+
+  const locked = core.setIntervention(base, "lock", schema);
+  assert.equal(locked.intervention.kind, "lock");
+  assert.deepEqual(locked.intervention.params, {});
+
+  const changed = core.setIntervention(locked, "change_execution_order", schema);
+  assert.deepEqual(changed.intervention.params, { delta: 0, targetSide: "Any" });
+
+  assert.equal(core.setIntervention(changed, "", schema).intervention, null);
+});
+
+test("모르는 효과 행은 파라미터도 종류도 바뀌지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = `${JSON.stringify({
+    id: "x", name: "실험", side: "Player", category: "Execution",
+    effects: [{ kind: "teleport", distance: 3 }],
+  }, null, 2)}\n`;
+  const { card } = core.readCardJson(original, schema);
+
+  assert.equal(core.setEffectParam(card, 0, "distance", "9", schema), card);
+  assert.equal(core.setEffectKind(card, 0, "damage", schema), card);
+  assert.equal(core.writeCardJson(card, schema), original,
+    "보존하기로 한 것이 편집 명령으로 깨지면 안 된다");
+
+  assert.deepEqual(core.removeEffect(card, 0).effects, [],
+    "삭제는 허용한다 - 사용자가 명시적으로 지시한 변경이다");
+});
