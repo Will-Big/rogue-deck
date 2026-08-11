@@ -1,7 +1,8 @@
 # 카드 저작 노트북 편집 구현 계획 (계획 C)
 
 - 작성일: 2026-08-07
-- 상태: `active`
+- 완료일: 2026-08-07 — Task 1~8 전부 실행. 실행 기록은 맨 아래에 있다
+- 상태: `completed`
 - 설계: [카드 저작 노트북 JSON 전환](../specs/2026-08-05-card-authoring-json-notebook-design.md)
 - 선행: [노트북 JSON 코어 (계획 A)](../archive/plans/2026-08-05-notebook-json-core.md),
   [노트북 저장소 읽기 UI (계획 B)](../archive/plans/2026-08-07-notebook-repo-read-ui.md) — 둘 다 2026-08-07 완료·머지
@@ -172,7 +173,7 @@ Chrome이나 Edge로 `http://localhost:8765/Tools/card-idea-notebook/index.html`
 `applyPending`이 하는 일은 설계 §10.1의 한 줄 그대로다: `저장소 파일 + 미반영 편집분 = 화면에
 보이는 것`. 저장소에 있는 것은 대체하고, 저장소에 없는 미반영은 **뒤에 덧붙인다**.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 `index.test.mjs` 끝에 붙인다. 파일에 이미 있는 `MemoryStorage`(389줄)를 쓰지 않고 작은 것을 새로
 만드는 이유는, 그쪽이 Markdown 경로의 저장 실패 시나리오를 위해 만들어진 것이고 계획 D가 그
@@ -292,7 +293,7 @@ test("저장에 실패해도 던지지 않고 알린다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -300,7 +301,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 8개.** `core.readPending is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `globalThis.CardIdeaNotebook = Object.freeze({` **바로 위**에 넣는다.
 
@@ -422,7 +423,7 @@ export 블록의 `CONTENT_PATHS` **위**에 넣는다:
       CONTENT_PATHS,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -430,7 +431,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **134/134** (기준선 126 + 신규 8).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -464,7 +465,7 @@ Markdown 경로의 STORAGE_KEY와 별개 키를 쓴다. 그쪽은 아직 살아 
 `uid`에 접두사를 붙이는 이유는 충돌 때문이다. 접두사가 없으면 새 카드에 `vanguard_slash`라는 id를
 주는 순간 저장소 카드의 uid와 겹친다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -527,7 +528,7 @@ test("왕복은 uid에 영향받지 않는다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -536,7 +537,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: **FAIL 5개.** `card.uid`가 `""`이고 `core.newUid is not a function`.
 `왕복은 uid에 영향받지 않는다`는 이미 통과한다 — `uid`는 `cardFields`에 없어 직렬화되지 않는다.
 
-- [ ] **Step 3: uid 헬퍼를 넣고 `readCardJson`을 고친다**
+- [x] **Step 3: uid 헬퍼를 넣고 `readCardJson`을 고친다**
 
 `readStatusJson` **바로 위**에 넣는다.
 
@@ -599,7 +600,7 @@ export 블록에 세 줄 더한다:
       CONTENT_PATHS,
 ```
 
-- [ ] **Step 4: 저장소 UI의 색인을 uid로 바꾼다**
+- [x] **Step 4: 저장소 UI의 색인을 uid로 바꾼다**
 
 `<script data-repo-ui>`의 `loadRepo`에서 카드 상태 표를 uid로 만든다:
 
@@ -676,7 +677,7 @@ export 블록에 세 줄 더한다:
       });
 ```
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -684,7 +685,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **139/139** (134 + 신규 5. `왕복은 uid에 영향받지 않는다`는 Step 2에서 이미 통과했다).
 
-- [ ] **Step 6: 브라우저에서 회귀를 확인한다**
+- [x] **Step 6: 브라우저에서 회귀를 확인한다**
 
 계획 B가 만든 화면이 그대로여야 한다. 폴더를 연결하고 확인한다.
 
@@ -692,7 +693,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 2. 카드를 누르면 상세와 원문이 나온다. **선택 표시가 옳은 줄에 붙는다.**
 3. 요약의 고아 경고를 누르면 그 카드가 선택된다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -730,7 +731,7 @@ id는 저작 중에 바뀌지만 uid는 바뀌지 않으므로 선택과 미반�
 한 곳이 빠졌을 때 조용히 문자열이 모델에 들어가고, 그러면 `writeCardJson`이 `"1"`을 써서 왕복이
 깨진다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -823,7 +824,7 @@ test("새 카드는 스키마의 기본값으로 시작한다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -831,7 +832,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 8개.** `core.setCardField is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `readCardJson` **바로 아래**에 넣는다.
 
@@ -901,7 +902,7 @@ export 블록에 네 줄 더한다:
       writeCardJson,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -909,7 +910,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **147/147** (139 + 신규 8).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -947,7 +948,7 @@ git commit -m "feat(tools): 노트북이 카드의 기본 필드를 편집한다
 파라미터나 종류를 바꾸면 보존하기로 한 것이 깨진다. 삭제와 이동은 허용한다 — 그것은 사용자가
 명시적으로 지시한 변경이다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -1105,7 +1106,7 @@ test("모르는 효과 행은 파라미터도 종류도 바뀌지 않는다", ()
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1113,7 +1114,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 11개.** `core.addEffect is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `createCardModel` **바로 아래**에 넣는다.
 
@@ -1280,7 +1281,7 @@ export 블록에 열 줄 더한다:
       writeCardJson,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1288,7 +1289,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **158/158** (147 + 신규 11).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1319,7 +1320,7 @@ git commit -m "feat(tools): 노트북이 효과와 개입 행을 편집한다
 **담기는 이미 있는 카드를 건너뛴다.** 설계 §7의 체크박스가 이미 소속된 풀을 비활성으로 두므로
 정상 흐름에서는 일어나지 않지만, 여기서 막아 두면 UI가 실수해도 중복이 새로 생기지 않는다.
 
-- [ ] **Step 1: 실패하는 테스트를 쓴다**
+- [x] **Step 1: 실패하는 테스트를 쓴다**
 
 ```js
 
@@ -1379,7 +1380,7 @@ test("편성을 고쳐도 왕복 형식이 유지된다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1387,7 +1388,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 6개.** `core.addCardsToPool is not a function`.
 
-- [ ] **Step 3: 최소 구현을 쓴다**
+- [x] **Step 3: 최소 구현을 쓴다**
 
 `writePoolJson` **바로 아래**에 넣는다.
 
@@ -1436,7 +1437,7 @@ export 블록에 세 줄 더한다:
       moveInPool,
 ```
 
-- [ ] **Step 4: 통과를 확인한다**
+- [x] **Step 4: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1444,7 +1445,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **164/164** (158 + 신규 6).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1473,7 +1474,7 @@ git commit -m "feat(tools): 노트북이 풀 편성을 조작한다
 **오류 카드는 폼 대신 원본 JSON을 읽기 전용으로 보여준다**(설계 §11.3). 모르는 최상위 키를 가진
 카드가 그렇다 — 폼으로 열면 §10.2가 보존하기로 한 것을 폼이 표현하지 못하는 만큼 망가뜨린다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -1491,7 +1492,7 @@ test("편집 명령이 저장소 UI에만 배선된다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1500,7 +1501,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: **FAIL 1개.** `id="repo-new-card"`를 찾지 못한다.
 (두 번째 테스트는 이미 통과한다 — 아직 아무것도 배선하지 않았다.)
 
-- [ ] **Step 3: 마크업과 CSS를 넣는다**
+- [x] **Step 3: 마크업과 CSS를 넣는다**
 
 저장소 목록 헤더의 `<button type="button" class="primary" id="repo-connect">폴더 연결</button>`을
 둘로 나눈다:
@@ -1531,7 +1532,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
 ```
 
-- [ ] **Step 4: 미반영 배선과 폼을 쓴다**
+- [x] **Step 4: 미반영 배선과 폼을 쓴다**
 
 `<script data-repo-ui>`의 `repoStore` 선언 **바로 뒤**에 넣는다:
 
@@ -1797,7 +1798,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     if (restored.errors.length) pendingNote = restored.errors.join(" ");
 ```
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1805,7 +1806,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **166/166** (164 + 신규 2).
 
-- [ ] **Step 6: 브라우저에서 수동 검수한다**
+- [x] **Step 6: 브라우저에서 수동 검수한다**
 
 폴더를 연결하고 확인한다.
 
@@ -1830,7 +1831,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
    git checkout Assets/StreamingAssets/Content/Cards/vanguard_slash.json && git status --short
    ```
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -1863,7 +1864,7 @@ diff 요약이 거짓말을 한다.
 계획 A의 스키마가 둘을 같은 `{kind, label, fields[]}`로 내므로, 파라미터 칸을 그리는 함수 하나가
 양쪽을 그린다. 다른 것은 개입에 조건이 없고 행이 하나라는 점뿐이다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -1875,7 +1876,7 @@ test("효과 편집기의 스타일이 마크업에 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1883,7 +1884,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 1개.** `.effect-row`를 찾지 못한다.
 
-- [ ] **Step 3: CSS를 넣는다**
+- [x] **Step 3: CSS를 넣는다**
 
 `.repo-readonly` 뒤에 넣는다.
 
@@ -1909,7 +1910,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     .effect-glyph { color: var(--gold); font-size: 12px; letter-spacing: .12em; }
 ```
 
-- [ ] **Step 4: 효과·개입 렌더러를 쓴다**
+- [x] **Step 4: 효과·개입 렌더러를 쓴다**
 
 `renderCardDetail` **바로 위**에 넣는다.
 
@@ -2133,7 +2134,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
       else elements.detail.append(renderInterventionRow(card));
 ```
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -2141,7 +2142,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **167/167** (166 + 신규 1).
 
-- [ ] **Step 6: 브라우저에서 수동 검수한다**
+- [x] **Step 6: 브라우저에서 수동 검수한다**
 
 1. `vanguard_slash`를 고르면 효과 섹션에 `damage` 행 하나가 나오고 `value 5`, `selector FrontOne`,
    그 옆에 글리프 `◆━━━━`가 보인다.
@@ -2155,7 +2156,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
    나온다. `lock`으로 바꾸면 **파라미터 칸이 하나도 없다.**
 7. 카드에 손으로 모르는 효과 kind를 넣고 다시 읽으면 그 행이 `해석 못 함`으로 잠긴다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -2186,7 +2187,7 @@ git commit -m "feat(tools): 노트북이 효과와 개입을 구조화 폼으로
 **소유권은 풀에 있다**(설계 §7). 카드 화면의 체크박스는 **담기만** 하고, 위치 조정과 제거는 풀
 화면에서만 된다. 이미 소속된 풀은 체크된 채 비활성이라 체크 해제로 제거되는 사고가 없다.
 
-- [ ] **Step 1: 실패하는 마크업 테스트를 쓴다**
+- [x] **Step 1: 실패하는 마크업 테스트를 쓴다**
 
 ```js
 
@@ -2197,7 +2198,7 @@ test("풀 담기와 소속 표시의 스타일이 마크업에 있다", () => {
 });
 ```
 
-- [ ] **Step 2: 실패를 확인한다**
+- [x] **Step 2: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -2205,7 +2206,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: **FAIL 1개.** `.pool-membership`을 찾지 못한다.
 
-- [ ] **Step 3: CSS를 넣는다**
+- [x] **Step 3: CSS를 넣는다**
 
 `.effect-glyph` 뒤에 넣는다.
 
@@ -2232,7 +2233,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     }
 ```
 
-- [ ] **Step 4: 편성 조작과 소속 체크박스를 쓴다**
+- [x] **Step 4: 편성 조작과 소속 체크박스를 쓴다**
 
 `renderPoolDetail`의 편성 루프에서 슬롯에 조작 버튼을 붙인다. `slot.append(order, label, tail);`을
 바꾼다:
@@ -2326,7 +2327,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     }
 ```
 
-- [ ] **Step 5: 통과를 확인한다**
+- [x] **Step 5: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -2335,7 +2336,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 
 기대: 노트북 **168/168** (167 + 신규 1), 헤드리스 **526/526**.
 
-- [ ] **Step 6: 브라우저에서 최종 검수한다**
+- [x] **Step 6: 브라우저에서 최종 검수한다**
 
 1. `풀` 탭 → `starter` → 편성 각 줄에 `▲`·`▼`·`빼기`가 있다.
 2. `빼기`를 누르면 22 → 21장이 되고 배지가 `✎ 수정됨`, 요약의 미반영이 1이 된다.
@@ -2349,7 +2350,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 8. 탭을 새로 고쳐도 편집분 전부가 남아 있다.
 9. **`git status`가 깨끗하다** — 이 계획은 파일을 쓰지 않는다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs
@@ -2382,6 +2383,70 @@ git commit -m "feat(tools): 노트북이 풀 편성을 조작한다
 설계 §16 검수 기준 중 이 계획이 담당하는 것은 **7의 절반**(모르는 효과 kind를 편집으로 깨뜨리지
 않는다 — 내보낸 뒤 파일이 바뀌지 않는지는 계획 D가 확인한다)이다. 2·4·5와 8의 나머지는 쓰기가
 필요하므로 계획 D가 맡는다.
+
+---
+
+## 실행 기록 (2026-08-07)
+
+Task 1~8을 순서대로 실행했다. **노트북 168/168, 헤드리스 526/526.** 저장소 콘텐츠 파일은 하나도
+바뀌지 않았다 — 이 계획은 파일을 쓰지 않는다.
+
+### 계획이 놓친 것 넷
+
+1. **이름 충돌 — 가장 컸다.** `createCard`와 `editCardField`는 **Markdown 경로가 이미 쓰고 있다.**
+   같은 스코프에 다시 선언하니 함수 선언 호이스팅이 옛 것을 가려 **Markdown 테스트 여섯이 한꺼번에
+   실패했다.** `createCardModel`·`setCardField`로 바꿨다. Task 4·5 착수 전에는 이름 충돌을 먼저
+   grep으로 확인했고 그쪽은 깨끗했다.
+
+2. **계획 B의 테스트 둘이 옛 계약을 인코딩하고 있었다.** `cardListView`의 `states`를 카드 `id`로
+   색인하던 테스트를 uid로 옮겼다. 계획은 이 갱신을 적지 않았다.
+
+3. **`renderSummary`의 이른 반환.** 미반영 저장 실패 안내를 `renderSummary` 끝에 두라고 했는데,
+   그 함수에는 `message`·미연결 두 갈래의 이른 반환이 있어 연결 전에는 안내가 표시되지 않는다.
+   `render()`로 옮겼다.
+
+4. **탭 동기화 누락 — 검수로 잡았다.** `applyPoolEdit`이 `selection`만 바꾸고 탭은 그대로 둬서
+   **목록은 카드인데 상세는 풀인 화면**이 나왔다. `selectEntry`만 탭을 맞추고 있던 것을
+   `selectWithTab`으로 뽑아 편집 경로도 함께 쓰게 했다.
+
+### 테스트 개수의 어긋남
+
+계획이 Task 2를 `신규 5`, Task 4를 `신규 11`로 셌지만 실제 테스트는 6개와 10개였다. 총계는
+우연히 맞아떨어졌고(158) 최종 수치도 계획대로 **168**이다. 중간 기대치만 1씩 어긋났다.
+
+### 검수 방법과 그 한계
+
+계획 B와 같이 `window.showDirectoryPicker`를 `fetch` 기반 가짜 디렉터리 핸들로 바꿔치고 나머지는
+진짜 코드를 태웠다. **가짜 핸들의 `fetch`에 `{ cache: "reload" }`가 필요하다** — 없으면 브라우저
+HTTP 캐시가 옛 내용을 돌려줘서 "저장소 다시 읽기"가 바뀐 파일을 못 본다. 실제 File System Access
+API는 HTTP 캐시를 거치지 않으므로 **이것은 대역의 한계이지 제품 결함이 아니다.**
+
+검수 입력에서 `venom_thrust`를 새 카드 id로 골랐다가 그것이 이미 저장소에 있고 `starter`에도
+들어 있다는 것을 발견했다. 노트북은 옳게 동작했다 — 중복 id 오류를 냈고, 같은 id가 이미 풀에
+있어 소속 체크박스가 비활성이었다. `thorn_lash`로 다시 했다.
+
+### 실측한 검수 결과
+
+| 항목 | 결과 |
+|---|---|
+| 폼 | id·이름·진영·분류·비용·실행 순서·등급·태그 여덟 칸 |
+| 편집 ↔ 되돌리기 | `✎ 수정됨 · 미반영 1` ↔ `● 저장소와 동일 · 미반영 0` |
+| 분류 전환 | `Intervention`으로 바꾸면 실행 순서 칸이 사라지고 `개입 액션이 필요합니다` 오류 |
+| 효과 편집기 | `damage value=5 selector=FrontOne` + 글리프 `◆━━━━` |
+| 조건 | `riposte`가 펼쳐진 채 `successEffectValue=7` |
+| 상태 드롭다운 | 11개 + `(없음)`, 한국어 이름과 키 병기 |
+| 개입 | `hasten`이 `delta=-1 targetSide=Player`, `lock`은 **파라미터 칸 0개** |
+| 행 조작 | `▲`·`▼`·복제·삭제 전부 동작 |
+| 풀 조작 | 빼기 22→21에 분포가 즉시 따라감, 담기로 22 복귀 |
+| 풀 규칙 | `fixture_attack`을 담자 **등급·태그 오류**가 뜨고 빼낸 카드가 고아 경고로 이동 |
+| 소속 체크박스 | 소속 풀이 `체크 + 비활성 + (소속)` |
+| 새 카드 완주 | id·이름·등급·태그·효과를 채우고 풀에 담아 **오류 0** |
+| 보존 | 새로고침 후 미반영 유지 |
+| 모르는 키 | 폼 대신 안내, 원문은 그대로 |
+
+### 계획 D에 넘기는 것
+
+"다음" 절 그대로다. 저장소 UI 스크립트에 쓰기를 붙이고 옛 Markdown 스크립트와 모드 전환을 지운다.
 
 ## 다음
 
