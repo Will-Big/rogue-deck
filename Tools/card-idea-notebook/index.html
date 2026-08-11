@@ -1753,7 +1753,7 @@
       }
 
       const card = {
-        uid: "",
+        uid: repoUid(String(raw.id)),
         id: String(raw.id),
         name: String(raw.name),
         side: String(raw.side),
@@ -2059,6 +2059,24 @@
       pools: Object.freeze(["Assets", "StreamingAssets", "Content", "Pools"]),
     });
 
+    /// 노트북 내부 식별자. id는 저작 중에 바뀌지만 uid는 바뀌지 않으므로, 선택과 미반영은
+    /// uid에 매달린다(설계 5). 접두사를 붙이는 이유는 충돌이다 - 없으면 새 카드에
+    /// 'vanguard_slash'라는 id를 주는 순간 저장소 카드의 uid와 겹친다.
+    const REPO_UID_PREFIX = "file:";
+    const NEW_UID_PREFIX = "new:";
+
+    function repoUid(id) {
+      return REPO_UID_PREFIX + id;
+    }
+
+    function newUid(sequence) {
+      return NEW_UID_PREFIX + sequence;
+    }
+
+    function isNewUid(uid) {
+      return String(uid).startsWith(NEW_UID_PREFIX);
+    }
+
     /// 상태 파일에서 드롭다운 재료만 뽑는다(설계 11.5). 수명·성장치를 들고 있지 않는 것은
     /// 노트북이 상태를 쓰지 않기 때문이다 - 읽지 않는 값을 모델에 두면 언젠가 되쓰게 된다.
     function readStatusJson(text) {
@@ -2170,8 +2188,8 @@
 
     /// 목록 한 줄이 알아야 하는 것을 카드마다 계산하고 걸러 준다. 화면은 이 배열만 반복하므로
     /// 검색·필터 규칙이 DOM을 모른다.
-    /// states는 카드 id로 색인한다 - 이 계획에는 편집이 없어 id가 파일명 그대로 고정이다.
-    /// 계획 C가 편집을 붙이면 id가 저작 중에 바뀌므로 색인 키를 uid로 바꾼다(설계 5).
+    /// states는 uid로, errorIds는 id로 색인한다 - 편집 상태는 카드를 따라가야 하고(id는
+    /// 저작 중에 바뀐다) 검증은 파일 단위여서 로더와 같은 id로 봐야 한다.
     function cardListView({ cards, states, errorIds, membership, query, filter, poolId }) {
       const stateOf = states ?? new Map();
       const failing = errorIds ?? new Set();
@@ -2181,7 +2199,7 @@
       for (const card of cards) {
         const row = {
           card,
-          state: stateOf.get(card.id) ?? "same",
+          state: stateOf.get(card.uid) ?? "same",
           hasError: failing.has(card.id),
           pools: owners.get(card.id) ?? [],
         };
@@ -2341,6 +2359,9 @@
       putPendingPool,
       dropPendingPool,
       applyPending,
+      repoUid,
+      newUid,
+      isNewUid,
       CONTENT_PATHS,
       readStatusJson,
       poolDistribution,
@@ -3205,6 +3226,7 @@
       cards: [],
       pools: [],
       cardsById: new Map(),
+      cardsByUid: new Map(),
       membership: new Map(),
       quarantined: [],
       validation: { errors: [], warnings: [] },
@@ -3333,11 +3355,15 @@
         ...statusFolder.failures, ...cardFolder.failures, ...poolFolder.failures);
 
       const cardsById = new Map();
-      for (const card of cards) cardsById.set(card.id, card);
+      const cardsByUid = new Map();
+      for (const card of cards) {
+        cardsById.set(card.id, card);
+        cardsByUid.set(card.uid, card);
+      }
 
       const cardStates = new Map();
       for (const card of cards) {
-        cardStates.set(card.id,
+        cardStates.set(card.uid,
           core.resolveCardState({ stored: card.base, pending: card, schema }));
       }
 
@@ -3352,6 +3378,7 @@
         cards,
         pools,
         cardsById,
+        cardsByUid,
         membership: core.poolMembership(pools),
         quarantined,
         validation: core.validateContent({
@@ -3432,7 +3459,16 @@
       text.textContent = message;
       button.append(text);
 
-      button.addEventListener("click", () => selectEntry(scope, id));
+      button.addEventListener("click", () => {
+        if (scope !== "card") {
+          selectEntry(scope, id);
+          return;
+        }
+        // 검증 오류와 격리 항목은 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
+        const card = repoStore.cardsById.get(id)
+          ?? repoStore.cardsById.get(String(id).replace(/\.json$/, ""));
+        if (card) selectEntry("card", card.uid);
+      });
       return button;
     }
 
@@ -3531,7 +3567,7 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "repo-entry";
-      if (selection.scope === "card" && selection.id === row.card.id) {
+      if (selection.scope === "card" && selection.id === row.card.uid) {
         button.classList.add("is-selected");
       }
 
@@ -3565,7 +3601,7 @@
         : `${STATE_BADGES[row.state] ?? row.state}${tags ? ` — ${tags}` : ""}`;
       button.append(badge);
 
-      button.addEventListener("click", () => selectEntry("card", row.card.id));
+      button.addEventListener("click", () => selectEntry("card", row.card.uid));
       return button;
     }
 
@@ -3756,7 +3792,7 @@
       else renderPoolList();
 
       if (selection.scope === "card") {
-        const card = repoStore.cardsById.get(selection.id);
+        const card = repoStore.cardsByUid.get(selection.id);
         if (card) renderCardDetail(card);
       }
       if (selection.scope === "pool") {

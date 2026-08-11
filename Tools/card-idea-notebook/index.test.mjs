@@ -2385,7 +2385,11 @@ test("필터가 상태·오류·고아를 가른다", () => {
     { id: "same_card" }, { id: "edited" }, { id: "clashing" },
     { id: "broken" }, { id: "enemy_card", side: "Enemy" },
   ]);
-  const states = new Map([["edited", "modified"], ["clashing", "conflict"]]);
+  // 상태는 uid로 색인한다. id는 저작 중에 바뀌므로 상태가 카드를 따라가야 한다.
+  const states = new Map([
+    [core.repoUid("edited"), "modified"],
+    [core.repoUid("clashing"), "conflict"],
+  ]);
   const errorIds = new Set(["broken"]);
   const membership = new Map([["same_card", ["starter"]]]);
   const view = (filter) => core.cardListView({ cards, states, errorIds, membership, filter })
@@ -2422,7 +2426,7 @@ test("줄마다 상태·오류·소속을 붙여 준다", () => {
 
   const [marked] = core.cardListView({
     cards,
-    states: new Map([["a", "conflict"]]),
+    states: new Map([[core.repoUid("a"), "conflict"]]),
     errorIds: new Set(["a"]),
     membership: new Map([["a", ["starter", "mycologist"]]]),
     filter: "all",
@@ -2633,4 +2637,62 @@ test("저장에 실패해도 던지지 않고 알린다", () => {
   const result = core.writePending(storage, core.emptyPending());
   assert.equal(result.persisted, false);
   assert.ok(result.error.includes("quota"));
+});
+
+test("저장소에서 읽은 카드에 파일 uid를 붙인다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  assert.equal(card.uid, "file:vanguard_slash");
+  assert.equal(core.isNewUid(card.uid), false);
+});
+
+test("신규 uid는 접두사로 구분된다", () => {
+  const core = loadCore();
+  assert.equal(core.newUid(1), "new:1");
+  assert.equal(core.isNewUid(core.newUid(1)), true);
+  assert.notEqual(core.newUid(1), core.repoUid("1"),
+    "접두사가 없으면 새 카드의 id가 저장소 카드의 uid와 겹칠 수 있다");
+});
+
+test("id를 바꿔도 uid는 그대로다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const renamed = { ...card, id: "renamed_card" };
+  assert.equal(renamed.uid, "file:vanguard_slash");
+});
+
+test("목록의 상태는 uid로, 오류는 id로 색인한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const renamed = { ...card, id: "renamed_card" };
+
+  const [row] = core.cardListView({
+    cards: [renamed],
+    states: new Map([[renamed.uid, "modified"]]),
+    errorIds: new Set(["renamed_card"]),
+    filter: "all",
+  });
+
+  assert.equal(row.state, "modified", "id를 바꿔도 상태가 따라온다");
+  assert.equal(row.hasError, true, "검증 오류는 현재 id로 붙는다");
+});
+
+test("uid를 모르면 저장소와 같은 것으로 본다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(readCardFile("vanguard_slash.json"), schema);
+  const [row] = core.cardListView({ cards: [card], filter: "all" });
+  assert.equal(row.state, "same");
+});
+
+test("왕복은 uid에 영향받지 않는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const original = readCardFile("vanguard_slash.json");
+  const { card } = core.readCardJson(original, schema);
+  assert.equal(core.writeCardJson(card, schema), original,
+    "uid는 노트북 내부 식별자이고 파일에 나가지 않는다");
 });
