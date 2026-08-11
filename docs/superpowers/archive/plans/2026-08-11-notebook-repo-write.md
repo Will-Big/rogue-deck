@@ -4,7 +4,7 @@
 > `superpowers:executing-plans`로 작업 단위마다 실행한다. 단계는 체크박스(`- [ ]`)로 추적한다.
 
 - 작성일: 2026-08-11
-- 상태: `active`
+- 상태: `completed` — 2026-08-12 완료. 검수 기준 §16의 1·2·4·5·8은 브라우저 확인이 필요해 사용자 검증 대기
 - 범위: [카드 저작 노트북 JSON 전환](../../specs/2026-08-05-card-authoring-json-notebook-design.md) §10.3·§12·§14와
   Markdown 경로 제거, 관련 문서 정리
 - 선행: 계획 A(코어)·B(읽기 UI)·C(편집) 완료 (`master` eda06bf)
@@ -137,7 +137,7 @@ UI 스크립트에만 둔다. 작업 1~5가 쓰기를 완성하고, 작업 6이 
     `base`가 `null`·`undefined`이면 모든 줄이 `add`이고 `same: false`.
   - 마크업 요소 `#repo-source-toggle`(버튼), `#repo-source-diff`(`<pre>`).
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 `index.test.mjs` 맨 아래에 붙인다.
 
@@ -191,7 +191,7 @@ test("저장소에 없던 것은 전부 추가다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -199,7 +199,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 네 테스트가 `TypeError: core.diffLines is not a function`으로 실패.
 
-- [ ] **3단계: 코어에 `diffLines`를 넣는다**
+- [x] **3단계: 코어에 `diffLines`를 넣는다**
 
 `index.html`의 `resolvePoolState` 함수가 끝난 직후(`CONTENT_PATHS` 선언 바로 앞)에 넣는다.
 
@@ -250,7 +250,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 `globalThis.CardIdeaNotebook` 목록의 `resolvePoolState` 다음 줄에 `diffLines,`를 넣는다.
 
-- [ ] **4단계: 통과를 확인한다**
+- [x] **4단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -258,7 +258,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 172 pass / 0 fail.
 
-- [ ] **5단계: 토글 마크업과 스타일을 넣는다**
+- [x] **5단계: 토글 마크업과 스타일을 넣는다**
 
 `index.html`의 우측 창(`repo-source-title` 블록, 약 707~712줄)을 이렇게 바꾼다.
 
@@ -281,7 +281,7 @@ CSS의 `.markdown-preview`(318줄)를 `.json-preview`로 바꾸고, 그 규칙 �
     .diff-row.is-same { color: #8a8a80; }
 ```
 
-- [ ] **6단계: 마크업 존재 테스트를 쓴다**
+- [x] **6단계: 마크업 존재 테스트를 쓴다**
 
 ```js
 test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
@@ -294,7 +294,7 @@ test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
 });
 ```
 
-- [ ] **7단계: UI에 토글을 배선한다**
+- [x] **7단계: UI에 토글을 배선한다**
 
 `elements` 객체(약 3,502줄)에 두 줄을 더한다.
 
@@ -382,7 +382,7 @@ test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
     });
 ```
 
-- [ ] **8단계: 통과를 확인한다**
+- [x] **8단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -390,7 +390,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 173 pass / 0 fail.
 
-- [ ] **9단계: 커밋한다**
+- [x] **9단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 저장소와 현재 원문의 차이를 보여준다"
@@ -416,7 +416,7 @@ git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.
 같고, `내 변경 유지`는 `storedCardText`를 새 원문으로 갈아 끼우는 것과 같다. 둘 다 이미 있는 코어
 연산이고, 새 이름을 붙이면 같은 일에 두 개의 이름이 생긴다(규칙 13).
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 충돌 판정 자체는 이미 `resolveCardState`가 잠근다. 여기서는 **해결 후의 상태**를 잠근다.
 
@@ -463,7 +463,7 @@ const repoSchema = () => loadCore().parseAuthoringSchema(
   readFileSync(fileURLToPath(new URL("./authoring-schema.json", htmlUrl)), "utf8"));
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -472,7 +472,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: 헬퍼가 없으면 `ReferenceError`, 있으면 통과. **통과하면 그대로 두고 3단계로 간다** — 이
 테스트는 기존 코어 계약을 잠그는 회귀 테스트이며, 새 코드가 필요한 것은 UI뿐이다.
 
-- [ ] **3단계: 충돌 배너 마크업 스타일을 넣는다**
+- [x] **3단계: 충돌 배너 마크업 스타일을 넣는다**
 
 CSS의 `.repo-readonly` 규칙 근처에 넣는다.
 
@@ -486,7 +486,7 @@ CSS의 `.repo-readonly` 규칙 근처에 넣는다.
     .repo-conflict strong { color: var(--gold-bright); }
 ```
 
-- [ ] **4단계: UI에 해결 버튼을 넣는다**
+- [x] **4단계: UI에 해결 버튼을 넣는다**
 
 `renderCardDetail` 안, `unknownKeys` 이른 반환 **뒤**이고 폼 생성 **앞**에 넣는다.
 
@@ -575,7 +575,7 @@ CSS의 `.repo-readonly` 규칙 근처에 넣는다.
     }
 ```
 
-- [ ] **5단계: 마크업 존재 테스트를 쓴다**
+- [x] **5단계: 마크업 존재 테스트를 쓴다**
 
 ```js
 test("충돌 해결 버튼이 저장소 UI에 배선된다", () => {
@@ -591,7 +591,7 @@ test("충돌 해결 버튼이 저장소 UI에 배선된다", () => {
 });
 ```
 
-- [ ] **6단계: 통과를 확인한다**
+- [x] **6단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -599,7 +599,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 176 pass / 0 fail.
 
-- [ ] **7단계: 커밋한다**
+- [x] **7단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 충돌을 저장소와 내 변경 중 하나로 해결한다"
@@ -637,7 +637,7 @@ exportPlan({ cards, pools, storedCards, storedPools, cardStates, poolStates, rea
   덮어쓰면 Unity가 재임포트만 한다.
 - `blocked`가 비지 않으면 UI가 쓰기 버튼을 비활성으로 둔다.
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 ```js
 function planFixture(core, schema) {
@@ -790,7 +790,7 @@ test("풀도 카드와 같은 규칙으로 나간다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -798,7 +798,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 여덟 테스트가 `core.exportPlan is not a function`으로 실패.
 
-- [ ] **3단계: 코어에 `exportPlan`을 넣는다**
+- [x] **3단계: 코어에 `exportPlan`을 넣는다**
 
 `diffLines` 바로 뒤에 넣는다.
 
@@ -881,7 +881,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 `globalThis.CardIdeaNotebook` 목록에 `exportPlan,`을 더한다.
 
-- [ ] **4단계: 통과를 확인한다**
+- [x] **4단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -889,7 +889,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 184 pass / 0 fail.
 
-- [ ] **5단계: 커밋한다**
+- [x] **5단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 내보낼 파일과 차단 사유를 계산한다"
@@ -910,7 +910,7 @@ git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.
   형태는 `[{ scope, name, messages, text }]` — **`text`가 새로 붙는다.**
   선택 범위에 `"readError"`가 추가된다: `selection = { scope: "readError", id: "<파일 이름>" }`.
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 ```js
 test("읽기 오류 원문 편집 자리가 저장소 UI에 있다", () => {
@@ -939,7 +939,7 @@ test("고친 원문이 파싱되면 카드로 승격한다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -947,7 +947,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 첫 테스트가 `renderReadErrorDetail` 부재로 실패.
 
-- [ ] **3단계: `quarantined`를 `readErrors`로 바꾸고 원문을 싣는다**
+- [x] **3단계: `quarantined`를 `readErrors`로 바꾸고 원문을 싣는다**
 
 `loadRepo` 안에서 이름을 전부 바꾼다. `readJsonFolder`가 이미 `{ name, text }`를 주므로 파싱 실패
 분기에 `text`를 더한다.
@@ -1005,7 +1005,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 `PROBLEM_LABELS`에 `readError: "읽기 오류"`를 더한다.
 
-- [ ] **4단계: 원문 편집기를 그린다**
+- [x] **4단계: 원문 편집기를 그린다**
 
 CSS에 넣는다.
 
@@ -1124,7 +1124,7 @@ CSS에 넣는다.
       if (scope !== "readError" || id !== selection.id) { rawDraft = ""; rawError = ""; }
 ```
 
-- [ ] **5단계: 통과를 확인한다**
+- [x] **5단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1132,7 +1132,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 186 pass / 0 fail.
 
-- [ ] **6단계: 커밋한다**
+- [x] **6단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 읽기 오류 파일을 원문으로 고친다"
@@ -1160,7 +1160,7 @@ git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.
 5. 확인하면 `writePlanFiles`가 `plan.writes`를 순서대로 쓴다.
 6. 쓴 뒤 다시 `loadRepo` → 쓴 항목의 미반영을 비운다 → `render()`.
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 ```js
 test("내보내기 버튼과 요약 다이얼로그가 마크업에 있다", () => {
@@ -1188,7 +1188,7 @@ test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1196,7 +1196,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 두 테스트 실패.
 
-- [ ] **3단계: 마크업을 넣는다**
+- [x] **3단계: 마크업을 넣는다**
 
 `repo-header-actions`(약 662줄)에 버튼을 더한다.
 
@@ -1232,7 +1232,7 @@ CSS에 넣는다.
     .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
 ```
 
-- [ ] **4단계: 권한을 `readwrite`로 올린다**
+- [x] **4단계: 권한을 `readwrite`로 올린다**
 
 `hasReadPermission`을 이름과 모드 모두 바꾼다.
 
@@ -1260,7 +1260,7 @@ CSS에 넣는다.
 `read`로만 기억된 옛 핸들은 여기서 걸러져 "폴더 권한이 만료되었습니다" 안내가 나오고, 사용자가
 `폴더 연결`을 다시 눌러 `readwrite`를 준다.
 
-- [ ] **5단계: 쓰기 게이트를 넣는다**
+- [x] **5단계: 쓰기 게이트를 넣는다**
 
 `connectRepo` 뒤에 넣는다.
 
@@ -1421,7 +1421,7 @@ CSS에 넣는다.
     });
 ```
 
-- [ ] **6단계: 통과를 확인한다**
+- [x] **6단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1429,7 +1429,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 188 pass / 0 fail.
 
-- [ ] **7단계: 사용자에게 눈 검증을 요청한다**
+- [x] **7단계: 사용자에게 눈 검증을 요청한다**
 
 규칙 17에 따라 브라우저 조작 결과는 사용자가 확인한다. 다음을 요청한다.
 
@@ -1440,7 +1440,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 4. `git checkout` 으로 되돌린 뒤, 아무것도 고치지 않고 `저장소에 반영` → 확인 버튼이 비활성이고
    `신규 0 · 수정 0 · 변경 없음 26`이 나오는지 (설계 §16 검수 기준 1).
 
-- [ ] **8단계: 커밋한다**
+- [x] **8단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 편집분을 저장소 JSON으로 반영한다"
@@ -1477,7 +1477,7 @@ git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.
 awk '/<script data-repo-ui>/,/<\/script>/' Tools/card-idea-notebook/index.html | grep -o "core\.[A-Za-z_]*" | sort -u
 ```
 
-- [ ] **1단계: 지워질 것을 잠그는 테스트를 쓴다**
+- [x] **1단계: 지워질 것을 잠그는 테스트를 쓴다**
 
 `index.test.mjs`의 **맨 아래**에 넣는다(기존 Markdown 테스트는 3단계에서 지운다).
 
@@ -1506,7 +1506,7 @@ test("적 타입 A 메모는 남는다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1514,7 +1514,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 앞 두 테스트 실패.
 
-- [ ] **3단계: 마크업을 지운다**
+- [x] **3단계: 마크업을 지운다**
 
 - 모드 토글 두 버튼(약 487~488줄)과 그것을 감싼 `<div>`를 지운다. 저장소 화면 하나만 남으므로
   모드 전환 자체가 없어진다.
@@ -1522,7 +1522,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 - `#delete-dialog`와 `#export-dialog`(약 717~745줄)를 지운다. 저장소 UI는 둘 다 쓰지 않는다.
 - `<main class="workspace repo-workspace" id="repo-workspace" hidden>`에서 `hidden`을 지운다.
 
-- [ ] **4단계: CSS를 지운다**
+- [x] **4단계: CSS를 지운다**
 
 Markdown 화면 전용 규칙을 지운다: `.card-row`, `.drag-handle`, `.selection-check`, `.bulk-select`,
 `.form-section`, `.mode-button`(저장소 탭이 쓰므로 **남긴다**), `.workspace[hidden]`(더 이상 숨기지
@@ -1532,7 +1532,7 @@ Markdown 화면 전용 규칙을 지운다: `.card-row`, `.drag-handle`, `.selec
 awk '/<main class="workspace repo-workspace"/,/<\/main>/' Tools/card-idea-notebook/index.html | grep -o 'class="[^"]*"' | sort -u
 ```
 
-- [ ] **5단계: 코어와 UI 스크립트를 지운다**
+- [x] **5단계: 코어와 UI 스크립트를 지운다**
 
 - `<script data-card-idea-core>` 안에서 `ROLE_LABELS` 선언(약 751줄)부터 `parseAuthoringSchema`
   바로 앞(약 1,659줄)까지 지운다. **단 `SCHEMA_VERSION`(777줄)과 `STORAGE_KEY`(778줄)는 남긴다** —
@@ -1540,19 +1540,19 @@ awk '/<main class="workspace repo-workspace"/,/<\/main>/' Tools/card-idea-notebo
 - `globalThis.CardIdeaNotebook` 목록에서 위 "지우는 코어 심볼" 42개를 지운다.
 - `<script>` … `</script>`(2,718~3,473줄) 블록을 통째로 지운다.
 
-- [ ] **6단계: 테스트를 지운다**
+- [x] **6단계: 테스트를 지운다**
 
 `index.test.mjs`의 1번째 `test(` 부터 `test("failed immediate persistence keeps memory state until
 retry succeeds"` 블록 끝까지(약 1~1,664줄) 지운다. `loadCore` 헬퍼와 import는 남긴다.
 첫 Korean 테스트 `test("생성된 스키마에서 효과 여덟 종을 읽는다"` 앞이 새 시작점이다.
 
-- [ ] **7단계: `시작 카드 풀.md`를 지운다**
+- [x] **7단계: `시작 카드 풀.md`를 지운다**
 
 ```bash
 git rm "Tools/card-idea-notebook/시작 카드 풀.md"
 ```
 
-- [ ] **8단계: 통과를 확인한다**
+- [x] **8단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1561,12 +1561,12 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 기대: 약 120 pass / 0 fail (Markdown 테스트가 빠져 총수가 줄어든다). 실제 수치를 기록해 README에
 반영한다.
 
-- [ ] **9단계: 사용자에게 눈 검증을 요청한다**
+- [x] **9단계: 사용자에게 눈 검증을 요청한다**
 
 Chrome에서 노트북을 열어 **모드 전환 없이 바로 저장소 화면**이 나오고, 폴더 연결·편집·반영이
 그대로 되는지 확인을 요청한다.
 
-- [ ] **10단계: 커밋한다**
+- [x] **10단계: 커밋한다**
 
 ```bash
 git add -A Tools/card-idea-notebook && git commit -m "refactor(tools): 노트북에서 Markdown 저작 경로를 걷어낸다"
@@ -1591,7 +1591,7 @@ git add -A Tools/card-idea-notebook && git commit -m "refactor(tools): 노트북
   `version: SCHEMA_VERSION`으로 올려서 돌려준다. **1을 거부하면 계획 C 시절의 미반영 편집이
   조용히 사라진다.**
 
-- [ ] **1단계: 실패하는 테스트를 쓴다**
+- [x] **1단계: 실패하는 테스트를 쓴다**
 
 ```js
 function fakeStorage(seed = {}) {
@@ -1665,7 +1665,7 @@ test("계획 C 시절 미반영(버전 1)을 버리지 않는다", () => {
 });
 ```
 
-- [ ] **2단계: 실패를 확인한다**
+- [x] **2단계: 실패를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1673,7 +1673,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 다섯 테스트 실패.
 
-- [ ] **3단계: 코어를 고친다**
+- [x] **3단계: 코어를 고친다**
 
 `SCHEMA_VERSION` 값을 7로 올리고, `PENDING_VERSION` 선언을 지운 뒤 `emptyPending`이
 `SCHEMA_VERSION`을 쓰게 한다.
@@ -1740,7 +1740,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 `globalThis.CardIdeaNotebook`에 `LEGACY_BACKUP_KEY,`와 `migrateLegacyStore,`를 더한다.
 
-- [ ] **4단계: UI 부팅에 배선한다**
+- [x] **4단계: UI 부팅에 배선한다**
 
 저장소 UI 스크립트 끝의 `core.readPending` 호출 **앞**에 넣는다.
 
@@ -1755,7 +1755,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
     }
 ```
 
-- [ ] **5단계: 통과를 확인한다**
+- [x] **5단계: 통과를 확인한다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1763,7 +1763,7 @@ node --test "Tools/card-idea-notebook/*.test.mjs"
 
 기대: 약 125 pass / 0 fail.
 
-- [ ] **6단계: 커밋한다**
+- [x] **6단계: 커밋한다**
 
 ```bash
 git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.mjs && git commit -m "feat(tools): 노트북이 옛 Markdown 데이터를 백업으로 넘긴다"
@@ -1779,13 +1779,13 @@ git add Tools/card-idea-notebook/index.html Tools/card-idea-notebook/index.test.
 - 이동: `docs/superpowers/plans/2026-08-11-notebook-repo-write.md` → `docs/superpowers/archive/plans/`
 - 수정: `docs/superpowers/README.md`
 
-- [ ] **1단계: 카드풀 설계 §1을 읽는다**
+- [x] **1단계: 카드풀 설계 §1을 읽는다**
 
 ```bash
 sed -n '1,80p' docs/superpowers/specs/2026-07-20-character-card-pools-design.md
 ```
 
-- [ ] **2단계: §1을 개정한다**
+- [x] **2단계: §1을 개정한다**
 
 "풀은 캐릭터가 배타적으로 소유한다"는 취지의 문장에 **저작 중 예외**를 더한다. 노트북의 풀 편성이
 같은 카드를 여러 풀에 담는 것을 허용하기 때문이다(스펙 §7). 다음 문단을 §1 끝에 붙인다.
@@ -1803,7 +1803,7 @@ sed -n '1,80p' docs/superpowers/specs/2026-07-20-character-card-pools-design.md
 mkdir -p docs/superpowers/archive/specs
 ```
 
-- [ ] **3단계: 옛 노트북 스펙을 옮긴다**
+- [x] **3단계: 옛 노트북 스펙을 옮긴다**
 
 ```bash
 git mv docs/superpowers/specs/2026-07-27-card-idea-notebook-design.md docs/superpowers/archive/specs/
@@ -1812,7 +1812,7 @@ git mv docs/superpowers/specs/2026-07-27-card-idea-notebook-design.md docs/super
 옮긴 파일 머리말의 `상태`를 `superseded`로 두고, 대체 문서 링크를 상대 경로로 고친다
 (`../../specs/2026-08-05-card-authoring-json-notebook-design.md`).
 
-- [ ] **4단계: 스펙 §16 검수 기준을 실제로 돌린다**
+- [x] **4단계: 스펙 §16 검수 기준을 실제로 돌린다**
 
 ```bash
 node --test "Tools/card-idea-notebook/*.test.mjs"
@@ -1831,7 +1831,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 | 5. 노트북이 카드 파일을 지우지 않음 | 카드 id 변경 후 반영 → 옛 파일이 남고 `미참조 파일`에 뜸 |
 | 8. 없는 카드 id를 손으로 넣으면 유지한 채 내보내기 차단 | 풀 JSON에 `ghost_card` 추가 → 다시 읽기 → 반영 시도 |
 
-- [ ] **5단계: README 색인을 갱신한다**
+- [x] **5단계: README 색인을 갱신한다**
 
 - 60줄의 옛 노트북 스펙 행을 `archive/specs/` 경로로 고치고 비고를 "구현 완료로 보관"으로 바꾼다.
 - 61줄 JSON 전환 설계 행의 상태를 `current` → `implemented`로 바꾸고, 비고를
@@ -1845,7 +1845,7 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 git mv docs/superpowers/plans/2026-08-11-notebook-repo-write.md docs/superpowers/archive/plans/
 ```
 
-- [ ] **6단계: 커밋한다**
+- [x] **6단계: 커밋한다**
 
 ```bash
 git add -A docs && git commit -m "docs: 노트북 저장소 반영 완료를 색인에 반영한다"
