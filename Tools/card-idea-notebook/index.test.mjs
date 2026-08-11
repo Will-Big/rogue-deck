@@ -3134,3 +3134,152 @@ test("충돌 해결 버튼이 저장소 UI에 배선된다", () => {
   assert.match(ui[1], /function keepCardMine/);
   assert.match(html, /\.repo-conflict/);
 });
+
+function planFixture(core, schema) {
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  return { storedText, card };
+}
+
+test("변경 없는 카드는 쓰지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes, []);
+  assert.deepEqual(plan.unchanged, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("수정된 카드는 갱신으로, 새 카드는 신규로 나간다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const edited = core.setCardField(card, "name", "고친 이름");
+  const fresh = core.setCardField(
+    core.createCardModel({ schema, uid: core.newUid(1) }), "id", "brand_new");
+
+  const plan = core.exportPlan({
+    cards: [edited, fresh], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[edited.uid, "modified"], [fresh.uid, "new"]]),
+    poolStates: new Map(), readErrors: [],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.updated, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.created, ["brand_new.json"]);
+  assert.deepEqual(plan.writes.map((entry) => entry.name),
+    ["brand_new.json", "vanguard_slash.json"]);
+  assert.deepEqual(plan.writes[0].segments,
+    ["Assets", "StreamingAssets", "Content", "Cards", "brand_new.json"]);
+});
+
+test("id를 바꾸면 옛 파일이 미참조가 된다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const renamed = core.setCardField(card, "id", "vanguard_cleave");
+
+  const plan = core.exportPlan({
+    cards: [renamed], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[renamed.uid, "modified"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.created, ["vanguard_cleave.json"]);
+  assert.deepEqual(plan.unreferenced, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("읽기 오류가 있으면 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.readErrors, ["broken.json"]);
+  assert.deepEqual(plan.unreferenced, []);
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 1개/);
+});
+
+test("충돌과 검증 오류도 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "conflict"]]), poolStates: new Map(),
+    readErrors: [],
+    validation: { errors: [{ scope: "pool", id: "starter", message: "없는 카드입니다" }], warnings: [] },
+    schema,
+  });
+
+  assert.equal(plan.blocked.length, 2);
+  assert.match(plan.blocked[0], /충돌 1개/);
+  assert.match(plan.blocked[1], /검증 오류 1개/);
+});
+
+test("경고는 내보내기를 막지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [],
+    validation: { errors: [], warnings: [{ scope: "card", id: "x", message: "어느 풀에도 없습니다." }] },
+    schema,
+  });
+
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("요약 한 줄이 신규·수정·변경 없음을 센다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const edited = core.setCardField(card, "name", "고친 이름");
+
+  const plan = core.exportPlan({
+    cards: [edited], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[edited.uid, "modified"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.equal(plan.summaryLine, "신규 0 · 수정 1 · 변경 없음 0");
+});
+
+test("풀도 카드와 같은 규칙으로 나간다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const edited = core.removeFromPool(pool, 0);
+
+  const plan = core.exportPlan({
+    cards: [], pools: [edited], storedCards: [], storedPools: [pool],
+    cardStates: new Map(), poolStates: new Map([[edited.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.updated, ["starter.json"]);
+  assert.deepEqual(plan.writes[0].segments,
+    ["Assets", "StreamingAssets", "Content", "Pools", "starter.json"]);
+  assert.equal(plan.writes[0].text, core.writePoolJson(edited));
+});

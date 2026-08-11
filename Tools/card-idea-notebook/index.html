@@ -2377,6 +2377,81 @@
       return { same: rows.every((row) => row.kind === "same"), rows };
     }
 
+    /// 내보내기 계획(설계 12). 저장소 파일 이름 집합에서 이번에 쓸 이름을 빼면 남는 것이 둘이다 -
+    /// 읽지 못해 제외한 것과, 아무도 대응하지 않게 된 것. 앞은 고쳐야 하고 뒤는 지워도 되므로
+    /// 한 줄로 묶지 않는다.
+    function exportPlan({
+      cards, pools, storedCards, storedPools,
+      cardStates, poolStates, readErrors, validation, schema,
+    }) {
+      const cardFile = (id) => `${id}.json`;
+      const states = cardStates ?? new Map();
+      const poolStateOf = poolStates ?? new Map();
+      const problems = readErrors ?? [];
+
+      const created = [];
+      const updated = [];
+      const unchanged = [];
+      const writes = [];
+
+      const storedCardNames = new Set((storedCards ?? []).map((card) => cardFile(card.id)));
+      const storedPoolNames = new Set((storedPools ?? []).map((pool) => cardFile(pool.id)));
+      const writtenNames = new Set();
+
+      /// 신규와 수정을 상태가 아니라 '저장소에 그 이름의 파일이 있었나'로 가른다. id를 바꾼
+      /// 카드는 상태가 modified지만 파일 이름이 새것이라 신규로 나가야 하고, 옛 이름은 아래에서
+      /// 미참조가 된다.
+      const record = (name, state, segments, storedNames, text) => {
+        writtenNames.add(name);
+        if (state === "same") {
+          unchanged.push(name);
+          return;
+        }
+        writes.push({ segments: [...segments, name], name, text });
+        (storedNames.has(name) ? updated : created).push(name);
+      };
+
+      for (const card of cards ?? []) {
+        record(
+          cardFile(card.id), states.get(card.uid) ?? "same",
+          CONTENT_PATHS.cards, storedCardNames, writeCardJson(card, schema));
+      }
+
+      for (const pool of pools ?? []) {
+        record(
+          cardFile(pool.id), poolStateOf.get(pool.id) ?? "same",
+          CONTENT_PATHS.pools, storedPoolNames, writePoolJson(pool));
+      }
+
+      const errorNames = problems.map((entry) => entry.name);
+      const errorNameSet = new Set(errorNames);
+      const unreferenced = [...storedCardNames, ...storedPoolNames]
+        .filter((name) => !writtenNames.has(name) && !errorNameSet.has(name));
+
+      const blocked = [];
+      if (errorNames.length) {
+        blocked.push(`읽기 오류 ${errorNames.length}개를 고쳐야 내보낼 수 있습니다.`);
+      }
+      const conflicts = [...states.values(), ...poolStateOf.values()]
+        .filter((state) => state === "conflict").length;
+      if (conflicts) blocked.push(`충돌 ${conflicts}개를 해결해야 내보낼 수 있습니다.`);
+      const errorCount = (validation?.errors ?? []).length;
+      if (errorCount) blocked.push(`검증 오류 ${errorCount}개를 고쳐야 내보낼 수 있습니다.`);
+
+      const sorted = (list) => [...list].sort();
+      return {
+        writes: writes.sort((a, b) => a.name.localeCompare(b.name)),
+        created: sorted(created),
+        updated: sorted(updated),
+        unchanged: sorted(unchanged),
+        unreferenced: sorted(unreferenced),
+        readErrors: sorted(errorNames),
+        blocked,
+        summaryLine:
+          `신규 ${created.length} · 수정 ${updated.length} · 변경 없음 ${unchanged.length}`,
+      };
+    }
+
     /// 노트북이 아는 저장소 경로 넷(설계 3). 세그먼트 배열인 것은 File System Access API가
     /// 경로 문자열이 아니라 디렉터리 핸들을 한 칸씩 타고 내려가기 때문이다.
     const CONTENT_PATHS = Object.freeze({
@@ -2722,6 +2797,7 @@
       resolveCardState,
       resolvePoolState,
       diffLines,
+      exportPlan,
       emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,
