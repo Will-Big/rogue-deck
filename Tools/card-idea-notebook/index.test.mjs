@@ -3005,3 +3005,10 @@ test("편집 명령이 저장소 UI에만 배선된다", () => {
   assert.equal(markdownUi.includes("applyCardEdit"), false,
     "Markdown UI 스크립트는 이 계획에서 바뀌지 않는다");
 });
+
+test("효과 편집기의 스타일이 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  assert.match(html, /\.effect-row\b/);
+  assert.match(html, /\.effect-params\b/);
+  assert.match(html, /\.effect-condition\b/);
+});

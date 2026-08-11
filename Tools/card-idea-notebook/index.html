@@ -441,6 +441,26 @@
       color: var(--ink); background: #191b18; }
     .repo-form .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
+    .effect-list { display: grid; gap: 8px; }
+    .effect-row {
+      display: grid;
+      gap: 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #191b18;
+    }
+    .effect-row.is-locked { border-color: var(--warning); }
+    .effect-head { display: flex; gap: 8px; align-items: center; }
+    .effect-head select { flex: 1; }
+    .effect-params { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-params label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-params input[type="number"] { width: 84px; }
+    .effect-condition { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-condition label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-actions { display: flex; gap: 4px; }
+    .effect-actions button { padding: 4px 8px; font-size: 11px; }
+    .effect-glyph { color: var(--gold); font-size: 12px; letter-spacing: .12em; }
 
     @media (max-width: 1280px) {
       body { min-width: 920px; }
@@ -4038,6 +4058,214 @@
       return select;
     }
 
+    /// 위치 범위의 글리프 표기. 기존 도구에서 검증된 표기이고 방향 감각을 숫자보다 잘
+    /// 전달하므로 selector 드롭다운 옆에 남긴다(설계 6).
+    const SELECTOR_GLYPHS = Object.freeze({
+      None: "",
+      FrontOne: "◆━━━━",
+      FrontTwo: "◆◆━━━",
+      BackOne: "━━━━◆",
+      BackTwo: "━━━◆◆",
+      All: "━━━━━",
+    });
+
+    function statusLabel(key) {
+      return repoStore.statuses.find((status) => status.key === key)?.displayName ?? key;
+    }
+
+    function checkboxControl(value, onChange) {
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = value === true;
+      input.addEventListener("change", () => onChange(input.checked));
+      return input;
+    }
+
+    /// 스키마의 필드 타입 넷이 컨트롤 넷으로 간다(설계 6의 표). 효과와 개입이 같은 모양이라
+    /// 이 함수 하나가 양쪽을 그린다.
+    function paramControl(field, value, onChange) {
+      if (field.type === "int") return numberControl(value ?? 0, onChange);
+      if (field.type === "bool") return checkboxControl(value, onChange);
+      if (field.type === "status") {
+        const select = document.createElement("select");
+        const none = document.createElement("option");
+        none.value = "";
+        none.textContent = "(없음)";
+        select.append(none);
+        for (const status of repoStore.statuses) {
+          const node = document.createElement("option");
+          node.value = status.key;
+          node.textContent = `${statusLabel(status.key)} (${status.key})`;
+          select.append(node);
+        }
+        select.value = value ?? "";
+        select.addEventListener("change", () => onChange(select.value));
+        return select;
+      }
+
+      return selectControl(field.options, value ?? field.options[0], onChange);
+    }
+
+    function paramsBlock(spec, params, onParam) {
+      const block = document.createElement("div");
+      block.className = "effect-params";
+      for (const field of spec.fields) {
+        const control = paramControl(field, params[field.name], (next) => onParam(field.name, next));
+        block.append(formField(field.name, control));
+
+        if (field.name === "selector") {
+          const glyph = document.createElement("output");
+          glyph.className = "effect-glyph";
+          glyph.textContent = SELECTOR_GLYPHS[params.selector] ?? "";
+          block.append(glyph);
+        }
+      }
+
+      return block;
+    }
+
+    function conditionBlock(card, index, effect) {
+      const wrap = document.createElement("details");
+      wrap.open = Boolean(effect.condition);
+
+      const summary = document.createElement("summary");
+      summary.textContent = effect.condition ? `조건: ${effect.condition.kind}` : "조건";
+      wrap.append(summary);
+
+      const body = document.createElement("div");
+      body.className = "effect-condition";
+      const kinds = repoStore.schema.condition.kinds;
+      const current = effect.condition ?? core.emptyConditionValue();
+
+      body.append(formField("kind", selectControl(kinds, current.kind, (next) => {
+        applyCardEdit(next === kinds[0]
+          ? core.setEffectCondition(card, index, null)
+          : core.setEffectCondition(card, index, { kind: next }));
+      })));
+
+      if (effect.condition) {
+        for (const field of repoStore.schema.condition.fields) {
+          body.append(formField(field.name, paramControl(
+            field,
+            current[field.name],
+            (value) => applyCardEdit(
+              core.setEffectCondition(card, index, { [field.name]: value })),
+          )));
+        }
+      }
+
+      wrap.append(body);
+      return wrap;
+    }
+
+    function actionButton(label, onClick) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    function effectRow(card, effect, index) {
+      const row = document.createElement("div");
+      row.className = effect.raw ? "effect-row is-locked" : "effect-row";
+
+      const head = document.createElement("div");
+      head.className = "effect-head";
+
+      if (effect.raw) {
+        const locked = document.createElement("span");
+        locked.textContent = `해석 못 함: ${effect.kind}`;
+        head.append(locked);
+      } else {
+        head.append(selectControl(
+          repoStore.schema.effectOrder,
+          effect.kind,
+          (next) => applyCardEdit(core.setEffectKind(card, index, next, repoStore.schema)),
+        ));
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "effect-actions";
+      actions.append(
+        actionButton("▲", () => applyCardEdit(core.moveEffect(card, index, index - 1))),
+        actionButton("▼", () => applyCardEdit(core.moveEffect(card, index, index + 1))),
+        actionButton("복제", () => applyCardEdit(core.duplicateEffect(card, index))),
+        actionButton("삭제", () => applyCardEdit(core.removeEffect(card, index))),
+      );
+      head.append(actions);
+      row.append(head);
+
+      if (effect.raw) return row;
+
+      row.append(paramsBlock(
+        repoStore.schema.effects[effect.kind],
+        effect.params,
+        (name, value) => applyCardEdit(
+          core.setEffectParam(card, index, name, value, repoStore.schema)),
+      ));
+      row.append(conditionBlock(card, index, effect));
+      return row;
+    }
+
+    function renderEffectRows(card) {
+      const section = document.createElement("div");
+      section.className = "effect-list";
+      (card.effects ?? []).forEach((effect, index) => {
+        section.append(effectRow(card, effect, index));
+      });
+
+      const add = document.createElement("div");
+      add.className = "effect-actions";
+      add.append(selectControl(
+        ["(효과 추가)", ...repoStore.schema.effectOrder],
+        "(효과 추가)",
+        (kind) => {
+          if (kind !== "(효과 추가)") {
+            applyCardEdit(core.addEffect(card, kind, repoStore.schema));
+          }
+        },
+      ));
+      section.append(add);
+      return poolSection("효과", section);
+    }
+
+    /// 개입 섹션은 효과 행과 같은 컨트롤이며 행이 하나뿐이고 조건이 없다(설계 6).
+    function renderInterventionRow(card) {
+      const row = document.createElement("div");
+      row.className = card.intervention?.raw ? "effect-row is-locked" : "effect-row";
+
+      const head = document.createElement("div");
+      head.className = "effect-head";
+
+      // 해석 못 하는 개입은 종류 드롭다운을 내지 않는다. 효과 행과 같은 이유로, 고르는
+      // 순간 보존하기로 한 원본이 사라진다(설계 10.2).
+      if (card.intervention?.raw) {
+        const locked = document.createElement("span");
+        locked.textContent = `해석 못 함: ${card.intervention.kind}`;
+        head.append(locked);
+      } else {
+        head.append(selectControl(
+          ["(없음)", ...repoStore.schema.interventionOrder],
+          card.intervention?.kind ?? "(없음)",
+          (kind) => applyCardEdit(core.setIntervention(
+            card, kind === "(없음)" ? "" : kind, repoStore.schema)),
+        ));
+      }
+      row.append(head);
+
+      if (card.intervention && !card.intervention.raw) {
+        row.append(paramsBlock(
+          repoStore.schema.interventions[card.intervention.kind],
+          card.intervention.params,
+          (name, value) => applyCardEdit(
+            core.setInterventionParam(card, name, value, repoStore.schema)),
+        ));
+      }
+
+      return poolSection("개입", row);
+    }
+
     /// 모르는 최상위 키를 가진 카드는 폼 대신 원문을 읽기 전용으로 보여준다(설계 11.3).
     /// 폼으로 열면 10.2가 보존하기로 한 것을 폼이 표현하지 못하는 만큼 망가뜨린다.
     function renderCardDetail(card) {
@@ -4093,6 +4321,8 @@
       form.append(meta);
 
       elements.detail.append(form);
+      if (card.category === "Execution") elements.detail.append(renderEffectRows(card));
+      else elements.detail.append(renderInterventionRow(card));
     }
 
     function poolEntry(pool) {
