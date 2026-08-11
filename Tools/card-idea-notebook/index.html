@@ -4024,8 +4024,15 @@
       return group;
     }
 
-    function renderExportSummary(plan) {
+    function renderExportSummary(plan, notice) {
       elements.exportSummary.replaceChildren();
+
+      if (notice) {
+        const line = document.createElement("p");
+        line.className = "export-blocked";
+        line.textContent = notice;
+        elements.exportSummary.append(line);
+      }
 
       for (const reason of plan.blocked) {
         const line = document.createElement("p");
@@ -4095,16 +4102,47 @@
       });
     }
 
+    /// 계획 둘의 '같음'을 판정한다 - writes(파일 이름·내용)와 blocked만 본다. 다이얼로그가 떠
+    /// 있는 동안 바뀔 수 있는 다른 필드(unchanged 등)는 쓰기 여부와 무관하므로 무시한다.
+    function samePlan(a, b) {
+      const shape = (plan) => JSON.stringify({ writes: plan.writes, blocked: plan.blocked });
+      return shape(a) === shape(b);
+    }
+
     /// 쓴 파일의 미반영을 비운다. 다시 읽으면 base가 방금 쓴 내용이 되므로 상태가 '저장소와 동일'로
     /// 내려가지만, 미반영을 남겨 두면 localStorage가 영원히 자라고 다음 세션에서 되살아난다.
     async function confirmExport() {
       if (!plannedExport || plannedExport.blocked.length) return;
 
       elements.exportConfirm.disabled = true;
+
+      // 다이얼로그가 떠 있는 동안 저장소가 다른 경로(에디터, git)로 바뀌었을 수 있다 - 쓰기
+      // 직전 한 번 더 읽어 계획을 검증한다. 재읽기가 유일한 덮어쓰기 방어라는 설계 10.1의
+      // 의도를 다이얼로그가 열려 있는 창에서도 지킨다.
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+      } catch (error) {
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
+
+      const freshPlan = currentExportPlan();
+      if (!samePlan(plannedExport, freshPlan)) {
+        plannedExport = freshPlan;
+        renderExportSummary(freshPlan, "저장소가 방금 바뀌었습니다. 달라진 내용을 확인하고 다시 눌러 주세요.");
+        return;
+      }
+
       try {
         await writePlanFiles(repoStore.root, plannedExport.writes);
       } catch (error) {
-        repoStore.message = `저장소에 쓰지 못했습니다: ${error?.message ?? error}`;
+        repoStore.message =
+          `저장소에 쓰지 못했습니다: ${error?.message ?? error}. ` +
+          "일부 파일은 이미 반영되었을 수 있습니다. 저장소 다시 읽기로 확인해 주세요.";
+        plannedExport = null;
+        elements.exportConfirm.disabled = false;
         elements.exportDialog.close();
         render();
         return;
@@ -5179,9 +5217,14 @@
     elements.exportConfirm.addEventListener("click", confirmExport);
     elements.exportDialog.addEventListener("click", (event) => {
       if (event.target.closest("[data-repo-export-action]")) {
-        plannedExport = null;
         elements.exportDialog.close();
       }
+    });
+    // 네이티브 Escape로 닫는 경로는 위 클릭 핸들러를 거치지 않는다 - close 이벤트에서 한 번 더
+    // 정리해 어느 경로로 닫혀도 plannedExport가 남지 않게 한다. confirmExport의 성공·실패 경로도
+    // close()를 부르지만 그때는 이미 plannedExport를 null로 정리한 뒤라 무해하다.
+    elements.exportDialog.addEventListener("close", () => {
+      plannedExport = null;
     });
 
     const restored = core.readPending(window.localStorage);

@@ -3400,6 +3400,24 @@ test("내보내기 버튼과 요약 다이얼로그가 마크업에 있다", () 
   assert.match(html, /미참조 파일/);
 });
 
+/// 소스에서 함수 본문만 중괄호 매칭으로 떼어낸다. 스크립트 끝까지 훑으면 뒤에 있는 다른
+/// 함수의 문자열이 잡혀, 본문 안에서 순서를 뒤집는 진짜 회귀를 놓친다.
+function functionBody(source, signature) {
+  const start = source.indexOf(signature);
+  assert.notEqual(start, -1, `${signature}를 찾지 못했다`);
+
+  const open = source.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === "{") depth += 1;
+    else if (source[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return source.slice(open, i + 1);
+    }
+  }
+  throw new Error(`${signature}의 본문이 닫히지 않았다`);
+}
+
 test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
   const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
@@ -3410,6 +3428,11 @@ test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
   assert.match(ui[1], /mode: "readwrite"/);
 
   // 재읽기가 계획보다 먼저여야 외부 변경을 덮어쓰지 않는다(설계 10.1).
-  const body = ui[1].slice(ui[1].indexOf("async function exportToRepo"));
-  assert.ok(body.indexOf("await loadRepo") < body.indexOf("core.exportPlan"));
+  const body = functionBody(ui[1], "async function exportToRepo");
+  assert.ok(body.includes("await loadRepo"), "재읽기가 본문에 있어야 한다");
+  assert.ok(body.includes("currentExportPlan()"), "계획 계산이 본문에 있어야 한다");
+  assert.ok(body.indexOf("await loadRepo") < body.indexOf("currentExportPlan()"));
+
+  // 권한 확보가 재읽기보다 먼저여야 한다 - await가 사용자 제스처를 소진한다.
+  assert.ok(body.indexOf("hasWritePermission") < body.indexOf("await loadRepo"));
 });
