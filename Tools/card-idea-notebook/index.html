@@ -211,26 +211,6 @@
     .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
     .export-notice { margin: 0 0 8px; color: var(--gold-bright); font-size: 12px; }
 
-    .toast {
-      position: fixed;
-      z-index: 30;
-      left: 50%;
-      bottom: 24px;
-      max-width: 520px;
-      transform: translate(-50%, 16px);
-      padding: 11px 16px;
-      border: 1px solid var(--line-strong);
-      border-radius: 999px;
-      opacity: 0;
-      pointer-events: none;
-      color: var(--ink);
-      background: #292d28;
-      box-shadow: var(--shadow);
-      transition: opacity .18s ease, transform .18s ease;
-      font-size: 12px;
-    }
-    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
-
     .mode-button { padding: 6px 12px; font-size: 12px; }
     .mode-button.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
     .repo-hint { margin-bottom: 8px; color: var(--warning); font-size: 12px; line-height: 1.5; }
@@ -439,8 +419,6 @@
       <button type="button" class="primary" id="repo-export-confirm">반영</button>
     </div>
   </dialog>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script data-card-idea-core>
   (() => {
@@ -1612,7 +1590,6 @@
     const core = globalThis.CardIdeaNotebook;
     const byId = (id) => document.getElementById(id);
     const elements = {
-      repoWorkspace: byId("repo-workspace"),
       connect: byId("repo-connect"),
       reload: byId("repo-reload"),
       unsupported: byId("repo-unsupported"),

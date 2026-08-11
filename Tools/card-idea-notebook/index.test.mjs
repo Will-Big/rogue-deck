@@ -1363,11 +1363,18 @@ test("새 카드 버튼과 편집 폼 자리가 마크업에 있다", () => {
   assert.match(html, /id="repo-pending-note"/);
 });
 
-test("편집 명령이 저장소 UI에만 배선된다", () => {
+test("편집 진입점이 코어가 아니라 저장소 UI에 있다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
-  const markdownUi = html.split("<script data-repo-ui>")[0].split("</script>").pop();
-  assert.equal(markdownUi.includes("applyCardEdit"), false,
-    "Markdown UI 스크립트는 이 계획에서 바뀌지 않는다");
+  const core = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/);
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(core);
+  assert.ok(ui);
+  // 코어는 DOM을 모른다. 편집 진입점이 여기로 새면 테스트 하네스가 즉시 깨진다.
+  assert.equal(core[1].includes("applyCardEdit"), false);
+  assert.equal(core[1].includes("document."), false);
+  assert.match(ui[1], /function applyCardEdit/);
+  assert.match(ui[1], /function applyPoolEdit/);
 });
 
 test("효과 편집기의 스타일이 마크업에 있다", () => {
