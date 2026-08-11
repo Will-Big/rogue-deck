@@ -446,6 +446,13 @@
       color: var(--ink); background: #191b18; }
     .repo-form .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
+    .repo-raw-editor { display: grid; gap: 8px; }
+    .repo-raw-editor textarea {
+      min-height: 340px; padding: 10px; border: 1px solid #3a3a33; border-radius: 6px;
+      background: #161815; color: #ded9c8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.55;
+    }
+    .repo-raw-error { margin: 0; color: #e8a0a0; font-size: 12px; }
     .repo-conflict {
       display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
       margin: 0 0 10px; padding: 9px 11px;
@@ -3678,7 +3685,7 @@
       cardsById: new Map(),
       cardsByUid: new Map(),
       membership: new Map(),
-      quarantined: [],
+      readErrors: [],
       validation: { errors: [], warnings: [] },
       cardStates: new Map(),
       poolStates: new Map(),
@@ -3775,14 +3782,14 @@
     /// 풀이 카드 id 배열이라 카드에 의존하기 때문이다(설계 10.1, ContentBootstrap과 같은 이유).
     async function loadRepo(root) {
       const schema = core.parseAuthoringSchema(await fileTextAt(root, core.CONTENT_PATHS.schema));
-      const quarantined = [];
+      const readErrors = [];
 
       const statusFolder = await readJsonFolder(root, core.CONTENT_PATHS.statuses);
       const statuses = [];
       for (const file of statusFolder.files) {
         const { status, errors } = core.readStatusJson(file.text);
         if (status) statuses.push(status);
-        else quarantined.push({ scope: "status", name: file.name, messages: errors });
+        else readErrors.push({ scope: "status", name: file.name, messages: errors, text: file.text });
       }
 
       const cardFolder = await readJsonFolder(root, core.CONTENT_PATHS.cards);
@@ -3790,7 +3797,7 @@
       for (const file of cardFolder.files) {
         const { card, errors } = core.readCardJson(file.text, schema);
         if (card) cards.push(card);
-        else quarantined.push({ scope: "card", name: file.name, messages: errors });
+        else readErrors.push({ scope: "card", name: file.name, messages: errors, text: file.text });
       }
 
       const poolFolder = await readJsonFolder(root, core.CONTENT_PATHS.pools);
@@ -3798,11 +3805,13 @@
       for (const file of poolFolder.files) {
         const { pool, errors } = core.readPoolJson(file.text);
         if (pool) pools.push(pool);
-        else quarantined.push({ scope: "pool", name: file.name, messages: errors });
+        else readErrors.push({ scope: "pool", name: file.name, messages: errors, text: file.text });
       }
 
-      quarantined.push(
-        ...statusFolder.failures, ...cardFolder.failures, ...poolFolder.failures);
+      readErrors.push(
+        ...statusFolder.failures.map((entry) => ({ ...entry, text: null })),
+        ...cardFolder.failures.map((entry) => ({ ...entry, text: null })),
+        ...poolFolder.failures.map((entry) => ({ ...entry, text: null })));
 
       const cardsById = new Map();
       const cardsByUid = new Map();
@@ -3842,7 +3851,7 @@
         cardsById,
         cardsByUid,
         membership: core.poolMembership(pools),
-        quarantined,
+        readErrors,
         validation: core.validateContent({
           cards, pools, statusKeys: statuses.map((status) => status.key), schema,
         }),
@@ -3978,6 +3987,7 @@
       pool: "풀",
       status: "상태",
       file: "파일",
+      readError: "읽기 오류",
     });
 
     let selection = { scope: "", id: "" };
@@ -3986,9 +3996,13 @@
     /// 선택 대상에 맞는 탭으로 옮긴다. 중앙과 우측이 선택을 따라가므로(설계 11.1) 탭이
     /// 어긋나면 목록은 카드인데 상세는 풀인 화면이 나온다.
     function selectWithTab(scope, id) {
-      // 토글은 보고 있는 항목에 대한 것이다 - 다른 항목으로 옮기면 꺼야 한다.
-      // 같은 항목을 다시 고르는 경우(applyCardEdit의 편집 후 재선택 등)는 유지한다.
-      if (scope !== selection.scope || id !== selection.id) showDiff = false;
+      // 토글과 읽기 오류 원문 초안은 보고 있는 항목에 대한 것이다 - 다른 항목으로 옮기면 꺼야
+      // 한다. 같은 항목을 다시 고르는 경우(applyCardEdit의 편집 후 재선택 등)는 유지한다.
+      if (scope !== selection.scope || id !== selection.id) {
+        showDiff = false;
+        rawDraft = "";
+        rawError = "";
+      }
       selection = { scope, id };
       if (scope !== "card" && scope !== "pool") return;
 
@@ -4019,11 +4033,15 @@
       button.append(text);
 
       button.addEventListener("click", () => {
+        if (scope === "readError") {
+          selectEntry("readError", id);
+          return;
+        }
         if (scope !== "card") {
           selectEntry(scope, id);
           return;
         }
-        // 검증 오류와 격리 항목은 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
+        // 검증 오류는 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
         const card = repoStore.cardsById.get(id)
           ?? repoStore.cardsById.get(String(id).replace(/\.json$/, ""));
         if (card) selectEntry("card", card.uid);
@@ -4031,18 +4049,19 @@
       return button;
     }
 
-    /// 격리된 파일을 오류보다 먼저 보여준다. 그 파일들은 아예 읽히지 않아 검증기가 보지도
-    /// 못했으므로, 검증 오류 0이라고 안심하면 안 되기 때문이다(설계 10.2).
+    /// 읽기 오류 파일을 검증 오류보다 먼저 보여준다. 그 파일들은 아예 읽히지 않아 검증기가
+    /// 보지도 못했으므로, 검증 오류 0이라고 안심하면 안 되기 때문이다(설계 10.2).
     function renderProblems() {
       elements.problems.replaceChildren();
       if (!repoStore.connected) return;
 
-      for (const entry of repoStore.quarantined) {
+      for (const entry of repoStore.readErrors) {
         elements.problems.append(problemButton({
           level: "error",
-          scope: entry.scope,
+          scope: "readError",
           id: entry.name,
-          message: `${entry.messages.join(" ")} (읽지 못해 격리했습니다)`,
+          message: `${PROBLEM_LABELS[entry.scope] ?? entry.scope} · `
+            + `${entry.messages.join(" ")} (읽지 못했습니다 · 고쳐야 내보낼 수 있습니다)`,
         }));
       }
 
@@ -4115,7 +4134,7 @@
       for (const error of repoStore.validation.errors) {
         if (error.scope === "card") ids.add(error.id);
       }
-      for (const entry of repoStore.quarantined) {
+      for (const entry of repoStore.readErrors) {
         if (entry.scope === "card") ids.add(entry.name.replace(/\.json$/, ""));
       }
 
@@ -4568,6 +4587,91 @@
       render();
     }
 
+    let rawDraft = "";
+    let rawError = "";
+
+    /// 읽기 오류 파일은 폼으로 열 수 없다 - 폼이 표현하지 못하는 것을 망가뜨린다(설계 10.2).
+    /// 대신 원문을 직접 고치게 하고, 다시 파싱해 성공할 때만 모델로 올린다. 이렇게 하지 않으면
+    /// "반드시 고쳐야 내보낼 수 있다"는 규칙이 노트북 밖으로 나가야만 풀리는 막다른 길이 된다.
+    function renderReadErrorDetail(entry) {
+      elements.detailTitle.textContent = `읽기 오류 · ${entry.name}`;
+      renderSource({ title: entry.name, stored: entry.text, current: entry.text ?? "" });
+
+      const box = document.createElement("div");
+      box.className = "repo-raw-editor";
+
+      const why = document.createElement("p");
+      why.className = "repo-raw-error";
+      why.textContent = entry.messages.join(" ");
+      box.append(why);
+
+      if (entry.text === null) {
+        const note = document.createElement("p");
+        note.className = "repo-readonly";
+        note.textContent = "파일을 열지 못해 원문을 보여줄 수 없습니다."
+          + " 파일 권한을 확인한 뒤 저장소 다시 읽기를 눌러 주세요.";
+        box.append(note);
+        elements.detail.append(box);
+        return;
+      }
+
+      const area = document.createElement("textarea");
+      area.spellcheck = false;
+      area.value = rawDraft || entry.text;
+      area.addEventListener("input", () => { rawDraft = area.value; });
+      box.append(area);
+
+      if (rawError) {
+        const failed = document.createElement("p");
+        failed.className = "repo-raw-error";
+        failed.textContent = rawError;
+        box.append(failed);
+      }
+
+      const apply = document.createElement("button");
+      apply.type = "button";
+      apply.className = "primary";
+      apply.textContent = "고친 원문 적용";
+      apply.addEventListener("click", () => applyRawRepair(entry, area.value));
+      box.append(apply);
+
+      elements.detail.append(box);
+    }
+
+    /// 승격에 성공하면 base를 '원래의 깨진 원문'으로 둔다. 그래야 상태가 '수정됨'으로 되어
+    /// 내보내기에 포함되고, 우측 diff가 무엇을 고쳤는지 보여준다.
+    function applyRawRepair(entry, text) {
+      if (entry.scope === "pool") {
+        const { pool, errors } = core.readPoolJson(text);
+        if (!pool) { rawError = errors.join(" "); render(); return; }
+        repoStore.storedPoolText.set(pool.id, entry.text);
+        repoStore.storedPools = [...repoStore.storedPools, { ...pool, base: entry.text }];
+        repoStore.readErrors = repoStore.readErrors.filter((row) => row.name !== entry.name);
+        rawDraft = "";
+        rawError = "";
+        pending = core.putPendingPool(pending, { ...pool, base: entry.text });
+        persistPending();
+        refreshFromPending();
+        selectWithTab("pool", pool.id);
+        render();
+        return;
+      }
+
+      const { card, errors } = core.readCardJson(text, repoStore.schema);
+      if (!card) { rawError = errors.join(" "); render(); return; }
+
+      repoStore.storedCardText.set(card.uid, entry.text);
+      repoStore.storedCards = [...repoStore.storedCards, { ...card, base: entry.text }];
+      repoStore.readErrors = repoStore.readErrors.filter((row) => row.name !== entry.name);
+      rawDraft = "";
+      rawError = "";
+      pending = core.putPendingCard(pending, { ...card, base: entry.text });
+      persistPending();
+      refreshFromPending();
+      selectWithTab("card", card.uid);
+      render();
+    }
+
     function renderCardDetail(card) {
       elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
       renderSource({
@@ -4816,6 +4920,10 @@
       if (selection.scope === "pool") {
         const pool = repoStore.pools.find((entry) => entry.id === selection.id);
         if (pool) renderPoolDetail(pool);
+      }
+      if (selection.scope === "readError") {
+        const entry = repoStore.readErrors.find((row) => row.name === selection.id);
+        if (entry) renderReadErrorDetail(entry);
       }
     }
 

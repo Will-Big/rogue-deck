@@ -3345,3 +3345,28 @@ test("카드를 풀보다 먼저 쓴다", () => {
   assert.deepEqual(plan.writes.map((entry) => entry.name),
     ["vanguard_slash.json", "starter.json"]);
 });
+
+test("읽기 오류 원문 편집 자리가 저장소 UI에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /function renderReadErrorDetail/);
+  assert.match(ui[1], /readErrors/);
+  assert.doesNotMatch(ui[1], /quarantined/);
+  assert.match(html, /\.repo-raw-editor/);
+});
+
+test("고친 원문이 파싱되면 카드로 승격한다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const broken = "{ \"id\": \"x\", ";
+
+  assert.equal(core.readCardJson(broken, schema).card, null);
+
+  const fixed = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card, errors } = core.readCardJson(fixed, schema);
+
+  assert.deepEqual(errors, []);
+  assert.equal(card.id, "vanguard_slash");
+});
