@@ -59,7 +59,6 @@
     button:disabled { opacity: .4; cursor: not-allowed; }
     button.primary { color: #1b1a15; border-color: var(--gold); background: var(--gold); font-weight: 750; }
     button.primary:hover:not(:disabled) { background: var(--gold-bright); }
-    button.danger { color: #ffd9d4; border-color: #734942; background: #412a27; }
     button.ghost { background: transparent; }
 
     input, select, textarea {
@@ -146,7 +145,6 @@
     }
 
     .pane-title { display: flex; align-items: center; gap: 9px; font-size: 14px; }
-    .editor-actions { display: flex; align-items: center; gap: 8px; }
     .count {
       min-width: 25px;
       padding: 2px 7px;
@@ -254,9 +252,6 @@
     .repo-entry .badge.is-modified,
     .repo-entry .badge.is-new { color: var(--warning); }
     .repo-entry .badge.is-error { color: var(--danger); }
-    .repo-fields { display: grid; gap: 6px; font-size: 13px; }
-    .repo-fields div { display: flex; gap: 10px; }
-    .repo-fields dt { min-width: 84px; color: var(--muted); }
     .pool-section { margin-top: 16px; }
     .pool-section h4 { margin-bottom: 8px; color: var(--muted); font-size: 12px; }
     .pool-roster { display: grid; gap: 5px; font-size: 12px; }
@@ -1191,7 +1186,6 @@
           writePoolJson(pool));
       }
 
-      const errorNames = problems.map((entry) => entry.name);
       const cardErrorNames = new Set(
         problems.filter((entry) => entry.scope === "card").map((entry) => entry.name));
       const poolErrorNames = new Set(
@@ -1201,6 +1195,20 @@
       const unreferencedPools = [...storedPoolNames]
         .filter((name) => !writtenPoolNames.has(name) && !poolErrorNames.has(name));
       const unreferenced = [...unreferencedCards, ...unreferencedPools];
+
+      // 이번 계획이 덮어쓸 파일에 대응하는 읽기 오류는 차단 사유·요약 목록에서 뺀다. 그 파일은
+      // 쓰는 순간 고쳐지므로(applyRawRepair가 메모리에서 승격시키고 이 계획이 실제로 쓴다) 막을
+      // 이유가 없다 - 그대로 두면 "반드시 고쳐야 내보낼 수 있다"가 노트북 밖에서만 풀리는
+      // 막다른 길이 되고, 같은 파일이 신규/수정과 읽기 오류에 동시에 떠 모순으로 보인다.
+      // scope가 "status"·"file"인 읽기 오류는 이번 계획이 쓰는 대상이 아니므로 늘 차단 사유로
+      // 남는다.
+      const isResolvedByThisPlan = (entry) => {
+        if (entry.scope === "card") return writtenCardNames.has(entry.name);
+        if (entry.scope === "pool") return writtenPoolNames.has(entry.name);
+        return false;
+      };
+      const blockingErrors = problems.filter((entry) => !isResolvedByThisPlan(entry));
+      const errorNames = blockingErrors.map((entry) => entry.name);
 
       const blocked = [];
       if (errorNames.length) {
@@ -2014,6 +2022,10 @@
     async function exportToRepo() {
       if (!repoStore.root) return;
 
+      // 직전 실패 메시지를 지운다 - 안 지우면 이번이 성공해도 다이얼로그가 열리는 동안
+      // 지난 실패 문구가 화면에 남는다.
+      repoStore.message = "";
+
       // 권한을 먼저 확보한다 - await가 사용자 제스처를 소진하므로 재읽기보다 앞이어야 한다.
       if (!(await hasWritePermission(repoStore.root, true))) {
         repoStore.message = "쓰기 권한을 얻지 못했습니다. 폴더 연결을 다시 눌러 주세요.";
@@ -2278,12 +2290,14 @@
       }
     }
 
+    // "missing"은 resolveCardState/resolvePoolState의 코어 계약이지만(pending이 없을 때),
+    // 호출부가 언제나 카드를 넘기므로 여기서는 실제로 나오지 않는다. 예전에는 "저장소에만
+    // 있음"을 뜻했으나 §12 개정이 그 개념을 읽기 오류/미참조 파일로 갈랐으므로 배지를 두지 않는다.
     const STATE_BADGES = Object.freeze({
       same: "● 저장소와 동일",
       modified: "✎ 수정됨",
       new: "＋ 신규",
       conflict: "⚠ 충돌",
-      missing: "− 저장소에만 있음",
     });
     const SIDE_LABELS = Object.freeze({ Player: "아군", Enemy: "적군" });
     const CATEGORY_LABELS = Object.freeze({ Execution: "실행", Intervention: "개입" });
@@ -2841,7 +2855,10 @@
         if (!pool) { rawError = errors.join(" "); render(); return; }
         repoStore.storedPoolText.set(pool.id, entry.text);
         repoStore.storedPools = [...repoStore.storedPools, { ...pool, base: entry.text }];
-        repoStore.readErrors = repoStore.readErrors.filter((row) => row.name !== entry.name);
+        // name만 비교하면 Cards/와 Pools/의 동명 파일(예: starter.json) 중 한쪽을 고칠 때
+        // 둘 다 읽기 오류 목록에서 사라진다 - scope까지 맞춰야 폴더가 갈린다.
+        repoStore.readErrors = repoStore.readErrors
+          .filter((row) => row.scope !== entry.scope || row.name !== entry.name);
         rawDraft = "";
         rawError = "";
         pending = core.putPendingPool(pending, { ...pool, base: entry.text });
@@ -2857,7 +2874,10 @@
 
       repoStore.storedCardText.set(card.uid, entry.text);
       repoStore.storedCards = [...repoStore.storedCards, { ...card, base: entry.text }];
-      repoStore.readErrors = repoStore.readErrors.filter((row) => row.name !== entry.name);
+      // name만 비교하면 Cards/와 Pools/의 동명 파일(예: starter.json) 중 한쪽을 고칠 때
+      // 둘 다 읽기 오류 목록에서 사라진다 - scope까지 맞춰야 폴더가 갈린다.
+      repoStore.readErrors = repoStore.readErrors
+        .filter((row) => row.scope !== entry.scope || row.name !== entry.name);
       rawDraft = "";
       rawError = "";
       pending = core.putPendingCard(pending, { ...card, base: entry.text });

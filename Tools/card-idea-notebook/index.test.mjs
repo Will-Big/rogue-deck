@@ -1798,18 +1798,44 @@ test("읽기 오류 원문 편집 자리가 저장소 UI에 있다", () => {
   assert.match(html, /\.repo-raw-editor/);
 });
 
-test("고친 원문이 파싱되면 카드로 승격한다", () => {
+test("이번에 덮어쓸 파일의 읽기 오류는 내보내기를 막지 않는다", () => {
   const core = loadCore();
   const schema = repoSchema();
-  const broken = "{ \"id\": \"x\", ";
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const repaired = { ...card, id: "broken", uid: core.repoUid("broken"), base: "{ 깨진 원문" };
 
-  assert.equal(core.readCardJson(broken, schema).card, null);
+  const plan = core.exportPlan({
+    cards: [repaired], pools: [], storedCards: [], storedPools: [],
+    cardStates: new Map([[repaired.uid, "new"]]), poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
 
-  const fixed = readFileSync(repoCardPath("vanguard_slash"), "utf8");
-  const { card, errors } = core.readCardJson(fixed, schema);
+  assert.deepEqual(plan.writes.map((entry) => entry.name), ["broken.json"]);
+  assert.deepEqual(plan.blocked, [], "고쳐서 덮어쓸 파일이 스스로를 막으면 안 된다");
+  assert.deepEqual(plan.readErrors, [], "같은 파일이 신규와 읽기 오류에 동시에 뜨면 안 된다");
+});
 
-  assert.deepEqual(errors, []);
-  assert.equal(card.id, "vanguard_slash");
+test("쓰지 않는 읽기 오류는 여전히 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [
+      { scope: "card", name: "other_broken.json", messages: ["JSON을 읽을 수 없습니다"] },
+      { scope: "status", name: "bad_status.json", messages: ["JSON을 읽을 수 없습니다"] },
+    ],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 2개/);
+  assert.deepEqual(plan.readErrors, ["bad_status.json", "other_broken.json"]);
 });
 
 test("상태 파일은 원문 편집 대신 읽기 전용 안내를 낸다", () => {
