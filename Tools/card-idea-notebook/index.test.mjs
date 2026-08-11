@@ -3018,3 +3018,60 @@ test("풀 담기와 소속 표시의 스타일이 마크업에 있다", () => {
   assert.match(html, /\.pool-membership\b/);
   assert.match(html, /\.pool-picker\b/);
 });
+
+test("같은 원문은 차이가 없다", () => {
+  const core = loadCore();
+  const text = "{\n  \"id\": \"a\"\n}\n";
+
+  const diff = core.diffLines(text, text);
+
+  assert.equal(diff.same, true);
+  assert.deepEqual(diff.rows.map((row) => row.kind), ["same", "same", "same", "same"]);
+});
+
+test("바뀐 줄을 삭제와 추가로 낸다", () => {
+  const core = loadCore();
+  const base = "{\n  \"id\": \"a\"\n}\n";
+  const current = "{\n  \"id\": \"b\"\n}\n";
+
+  const diff = core.diffLines(base, current);
+
+  assert.equal(diff.same, false);
+  assert.deepEqual(diff.rows, [
+    { kind: "same", text: "{" },
+    { kind: "remove", text: "  \"id\": \"a\"" },
+    { kind: "add", text: "  \"id\": \"b\"" },
+    { kind: "same", text: "}" },
+    { kind: "same", text: "" },
+  ]);
+});
+
+test("줄이 늘면 추가만 낸다", () => {
+  const core = loadCore();
+  const base = "a\nb\n";
+  const current = "a\nx\nb\n";
+
+  const diff = core.diffLines(base, current);
+
+  assert.deepEqual(diff.rows.map((row) => `${row.kind}:${row.text}`), [
+    "same:a", "add:x", "same:b", "same:",
+  ]);
+});
+
+test("저장소에 없던 것은 전부 추가다", () => {
+  const core = loadCore();
+
+  const diff = core.diffLines(null, "a\nb\n");
+
+  assert.equal(diff.same, false);
+  assert.equal(diff.rows.every((row) => row.kind === "add"), true);
+});
+
+test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="repo-source-toggle"/);
+  assert.match(html, /id="repo-source-diff"/);
+  assert.match(html, /\.diff-row\.is-add/);
+  assert.match(html, /\.diff-row\.is-remove/);
+});

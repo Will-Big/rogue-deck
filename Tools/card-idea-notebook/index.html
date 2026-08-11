@@ -315,7 +315,7 @@
 
     .preview-pane { background: #131512; }
     .preview-wrap { min-height: 100%; padding: 18px; }
-    .markdown-preview {
+    .json-preview {
       min-height: calc(100vh - 145px);
       margin: 0;
       padding: 18px;
@@ -328,6 +328,10 @@
       overflow-wrap: anywhere;
       font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
+    .diff-row { display: block; white-space: pre-wrap; }
+    .diff-row.is-add { color: #9ede9e; background: rgba(80, 160, 80, .12); }
+    .diff-row.is-remove { color: #e8a0a0; background: rgba(180, 70, 70, .12); }
+    .diff-row.is-same { color: #8a8a80; }
 
     dialog {
       width: min(440px, calc(100vw - 40px));
@@ -645,7 +649,7 @@
           <span class="count">실시간</span>
         </div>
         <div class="preview-wrap">
-          <pre class="markdown-preview" id="markdown-preview"></pre>
+          <pre class="json-preview" id="markdown-preview"></pre>
         </div>
       </div>
     </aside>
@@ -708,8 +712,10 @@
       <div class="pane-scroll">
         <div class="pane-header">
           <div class="pane-title"><strong id="repo-source-title">JSON 원문</strong></div>
+          <button type="button" id="repo-source-toggle" hidden>저장소 ↔ 현재</button>
         </div>
-        <pre class="markdown-preview" id="repo-source"></pre>
+        <pre class="json-preview" id="repo-source"></pre>
+        <pre class="json-preview" id="repo-source-diff" hidden></pre>
       </div>
     </aside>
   </main>
@@ -2320,6 +2326,49 @@
       return "same";
     }
 
+    /// LCS 기반 줄 diff. 카드 JSON은 길어야 60줄 남짓이라 O(n*m) 표로 충분하고, 외부 패키지를
+    /// 들이지 않는다(규칙 14). 삭제를 추가보다 먼저 내보내 "무엇이 무엇으로 바뀌었나"로 읽힌다.
+    function diffLines(base, current) {
+      const left = base === null || base === undefined ? [] : String(base).split("\n");
+      const right = String(current ?? "").split("\n");
+
+      const table = Array.from({ length: left.length + 1 }, () => new Array(right.length + 1).fill(0));
+      for (let i = left.length - 1; i >= 0; i -= 1) {
+        for (let j = right.length - 1; j >= 0; j -= 1) {
+          table[i][j] = left[i] === right[j]
+            ? table[i + 1][j + 1] + 1
+            : Math.max(table[i + 1][j], table[i][j + 1]);
+        }
+      }
+
+      const rows = [];
+      let i = 0;
+      let j = 0;
+      while (i < left.length && j < right.length) {
+        if (left[i] === right[j]) {
+          rows.push({ kind: "same", text: left[i] });
+          i += 1;
+          j += 1;
+        } else if (table[i + 1][j] >= table[i][j + 1]) {
+          rows.push({ kind: "remove", text: left[i] });
+          i += 1;
+        } else {
+          rows.push({ kind: "add", text: right[j] });
+          j += 1;
+        }
+      }
+      while (i < left.length) {
+        rows.push({ kind: "remove", text: left[i] });
+        i += 1;
+      }
+      while (j < right.length) {
+        rows.push({ kind: "add", text: right[j] });
+        j += 1;
+      }
+
+      return { same: rows.every((row) => row.kind === "same"), rows };
+    }
+
     /// 노트북이 아는 저장소 경로 넷(설계 3). 세그먼트 배열인 것은 File System Access API가
     /// 경로 문자열이 아니라 디렉터리 핸들을 한 칸씩 타고 내려가기 때문이다.
     const CONTENT_PATHS = Object.freeze({
@@ -2664,6 +2713,7 @@
       validateContent,
       resolveCardState,
       resolvePoolState,
+      diffLines,
       emptyConditionValue,
       ROLE_LABELS,
       FACTION_LABELS,
@@ -3500,6 +3550,8 @@
       detail: byId("repo-detail"),
       sourceTitle: byId("repo-source-title"),
       source: byId("repo-source"),
+      sourceToggle: byId("repo-source-toggle"),
+      sourceDiff: byId("repo-source-diff"),
     };
 
     const HANDLE_DB_NAME = `${core.STORAGE_KEY}.handles`;
@@ -3823,6 +3875,7 @@
     });
 
     let selection = { scope: "", id: "" };
+    let showDiff = false;
 
     /// 선택 대상에 맞는 탭으로 옮긴다. 중앙과 우측이 선택을 따라가므로(설계 11.1) 탭이
     /// 어긋나면 목록은 카드인데 상세는 풀인 화면이 나온다.
@@ -4322,10 +4375,38 @@
 
     /// 모르는 최상위 키를 가진 카드는 폼 대신 원문을 읽기 전용으로 보여준다(설계 11.3).
     /// 폼으로 열면 10.2가 보존하기로 한 것을 폼이 표현하지 못하는 만큼 망가뜨린다.
+    /// 우측은 언제나 "지금 쓰면 나올 원문"을 보여준다. 저장소와 다를 때만 토글이 나오고,
+    /// 토글을 켜면 diff가 원문 자리를 대신한다 - 둘을 동시에 띄우면 어느 쪽이 나갈 것인지
+    /// 헷갈린다(설계 11.3).
+    function renderSource({ title, stored, current }) {
+      elements.sourceTitle.textContent = title;
+      elements.source.textContent = current;
+
+      const diff = core.diffLines(stored, current);
+      elements.sourceToggle.hidden = diff.same;
+      if (diff.same) showDiff = false;
+
+      elements.sourceToggle.classList.toggle("is-active", showDiff);
+      elements.source.hidden = showDiff;
+      elements.sourceDiff.hidden = !showDiff;
+      elements.sourceDiff.replaceChildren();
+      if (!showDiff) return;
+
+      for (const row of diff.rows) {
+        const line = document.createElement("span");
+        line.className = `diff-row is-${row.kind}`;
+        line.textContent = `${row.kind === "add" ? "+" : row.kind === "remove" ? "-" : " "} ${row.text}`;
+        elements.sourceDiff.append(line);
+      }
+    }
+
     function renderCardDetail(card) {
       elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
-      elements.sourceTitle.textContent = card.id ? `Cards/${card.id}.json` : "Cards/(id 없음).json";
-      elements.source.textContent = card.base ?? core.writeCardJson(card, repoStore.schema);
+      renderSource({
+        title: card.id ? `Cards/${card.id}.json` : "Cards/(id 없음).json",
+        stored: repoStore.storedCardText.get(card.uid) ?? null,
+        current: core.writeCardJson(card, repoStore.schema),
+      });
 
       if (card.unknownKeys.length) {
         const note = document.createElement("p");
@@ -4509,8 +4590,11 @@
       }
       elements.detail.append(poolSection("오류", problems));
 
-      elements.sourceTitle.textContent = `Pools/${pool.id}.json`;
-      elements.source.textContent = pool.base;
+      renderSource({
+        title: `Pools/${pool.id}.json`,
+        stored: repoStore.storedPoolText.get(pool.id) ?? null,
+        current: core.writePoolJson(pool),
+      });
     }
 
     function render() {
@@ -4520,6 +4604,8 @@
       elements.detailTitle.textContent = "선택된 항목 없음";
       elements.sourceTitle.textContent = "JSON 원문";
       elements.source.textContent = "";
+      elements.sourceDiff.replaceChildren();
+      elements.sourceToggle.hidden = true;
 
       // renderSummary는 이른 반환이 있으므로 여기서 갱신한다 - 연결 전에도 미반영 복원
       // 실패는 알려야 한다.
@@ -4593,6 +4679,10 @@
     }
 
     elements.reload.addEventListener("click", reloadRepo);
+    elements.sourceToggle.addEventListener("click", () => {
+      showDiff = !showDiff;
+      render();
+    });
     elements.newCard.addEventListener("click", newCard);
     elements.search.addEventListener("input", () => {
       query = elements.search.value;
