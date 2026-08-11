@@ -2937,3 +2937,58 @@ test("모르는 효과 행은 파라미터도 종류도 바뀌지 않는다", ()
   assert.deepEqual(core.removeEffect(card, 0).effects, [],
     "삭제는 허용한다 - 사용자가 명시적으로 지시한 변경이다");
 });
+
+test("풀 맨 끝에 카드를 담는다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b"]}');
+
+  assert.deepEqual(core.addCardsToPool(pool, ["c", "d"]).cards, ["a", "b", "c", "d"]);
+  assert.deepEqual(pool.cards, ["a", "b"], "원본을 제자리에서 고치지 않는다");
+});
+
+test("이미 있는 카드는 다시 담지 않는다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b"]}');
+  assert.deepEqual(core.addCardsToPool(pool, ["b", "c"]).cards, ["a", "b", "c"]);
+  assert.deepEqual(core.addCardsToPool(pool, ["c", "c"]).cards, ["a", "b", "c"],
+    "같은 요청 안의 중복도 한 번만 담는다");
+});
+
+test("이미 있는 중복은 담기로 사라지지 않는다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","a"]}');
+  assert.deepEqual(core.addCardsToPool(pool, ["b"]).cards, ["a", "a", "b"],
+    "저장소에 있던 중복은 그대로 둔다 - 검증기가 오류로 잡고 사용자가 뺀다");
+});
+
+test("인덱스로 뺀다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","a","b"]}');
+
+  assert.deepEqual(core.removeFromPool(pool, 0).cards, ["a", "b"],
+    "같은 카드가 둘일 때 id로는 어느 쪽을 뺄지 정할 수 없다");
+  assert.deepEqual(core.removeFromPool(pool, 9).cards, ["a", "a", "b"]);
+});
+
+test("편성 순서를 바꾼다", () => {
+  const core = loadCore();
+  const { pool } = core.readPoolJson('{"id":"p","cards":["a","b","c"]}');
+
+  assert.deepEqual(core.moveInPool(pool, 0, 2).cards, ["b", "c", "a"]);
+  assert.deepEqual(core.moveInPool(pool, 2, 0).cards, ["c", "a", "b"]);
+  assert.deepEqual(core.moveInPool(pool, 0, 9).cards, ["b", "c", "a"], "범위를 넘으면 끝으로");
+  assert.deepEqual(core.moveInPool(pool, 9, 0).cards, ["a", "b", "c"], "없는 자리는 무시한다");
+});
+
+test("편성을 고쳐도 왕복 형식이 유지된다", () => {
+  const core = loadCore();
+  const text = readFileSync(fileURLToPath(new URL("starter.json", poolsDir)), "utf8");
+  const { pool } = core.readPoolJson(text);
+
+  const edited = core.removeFromPool(core.addCardsToPool(pool, ["새_카드"]), 0);
+  const written = core.writePoolJson(edited);
+
+  assert.ok(written.endsWith("]\n}\n"));
+  assert.deepEqual(JSON.parse(written).cards, edited.cards);
+  assert.equal(core.writePoolJson(pool), text, "원본은 그대로 왕복한다");
+});

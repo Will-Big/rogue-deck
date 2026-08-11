@@ -2113,6 +2113,40 @@
       return `${JSON.stringify(out, null, 2)}\n`;
     }
 
+    /// 이미 있는 카드는 건너뛴다. 설계 7의 체크박스가 이미 소속된 풀을 비활성으로 두므로
+    /// 정상 흐름에서는 일어나지 않지만, 여기서 막으면 UI가 실수해도 중복이 새로 생기지 않는다.
+    /// 저장소에 이미 있던 중복은 건드리지 않는다 - 검증기가 오류로 잡고 사용자가 뺀다.
+    function addCardsToPool(pool, cardIds) {
+      const present = new Set(pool.cards);
+      const added = [];
+      for (const cardId of cardIds) {
+        if (present.has(cardId)) continue;
+        present.add(cardId);
+        added.push(cardId);
+      }
+
+      return added.length ? { ...pool, cards: [...pool.cards, ...added] } : pool;
+    }
+
+    /// 인덱스로 뺀다. 풀에 같은 카드가 두 번 들어 있을 수 있으므로(설계 10.4가 지우지 않기로
+    /// 했다) id로는 어느 쪽을 뺄지 정할 수 없다.
+    function removeFromPool(pool, index) {
+      if (index < 0 || index >= pool.cards.length) return pool;
+
+      const cards = [...pool.cards];
+      cards.splice(index, 1);
+      return { ...pool, cards };
+    }
+
+    function moveInPool(pool, from, to) {
+      if (from < 0 || from >= pool.cards.length) return pool;
+
+      const cards = [...pool.cards];
+      const [moved] = cards.splice(from, 1);
+      cards.splice(Math.max(0, Math.min(to, cards.length)), 0, moved);
+      return { ...pool, cards };
+    }
+
     const CARD_ID_PATTERN = /^[a-z0-9_]+$/;
 
     /// 로더가 거부할 것을 내보내기 전에 잡는다(설계 9). 통과가 부팅 성공을 보장하지는 않지만,
@@ -2586,6 +2620,9 @@
       writeCardJson,
       readPoolJson,
       writePoolJson,
+      addCardsToPool,
+      removeFromPool,
+      moveInPool,
       validateContent,
       resolveCardState,
       resolvePoolState,
