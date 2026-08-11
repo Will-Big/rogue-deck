@@ -420,9 +420,9 @@
     .pool-roster { display: grid; gap: 5px; font-size: 12px; }
     .pool-roster .slot {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) auto;
+      grid-template-columns: 28px minmax(0, 1fr) auto auto;
       gap: 8px;
-      align-items: baseline;
+      align-items: center;
       padding: 6px 9px;
       border: 1px solid var(--line);
       border-radius: 9px;
@@ -433,6 +433,40 @@
     .pool-distribution { display: grid; gap: 6px; font-size: 12px; }
     .pool-distribution div { display: flex; gap: 10px; }
     .pool-distribution dt { min-width: 48px; color: var(--muted); }
+    .repo-header-actions { display: flex; gap: 6px; }
+    .repo-form { display: grid; gap: 10px; }
+    .repo-form label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+    .repo-form input,
+    .repo-form select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
+      color: var(--ink); background: #191b18; }
+    .repo-form .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
+    .effect-list { display: grid; gap: 8px; }
+    .effect-row {
+      display: grid;
+      gap: 8px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #191b18;
+    }
+    .effect-row.is-locked { border-color: var(--warning); }
+    .effect-head { display: flex; gap: 8px; align-items: center; }
+    .effect-head select { flex: 1; }
+    .effect-params { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-params label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-params input[type="number"] { width: 84px; }
+    .effect-condition { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-condition label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-actions { display: flex; gap: 4px; }
+    .effect-actions button { padding: 4px 8px; font-size: 11px; }
+    .effect-glyph { color: var(--gold); font-size: 12px; letter-spacing: .12em; }
+    .pool-membership { display: grid; gap: 5px; font-size: 12px; justify-items: start; }
+    .pool-membership label { display: flex; gap: 7px; align-items: center; color: var(--ink); }
+    .pool-membership .owned { color: var(--muted); font-size: 11px; }
+    .pool-picker { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+    .pool-roster .slot .slot-actions { display: flex; gap: 4px; }
+    .pool-roster .slot .slot-actions button { padding: 2px 7px; font-size: 11px; }
 
     @media (max-width: 1280px) {
       body { min-width: 920px; }
@@ -625,7 +659,10 @@
             <strong>저장소</strong>
             <span class="count" id="repo-count">–</span>
           </div>
-          <button type="button" class="primary" id="repo-connect">폴더 연결</button>
+          <div class="repo-header-actions">
+            <button type="button" id="repo-new-card">＋ 새 카드</button>
+            <button type="button" class="primary" id="repo-connect">폴더 연결</button>
+          </div>
         </div>
         <div class="library-tools">
           <p class="repo-hint" id="repo-unsupported" hidden>
@@ -661,6 +698,7 @@
           <div class="pane-title"><strong id="repo-detail-title">선택된 항목 없음</strong></div>
         </div>
         <div class="repo-summary" id="repo-summary"></div>
+        <p class="repo-hint" id="repo-pending-note" hidden></p>
         <div class="repo-problems" id="repo-problems"></div>
         <div class="repo-detail" id="repo-detail"></div>
       </div>
@@ -1753,7 +1791,7 @@
       }
 
       const card = {
-        uid: "",
+        uid: repoUid(String(raw.id)),
         id: String(raw.id),
         name: String(raw.name),
         side: String(raw.side),
@@ -1774,6 +1812,204 @@
       };
 
       return { card, errors: [] };
+    }
+
+    const EDITABLE_CARD_FIELDS = Object.freeze([
+      "id", "name", "side", "category", "energyCost", "baseExecutionOrder", "grade", "tags",
+    ]);
+
+    const NUMBER_CARD_FIELDS = Object.freeze(["energyCost", "baseExecutionOrder"]);
+
+    /// 폼은 언제나 문자열을 준다. 화면마다 Number()를 부르면 한 곳이 빠졌을 때 조용히 문자열이
+    /// 모델에 들어가고, 그러면 writeCardJson이 "1"을 써서 왕복이 깨진다.
+    function toCardNumber(value) {
+      const parsed = Number(String(value).trim());
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    /// 중복 태그를 여기서 지우지 않는다 - 검증기가 오류로 잡아 사용자가 고치는 편이,
+    /// 입력이 조용히 달라지는 것보다 낫다.
+    function parseTagsInput(text) {
+      return String(text ?? "")
+        .split(/[,\n]/)
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+    }
+
+    /// 필드 하나를 바꾼 새 카드. 제자리에서 고치지 않는 이유는 resolveCardState가 base와
+    /// "지금 쓰면 나올 문자열"을 비교하기 때문이다 - 모델을 뒤집으면 비교 대상이 함께 바뀐다.
+    function setCardField(card, field, value) {
+      if (!EDITABLE_CARD_FIELDS.includes(field)) return card;
+
+      if (field === "tags") return { ...card, tags: parseTagsInput(value) };
+      if (NUMBER_CARD_FIELDS.includes(field)) return { ...card, [field]: toCardNumber(value) };
+      return { ...card, [field]: String(value).trim() };
+    }
+
+    /// 빈 카드. 분류에 없는 쪽 필드도 채워 두는 이유는 설계 5 그대로다 - 편집 중 분류를
+    /// 바꿔도 값이 사라지지 않아야 하고, 어차피 라이터가 분류별 키 목록만 내보낸다.
+    function createCardModel({ schema, uid }) {
+      return {
+        uid,
+        id: "",
+        name: "",
+        side: schema.sides[0],
+        category: schema.categories[0],
+        energyCost: 0,
+        baseExecutionOrder: 0,
+        effects: [],
+        intervention: null,
+        grade: schema.grades[0],
+        tags: [],
+        unknownKeys: [],
+        extra: {},
+        base: null,
+      };
+    }
+
+    /// 스키마 필드 하나의 빈 값. writeCardJson의 isDefaultValue와 짝이 맞아야 한다 -
+    /// 여기서 낸 값이 곧 "파일에서 생략되는 값"이다.
+    function defaultParamValue(field) {
+      if (field.type === "int") return 0;
+      if (field.type === "bool") return false;
+      if (field.type === "status") return "";
+      return field.options[0];
+    }
+
+    function coerceParamValue(field, value) {
+      if (field.type === "int") return toCardNumber(value);
+      if (field.type === "bool") return value === true || value === "true";
+      return String(value);
+    }
+
+    /// 효과와 개입이 스키마에서 같은 모양이라 한 함수가 둘을 만든다(계획 3.5의 결과).
+    function emptyParams(spec) {
+      const params = {};
+      for (const field of spec.fields) params[field.name] = defaultParamValue(field);
+      return params;
+    }
+
+    function replaceEffects(card, effects) {
+      return { ...card, effects };
+    }
+
+    function addEffect(card, kind, schema) {
+      const spec = schema.effects[kind];
+      if (!spec) return card;
+
+      return replaceEffects(card, [
+        ...(card.effects ?? []),
+        { kind, params: emptyParams(spec), condition: null, raw: null },
+      ]);
+    }
+
+    function removeEffect(card, index) {
+      const effects = [...(card.effects ?? [])];
+      if (index < 0 || index >= effects.length) return card;
+
+      effects.splice(index, 1);
+      return replaceEffects(card, effects);
+    }
+
+    /// 파라미터를 얕은 복사한다. 같은 객체를 가리키면 한쪽을 고칠 때 둘 다 바뀐다.
+    function duplicateEffect(card, index) {
+      const effects = [...(card.effects ?? [])];
+      const source = effects[index];
+      if (!source) return card;
+
+      effects.splice(index + 1, 0, {
+        ...source,
+        params: { ...source.params },
+        condition: source.condition ? { ...source.condition } : null,
+      });
+      return replaceEffects(card, effects);
+    }
+
+    function moveEffect(card, from, to) {
+      const effects = [...(card.effects ?? [])];
+      if (from < 0 || from >= effects.length) return card;
+
+      const [moved] = effects.splice(from, 1);
+      effects.splice(Math.max(0, Math.min(to, effects.length)), 0, moved);
+      return replaceEffects(card, effects);
+    }
+
+    /// 종류가 바뀌면 파라미터가 통째로 갈린다 - 계획 3.5가 파라미터를 액션에 소속시켰으므로
+    /// 쓰지 않는 칸이 남을 자리가 없다. 조건은 효과 종류와 독립이라 유지한다.
+    function setEffectKind(card, index, kind, schema) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      const spec = schema.effects[kind];
+      if (!current || current.raw || !spec) return card;
+
+      effects[index] = { kind, params: emptyParams(spec), condition: current.condition, raw: null };
+      return replaceEffects(card, effects);
+    }
+
+    function setEffectParam(card, index, name, value, schema) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      if (!current || current.raw) return card;
+
+      const field = schema.effects[current.kind]?.fields.find((entry) => entry.name === name);
+      if (!field) return card;
+
+      effects[index] = {
+        ...current,
+        params: { ...current.params, [name]: coerceParamValue(field, value) },
+      };
+      return replaceEffects(card, effects);
+    }
+
+    /// patch가 null이면 조건을 뗀다. 아니면 있는 조건 위에 얹는다 - 폼이 칸 하나씩 보내므로
+    /// 나머지 칸이 유지되어야 한다.
+    function setEffectCondition(card, index, patch) {
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      if (!current || current.raw) return card;
+
+      if (patch === null) {
+        effects[index] = { ...current, condition: null };
+        return replaceEffects(card, effects);
+      }
+
+      const merged = { ...emptyConditionValue(), ...current.condition, ...patch };
+      effects[index] = {
+        ...current,
+        condition: {
+          kind: String(merged.kind),
+          n: toCardNumber(merged.n),
+          successEffectValue: toCardNumber(merged.successEffectValue),
+          skipOnBasic: merged.skipOnBasic === true || merged.skipOnBasic === "true",
+        },
+      };
+      return replaceEffects(card, effects);
+    }
+
+    /// 개입은 효과에서 조건을 뺀 것이고 행이 하나뿐이다. kind가 비면 뗀다.
+    function setIntervention(card, kind, schema) {
+      if (!kind) return { ...card, intervention: null };
+
+      const spec = schema.interventions[kind];
+      if (!spec) return card;
+      return { ...card, intervention: { kind, params: emptyParams(spec), raw: null } };
+    }
+
+    function setInterventionParam(card, name, value, schema) {
+      const current = card.intervention;
+      if (!current || current.raw) return card;
+
+      const field = schema.interventions[current.kind]?.fields
+        .find((entry) => entry.name === name);
+      if (!field) return card;
+
+      return {
+        ...card,
+        intervention: {
+          ...current,
+          params: { ...current.params, [name]: coerceParamValue(field, value) },
+        },
+      };
     }
 
     /// 기본값이면 생략한다. C#의 DefaultValueHandling.Ignore를 그대로 옮긴 것이다.
@@ -1913,6 +2149,40 @@
       const out = { id: pool.id, cards: [...pool.cards] };
       for (const key of pool.unknownKeys) out[key] = pool.extra[key];
       return `${JSON.stringify(out, null, 2)}\n`;
+    }
+
+    /// 이미 있는 카드는 건너뛴다. 설계 7의 체크박스가 이미 소속된 풀을 비활성으로 두므로
+    /// 정상 흐름에서는 일어나지 않지만, 여기서 막으면 UI가 실수해도 중복이 새로 생기지 않는다.
+    /// 저장소에 이미 있던 중복은 건드리지 않는다 - 검증기가 오류로 잡고 사용자가 뺀다.
+    function addCardsToPool(pool, cardIds) {
+      const present = new Set(pool.cards);
+      const added = [];
+      for (const cardId of cardIds) {
+        if (present.has(cardId)) continue;
+        present.add(cardId);
+        added.push(cardId);
+      }
+
+      return added.length ? { ...pool, cards: [...pool.cards, ...added] } : pool;
+    }
+
+    /// 인덱스로 뺀다. 풀에 같은 카드가 두 번 들어 있을 수 있으므로(설계 10.4가 지우지 않기로
+    /// 했다) id로는 어느 쪽을 뺄지 정할 수 없다.
+    function removeFromPool(pool, index) {
+      if (index < 0 || index >= pool.cards.length) return pool;
+
+      const cards = [...pool.cards];
+      cards.splice(index, 1);
+      return { ...pool, cards };
+    }
+
+    function moveInPool(pool, from, to) {
+      if (from < 0 || from >= pool.cards.length) return pool;
+
+      const cards = [...pool.cards];
+      const [moved] = cards.splice(from, 1);
+      cards.splice(Math.max(0, Math.min(to, cards.length)), 0, moved);
+      return { ...pool, cards };
     }
 
     const CARD_ID_PATTERN = /^[a-z0-9_]+$/;
@@ -2059,6 +2329,24 @@
       pools: Object.freeze(["Assets", "StreamingAssets", "Content", "Pools"]),
     });
 
+    /// 노트북 내부 식별자. id는 저작 중에 바뀌지만 uid는 바뀌지 않으므로, 선택과 미반영은
+    /// uid에 매달린다(설계 5). 접두사를 붙이는 이유는 충돌이다 - 없으면 새 카드에
+    /// 'vanguard_slash'라는 id를 주는 순간 저장소 카드의 uid와 겹친다.
+    const REPO_UID_PREFIX = "file:";
+    const NEW_UID_PREFIX = "new:";
+
+    function repoUid(id) {
+      return REPO_UID_PREFIX + id;
+    }
+
+    function newUid(sequence) {
+      return NEW_UID_PREFIX + sequence;
+    }
+
+    function isNewUid(uid) {
+      return String(uid).startsWith(NEW_UID_PREFIX);
+    }
+
     /// 상태 파일에서 드롭다운 재료만 뽑는다(설계 11.5). 수명·성장치를 들고 있지 않는 것은
     /// 노트북이 상태를 쓰지 않기 때문이다 - 읽지 않는 값을 모델에 두면 언젠가 되쓰게 된다.
     function readStatusJson(text) {
@@ -2170,8 +2458,8 @@
 
     /// 목록 한 줄이 알아야 하는 것을 카드마다 계산하고 걸러 준다. 화면은 이 배열만 반복하므로
     /// 검색·필터 규칙이 DOM을 모른다.
-    /// states는 카드 id로 색인한다 - 이 계획에는 편집이 없어 id가 파일명 그대로 고정이다.
-    /// 계획 C가 편집을 붙이면 id가 저작 중에 바뀌므로 색인 키를 uid로 바꾼다(설계 5).
+    /// states는 uid로, errorIds는 id로 색인한다 - 편집 상태는 카드를 따라가야 하고(id는
+    /// 저작 중에 바뀐다) 검증은 파일 단위여서 로더와 같은 id로 봐야 한다.
     function cardListView({ cards, states, errorIds, membership, query, filter, poolId }) {
       const stateOf = states ?? new Map();
       const failing = errorIds ?? new Set();
@@ -2181,7 +2469,7 @@
       for (const card of cards) {
         const row = {
           card,
-          state: stateOf.get(card.id) ?? "same",
+          state: stateOf.get(card.uid) ?? "same",
           hasError: failing.has(card.id),
           pools: owners.get(card.id) ?? [],
         };
@@ -2231,7 +2519,119 @@
       ];
     }
 
+    /// Markdown 경로의 STORAGE_KEY와 별개다. 그쪽은 아직 살아 있고 SCHEMA_VERSION을 올리면
+    /// 그 자리에서 깨지므로, 미반영은 자체 키와 자체 버전을 쓴다. 설계 14의 6 → 7 전환은
+    /// Markdown 경로를 지우는 계획 D가 맡는다.
+    const PENDING_STORAGE_KEY = "fate-weaver.card-idea-notebook.pending";
+    const PENDING_VERSION = 1;
+
+    function emptyPending() {
+      return { version: PENDING_VERSION, cards: {}, pools: {} };
+    }
+
+    function readPending(storage) {
+      const raw = storage.getItem(PENDING_STORAGE_KEY);
+      if (!raw) return { pending: emptyPending(), errors: [] };
+
+      let saved;
+      try {
+        saved = JSON.parse(raw);
+      } catch (error) {
+        return {
+          pending: emptyPending(),
+          errors: [`미반영 편집분을 읽을 수 없습니다: ${error.message}`],
+        };
+      }
+
+      if (!saved || saved.version !== PENDING_VERSION) {
+        return {
+          pending: emptyPending(),
+          errors: [`지원하지 않는 미반영 데이터 버전: ${saved?.version}`],
+        };
+      }
+
+      return {
+        pending: {
+          version: PENDING_VERSION,
+          cards: { ...(saved.cards ?? {}) },
+          pools: { ...(saved.pools ?? {}) },
+        },
+        errors: [],
+      };
+    }
+
+    /// 던지지 않는다. 용량 초과는 저작 중에 실제로 일어나고, 그때 편집을 막는 것보다
+    /// 알리고 계속 쓰게 하는 편이 낫다 - 화면의 모델은 여전히 살아 있다.
+    function writePending(storage, pending) {
+      try {
+        storage.setItem(PENDING_STORAGE_KEY, JSON.stringify(pending));
+        return { persisted: true, error: "" };
+      } catch (error) {
+        return { persisted: false, error: String(error?.message ?? error) };
+      }
+    }
+
+    function putPendingCard(pending, card) {
+      return { ...pending, cards: { ...pending.cards, [card.uid]: card } };
+    }
+
+    function dropPendingCard(pending, uid) {
+      const cards = { ...pending.cards };
+      delete cards[uid];
+      return { ...pending, cards };
+    }
+
+    function putPendingPool(pending, pool) {
+      return { ...pending, pools: { ...pending.pools, [pool.id]: pool } };
+    }
+
+    function dropPendingPool(pending, id) {
+      const pools = { ...pending.pools };
+      delete pools[id];
+      return { ...pending, pools };
+    }
+
+    /// 설계 10.1의 한 줄: 저장소 파일 + 미반영 편집분 = 화면에 보이는 것.
+    /// 저장소에 있는 것은 대체하고, 저장소에 없는 미반영은 뒤에 덧붙인다.
+    function applyPending({ cards, pools, pending }) {
+      const usedCardUids = new Set();
+      const mergedCards = cards.map((card) => {
+        const edited = pending.cards[card.uid];
+        if (!edited) return card;
+        usedCardUids.add(card.uid);
+        return edited;
+      });
+      for (const [uid, card] of Object.entries(pending.cards)) {
+        if (!usedCardUids.has(uid)) mergedCards.push(card);
+      }
+
+      const usedPoolIds = new Set();
+      const mergedPools = pools.map((pool) => {
+        const edited = pending.pools[pool.id];
+        if (!edited) return pool;
+        usedPoolIds.add(pool.id);
+        return edited;
+      });
+      for (const [id, pool] of Object.entries(pending.pools)) {
+        if (!usedPoolIds.has(id)) mergedPools.push(pool);
+      }
+
+      return { cards: mergedCards, pools: mergedPools };
+    }
+
     globalThis.CardIdeaNotebook = Object.freeze({
+      PENDING_STORAGE_KEY,
+      emptyPending,
+      readPending,
+      writePending,
+      putPendingCard,
+      dropPendingCard,
+      putPendingPool,
+      dropPendingPool,
+      applyPending,
+      repoUid,
+      newUid,
+      isNewUid,
       CONTENT_PATHS,
       readStatusJson,
       poolDistribution,
@@ -2242,9 +2642,25 @@
       summaryLines,
       parseAuthoringSchema,
       readCardJson,
+      EDITABLE_CARD_FIELDS,
+      setCardField,
+      parseTagsInput,
+      createCardModel,
+      addEffect,
+      removeEffect,
+      duplicateEffect,
+      moveEffect,
+      setEffectKind,
+      setEffectParam,
+      setEffectCondition,
+      setIntervention,
+      setInterventionParam,
       writeCardJson,
       readPoolJson,
       writePoolJson,
+      addCardsToPool,
+      removeFromPool,
+      moveInPool,
       validateContent,
       resolveCardState,
       resolvePoolState,
@@ -3077,6 +3493,8 @@
       search: byId("repo-search"),
       filter: byId("repo-filter"),
       summary: byId("repo-summary"),
+      pendingNote: byId("repo-pending-note"),
+      newCard: byId("repo-new-card"),
       problems: byId("repo-problems"),
       detailTitle: byId("repo-detail-title"),
       detail: byId("repo-detail"),
@@ -3095,7 +3513,12 @@
       statuses: [],
       cards: [],
       pools: [],
+      storedCards: [],
+      storedPools: [],
+      storedCardText: new Map(),
+      storedPoolText: new Map(),
       cardsById: new Map(),
+      cardsByUid: new Map(),
       membership: new Map(),
       quarantined: [],
       validation: { errors: [], warnings: [] },
@@ -3224,11 +3647,15 @@
         ...statusFolder.failures, ...cardFolder.failures, ...poolFolder.failures);
 
       const cardsById = new Map();
-      for (const card of cards) cardsById.set(card.id, card);
+      const cardsByUid = new Map();
+      for (const card of cards) {
+        cardsById.set(card.id, card);
+        cardsByUid.set(card.uid, card);
+      }
 
       const cardStates = new Map();
       for (const card of cards) {
-        cardStates.set(card.id,
+        cardStates.set(card.uid,
           core.resolveCardState({ stored: card.base, pending: card, schema }));
       }
 
@@ -3237,12 +3664,25 @@
         poolStates.set(pool.id, core.resolvePoolState({ stored: pool.base, pending: pool }));
       }
 
+      // refreshFromPending이 매번 원본에서 다시 쌓으려면 편집되지 않은 사본이 필요하다.
+      // 원본 텍스트를 uid로 색인한다 - id로 하면 사용자가 id를 바꾸는 순간 원본을 못 찾아
+      // resolveCardState가 그 카드를 '신규'로 잘못 판정한다.
+      const storedCardText = new Map();
+      for (const card of cards) storedCardText.set(card.uid, card.base);
+      const storedPoolText = new Map();
+      for (const pool of pools) storedPoolText.set(pool.id, pool.base);
+
       return {
         schema,
         statuses,
         cards,
         pools,
+        storedCards: cards,
+        storedPools: pools,
+        storedCardText,
+        storedPoolText,
         cardsById,
+        cardsByUid,
         membership: core.poolMembership(pools),
         quarantined,
         validation: core.validateContent({
@@ -3253,8 +3693,96 @@
       };
     }
 
+    let pending = core.emptyPending();
+    let newCardSequence = 0;
+    let pendingNote = "";
+
+    function persistPending() {
+      const result = core.writePending(window.localStorage, pending);
+      pendingNote = result.persisted
+        ? ""
+        : `편집분을 브라우저에 저장하지 못했습니다: ${result.error}`;
+    }
+
+    /// 저장소에서 읽은 것 위에 미반영을 얹어 화면이 보는 목록을 다시 만든다(설계 10.1).
+    /// 상태·색인·검증이 전부 이 결과에서 나오므로 편집 한 번마다 통째로 다시 계산한다 -
+    /// 카드 26장 규모에서 부분 갱신은 이득보다 어긋날 위험이 크다.
+    function refreshFromPending() {
+      if (!repoStore.connected) return;
+
+      const merged = core.applyPending({
+        cards: repoStore.storedCards,
+        pools: repoStore.storedPools,
+        pending,
+      });
+
+      repoStore.cards = merged.cards;
+      repoStore.pools = merged.pools;
+      repoStore.cardsById = new Map(merged.cards.map((card) => [card.id, card]));
+      repoStore.cardsByUid = new Map(merged.cards.map((card) => [card.uid, card]));
+      repoStore.membership = core.poolMembership(merged.pools);
+      repoStore.cardStates = new Map(merged.cards.map((card) => [
+        card.uid,
+        core.resolveCardState({
+          stored: repoStore.storedCardText.get(card.uid) ?? null,
+          pending: card,
+          schema: repoStore.schema,
+        }),
+      ]));
+      repoStore.poolStates = new Map(merged.pools.map((pool) => [
+        pool.id,
+        core.resolvePoolState({
+          stored: repoStore.storedPoolText.get(pool.id) ?? null,
+          pending: pool,
+        }),
+      ]));
+      repoStore.validation = core.validateContent({
+        cards: merged.cards,
+        pools: merged.pools,
+        statusKeys: repoStore.statuses.map((status) => status.key),
+        schema: repoStore.schema,
+      });
+    }
+
+    /// 편집 하나를 미반영에 반영한다. 저장소 원본과 같아지면 미반영에서 뺀다 -
+    /// 되돌린 편집이 계속 "수정됨"으로 남으면 diff 요약이 거짓말을 한다.
+    function applyCardEdit(next) {
+      const stored = repoStore.storedCardText.get(next.uid) ?? null;
+      const unchanged = stored !== null
+        && core.writeCardJson(next, repoStore.schema) === stored;
+      pending = unchanged
+        ? core.dropPendingCard(pending, next.uid)
+        : core.putPendingCard(pending, next);
+      persistPending();
+      refreshFromPending();
+      selectWithTab("card", next.uid);
+      render();
+    }
+
+    function applyPoolEdit(next) {
+      const stored = repoStore.storedPoolText.get(next.id) ?? null;
+      const unchanged = stored !== null && core.writePoolJson(next) === stored;
+      pending = unchanged
+        ? core.dropPendingPool(pending, next.id)
+        : core.putPendingPool(pending, next);
+      persistPending();
+      refreshFromPending();
+      selectWithTab("pool", next.id);
+      render();
+    }
+
+    function newCard() {
+      newCardSequence += 1;
+      // 탭 전환은 applyCardEdit의 selectWithTab이 맡는다.
+      applyCardEdit(core.createCardModel({
+        schema: repoStore.schema,
+        uid: core.newUid(newCardSequence),
+      }));
+    }
+
     function applyLoaded(root, loaded) {
       Object.assign(repoStore, loaded, { connected: true, root, message: "" });
+      refreshFromPending();
       render();
     }
 
@@ -3296,16 +3824,21 @@
 
     let selection = { scope: "", id: "" };
 
-    /// 요약의 문제 항목에서도 부르므로 대상에 맞는 탭으로 옮긴다 - 풀 오류를 눌렀는데
-    /// 카드 목록이 그대로면 어디로 갔는지 알 수 없다.
-    function selectEntry(scope, id) {
+    /// 선택 대상에 맞는 탭으로 옮긴다. 중앙과 우측이 선택을 따라가므로(설계 11.1) 탭이
+    /// 어긋나면 목록은 카드인데 상세는 풀인 화면이 나온다.
+    function selectWithTab(scope, id) {
       selection = { scope, id };
-      if (scope === "card" || scope === "pool") {
-        const next = scope === "card" ? "cards" : "pools";
-        tab = next;
-        elements.tabCards.classList.toggle("is-active", next === "cards");
-        elements.tabPools.classList.toggle("is-active", next === "pools");
-      }
+      if (scope !== "card" && scope !== "pool") return;
+
+      tab = scope === "card" ? "cards" : "pools";
+      elements.tabCards.classList.toggle("is-active", tab === "cards");
+      elements.tabPools.classList.toggle("is-active", tab === "pools");
+    }
+
+    /// 요약의 문제 항목에서도 부르므로 탭을 함께 옮긴다 - 풀 오류를 눌렀는데 카드 목록이
+    /// 그대로면 어디로 갔는지 알 수 없다.
+    function selectEntry(scope, id) {
+      selectWithTab(scope, id);
       render();
     }
 
@@ -3323,7 +3856,16 @@
       text.textContent = message;
       button.append(text);
 
-      button.addEventListener("click", () => selectEntry(scope, id));
+      button.addEventListener("click", () => {
+        if (scope !== "card") {
+          selectEntry(scope, id);
+          return;
+        }
+        // 검증 오류와 격리 항목은 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
+        const card = repoStore.cardsById.get(id)
+          ?? repoStore.cardsById.get(String(id).replace(/\.json$/, ""));
+        if (card) selectEntry("card", card.uid);
+      });
       return button;
     }
 
@@ -3422,7 +3964,7 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "repo-entry";
-      if (selection.scope === "card" && selection.id === row.card.id) {
+      if (selection.scope === "card" && selection.id === row.card.uid) {
         button.classList.add("is-selected");
       }
 
@@ -3456,7 +3998,7 @@
         : `${STATE_BADGES[row.state] ?? row.state}${tags ? ` — ${tags}` : ""}`;
       button.append(badge);
 
-      button.addEventListener("click", () => selectEntry("card", row.card.id));
+      button.addEventListener("click", () => selectEntry("card", row.card.uid));
       return button;
     }
 
@@ -3486,38 +4028,356 @@
 
     /// 편집기는 계획 C다. 여기서는 카드가 무엇인지 읽을 수 있을 만큼만 보여주고,
     /// 실제 값의 원본은 우측 원문이 맡는다.
-    function renderCardDetail(card) {
-      elements.detailTitle.textContent = `${card.name} · ${card.id}`;
+    function formField(label, control) {
+      const wrap = document.createElement("label");
+      const text = document.createElement("span");
+      text.textContent = label;
+      wrap.append(text, control);
+      return wrap;
+    }
 
-      const fields = document.createElement("dl");
-      fields.className = "repo-fields";
-      fields.append(
-        fieldRow("진영", SIDE_LABELS[card.side] ?? card.side),
-        fieldRow("분류", CATEGORY_LABELS[card.category] ?? card.category),
-        fieldRow("비용", String(card.energyCost)),
-        fieldRow("등급", card.grade),
-        fieldRow("태그", (card.tags ?? []).join(" · ") || "없음"),
-        fieldRow("소속 풀", (repoStore.membership.get(card.id) ?? []).join(" · ") || "없음"),
-      );
+    function textControl(value, onChange) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.addEventListener("change", () => onChange(input.value));
+      return input;
+    }
 
-      if (card.category === "Execution") {
-        fields.append(
-          fieldRow("실행 순서", String(card.baseExecutionOrder)),
-          fieldRow("효과", card.effects === null
-            ? "없음"
-            : card.effects.map((effect) => effect.kind).join(" → ") || "0개"),
-        );
-      } else {
-        fields.append(fieldRow("개입", card.intervention?.kind ?? "없음"));
+    function numberControl(value, onChange) {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "1";
+      input.value = String(value);
+      input.addEventListener("change", () => onChange(input.value));
+      return input;
+    }
+
+    function selectControl(options, value, onChange) {
+      const select = document.createElement("select");
+      for (const option of options) {
+        const node = document.createElement("option");
+        node.value = option;
+        node.textContent = option;
+        select.append(node);
       }
+      select.value = value;
+      select.addEventListener("change", () => onChange(select.value));
+      return select;
+    }
+
+    /// 위치 범위의 글리프 표기. 기존 도구에서 검증된 표기이고 방향 감각을 숫자보다 잘
+    /// 전달하므로 selector 드롭다운 옆에 남긴다(설계 6).
+    const SELECTOR_GLYPHS = Object.freeze({
+      None: "",
+      FrontOne: "◆━━━━",
+      FrontTwo: "◆◆━━━",
+      BackOne: "━━━━◆",
+      BackTwo: "━━━◆◆",
+      All: "━━━━━",
+    });
+
+    function statusLabel(key) {
+      return repoStore.statuses.find((status) => status.key === key)?.displayName ?? key;
+    }
+
+    function checkboxControl(value, onChange) {
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = value === true;
+      input.addEventListener("change", () => onChange(input.checked));
+      return input;
+    }
+
+    /// 스키마의 필드 타입 넷이 컨트롤 넷으로 간다(설계 6의 표). 효과와 개입이 같은 모양이라
+    /// 이 함수 하나가 양쪽을 그린다.
+    function paramControl(field, value, onChange) {
+      if (field.type === "int") return numberControl(value ?? 0, onChange);
+      if (field.type === "bool") return checkboxControl(value, onChange);
+      if (field.type === "status") {
+        const select = document.createElement("select");
+        const none = document.createElement("option");
+        none.value = "";
+        none.textContent = "(없음)";
+        select.append(none);
+        for (const status of repoStore.statuses) {
+          const node = document.createElement("option");
+          node.value = status.key;
+          node.textContent = `${statusLabel(status.key)} (${status.key})`;
+          select.append(node);
+        }
+        select.value = value ?? "";
+        select.addEventListener("change", () => onChange(select.value));
+        return select;
+      }
+
+      return selectControl(field.options, value ?? field.options[0], onChange);
+    }
+
+    function paramsBlock(spec, params, onParam) {
+      const block = document.createElement("div");
+      block.className = "effect-params";
+      for (const field of spec.fields) {
+        const control = paramControl(field, params[field.name], (next) => onParam(field.name, next));
+        block.append(formField(field.name, control));
+
+        if (field.name === "selector") {
+          const glyph = document.createElement("output");
+          glyph.className = "effect-glyph";
+          glyph.textContent = SELECTOR_GLYPHS[params.selector] ?? "";
+          block.append(glyph);
+        }
+      }
+
+      return block;
+    }
+
+    function conditionBlock(card, index, effect) {
+      const wrap = document.createElement("details");
+      wrap.open = Boolean(effect.condition);
+
+      const summary = document.createElement("summary");
+      summary.textContent = effect.condition ? `조건: ${effect.condition.kind}` : "조건";
+      wrap.append(summary);
+
+      const body = document.createElement("div");
+      body.className = "effect-condition";
+      const kinds = repoStore.schema.condition.kinds;
+      const current = effect.condition ?? core.emptyConditionValue();
+
+      body.append(formField("kind", selectControl(kinds, current.kind, (next) => {
+        applyCardEdit(next === kinds[0]
+          ? core.setEffectCondition(card, index, null)
+          : core.setEffectCondition(card, index, { kind: next }));
+      })));
+
+      if (effect.condition) {
+        for (const field of repoStore.schema.condition.fields) {
+          body.append(formField(field.name, paramControl(
+            field,
+            current[field.name],
+            (value) => applyCardEdit(
+              core.setEffectCondition(card, index, { [field.name]: value })),
+          )));
+        }
+      }
+
+      wrap.append(body);
+      return wrap;
+    }
+
+    function actionButton(label, onClick) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    function effectRow(card, effect, index) {
+      const row = document.createElement("div");
+      row.className = effect.raw ? "effect-row is-locked" : "effect-row";
+
+      const head = document.createElement("div");
+      head.className = "effect-head";
+
+      if (effect.raw) {
+        const locked = document.createElement("span");
+        locked.textContent = `해석 못 함: ${effect.kind}`;
+        head.append(locked);
+      } else {
+        head.append(selectControl(
+          repoStore.schema.effectOrder,
+          effect.kind,
+          (next) => applyCardEdit(core.setEffectKind(card, index, next, repoStore.schema)),
+        ));
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "effect-actions";
+      actions.append(
+        actionButton("▲", () => applyCardEdit(core.moveEffect(card, index, index - 1))),
+        actionButton("▼", () => applyCardEdit(core.moveEffect(card, index, index + 1))),
+        actionButton("복제", () => applyCardEdit(core.duplicateEffect(card, index))),
+        actionButton("삭제", () => applyCardEdit(core.removeEffect(card, index))),
+      );
+      head.append(actions);
+      row.append(head);
+
+      if (effect.raw) return row;
+
+      row.append(paramsBlock(
+        repoStore.schema.effects[effect.kind],
+        effect.params,
+        (name, value) => applyCardEdit(
+          core.setEffectParam(card, index, name, value, repoStore.schema)),
+      ));
+      row.append(conditionBlock(card, index, effect));
+      return row;
+    }
+
+    function renderEffectRows(card) {
+      const section = document.createElement("div");
+      section.className = "effect-list";
+      (card.effects ?? []).forEach((effect, index) => {
+        section.append(effectRow(card, effect, index));
+      });
+
+      const add = document.createElement("div");
+      add.className = "effect-actions";
+      add.append(selectControl(
+        ["(효과 추가)", ...repoStore.schema.effectOrder],
+        "(효과 추가)",
+        (kind) => {
+          if (kind !== "(효과 추가)") {
+            applyCardEdit(core.addEffect(card, kind, repoStore.schema));
+          }
+        },
+      ));
+      section.append(add);
+      return poolSection("효과", section);
+    }
+
+    /// 개입 섹션은 효과 행과 같은 컨트롤이며 행이 하나뿐이고 조건이 없다(설계 6).
+    function renderInterventionRow(card) {
+      const row = document.createElement("div");
+      row.className = card.intervention?.raw ? "effect-row is-locked" : "effect-row";
+
+      const head = document.createElement("div");
+      head.className = "effect-head";
+
+      // 해석 못 하는 개입은 종류 드롭다운을 내지 않는다. 효과 행과 같은 이유로, 고르는
+      // 순간 보존하기로 한 원본이 사라진다(설계 10.2).
+      if (card.intervention?.raw) {
+        const locked = document.createElement("span");
+        locked.textContent = `해석 못 함: ${card.intervention.kind}`;
+        head.append(locked);
+      } else {
+        head.append(selectControl(
+          ["(없음)", ...repoStore.schema.interventionOrder],
+          card.intervention?.kind ?? "(없음)",
+          (kind) => applyCardEdit(core.setIntervention(
+            card, kind === "(없음)" ? "" : kind, repoStore.schema)),
+        ));
+      }
+      row.append(head);
+
+      if (card.intervention && !card.intervention.raw) {
+        row.append(paramsBlock(
+          repoStore.schema.interventions[card.intervention.kind],
+          card.intervention.params,
+          (name, value) => applyCardEdit(
+            core.setInterventionParam(card, name, value, repoStore.schema)),
+        ));
+      }
+
+      return poolSection("개입", row);
+    }
+
+    /// 소유권은 풀에 있다(설계 7). 이 컨트롤은 담기만 하고 위치 조정과 제거는 풀 화면에서만
+    /// 된다. 이미 소속된 풀을 체크된 채 비활성으로 두면 한 컨트롤이 "현재 상태"와 "이번에 담을
+    /// 곳"을 동시에 보여주고, 체크 해제로 제거되는 사고가 없다.
+    function renderPoolMembership(card) {
+      const block = document.createElement("div");
+      block.className = "pool-membership";
+      const owners = repoStore.membership.get(card.id) ?? [];
+      const chosen = new Set();
+
+      for (const pool of repoStore.pools) {
+        const owned = owners.includes(pool.id);
+        const label = document.createElement("label");
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = owned;
+        box.disabled = owned || !card.id;
+        box.addEventListener("change", () => {
+          if (box.checked) chosen.add(pool.id);
+          else chosen.delete(pool.id);
+        });
+
+        const name = document.createElement("span");
+        name.textContent = pool.id;
+        label.append(box, name);
+
+        if (owned) {
+          const note = document.createElement("span");
+          note.className = "owned";
+          note.textContent = "(소속)";
+          label.append(note);
+        }
+        block.append(label);
+      }
+
+      const submit = actionButton("선택한 풀에 담기", () => {
+        for (const poolId of chosen) {
+          const pool = repoStore.pools.find((entry) => entry.id === poolId);
+          if (pool) applyPoolEdit(core.addCardsToPool(pool, [card.id]));
+        }
+      });
+      submit.disabled = !card.id;
+      block.append(submit);
+
+      return poolSection("소속 풀", block);
+    }
+
+    /// 모르는 최상위 키를 가진 카드는 폼 대신 원문을 읽기 전용으로 보여준다(설계 11.3).
+    /// 폼으로 열면 10.2가 보존하기로 한 것을 폼이 표현하지 못하는 만큼 망가뜨린다.
+    function renderCardDetail(card) {
+      elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
+      elements.sourceTitle.textContent = card.id ? `Cards/${card.id}.json` : "Cards/(id 없음).json";
+      elements.source.textContent = card.base ?? core.writeCardJson(card, repoStore.schema);
 
       if (card.unknownKeys.length) {
-        fields.append(fieldRow("모르는 키", card.unknownKeys.join(" · ")));
+        const note = document.createElement("p");
+        note.className = "repo-readonly";
+        note.textContent = `모르는 키 ${card.unknownKeys.join(" · ")}가 있어 편집할 수 없습니다.`
+          + " 부팅이 이 카드를 거부하므로 그 키를 손으로 지운 뒤 다시 읽어 주세요.";
+        elements.detail.append(note);
+        return;
       }
 
-      elements.detail.append(fields);
-      elements.sourceTitle.textContent = `Cards/${card.id}.json`;
-      elements.source.textContent = card.base;
+      const form = document.createElement("div");
+      form.className = "repo-form";
+      const edit = (field) => (value) => applyCardEdit(core.setCardField(card, field, value));
+
+      const identity = document.createElement("div");
+      identity.className = "row";
+      identity.append(
+        formField("id", textControl(card.id, edit("id"))),
+        formField("이름", textControl(card.name, edit("name"))),
+      );
+      form.append(identity);
+
+      const classify = document.createElement("div");
+      classify.className = "row";
+      classify.append(
+        formField("진영", selectControl(repoStore.schema.sides, card.side, edit("side"))),
+        formField("분류",
+          selectControl(repoStore.schema.categories, card.category, edit("category"))),
+      );
+      form.append(classify);
+
+      const numbers = document.createElement("div");
+      numbers.className = "row";
+      numbers.append(formField("비용", numberControl(card.energyCost, edit("energyCost"))));
+      if (card.category === "Execution") {
+        numbers.append(formField("실행 순서",
+          numberControl(card.baseExecutionOrder, edit("baseExecutionOrder"))));
+      }
+      form.append(numbers);
+
+      const meta = document.createElement("div");
+      meta.className = "row";
+      meta.append(
+        formField("등급", selectControl(repoStore.schema.grades, card.grade, edit("grade"))),
+        formField("태그", textControl((card.tags ?? []).join(", "), edit("tags"))),
+      );
+      form.append(meta);
+
+      elements.detail.append(form);
+      if (card.category === "Execution") elements.detail.append(renderEffectRows(card));
+      else elements.detail.append(renderInterventionRow(card));
+      elements.detail.append(renderPoolMembership(card));
     }
 
     function poolEntry(pool) {
@@ -3593,9 +4453,35 @@
         tail.className = "tail";
         tail.textContent = card ? [card.grade, ...(card.tags ?? [])].join(" · ") : "";
 
-        slot.append(order, label, tail);
+        const slotActions = document.createElement("div");
+        slotActions.className = "slot-actions";
+        slotActions.append(
+          actionButton("▲", () => applyPoolEdit(core.moveInPool(pool, index, index - 1))),
+          actionButton("▼", () => applyPoolEdit(core.moveInPool(pool, index, index + 1))),
+          actionButton("빼기", () => applyPoolEdit(core.removeFromPool(pool, index))),
+        );
+
+        slot.append(order, label, tail, slotActions);
         roster.append(slot);
       });
+
+      // 담기는 맨 끝에 붙이기만 한다. 소유권이 풀에 있으므로 이쪽이 본진이다(설계 7).
+      const picker = document.createElement("div");
+      picker.className = "pool-picker";
+      const candidates = repoStore.cards
+        .filter((card) => card.side === repoStore.schema.sides[0])
+        .filter((card) => card.id && !pool.cards.includes(card.id));
+      picker.append(selectControl(
+        ["(카드 담기)", ...candidates.map((card) => card.id)],
+        "(카드 담기)",
+        (cardId) => {
+          if (cardId !== "(카드 담기)") {
+            applyPoolEdit(core.addCardsToPool(pool, [cardId]));
+          }
+        },
+      ));
+      roster.append(picker);
+
       elements.detail.append(poolSection("편성", roster));
 
       const stats = document.createElement("dl");
@@ -3635,6 +4521,11 @@
       elements.sourceTitle.textContent = "JSON 원문";
       elements.source.textContent = "";
 
+      // renderSummary는 이른 반환이 있으므로 여기서 갱신한다 - 연결 전에도 미반영 복원
+      // 실패는 알려야 한다.
+      elements.pendingNote.hidden = !pendingNote;
+      elements.pendingNote.textContent = pendingNote;
+
       renderSummary();
       renderProblems();
 
@@ -3647,7 +4538,7 @@
       else renderPoolList();
 
       if (selection.scope === "card") {
-        const card = repoStore.cardsById.get(selection.id);
+        const card = repoStore.cardsByUid.get(selection.id);
         if (card) renderCardDetail(card);
       }
       if (selection.scope === "pool") {
@@ -3702,6 +4593,7 @@
     }
 
     elements.reload.addEventListener("click", reloadRepo);
+    elements.newCard.addEventListener("click", newCard);
     elements.search.addEventListener("input", () => {
       query = elements.search.value;
       render();
@@ -3714,6 +4606,10 @@
     elements.tabPools.addEventListener("click", () => setTab("pools"));
     elements.modeMarkdown.addEventListener("click", () => setMode("markdown"));
     elements.modeRepo.addEventListener("click", () => setMode("repo"));
+
+    const restored = core.readPending(window.localStorage);
+    pending = restored.pending;
+    if (restored.errors.length) pendingNote = restored.errors.join(" ");
 
     render();
   })();

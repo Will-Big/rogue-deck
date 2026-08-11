@@ -58,7 +58,7 @@
 | [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
 | [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |
 | [카드 아이디어 노트](specs/2026-07-27-card-idea-notebook-design.md) | `superseded` | Markdown 저작 시절의 노트북. 아래 JSON 전환 설계가 대체한다 — 구현 완료 시 `archive/`로 옮긴다 | 참조 전용 |
-| [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마. **계획 A(코어) 완료, 계획 B(UI) 미작성** | 카드 저작 도구 구현·변경 |
+| [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마. **계획 A(코어)·B(읽기 UI)·C(편집) 완료, 계획 D(쓰기·정리) 미작성** | 카드 저작 도구 구현·변경 |
 
 ### 문서 관리
 
@@ -168,9 +168,9 @@
   `StatusSpecJsonConverter`가 판별자 표를 `CombatRegistries.Statuses()`에서 만든다 — 각 행동이
   `NewSpec()`으로 자기 스펙 타입을 답하므로 코드에 값 목록이 남지 않는다.
 
-### 현재 수치 (계획 B 완료 시점, 2026-08-07 실측)
+### 현재 수치 (계획 C 완료 시점, 2026-08-07 실측)
 
-헤드리스 **526/526**, 노트북 **126/126**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
+헤드리스 **526/526**, 노트북 **168/168**, Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
 (EditMode는 계획 3.5 시점 수치이며 계획 A 이후 재측정하지 않았다 — 신규 테스트는 `Tests/Headless`가
 포함하는 EditMode 폴더에 있으므로 Unity 쪽도 1 늘어날 것이다).
 카드 JSON **26**(실행 22 + 개입 4 중 fixture 4, 플레이어 카드는 전부 등급·태그 보유), 상태 JSON **11**,
@@ -198,21 +198,26 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 계획 A는 헤드리스에 `AuthoringSchemaExportTests` 하나(525 → 526)를, 노트북에 44개(58 → 102)를
 더했다. 노트북 쪽의 축은 **저장소 카드 26장·풀 1개의 왕복 바이트 동일성**이며, C# 왕복 테스트와
 같은 것을 브라우저 쪽에서 잠근다 — 둘이 어긋나면 노트북이 저작하지 않은 카드까지 diff에 띄운다.
+계획 C는 노트북에 42개를 더했다(126 → 168). 미반영 보관소·uid·편집 명령이 전부 코어의 순수
+함수이고, 폼과 이벤트는 마크업 존재 검사만 자동화된다.
 계획 B는 노트북에 24개를 더했다(102 → 126). 집계·검색·요약 규칙은 코어의 순수 함수라 단위
 테스트가 덮고, 브라우저 API와 DOM은 마크업 존재 검사만 자동화된다.
 
 ## 후속 작업 대기열
 
-- [ ] **노트북 편집·쓰기 (계획 C) — 문서를 아직 쓰지 않았다.**
-  [계획 B](archive/plans/2026-08-07-notebook-repo-read-ui.md)가 2026-08-07 완료되어 노트북이
-  저장소를 **읽고 보여주는** 데까지 왔다. 범위는 설계 §6 효과·개입
-  편집기, 카드 기본 필드 폼, §7 풀 편성 조작과 카드 화면의 소속 풀 체크박스, 미반영 저장과
-  §14 마이그레이션(`SCHEMA_VERSION` 7), §10.3 충돌 해결 UI, §12 diff 요약과 파일 쓰기(폴더 권한을
-  `readwrite`로 승격), Markdown 경로와 그 UI 스크립트 제거, `시작 카드 풀.md` 삭제,
+- [ ] **노트북 반영·정리 (계획 D) — 문서를 아직 쓰지 않았다.**
+  [계획 C](archive/plans/2026-08-07-notebook-authoring-edit.md)가 2026-08-07 완료되어 노트북에서 카드와 풀을 편집할 수 있다. 남은 것은 그 편집분을 저장소에 반영하는 일이다. 범위는 §10.3 충돌
+  해결 UI, §12 diff 요약과 **파일 쓰기**(폴더 권한 `readwrite` 승격, 내보내기 직전 재읽기),
+  우측 `저장소 ↔ 현재` diff 토글, §14 마이그레이션(`SCHEMA_VERSION` 7과 옛 키 백업),
+  Markdown 경로와 그 UI 스크립트·마크업 제거, `시작 카드 풀.md` 삭제,
   [플레이어 캐릭터 및 카드풀](specs/2026-07-20-character-card-pools-design.md) §1 개정
   (저작 중 풀 공유 허용), 옛 노트북 스펙 `archive/` 이동이다.
-  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을, 계획 B가 6과 8의 절반을 맡고, **2·4·5와 8의
-  나머지가 계획 C 몫이다.**
+  설계 §16 검수 기준 여덟 중 계획 A가 1·3·7을, 계획 B가 6과 8의 절반을, 계획 C가 7의 절반을
+  맡고, **2·4·5와 8의 나머지가 계획 D 몫이다.**
+
+  §14를 계획 C가 아니라 D가 맡는 이유: `SCHEMA_VERSION`·`STORAGE_KEY`는 **아직 살아 있는 Markdown
+  경로가 쓰는 것**이라, Markdown을 지우기 전에 버전을 올리면 그 자리에서 깨진다. 계획 C의 미반영은
+  별도 키(`…notebook.pending`)에 자체 버전 1로 담는다.
 
 - [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
   `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
