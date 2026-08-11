@@ -354,6 +354,7 @@
     .export-group h3 { margin: 0 0 4px; font-size: 12px; color: #cfc9b6; }
     .export-group ul { margin: 0; padding-left: 18px; color: #9a958a; font-size: 12px; }
     .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
+    .export-notice { margin: 0 0 8px; color: var(--gold-bright); font-size: 12px; }
 
     .toast {
       position: fixed;
@@ -4029,7 +4030,7 @@
 
       if (notice) {
         const line = document.createElement("p");
-        line.className = "export-blocked";
+        line.className = "export-notice";
         line.textContent = notice;
         elements.exportSummary.append(line);
       }
@@ -4102,11 +4103,22 @@
       });
     }
 
-    /// 계획 둘의 '같음'을 판정한다 - writes(파일 이름·내용)와 blocked만 본다. 다이얼로그가 떠
-    /// 있는 동안 바뀔 수 있는 다른 필드(unchanged 등)는 쓰기 여부와 무관하므로 무시한다.
-    function samePlan(a, b) {
-      const shape = (plan) => JSON.stringify({ writes: plan.writes, blocked: plan.blocked });
-      return shape(a) === shape(b);
+    /// 상태 맵에서 충돌 중인 항목의 식별자만 뽑아 정렬한다. 카드 uid와 풀 id는 별개
+    /// 네임스페이스라 접두사로 갈라 둔다(exportPlan의 이름 집합 분리와 같은 이유).
+    function conflictKeys(cardStates, poolStates) {
+      const keys = [];
+      for (const [uid, state] of cardStates ?? []) if (state === "conflict") keys.push(`card:${uid}`);
+      for (const [id, state] of poolStates ?? []) if (state === "conflict") keys.push(`pool:${id}`);
+      return keys.sort();
+    }
+
+    /// 계획 둘의 '같음'을 판정한다 - writes(파일 이름·내용)와 blocked만으로는 부족하다. blocked는
+    /// 충돌을 개수로만 담으므로, 카드 A가 충돌에서 풀리고 동시에 카드 B가 충돌이 되면 개수가 같아
+    /// 계획이 같아 보인다. 그래서 충돌 식별자 집합도 함께 비교한다.
+    function samePlan(a, b, conflictsA, conflictsB) {
+      const shape = (plan, conflicts) =>
+        JSON.stringify({ writes: plan.writes, blocked: plan.blocked, conflicts });
+      return shape(a, conflictsA) === shape(b, conflictsB);
     }
 
     /// 쓴 파일의 미반영을 비운다. 다시 읽으면 base가 방금 쓴 내용이 되므로 상태가 '저장소와 동일'로
@@ -4116,12 +4128,22 @@
 
       elements.exportConfirm.disabled = true;
 
+      // plannedExport가 만들어진 시점(exportToRepo 또는 이전 재읽기)의 충돌 식별자를 남겨 둔다 -
+      // 재읽기 뒤 samePlan이 이것과 새 충돌 식별자를 비교해 겉보기 개수가 같아도 대상이 바뀐
+      // 것을 잡는다.
+      const conflictsBefore = conflictKeys(repoStore.cardStates, repoStore.poolStates);
+
       // 다이얼로그가 떠 있는 동안 저장소가 다른 경로(에디터, git)로 바뀌었을 수 있다 - 쓰기
       // 직전 한 번 더 읽어 계획을 검증한다. 재읽기가 유일한 덮어쓰기 방어라는 설계 10.1의
       // 의도를 다이얼로그가 열려 있는 창에서도 지킨다.
       try {
         Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
       } catch (error) {
+        // 쓰기 실패 경로와 대칭으로 정리한다 - 다이얼로그를 열어 둔 채 확인 버튼만 죽이면
+        // 안내 없는 데드락처럼 보인다. 닫아야 failWith가 남기는 메시지가 바깥 요약에 뜬다.
+        plannedExport = null;
+        elements.exportConfirm.disabled = false;
+        elements.exportDialog.close();
         failWith(error);
         return;
       }
@@ -4129,7 +4151,8 @@
       render();
 
       const freshPlan = currentExportPlan();
-      if (!samePlan(plannedExport, freshPlan)) {
+      const conflictsAfter = conflictKeys(repoStore.cardStates, repoStore.poolStates);
+      if (!samePlan(plannedExport, freshPlan, conflictsBefore, conflictsAfter)) {
         plannedExport = freshPlan;
         renderExportSummary(freshPlan, "저장소가 방금 바뀌었습니다. 달라진 내용을 확인하고 다시 눌러 주세요.");
         return;

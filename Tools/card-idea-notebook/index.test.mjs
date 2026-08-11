@@ -3436,3 +3436,38 @@ test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
   // 권한 확보가 재읽기보다 먼저여야 한다 - await가 사용자 제스처를 소진한다.
   assert.ok(body.indexOf("hasWritePermission") < body.indexOf("await loadRepo"));
 });
+
+test("쓰기 직전에 저장소를 다시 읽고 계획을 검증한다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const body = functionBody(ui[1], "async function confirmExport");
+
+  // 재읽기 → 계획 재계산 → 비교 → 쓰기 순서. 하나라도 뒤집히면 낡은 계획으로 덮어쓴다.
+  assert.ok(body.includes("await loadRepo"), "쓰기 직전 재읽기가 있어야 한다");
+  assert.ok(body.indexOf("await loadRepo") < body.indexOf("currentExportPlan()"));
+  assert.ok(body.indexOf("samePlan") < body.indexOf("await writePlanFiles"));
+});
+
+test("쓰기와 재읽기 실패가 모두 다이얼로그를 정리한다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const body = functionBody(ui[1], "async function confirmExport");
+
+  // 실패 경로마다 확인 버튼을 되살리고 계획을 버려야 다음 시도가 막히지 않는다.
+  assert.equal((body.match(/plannedExport = null/g) ?? []).length >= 3, true);
+  assert.equal((body.match(/exportConfirm\.disabled = false/g) ?? []).length >= 2, true);
+  assert.match(body, /일부 파일은 이미 반영되었을 수 있습니다/);
+});
+
+test("다이얼로그를 어떻게 닫든 계획이 남지 않는다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  // Escape로 닫는 경로가 있으므로 버튼 클릭만으로는 부족하다.
+  assert.match(ui[1], /exportDialog\.addEventListener\("close"/);
+});
