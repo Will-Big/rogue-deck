@@ -3370,3 +3370,22 @@ test("고친 원문이 파싱되면 카드로 승격한다", () => {
   assert.deepEqual(errors, []);
   assert.equal(card.id, "vanguard_slash");
 });
+
+test("상태 파일은 원문 편집 대신 읽기 전용 안내를 낸다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /상태 파일은 이 노트북에서 편집하지 않습니다/);
+  assert.match(ui[1], /entry\.scope === "status"/);
+});
+
+test("상태 JSON은 카드로 읽히지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+
+  const { card, errors } = core.readCardJson('{"key":"burn","displayName":"화상"}', schema);
+
+  assert.equal(card, null);
+  assert.ok(errors.some((message) => message.includes("id")));
+});
