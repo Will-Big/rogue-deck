@@ -332,6 +332,7 @@
     .diff-row.is-add { color: #9ede9e; background: rgba(80, 160, 80, .12); }
     .diff-row.is-remove { color: #e8a0a0; background: rgba(180, 70, 70, .12); }
     .diff-row.is-same { color: #8a8a80; }
+    #repo-source-toggle.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
 
     dialog {
       width: min(440px, calc(100vw - 40px));
@@ -3880,6 +3881,9 @@
     /// 선택 대상에 맞는 탭으로 옮긴다. 중앙과 우측이 선택을 따라가므로(설계 11.1) 탭이
     /// 어긋나면 목록은 카드인데 상세는 풀인 화면이 나온다.
     function selectWithTab(scope, id) {
+      // 토글은 보고 있는 항목에 대한 것이다 - 다른 항목으로 옮기면 꺼야 한다.
+      // 같은 항목을 다시 고르는 경우(applyCardEdit의 편집 후 재선택 등)는 유지한다.
+      if (scope !== selection.scope || id !== selection.id) showDiff = false;
       selection = { scope, id };
       if (scope !== "card" && scope !== "pool") return;
 
@@ -4604,7 +4608,9 @@
       elements.detailTitle.textContent = "선택된 항목 없음";
       elements.sourceTitle.textContent = "JSON 원문";
       elements.source.textContent = "";
+      elements.source.hidden = false;
       elements.sourceDiff.replaceChildren();
+      elements.sourceDiff.hidden = true;
       elements.sourceToggle.hidden = true;
 
       // renderSummary는 이른 반환이 있으므로 여기서 갱신한다 - 연결 전에도 미반영 복원

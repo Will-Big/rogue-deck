@@ -3075,3 +3075,13 @@ test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
   assert.match(html, /\.diff-row\.is-add/);
   assert.match(html, /\.diff-row\.is-remove/);
 });
+
+test("우측 창은 선택이 사라지면 원문 자리로 돌아간다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /elements\.source\.hidden = false;/);
+  assert.match(ui[1], /elements\.sourceDiff\.hidden = true;/);
+  assert.match(html, /#repo-source-toggle\.is-active/);
+});
