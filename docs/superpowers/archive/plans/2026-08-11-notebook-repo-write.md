@@ -5,7 +5,7 @@
 
 - 작성일: 2026-08-11
 - 상태: `active`
-- 범위: [카드 저작 노트북 JSON 전환](../specs/2026-08-05-card-authoring-json-notebook-design.md) §10.3·§12·§14와
+- 범위: [카드 저작 노트북 JSON 전환](../../specs/2026-08-05-card-authoring-json-notebook-design.md) §10.3·§12·§14와
   Markdown 경로 제거, 관련 문서 정리
 - 선행: 계획 A(코어)·B(읽기 UI)·C(편집) 완료 (`master` eda06bf)
 - 워크트리: `/Users/ish/Git/rogue-deck-notebook-repo-write`, 브랜치 `feat/notebook-repo-write`
