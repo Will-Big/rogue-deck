@@ -1860,6 +1860,24 @@ test("시작 카드 풀 Markdown이 지워졌다", () => {
   assert.equal(existsSync(legacy), false);
 });
 
+/// 마크업의 id와 스크립트의 byId를 양방향으로 맞춘다. 한쪽만 보면 옛 경로가 남긴 고아를
+/// 놓친다 - #storage-status가 "브라우저 로컬 저장 · 즉시 보존"이라고 말하는 채로 살아남았던
+/// 이유가 그것이다. 저장소 경로는 로컬 저장이 아니라 명시적 파일 반영이다.
+test("마크업의 id와 스크립트가 찾는 id가 서로 맞는다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]));
+  const looked = new Set([...ui[1].matchAll(/byId\("([^"]+)"\)/g)].map((match) => match[1]));
+
+  assert.deepEqual([...looked].filter((id) => !ids.has(id)), [],
+    "스크립트가 찾는 id가 마크업에 없다");
+  // repo-workspace는 레이아웃 컨테이너라 스크립트가 찾지 않는다.
+  assert.deepEqual([...ids].filter((id) => !looked.has(id)), ["repo-workspace"],
+    "아무도 찾지 않는 id가 남았다");
+});
+
 test("적 타입 A 메모는 남는다", () => {
   const memo = new URL("./적 타입 A.md", htmlUrl);
 
