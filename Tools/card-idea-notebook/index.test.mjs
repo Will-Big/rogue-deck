@@ -1838,6 +1838,32 @@ test("쓰지 않는 읽기 오류는 여전히 내보내기를 막는다", () =>
   assert.deepEqual(plan.readErrors, ["bad_status.json", "other_broken.json"]);
 });
 
+/// 예외는 '이번에 쓰는 파일'로만 좁혀야 한다. 저장소와 동일한 카드는 쓰기 목록에 없으므로
+/// 같은 이름의 깨진 파일을 고쳐 주지 못한다 - 그런데도 예외로 치면 깨진 파일이 차단에도
+/// 요약에도 뜨지 않은 채 남아 부팅이 실패한다. 파일명과 id가 다를 때 실제로 일어난다.
+test("변경 없는 카드는 동명 읽기 오류를 풀어 주지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  // other.json이 담고 있어 파일명과 id가 어긋난 카드. 깨진 broken.json과 이름이 겹친다.
+  const mismatched = { ...card, id: "broken", uid: core.repoUid("broken") };
+  const edited = core.setCardField(card, "name", "고친 이름");
+
+  const plan = core.exportPlan({
+    cards: [mismatched, edited], pools: [], storedCards: [mismatched, card], storedPools: [],
+    cardStates: new Map([[mismatched.uid, "same"], [edited.uid, "modified"]]),
+    poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes.map((entry) => entry.name), ["vanguard_slash.json"]);
+  assert.deepEqual(plan.readErrors, ["broken.json"], "깨진 파일이 목록에서 사라지면 안 된다");
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 1개/);
+});
+
 test("상태 파일은 원문 편집 대신 읽기 전용 안내를 낸다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
   const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);

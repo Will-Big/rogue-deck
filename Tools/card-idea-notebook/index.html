@@ -1202,9 +1202,17 @@
       // 막다른 길이 되고, 같은 파일이 신규/수정과 읽기 오류에 동시에 떠 모순으로 보인다.
       // scope가 "status"·"file"인 읽기 오류는 이번 계획이 쓰는 대상이 아니므로 늘 차단 사유로
       // 남는다.
+      //
+      // 판정을 writtenCardNames가 아니라 '실제로 쓰는 목록'과 맞춘다. writtenNames에는 쓰지
+      // 않는 same·conflict도 들어가는데(미참조 오인을 막으려고 그렇게 했다), same인 카드가
+      // 깨진 동명 파일과 겹치면 - 파일명과 id가 다를 때 일어난다 - 아무 데도 뜨지 않은 채
+      // 깨진 파일이 남고 부팅이 실패한다. conflict는 그 자체가 차단 사유라 무해하지만 same은
+      // 아니므로, 예외를 실제 쓰기로만 좁힌다.
+      const cardWriteNames = new Set(cardWrites.map((entry) => entry.name));
+      const poolWriteNames = new Set(poolWrites.map((entry) => entry.name));
       const isResolvedByThisPlan = (entry) => {
-        if (entry.scope === "card") return writtenCardNames.has(entry.name);
-        if (entry.scope === "pool") return writtenPoolNames.has(entry.name);
+        if (entry.scope === "card") return cardWriteNames.has(entry.name);
+        if (entry.scope === "pool") return poolWriteNames.has(entry.name);
         return false;
       };
       const blockingErrors = problems.filter((entry) => !isResolvedByThisPlan(entry));
