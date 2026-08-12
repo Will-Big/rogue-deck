@@ -150,7 +150,9 @@
       backdrop-filter: blur(14px);
     }
 
-    .pane-title { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+    .pane-title { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; font-size: 14px; }
+    /* 다시 읽기는 제목 옆에 붙는 보조 동작이다. 오른쪽 주요 동작 셋과 무게를 맞추면 안 된다. */
+    .pane-title #repo-reload { padding: 5px 10px; color: var(--muted); font-size: 12px; }
     .count {
       min-width: 25px;
       padding: 2px 7px;
@@ -161,7 +163,8 @@
       font-size: 11px;
     }
 
-    .library-tools { padding: 14px 14px 10px; }
+    /* 검색과 필터는 별개의 좁히기 수단이다. 붙여 두면 필터 이름이 검색 입력의 설명처럼 읽힌다. */
+    .library-tools { display: grid; gap: 15px; padding: 15px 14px 12px; }
 
     .library-pane {
       display: grid;
@@ -214,9 +217,31 @@
     .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
     .export-notice { margin: 0 0 8px; color: var(--gold-bright); font-size: 12px; }
 
-    .mode-button { padding: 6px 12px; font-size: 12px; }
-    .mode-button.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
-    .repo-hint { margin-bottom: 8px; color: var(--warning); font-size: 12px; line-height: 1.5; }
+    /* 카드/풀은 목록 전체를 갈아끼우므로 누르는 버튼이 아니라 지금 어느 쪽을 보고 있는지를
+       알리는 탭이다. 목록 블록 맨 위에서 폭을 반씩 나눠 갖고, 밑줄로 현재 위치를 표시한다. */
+    .repo-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+    .repo-tab {
+      padding: 11px 0 10px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+    }
+    /* button:hover가 테두리를 금색으로 바꾸므로 여기서 다시 잡는다 - 그대로 두면 스쳐만 가도
+       선택된 탭처럼 보인다. */
+    .repo-tab:hover:not(:disabled) { color: var(--ink); border-bottom-color: var(--line-strong); background: rgba(255, 255, 255, .03); }
+    .repo-tab.is-active,
+    .repo-tab.is-active:hover { color: var(--gold-bright); border-bottom-color: var(--gold); font-weight: 750; }
+    .repo-hint { margin: 0; color: var(--warning); font-size: 12px; line-height: 1.5; }
+    /* 좌측의 안내는 .library-tools의 grid gap이 간격을 주지만, 이쪽은 일반 블록 흐름이라
+       스스로 여백을 가져야 한다. */
+    #repo-pending-note { padding: 12px 16px; }
     .repo-list { display: grid; gap: 7px; padding: 0 10px 10px; }
     .repo-summary { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
     .repo-summary p { margin: 0 0 4px; color: var(--muted); }
@@ -236,7 +261,6 @@
     .repo-problem .where { color: var(--muted); font-size: 11px; }
     .repo-problem.is-error { border-color: var(--danger); }
     .repo-problem.is-warning { border-color: var(--warning); }
-    .repo-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
     .repo-entry {
       display: grid;
       gap: 3px;
@@ -349,6 +373,7 @@
           <div class="pane-title">
             <strong>저장소</strong>
             <span class="count" id="repo-count">–</span>
+            <button type="button" id="repo-reload" disabled>다시 읽기</button>
           </div>
           <div class="repo-header-actions">
             <button type="button" id="repo-new-card">＋ 새 카드</button>
@@ -356,15 +381,16 @@
             <button type="button" class="primary" id="repo-connect">폴더 연결</button>
           </div>
         </div>
+        <div class="repo-tabs" role="tablist" aria-label="목록 종류">
+          <button type="button" id="repo-tab-cards" class="repo-tab is-active"
+            role="tab" aria-selected="true">카드</button>
+          <button type="button" id="repo-tab-pools" class="repo-tab"
+            role="tab" aria-selected="false">풀</button>
+        </div>
         <div class="library-tools">
           <p class="repo-hint" id="repo-unsupported" hidden>
             이 브라우저는 폴더 연결을 지원하지 않습니다. Chrome이나 Edge로 열어 주세요.
           </p>
-          <button type="button" id="repo-reload" disabled>저장소 다시 읽기</button>
-          <div class="repo-tabs" role="group" aria-label="목록 종류">
-            <button type="button" id="repo-tab-cards" class="mode-button is-active">카드</button>
-            <button type="button" id="repo-tab-pools" class="mode-button">풀</button>
-          </div>
           <label>
             검색
             <input id="repo-search" type="search" placeholder="이름 · id · 태그">
@@ -2197,8 +2223,17 @@
       if (scope !== "card" && scope !== "pool") return;
 
       tab = scope === "card" ? "cards" : "pools";
-      elements.tabCards.classList.toggle("is-active", tab === "cards");
-      elements.tabPools.classList.toggle("is-active", tab === "pools");
+      markActiveTab();
+    }
+
+    /// 탭 표시를 한 곳에서만 만든다. 두 자리에서 각각 토글하면 aria-selected 같은 것이
+    /// 한쪽에만 붙어 화면과 보조기술이 다른 말을 한다.
+    function markActiveTab() {
+      for (const [button, name] of [[elements.tabCards, "cards"], [elements.tabPools, "pools"]]) {
+        const active = tab === name;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", String(active));
+      }
     }
 
     /// 요약의 문제 항목에서도 부르므로 탭을 함께 옮긴다 - 풀 오류를 눌렀는데 카드 목록이
@@ -3161,8 +3196,7 @@
     function setTab(next) {
       tab = next;
       selection = { scope: "", id: "" };
-      elements.tabCards.classList.toggle("is-active", next === "cards");
-      elements.tabPools.classList.toggle("is-active", next === "pools");
+      markActiveTab();
       render();
     }
 
