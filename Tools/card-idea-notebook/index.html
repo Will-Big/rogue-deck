@@ -59,7 +59,6 @@
     button:disabled { opacity: .4; cursor: not-allowed; }
     button.primary { color: #1b1a15; border-color: var(--gold); background: var(--gold); font-weight: 750; }
     button.primary:hover:not(:disabled) { background: var(--gold-bright); }
-    button.danger { color: #ffd9d4; border-color: #734942; background: #412a27; }
     button.ghost { background: transparent; }
 
     input, select, textarea {
@@ -109,7 +108,6 @@
     h1, h2, h3, p { margin: 0; }
     h1 { font-family: Georgia, "Noto Serif KR", serif; font-size: 20px; letter-spacing: -.02em; }
     .subtitle { margin-top: 3px; color: var(--muted); font-size: 12px; }
-    .header-status { color: var(--muted); font-size: 12px; }
 
     .workspace {
       height: calc(100vh - 78px);
@@ -147,7 +145,6 @@
     }
 
     .pane-title { display: flex; align-items: center; gap: 9px; font-size: 14px; }
-    .editor-actions { display: flex; align-items: center; gap: 8px; }
     .count {
       min-width: 25px;
       padding: 2px 7px;
@@ -159,79 +156,7 @@
     }
 
     .library-tools { padding: 14px 14px 10px; }
-    .card-list { display: grid; gap: 7px; padding: 0 10px 10px; }
 
-    .card-row {
-      display: grid;
-      grid-template-columns: 24px 24px minmax(0, 1fr);
-      gap: 7px;
-      align-items: stretch;
-      border: 1px solid transparent;
-      border-radius: 11px;
-      background: var(--panel);
-    }
-
-    .card-row.active { border-color: #8b7645; background: #29281f; }
-    .card-row.selected:not(.active) { border-color: #5e573f; background: #25261f; }
-    .card-row:hover { border-color: var(--line-strong); }
-    .card-row.dragging { opacity: .46; }
-    .card-row.drop-before { box-shadow: 0 -3px 0 var(--gold); }
-    .card-row.drop-after { box-shadow: 0 3px 0 var(--gold); }
-    .drag-handle {
-      width: 24px;
-      border: 0;
-      padding: 0;
-      color: var(--dim);
-      background: transparent;
-      cursor: grab;
-      font-size: 16px;
-      touch-action: none;
-    }
-    .drag-handle:hover:not(:disabled) { border-color: transparent; color: var(--gold); background: transparent; }
-    .drag-handle:active:not(:disabled) { cursor: grabbing; transform: none; }
-    .drag-handle:disabled { cursor: not-allowed; }
-    .selection-check { width: 15px; margin: 0 0 0 9px; accent-color: var(--gold); }
-    .card-select {
-      min-width: 0;
-      border: 0;
-      padding: 10px 10px 10px 2px;
-      text-align: left;
-      background: transparent;
-    }
-    .card-select:hover:not(:disabled) { border-color: transparent; background: transparent; }
-    .card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 750; }
-    .card-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; color: var(--muted); font-size: 11px; }
-    .tag, .faction-pill, .grade-pill, .role-pill, .completion-pill {
-      padding: 2px 6px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: #171916;
-    }
-    .faction-pill.ally { color: #b9d7f0; border-color: #405f75; background: #1b2831; }
-    .faction-pill.enemy { color: #efb6b0; border-color: #74423e; background: #311f1d; }
-    .grade-pill { color: #ead8aa; border-color: #645738; background: #2a261a; }
-    .completion-pill.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
-    .completion-pill.incomplete { color: #f6dca7; border-color: #705c32; background: #30291c; }
-    .warning-dot { color: var(--warning); }
-    .empty-list { padding: 28px 18px; color: var(--muted); text-align: center; line-height: 1.7; font-size: 13px; }
-    .bulk-select {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .bulk-select input { width: 15px; margin: 0; accent-color: var(--gold); }
-
-    .library-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      padding: 12px;
-      border-top: 1px solid var(--line);
-      background: rgba(25, 27, 24, .97);
-    }
     .library-pane {
       display: grid;
       grid-template-rows: minmax(0, 1fr) auto;
@@ -240,82 +165,9 @@
       min-height: 0;
       height: auto;
     }
-    .library-actions .wide-action { grid-column: 1 / -1; }
-    .export-name-field { color: var(--muted); font-size: 12px; }
-    .export-name-field input { padding: 8px 10px; }
-
-    .editor-content { display: grid; gap: 20px; padding: 18px 20px 80px; }
-    .completion-badge {
-      display: inline-flex;
-      padding: 5px 8px;
-      border: 1px solid var(--line-strong);
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 750;
-    }
-    .completion-badge.complete { color: #cbe7cb; border-color: #426648; background: #1d2b1f; }
-    .completion-badge.incomplete { color: #f0c86d; border-color: #705c32; background: #352e1e; }
-    .editor-heading { display: flex; align-items: center; gap: 9px; }
-    .form-section {
-      display: grid;
-      gap: 13px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      background: var(--panel);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
-    }
-    .form-section h3 { color: var(--gold-bright); font-family: Georgia, "Noto Serif KR", serif; font-size: 14px; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .form-grid .wide { grid-column: 1 / -1; }
-    .hidden { display: none !important; }
-
-    .target-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .target-box {
-      display: grid;
-      gap: 9px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #191b18;
-    }
-    .target-heading { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 800; }
-    .ally-text { color: var(--ally); }
-    .enemy-text { color: var(--enemy); }
-    .target-glyph {
-      min-height: 25px;
-      color: #e6d8ad;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: .08em;
-      text-align: center;
-      white-space: nowrap;
-    }
-    .target-summary {
-      padding: 11px;
-      border: 1px dashed var(--line-strong);
-      border-radius: 9px;
-      color: #ddd5c4;
-      background: #161815;
-      text-align: center;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-    }
-
-    .validation { display: grid; gap: 6px; }
-    .message {
-      padding: 9px 11px;
-      border-left: 3px solid;
-      border-radius: 6px;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .message.error { border-color: var(--danger); color: #ffd3cd; background: #33211f; }
-    .message.warning { border-color: var(--warning); color: #f6dca7; background: #30291c; }
-    .message.ok { border-color: var(--success); color: #cbe7cb; background: #1d2b1f; }
 
     .preview-pane { background: #131512; }
-    .preview-wrap { min-height: 100%; padding: 18px; }
-    .markdown-preview {
+    .json-preview {
       min-height: calc(100vh - 145px);
       margin: 0;
       padding: 18px;
@@ -328,6 +180,11 @@
       overflow-wrap: anywhere;
       font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
+    .diff-row { display: block; white-space: pre-wrap; }
+    .diff-row.is-add { color: #9ede9e; background: rgba(80, 160, 80, .12); }
+    .diff-row.is-remove { color: #e8a0a0; background: rgba(180, 70, 70, .12); }
+    .diff-row.is-same { color: #8a8a80; }
+    #repo-source-toggle.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
 
     dialog {
       width: min(440px, calc(100vw - 40px));
@@ -343,31 +200,14 @@
     .dialog-body h2 { margin-bottom: 10px; font: 19px Georgia, "Noto Serif KR", serif; }
     .dialog-body p { color: var(--muted); line-height: 1.65; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); }
+    #repo-export-dialog .dialog-body { min-width: 420px; max-height: 62vh; overflow: auto; }
+    .export-line { margin: 0 0 8px; color: var(--gold-bright); font-size: 13px; }
+    .export-group { margin: 0 0 10px; }
+    .export-group h3 { margin: 0 0 4px; font-size: 12px; color: #cfc9b6; }
+    .export-group ul { margin: 0; padding-left: 18px; color: #9a958a; font-size: 12px; }
+    .export-blocked { margin: 0 0 8px; color: #e8a0a0; font-size: 12px; }
+    .export-notice { margin: 0 0 8px; color: var(--gold-bright); font-size: 12px; }
 
-    .toast {
-      position: fixed;
-      z-index: 30;
-      left: 50%;
-      bottom: 24px;
-      max-width: 520px;
-      transform: translate(-50%, 16px);
-      padding: 11px 16px;
-      border: 1px solid var(--line-strong);
-      border-radius: 999px;
-      opacity: 0;
-      pointer-events: none;
-      color: var(--ink);
-      background: #292d28;
-      box-shadow: var(--shadow);
-      transition: opacity .18s ease, transform .18s ease;
-      font-size: 12px;
-    }
-    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
-
-    /* .workspace의 display: grid가 작성자 스타일이라 브라우저 기본 [hidden]을 이긴다.
-       이 규칙이 없으면 hidden을 걸어도 화면이 그대로 보인다(2026-08-07 실측). */
-    .workspace[hidden] { display: none; }
-    .mode-switch { display: flex; gap: 4px; }
     .mode-button { padding: 6px 12px; font-size: 12px; }
     .mode-button.is-active { color: #1b1a15; border-color: var(--gold); background: var(--gold); }
     .repo-hint { margin-bottom: 8px; color: var(--warning); font-size: 12px; line-height: 1.5; }
@@ -412,9 +252,6 @@
     .repo-entry .badge.is-modified,
     .repo-entry .badge.is-new { color: var(--warning); }
     .repo-entry .badge.is-error { color: var(--danger); }
-    .repo-fields { display: grid; gap: 6px; font-size: 13px; }
-    .repo-fields div { display: flex; gap: 10px; }
-    .repo-fields dt { min-width: 84px; color: var(--muted); }
     .pool-section { margin-top: 16px; }
     .pool-section h4 { margin-bottom: 8px; color: var(--muted); font-size: 12px; }
     .pool-roster { display: grid; gap: 5px; font-size: 12px; }
@@ -441,6 +278,20 @@
       color: var(--ink); background: #191b18; }
     .repo-form .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .repo-readonly { color: var(--warning); font-size: 12px; line-height: 1.6; }
+    .repo-raw-editor { display: grid; gap: 8px; }
+    .repo-raw-editor textarea {
+      min-height: 340px; padding: 10px; border: 1px solid #3a3a33; border-radius: 6px;
+      background: #161815; color: #ded9c8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.55;
+    }
+    .repo-raw-error { margin: 0; color: #e8a0a0; font-size: 12px; }
+    .repo-conflict {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+      margin: 0 0 10px; padding: 9px 11px;
+      border: 1px solid #8a5a2a; border-radius: 6px; background: rgba(160, 100, 40, .14);
+      color: #e8c79a; font-size: 12px;
+    }
+    .repo-conflict strong { color: var(--gold-bright); }
     .effect-list { display: grid; gap: 8px; }
     .effect-row {
       display: grid;
@@ -480,178 +331,12 @@
       <div class="brand-mark" aria-hidden="true">✦</div>
       <div>
         <h1>Fate Weaver 카드 아이디어 노트</h1>
-        <p class="subtitle">아이디어를 정리하고 AI 저작용 Markdown으로 내보냅니다.</p>
+        <p class="subtitle">저장소 JSON을 읽고 편집해 파일로 반영합니다.</p>
       </div>
     </div>
-    <div class="mode-switch" role="group" aria-label="작업 모드">
-      <button type="button" id="mode-markdown" class="mode-button is-active">아이디어</button>
-      <button type="button" id="mode-repo" class="mode-button">저장소</button>
-    </div>
-    <p class="header-status" id="storage-status">브라우저 로컬 저장 · 즉시 보존</p>
   </header>
 
-  <main class="workspace">
-    <aside class="pane library-pane" aria-label="카드 목록">
-      <div class="pane-scroll">
-        <div class="pane-header">
-          <div class="pane-title">
-            <strong>카드 목록</strong>
-            <span class="count" id="card-count">0</span>
-          </div>
-          <button type="button" class="primary" id="new-card">＋ 새 카드</button>
-        </div>
-        <div class="library-tools">
-          <label>
-            카드 검색
-            <input id="search" type="search" placeholder="이름 또는 태그">
-          </label>
-          <label class="bulk-select">
-            <input id="select-all" type="checkbox">
-            전체 체크
-          </label>
-        </div>
-        <div class="card-list" id="card-list"></div>
-      </div>
-      <div class="library-actions">
-        <label class="wide-action export-name-field">
-          기본 파일명
-          <input id="export-file-name" type="text" placeholder="fate-weaver-card-ideas-YYYY-MM-DD">
-        </label>
-        <button type="button" id="duplicate-card">복제</button>
-        <button type="button" class="danger" id="delete-card">삭제</button>
-        <button type="button" class="wide-action" id="import-markdown">Markdown 불러오기</button>
-        <input id="import-file" type="file" accept=".md,text/markdown" hidden>
-        <button type="button" class="primary wide-action" id="export-markdown">Markdown 내보내기</button>
-      </div>
-    </aside>
-
-    <section class="pane editor-pane" aria-label="카드 편집">
-      <div class="pane-scroll">
-        <div class="pane-header">
-          <div class="editor-heading">
-            <strong id="editor-title">선택된 카드 없음</strong>
-            <span class="completion-badge incomplete" id="completion-badge">미완성</span>
-          </div>
-          <div class="editor-actions">
-            <button type="button" id="save-card">저장</button>
-            <button type="button" class="primary" id="save-all-cards">전체 저장</button>
-          </div>
-        </div>
-
-        <form class="editor-content" id="card-form">
-          <div class="validation" id="validation"></div>
-
-          <section class="form-section">
-            <h3>기본 정보</h3>
-            <div class="form-grid">
-              <label class="wide">
-                카드 이름
-                <input id="card-name" name="name" data-card-field="name" type="text" placeholder="카드 이름" autocomplete="off">
-              </label>
-              <label>
-                진영
-                <select id="card-faction" name="faction" data-card-field="faction">
-                  <option value="ally">아군</option>
-                  <option value="enemy">적군</option>
-                </select>
-              </label>
-              <label>
-                등급
-                <select id="card-grade" name="grade" data-card-field="grade">
-                  <option value="none">없음</option>
-                  <option value="common">일반</option>
-                  <option value="advanced">고급</option>
-                  <option value="rare">희귀</option>
-                  <option value="other">기타</option>
-                </select>
-              </label>
-              <label>
-                비용
-                <input id="card-cost" name="cost" data-card-field="cost" type="number" min="0" step="1" placeholder="미정">
-              </label>
-              <label>
-                역할
-                <select id="card-role" name="role" data-card-field="role">
-                  <option value="unknown">미정</option>
-                  <option value="execution">실행</option>
-                  <option value="intervention">조작</option>
-                </select>
-              </label>
-              <label id="execution-order-field">
-                실행순서
-                <input id="execution-order" name="executionOrder" data-card-field="executionOrder" type="number" step="1" placeholder="미정">
-              </label>
-              <label class="wide">
-                태그
-                <input id="card-tags" name="tags" data-card-field="tags" type="text" placeholder="독, 성장, 방어">
-              </label>
-            </div>
-          </section>
-
-          <section class="form-section">
-            <h3>위치 범위</h3>
-            <div class="target-grid">
-              <div class="target-box">
-                <div class="target-heading">
-                  <span class="ally-text">◆ 아군</span>
-                  <span>전열 → 중앙</span>
-                </div>
-                <select id="ally-target" data-card-field="targets.ally" aria-label="아군 위치 범위"></select>
-                <output class="target-glyph ally-text" id="ally-glyph">없음</output>
-              </div>
-              <div class="target-box">
-                <div class="target-heading">
-                  <span>중앙 ← 전열</span>
-                  <span class="enemy-text">적군 ◆</span>
-                </div>
-                <select id="enemy-target" data-card-field="targets.enemy" aria-label="적군 위치 범위"></select>
-                <output class="target-glyph enemy-text" id="enemy-glyph">없음</output>
-              </div>
-            </div>
-            <output class="target-summary" id="target-summary">대상 없음</output>
-          </section>
-
-          <section class="form-section">
-            <h3>능력 문장</h3>
-            <label>
-              <span class="enemy-text">적군 능력</span>
-              <textarea id="enemy-abilities" data-card-field="abilities.enemy" placeholder="한 줄에 능력 하나씩 입력"></textarea>
-            </label>
-            <label>
-              <span class="ally-text">아군 능력</span>
-              <textarea id="ally-abilities" data-card-field="abilities.ally" placeholder="한 줄에 능력 하나씩 입력"></textarea>
-            </label>
-            <label>
-              대상 없는 능력
-              <textarea id="none-abilities" data-card-field="abilities.none" placeholder="드로우, 운명력 등 위치 대상이 없는 능력"></textarea>
-            </label>
-          </section>
-
-          <section class="form-section">
-            <h3>설계 메모</h3>
-            <label>
-              자유 메모
-              <textarea id="card-notes" data-card-field="notes" placeholder="설계 의도, 미정 수치, 연계 후보와 고민"></textarea>
-            </label>
-          </section>
-        </form>
-      </div>
-    </section>
-
-    <aside class="pane preview-pane" aria-label="Markdown 미리보기">
-      <div class="pane-scroll">
-        <div class="pane-header">
-          <div class="pane-title"><strong>Markdown 원문</strong></div>
-          <span class="count">실시간</span>
-        </div>
-        <div class="preview-wrap">
-          <pre class="markdown-preview" id="markdown-preview"></pre>
-        </div>
-      </div>
-    </aside>
-  </main>
-
-  <main class="workspace repo-workspace" id="repo-workspace" hidden>
+  <main class="workspace repo-workspace" id="repo-workspace">
     <aside class="pane library-pane" aria-label="저장소 목록">
       <div class="pane-scroll">
         <div class="pane-header">
@@ -661,6 +346,7 @@
           </div>
           <div class="repo-header-actions">
             <button type="button" id="repo-new-card">＋ 새 카드</button>
+            <button type="button" id="repo-export" disabled>저장소에 반영</button>
             <button type="button" class="primary" id="repo-connect">폴더 연결</button>
           </div>
         </div>
@@ -708,952 +394,28 @@
       <div class="pane-scroll">
         <div class="pane-header">
           <div class="pane-title"><strong id="repo-source-title">JSON 원문</strong></div>
+          <button type="button" id="repo-source-toggle" hidden>저장소 ↔ 현재</button>
         </div>
-        <pre class="markdown-preview" id="repo-source"></pre>
+        <pre class="json-preview" id="repo-source"></pre>
+        <pre class="json-preview" id="repo-source-diff" hidden></pre>
       </div>
     </aside>
   </main>
 
-  <dialog id="delete-dialog">
+  <dialog id="repo-export-dialog">
     <div class="dialog-body">
-      <h2>카드를 삭제할까요?</h2>
-      <p id="delete-message">삭제한 카드는 복구할 수 없습니다.</p>
+      <h2>저장소에 반영</h2>
+      <div id="repo-export-summary"></div>
     </div>
     <div class="dialog-actions">
-      <button type="button" class="ghost" data-delete-action="cancel">취소</button>
-      <button type="button" class="danger" data-delete-action="confirm">삭제</button>
+      <button type="button" class="ghost" data-repo-export-action="cancel">취소</button>
+      <button type="button" class="primary" id="repo-export-confirm">반영</button>
     </div>
   </dialog>
-
-  <dialog id="export-dialog">
-    <form id="export-form" method="dialog">
-      <div class="dialog-body">
-        <h2>Markdown 파일명</h2>
-        <label>
-          파일명
-          <input id="export-dialog-name" type="text" autocomplete="off">
-        </label>
-        <p>확장자 .md는 자동으로 붙습니다. 빈 이름도 내보낼 수 있습니다.</p>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" class="ghost" data-export-action="cancel">취소</button>
-        <button type="submit" class="primary">내보내기</button>
-      </div>
-    </form>
-  </dialog>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script data-card-idea-core>
   (() => {
     "use strict";
-
-    const ROLE_LABELS = Object.freeze({
-      unknown: "미정",
-      execution: "실행",
-      intervention: "조작",
-    });
-    const FACTION_LABELS = Object.freeze({
-      ally: "아군",
-      enemy: "적군",
-    });
-    const GRADE_LABELS = Object.freeze({
-      none: "없음",
-      common: "일반",
-      advanced: "고급",
-      rare: "희귀",
-      other: "기타",
-    });
-
-    const TARGETS = Object.freeze({
-      none: Object.freeze({ label: "없음", ally: "", enemy: "" }),
-      self: Object.freeze({ label: "자신", ally: "◎", enemy: "◎" }),
-      frontOne: Object.freeze({ label: "앞 하나", ally: "━━━━◆", enemy: "◆━━━━" }),
-      frontTwo: Object.freeze({ label: "앞 둘", ally: "━━━◆◆", enemy: "◆◆━━━" }),
-      backOne: Object.freeze({ label: "뒤 하나", ally: "◆━━━━", enemy: "━━━━◆" }),
-      backTwo: Object.freeze({ label: "뒤 둘", ally: "◆◆━━━", enemy: "━━━◆◆" }),
-      all: Object.freeze({ label: "모두", ally: "━━━━━", enemy: "━━━━━" }),
-    });
-    const SCHEMA_VERSION = 6;
-    const STORAGE_KEY = "fate-weaver.card-idea-notebook";
-    const SAVE_PICKER_ID = "fateWeaverCardIdeas";
-
-    function emptyCard() {
-      return {
-        id: "",
-        name: "",
-        faction: "ally",
-        grade: "common",
-        role: "unknown",
-        cost: "",
-        executionOrder: "",
-        tags: [],
-        targets: { ally: "none", enemy: "none" },
-        abilities: { ally: [], enemy: [], none: [] },
-        notes: "",
-        completionStatus: "incomplete",
-        createdAt: "",
-        updatedAt: "",
-      };
-    }
-
-    function textLines(value) {
-      const values = Array.isArray(value) ? value : String(value ?? "").split(/\r?\n/);
-      return values.map((line) => String(line).trim()).filter(Boolean);
-    }
-
-    function tagList(value) {
-      const values = Array.isArray(value) ? value : String(value ?? "").split(/[,\n]/);
-      return [...new Set(values.map((tag) => String(tag).trim()).filter(Boolean))];
-    }
-
-    function validRole(value) {
-      return Object.hasOwn(ROLE_LABELS, value) ? value : "unknown";
-    }
-
-    function validFaction(value) {
-      return Object.hasOwn(FACTION_LABELS, value) ? value : "ally";
-    }
-
-    function validGrade(value) {
-      return Object.hasOwn(GRADE_LABELS, value) ? value : "common";
-    }
-
-    function validTarget(value) {
-      return Object.hasOwn(TARGETS, value) ? value : "none";
-    }
-
-    function normalizeCard(input = {}) {
-      const base = emptyCard();
-      const faction = validFaction(input.faction);
-      return {
-        ...base,
-        id: String(input.id ?? "").trim(),
-        name: String(input.name ?? "").trim(),
-        faction,
-        grade: faction === "enemy" ? "none" : validGrade(input.grade),
-        role: faction === "enemy" ? "execution" : validRole(input.role),
-        cost: faction === "enemy" ? "" : String(input.cost ?? "").trim(),
-        executionOrder: String(input.executionOrder ?? "").trim(),
-        tags: tagList(input.tags),
-        targets: {
-          ally: validTarget(input.targets?.ally),
-          enemy: validTarget(input.targets?.enemy),
-        },
-        abilities: {
-          ally: textLines(input.abilities?.ally),
-          enemy: textLines(input.abilities?.enemy),
-          none: textLines(input.abilities?.none),
-        },
-        notes: String(input.notes ?? "").trim(),
-        completionStatus: input.completionStatus === "complete" ? "complete" : "incomplete",
-        createdAt: String(input.createdAt ?? ""),
-        updatedAt: String(input.updatedAt ?? ""),
-      };
-    }
-
-    function changeCardFaction(input, faction) {
-      const card = normalizeCard(input);
-      const nextFaction = validFaction(faction);
-      if (card.faction === nextFaction) return card;
-      return normalizeCard({
-        ...card,
-        faction: nextFaction,
-        grade: nextFaction === "ally" ? "common" : "none",
-        role: nextFaction === "ally" ? "unknown" : "execution",
-        cost: "",
-      });
-    }
-
-    function validateCard(input) {
-      const card = normalizeCard(input);
-      const errors = [];
-      const warnings = [];
-
-      if (card.targets.ally === "self" && card.targets.enemy === "self") {
-        errors.push("아군과 적군에 자신을 동시에 지정할 수 없습니다.");
-      }
-      if (card.abilities.ally.length && card.targets.ally === "none") {
-        warnings.push("아군 능력은 있지만 아군 위치 범위가 없습니다.");
-      }
-      if (card.targets.ally !== "none" && !card.abilities.ally.length) {
-        warnings.push("아군 위치 범위는 있지만 아군 능력이 없습니다.");
-      }
-      if (card.abilities.enemy.length && card.targets.enemy === "none") {
-        warnings.push("적군 능력은 있지만 적군 위치 범위가 없습니다.");
-      }
-      if (card.targets.enemy !== "none" && !card.abilities.enemy.length) {
-        warnings.push("적군 위치 범위는 있지만 적군 능력이 없습니다.");
-      }
-
-      return { errors, warnings };
-    }
-
-    function isIntegerText(value) {
-      return /^-?\d+$/.test(String(value ?? "").trim());
-    }
-
-    function isNonNegativeIntegerText(value) {
-      return /^\d+$/.test(String(value ?? "").trim());
-    }
-
-    function isCardComplete(input) {
-      const card = normalizeCard(input);
-      if (validateCard(card).errors.length || !card.name) return false;
-      if (
-        card.faction === "ally"
-        && (!isNonNegativeIntegerText(card.cost) || card.role === "unknown")
-      ) {
-        return false;
-      }
-      if (card.role === "execution" && !isIntegerText(card.executionOrder)) return false;
-      return true;
-    }
-
-    function targetSummary(input) {
-      const card = normalizeCard(input);
-      const ally = TARGETS[card.targets.ally];
-      const enemy = TARGETS[card.targets.enemy];
-      const parts = [];
-
-      if (card.targets.ally !== "none") {
-        parts.push(`아군 ${ally.label} \`${ally.ally}\``);
-      }
-      if (card.targets.enemy !== "none") {
-        parts.push(`\`${enemy.enemy}\` 적군 ${enemy.label}`);
-      }
-      return parts.length ? parts.join(" │ ") : "없음";
-    }
-
-    function encodeNoteMarkdown(notes) {
-      return String(notes ?? "")
-        .split("\n")
-        .map((line) => line.startsWith("\\") || line.startsWith("## ") ? `\\${line}` : line)
-        .join("\n");
-    }
-
-    function decodeNoteMarkdown(notes) {
-      return String(notes ?? "")
-        .split("\n")
-        .map((line) => {
-          if (line.startsWith("\\\\") || line.startsWith("\\## ")) return line.slice(1);
-          return line;
-        })
-        .join("\n");
-    }
-
-    function encodeTargetlessAbility(line) {
-      const text = String(line);
-      if (
-        text.startsWith("\\")
-        || text.startsWith("[적군] ")
-        || text.startsWith("[아군] ")
-      ) {
-        return `\\${text}`;
-      }
-      return text;
-    }
-
-    function decodeTargetlessAbility(line) {
-      if (
-        line.startsWith("\\\\")
-        || line.startsWith("\\[적군] ")
-        || line.startsWith("\\[아군] ")
-      ) {
-        return line.slice(1);
-      }
-      return line;
-    }
-
-    function cardMarkdown(input) {
-      const card = normalizeCard(input);
-      const lines = [
-        `## ${card.name || "이름 없는 카드"}`,
-        "",
-        `- 진영: ${FACTION_LABELS[card.faction]}`,
-        `- 등급: ${GRADE_LABELS[card.grade]}`,
-      ];
-
-      if (card.faction === "enemy") lines.push("- 비용: 없음");
-      else if (card.cost) lines.push(`- 비용: ${card.cost}`);
-      lines.push(`- 역할: ${ROLE_LABELS[card.role]}`);
-      if (card.role === "execution" && card.executionOrder) {
-        lines.push(`- 실행순서: ${card.executionOrder}`);
-      }
-      if (card.tags.length) lines.push(`- 태그: ${card.tags.join(", ")}`);
-      lines.push(`- 대상: ${targetSummary(card)}`);
-
-      const abilityLines = [
-        ...card.abilities.enemy.map((line) => `- [적군] ${line}`),
-        ...card.abilities.ally.map((line) => `- [아군] ${line}`),
-        ...card.abilities.none.map((line) => `- ${encodeTargetlessAbility(line)}`),
-      ];
-      if (abilityLines.length) {
-        lines.push("", "### 능력", "", ...abilityLines);
-      }
-      if (card.notes) {
-        lines.push("", "### 메모", "", encodeNoteMarkdown(card.notes));
-      }
-      return `${lines.join("\n").trim()}\n`;
-    }
-
-    function bundleMarkdown(inputs, date = new Date().toISOString().slice(0, 10)) {
-      const cards = inputs.map(normalizeCard);
-      const header = [
-        "# Fate Weaver 카드 아이디어",
-        "",
-        `- 생성일: ${date}`,
-        `- 카드 수: ${cards.length}`,
-        "- 대상 규칙: `docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md`",
-      ].join("\n");
-      return `${header}\n\n${cards.map(cardMarkdown).join("\n").trim()}\n`;
-    }
-
-    function markdownImportError(detail) {
-      return new Error(`불러올 수 없는 Markdown입니다. ${detail}`);
-    }
-
-    function parseTargetMarkdown(value) {
-      for (const ally of Object.keys(TARGETS)) {
-        for (const enemy of Object.keys(TARGETS)) {
-          const card = normalizeCard({ targets: { ally, enemy } });
-          if (targetSummary(card) === value) return { ally, enemy };
-        }
-      }
-      throw markdownImportError("대상 형식을 확인하세요.");
-    }
-
-    function parseCardMarkdown(section) {
-      const lines = section.replace(/\r\n/g, "\n").split("\n");
-      const heading = lines.shift();
-      if (!heading?.startsWith("## ") || !heading.slice(3).trim()) {
-        throw markdownImportError("카드 이름이 없습니다.");
-      }
-      const input = {
-        name: heading.slice(3).trim(),
-        faction: "ally",
-        grade: "none",
-        role: "",
-        cost: "",
-        executionOrder: "",
-        tags: [],
-        targets: null,
-        abilities: { ally: [], enemy: [], none: [] },
-        notes: "",
-        completionStatus: "complete",
-      };
-      let mode = "metadata";
-      const notes = [];
-
-      for (const line of lines) {
-        if (mode === "notes") {
-          notes.push(line);
-          continue;
-        }
-        if (!line.trim()) continue;
-        if (line === "### 능력" && mode === "metadata") {
-          mode = "abilities";
-          continue;
-        }
-        if (line === "### 메모" && (mode === "metadata" || mode === "abilities")) {
-          mode = "notes";
-          continue;
-        }
-        if (line.startsWith("### ")) {
-          throw markdownImportError(`알 수 없는 카드 절: ${line}`);
-        }
-
-        if (mode === "metadata") {
-          const separator = line.indexOf(": ");
-          if (!line.startsWith("- ") || separator < 3) {
-            throw markdownImportError(`카드 메타데이터 형식을 확인하세요: ${line}`);
-          }
-          const key = line.slice(2, separator);
-          const value = line.slice(separator + 2);
-          if (key === "진영") {
-            input.faction = Object.keys(FACTION_LABELS)
-              .find((faction) => FACTION_LABELS[faction] === value) ?? "";
-            if (!input.faction) throw markdownImportError(`알 수 없는 진영: ${value}`);
-          } else if (key === "등급") {
-            input.grade = Object.keys(GRADE_LABELS)
-              .find((grade) => GRADE_LABELS[grade] === value) ?? "";
-            if (!input.grade) throw markdownImportError(`알 수 없는 등급: ${value}`);
-          } else if (key === "역할") {
-            input.role = Object.keys(ROLE_LABELS).find((role) => ROLE_LABELS[role] === value) ?? "";
-            if (!input.role) throw markdownImportError(`알 수 없는 역할: ${value}`);
-          } else if (key === "비용") {
-            input.cost = value;
-          } else if (key === "실행순서") {
-            input.executionOrder = value;
-          } else if (key === "태그") {
-            input.tags = value;
-          } else if (key === "대상") {
-            input.targets = parseTargetMarkdown(value);
-          } else {
-            throw markdownImportError(`알 수 없는 메타데이터: ${key}`);
-          }
-          continue;
-        }
-
-        if (!line.startsWith("- ")) {
-          throw markdownImportError(`능력 형식을 확인하세요: ${line}`);
-        }
-        const ability = line.slice(2);
-        if (ability.startsWith("[적군] ")) input.abilities.enemy.push(ability.slice(5));
-        else if (ability.startsWith("[아군] ")) input.abilities.ally.push(ability.slice(5));
-        else input.abilities.none.push(decodeTargetlessAbility(ability));
-      }
-
-      input.notes = decodeNoteMarkdown(notes.join("\n").trim());
-      if (!input.role) throw markdownImportError(`${input.name}의 역할이 없습니다.`);
-      if (!input.targets) throw markdownImportError(`${input.name}의 대상이 없습니다.`);
-      if (input.faction === "enemy") {
-        if (input.grade !== "none") {
-          throw markdownImportError(`${input.name}의 적군 등급은 없음이어야 합니다.`);
-        }
-        if (input.cost !== "없음") {
-          throw markdownImportError(`${input.name}의 적군 비용은 없음이어야 합니다.`);
-        }
-        if (input.role !== "execution") {
-          throw markdownImportError(`${input.name}의 적군 역할은 실행이어야 합니다.`);
-        }
-        input.cost = "";
-      } else if (input.cost === "없음") {
-        throw markdownImportError(`${input.name}의 아군 비용을 확인하세요.`);
-      }
-      if (input.executionOrder && input.role !== "execution") {
-        throw markdownImportError(`${input.name}의 실행순서가 역할과 맞지 않습니다.`);
-      }
-      const card = normalizeCard(input);
-      const validation = validateCard(card);
-      if (validation.errors.length) throw markdownImportError(validation.errors[0]);
-      return normalizeCard({
-        ...card,
-        completionStatus: isCardComplete(card) ? "complete" : "incomplete",
-      });
-    }
-
-    function parseBundleMarkdown(markdown) {
-      const text = String(markdown ?? "").replace(/\r\n/g, "\n").trim();
-      const firstCardIndex = text.indexOf("\n## ");
-      if (firstCardIndex < 0) throw markdownImportError("카드 묶음이 없습니다.");
-      const header = text.slice(0, firstCardIndex).split("\n");
-      if (header[0] !== "# Fate Weaver 카드 아이디어") {
-        throw markdownImportError("묶음 제목이 다릅니다.");
-      }
-      const allowedHeader = header.filter(Boolean);
-      if (
-        allowedHeader.length !== 4
-        || !/^- 생성일: \d{4}-\d{2}-\d{2}$/.test(allowedHeader[1])
-        || !/^- 카드 수: \d+$/.test(allowedHeader[2])
-        || allowedHeader[3] !== "- 대상 규칙: `docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md`"
-      ) {
-        throw markdownImportError("묶음 헤더 형식을 확인하세요.");
-      }
-      const declaredCount = Number(allowedHeader[2].slice("- 카드 수: ".length));
-      const sections = text.slice(firstCardIndex + 1).split(/\n(?=## )/);
-      if (declaredCount !== sections.length) {
-        throw markdownImportError("카드 수가 일치하지 않습니다.");
-      }
-      return sections.map(parseCardMarkdown);
-    }
-
-    function initialState() {
-      return {
-        schemaVersion: SCHEMA_VERSION,
-        cards: [],
-        activeCardId: "",
-        searchQuery: "",
-        selection: [],
-        exportFileName: "",
-      };
-    }
-
-    function writeStore(storage, input) {
-      const state = input ?? initialState();
-      const ids = new Set((state.cards ?? []).map((card) => String(card.id)));
-      const saved = {
-        schemaVersion: SCHEMA_VERSION,
-        cards: (state.cards ?? []).map(normalizeCard),
-        activeCardId: String(state.activeCardId ?? ""),
-        searchQuery: String(state.searchQuery ?? ""),
-        selection: [...new Set((state.selection ?? []).map(String))]
-          .filter((id) => ids.has(id)),
-        exportFileName: String(state.exportFileName ?? ""),
-      };
-      storage.setItem(STORAGE_KEY, JSON.stringify(saved));
-      return saved;
-    }
-
-    function readStore(storage) {
-      const raw = storage.getItem(STORAGE_KEY);
-      if (!raw) return initialState();
-
-      const saved = JSON.parse(raw);
-      if (![1, 2, 3, 4, 5, SCHEMA_VERSION].includes(saved.schemaVersion)) {
-        throw new Error(`지원하지 않는 저장 데이터 버전: ${saved.schemaVersion}`);
-      }
-      const needsFactionMigration = saved.schemaVersion <= 4;
-      const needsGradeMigration = saved.schemaVersion <= 5;
-      const cards = (saved.cards ?? []).map((card) => {
-        const normalized = normalizeCard({
-          ...card,
-          faction: needsFactionMigration ? "ally" : card.faction,
-          grade: needsGradeMigration ? "none" : card.grade,
-        });
-        return needsFactionMigration
-          ? normalizeCard({
-            ...normalized,
-            completionStatus: isCardComplete(normalized) ? "complete" : "incomplete",
-          })
-          : normalized;
-      });
-      const ids = new Set(cards.map((card) => card.id));
-      const savedSelection = saved.schemaVersion >= 3
-        ? saved.selection
-        : saved.exportSelection;
-      const selection = (savedSelection ?? [])
-        .map(String)
-        .filter((id) => ids.has(id));
-      const savedActiveCardId = ids.has(saved.activeCardId) ? saved.activeCardId : "";
-      const activeCardId = selection.length && !selection.includes(savedActiveCardId)
-        ? cards.find((card) => selection.includes(card.id))?.id ?? ""
-        : savedActiveCardId;
-      return {
-        schemaVersion: SCHEMA_VERSION,
-        cards,
-        activeCardId,
-        searchQuery: String(saved.searchQuery ?? ""),
-        selection,
-        exportFileName: String(saved.exportFileName ?? ""),
-      };
-    }
-
-    function readStoreSession(storage) {
-      try {
-        return {
-          state: readStore(storage),
-          writable: true,
-          error: "",
-        };
-      } catch (error) {
-        return {
-          state: initialState(),
-          writable: false,
-          error: error instanceof Error ? error.message : "저장 데이터를 읽지 못했습니다.",
-        };
-      }
-    }
-
-    function tryWriteStore(storage, state) {
-      try {
-        writeStore(storage, state);
-        return { state, persistFailed: false, error: "" };
-      } catch (error) {
-        return {
-          state,
-          persistFailed: true,
-          error: error instanceof Error ? error.message : "저장소 쓰기에 실패했습니다.",
-        };
-      }
-    }
-
-    function selectedCards(state) {
-      const selected = new Set((state.selection ?? []).map(String));
-      return (state.cards ?? [])
-        .filter((card) => selected.has(String(card.id)))
-        .map(normalizeCard);
-    }
-
-    function cardsForExport(state) {
-      return exportStatus(state).kind === "ready" ? selectedCards(state) : [];
-    }
-
-    function downloadFileName(input, date) {
-      const name = String(input ?? "").trim();
-      const base = name || `fate-weaver-card-ideas-${date}`;
-      return /\.md$/i.test(base) ? base : `${base}.md`;
-    }
-
-    function isMarkdownFileName(input) {
-      return /\.md$/i.test(String(input ?? "").trim());
-    }
-
-    function saveFilePickerOptions(input, date) {
-      return {
-        suggestedName: downloadFileName(input, date),
-        id: SAVE_PICKER_ID,
-        types: [{ description: "Markdown 파일", accept: { "text/markdown": [".md"] } }],
-      };
-    }
-
-    function isPickerCancel(error) {
-      return (error && error.name) === "AbortError";
-    }
-
-    function supportsSavePicker(win) {
-      return typeof win?.showSaveFilePicker === "function";
-    }
-
-    function uniqueCardId(cards, requestedId) {
-      const base = String(requestedId ?? "").trim() || `card-${Date.now().toString(36)}`;
-      const ids = new Set((cards ?? []).map((card) => String(card.id)));
-      if (!ids.has(base)) return base;
-      let suffix = 2;
-      while (ids.has(`${base}-${suffix}`)) suffix += 1;
-      return `${base}-${suffix}`;
-    }
-
-    function uniqueCardName(cards, requestedName) {
-      const base = String(requestedName ?? "").trim() || "새 카드";
-      const names = new Set((cards ?? []).map((card) => String(card.name)));
-      if (!names.has(base)) return base;
-      let suffix = 2;
-      while (names.has(`${base} (${suffix})`)) suffix += 1;
-      return `${base} (${suffix})`;
-    }
-
-    function createCard(state, options = {}) {
-      const now = options.now ?? new Date().toISOString();
-      const card = normalizeCard({
-        id: uniqueCardId(state.cards, options.id),
-        name: uniqueCardName(state.cards, options.name || "새 카드"),
-        completionStatus: "incomplete",
-        createdAt: now,
-        updatedAt: now,
-      });
-      return {
-        ...state,
-        cards: [...(state.cards ?? []), card],
-        activeCardId: card.id,
-        selection: [card.id],
-      };
-    }
-
-    function editCard(state, id, patch = {}) {
-      const cards = (state.cards ?? []).map((card) => {
-        if (card.id !== id) return card;
-        return normalizeCard({
-          ...card,
-          ...patch,
-          targets: patch.targets ?? card.targets,
-          abilities: patch.abilities ?? card.abilities,
-          completionStatus: "incomplete",
-        });
-      });
-      return {
-        ...state,
-        cards,
-      };
-    }
-
-    const ALL_CARD_FIELDS = new Set([
-      "name",
-      "faction",
-      "tags",
-      "targets.ally",
-      "targets.enemy",
-      "abilities.ally",
-      "abilities.enemy",
-      "abilities.none",
-      "notes",
-    ]);
-    const ALLY_CARD_FIELDS = new Set(["grade", "cost", "role"]);
-
-    function editTargetCards(state) {
-      const cards = state.cards ?? [];
-      const selected = new Set((state.selection ?? []).map(String));
-      const selectedTargets = cards.filter((card) => selected.has(String(card.id)));
-      if (selectedTargets.length) return selectedTargets.map(normalizeCard);
-      const active = cards.find((card) => card.id === state.activeCardId);
-      return active ? [normalizeCard(active)] : [];
-    }
-
-    function isFieldApplicable(input, field) {
-      const card = normalizeCard(input);
-      if (ALL_CARD_FIELDS.has(field)) return true;
-      if (ALLY_CARD_FIELDS.has(field)) return card.faction === "ally";
-      if (field === "executionOrder") return card.role === "execution";
-      return false;
-    }
-
-    function cardFieldValue(input, field) {
-      const card = normalizeCard(input);
-      if (field === "tags") return card.tags.join(", ");
-      if (field.startsWith("targets.")) return card.targets[field.slice("targets.".length)];
-      if (field.startsWith("abilities.")) {
-        return card.abilities[field.slice("abilities.".length)].join("\n");
-      }
-      return String(card[field] ?? "");
-    }
-
-    function fieldAggregate(state, field) {
-      const cards = editTargetCards(state)
-        .filter((card) => isFieldApplicable(card, field));
-      if (!cards.length) {
-        return { kind: "empty", value: "", applicableCount: 0 };
-      }
-      const values = cards.map((card) => cardFieldValue(card, field));
-      const common = values.every((value) => value === values[0]);
-      return {
-        kind: common ? "common" : "mixed",
-        value: common ? values[0] : "",
-        applicableCount: cards.length,
-      };
-    }
-
-    function editCardField(input, field, value) {
-      const card = normalizeCard(input);
-      if (field === "faction") return changeCardFaction(card, value);
-      if (field === "name") return normalizeCard({ ...card, name: value });
-      if (field === "grade") return normalizeCard({ ...card, grade: value });
-      if (field === "cost") return normalizeCard({ ...card, cost: value });
-      if (field === "role") return normalizeCard({ ...card, role: value });
-      if (field === "executionOrder") {
-        return normalizeCard({ ...card, executionOrder: value });
-      }
-      if (field === "tags") return normalizeCard({ ...card, tags: value });
-      if (field === "notes") return normalizeCard({ ...card, notes: value });
-      if (field.startsWith("targets.")) {
-        const targetFaction = field.slice("targets.".length);
-        return normalizeCard({
-          ...card,
-          targets: { ...card.targets, [targetFaction]: value },
-        });
-      }
-      if (field.startsWith("abilities.")) {
-        const abilityFaction = field.slice("abilities.".length);
-        return normalizeCard({
-          ...card,
-          abilities: { ...card.abilities, [abilityFaction]: value },
-        });
-      }
-      return card;
-    }
-
-    function editSelectedField(state, field, value) {
-      const targetIds = new Set(editTargetCards(state).map((card) => card.id));
-      let changed = false;
-      const cards = (state.cards ?? []).map((card) => {
-        if (!targetIds.has(card.id) || !isFieldApplicable(card, field)) return card;
-        const nextCard = editCardField(card, field, value);
-        if (cardFieldValue(nextCard, field) === cardFieldValue(card, field)) return card;
-        changed = true;
-        return normalizeCard({
-          ...nextCard,
-          completionStatus: "incomplete",
-        });
-      });
-      return changed ? { ...state, cards } : state;
-    }
-
-    function saveCard(state, id, options = {}) {
-      const card = (state.cards ?? []).find((candidate) => candidate.id === id);
-      if (!card) throw new Error("저장할 카드를 찾을 수 없습니다.");
-      const validation = validateCard(card);
-      if (validation.errors.length) throw new Error(validation.errors[0]);
-      const now = options.now ?? new Date().toISOString();
-      return {
-        ...state,
-        cards: state.cards.map((candidate) => candidate.id === id
-          ? normalizeCard({
-            ...candidate,
-            completionStatus: isCardComplete(candidate) ? "complete" : "incomplete",
-            updatedAt: now,
-          })
-          : candidate),
-      };
-    }
-
-    function saveAllCards(state, options = {}) {
-      const now = options.now ?? new Date().toISOString();
-      for (const card of state.cards ?? []) {
-        const validation = validateCard(card);
-        if (validation.errors.length) throw new Error(validation.errors[0]);
-      }
-      return {
-        ...state,
-        cards: (state.cards ?? []).map((card) => normalizeCard({
-          ...card,
-          completionStatus: isCardComplete(card) ? "complete" : "incomplete",
-          updatedAt: now,
-        })),
-      };
-    }
-
-    function importCards(state, markdown, options = {}) {
-      const parsed = parseBundleMarkdown(markdown);
-      const now = options.now ?? new Date().toISOString();
-      const cards = [...(state.cards ?? [])];
-      const imported = parsed.map((card, index) => {
-        const added = normalizeCard({
-          ...card,
-          id: uniqueCardId(cards, options.ids?.[index] || `card-${Date.now().toString(36)}-${index}`),
-          name: uniqueCardName(cards, card.name),
-          completionStatus: card.completionStatus,
-          createdAt: now,
-          updatedAt: now,
-        });
-        cards.push(added);
-        return added;
-      });
-      return {
-        ...state,
-        cards,
-        activeCardId: imported[0]?.id ?? state.activeCardId,
-        selection: imported[0] ? [imported[0].id] : state.selection,
-      };
-    }
-
-    function bulkSelection(state, checked) {
-      return {
-        ...state,
-        selection: checked
-          ? (state.cards ?? []).map((card) => card.id)
-          : [],
-      };
-    }
-
-    function selectCard(state, visibleIds, cardId, mode, anchorId) {
-      const cardIds = (state.cards ?? []).map((card) => String(card.id));
-      const validIds = new Set(cardIds);
-      const clickedId = String(cardId);
-      if (!validIds.has(clickedId)) return { state, anchorId };
-
-      const orderedVisibleIds = (visibleIds ?? [])
-        .map(String)
-        .filter((id) => validIds.has(id));
-      if (mode === "range") {
-        const fallbackAnchor = orderedVisibleIds.includes(String(state.activeCardId))
-          ? String(state.activeCardId)
-          : clickedId;
-        const resolvedAnchor = orderedVisibleIds.includes(String(anchorId))
-          ? String(anchorId)
-          : fallbackAnchor;
-        const anchorIndex = orderedVisibleIds.indexOf(resolvedAnchor);
-        const clickedIndex = orderedVisibleIds.indexOf(clickedId);
-        if (anchorIndex >= 0 && clickedIndex >= 0) {
-          const first = Math.min(anchorIndex, clickedIndex);
-          const last = Math.max(anchorIndex, clickedIndex);
-          return {
-            state: {
-              ...state,
-              activeCardId: clickedId,
-              selection: orderedVisibleIds.slice(first, last + 1),
-            },
-            anchorId: resolvedAnchor,
-          };
-        }
-      }
-
-      if (mode === "toggle") {
-        const selected = new Set((state.selection ?? []).map(String));
-        const wasSelected = selected.delete(clickedId);
-        if (!wasSelected) selected.add(clickedId);
-        const selection = cardIds.filter((id) => selected.has(id));
-        const currentActiveId = String(state.activeCardId ?? "");
-        const activeCardId = wasSelected
-          ? selection.includes(currentActiveId)
-            ? currentActiveId
-            : selection[0] ?? clickedId
-          : clickedId;
-        return {
-          state: { ...state, activeCardId, selection },
-          anchorId: clickedId,
-        };
-      }
-
-      return {
-        state: {
-          ...state,
-          activeCardId: clickedId,
-          selection: [clickedId],
-        },
-        anchorId: clickedId,
-      };
-    }
-
-    function reorderCards(state, draggedId, targetId, placement) {
-      const cards = [...(state.cards ?? [])];
-      if (draggedId === targetId || !["before", "after"].includes(placement)) return state;
-      const draggedIndex = cards.findIndex((card) => card.id === draggedId);
-      const originalTargetIndex = cards.findIndex((card) => card.id === targetId);
-      if (draggedIndex < 0 || originalTargetIndex < 0) return state;
-
-      const [dragged] = cards.splice(draggedIndex, 1);
-      const targetIndex = cards.findIndex((card) => card.id === targetId);
-      cards.splice(placement === "after" ? targetIndex + 1 : targetIndex, 0, dragged);
-      return { ...state, cards };
-    }
-
-    function duplicateCard(state, id, options = {}) {
-      const source = (state.cards ?? []).find((card) => card.id === id);
-      if (!source) return state;
-      const now = options.now ?? new Date().toISOString();
-      const duplicate = normalizeCard({
-        ...source,
-        id: uniqueCardId(state.cards, options.id),
-        name: uniqueCardName(state.cards, `${source.name} 복사본`),
-        completionStatus: "incomplete",
-        createdAt: now,
-        updatedAt: now,
-      });
-      return {
-        ...state,
-        cards: [...state.cards, duplicate],
-        activeCardId: duplicate.id,
-        selection: [duplicate.id],
-      };
-    }
-
-    function deletionIds(state) {
-      const selectedIds = selectedCards(state).map((card) => card.id);
-      if (selectedIds.length) return selectedIds;
-      return (state.cards ?? []).some((card) => card.id === state.activeCardId)
-        ? [state.activeCardId]
-        : [];
-    }
-
-    function deleteCards(state, ids) {
-      const deleting = new Set((ids ?? []).map(String));
-      const cards = (state.cards ?? []).filter((card) => !deleting.has(card.id));
-      const activeCardId = cards.some((card) => card.id === state.activeCardId)
-        ? state.activeCardId
-        : cards[0]?.id ?? "";
-      return {
-        ...state,
-        cards,
-        activeCardId,
-        selection: (state.selection ?? []).filter((id) => !deleting.has(id)),
-      };
-    }
-
-    function deleteCard(state, id) {
-      return deleteCards(state, [id]);
-    }
-
-    function filteredCards(cards, query) {
-      const needle = String(query ?? "").trim().toLocaleLowerCase("ko");
-      if (!needle) return [...(cards ?? [])];
-      return (cards ?? []).filter((card) => {
-        const haystack = `${card.name} ${(card.tags ?? []).join(" ")}`.toLocaleLowerCase("ko");
-        return haystack.includes(needle);
-      });
-    }
-
-    function exportStatus(state) {
-      const cards = selectedCards(state);
-      if (!cards.length) {
-        return { kind: "error", message: "내보낼 카드를 선택하세요." };
-      }
-      if (cards.some((card) => card.completionStatus !== "complete")) {
-        return {
-          kind: "error",
-          message: "미완성 카드는 내보낼 수 없습니다. 먼저 완성 상태로 저장하거나 선택을 해제하세요.",
-        };
-      }
-      return { kind: "ready" };
-    }
 
     /// 생성된 저작 스키마를 폼이 쓸 형태로 바꾼다. 이 파일은 헤드리스 테스트가 만들므로
     /// 손으로 고치지 않는다 - 내용이 이상하면 dotnet test를 돌린다.
@@ -1716,6 +478,9 @@
       });
     }
 
+    const SCHEMA_VERSION = 7;
+    const STORAGE_KEY = "fate-weaver.card-idea-notebook";
+    const LEGACY_BACKUP_KEY = `${STORAGE_KEY}.v6-backup`;
     const CARD_REQUIRED_KEYS = Object.freeze(["id", "name", "side", "category"]);
 
     function emptyConditionValue() {
@@ -2320,6 +1085,167 @@
       return "same";
     }
 
+    /// LCS 기반 줄 diff. 카드 JSON은 길어야 60줄 남짓이라 O(n*m) 표로 충분하고, 외부 패키지를
+    /// 들이지 않는다(규칙 14). 삭제를 추가보다 먼저 내보내 "무엇이 무엇으로 바뀌었나"로 읽힌다.
+    function diffLines(base, current) {
+      const left = base === null || base === undefined ? [] : String(base).split("\n");
+      const right = String(current ?? "").split("\n");
+
+      const table = Array.from({ length: left.length + 1 }, () => new Array(right.length + 1).fill(0));
+      for (let i = left.length - 1; i >= 0; i -= 1) {
+        for (let j = right.length - 1; j >= 0; j -= 1) {
+          table[i][j] = left[i] === right[j]
+            ? table[i + 1][j + 1] + 1
+            : Math.max(table[i + 1][j], table[i][j + 1]);
+        }
+      }
+
+      const rows = [];
+      let i = 0;
+      let j = 0;
+      while (i < left.length && j < right.length) {
+        if (left[i] === right[j]) {
+          rows.push({ kind: "same", text: left[i] });
+          i += 1;
+          j += 1;
+        } else if (table[i + 1][j] >= table[i][j + 1]) {
+          rows.push({ kind: "remove", text: left[i] });
+          i += 1;
+        } else {
+          rows.push({ kind: "add", text: right[j] });
+          j += 1;
+        }
+      }
+      while (i < left.length) {
+        rows.push({ kind: "remove", text: left[i] });
+        i += 1;
+      }
+      while (j < right.length) {
+        rows.push({ kind: "add", text: right[j] });
+        j += 1;
+      }
+
+      return { same: rows.every((row) => row.kind === "same"), rows };
+    }
+
+    /// 내보내기 계획(설계 12). 저장소 파일 이름 집합에서 이번에 쓸 이름을 빼면 남는 것이 둘이다 -
+    /// 읽지 못해 제외한 것과, 아무도 대응하지 않게 된 것. 앞은 고쳐야 하고 뒤는 지워도 되므로
+    /// 한 줄로 묶지 않는다.
+    function exportPlan({
+      cards, pools, storedCards, storedPools,
+      cardStates, poolStates, readErrors, validation, schema,
+    }) {
+      const cardFile = (id) => `${id}.json`;
+      const states = cardStates ?? new Map();
+      const poolStateOf = poolStates ?? new Map();
+      const problems = readErrors ?? [];
+
+      const created = [];
+      const updated = [];
+      const unchanged = [];
+      const cardWrites = [];
+      const poolWrites = [];
+
+      // 카드 id와 풀 id는 별개 네임스페이스다(각각 Cards/·Pools/ 폴더) - 같은 이름이 우연히
+      // 겹쳐도 서로를 가리지 않도록 이름 집합·기록 집합을 카드용·풀용으로 나눠 계산한다.
+      const storedCardNames = new Set((storedCards ?? []).map((card) => cardFile(card.id)));
+      const storedPoolNames = new Set((storedPools ?? []).map((pool) => cardFile(pool.id)));
+      const writtenCardNames = new Set();
+      const writtenPoolNames = new Set();
+
+      /// 신규와 수정을 상태가 아니라 '저장소에 그 이름의 파일이 있었나'로 가른다. id를 바꾼
+      /// 카드는 상태가 modified지만 파일 이름이 새것이라 신규로 나가야 하고, 옛 이름은 아래에서
+      /// 미참조가 된다.
+      const record = (name, state, segments, storedNames, writtenNames, writeList, text) => {
+        // 미참조 오판을 막기 위해 상태와 무관하게 '다뤘다'는 기록은 남긴다 - conflict도
+        // 마찬가지다(아래에서 쓰기 목록에는 넣지 않는다).
+        writtenNames.add(name);
+        if (state === "same") {
+          unchanged.push(name);
+          return;
+        }
+        // conflict은 저장소와 내 변경 중 하나를 사용자가 고르게 하는 것이 설계 결정이다(설계
+        // 12) - 자동으로 어느 한쪽을 덮어쓰지 않도록 쓰기 목록 밖에 둔다. blocked가 이미
+        // 이유를 보고하므로 여기서는 조용히 건너뛴다.
+        if (state === "conflict") return;
+        writeList.push({ segments: [...segments, name], name, text });
+        (storedNames.has(name) ? updated : created).push(name);
+      };
+
+      for (const card of cards ?? []) {
+        record(
+          cardFile(card.id), states.get(card.uid) ?? "same",
+          CONTENT_PATHS.cards, storedCardNames, writtenCardNames, cardWrites,
+          writeCardJson(card, schema));
+      }
+
+      for (const pool of pools ?? []) {
+        record(
+          cardFile(pool.id), poolStateOf.get(pool.id) ?? "same",
+          CONTENT_PATHS.pools, storedPoolNames, writtenPoolNames, poolWrites,
+          writePoolJson(pool));
+      }
+
+      const cardErrorNames = new Set(
+        problems.filter((entry) => entry.scope === "card").map((entry) => entry.name));
+      const poolErrorNames = new Set(
+        problems.filter((entry) => entry.scope === "pool").map((entry) => entry.name));
+      const unreferencedCards = [...storedCardNames]
+        .filter((name) => !writtenCardNames.has(name) && !cardErrorNames.has(name));
+      const unreferencedPools = [...storedPoolNames]
+        .filter((name) => !writtenPoolNames.has(name) && !poolErrorNames.has(name));
+      const unreferenced = [...unreferencedCards, ...unreferencedPools];
+
+      // 이번 계획이 덮어쓸 파일에 대응하는 읽기 오류는 차단 사유·요약 목록에서 뺀다. 그 파일은
+      // 쓰는 순간 고쳐지므로(applyRawRepair가 메모리에서 승격시키고 이 계획이 실제로 쓴다) 막을
+      // 이유가 없다 - 그대로 두면 "반드시 고쳐야 내보낼 수 있다"가 노트북 밖에서만 풀리는
+      // 막다른 길이 되고, 같은 파일이 신규/수정과 읽기 오류에 동시에 떠 모순으로 보인다.
+      // scope가 "status"·"file"인 읽기 오류는 이번 계획이 쓰는 대상이 아니므로 늘 차단 사유로
+      // 남는다.
+      //
+      // 판정을 writtenCardNames가 아니라 '실제로 쓰는 목록'과 맞춘다. writtenNames에는 쓰지
+      // 않는 same·conflict도 들어가는데(미참조 오인을 막으려고 그렇게 했다), same인 카드가
+      // 깨진 동명 파일과 겹치면 - 파일명과 id가 다를 때 일어난다 - 아무 데도 뜨지 않은 채
+      // 깨진 파일이 남고 부팅이 실패한다. conflict는 그 자체가 차단 사유라 무해하지만 same은
+      // 아니므로, 예외를 실제 쓰기로만 좁힌다.
+      const cardWriteNames = new Set(cardWrites.map((entry) => entry.name));
+      const poolWriteNames = new Set(poolWrites.map((entry) => entry.name));
+      const isResolvedByThisPlan = (entry) => {
+        if (entry.scope === "card") return cardWriteNames.has(entry.name);
+        if (entry.scope === "pool") return poolWriteNames.has(entry.name);
+        return false;
+      };
+      const blockingErrors = problems.filter((entry) => !isResolvedByThisPlan(entry));
+      const errorNames = blockingErrors.map((entry) => entry.name);
+
+      const blocked = [];
+      if (errorNames.length) {
+        blocked.push(`읽기 오류 ${errorNames.length}개를 고쳐야 내보낼 수 있습니다.`);
+      }
+      const conflicts = [...states.values(), ...poolStateOf.values()]
+        .filter((state) => state === "conflict").length;
+      if (conflicts) blocked.push(`충돌 ${conflicts}개를 해결해야 내보낼 수 있습니다.`);
+      const errorCount = (validation?.errors ?? []).length;
+      if (errorCount) blocked.push(`검증 오류 ${errorCount}개를 고쳐야 내보낼 수 있습니다.`);
+
+      const sorted = (list) => [...list].sort();
+      const byName = (a, b) => a.name.localeCompare(b.name);
+      return {
+        // 카드를 풀보다 먼저 쓴다 - PoolContentLoader.Load가 부팅 시 cards.Catalog를 요구하고
+        // (ContentBootstrap과 같은 이유, 설계 10.1), Unity가 폴더를 감시하며 즉시 재임포트하므로
+        // 풀이 먼저 반영되면 아직 없는 카드를 참조한다는 경고가 일시적으로 뜬다.
+        writes: [...cardWrites.sort(byName), ...poolWrites.sort(byName)],
+        created: sorted(created),
+        updated: sorted(updated),
+        unchanged: sorted(unchanged),
+        unreferenced: sorted(unreferenced),
+        readErrors: sorted(errorNames),
+        blocked,
+        summaryLine:
+          `신규 ${created.length} · 수정 ${updated.length} · 변경 없음 ${unchanged.length}`,
+      };
+    }
+
     /// 노트북이 아는 저장소 경로 넷(설계 3). 세그먼트 배열인 것은 File System Access API가
     /// 경로 문자열이 아니라 디렉터리 핸들을 한 칸씩 타고 내려가기 때문이다.
     const CONTENT_PATHS = Object.freeze({
@@ -2519,14 +1445,35 @@
       ];
     }
 
-    /// Markdown 경로의 STORAGE_KEY와 별개다. 그쪽은 아직 살아 있고 SCHEMA_VERSION을 올리면
-    /// 그 자리에서 깨지므로, 미반영은 자체 키와 자체 버전을 쓴다. 설계 14의 6 → 7 전환은
-    /// Markdown 경로를 지우는 계획 D가 맡는다.
+    /// STORAGE_KEY와 별개다. STORAGE_KEY는 이제 HANDLE_DB_NAME의 이름 공간 접두사로만 쓰이므로,
+    /// 미반영은 자체 키와 자체 버전을 쓴다.
     const PENDING_STORAGE_KEY = "fate-weaver.card-idea-notebook.pending";
-    const PENDING_VERSION = 1;
+
+    /// 설계 14: 옛 데이터는 능력이 자유 텍스트라 자동 변환이 불가능하다. 지우지 않고 옮긴 뒤
+    /// 안내한다 - 저장소의 카드 26장을 읽으면 대부분 복원된다.
+    /// 백업이 이미 있으면 아무것도 하지 않는다. 두 번째 백업으로 첫 백업을 덮으면 정작 지키려던
+    /// 것을 잃는다.
+    const LEGACY_MIGRATION_NOTE =
+      "Markdown 시절의 저작 데이터를 백업으로 옮겼습니다."
+      + " 노트북은 이제 저장소 JSON만 저작합니다 - 폴더를 연결해 주세요.";
+
+    function migrateLegacyStore(storage) {
+      const legacy = storage.getItem(STORAGE_KEY);
+      if (legacy === null) return { moved: false, note: "" };
+      if (storage.getItem(LEGACY_BACKUP_KEY) !== null) return { moved: false, note: "" };
+
+      try {
+        storage.setItem(LEGACY_BACKUP_KEY, legacy);
+        storage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        return { moved: false, note: `옛 데이터를 옮기지 못했습니다: ${error?.message ?? error}` };
+      }
+
+      return { moved: true, note: LEGACY_MIGRATION_NOTE };
+    }
 
     function emptyPending() {
-      return { version: PENDING_VERSION, cards: {}, pools: {} };
+      return { version: SCHEMA_VERSION, cards: {}, pools: {} };
     }
 
     function readPending(storage) {
@@ -2543,7 +1490,9 @@
         };
       }
 
-      if (!saved || saved.version !== PENDING_VERSION) {
+      /// 계획 C가 쓴 버전 1은 모양이 지금과 같다. 거부하면 그때의 미반영 편집이 조용히 사라지므로
+      /// 받아들이고 올린다.
+      if (!saved || ![1, SCHEMA_VERSION].includes(saved.version)) {
         return {
           pending: emptyPending(),
           errors: [`지원하지 않는 미반영 데이터 버전: ${saved?.version}`],
@@ -2552,7 +1501,7 @@
 
       return {
         pending: {
-          version: PENDING_VERSION,
+          version: SCHEMA_VERSION,
           cards: { ...(saved.cards ?? {}) },
           pools: { ...(saved.pools ?? {}) },
         },
@@ -2621,6 +1570,8 @@
 
     globalThis.CardIdeaNotebook = Object.freeze({
       PENDING_STORAGE_KEY,
+      LEGACY_BACKUP_KEY,
+      migrateLegacyStore,
       emptyPending,
       readPending,
       writePending,
@@ -2664,811 +1615,12 @@
       validateContent,
       resolveCardState,
       resolvePoolState,
+      diffLines,
+      exportPlan,
       emptyConditionValue,
-      ROLE_LABELS,
-      FACTION_LABELS,
-      GRADE_LABELS,
-      TARGETS,
       SCHEMA_VERSION,
       STORAGE_KEY,
-      SAVE_PICKER_ID,
-      emptyCard,
-      normalizeCard,
-      changeCardFaction,
-      validateCard,
-      isCardComplete,
-      targetSummary,
-      cardMarkdown,
-      bundleMarkdown,
-      parseBundleMarkdown,
-      initialState,
-      writeStore,
-      readStore,
-      readStoreSession,
-      tryWriteStore,
-      selectedCards,
-      cardsForExport,
-      downloadFileName,
-      isMarkdownFileName,
-      saveFilePickerOptions,
-      isPickerCancel,
-      supportsSavePicker,
-      uniqueCardName,
-      createCard,
-      editCard,
-      editTargetCards,
-      isFieldApplicable,
-      fieldAggregate,
-      editSelectedField,
-      saveCard,
-      saveAllCards,
-      importCards,
-      bulkSelection,
-      selectCard,
-      reorderCards,
-      duplicateCard,
-      deletionIds,
-      deleteCards,
-      deleteCard,
-      filteredCards,
-      exportStatus,
     });
-  })();
-  </script>
-  <script>
-  (() => {
-    "use strict";
-
-    const core = globalThis.CardIdeaNotebook;
-    const byId = (id) => document.getElementById(id);
-    const elements = {
-      storageStatus: byId("storage-status"),
-      cardCount: byId("card-count"),
-      cardList: byId("card-list"),
-      search: byId("search"),
-      selectAll: byId("select-all"),
-      newCard: byId("new-card"),
-      duplicateCard: byId("duplicate-card"),
-      deleteCard: byId("delete-card"),
-      importMarkdown: byId("import-markdown"),
-      importFile: byId("import-file"),
-      exportFileName: byId("export-file-name"),
-      exportMarkdown: byId("export-markdown"),
-      exportDialog: byId("export-dialog"),
-      exportForm: byId("export-form"),
-      exportDialogName: byId("export-dialog-name"),
-      saveCard: byId("save-card"),
-      saveAllCards: byId("save-all-cards"),
-      editorTitle: byId("editor-title"),
-      completionBadge: byId("completion-badge"),
-      form: byId("card-form"),
-      validation: byId("validation"),
-      name: byId("card-name"),
-      faction: byId("card-faction"),
-      grade: byId("card-grade"),
-      role: byId("card-role"),
-      cost: byId("card-cost"),
-      executionOrderField: byId("execution-order-field"),
-      executionOrder: byId("execution-order"),
-      tags: byId("card-tags"),
-      allyTarget: byId("ally-target"),
-      enemyTarget: byId("enemy-target"),
-      allyGlyph: byId("ally-glyph"),
-      enemyGlyph: byId("enemy-glyph"),
-      targetSummary: byId("target-summary"),
-      enemyAbilities: byId("enemy-abilities"),
-      allyAbilities: byId("ally-abilities"),
-      noneAbilities: byId("none-abilities"),
-      notes: byId("card-notes"),
-      markdownPreview: byId("markdown-preview"),
-      deleteDialog: byId("delete-dialog"),
-      deleteMessage: byId("delete-message"),
-      toast: byId("toast"),
-    };
-
-    let state;
-    let storageWritable = true;
-    let persistFailed = false;
-    let toastTimer = 0;
-    let pendingDeleteCardIds = [];
-    let draggedCardId = "";
-    let selectionAnchorId = "";
-
-    function showToast(message) {
-      window.clearTimeout(toastTimer);
-      elements.toast.textContent = message;
-      elements.toast.classList.add("visible");
-      toastTimer = window.setTimeout(() => elements.toast.classList.remove("visible"), 2600);
-    }
-
-    function activeCard() {
-      return state.cards.find((card) => card.id === state.activeCardId) ?? null;
-    }
-
-    function fieldControls() {
-      return new Map([
-        ["name", elements.name],
-        ["faction", elements.faction],
-        ["grade", elements.grade],
-        ["cost", elements.cost],
-        ["role", elements.role],
-        ["executionOrder", elements.executionOrder],
-        ["tags", elements.tags],
-        ["targets.ally", elements.allyTarget],
-        ["targets.enemy", elements.enemyTarget],
-        ["abilities.enemy", elements.enemyAbilities],
-        ["abilities.ally", elements.allyAbilities],
-        ["abilities.none", elements.noneAbilities],
-        ["notes", elements.notes],
-      ]);
-    }
-
-    function editTargets() {
-      return core.editTargetCards(state);
-    }
-
-    function renderValidation() {
-      const card = activeCard();
-      const result = card ? core.validateCard(card) : { errors: [], warnings: [] };
-      const messages = card
-        ? [
-          ...result.errors.map((message) => ({ kind: "error", message })),
-          ...result.warnings.map((message) => ({ kind: "warning", message })),
-        ]
-        : [{ kind: "warning", message: "새 카드를 만들거나 목록에서 카드를 선택하세요." }];
-      if (!storageWritable) {
-        messages.unshift({
-          kind: "error",
-          message: "기존 저장 데이터를 읽을 수 없어 보호 중입니다. 이 세션에서는 저장할 수 없습니다.",
-        });
-      } else if (persistFailed) {
-        messages.unshift({
-          kind: "error",
-          message: "브라우저 보존에 실패했습니다. 다음 변경에서 전체 상태 저장을 다시 시도합니다.",
-        });
-      }
-      if (!messages.length) {
-        messages.push({ kind: "ok", message: "저장할 수 있는 상태입니다." });
-      }
-
-      elements.validation.replaceChildren(...messages.map(({ kind, message }) => {
-        const node = document.createElement("div");
-        node.className = `message ${kind}`;
-        node.textContent = message;
-        return node;
-      }));
-    }
-
-    function renderTargets() {
-      const ally = core.fieldAggregate(state, "targets.ally");
-      const enemy = core.fieldAggregate(state, "targets.enemy");
-      elements.allyGlyph.textContent = ally.kind === "mixed"
-        ? "혼합"
-        : core.TARGETS[ally.value]?.ally || "없음";
-      elements.enemyGlyph.textContent = enemy.kind === "mixed"
-        ? "혼합"
-        : core.TARGETS[enemy.value]?.enemy || "없음";
-      elements.targetSummary.textContent = ally.kind === "mixed" || enemy.kind === "mixed"
-        ? "혼합 대상"
-        : core.targetSummary({
-          targets: {
-            ally: ally.value || "none",
-            enemy: enemy.value || "none",
-          },
-        }).replaceAll("`", "");
-    }
-
-    function renderDerived() {
-      const card = activeCard();
-      const status = card?.completionStatus ?? "incomplete";
-      const selectedCount = core.selectedCards(state).length;
-      elements.editorTitle.textContent = selectedCount > 1
-        ? `${selectedCount}장 선택`
-        : card?.name || "선택된 카드 없음";
-      elements.completionBadge.textContent = status === "complete" ? "완성" : "미완성";
-      elements.completionBadge.className = `completion-badge ${status}`;
-      elements.completionBadge.classList.toggle("hidden", !card);
-      const executionOrder = core.fieldAggregate(state, "executionOrder");
-      elements.executionOrderField.classList.toggle("hidden", executionOrder.applicableCount === 0);
-      elements.markdownPreview.textContent = card ? core.cardMarkdown(card) : "";
-      elements.saveCard.disabled = !card;
-      elements.saveAllCards.disabled = state.cards.length === 0;
-      renderTargets();
-      renderValidation();
-      renderStorageStatus();
-    }
-
-    function removeMixedOption(control) {
-      control.querySelector('option[data-mixed="true"]')?.remove();
-    }
-
-    function showMixedOption(control) {
-      removeMixedOption(control);
-      const option = document.createElement("option");
-      option.value = "__mixed";
-      option.textContent = "혼합";
-      option.disabled = true;
-      option.dataset.mixed = "true";
-      control.append(option);
-      control.value = "__mixed";
-    }
-
-    function renderForm() {
-      const targets = editTargets();
-      const hasTargets = targets.length > 0;
-      const allEnemies = hasTargets && targets.every((card) => card.faction === "enemy");
-      elements.cost.type = allEnemies ? "text" : "number";
-      for (const [field, control] of fieldControls()) {
-        const aggregate = core.fieldAggregate(state, field);
-        const isSelect = control.tagName === "SELECT";
-        if (isSelect) removeMixedOption(control);
-
-        if (aggregate.kind === "mixed") {
-          if (isSelect) showMixedOption(control);
-          else {
-            control.value = "";
-            control.placeholder = "혼합 값";
-          }
-        } else if (aggregate.kind === "common") {
-          control.value = aggregate.value;
-          if (!isSelect) control.placeholder = control.dataset.defaultPlaceholder ?? "";
-        } else if (allEnemies && field === "grade") {
-          control.value = "none";
-        } else if (allEnemies && field === "cost") {
-          control.value = "없음";
-        } else if (allEnemies && field === "role") {
-          control.value = "execution";
-        } else {
-          control.value = "";
-          if (!isSelect) control.placeholder = control.dataset.defaultPlaceholder ?? "";
-        }
-        control.disabled = !hasTargets || aggregate.applicableCount === 0;
-      }
-
-      if (allEnemies) elements.cost.placeholder = "";
-      renderDerived();
-    }
-
-    function clearDragStyles() {
-      for (const row of elements.cardList.querySelectorAll(".card-row")) {
-        row.classList.remove("dragging", "drop-before", "drop-after");
-      }
-    }
-
-    function cardRow(card) {
-      const validation = core.validateCard(card);
-      const row = document.createElement("div");
-      row.className = [
-        "card-row",
-        card.id === state.activeCardId ? "active" : "",
-        state.selection.includes(card.id) ? "selected" : "",
-      ].filter(Boolean).join(" ");
-
-      const dragDisabled = Boolean(state.searchQuery.trim());
-      const handle = document.createElement("button");
-      handle.type = "button";
-      handle.className = "drag-handle";
-      handle.textContent = "⠿";
-      handle.draggable = !dragDisabled;
-      handle.disabled = dragDisabled;
-      handle.title = dragDisabled
-        ? "검색 중에는 순서를 변경할 수 없습니다."
-        : "드래그하여 카드 순서 변경";
-      handle.setAttribute("aria-label", `${card.name || "이름 없는 카드"} 순서 변경`);
-      handle.addEventListener("dragstart", (event) => {
-        if (dragDisabled) {
-          event.preventDefault();
-          return;
-        }
-        draggedCardId = card.id;
-        if (event.dataTransfer) {
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", card.id);
-        }
-        row.classList.add("dragging");
-      });
-      handle.addEventListener("dragend", () => {
-        draggedCardId = "";
-        clearDragStyles();
-      });
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = "selection-check";
-      checkbox.checked = state.selection.includes(card.id);
-      checkbox.title = "삭제, Markdown 내보내기 또는 다중 편집에 사용할 카드 선택";
-      checkbox.setAttribute("aria-label", `${card.name} 선택`);
-      checkbox.addEventListener("click", (event) => {
-        event.preventDefault();
-        selectFromEvent(card.id, event, "toggle");
-      });
-
-      const select = document.createElement("button");
-      select.type = "button";
-      select.className = "card-select";
-      select.addEventListener("click", (event) => selectFromEvent(card.id, event, "replace"));
-
-      const name = document.createElement("div");
-      name.className = "card-name";
-      name.textContent = card.name || "이름 없는 카드";
-
-      const meta = document.createElement("div");
-      meta.className = "card-meta";
-      const faction = document.createElement("span");
-      faction.className = `faction-pill ${card.faction}`;
-      faction.textContent = core.FACTION_LABELS[card.faction];
-      const grade = document.createElement("span");
-      grade.className = "grade-pill";
-      grade.textContent = core.GRADE_LABELS[card.grade];
-      const role = document.createElement("span");
-      role.className = "role-pill";
-      role.textContent = core.ROLE_LABELS[card.role];
-      const completion = document.createElement("span");
-      completion.className = `completion-pill ${card.completionStatus}`;
-      completion.textContent = card.completionStatus === "complete" ? "완성" : "미완성";
-      meta.append(faction, grade, role, completion);
-      for (const tagText of card.tags.slice(0, 3)) {
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.textContent = tagText;
-        meta.append(tag);
-      }
-      const issueCount = validation.errors.length + validation.warnings.length;
-      if (issueCount) {
-        const warning = document.createElement("span");
-        warning.className = "warning-dot";
-        warning.textContent = `▲ ${issueCount}`;
-        warning.title = [...validation.errors, ...validation.warnings].join("\n");
-        meta.append(warning);
-      }
-      select.append(name, meta);
-      row.addEventListener("dragover", (event) => {
-        if (!draggedCardId || dragDisabled || draggedCardId === card.id) return;
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-        const bounds = row.getBoundingClientRect();
-        const placement = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
-        row.classList.toggle("drop-before", placement === "before");
-        row.classList.toggle("drop-after", placement === "after");
-      });
-      row.addEventListener("dragleave", (event) => {
-        if (!row.contains(event.relatedTarget)) {
-          row.classList.remove("drop-before", "drop-after");
-        }
-      });
-      row.addEventListener("drop", (event) => {
-        if (!draggedCardId || dragDisabled || draggedCardId === card.id) return;
-        event.preventDefault();
-        const bounds = row.getBoundingClientRect();
-        const placement = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
-        const nextState = core.reorderCards(state, draggedCardId, card.id, placement);
-        draggedCardId = "";
-        clearDragStyles();
-        if (nextState !== state) persistRegular(nextState);
-        renderList();
-      });
-      row.append(handle, checkbox, select);
-      return row;
-    }
-
-    function renderList() {
-      const cards = core.filteredCards(state.cards, state.searchQuery);
-      elements.cardCount.textContent = String(state.cards.length);
-      elements.cardList.replaceChildren();
-      if (!cards.length) {
-        const empty = document.createElement("p");
-        empty.className = "empty-list";
-        empty.textContent = state.cards.length
-          ? "검색 조건에 맞는 카드가 없습니다."
-          : "아직 카드가 없습니다.\n새 카드를 만들어 아이디어를 기록하세요.";
-        empty.style.whiteSpace = "pre-line";
-        elements.cardList.append(empty);
-      } else {
-        elements.cardList.append(...cards.map(cardRow));
-      }
-
-      const current = activeCard();
-      elements.duplicateCard.disabled = !current;
-      elements.deleteCard.disabled = core.deletionIds(state).length === 0;
-      const cardIds = state.cards.map((card) => card.id);
-      const selectedCount = cardIds.filter((id) => state.selection.includes(id)).length;
-      elements.selectAll.disabled = cardIds.length === 0;
-      elements.selectAll.checked = cardIds.length > 0 && selectedCount === cardIds.length;
-      elements.selectAll.indeterminate = selectedCount > 0 && selectedCount < cardIds.length;
-    }
-
-    function renderAll() {
-      elements.search.value = state.searchQuery;
-      elements.exportFileName.value = state.exportFileName;
-      renderList();
-      renderForm();
-    }
-
-    function selectFromEvent(id, event, plainMode) {
-      const mode = event.shiftKey
-        ? "range"
-        : event.ctrlKey || event.metaKey
-          ? "toggle"
-          : plainMode;
-      const visibleIds = core.filteredCards(state.cards, state.searchQuery)
-        .map((card) => card.id);
-      const result = core.selectCard(state, visibleIds, id, mode, selectionAnchorId);
-      selectionAnchorId = result.anchorId;
-      persistRegular(result.state);
-      renderAll();
-    }
-
-    function newCard() {
-      persistRegular(core.createCard(state, {
-        id: generatedId(),
-        now: new Date().toISOString(),
-      }));
-      selectionAnchorId = state.activeCardId;
-      renderAll();
-      elements.name.focus();
-    }
-
-    function generatedId() {
-      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-      return `card-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-    }
-
-    function renderStorageStatus() {
-      if (!storageWritable) {
-        elements.storageStatus.textContent = "저장 데이터 읽기 실패 · 기존 데이터 보호 중";
-      } else if (persistFailed) {
-        elements.storageStatus.textContent = "보존 실패 · 다음 변경에서 재시도";
-      } else {
-        elements.storageStatus.textContent = "브라우저 로컬 저장 · 즉시 보존";
-      }
-    }
-
-    function persistRegular(nextState) {
-      state = nextState;
-      if (!storageWritable) {
-        persistFailed = true;
-        renderStorageStatus();
-        return false;
-      }
-      const result = core.tryWriteStore(localStorage, state);
-      persistFailed = result.persistFailed;
-      if (persistFailed) showToast(`보존 실패: ${result.error}`);
-      renderStorageStatus();
-      return !persistFailed;
-    }
-
-    function saveCurrent() {
-      const card = activeCard();
-      if (!card) return false;
-      try {
-        const savedState = core.saveCard(state, card.id, {
-          now: new Date().toISOString(),
-        });
-        const persisted = persistRegular(savedState);
-        const savedCard = savedState.cards.find((candidate) => candidate.id === card.id);
-        const statusLabel = savedCard?.completionStatus === "complete" ? "완성" : "미완성";
-        renderAll();
-        showToast(persisted
-          ? `카드를 ${statusLabel} 상태로 저장했습니다.`
-          : `${statusLabel} 상태로 판정했지만 브라우저 보존에 실패했습니다.`);
-        return persisted;
-      } catch (error) {
-        renderDerived();
-        showToast(error instanceof Error ? error.message : "카드를 저장하지 못했습니다.");
-        return false;
-      }
-    }
-
-    function saveAll() {
-      if (!state.cards.length) return false;
-      try {
-        const savedState = core.saveAllCards(state, {
-          now: new Date().toISOString(),
-        });
-        const completeCount = savedState.cards
-          .filter((card) => card.completionStatus === "complete").length;
-        const incompleteCount = savedState.cards.length - completeCount;
-        const persisted = persistRegular(savedState);
-        renderAll();
-        showToast(persisted
-          ? `전체 저장: 완성 ${completeCount}장, 미완성 ${incompleteCount}장`
-          : "전체 상태를 판정했지만 브라우저 보존에 실패했습니다.");
-        return persisted;
-      } catch (error) {
-        renderAll();
-        showToast(error instanceof Error ? error.message : "전체 카드를 저장하지 못했습니다.");
-        return false;
-      }
-    }
-
-    function confirmDelete() {
-      const ids = core.deletionIds(state);
-      if (!ids.length) return;
-      pendingDeleteCardIds = [...ids];
-      if (ids.length === 1) {
-        const card = state.cards.find((candidate) => candidate.id === ids[0]);
-        elements.deleteMessage.textContent = `“${card?.name || "이름 없는 카드"}”을 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
-      } else {
-        elements.deleteMessage.textContent = `선택한 ${ids.length}장의 카드를 삭제합니다. 삭제한 카드는 복구할 수 없습니다.`;
-      }
-      elements.deleteDialog.showModal();
-    }
-
-    function deleteCurrent() {
-      const ids = pendingDeleteCardIds.filter((id) =>
-        state.cards.some((card) => card.id === id));
-      if (!ids.length) {
-        pendingDeleteCardIds = [];
-        elements.deleteDialog.close();
-        showToast("삭제할 카드를 찾을 수 없습니다.");
-        return;
-      }
-      try {
-        if (!storageWritable) {
-          throw new Error("기존 저장 데이터를 보호하기 위해 삭제를 중단했습니다.");
-        }
-        const nextState = core.deleteCards(state, ids);
-        core.writeStore(localStorage, nextState);
-        state = nextState;
-        selectionAnchorId = state.activeCardId;
-        persistFailed = false;
-        pendingDeleteCardIds = [];
-        elements.deleteDialog.close();
-        renderAll();
-        showToast(ids.length === 1 ? "카드를 삭제했습니다." : `${ids.length}장의 카드를 삭제했습니다.`);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : "카드를 삭제하지 못했습니다.");
-      }
-    }
-
-    const HANDLE_DB_NAME = `${core.STORAGE_KEY}.handles`;
-    const HANDLE_STORE = "handles";
-    const HANDLE_KEY = "lastExport";
-    let lastExportHandle = null;
-
-    function openHandleDb() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(HANDLE_DB_NAME, 1);
-        request.onupgradeneeded = () => request.result.createObjectStore(HANDLE_STORE);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-        request.onblocked = () => reject(new Error("파일 위치 기억 저장소를 열 수 없습니다."));
-      });
-    }
-
-    async function withHandleStore(mode, run) {
-      const db = await openHandleDb();
-      try {
-        return await new Promise((resolve, reject) => {
-          const request = run(db.transaction(HANDLE_STORE, mode).objectStore(HANDLE_STORE));
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        });
-      } finally {
-        db.close();
-      }
-    }
-
-    // 위치 기억은 부가 기능이므로, 저장소를 못 쓰는 브라우저에서도 내보내기 자체는 막지 않는다.
-    async function loadLastExportHandle() {
-      try {
-        lastExportHandle = (await withHandleStore("readonly", (store) => store.get(HANDLE_KEY))) ?? null;
-      } catch {
-        lastExportHandle = null;
-      }
-    }
-
-    async function rememberExportHandle(handle) {
-      try {
-        await withHandleStore("readwrite", (store) => store.put(handle, HANDLE_KEY));
-      } catch {
-        /* 다음 내보내기에서 브라우저 기본 위치로 시작할 뿐 저장 결과에는 영향이 없다. */
-      }
-    }
-
-    function downloadMarkdown(markdown, fileName, count) {
-      const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = fileName;
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      showToast(`${count}장의 완성 카드를 Markdown으로 내보냈습니다.`);
-    }
-
-    function downloadSelectedCards(fileName) {
-      const cards = core.cardsForExport(state);
-      const date = new Date().toISOString().slice(0, 10);
-      const markdown = core.bundleMarkdown(cards, date);
-      downloadMarkdown(markdown, core.downloadFileName(fileName, date), cards.length);
-    }
-
-    async function saveSelectedCardsToPickedFile(fileName) {
-      const cards = core.cardsForExport(state);
-      const date = new Date().toISOString().slice(0, 10);
-      const markdown = core.bundleMarkdown(cards, date);
-      const options = core.saveFilePickerOptions(fileName, date);
-      // 마지막 저장 위치는 사용자 제스처 이전에 미리 읽어 두어 선택창 호출을 지연시키지 않는다.
-      if (lastExportHandle) options.startIn = lastExportHandle;
-      let handle;
-      try {
-        handle = await window.showSaveFilePicker(options);
-      } catch (error) {
-        if (core.isPickerCancel(error)) return;
-        downloadMarkdown(markdown, options.suggestedName, cards.length);
-        return;
-      }
-      try {
-        const writable = await handle.createWritable();
-        await writable.write(markdown);
-        await writable.close();
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : "Markdown을 저장하지 못했습니다.");
-        return;
-      }
-      lastExportHandle = handle;
-      rememberExportHandle(handle);
-      showToast(`${cards.length}장의 완성 카드를 ${handle.name}으로 저장했습니다.`);
-    }
-
-    function exportMarkdown() {
-      const status = core.exportStatus(state);
-      if (status.kind === "error") {
-        showToast(status.message);
-        return;
-      }
-      if (core.supportsSavePicker(window)) {
-        saveSelectedCardsToPickedFile(state.exportFileName);
-        return;
-      }
-      elements.exportDialogName.value = state.exportFileName;
-      elements.exportDialog.showModal();
-      elements.exportDialogName.focus();
-      elements.exportDialogName.select();
-    }
-
-    async function importMarkdownFile(file) {
-      if (!file) return;
-      try {
-        if (!core.isMarkdownFileName(file.name)) {
-          throw new Error("Markdown(.md) 파일만 불러올 수 있습니다.");
-        }
-        if (!storageWritable) {
-          throw new Error("기존 저장 데이터를 보호하기 위해 불러오기를 중단했습니다.");
-        }
-        const markdown = await file.text();
-        const parsed = core.parseBundleMarkdown(markdown);
-        const nextState = core.importCards(state, markdown, {
-          ids: parsed.map(() => generatedId()),
-          now: new Date().toISOString(),
-        });
-        core.writeStore(localStorage, nextState);
-        state = nextState;
-        selectionAnchorId = state.activeCardId;
-        persistFailed = false;
-        renderAll();
-        showToast(`${parsed.length}장의 카드를 불러왔습니다.`);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : "Markdown을 불러오지 못했습니다.");
-      } finally {
-        elements.importFile.value = "";
-      }
-    }
-
-    for (const [value, target] of Object.entries(core.TARGETS)) {
-      for (const select of [elements.allyTarget, elements.enemyTarget]) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = target.label;
-        select.append(option);
-      }
-    }
-    for (const control of elements.form.querySelectorAll("input, textarea")) {
-      control.dataset.defaultPlaceholder = control.placeholder;
-    }
-
-    const storageSession = core.readStoreSession(localStorage);
-    state = storageSession.state;
-    storageWritable = storageSession.writable;
-    if (!storageWritable) {
-      window.setTimeout(() => showToast(storageSession.error), 0);
-    }
-
-    const initialCard = state.cards.find((card) => card.id === state.activeCardId) ?? state.cards[0] ?? null;
-    if (initialCard) {
-      state.activeCardId = initialCard.id;
-    }
-    selectionAnchorId = state.activeCardId;
-
-    elements.form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      saveCurrent();
-    });
-    elements.saveCard.addEventListener("click", saveCurrent);
-    elements.saveAllCards.addEventListener("click", saveAll);
-    elements.newCard.addEventListener("click", newCard);
-    elements.duplicateCard.addEventListener("click", () => {
-      persistRegular(core.duplicateCard(state, state.activeCardId, {
-        id: generatedId(),
-        now: new Date().toISOString(),
-      }));
-      selectionAnchorId = state.activeCardId;
-      renderAll();
-      elements.name.focus();
-    });
-    elements.deleteCard.addEventListener("click", confirmDelete);
-    elements.selectAll.addEventListener("change", () => {
-      persistRegular(core.bulkSelection(state, elements.selectAll.checked));
-      renderAll();
-    });
-    elements.importMarkdown.addEventListener("click", () => elements.importFile.click());
-    elements.importFile.addEventListener("change", () => importMarkdownFile(elements.importFile.files?.[0]));
-    elements.exportFileName.addEventListener("input", () => {
-      persistRegular({ ...state, exportFileName: elements.exportFileName.value });
-    });
-    elements.exportMarkdown.addEventListener("click", exportMarkdown);
-    elements.exportForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      downloadSelectedCards(elements.exportDialogName.value);
-      elements.exportDialog.close();
-    });
-    elements.exportDialog.addEventListener("click", (event) => {
-      if (event.target.closest("[data-export-action]")?.dataset.exportAction === "cancel") {
-        elements.exportDialog.close();
-      }
-    });
-    elements.search.addEventListener("input", () => {
-      persistRegular({ ...state, searchQuery: elements.search.value });
-      renderList();
-    });
-    function applyFormField(control, renderWholeForm) {
-      const field = control.dataset.cardField;
-      if (!field || control.disabled || control.value === "__mixed") return;
-      const nextState = core.editSelectedField(state, field, control.value);
-      if (nextState === state) return;
-      persistRegular(nextState);
-      if (renderWholeForm) renderAll();
-      else {
-        renderList();
-        renderDerived();
-      }
-    }
-    elements.form.addEventListener("input", (event) => {
-      const control = event.target.closest("[data-card-field]");
-      if (!control || control.tagName === "SELECT") return;
-      applyFormField(control, false);
-    });
-    elements.form.addEventListener("change", (event) => {
-      const control = event.target.closest("[data-card-field]");
-      if (!control) return;
-      applyFormField(control, control.tagName === "SELECT");
-    });
-    elements.deleteDialog.addEventListener("click", (event) => {
-      const action = event.target.closest("[data-delete-action]")?.dataset.deleteAction;
-      if (action === "cancel") {
-        pendingDeleteCardIds = [];
-        elements.deleteDialog.close();
-      }
-      if (action === "confirm") deleteCurrent();
-    });
-    window.addEventListener("keydown", (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "s") {
-        event.preventDefault();
-        if (event.shiftKey) saveAll();
-        else saveCurrent();
-      }
-    });
-    window.addEventListener("beforeunload", (event) => {
-      if (!persistFailed) return;
-      event.preventDefault();
-      event.returnValue = "";
-    });
-
-    renderAll();
-    if (core.supportsSavePicker(window)) loadLastExportHandle();
   })();
   </script>
 
@@ -3479,10 +1631,6 @@
     const core = globalThis.CardIdeaNotebook;
     const byId = (id) => document.getElementById(id);
     const elements = {
-      modeMarkdown: byId("mode-markdown"),
-      modeRepo: byId("mode-repo"),
-      markdownWorkspace: document.querySelector("main.workspace:not(.repo-workspace)"),
-      repoWorkspace: byId("repo-workspace"),
       connect: byId("repo-connect"),
       reload: byId("repo-reload"),
       unsupported: byId("repo-unsupported"),
@@ -3500,6 +1648,12 @@
       detail: byId("repo-detail"),
       sourceTitle: byId("repo-source-title"),
       source: byId("repo-source"),
+      sourceToggle: byId("repo-source-toggle"),
+      sourceDiff: byId("repo-source-diff"),
+      export: byId("repo-export"),
+      exportDialog: byId("repo-export-dialog"),
+      exportSummary: byId("repo-export-summary"),
+      exportConfirm: byId("repo-export-confirm"),
     };
 
     const HANDLE_DB_NAME = `${core.STORAGE_KEY}.handles`;
@@ -3520,7 +1674,7 @@
       cardsById: new Map(),
       cardsByUid: new Map(),
       membership: new Map(),
-      quarantined: [],
+      readErrors: [],
       validation: { errors: [], warnings: [] },
       cardStates: new Map(),
       poolStates: new Map(),
@@ -3570,8 +1724,10 @@
 
     /// 기억한 핸들은 새 탭에서 권한이 만료된다. 조용히 다시 묻지 않고 false를 돌려주면
     /// 호출부가 버튼을 누르게 한다 - 권한 요청은 사용자 제스처를 요구한다.
-    async function hasReadPermission(handle, interactive) {
-      const options = { mode: "read" };
+    /// 폴더는 처음부터 readwrite로 연다. 쓰기 시점에 승격하면 권한 요청이 사용자 제스처를
+    /// 요구해 내보내기 흐름이 두 번 끊긴다. 대신 연결 단계에서 한 번만 묻는다.
+    async function hasWritePermission(handle, interactive) {
+      const options = { mode: "readwrite" };
       if ((await handle.queryPermission(options)) === "granted") return true;
       if (!interactive) return false;
       return (await handle.requestPermission(options)) === "granted";
@@ -3617,14 +1773,14 @@
     /// 풀이 카드 id 배열이라 카드에 의존하기 때문이다(설계 10.1, ContentBootstrap과 같은 이유).
     async function loadRepo(root) {
       const schema = core.parseAuthoringSchema(await fileTextAt(root, core.CONTENT_PATHS.schema));
-      const quarantined = [];
+      const readErrors = [];
 
       const statusFolder = await readJsonFolder(root, core.CONTENT_PATHS.statuses);
       const statuses = [];
       for (const file of statusFolder.files) {
         const { status, errors } = core.readStatusJson(file.text);
         if (status) statuses.push(status);
-        else quarantined.push({ scope: "status", name: file.name, messages: errors });
+        else readErrors.push({ scope: "status", name: file.name, messages: errors, text: file.text });
       }
 
       const cardFolder = await readJsonFolder(root, core.CONTENT_PATHS.cards);
@@ -3632,7 +1788,7 @@
       for (const file of cardFolder.files) {
         const { card, errors } = core.readCardJson(file.text, schema);
         if (card) cards.push(card);
-        else quarantined.push({ scope: "card", name: file.name, messages: errors });
+        else readErrors.push({ scope: "card", name: file.name, messages: errors, text: file.text });
       }
 
       const poolFolder = await readJsonFolder(root, core.CONTENT_PATHS.pools);
@@ -3640,11 +1796,13 @@
       for (const file of poolFolder.files) {
         const { pool, errors } = core.readPoolJson(file.text);
         if (pool) pools.push(pool);
-        else quarantined.push({ scope: "pool", name: file.name, messages: errors });
+        else readErrors.push({ scope: "pool", name: file.name, messages: errors, text: file.text });
       }
 
-      quarantined.push(
-        ...statusFolder.failures, ...cardFolder.failures, ...poolFolder.failures);
+      readErrors.push(
+        ...statusFolder.failures.map((entry) => ({ ...entry, text: null })),
+        ...cardFolder.failures.map((entry) => ({ ...entry, text: null })),
+        ...poolFolder.failures.map((entry) => ({ ...entry, text: null })));
 
       const cardsById = new Map();
       const cardsByUid = new Map();
@@ -3684,7 +1842,7 @@
         cardsById,
         cardsByUid,
         membership: core.poolMembership(pools),
-        quarantined,
+        readErrors,
         validation: core.validateContent({
           cards, pools, statusKeys: statuses.map((status) => status.key), schema,
         }),
@@ -3796,7 +1954,7 @@
       try {
         const root = await window.showDirectoryPicker({
           id: "fateWeaverRepoRoot",
-          mode: "read",
+          mode: "readwrite",
         });
         await rememberRoot(root);
         applyLoaded(root, await loadRepo(root));
@@ -3804,6 +1962,200 @@
         if (error?.name === "AbortError") return;
         failWith(error);
       }
+    }
+
+    /// §12: 노트북은 파일을 지우지 않는다. createWritable은 자르고 다시 쓰므로 덮어쓰기만 한다.
+    async function writePlanFiles(root, writes) {
+      for (const entry of writes) {
+        const folder = await directoryAt(root, entry.segments.slice(0, -1));
+        const handle = await folder.getFileHandle(entry.name, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(entry.text);
+        await writable.close();
+      }
+    }
+
+    function fileGroup(title, names, note) {
+      if (!names.length) return null;
+      const group = document.createElement("div");
+      group.className = "export-group";
+      const heading = document.createElement("h3");
+      heading.textContent = note ? `${title} ${names.length} — ${note}` : `${title} ${names.length}`;
+      const list = document.createElement("ul");
+      for (const name of names) {
+        const item = document.createElement("li");
+        item.textContent = name;
+        list.append(item);
+      }
+      group.append(heading, list);
+      return group;
+    }
+
+    function renderExportSummary(plan, notice) {
+      elements.exportSummary.replaceChildren();
+
+      if (notice) {
+        const line = document.createElement("p");
+        line.className = "export-notice";
+        line.textContent = notice;
+        elements.exportSummary.append(line);
+      }
+
+      for (const reason of plan.blocked) {
+        const line = document.createElement("p");
+        line.className = "export-blocked";
+        line.textContent = `⚠ ${reason}`;
+        elements.exportSummary.append(line);
+      }
+
+      const line = document.createElement("p");
+      line.className = "export-line";
+      line.textContent = plan.summaryLine;
+      elements.exportSummary.append(line);
+
+      const groups = [
+        fileGroup("신규", plan.created),
+        fileGroup("수정", plan.updated),
+        fileGroup("읽기 오류", plan.readErrors, "고쳐야 내보낼 수 있습니다"),
+        fileGroup("미참조 파일", plan.unreferenced,
+          "노트북은 지우지 않습니다. 그대로 두어도 됩니다"),
+      ];
+      for (const group of groups) if (group) elements.exportSummary.append(group);
+
+      elements.exportConfirm.disabled = plan.blocked.length > 0 || plan.writes.length === 0;
+    }
+
+    let plannedExport = null;
+
+    async function exportToRepo() {
+      if (!repoStore.root) return;
+
+      // 직전 실패 메시지를 지운다 - 안 지우면 이번이 성공해도 다이얼로그가 열리는 동안
+      // 지난 실패 문구가 화면에 남는다.
+      repoStore.message = "";
+
+      // 권한을 먼저 확보한다 - await가 사용자 제스처를 소진하므로 재읽기보다 앞이어야 한다.
+      if (!(await hasWritePermission(repoStore.root, true))) {
+        repoStore.message = "쓰기 권한을 얻지 못했습니다. 폴더 연결을 다시 눌러 주세요.";
+        render();
+        return;
+      }
+
+      // 내보내기 직전에 다시 읽는다(설계 10.1). 외부 편집을 덮어쓰는 사고를 여기서 막는다.
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+      } catch (error) {
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
+
+      plannedExport = currentExportPlan();
+      renderExportSummary(plannedExport);
+      elements.exportDialog.showModal();
+    }
+
+    // exportToRepo 뒤에 둔다 - 함수 선언은 끌어올려지므로 위 호출과 무관하게 동작이 같고,
+    // 재읽기(await loadRepo)가 계획 계산(core.exportPlan)보다 먼저라는 순서를 소스 텍스트에서도
+    // 드러낸다(설계 10.1).
+    function currentExportPlan() {
+      return core.exportPlan({
+        cards: repoStore.cards,
+        pools: repoStore.pools,
+        storedCards: repoStore.storedCards,
+        storedPools: repoStore.storedPools,
+        cardStates: repoStore.cardStates,
+        poolStates: repoStore.poolStates,
+        readErrors: repoStore.readErrors,
+        validation: repoStore.validation,
+        schema: repoStore.schema,
+      });
+    }
+
+    /// 상태 맵에서 충돌 중인 항목의 식별자만 뽑아 정렬한다. 카드 uid와 풀 id는 별개
+    /// 네임스페이스라 접두사로 갈라 둔다(exportPlan의 이름 집합 분리와 같은 이유).
+    function conflictKeys(cardStates, poolStates) {
+      const keys = [];
+      for (const [uid, state] of cardStates ?? []) if (state === "conflict") keys.push(`card:${uid}`);
+      for (const [id, state] of poolStates ?? []) if (state === "conflict") keys.push(`pool:${id}`);
+      return keys.sort();
+    }
+
+    /// 계획 둘의 '같음'을 판정한다 - writes(파일 이름·내용)와 blocked만으로는 부족하다. blocked는
+    /// 충돌을 개수로만 담으므로, 카드 A가 충돌에서 풀리고 동시에 카드 B가 충돌이 되면 개수가 같아
+    /// 계획이 같아 보인다. 그래서 충돌 식별자 집합도 함께 비교한다.
+    function samePlan(a, b, conflictsA, conflictsB) {
+      const shape = (plan, conflicts) =>
+        JSON.stringify({ writes: plan.writes, blocked: plan.blocked, conflicts });
+      return shape(a, conflictsA) === shape(b, conflictsB);
+    }
+
+    /// 쓴 파일의 미반영을 비운다. 다시 읽으면 base가 방금 쓴 내용이 되므로 상태가 '저장소와 동일'로
+    /// 내려가지만, 미반영을 남겨 두면 localStorage가 영원히 자라고 다음 세션에서 되살아난다.
+    async function confirmExport() {
+      if (!plannedExport || plannedExport.blocked.length) return;
+
+      elements.exportConfirm.disabled = true;
+
+      // plannedExport가 만들어진 시점(exportToRepo 또는 이전 재읽기)의 충돌 식별자를 남겨 둔다 -
+      // 재읽기 뒤 samePlan이 이것과 새 충돌 식별자를 비교해 겉보기 개수가 같아도 대상이 바뀐
+      // 것을 잡는다.
+      const conflictsBefore = conflictKeys(repoStore.cardStates, repoStore.poolStates);
+
+      // 다이얼로그가 떠 있는 동안 저장소가 다른 경로(에디터, git)로 바뀌었을 수 있다 - 쓰기
+      // 직전 한 번 더 읽어 계획을 검증한다. 재읽기가 유일한 덮어쓰기 방어라는 설계 10.1의
+      // 의도를 다이얼로그가 열려 있는 창에서도 지킨다.
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+      } catch (error) {
+        // 쓰기 실패 경로와 대칭으로 정리한다 - 다이얼로그를 열어 둔 채 확인 버튼만 죽이면
+        // 안내 없는 데드락처럼 보인다. 닫아야 failWith가 남기는 메시지가 바깥 요약에 뜬다.
+        plannedExport = null;
+        elements.exportConfirm.disabled = false;
+        elements.exportDialog.close();
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
+
+      const freshPlan = currentExportPlan();
+      const conflictsAfter = conflictKeys(repoStore.cardStates, repoStore.poolStates);
+      if (!samePlan(plannedExport, freshPlan, conflictsBefore, conflictsAfter)) {
+        plannedExport = freshPlan;
+        renderExportSummary(freshPlan, "저장소가 방금 바뀌었습니다. 달라진 내용을 확인하고 다시 눌러 주세요.");
+        return;
+      }
+
+      try {
+        await writePlanFiles(repoStore.root, plannedExport.writes);
+      } catch (error) {
+        repoStore.message =
+          `저장소에 쓰지 못했습니다: ${error?.message ?? error}. ` +
+          "일부 파일은 이미 반영되었을 수 있습니다. 저장소 다시 읽기로 확인해 주세요.";
+        plannedExport = null;
+        elements.exportConfirm.disabled = false;
+        elements.exportDialog.close();
+        render();
+        return;
+      }
+
+      const written = plannedExport.writes.length;
+      elements.exportDialog.close();
+      plannedExport = null;
+      pending = core.emptyPending();
+      persistPending();
+
+      try {
+        Object.assign(repoStore, await loadRepo(repoStore.root), { connected: true });
+        repoStore.message = `${written}개 파일을 저장소에 반영했습니다.`;
+      } catch (error) {
+        failWith(error);
+        return;
+      }
+      refreshFromPending();
+      render();
     }
 
     async function reloadRepo() {
@@ -3820,13 +2172,22 @@
       pool: "풀",
       status: "상태",
       file: "파일",
+      readError: "읽기 오류",
     });
 
     let selection = { scope: "", id: "" };
+    let showDiff = false;
 
     /// 선택 대상에 맞는 탭으로 옮긴다. 중앙과 우측이 선택을 따라가므로(설계 11.1) 탭이
     /// 어긋나면 목록은 카드인데 상세는 풀인 화면이 나온다.
     function selectWithTab(scope, id) {
+      // 토글과 읽기 오류 원문 초안은 보고 있는 항목에 대한 것이다 - 다른 항목으로 옮기면 꺼야
+      // 한다. 같은 항목을 다시 고르는 경우(applyCardEdit의 편집 후 재선택 등)는 유지한다.
+      if (scope !== selection.scope || id !== selection.id) {
+        showDiff = false;
+        rawDraft = "";
+        rawError = "";
+      }
       selection = { scope, id };
       if (scope !== "card" && scope !== "pool") return;
 
@@ -3857,11 +2218,15 @@
       button.append(text);
 
       button.addEventListener("click", () => {
+        if (scope === "readError") {
+          selectEntry("readError", id);
+          return;
+        }
         if (scope !== "card") {
           selectEntry(scope, id);
           return;
         }
-        // 검증 오류와 격리 항목은 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
+        // 검증 오류는 카드 id로 온다. 선택은 uid를 쓰므로 여기서 옮긴다.
         const card = repoStore.cardsById.get(id)
           ?? repoStore.cardsById.get(String(id).replace(/\.json$/, ""));
         if (card) selectEntry("card", card.uid);
@@ -3869,18 +2234,19 @@
       return button;
     }
 
-    /// 격리된 파일을 오류보다 먼저 보여준다. 그 파일들은 아예 읽히지 않아 검증기가 보지도
-    /// 못했으므로, 검증 오류 0이라고 안심하면 안 되기 때문이다(설계 10.2).
+    /// 읽기 오류 파일을 검증 오류보다 먼저 보여준다. 그 파일들은 아예 읽히지 않아 검증기가
+    /// 보지도 못했으므로, 검증 오류 0이라고 안심하면 안 되기 때문이다(설계 10.2).
     function renderProblems() {
       elements.problems.replaceChildren();
       if (!repoStore.connected) return;
 
-      for (const entry of repoStore.quarantined) {
+      for (const entry of repoStore.readErrors) {
         elements.problems.append(problemButton({
           level: "error",
-          scope: entry.scope,
+          scope: "readError",
           id: entry.name,
-          message: `${entry.messages.join(" ")} (읽지 못해 격리했습니다)`,
+          message: `${PROBLEM_LABELS[entry.scope] ?? entry.scope} · `
+            + `${entry.messages.join(" ")} (읽지 못했습니다 · 고쳐야 내보낼 수 있습니다)`,
         }));
       }
 
@@ -3932,12 +2298,14 @@
       }
     }
 
+    // "missing"은 resolveCardState/resolvePoolState의 코어 계약이지만(pending이 없을 때),
+    // 호출부가 언제나 카드를 넘기므로 여기서는 실제로 나오지 않는다. 예전에는 "저장소에만
+    // 있음"을 뜻했으나 §12 개정이 그 개념을 읽기 오류/미참조 파일로 갈랐으므로 배지를 두지 않는다.
     const STATE_BADGES = Object.freeze({
       same: "● 저장소와 동일",
       modified: "✎ 수정됨",
       new: "＋ 신규",
       conflict: "⚠ 충돌",
-      missing: "− 저장소에만 있음",
     });
     const SIDE_LABELS = Object.freeze({ Player: "아군", Enemy: "적군" });
     const CATEGORY_LABELS = Object.freeze({ Execution: "실행", Intervention: "개입" });
@@ -3953,7 +2321,7 @@
       for (const error of repoStore.validation.errors) {
         if (error.scope === "card") ids.add(error.id);
       }
-      for (const entry of repoStore.quarantined) {
+      for (const entry of repoStore.readErrors) {
         if (entry.scope === "card") ids.add(entry.name.replace(/\.json$/, ""));
       }
 
@@ -4322,10 +2690,218 @@
 
     /// 모르는 최상위 키를 가진 카드는 폼 대신 원문을 읽기 전용으로 보여준다(설계 11.3).
     /// 폼으로 열면 10.2가 보존하기로 한 것을 폼이 표현하지 못하는 만큼 망가뜨린다.
+    /// 우측은 언제나 "지금 쓰면 나올 원문"을 보여준다. 저장소와 다를 때만 토글이 나오고,
+    /// 토글을 켜면 diff가 원문 자리를 대신한다 - 둘을 동시에 띄우면 어느 쪽이 나갈 것인지
+    /// 헷갈린다(설계 11.3).
+    function renderSource({ title, stored, current }) {
+      elements.sourceTitle.textContent = title;
+      elements.source.textContent = current;
+
+      const diff = core.diffLines(stored, current);
+      elements.sourceToggle.hidden = diff.same;
+      if (diff.same) showDiff = false;
+
+      elements.sourceToggle.classList.toggle("is-active", showDiff);
+      elements.source.hidden = showDiff;
+      elements.sourceDiff.hidden = !showDiff;
+      elements.sourceDiff.replaceChildren();
+      if (!showDiff) return;
+
+      for (const row of diff.rows) {
+        const line = document.createElement("span");
+        line.className = `diff-row is-${row.kind}`;
+        line.textContent = `${row.kind === "add" ? "+" : row.kind === "remove" ? "-" : " "} ${row.text}`;
+        elements.sourceDiff.append(line);
+      }
+    }
+
+    function conflictBanner({ message, onStored, onMine }) {
+      const banner = document.createElement("div");
+      banner.className = "repo-conflict";
+
+      const label = document.createElement("strong");
+      label.textContent = "⚠ 충돌";
+      const text = document.createElement("span");
+      text.textContent = message;
+      banner.append(label, text);
+
+      const stored = document.createElement("button");
+      stored.type = "button";
+      stored.textContent = "저장소 것으로 되돌리기";
+      stored.addEventListener("click", onStored);
+
+      const mine = document.createElement("button");
+      mine.type = "button";
+      mine.className = "primary";
+      mine.textContent = "내 변경 유지";
+      mine.addEventListener("click", onMine);
+
+      banner.append(stored, mine);
+      return banner;
+    }
+
+    /// 되돌리기는 미반영에서 빼는 것과 같다. 저장소 원문은 이미 storedCardText에 새로 들어와
+    /// 있으므로, 미반영만 사라지면 화면이 저장소 것을 그대로 보여준다(설계 10.3).
+    function revertCardToStored(card) {
+      pending = core.dropPendingCard(pending, card.uid);
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    /// 유지는 base를 새 저장소 원문으로 갈아 끼우는 것이다. 그래야 충돌이 '수정됨'으로 내려가고,
+    /// 우측 diff가 "내 것 ↔ 새 저장소 원문"을 비교한다.
+    function keepCardMine(card) {
+      const stored = repoStore.storedCardText.get(card.uid) ?? null;
+      pending = core.putPendingCard(pending, { ...card, base: stored });
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    function revertPoolToStored(pool) {
+      pending = core.dropPendingPool(pending, pool.id);
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    function keepPoolMine(pool) {
+      const stored = repoStore.storedPoolText.get(pool.id) ?? null;
+      pending = core.putPendingPool(pending, { ...pool, base: stored });
+      persistPending();
+      refreshFromPending();
+      render();
+    }
+
+    let rawDraft = "";
+    let rawError = "";
+
+    /// 읽기 오류 파일은 폼으로 열 수 없다 - 폼이 표현하지 못하는 것을 망가뜨린다(설계 10.2).
+    /// 대신 원문을 직접 고치게 하고, 다시 파싱해 성공할 때만 모델로 올린다. 이렇게 하지 않으면
+    /// "반드시 고쳐야 내보낼 수 있다"는 규칙이 노트북 밖으로 나가야만 풀리는 막다른 길이 된다.
+    function renderReadErrorDetail(entry) {
+      elements.detailTitle.textContent = `읽기 오류 · ${entry.name}`;
+
+      // text === null은 파일을 아예 열지 못한 경우(scope: "file")다. 비교할 원문이 없으므로
+      // stored·current를 둘 다 빈 문자열로 넘겨 diff.same이 true가 되게 한다 - 그래야 의미 없는
+      // "저장소 ↔ 현재" 토글이 뜨지 않는다. scope 검사보다 반드시 먼저 온다.
+      if (entry.text === null) {
+        renderSource({ title: entry.name, stored: "", current: "" });
+
+        const box = document.createElement("div");
+        box.className = "repo-raw-editor";
+
+        const why = document.createElement("p");
+        why.className = "repo-raw-error";
+        why.textContent = entry.messages.join(" ");
+        box.append(why);
+
+        const note = document.createElement("p");
+        note.className = "repo-readonly";
+        note.textContent = "파일을 열지 못해 원문을 보여줄 수 없습니다."
+          + " 파일 권한을 확인한 뒤 저장소 다시 읽기를 눌러 주세요.";
+        box.append(note);
+        elements.detail.append(box);
+        return;
+      }
+
+      renderSource({ title: entry.name, stored: entry.text, current: entry.text });
+
+      const box = document.createElement("div");
+      box.className = "repo-raw-editor";
+
+      const why = document.createElement("p");
+      why.className = "repo-raw-error";
+      why.textContent = entry.messages.join(" ");
+      box.append(why);
+
+      // 상태(Statuses/) JSON은 이 노트북의 저작 범위 밖이다(스펙 §15) - id/name/side/category가
+      // 없어 core.readCardJson으로 보내면 항상 엉뚱한 오류만 낸다. 편집 UI 대신 읽기 전용 안내만 준다.
+      if (entry.scope === "status") {
+        const note = document.createElement("p");
+        note.className = "repo-readonly";
+        note.textContent = "상태 파일은 이 노트북에서 편집하지 않습니다(읽기 전용)."
+          + " 저장소에서 직접 고친 뒤 저장소 다시 읽기를 눌러 주세요.";
+        box.append(note);
+        elements.detail.append(box);
+        return;
+      }
+
+      const area = document.createElement("textarea");
+      area.spellcheck = false;
+      area.value = rawDraft || entry.text;
+      area.addEventListener("input", () => { rawDraft = area.value; });
+      box.append(area);
+
+      if (rawError) {
+        const failed = document.createElement("p");
+        failed.className = "repo-raw-error";
+        failed.textContent = rawError;
+        box.append(failed);
+      }
+
+      const apply = document.createElement("button");
+      apply.type = "button";
+      apply.className = "primary";
+      apply.textContent = "고친 원문 적용";
+      apply.addEventListener("click", () => applyRawRepair(entry, area.value));
+      box.append(apply);
+
+      elements.detail.append(box);
+    }
+
+    /// 승격에 성공하면 base를 '원래의 깨진 원문'으로 둔다. 그래야 상태가 '수정됨'으로 되어
+    /// 내보내기에 포함되고, 우측 diff가 무엇을 고쳤는지 보여준다.
+    function applyRawRepair(entry, text) {
+      // status(읽기 전용 안내만 제공)와 file(원문 자체가 없음)은 이 경로로 불릴 UI가 없다.
+      // 방어적으로 막아 둔다 - core.readCardJson·readPoolJson 둘 다 이 두 scope를 검증하지 않는다.
+      if (entry.scope !== "card" && entry.scope !== "pool") return;
+
+      if (entry.scope === "pool") {
+        const { pool, errors } = core.readPoolJson(text);
+        if (!pool) { rawError = errors.join(" "); render(); return; }
+        repoStore.storedPoolText.set(pool.id, entry.text);
+        repoStore.storedPools = [...repoStore.storedPools, { ...pool, base: entry.text }];
+        // name만 비교하면 Cards/와 Pools/의 동명 파일(예: starter.json) 중 한쪽을 고칠 때
+        // 둘 다 읽기 오류 목록에서 사라진다 - scope까지 맞춰야 폴더가 갈린다.
+        repoStore.readErrors = repoStore.readErrors
+          .filter((row) => row.scope !== entry.scope || row.name !== entry.name);
+        rawDraft = "";
+        rawError = "";
+        pending = core.putPendingPool(pending, { ...pool, base: entry.text });
+        persistPending();
+        refreshFromPending();
+        selectWithTab("pool", pool.id);
+        render();
+        return;
+      }
+
+      const { card, errors } = core.readCardJson(text, repoStore.schema);
+      if (!card) { rawError = errors.join(" "); render(); return; }
+
+      repoStore.storedCardText.set(card.uid, entry.text);
+      repoStore.storedCards = [...repoStore.storedCards, { ...card, base: entry.text }];
+      // name만 비교하면 Cards/와 Pools/의 동명 파일(예: starter.json) 중 한쪽을 고칠 때
+      // 둘 다 읽기 오류 목록에서 사라진다 - scope까지 맞춰야 폴더가 갈린다.
+      repoStore.readErrors = repoStore.readErrors
+        .filter((row) => row.scope !== entry.scope || row.name !== entry.name);
+      rawDraft = "";
+      rawError = "";
+      pending = core.putPendingCard(pending, { ...card, base: entry.text });
+      persistPending();
+      refreshFromPending();
+      selectWithTab("card", card.uid);
+      render();
+    }
+
     function renderCardDetail(card) {
       elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
-      elements.sourceTitle.textContent = card.id ? `Cards/${card.id}.json` : "Cards/(id 없음).json";
-      elements.source.textContent = card.base ?? core.writeCardJson(card, repoStore.schema);
+      renderSource({
+        title: card.id ? `Cards/${card.id}.json` : "Cards/(id 없음).json",
+        stored: repoStore.storedCardText.get(card.uid) ?? null,
+        current: core.writeCardJson(card, repoStore.schema),
+      });
 
       if (card.unknownKeys.length) {
         const note = document.createElement("p");
@@ -4334,6 +2910,14 @@
           + " 부팅이 이 카드를 거부하므로 그 키를 손으로 지운 뒤 다시 읽어 주세요.";
         elements.detail.append(note);
         return;
+      }
+
+      if ((repoStore.cardStates.get(card.uid) ?? "same") === "conflict") {
+        elements.detail.append(conflictBanner({
+          message: "이 카드를 편집하는 동안 저장소 파일도 바뀌었습니다.",
+          onStored: () => revertCardToStored(card),
+          onMine: () => keepCardMine(card),
+        }));
       }
 
       const form = document.createElement("div");
@@ -4435,6 +3019,14 @@
       const distribution = core.poolDistribution({ pool, cardsById: repoStore.cardsById });
       elements.detailTitle.textContent = `${pool.id} · ${distribution.total}장`;
 
+      if ((repoStore.poolStates.get(pool.id) ?? "same") === "conflict") {
+        elements.detail.append(conflictBanner({
+          message: "이 풀을 편집하는 동안 저장소 파일도 바뀌었습니다.",
+          onStored: () => revertPoolToStored(pool),
+          onMine: () => keepPoolMine(pool),
+        }));
+      }
+
       const roster = document.createElement("div");
       roster.className = "pool-roster";
       pool.cards.forEach((cardId, index) => {
@@ -4509,17 +3101,25 @@
       }
       elements.detail.append(poolSection("오류", problems));
 
-      elements.sourceTitle.textContent = `Pools/${pool.id}.json`;
-      elements.source.textContent = pool.base;
+      renderSource({
+        title: `Pools/${pool.id}.json`,
+        stored: repoStore.storedPoolText.get(pool.id) ?? null,
+        current: core.writePoolJson(pool),
+      });
     }
 
     function render() {
+      elements.export.disabled = !repoStore.connected;
       elements.reload.disabled = !repoStore.connected;
       elements.list.replaceChildren();
       elements.detail.replaceChildren();
       elements.detailTitle.textContent = "선택된 항목 없음";
       elements.sourceTitle.textContent = "JSON 원문";
       elements.source.textContent = "";
+      elements.source.hidden = false;
+      elements.sourceDiff.replaceChildren();
+      elements.sourceDiff.hidden = true;
+      elements.sourceToggle.hidden = true;
 
       // renderSummary는 이른 반환이 있으므로 여기서 갱신한다 - 연결 전에도 미반영 복원
       // 실패는 알려야 한다.
@@ -4545,14 +3145,10 @@
         const pool = repoStore.pools.find((entry) => entry.id === selection.id);
         if (pool) renderPoolDetail(pool);
       }
-    }
-
-    function setMode(mode) {
-      const repo = mode === "repo";
-      elements.repoWorkspace.hidden = !repo;
-      elements.markdownWorkspace.hidden = repo;
-      elements.modeRepo.classList.toggle("is-active", repo);
-      elements.modeMarkdown.classList.toggle("is-active", !repo);
+      if (selection.scope === "readError") {
+        const entry = repoStore.readErrors.find((row) => row.name === selection.id);
+        if (entry) renderReadErrorDetail(entry);
+      }
     }
 
     /// 탭은 좌측 목록만 바꾼다. 중앙과 우측은 선택한 대상을 따라가므로(설계 11.1)
@@ -4570,7 +3166,7 @@
       if (!root) return;
 
       // 권한이 살아 있을 때만 조용히 읽는다. 만료됐으면 버튼을 누르게 둔다.
-      if (!(await hasReadPermission(root, false))) {
+      if (!(await hasWritePermission(root, false))) {
         repoStore.root = root;
         repoStore.message = "폴더 권한이 만료되었습니다. 폴더 연결을 다시 눌러 주세요.";
         render();
@@ -4593,6 +3189,10 @@
     }
 
     elements.reload.addEventListener("click", reloadRepo);
+    elements.sourceToggle.addEventListener("click", () => {
+      showDiff = !showDiff;
+      render();
+    });
     elements.newCard.addEventListener("click", newCard);
     elements.search.addEventListener("input", () => {
       query = elements.search.value;
@@ -4604,12 +3204,28 @@
     });
     elements.tabCards.addEventListener("click", () => setTab("cards"));
     elements.tabPools.addEventListener("click", () => setTab("pools"));
-    elements.modeMarkdown.addEventListener("click", () => setMode("markdown"));
-    elements.modeRepo.addEventListener("click", () => setMode("repo"));
+    elements.export.addEventListener("click", exportToRepo);
+    elements.exportConfirm.addEventListener("click", confirmExport);
+    elements.exportDialog.addEventListener("click", (event) => {
+      if (event.target.closest("[data-repo-export-action]")) {
+        elements.exportDialog.close();
+      }
+    });
+    // 네이티브 Escape로 닫는 경로는 위 클릭 핸들러를 거치지 않는다 - close 이벤트에서 한 번 더
+    // 정리해 어느 경로로 닫혀도 plannedExport가 남지 않게 한다. confirmExport의 성공·실패 경로도
+    // close()를 부르지만 그때는 이미 plannedExport를 null로 정리한 뒤라 무해하다.
+    elements.exportDialog.addEventListener("close", () => {
+      plannedExport = null;
+    });
+
+    const migration = core.migrateLegacyStore(window.localStorage);
+    if (migration.note) pendingNote = migration.note;
 
     const restored = core.readPending(window.localStorage);
     pending = restored.pending;
-    if (restored.errors.length) pendingNote = restored.errors.join(" ");
+    if (restored.errors.length) {
+      pendingNote = [pendingNote, ...restored.errors].filter(Boolean).join(" ");
+    }
 
     render();
   })();

@@ -21,1640 +21,6 @@ function loadCore() {
   return context.CardIdeaNotebook;
 }
 
-test("exposes every card grade in the authoring form", () => {
-  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
-
-  assert.match(html, /id="card-grade"/);
-  assert.match(html, /data-card-field="grade"/);
-  for (const label of ["없음", "일반", "고급", "희귀", "기타"]) {
-    assert.match(html, new RegExp(`>${label}<\\/option>`));
-  }
-});
-
-test("normalizes free text fields without inventing card decisions", () => {
-  const core = loadCore();
-  const card = core.normalizeCard({
-    name: "  맹독 찌르기  ",
-    role: "execution",
-    cost: "",
-    tags: "독, 성장\n방어",
-    targets: { ally: "backOne", enemy: "frontTwo" },
-    abilities: {
-      enemy: "피해를 준다.\n\n독을 부여한다.",
-      ally: ["방어를 부여한다."],
-      none: "",
-    },
-  });
-
-  assert.equal(card.name, "맹독 찌르기");
-  assert.equal(card.cost, "");
-  assert.deepEqual([...card.tags], ["독", "성장", "방어"]);
-  assert.deepEqual([...card.abilities.enemy], ["피해를 준다.", "독을 부여한다."]);
-  assert.deepEqual([...card.abilities.ally], ["방어를 부여한다."]);
-});
-
-test("normalizes card factions and derives completion from core information", () => {
-  const core = loadCore();
-  const defaultCard = core.emptyCard();
-  const enemy = core.normalizeCard({
-    faction: "enemy",
-    role: "intervention",
-    cost: "9",
-  });
-  const allyWithoutCost = core.normalizeCard({
-    name: "비용 없는 아군",
-    faction: "ally",
-    role: "intervention",
-  });
-  const completeAlly = core.normalizeCard({
-    name: "준비된 아군",
-    faction: "ally",
-    role: "intervention",
-    cost: "1",
-  });
-  const enemyWithoutOrder = core.normalizeCard({
-    name: "순서 없는 적",
-    faction: "enemy",
-  });
-  const completeEnemy = core.normalizeCard({
-    name: "준비된 적",
-    faction: "enemy",
-    executionOrder: "3",
-  });
-
-  assert.equal(defaultCard.faction, "ally");
-  assert.deepEqual(
-    { faction: enemy.faction, role: enemy.role, cost: enemy.cost },
-    { faction: "enemy", role: "execution", cost: "" },
-  );
-  assert.equal(core.isCardComplete(allyWithoutCost), false);
-  assert.equal(core.isCardComplete(completeAlly), true);
-  assert.equal(core.isCardComplete(enemyWithoutOrder), false);
-  assert.equal(core.isCardComplete(completeEnemy), true);
-});
-
-test("normalizes grades and resets grade with faction transitions", () => {
-  const core = loadCore();
-
-  assert.equal(core.emptyCard().grade, "common");
-  assert.equal(core.normalizeCard({ faction: "ally", grade: "rare" }).grade, "rare");
-  assert.equal(core.normalizeCard({ faction: "enemy", grade: "rare" }).grade, "none");
-  assert.equal(core.normalizeCard({ faction: "ally", grade: "invalid" }).grade, "common");
-
-  const enemy = core.changeCardFaction({
-    faction: "ally",
-    grade: "advanced",
-    role: "intervention",
-    cost: "2",
-  }, "enemy");
-  assert.deepEqual(
-    {
-      faction: enemy.faction,
-      grade: enemy.grade,
-      role: enemy.role,
-      cost: enemy.cost,
-    },
-    {
-      faction: "enemy",
-      grade: "none",
-      role: "execution",
-      cost: "",
-    },
-  );
-
-  const allyAgain = core.changeCardFaction(enemy, "ally");
-  assert.deepEqual(
-    {
-      faction: allyAgain.faction,
-      grade: allyAgain.grade,
-      role: allyAgain.role,
-      cost: allyAgain.cost,
-    },
-    {
-      faction: "ally",
-      grade: "common",
-      role: "unknown",
-      cost: "",
-    },
-  );
-});
-
-test("requires integer cost and execution order values for completion", () => {
-  const core = loadCore();
-  const ally = {
-    name: "아군 수치",
-    faction: "ally",
-    role: "intervention",
-  };
-  const enemy = {
-    name: "적군 수치",
-    faction: "enemy",
-  };
-
-  assert.equal(core.isCardComplete({ ...ally, cost: "0" }), true);
-  assert.equal(core.isCardComplete({ ...ally, cost: "" }), false);
-  assert.equal(core.isCardComplete({ ...ally, cost: "abc" }), false);
-  assert.equal(core.isCardComplete({ ...ally, cost: "1.5" }), false);
-  assert.equal(core.isCardComplete({ ...ally, cost: "-1" }), false);
-
-  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "0" }), true);
-  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "-1" }), true);
-  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "" }), false);
-  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "abc" }), false);
-  assert.equal(core.isCardComplete({ ...enemy, executionOrder: "1.5" }), false);
-});
-
-test("resets ally-only fields when changing card faction", () => {
-  const core = loadCore();
-  const ally = core.normalizeCard({
-    name: "전환 카드",
-    faction: "ally",
-    role: "intervention",
-    cost: "2",
-    notes: "유지할 메모",
-  });
-  const enemy = core.changeCardFaction(ally, "enemy");
-  const allyAgain = core.changeCardFaction(enemy, "ally");
-
-  assert.deepEqual(
-    { faction: enemy.faction, role: enemy.role, cost: enemy.cost, notes: enemy.notes },
-    { faction: "enemy", role: "execution", cost: "", notes: "유지할 메모" },
-  );
-  assert.deepEqual(
-    {
-      faction: allyAgain.faction,
-      role: allyAgain.role,
-      cost: allyAgain.cost,
-      notes: allyAgain.notes,
-    },
-    { faction: "ally", role: "unknown", cost: "", notes: "유지할 메모" },
-  );
-});
-
-test("saves one or every card without forcing incomplete cards complete", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({
-        id: "ally",
-        name: "준비된 아군",
-        faction: "ally",
-        role: "intervention",
-        cost: "1",
-      }),
-      core.normalizeCard({
-        id: "enemy",
-        name: "순서 없는 적",
-        faction: "enemy",
-      }),
-    ],
-    activeCardId: "enemy",
-    selection: ["ally", "enemy"],
-  };
-
-  const one = core.saveCard(state, "ally", {
-    now: "2026-07-28T01:00:00.000Z",
-  });
-  assert.equal(one.cards[0].completionStatus, "complete");
-  assert.equal(one.cards[1].completionStatus, "incomplete");
-
-  const all = core.saveAllCards(state, {
-    now: "2026-07-28T02:00:00.000Z",
-  });
-  assert.deepEqual(
-    [...all.cards.map((card) => card.completionStatus)],
-    ["complete", "incomplete"],
-  );
-  assert.equal(all.activeCardId, "enemy");
-  assert.deepEqual([...all.selection], ["ally", "enemy"]);
-});
-
-test("renders facing ally and enemy ranges in Markdown", () => {
-  const core = loadCore();
-  const card = core.normalizeCard({
-    name: "맹독 찌르기",
-    role: "execution",
-    cost: "1",
-    executionOrder: "4",
-    targets: { ally: "backOne", enemy: "frontTwo" },
-    abilities: {
-      ally: ["방어 4."],
-      enemy: ["피해 5."],
-      none: ["카드 1장 뽑기."],
-    },
-  });
-
-  const markdown = core.cardMarkdown(card);
-  assert.match(markdown, /아군 뒤 하나 `◆━━━━` │ `◆◆━━━` 적군 앞 둘/);
-  assert.match(markdown, /- \[적군\] 피해 5\./);
-  assert.match(markdown, /- \[아군\] 방어 4\./);
-  assert.match(markdown, /- 카드 1장 뽑기\./);
-});
-
-test("renders self for either faction and rejects two self targets", () => {
-  const core = loadCore();
-  const allySelf = core.normalizeCard({
-    name: "자기 방어",
-    targets: { ally: "self", enemy: "frontOne" },
-    abilities: { ally: ["방어 4."], enemy: ["피해 2."] },
-  });
-  const enemySelf = core.normalizeCard({
-    name: "적의 태세",
-    targets: { ally: "backOne", enemy: "self" },
-    abilities: { ally: ["약화 1."], enemy: ["방어 4."] },
-  });
-  const twoSelf = core.normalizeCard({
-    name: "잘못된 카드",
-    targets: { ally: "self", enemy: "self" },
-    abilities: { ally: ["방어 1."], enemy: ["방어 1."] },
-  });
-
-  assert.equal(core.TARGETS.self.label, "자신");
-  assert.equal(
-    core.targetSummary(allySelf),
-    "아군 자신 `◎` │ `◆━━━━` 적군 앞 하나",
-  );
-  assert.equal(
-    core.targetSummary(enemySelf),
-    "아군 뒤 하나 `◆━━━━` │ `◎` 적군 자신",
-  );
-  assert.deepEqual([...core.validateCard(twoSelf).errors], [
-    "아군과 적군에 자신을 동시에 지정할 수 없습니다.",
-  ]);
-
-  const state = {
-    ...core.initialState(),
-    cards: [{ ...twoSelf, id: "two-self" }],
-    activeCardId: "two-self",
-  };
-  assert.throws(
-    () => core.saveCard(state, "two-self"),
-    /아군과 적군에 자신을 동시에 지정할 수 없습니다/,
-  );
-});
-
-test("round-trips ally and enemy self targets through strict Markdown", () => {
-  const core = loadCore();
-  const source = [
-    core.normalizeCard({
-      name: "계승자의 방어",
-      role: "execution",
-      targets: { ally: "self", enemy: "frontOne" },
-      abilities: { ally: ["방어 4."], enemy: ["피해 2."] },
-      completionStatus: "complete",
-    }),
-    core.normalizeCard({
-      name: "적의 자기 강화",
-      role: "execution",
-      targets: { ally: "backOne", enemy: "self" },
-      abilities: { ally: ["약화 1."], enemy: ["공격 3."] },
-      completionStatus: "complete",
-    }),
-  ];
-
-  const parsed = core.parseBundleMarkdown(
-    core.bundleMarkdown(source, "2026-07-28"),
-  );
-  assert.deepEqual(
-    [...parsed.map((card) => [card.targets.ally, card.targets.enemy])],
-    [["self", "frontOne"], ["backOne", "self"]],
-  );
-
-  const invalid = core.bundleMarkdown([
-    core.normalizeCard({
-      name: "양쪽 자신",
-      role: "execution",
-      targets: { ally: "self", enemy: "self" },
-      abilities: { ally: ["방어 1."], enemy: ["방어 1."] },
-      completionStatus: "complete",
-    }),
-  ], "2026-07-28");
-  assert.throws(
-    () => core.parseBundleMarkdown(invalid),
-    /아군과 적군에 자신을 동시에 지정할 수 없습니다/,
-  );
-});
-
-test("omits blank optional metadata and empty sections", () => {
-  const core = loadCore();
-  const markdown = core.cardMarkdown(core.normalizeCard({
-    name: "빈 초안",
-    role: "unknown",
-    targets: { ally: "none", enemy: "none" },
-    abilities: { ally: "", enemy: "", none: "" },
-  }));
-
-  assert.equal(markdown.includes("비용:"), false);
-  assert.equal(markdown.includes("실행순서:"), false);
-  assert.equal(markdown.includes("태그:"), false);
-  assert.equal(markdown.includes("### 능력"), false);
-  assert.equal(markdown.includes("### 메모"), false);
-  assert.match(markdown, /- 대상: 없음/);
-});
-
-test("keeps structural messages without warning about blank core information", () => {
-  const core = loadCore();
-  const result = core.validateCard(core.normalizeCard({
-    name: "",
-    role: "execution",
-    cost: "",
-    executionOrder: "",
-    targets: { ally: "none", enemy: "frontOne" },
-    abilities: { ally: "방어 3.", enemy: "", none: "" },
-  }));
-
-  assert.deepEqual([...result.errors], []);
-  assert.deepEqual([...result.warnings], [
-    "아군 능력은 있지만 아군 위치 범위가 없습니다.",
-    "적군 위치 범위는 있지만 적군 능력이 없습니다.",
-  ]);
-});
-
-test("builds one AI handoff Markdown file from multiple cards", () => {
-  const core = loadCore();
-  const cards = [
-    core.normalizeCard({ name: "첫 카드", role: "unknown" }),
-    core.normalizeCard({ name: "둘째 카드", role: "intervention" }),
-  ];
-
-  const markdown = core.bundleMarkdown(cards, "2026-07-27");
-  assert.match(markdown, /^# Fate Weaver 카드 아이디어/);
-  assert.match(markdown, /- 생성일: 2026-07-27/);
-  assert.match(markdown, /- 카드 수: 2/);
-  assert.match(markdown, /## 첫 카드/);
-  assert.match(markdown, /## 둘째 카드/);
-});
-
-class MemoryStorage {
-  constructor(initial = {}) {
-    this.values = new Map(Object.entries(initial));
-    this.writeCount = 0;
-  }
-
-  getItem(key) {
-    return this.values.has(key) ? this.values.get(key) : null;
-  }
-
-  setItem(key, value) {
-    this.writeCount += 1;
-    this.values.set(key, String(value));
-  }
-}
-
-class ToggleStorage extends MemoryStorage {
-  constructor(initial = {}) {
-    super(initial);
-    this.failWrites = false;
-  }
-
-  setItem(key, value) {
-    if (this.failWrites) throw new Error("storage unavailable");
-    super.setItem(key, value);
-  }
-}
-
-test("writes local storage only through the explicit store operation", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage();
-  const state = core.initialState();
-  state.cards.push(core.normalizeCard({ id: "a", name: "저장할 카드" }));
-
-  assert.equal(storage.writeCount, 0);
-  core.writeStore(storage, state);
-  assert.equal(storage.writeCount, 1);
-
-  const saved = JSON.parse(storage.getItem(core.STORAGE_KEY));
-  assert.equal(saved.schemaVersion, 6);
-  assert.equal(saved.cards[0].faction, "ally");
-  assert.equal(saved.cards[0].name, "저장할 카드");
-});
-
-test("round-trips the current schema with shared selection and rejects an unknown schema", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage();
-  const state = {
-    ...core.initialState(),
-    cards: [core.normalizeCard({
-      id: "a",
-      name: "보존 카드",
-      grade: "rare",
-      tags: ["독"],
-      completionStatus: "complete",
-    })],
-    activeCardId: "a",
-    searchQuery: "독",
-    selection: ["a"],
-  };
-  core.writeStore(storage, state);
-
-  const loaded = core.readStore(storage);
-  assert.equal(loaded.cards[0].name, "보존 카드");
-  assert.equal(loaded.cards[0].grade, "rare");
-  assert.deepEqual([...loaded.cards[0].tags], ["독"]);
-  assert.equal(loaded.activeCardId, "a");
-  assert.equal(loaded.searchQuery, "독");
-  assert.deepEqual([...loaded.selection], ["a"]);
-
-  const incomplete = core.editCard(state, "a", { notes: "수정됨" });
-  core.writeStore(storage, incomplete);
-  assert.deepEqual([...core.readStore(storage).selection], ["a"]);
-
-  storage.setItem(core.STORAGE_KEY, JSON.stringify({ schemaVersion: 99, cards: [] }));
-  assert.throws(() => core.readStore(storage), /지원하지 않는 저장 데이터 버전/);
-});
-
-test("migrates schema 3 and round-trips the schema 6 default export file name", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage({
-    [core.STORAGE_KEY]: JSON.stringify({
-      schemaVersion: 3,
-      cards: [{ id: "a", name: "기존 카드", completionStatus: "complete" }],
-      activeCardId: "a",
-      searchQuery: "",
-      selection: ["a"],
-    }),
-  });
-
-  const migrated = core.readStore(storage);
-  assert.equal(migrated.schemaVersion, 6);
-  assert.equal(migrated.cards[0].faction, "ally");
-  assert.equal(migrated.cards[0].grade, "none");
-  assert.equal(migrated.cards[0].completionStatus, "incomplete");
-  assert.equal(migrated.exportFileName, "");
-  assert.deepEqual([...migrated.selection], ["a"]);
-
-  core.writeStore(storage, { ...migrated, exportFileName: "독 카드풀" });
-  assert.equal(core.readStore(storage).exportFileName, "독 카드풀");
-});
-
-test("migrates schema 4 cards to allies while preserving collection state", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage({
-    [core.STORAGE_KEY]: JSON.stringify({
-      schemaVersion: 4,
-      cards: [
-        {
-          id: "first",
-          name: "기존 조작",
-          role: "intervention",
-          cost: "1",
-          completionStatus: "complete",
-        },
-        {
-          id: "second",
-          name: "기존 초안",
-          role: "unknown",
-          completionStatus: "complete",
-        },
-      ],
-      activeCardId: "second",
-      searchQuery: "기존",
-      selection: ["first", "second"],
-      exportFileName: "기존 카드",
-    }),
-  });
-
-  const migrated = core.readStore(storage);
-  assert.deepEqual([...migrated.cards.map((card) => card.id)], ["first", "second"]);
-  assert.deepEqual([...migrated.cards.map((card) => card.faction)], ["ally", "ally"]);
-  assert.deepEqual(
-    [...migrated.cards.map((card) => card.completionStatus)],
-    ["complete", "incomplete"],
-  );
-  assert.equal(migrated.activeCardId, "second");
-  assert.equal(migrated.searchQuery, "기존");
-  assert.deepEqual([...migrated.selection], ["first", "second"]);
-  assert.equal(migrated.exportFileName, "기존 카드");
-});
-
-test("migrates every schema 5 card to no grade while preserving faction state", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage({
-    [core.STORAGE_KEY]: JSON.stringify({
-      schemaVersion: 5,
-      cards: [
-        {
-          id: "ally",
-          name: "아군 카드",
-          faction: "ally",
-          grade: "rare",
-          role: "intervention",
-          cost: "2",
-          completionStatus: "complete",
-        },
-        {
-          id: "enemy",
-          name: "적군 카드",
-          faction: "enemy",
-          grade: "advanced",
-          role: "execution",
-          cost: "",
-          executionOrder: "3",
-          completionStatus: "complete",
-        },
-      ],
-      activeCardId: "enemy",
-      searchQuery: "",
-      selection: ["enemy"],
-      exportFileName: "",
-    }),
-  });
-
-  const loaded = core.readStore(storage);
-  assert.deepEqual(
-    [...loaded.cards.map((card) => ({
-      faction: card.faction,
-      grade: card.grade,
-      role: card.role,
-      cost: card.cost,
-      completionStatus: card.completionStatus,
-    }))],
-    [
-      {
-        faction: "ally",
-        grade: "none",
-        role: "intervention",
-        cost: "2",
-        completionStatus: "complete",
-      },
-      {
-        faction: "enemy",
-        grade: "none",
-        role: "execution",
-        cost: "",
-        completionStatus: "complete",
-      },
-    ],
-  );
-  assert.equal(loaded.activeCardId, "enemy");
-  assert.deepEqual([...loaded.selection], ["enemy"]);
-});
-
-test("aligns the active card with a preserved selection when loading storage", () => {
-  const core = loadCore();
-
-  for (const schemaVersion of [5, 6]) {
-    const storage = new MemoryStorage({
-      [core.STORAGE_KEY]: JSON.stringify({
-        schemaVersion,
-        cards: [
-          {
-            id: "a",
-            name: "선택 카드",
-            faction: "ally",
-            grade: schemaVersion === 6 ? "rare" : undefined,
-          },
-          {
-            id: "b",
-            name: "과거 활성 카드",
-            faction: "ally",
-            grade: schemaVersion === 6 ? "advanced" : undefined,
-          },
-        ],
-        activeCardId: "b",
-        searchQuery: "",
-        selection: ["a"],
-        exportFileName: "",
-      }),
-    });
-
-    const loaded = core.readStore(storage);
-    assert.deepEqual([...loaded.selection], ["a"]);
-    assert.equal(loaded.activeCardId, "a");
-    assert.equal(core.editTargetCards(loaded)[0].id, "a");
-  }
-});
-
-test("normalizes Markdown download names and permits an empty name", () => {
-  const core = loadCore();
-  assert.equal(core.downloadFileName(" 독 카드풀 ", "2026-07-28"), "독 카드풀.md");
-  assert.equal(core.downloadFileName("독 카드풀.MD", "2026-07-28"), "독 카드풀.MD");
-  assert.equal(core.downloadFileName("독 카드풀.txt", "2026-07-28"), "독 카드풀.txt.md");
-  assert.equal(
-    core.downloadFileName("   ", "2026-07-28"),
-    "fate-weaver-card-ideas-2026-07-28.md",
-  );
-});
-
-test("builds save picker options from the export name", () => {
-  const core = loadCore();
-  const options = core.saveFilePickerOptions(" 독 카드풀 ", "2026-07-28");
-
-  assert.equal(options.suggestedName, "독 카드풀.md");
-  assert.equal(options.id, core.SAVE_PICKER_ID);
-  assert.equal(options.types.length, 1);
-  assert.equal(options.types[0].description, "Markdown 파일");
-  assert.deepEqual(Object.keys(options.types[0].accept), ["text/markdown"]);
-  assert.deepEqual([...options.types[0].accept["text/markdown"]], [".md"]);
-  assert.equal(
-    core.saveFilePickerOptions("", "2026-07-28").suggestedName,
-    "fate-weaver-card-ideas-2026-07-28.md",
-  );
-});
-
-test("keeps the save picker id within the browser limit", () => {
-  const core = loadCore();
-
-  assert.match(core.SAVE_PICKER_ID, /^[A-Za-z0-9_-]{1,32}$/);
-});
-
-test("treats only a cancelled picker as a silent abort", () => {
-  const core = loadCore();
-
-  assert.equal(core.isPickerCancel({ name: "AbortError" }), true);
-  assert.equal(core.isPickerCancel(new Error("boom")), false);
-  assert.equal(core.isPickerCancel({ name: "SecurityError" }), false);
-  assert.equal(core.isPickerCancel(undefined), false);
-});
-
-test("detects save picker support without assuming a browser", () => {
-  const core = loadCore();
-
-  assert.equal(core.supportsSavePicker({ showSaveFilePicker: () => {} }), true);
-  assert.equal(core.supportsSavePicker({ showSaveFilePicker: "nope" }), false);
-  assert.equal(core.supportsSavePicker({}), false);
-  assert.equal(core.supportsSavePicker(undefined), false);
-});
-
-test("accepts only Markdown file names for import", () => {
-  const core = loadCore();
-  assert.equal(core.isMarkdownFileName("카드풀.md"), true);
-  assert.equal(core.isMarkdownFileName("카드풀.MD"), true);
-  assert.equal(core.isMarkdownFileName("카드풀.txt"), false);
-  assert.equal(core.isMarkdownFileName("카드풀"), false);
-});
-
-test("keeps every card in one list without a separate draft state", () => {
-  const core = loadCore();
-  const state = core.initialState();
-
-  assert.equal(Object.hasOwn(state, "draft"), false);
-  const created = core.createCard(state, { id: "a" });
-  assert.equal(Object.hasOwn(created, "draft"), false);
-  assert.equal(created.cards.length, 1);
-});
-
-test("export includes every selected card when all selected cards are complete", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({
-        id: "a",
-        name: "완성본",
-        completionStatus: "complete",
-      }),
-      core.normalizeCard({
-        id: "b",
-        name: "미완성본",
-        completionStatus: "incomplete",
-      }),
-    ],
-    selection: ["a"],
-  };
-
-  assert.deepEqual([...core.cardsForExport(state).map((card) => card.name)], ["완성본"]);
-});
-
-test("duplicates into the list and deletes cards without mutating the source", () => {
-  const core = loadCore();
-  const saved = core.normalizeCard({
-    id: "a",
-    name: "원본",
-    tags: ["독"],
-    createdAt: "2026-07-27T10:00:00.000Z",
-  });
-  const state = {
-    ...core.initialState(),
-    cards: [saved],
-    activeCardId: "a",
-    selection: ["a"],
-  };
-
-  const duplicated = core.duplicateCard(state, "a", {
-    id: "b",
-    now: "2026-07-27T11:00:00.000Z",
-  });
-  assert.equal(duplicated.cards.length, 2);
-  assert.equal(duplicated.cards[1].name, "원본 복사본");
-  assert.equal(duplicated.cards[1].id, "b");
-  assert.equal(duplicated.cards[1].completionStatus, "incomplete");
-  assert.equal(duplicated.activeCardId, "b");
-  assert.deepEqual([...duplicated.selection], ["b"]);
-  assert.deepEqual([...saved.tags], ["독"]);
-
-  const deleted = core.deleteCard(state, "a");
-  assert.equal(deleted.cards.length, 0);
-  assert.deepEqual([...deleted.selection], []);
-  assert.equal(deleted.activeCardId, "");
-});
-
-test("searches saved cards by name or tag", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({ id: "a", name: "맹독 찌르기", tags: ["독", "공격"] }),
-      core.normalizeCard({ id: "b", name: "철벽", tags: ["방어"] }),
-    ],
-  };
-
-  assert.deepEqual(core.filteredCards(state.cards, "맹독").map((card) => card.id), ["a"]);
-  assert.deepEqual(core.filteredCards(state.cards, "방어").map((card) => card.id), ["b"]);
-  assert.equal(core.filteredCards(state.cards, "").length, 2);
-});
-
-test("blocks export without selection and allows a selected complete card", () => {
-  const core = loadCore();
-  const saved = core.normalizeCard({
-    id: "a",
-    name: "저장 카드",
-    completionStatus: "complete",
-  });
-  const base = {
-    ...core.initialState(),
-    cards: [saved],
-    activeCardId: "a",
-  };
-
-  assert.deepEqual(
-    { ...core.exportStatus(base) },
-    { kind: "error", message: "내보낼 카드를 선택하세요." },
-  );
-
-  const selected = {
-    ...base,
-    selection: ["a"],
-  };
-  assert.deepEqual({ ...core.exportStatus(selected) }, { kind: "ready" });
-});
-
-test("blocks writes after rejecting unreadable or future storage data", () => {
-  const core = loadCore();
-  const raw = JSON.stringify({
-    schemaVersion: 99,
-    cards: [{ id: "future-card", name: "미래 카드" }],
-  });
-  const storage = new MemoryStorage({ [core.STORAGE_KEY]: raw });
-  const session = core.readStoreSession(storage);
-  assert.equal(session.writable, false);
-  assert.match(session.error, /지원하지 않는 저장 데이터 버전/);
-  assert.equal(session.state.cards.length, 0);
-  assert.equal(storage.getItem(core.STORAGE_KEY), raw);
-});
-
-test("migrates schema 1 cards to incomplete schema 6 ally cards", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage({
-    [core.STORAGE_KEY]: JSON.stringify({
-      schemaVersion: 1,
-      cards: [{ id: "a", name: "기존 카드" }],
-      activeCardId: "a",
-      searchQuery: "",
-      exportSelection: ["a"],
-    }),
-  });
-
-  const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 6);
-  assert.equal(state.cards[0].faction, "ally");
-  assert.equal(state.cards[0].grade, "none");
-  assert.equal(state.cards[0].completionStatus, "incomplete");
-  assert.deepEqual([...state.selection], ["a"]);
-});
-
-test("migrates schema 2 export selection into schema 6 shared selection", () => {
-  const core = loadCore();
-  const storage = new MemoryStorage({
-    [core.STORAGE_KEY]: JSON.stringify({
-      schemaVersion: 2,
-      cards: [
-        { id: "a", name: "완성", completionStatus: "complete" },
-        { id: "b", name: "미완성", completionStatus: "incomplete" },
-      ],
-      activeCardId: "b",
-      searchQuery: "",
-      exportSelection: ["a", "b"],
-    }),
-  });
-
-  const state = core.readStore(storage);
-  assert.equal(state.schemaVersion, 6);
-  assert.deepEqual([...state.cards.map((card) => card.faction)], ["ally", "ally"]);
-  assert.deepEqual([...state.cards.map((card) => card.grade)], ["none", "none"]);
-  assert.deepEqual(
-    [...state.cards.map((card) => card.completionStatus)],
-    ["incomplete", "incomplete"],
-  );
-  assert.deepEqual([...state.selection], ["a", "b"]);
-});
-
-test("editing a selected complete card keeps it selected while making it incomplete", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [core.normalizeCard({
-      id: "a",
-      name: "카드",
-      completionStatus: "complete",
-    })],
-    selection: ["a"],
-  };
-
-  const edited = core.editCard(state, "a", { notes: "수정" });
-  assert.equal(edited.cards[0].completionStatus, "incomplete");
-  assert.deepEqual([...edited.selection], ["a"]);
-});
-
-test("bulk selection includes complete and incomplete cards", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
-      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
-    ],
-  };
-
-  assert.deepEqual([...core.bulkSelection(state, true).selection], ["a", "b"]);
-  assert.deepEqual([...core.bulkSelection(state, false).selection], []);
-});
-
-test("selects one card, toggles individuals, and replaces selection with a visible range", () => {
-  const core = loadCore();
-  const cards = ["a", "b", "c", "d", "e"]
-    .map((id) => core.normalizeCard({ id, name: id }));
-  const state = {
-    ...core.initialState(),
-    cards,
-    activeCardId: "a",
-    selection: ["a"],
-  };
-
-  const replaced = core.selectCard(
-    state,
-    ["a", "b", "c", "d", "e"],
-    "b",
-    "replace",
-    "a",
-  );
-  assert.deepEqual([...replaced.state.selection], ["b"]);
-  assert.equal(replaced.state.activeCardId, "b");
-  assert.equal(replaced.anchorId, "b");
-
-  const toggled = core.selectCard(
-    replaced.state,
-    ["a", "b", "c", "d", "e"],
-    "d",
-    "toggle",
-    replaced.anchorId,
-  );
-  assert.deepEqual([...toggled.state.selection], ["b", "d"]);
-  assert.equal(toggled.state.activeCardId, "d");
-  assert.equal(toggled.anchorId, "d");
-
-  const ranged = core.selectCard(
-    toggled.state,
-    ["b", "d", "e"],
-    "e",
-    "range",
-    "b",
-  );
-  assert.deepEqual([...ranged.state.selection], ["b", "d", "e"]);
-  assert.equal(ranged.state.activeCardId, "e");
-  assert.equal(ranged.anchorId, "b");
-
-  const reversed = core.selectCard(
-    ranged.state,
-    ["b", "d", "e"],
-    "b",
-    "range",
-    "e",
-  );
-  assert.deepEqual([...reversed.state.selection], ["b", "d", "e"]);
-
-  const fallback = core.selectCard(
-    { ...ranged.state, activeCardId: "d" },
-    ["b", "d", "e"],
-    "b",
-    "range",
-    "missing",
-  );
-  assert.deepEqual([...fallback.state.selection], ["b", "d"]);
-
-  const removedActive = core.selectCard(
-    { ...state, activeCardId: "d", selection: ["b", "d"] },
-    ["a", "b", "c", "d", "e"],
-    "d",
-    "toggle",
-    "d",
-  );
-  assert.deepEqual([...removedActive.state.selection], ["b"]);
-  assert.equal(removedActive.state.activeCardId, "b");
-
-  const emptied = core.selectCard(
-    removedActive.state,
-    ["a", "b", "c", "d", "e"],
-    "b",
-    "toggle",
-    removedActive.anchorId,
-  );
-  assert.deepEqual([...emptied.state.selection], []);
-  assert.equal(emptied.state.activeCardId, "b");
-});
-
-function multiEditState(core) {
-  return {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({
-        id: "ally-a",
-        name: "아군 실행",
-        faction: "ally",
-        grade: "common",
-        role: "execution",
-        cost: "1",
-        executionOrder: "2",
-        tags: ["독"],
-        targets: { ally: "frontOne", enemy: "frontOne" },
-        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
-        notes: "첫 메모",
-        completionStatus: "complete",
-      }),
-      core.normalizeCard({
-        id: "ally-b",
-        name: "아군 조작",
-        faction: "ally",
-        grade: "rare",
-        role: "intervention",
-        cost: "2",
-        executionOrder: "9",
-        tags: ["독"],
-        targets: { ally: "frontOne", enemy: "frontOne" },
-        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
-        notes: "둘째 메모",
-        completionStatus: "complete",
-      }),
-      core.normalizeCard({
-        id: "enemy",
-        name: "적 실행",
-        faction: "enemy",
-        grade: "rare",
-        executionOrder: "4",
-        tags: ["독"],
-        targets: { ally: "frontOne", enemy: "frontOne" },
-        abilities: { ally: ["방어"], enemy: ["피해"], none: ["드로우"] },
-        notes: "셋째 메모",
-        completionStatus: "complete",
-      }),
-    ],
-    activeCardId: "ally-a",
-    selection: ["ally-a", "ally-b", "enemy"],
-  };
-}
-
-test("aggregates only cards that can edit each field", () => {
-  const core = loadCore();
-  const state = multiEditState(core);
-
-  assert.deepEqual(
-    [...core.editTargetCards(state).map((card) => card.id)],
-    ["ally-a", "ally-b", "enemy"],
-  );
-  assert.deepEqual(
-    [...core.editTargetCards({
-      ...state,
-      activeCardId: "ally-b",
-      selection: [],
-    }).map((card) => card.id)],
-    ["ally-b"],
-  );
-  assert.deepEqual({ ...core.fieldAggregate(state, "grade") }, {
-    kind: "mixed",
-    value: "",
-    applicableCount: 2,
-  });
-  assert.deepEqual({ ...core.fieldAggregate(state, "tags") }, {
-    kind: "common",
-    value: "독",
-    applicableCount: 3,
-  });
-  assert.deepEqual({ ...core.fieldAggregate(state, "abilities.enemy") }, {
-    kind: "common",
-    value: "피해",
-    applicableCount: 3,
-  });
-  assert.deepEqual({ ...core.fieldAggregate(state, "executionOrder") }, {
-    kind: "mixed",
-    value: "",
-    applicableCount: 2,
-  });
-  assert.deepEqual({
-    ...core.fieldAggregate({
-      ...state,
-      activeCardId: "enemy",
-      selection: ["enemy"],
-    }, "grade"),
-  }, {
-    kind: "empty",
-    value: "",
-    applicableCount: 0,
-  });
-  assert.deepEqual({
-    ...core.fieldAggregate({
-      ...state,
-      activeCardId: "ally-b",
-      selection: [],
-    }, "grade"),
-  }, {
-    kind: "common",
-    value: "rare",
-    applicableCount: 1,
-  });
-});
-
-test("bulk edits only compatible selected cards and preserves unchanged cards", () => {
-  const core = loadCore();
-  const state = multiEditState(core);
-
-  const graded = core.editSelectedField(state, "grade", "rare");
-  assert.deepEqual(
-    [...graded.cards.map((card) => [card.grade, card.completionStatus])],
-    [
-      ["rare", "incomplete"],
-      ["rare", "complete"],
-      ["none", "complete"],
-    ],
-  );
-
-  const renamed = core.editSelectedField(state, "name", "같은 이름");
-  assert.deepEqual([...renamed.cards.map((card) => card.name)], [
-    "같은 이름",
-    "같은 이름",
-    "같은 이름",
-  ]);
-
-  const factionChanged = core.editSelectedField(state, "faction", "enemy");
-  assert.deepEqual(
-    [...factionChanged.cards.map((card) => ({
-      faction: card.faction,
-      grade: card.grade,
-      role: card.role,
-      cost: card.cost,
-      completionStatus: card.completionStatus,
-    }))],
-    [
-      {
-        faction: "enemy",
-        grade: "none",
-        role: "execution",
-        cost: "",
-        completionStatus: "incomplete",
-      },
-      {
-        faction: "enemy",
-        grade: "none",
-        role: "execution",
-        cost: "",
-        completionStatus: "incomplete",
-      },
-      {
-        faction: "enemy",
-        grade: "none",
-        role: "execution",
-        cost: "",
-        completionStatus: "complete",
-      },
-    ],
-  );
-
-  const reordered = core.editSelectedField(state, "executionOrder", "7");
-  assert.deepEqual(
-    [...reordered.cards.map((card) => [card.executionOrder, card.completionStatus])],
-    [
-      ["7", "incomplete"],
-      ["9", "complete"],
-      ["7", "incomplete"],
-    ],
-  );
-
-  const recosted = core.editSelectedField(state, "cost", "5");
-  assert.deepEqual(
-    [...recosted.cards.map((card) => [card.cost, card.completionStatus])],
-    [
-      ["5", "incomplete"],
-      ["5", "incomplete"],
-      ["", "complete"],
-    ],
-  );
-
-  const rerolled = core.editSelectedField(state, "role", "intervention");
-  assert.deepEqual(
-    [...rerolled.cards.map((card) => [card.role, card.completionStatus])],
-    [
-      ["intervention", "incomplete"],
-      ["intervention", "complete"],
-      ["execution", "complete"],
-    ],
-  );
-
-  const retargeted = core.editSelectedField(state, "targets.ally", "backTwo");
-  assert.deepEqual(
-    [...retargeted.cards.map((card) => [card.targets.ally, card.targets.enemy])],
-    [
-      ["backTwo", "frontOne"],
-      ["backTwo", "frontOne"],
-      ["backTwo", "frontOne"],
-    ],
-  );
-
-  const retagged = core.editSelectedField(state, "tags", "독, 소비");
-  assert.deepEqual(
-    [...retagged.cards.map((card) => [...card.tags])],
-    [
-      ["독", "소비"],
-      ["독", "소비"],
-      ["독", "소비"],
-    ],
-  );
-
-  const reworded = core.editSelectedField(
-    state,
-    "abilities.none",
-    "운명력을 얻는다.\n카드를 뽑는다.",
-  );
-  assert.deepEqual(
-    [...reworded.cards.map((card) => ({
-      none: [...card.abilities.none],
-      enemy: [...card.abilities.enemy],
-    }))],
-    [
-      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
-      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
-      { none: ["운명력을 얻는다.", "카드를 뽑는다."], enemy: ["피해"] },
-    ],
-  );
-
-  assert.equal(core.editSelectedField(state, "tags", "독"), state);
-
-  const activeOnly = core.editSelectedField({
-    ...state,
-    activeCardId: "ally-b",
-    selection: [],
-  }, "notes", "활성 카드만");
-  assert.deepEqual([...activeOnly.cards.map((card) => card.notes)], [
-    "첫 메모",
-    "활성 카드만",
-    "셋째 메모",
-  ]);
-});
-
-test("inserts a dragged card before or after a target without changing selection or active card", () => {
-  const core = loadCore();
-  const cards = ["a", "b", "c", "d"].map((id) => core.normalizeCard({
-    id,
-    name: id,
-    completionStatus: "complete",
-  }));
-  const state = {
-    ...core.initialState(),
-    cards,
-    activeCardId: "b",
-    selection: ["a", "c"],
-  };
-
-  const after = core.reorderCards(state, "a", "c", "after");
-  assert.deepEqual([...after.cards.map((card) => card.id)], ["b", "c", "a", "d"]);
-  assert.equal(after.activeCardId, "b");
-  assert.deepEqual([...after.selection], ["a", "c"]);
-
-  const before = core.reorderCards(state, "d", "b", "before");
-  assert.deepEqual([...before.cards.map((card) => card.id)], ["a", "d", "b", "c"]);
-  assert.strictEqual(core.reorderCards(state, "b", "b", "before"), state);
-});
-
-test("exports selected cards in the reordered list order", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: ["a", "b", "c"].map((id) => core.normalizeCard({
-      id,
-      name: id,
-      completionStatus: "complete",
-    })),
-    selection: ["a", "c"],
-  };
-
-  const reordered = core.reorderCards(state, "c", "a", "before");
-  assert.deepEqual(
-    [...core.cardsForExport(reordered).map((card) => card.id)],
-    ["c", "a"],
-  );
-});
-
-test("chooses selected cards for deletion and falls back to the active card", () => {
-  const core = loadCore();
-  const base = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({ id: "a", name: "첫 카드" }),
-      core.normalizeCard({ id: "b", name: "둘째 카드" }),
-      core.normalizeCard({ id: "c", name: "셋째 카드" }),
-    ],
-    activeCardId: "b",
-  };
-
-  assert.deepEqual([...core.deletionIds({ ...base, selection: ["a", "c"] })], ["a", "c"]);
-  assert.deepEqual([...core.deletionIds(base)], ["b"]);
-});
-
-test("bulk deletion preserves an unselected active card and selects a fallback when active is deleted", () => {
-  const core = loadCore();
-  const cards = [
-    core.normalizeCard({ id: "a", name: "첫 카드" }),
-    core.normalizeCard({ id: "b", name: "둘째 카드" }),
-    core.normalizeCard({ id: "c", name: "셋째 카드" }),
-  ];
-  const kept = core.deleteCards({
-    ...core.initialState(),
-    cards,
-    activeCardId: "b",
-    selection: ["a", "c"],
-  }, ["a", "c"]);
-  assert.equal(kept.activeCardId, "b");
-  assert.deepEqual([...kept.cards.map((card) => card.id)], ["b"]);
-
-  const fallback = core.deleteCards({
-    ...core.initialState(),
-    cards,
-    activeCardId: "b",
-    selection: ["b", "c"],
-  }, ["b", "c"]);
-  assert.equal(fallback.activeCardId, "a");
-  assert.deepEqual([...fallback.selection], []);
-});
-
-test("blocks all export when selection contains an incomplete card", () => {
-  const core = loadCore();
-  const state = {
-    ...core.initialState(),
-    cards: [
-      core.normalizeCard({ id: "a", name: "완성", completionStatus: "complete" }),
-      core.normalizeCard({ id: "b", name: "미완성", completionStatus: "incomplete" }),
-    ],
-    selection: ["a", "b"],
-  };
-
-  assert.deepEqual({ ...core.exportStatus(state) }, {
-    kind: "error",
-    message: "미완성 카드는 내보낼 수 없습니다. 먼저 완성 상태로 저장하거나 선택을 해제하세요.",
-  });
-  assert.deepEqual([...core.cardsForExport(state)], []);
-});
-
-test("creates uniquely named incomplete cards directly in the list", () => {
-  const core = loadCore();
-  const first = core.createCard(core.initialState(), {
-    id: "a",
-    now: "2026-07-27T00:00:00.000Z",
-  });
-  const second = core.createCard(first, {
-    id: "b",
-    now: "2026-07-27T00:01:00.000Z",
-  });
-
-  assert.deepEqual([...first.cards.map((card) => card.name)], ["새 카드"]);
-  assert.deepEqual([...second.cards.map((card) => card.name)], ["새 카드", "새 카드 (2)"]);
-  assert.equal(second.cards[1].completionStatus, "incomplete");
-  assert.equal(second.activeCardId, "b");
-  assert.deepEqual([...second.selection], ["b"]);
-});
-
-test("keeps generated card IDs unique when an ID source collides", () => {
-  const core = loadCore();
-  const first = core.createCard(core.initialState(), { id: "card" });
-  const second = core.createCard(first, { id: "card" });
-  const duplicated = core.duplicateCard(second, "card", { id: "card" });
-  const markdown = core.bundleMarkdown([
-    core.normalizeCard({ name: "가져온 카드", completionStatus: "complete" }),
-    core.normalizeCard({ name: "가져온 카드 둘", completionStatus: "complete" }),
-  ], "2026-07-27");
-  const imported = core.importCards(duplicated, markdown, { ids: ["card", "card"] });
-
-  assert.deepEqual([...imported.cards.map((card) => card.id)], [
-    "card",
-    "card-2",
-    "card-3",
-    "card-4",
-    "card-5",
-  ]);
-});
-
-test("editing a complete card makes it incomplete and keeps it selected", () => {
-  const core = loadCore();
-  const complete = core.normalizeCard({
-    id: "a",
-    name: "완성 카드",
-    completionStatus: "complete",
-  });
-  const state = {
-    ...core.initialState(),
-    cards: [complete],
-    activeCardId: "a",
-    selection: ["a"],
-  };
-
-  const edited = core.editCard(state, "a", { notes: "수정됨" });
-  assert.equal(edited.cards[0].notes, "수정됨");
-  assert.equal(edited.cards[0].completionStatus, "incomplete");
-  assert.deepEqual([...edited.selection], ["a"]);
-});
-
-test("saves complete and incomplete current cards from core information", () => {
-  const core = loadCore();
-  const created = core.createCard(core.initialState(), {
-    id: "a",
-    now: "2026-07-27T00:00:00.000Z",
-  });
-  const valid = core.editCard(created, "a", {
-    role: "intervention",
-    cost: "1",
-  });
-  const completed = core.saveCard(valid, "a", {
-    now: "2026-07-27T00:02:00.000Z",
-  });
-  assert.equal(completed.cards[0].completionStatus, "complete");
-  assert.equal(completed.cards[0].updatedAt, "2026-07-27T00:02:00.000Z");
-
-  const emptyName = core.editCard(completed, "a", { name: "" });
-  const incomplete = core.saveCard(emptyName, "a");
-  assert.equal(incomplete.cards[0].completionStatus, "incomplete");
-});
-
-test("round-trips exported cards through strict Markdown import", () => {
-  const core = loadCore();
-  const source = [
-    core.normalizeCard({
-      name: "맹독 호위",
-      role: "execution",
-      cost: "1",
-      executionOrder: "4",
-      tags: ["독", "방어"],
-      targets: { ally: "backOne", enemy: "frontTwo" },
-      abilities: {
-        ally: ["방어 4."],
-        enemy: ["독 2."],
-        none: ["카드 1장 뽑기."],
-      },
-      notes: "왕복 확인",
-      completionStatus: "complete",
-    }),
-  ];
-
-  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
-  assert.equal(parsed.length, 1);
-  assert.equal(parsed[0].name, "맹독 호위");
-  assert.deepEqual([...parsed[0].tags], ["독", "방어"]);
-  assert.deepEqual([...parsed[0].abilities.enemy], ["독 2."]);
-  assert.equal(parsed[0].targets.ally, "backOne");
-  assert.equal(parsed[0].targets.enemy, "frontTwo");
-  assert.equal(parsed[0].completionStatus, "complete");
-});
-
-test("emits and round-trips ally and enemy faction and grade metadata", () => {
-  const core = loadCore();
-  const ally = core.normalizeCard({
-    name: "아군 실행",
-    faction: "ally",
-    grade: "rare",
-    cost: "1",
-    role: "execution",
-    executionOrder: "4",
-    completionStatus: "complete",
-  });
-  const enemy = core.normalizeCard({
-    name: "적군 실행",
-    faction: "enemy",
-    executionOrder: "2",
-    completionStatus: "complete",
-  });
-
-  assert.match(
-    core.cardMarkdown(ally),
-    /- 진영: 아군\n- 등급: 희귀\n- 비용: 1\n- 역할: 실행\n- 실행순서: 4/,
-  );
-  assert.match(
-    core.cardMarkdown(enemy),
-    /- 진영: 적군\n- 등급: 없음\n- 비용: 없음\n- 역할: 실행\n- 실행순서: 2/,
-  );
-
-  const parsed = core.parseBundleMarkdown(
-    core.bundleMarkdown([ally, enemy], "2026-07-28"),
-  );
-  assert.deepEqual(
-    [...parsed.map((card) => ({
-      faction: card.faction,
-      grade: card.grade,
-      cost: card.cost,
-      role: card.role,
-      completionStatus: card.completionStatus,
-    }))],
-    [
-      {
-        faction: "ally",
-        grade: "rare",
-        cost: "1",
-        role: "execution",
-        completionStatus: "complete",
-      },
-      {
-        faction: "enemy",
-        grade: "none",
-        cost: "",
-        role: "execution",
-        completionStatus: "complete",
-      },
-    ],
-  );
-});
-
-test("imports legacy Markdown without faction as an ally draft", () => {
-  const core = loadCore();
-  const legacy = `# Fate Weaver 카드 아이디어
-
-- 생성일: 2026-07-27
-- 카드 수: 1
-- 대상 규칙: \`docs/superpowers/specs/2026-07-27-position-targeting-card-text-design.md\`
-
-## 구형 초안
-
-- 역할: 미정
-- 대상: 없음
-`;
-
-  const parsed = core.parseBundleMarkdown(legacy);
-  assert.equal(parsed[0].faction, "ally");
-  assert.equal(parsed[0].grade, "none");
-  assert.equal(parsed[0].completionStatus, "incomplete");
-
-  const imported = core.importCards(core.initialState(), legacy, {
-    ids: ["legacy"],
-    now: "2026-07-28T00:00:00.000Z",
-  });
-  assert.equal(imported.cards[0].faction, "ally");
-  assert.equal(imported.cards[0].grade, "none");
-  assert.equal(imported.cards[0].completionStatus, "incomplete");
-});
-
-test("rejects an unknown Markdown grade", () => {
-  const core = loadCore();
-  const source = core.normalizeCard({
-    name: "등급 오류",
-    faction: "ally",
-    grade: "common",
-    role: "intervention",
-    cost: "1",
-    completionStatus: "complete",
-  });
-  const markdown = core.bundleMarkdown([source], "2026-07-29")
-    .replace("- 진영: 아군", "- 진영: 아군\n- 등급: 전설");
-
-  assert.throws(
-    () => core.parseBundleMarkdown(markdown),
-    /알 수 없는 등급: 전설/,
-  );
-});
-
-test("rejects a non-none enemy Markdown grade", () => {
-  const core = loadCore();
-  const source = core.normalizeCard({
-    name: "적군 등급 오류",
-    faction: "enemy",
-    executionOrder: "1",
-    completionStatus: "complete",
-  });
-  const markdown = core.bundleMarkdown([source], "2026-07-29")
-    .replace("- 등급: 없음", "- 등급: 고급");
-
-  assert.throws(
-    () => core.parseBundleMarkdown(markdown),
-    /적군 등급은 없음이어야 합니다/,
-  );
-});
-
-test("round-trips note lines that resemble card headings", () => {
-  const core = loadCore();
-  const notes = "첫 줄\n## 새 카드처럼 보이는 메모\n\\## 백슬래시가 있는 메모";
-  const source = [
-    core.normalizeCard({
-      name: "메모 카드",
-      role: "unknown",
-      notes,
-      completionStatus: "complete",
-    }),
-  ];
-
-  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
-  assert.equal(parsed[0].notes, notes);
-});
-
-test("round-trips targetless abilities that resemble faction markers", () => {
-  const core = loadCore();
-  const targetless = ["[적군] 표식에 관한 설명.", "[아군] 표식에 관한 설명.", "\\[적군] 원문"];
-  const source = [
-    core.normalizeCard({
-      name: "표식 설명",
-      role: "unknown",
-      abilities: { none: targetless },
-      completionStatus: "complete",
-    }),
-  ];
-
-  const parsed = core.parseBundleMarkdown(core.bundleMarkdown(source, "2026-07-27"));
-  assert.deepEqual([...parsed[0].abilities.none], targetless);
-  assert.deepEqual([...parsed[0].abilities.enemy], []);
-  assert.deepEqual([...parsed[0].abilities.ally], []);
-});
-
-test("imports duplicate names as new numbered cards", () => {
-  const core = loadCore();
-  const existing = core.normalizeCard({
-    id: "a",
-    name: "맹독 호위",
-    completionStatus: "complete",
-  });
-  const markdown = core.bundleMarkdown([
-    core.normalizeCard({ name: "맹독 호위", completionStatus: "complete" }),
-    core.normalizeCard({ name: "맹독 호위", completionStatus: "complete" }),
-  ], "2026-07-27");
-
-  const imported = core.importCards(
-    { ...core.initialState(), cards: [existing] },
-    markdown,
-    { ids: ["b", "c"], now: "2026-07-27T01:00:00.000Z" },
-  );
-  assert.deepEqual([...imported.cards.map((card) => card.name)], [
-    "맹독 호위",
-    "맹독 호위 (2)",
-    "맹독 호위 (3)",
-  ]);
-  assert.equal(imported.activeCardId, "b");
-  assert.deepEqual([...imported.selection], ["b"]);
-  assert.equal(imported.cards[2].completionStatus, "incomplete");
-});
-
-test("rejects a malformed bundle without changing existing state", () => {
-  const core = loadCore();
-  const existing = core.normalizeCard({
-    id: "a",
-    name: "보존 카드",
-    completionStatus: "complete",
-  });
-  const state = { ...core.initialState(), cards: [existing] };
-
-  assert.throws(
-    () => core.importCards(state, "# 잘못된 파일"),
-    /불러올 수 없는 Markdown/,
-  );
-  assert.deepEqual([...state.cards.map((card) => card.name)], ["보존 카드"]);
-});
-
-test("rejects a bundle whose declared card count is wrong", () => {
-  const core = loadCore();
-  const markdown = core.bundleMarkdown([
-    core.normalizeCard({ name: "한 장", completionStatus: "complete" }),
-  ], "2026-07-27").replace("- 카드 수: 1", "- 카드 수: 2");
-
-  assert.throws(
-    () => core.parseBundleMarkdown(markdown),
-    /카드 수가 일치하지 않습니다/,
-  );
-});
-
-test("failed immediate persistence keeps memory state until retry succeeds", () => {
-  const core = loadCore();
-  const storage = new ToggleStorage();
-  const state = core.createCard(core.initialState(), {
-    id: "a",
-    now: "2026-07-27T00:00:00.000Z",
-  });
-
-  storage.failWrites = true;
-  const failed = core.tryWriteStore(storage, state);
-  assert.equal(failed.persistFailed, true);
-  assert.equal(failed.state.cards[0].name, "새 카드");
-  assert.equal(storage.getItem(core.STORAGE_KEY), null);
-
-  storage.failWrites = false;
-  const recovered = core.tryWriteStore(storage, failed.state);
-  assert.equal(recovered.persistFailed, false);
-  assert.equal(
-    JSON.parse(storage.getItem(core.STORAGE_KEY)).cards[0].name,
-    "새 카드",
-  );
-});
-
 const schemaUrl = new URL("./authoring-schema.json", import.meta.url);
 
 function loadSchema() {
@@ -2485,10 +851,8 @@ test("요약을 두 줄 문장으로 만든다", () => {
   ]);
 });
 
-test("저장소 모드 전환과 연결 버튼이 마크업에 있다", () => {
+test("저장소 연결 버튼이 마크업에 있다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
-  assert.match(html, /id="mode-repo"/);
-  assert.match(html, /id="mode-markdown"/);
   assert.match(html, /id="repo-connect"/);
   assert.match(html, /id="repo-reload"/);
   assert.match(html, /id="repo-unsupported"/);
@@ -2637,6 +1001,76 @@ test("저장에 실패해도 던지지 않고 알린다", () => {
   const result = core.writePending(storage, core.emptyPending());
   assert.equal(result.persisted, false);
   assert.ok(result.error.includes("quota"));
+});
+
+function fakeStorage(seed = {}) {
+  const map = new Map(Object.entries(seed));
+  return {
+    getItem: (key) => (map.has(key) ? map.get(key) : null),
+    setItem: (key, value) => { map.set(key, String(value)); },
+    removeItem: (key) => { map.delete(key); },
+    snapshot: () => Object.fromEntries(map),
+  };
+}
+
+test("스키마 버전이 7이다", () => {
+  const core = loadCore();
+
+  assert.equal(core.SCHEMA_VERSION, 7);
+});
+
+test("옛 Markdown 데이터를 백업 키로 옮기고 지운다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.STORAGE_KEY]: JSON.stringify({ schemaVersion: 6, cards: [{ name: "옛 카드" }] }),
+  });
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, true);
+  assert.match(result.note, /백업/);
+  assert.equal(storage.getItem(core.STORAGE_KEY), null);
+  assert.match(storage.getItem(core.LEGACY_BACKUP_KEY), /옛 카드/);
+});
+
+test("옛 데이터가 없으면 아무것도 하지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage();
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, false);
+  assert.equal(result.note, "");
+  assert.deepEqual(storage.snapshot(), {});
+});
+
+test("백업이 이미 있으면 덮어쓰지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.STORAGE_KEY]: JSON.stringify({ schemaVersion: 6 }),
+    [core.LEGACY_BACKUP_KEY]: "먼저 백업된 것",
+  });
+
+  const result = core.migrateLegacyStore(storage);
+
+  assert.equal(result.moved, false);
+  assert.equal(storage.getItem(core.LEGACY_BACKUP_KEY), "먼저 백업된 것");
+  assert.notEqual(storage.getItem(core.STORAGE_KEY), null);
+});
+
+test("계획 C 시절 미반영(버전 1)을 버리지 않는다", () => {
+  const core = loadCore();
+  const storage = fakeStorage({
+    [core.PENDING_STORAGE_KEY]: JSON.stringify({
+      version: 1, cards: { "repo:x": { id: "x" } }, pools: {},
+    }),
+  });
+
+  const result = core.readPending(storage);
+
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.pending.version, 7);
+  assert.deepEqual(Object.keys(result.pending.cards), ["repo:x"]);
 });
 
 test("저장소에서 읽은 카드에 파일 uid를 붙인다", () => {
@@ -2999,11 +1433,18 @@ test("새 카드 버튼과 편집 폼 자리가 마크업에 있다", () => {
   assert.match(html, /id="repo-pending-note"/);
 });
 
-test("편집 명령이 저장소 UI에만 배선된다", () => {
+test("편집 진입점이 코어가 아니라 저장소 UI에 있다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
-  const markdownUi = html.split("<script data-repo-ui>")[0].split("</script>").pop();
-  assert.equal(markdownUi.includes("applyCardEdit"), false,
-    "Markdown UI 스크립트는 이 계획에서 바뀌지 않는다");
+  const core = html.match(/<script data-card-idea-core>([\s\S]*?)<\/script>/);
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(core);
+  assert.ok(ui);
+  // 코어는 DOM을 모른다. 편집 진입점이 여기로 새면 테스트 하네스가 즉시 깨진다.
+  assert.equal(core[1].includes("applyCardEdit"), false);
+  assert.equal(core[1].includes("document."), false);
+  assert.match(ui[1], /function applyCardEdit/);
+  assert.match(ui[1], /function applyPoolEdit/);
 });
 
 test("효과 편집기의 스타일이 마크업에 있다", () => {
@@ -3017,4 +1458,550 @@ test("풀 담기와 소속 표시의 스타일이 마크업에 있다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
   assert.match(html, /\.pool-membership\b/);
   assert.match(html, /\.pool-picker\b/);
+});
+
+test("같은 원문은 차이가 없다", () => {
+  const core = loadCore();
+  const text = "{\n  \"id\": \"a\"\n}\n";
+
+  const diff = core.diffLines(text, text);
+
+  assert.equal(diff.same, true);
+  assert.deepEqual(diff.rows.map((row) => row.kind), ["same", "same", "same", "same"]);
+});
+
+test("바뀐 줄을 삭제와 추가로 낸다", () => {
+  const core = loadCore();
+  const base = "{\n  \"id\": \"a\"\n}\n";
+  const current = "{\n  \"id\": \"b\"\n}\n";
+
+  const diff = core.diffLines(base, current);
+
+  assert.equal(diff.same, false);
+  assert.deepEqual(diff.rows, [
+    { kind: "same", text: "{" },
+    { kind: "remove", text: "  \"id\": \"a\"" },
+    { kind: "add", text: "  \"id\": \"b\"" },
+    { kind: "same", text: "}" },
+    { kind: "same", text: "" },
+  ]);
+});
+
+test("줄이 늘면 추가만 낸다", () => {
+  const core = loadCore();
+  const base = "a\nb\n";
+  const current = "a\nx\nb\n";
+
+  const diff = core.diffLines(base, current);
+
+  assert.deepEqual(diff.rows.map((row) => `${row.kind}:${row.text}`), [
+    "same:a", "add:x", "same:b", "same:",
+  ]);
+});
+
+test("저장소에 없던 것은 전부 추가다", () => {
+  const core = loadCore();
+
+  const diff = core.diffLines(null, "a\nb\n");
+
+  assert.equal(diff.same, false);
+  assert.equal(diff.rows.every((row) => row.kind === "add"), true);
+});
+
+test("저장소 ↔ 현재 토글 자리가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="repo-source-toggle"/);
+  assert.match(html, /id="repo-source-diff"/);
+  assert.match(html, /\.diff-row\.is-add/);
+  assert.match(html, /\.diff-row\.is-remove/);
+});
+
+test("우측 창은 선택이 사라지면 원문 자리로 돌아간다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /elements\.source\.hidden = false;/);
+  assert.match(ui[1], /elements\.sourceDiff\.hidden = true;/);
+  assert.match(html, /#repo-source-toggle\.is-active/);
+});
+
+const repoRoot = new URL("../../", import.meta.url);
+const repoCardPath = (id) =>
+  fileURLToPath(new URL(`Assets/StreamingAssets/Content/Cards/${id}.json`, repoRoot));
+const repoSchema = () => loadCore().parseAuthoringSchema(
+  readFileSync(fileURLToPath(new URL("./authoring-schema.json", htmlUrl)), "utf8"));
+
+test("저장소 것으로 되돌리면 미반영이 사라진다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const mine = core.setCardField(card, "name", "내가 고친 이름");
+  const outside = storedText.replace(/"energyCost": \d+/, '"energyCost": 9');
+
+  assert.equal(
+    core.resolveCardState({ stored: outside, pending: mine, schema }), "conflict");
+
+  const pending = core.dropPendingCard(core.putPendingCard(core.emptyPending(), mine), mine.uid);
+  const { card: reread } = core.readCardJson(outside, schema);
+
+  assert.deepEqual(pending.cards, {});
+  assert.equal(core.resolveCardState({ stored: outside, pending: reread, schema }), "same");
+});
+
+test("내 변경을 유지하면 새 원본 위에서 수정됨이 된다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const mine = core.setCardField(card, "name", "내가 고친 이름");
+  const outside = storedText.replace(/"energyCost": \d+/, '"energyCost": 9');
+
+  const kept = { ...mine, base: outside };
+
+  assert.equal(core.resolveCardState({ stored: outside, pending: kept, schema }), "modified");
+});
+
+test("충돌 해결 버튼이 저장소 UI에 배선된다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui, "저장소 UI 스크립트가 있어야 한다");
+  assert.match(ui[1], /저장소 것으로 되돌리기/);
+  assert.match(ui[1], /내 변경 유지/);
+  assert.match(ui[1], /function revertCardToStored/);
+  assert.match(ui[1], /function keepCardMine/);
+  assert.match(html, /\.repo-conflict/);
+});
+
+function planFixture(core, schema) {
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  return { storedText, card };
+}
+
+test("변경 없는 카드는 쓰지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes, []);
+  assert.deepEqual(plan.unchanged, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("수정된 카드는 갱신으로, 새 카드는 신규로 나간다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const edited = core.setCardField(card, "name", "고친 이름");
+  const fresh = core.setCardField(
+    core.createCardModel({ schema, uid: core.newUid(1) }), "id", "brand_new");
+
+  const plan = core.exportPlan({
+    cards: [edited, fresh], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[edited.uid, "modified"], [fresh.uid, "new"]]),
+    poolStates: new Map(), readErrors: [],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.updated, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.created, ["brand_new.json"]);
+  assert.deepEqual(plan.writes.map((entry) => entry.name),
+    ["brand_new.json", "vanguard_slash.json"]);
+  assert.deepEqual(plan.writes[0].segments,
+    ["Assets", "StreamingAssets", "Content", "Cards", "brand_new.json"]);
+});
+
+test("id를 바꾸면 옛 파일이 미참조가 된다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const renamed = core.setCardField(card, "id", "vanguard_cleave");
+
+  const plan = core.exportPlan({
+    cards: [renamed], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[renamed.uid, "modified"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.created, ["vanguard_cleave.json"]);
+  assert.deepEqual(plan.unreferenced, ["vanguard_slash.json"]);
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("읽기 오류가 있으면 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.readErrors, ["broken.json"]);
+  assert.deepEqual(plan.unreferenced, []);
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 1개/);
+});
+
+test("충돌과 검증 오류도 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "conflict"]]), poolStates: new Map(),
+    readErrors: [],
+    validation: { errors: [{ scope: "pool", id: "starter", message: "없는 카드입니다" }], warnings: [] },
+    schema,
+  });
+
+  assert.equal(plan.blocked.length, 2);
+  assert.match(plan.blocked[0], /충돌 1개/);
+  assert.match(plan.blocked[1], /검증 오류 1개/);
+});
+
+test("경고는 내보내기를 막지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [],
+    validation: { errors: [], warnings: [{ scope: "card", id: "x", message: "어느 풀에도 없습니다." }] },
+    schema,
+  });
+
+  assert.deepEqual(plan.blocked, []);
+});
+
+test("요약 한 줄이 신규·수정·변경 없음을 센다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const edited = core.setCardField(card, "name", "고친 이름");
+
+  const plan = core.exportPlan({
+    cards: [edited], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[edited.uid, "modified"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.equal(plan.summaryLine, "신규 0 · 수정 1 · 변경 없음 0");
+});
+
+test("풀도 카드와 같은 규칙으로 나간다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const edited = core.removeFromPool(pool, 0);
+
+  const plan = core.exportPlan({
+    cards: [], pools: [edited], storedCards: [], storedPools: [pool],
+    cardStates: new Map(), poolStates: new Map([[edited.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.updated, ["starter.json"]);
+  assert.deepEqual(plan.writes[0].segments,
+    ["Assets", "StreamingAssets", "Content", "Pools", "starter.json"]);
+  assert.equal(plan.writes[0].text, core.writePoolJson(edited));
+});
+
+test("카드와 풀이 같은 id를 가져도 미참조를 놓치지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const sharedId = card.id;
+  const sharedPool = { ...pool, id: sharedId };
+  const renamedPool = { ...sharedPool, id: `${sharedId}_renamed` };
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [renamedPool], storedCards: [card], storedPools: [sharedPool],
+    cardStates: new Map([[card.uid, "same"]]),
+    poolStates: new Map([[renamedPool.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.unreferenced, [`${sharedId}.json`]);
+  assert.deepEqual(plan.unchanged, [`${sharedId}.json`]);
+});
+
+test("충돌 카드는 쓰기 목록에 들어가지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "conflict"]]), poolStates: new Map(),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes, []);
+  assert.deepEqual(plan.created, []);
+  assert.deepEqual(plan.updated, []);
+  assert.deepEqual(plan.unchanged, []);
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /충돌 1개/);
+});
+
+test("카드를 풀보다 먼저 쓴다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const { card } = planFixture(core, schema);
+  const editedCard = core.setCardField(card, "name", "고친 이름");
+  const poolText = readFileSync(fileURLToPath(new URL(
+    "Assets/StreamingAssets/Content/Pools/starter.json", repoRoot)), "utf8");
+  const { pool } = core.readPoolJson(poolText);
+  const editedPool = core.removeFromPool(pool, 0);
+
+  const plan = core.exportPlan({
+    cards: [editedCard], pools: [editedPool], storedCards: [card], storedPools: [pool],
+    cardStates: new Map([[editedCard.uid, "modified"]]),
+    poolStates: new Map([[editedPool.id, "modified"]]),
+    readErrors: [], validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes.map((entry) => entry.name),
+    ["vanguard_slash.json", "starter.json"]);
+});
+
+test("읽기 오류 원문 편집 자리가 저장소 UI에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /function renderReadErrorDetail/);
+  assert.match(ui[1], /readErrors/);
+  assert.doesNotMatch(ui[1], /quarantined/);
+  assert.match(html, /\.repo-raw-editor/);
+});
+
+test("이번에 덮어쓸 파일의 읽기 오류는 내보내기를 막지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  const repaired = { ...card, id: "broken", uid: core.repoUid("broken"), base: "{ 깨진 원문" };
+
+  const plan = core.exportPlan({
+    cards: [repaired], pools: [], storedCards: [], storedPools: [],
+    cardStates: new Map([[repaired.uid, "new"]]), poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes.map((entry) => entry.name), ["broken.json"]);
+  assert.deepEqual(plan.blocked, [], "고쳐서 덮어쓸 파일이 스스로를 막으면 안 된다");
+  assert.deepEqual(plan.readErrors, [], "같은 파일이 신규와 읽기 오류에 동시에 뜨면 안 된다");
+});
+
+test("쓰지 않는 읽기 오류는 여전히 내보내기를 막는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+
+  const plan = core.exportPlan({
+    cards: [card], pools: [], storedCards: [card], storedPools: [],
+    cardStates: new Map([[card.uid, "same"]]), poolStates: new Map(),
+    readErrors: [
+      { scope: "card", name: "other_broken.json", messages: ["JSON을 읽을 수 없습니다"] },
+      { scope: "status", name: "bad_status.json", messages: ["JSON을 읽을 수 없습니다"] },
+    ],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 2개/);
+  assert.deepEqual(plan.readErrors, ["bad_status.json", "other_broken.json"]);
+});
+
+/// 예외는 '이번에 쓰는 파일'로만 좁혀야 한다. 저장소와 동일한 카드는 쓰기 목록에 없으므로
+/// 같은 이름의 깨진 파일을 고쳐 주지 못한다 - 그런데도 예외로 치면 깨진 파일이 차단에도
+/// 요약에도 뜨지 않은 채 남아 부팅이 실패한다. 파일명과 id가 다를 때 실제로 일어난다.
+test("변경 없는 카드는 동명 읽기 오류를 풀어 주지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+  const storedText = readFileSync(repoCardPath("vanguard_slash"), "utf8");
+  const { card } = core.readCardJson(storedText, schema);
+  // other.json이 담고 있어 파일명과 id가 어긋난 카드. 깨진 broken.json과 이름이 겹친다.
+  const mismatched = { ...card, id: "broken", uid: core.repoUid("broken") };
+  const edited = core.setCardField(card, "name", "고친 이름");
+
+  const plan = core.exportPlan({
+    cards: [mismatched, edited], pools: [], storedCards: [mismatched, card], storedPools: [],
+    cardStates: new Map([[mismatched.uid, "same"], [edited.uid, "modified"]]),
+    poolStates: new Map(),
+    readErrors: [{ scope: "card", name: "broken.json", messages: ["JSON을 읽을 수 없습니다"] }],
+    validation: { errors: [], warnings: [] }, schema,
+  });
+
+  assert.deepEqual(plan.writes.map((entry) => entry.name), ["vanguard_slash.json"]);
+  assert.deepEqual(plan.readErrors, ["broken.json"], "깨진 파일이 목록에서 사라지면 안 된다");
+  assert.equal(plan.blocked.length, 1);
+  assert.match(plan.blocked[0], /읽기 오류 1개/);
+});
+
+test("상태 파일은 원문 편집 대신 읽기 전용 안내를 낸다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /상태 파일은 이 노트북에서 편집하지 않습니다/);
+  assert.match(ui[1], /entry\.scope === "status"/);
+});
+
+test("상태 JSON은 카드로 읽히지 않는다", () => {
+  const core = loadCore();
+  const schema = repoSchema();
+
+  const { card, errors } = core.readCardJson('{"key":"burn","displayName":"화상"}', schema);
+
+  assert.equal(card, null);
+  assert.ok(errors.some((message) => message.includes("id")));
+});
+
+test("내보내기 버튼과 요약 다이얼로그가 마크업에 있다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.match(html, /id="repo-export"/);
+  assert.match(html, /id="repo-export-dialog"/);
+  assert.match(html, /id="repo-export-summary"/);
+  assert.match(html, /id="repo-export-confirm"/);
+  assert.match(html, /미참조 파일/);
+});
+
+/// 소스에서 함수 본문만 중괄호 매칭으로 떼어낸다. 스크립트 끝까지 훑으면 뒤에 있는 다른
+/// 함수의 문자열이 잡혀, 본문 안에서 순서를 뒤집는 진짜 회귀를 놓친다.
+function functionBody(source, signature) {
+  const start = source.indexOf(signature);
+  assert.notEqual(start, -1, `${signature}를 찾지 못했다`);
+
+  const open = source.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === "{") depth += 1;
+    else if (source[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return source.slice(open, i + 1);
+    }
+  }
+  throw new Error(`${signature}의 본문이 닫히지 않았다`);
+}
+
+test("쓰기 게이트가 재읽기 뒤에 계획을 만든다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  assert.match(ui[1], /function exportToRepo/);
+  assert.match(ui[1], /function writePlanFiles/);
+  assert.match(ui[1], /mode: "readwrite"/);
+
+  // 재읽기가 계획보다 먼저여야 외부 변경을 덮어쓰지 않는다(설계 10.1).
+  const body = functionBody(ui[1], "async function exportToRepo");
+  assert.ok(body.includes("await loadRepo"), "재읽기가 본문에 있어야 한다");
+  assert.ok(body.includes("currentExportPlan()"), "계획 계산이 본문에 있어야 한다");
+  assert.ok(body.indexOf("await loadRepo") < body.indexOf("currentExportPlan()"));
+
+  // 권한 확보가 재읽기보다 먼저여야 한다 - await가 사용자 제스처를 소진한다.
+  assert.ok(body.indexOf("hasWritePermission") < body.indexOf("await loadRepo"));
+});
+
+test("쓰기 직전에 저장소를 다시 읽고 계획을 검증한다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const body = functionBody(ui[1], "async function confirmExport");
+
+  // 재읽기 → 계획 재계산 → 비교 → 쓰기 순서. 하나라도 뒤집히면 낡은 계획으로 덮어쓴다.
+  assert.ok(body.includes("await loadRepo"), "쓰기 직전 재읽기가 있어야 한다");
+  assert.ok(body.indexOf("await loadRepo") < body.indexOf("currentExportPlan()"));
+  assert.ok(body.indexOf("samePlan") < body.indexOf("await writePlanFiles"));
+});
+
+test("쓰기와 재읽기 실패가 모두 다이얼로그를 정리한다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const body = functionBody(ui[1], "async function confirmExport");
+
+  // 실패 경로마다 확인 버튼을 되살리고 계획을 버려야 다음 시도가 막히지 않는다.
+  assert.equal((body.match(/plannedExport = null/g) ?? []).length >= 3, true);
+  assert.equal((body.match(/exportConfirm\.disabled = false/g) ?? []).length >= 2, true);
+  assert.match(body, /일부 파일은 이미 반영되었을 수 있습니다/);
+});
+
+test("다이얼로그를 어떻게 닫든 계획이 남지 않는다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  // Escape로 닫는 경로가 있으므로 버튼 클릭만으로는 부족하다.
+  assert.match(ui[1], /exportDialog\.addEventListener\("close"/);
+});
+
+test("Markdown 저작 경로가 남아 있지 않다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+
+  assert.doesNotMatch(html, /bundleMarkdown/);
+  assert.doesNotMatch(html, /parseBundleMarkdown/);
+  assert.doesNotMatch(html, /id="mode-markdown"/);
+  assert.doesNotMatch(html, /id="markdown-preview"/);
+  assert.doesNotMatch(html, /id="export-dialog"/);
+  assert.equal(html.match(/<script/g).length, 2, "코어와 저장소 UI 둘만 남는다");
+});
+
+test("시작 카드 풀 Markdown이 지워졌다", () => {
+  const legacy = new URL("./시작 카드 풀.md", htmlUrl);
+
+  assert.equal(existsSync(legacy), false);
+});
+
+/// 마크업의 id와 스크립트의 byId를 양방향으로 맞춘다. 한쪽만 보면 옛 경로가 남긴 고아를
+/// 놓친다 - #storage-status가 "브라우저 로컬 저장 · 즉시 보존"이라고 말하는 채로 살아남았던
+/// 이유가 그것이다. 저장소 경로는 로컬 저장이 아니라 명시적 파일 반영이다.
+test("마크업의 id와 스크립트가 찾는 id가 서로 맞는다", () => {
+  const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
+  const ui = html.match(/<script data-repo-ui>([\s\S]*?)<\/script>/);
+
+  assert.ok(ui);
+  const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]));
+  const looked = new Set([...ui[1].matchAll(/byId\("([^"]+)"\)/g)].map((match) => match[1]));
+
+  assert.deepEqual([...looked].filter((id) => !ids.has(id)), [],
+    "스크립트가 찾는 id가 마크업에 없다");
+  // repo-workspace는 레이아웃 컨테이너라 스크립트가 찾지 않는다.
+  assert.deepEqual([...ids].filter((id) => !looked.has(id)), ["repo-workspace"],
+    "아무도 찾지 않는 id가 남았다");
+});
+
+test("적 타입 A 메모는 남는다", () => {
+  const memo = new URL("./적 타입 A.md", htmlUrl);
+
+  assert.equal(existsSync(memo), true);
 });

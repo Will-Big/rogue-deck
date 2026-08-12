@@ -1,13 +1,18 @@
 # Fate Weaver — 카드 아이디어 노트 설계
 
+> **보관 문서:** 완료되었거나 현재 기준에서 대체된 역사 기록입니다. 현행 규칙의 권위 문서가 아니며, 현재 문서는 [`docs/superpowers/README.md`](../../README.md)에서 확인합니다.
+
 - 작성일: 2026-07-27
 - 개정일: 2026-07-29
 - 문서 유형: `tool-design`
 - 주 도메인: `card-ideation`
 - 하위 유형: `static-web-tool`, `markdown-import-export`, `auto-preserved-draft`
 - 관련 규칙:
-  [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)
-- 상태: `current` — 카드 등급, 스키마 6과 다중 선택·편집 구현 완료
+  [위치 대상과 카드 텍스트 설계](../../specs/2026-07-27-position-targeting-card-text-design.md)
+- 상태: `superseded` — Markdown 저작 시절의 노트북 설계. 저작 원본이 저장소 JSON으로 전환되며
+  [카드 저작 노트북 JSON 전환 설계](../../specs/2026-08-05-card-authoring-json-notebook-design.md)가
+  대체했다(계획 A~D, 2026-08-12 완료). 이 문서는 Markdown 저작 시절의 설계 의도를 남긴 역사 기록으로만
+  참고한다.
 - 범위: 게임 데이터와 분리된 카드 초안 편집, 브라우저 즉시 보존, 완성 상태 관리,
   아군·적군 카드 분기, 카드 등급, 공용 다중 선택·편집·일괄 삭제, 카드 순서 저작,
   AI 전달용 Markdown 불러오기·내보내기
@@ -198,7 +203,7 @@ Markdown을 만들지 않고 활성 카드의 실제 저장값을 보여준다. 
 뜻한다. 한 카드에서 양 진영을 모두 `자신`으로 지정할 수는 없다.
 
 위치 범위의 의미와 방향은
-[위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)를 따른다. 편집 UI와
+[위치 대상과 카드 텍스트 설계](../../specs/2026-07-27-position-targeting-card-text-design.md)를 따른다. 편집 UI와
 Markdown 미리보기에서 아군과 적군의 전열은 서로 마주보게 표시한다.
 
 ### 4.4 능력 문장
