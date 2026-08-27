@@ -115,6 +115,9 @@ Tests/Headless/obj/
 #   cache/ast/     6.5MB, absolute paths, free to regenerate (AST, no LLM)
 #   graph.html     4.6MB, one command away: `graphify export html`
 #   cost.json      per-machine token tally, not shared state
+#   .vocab.txt     newer-graphify vocabulary scratch, machine-local
+#   memory/        newer-graphify agent-memory scratch (AGENTS.md rule 23)
+#   reflections/   newer-graphify reflection scratch, same category
 #
 # cache/semantic/ IS tracked on purpose: 1MB, fully repo-relative, and it is the
 # only artifact here that costs money to reproduce (2.28M tokens of doc/image
@@ -129,6 +132,12 @@ Tests/Headless/obj/
 /graphify-out/GRAPH_REPORT.md
 /graphify-out/graph.html
 /graphify-out/cost.json
+/graphify-out/.vocab.txt
+/graphify-out/memory/
+/graphify-out/reflections/
+
+# Superpowers plugin session scratch (brainstorm/sdd working files)
+/.superpowers/
 
 # ============================================
 # macOS Finder metadata
