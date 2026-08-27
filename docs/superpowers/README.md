@@ -74,7 +74,7 @@
 | [전투 상호작용 로그](plans/2026-07-31-combat-interaction-log.md) | `active` | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
-| [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 JSON 표시 투영·공유 호버 툴팁 배선은 후속 작업 대기열의 재개 조건까지 보류 |
+| [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-12 정정 — 후속 작업 대기열 참고) |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
@@ -212,17 +212,29 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 
 ## 후속 작업 대기열
 
-- [ ] **카드 상태 UI의 JSON 런타임 연계 — 선행이 아직 없다.** 완료된 범위는 JSON과 독립적인
-  `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태 아이콘·툴팁
-  컴포넌트와 프리팹이다. 상태 원본 확정(계획 3c)은 `master`에 들어갔다.
-  **막고 있는 것은 "카드별 부착 상태 키 계약"이며, 그것이 아직 존재하지 않는다** — 2026-08-06 확인
-  결과 `Content/Cards/*.json` 26장 어디에도 부착 상태를 적는 키가 없다. 그 계약을 설계하는 작업은
-  계획도 스펙도 없으므로, [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의
-  Task 3–5는 **재개 조건이 스스로 충족되지 않는다.** 계약을 설계하기로 정하거나, 이 항목을 정리하거나
-  둘 중 하나를 먼저 결정해야 한다.
-  (재개하게 되면: JSON의 상태 키·표시 이름·설명·아이콘 키를 표시 투영에 연결하고, 손패·실행 레일·
-  더미 팝업이 하나의 공유 툴팁을 쓰도록 배선한다. 카드에는 카드에 직접 붙은 상태만 표시하며, SO나
-  C# 문자열 임시 fallback은 추가하지 않는다.)
+- [ ] **카드 상태 UI의 JSON 런타임 연계 — 막혀 있지 않다. 배선만 남았다.** 완료된 범위는 JSON과
+  독립적인 `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태
+  아이콘·툴팁 컴포넌트와 프리팹이다. 상태 원본 확정(계획 3c)은 `master`에 들어갔다.
+
+  ~~막고 있는 것은 "카드별 부착 상태 키 계약"이며, 그것이 아직 존재하지 않는다~~
+  **2026-08-12 정정: 그 계약은 설계할 필요가 없다. 이미 코드에 있다.**
+  2026-08-06 조사가 "`Content/Cards/*.json` 26장 어디에도 부착 상태를 적는 키가 없다"를 확인하고
+  카드 JSON에 새 키를 설계해야 한다고 결론지었는데, **찾을 곳이 틀렸다.** 카드에 붙는 상태는
+  저작 데이터가 아니라 **런타임 인스턴스 상태**다.
+
+  - `ExecutionCardInstance.Statuses`(`StatusBag`)가 이미 있다 — `PartyMember`·`Enemy`와 같은 형태다.
+  - `StatusScope`가 `Entity`와 `CardInstance`를 가른다. `RewardSuppressionBehavior`(보상 무효)가
+    실제로 `CardInstance`로 등록되어 있고 `TurnResolver`가 `card.Statuses`에서 꺼내 쓴다.
+
+  따라서 카드 JSON에 새 키를 넣으면 안 된다 — 넣으면 런타임 실상과 저작본이 어긋난다.
+  [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md)의 Task 3–5는
+  **선행 없이 바로 재개할 수 있다.**
+
+  (재개하면: `ExecutionCardInstance.Statuses`의 키 목록 → `ICardStatusDisplaySource`로 표시 콘텐츠
+  해석 → `CardStatusPresentation` 조립 → 아이콘·툴팁 배선. 표시 콘텐츠의 출처는 상태 JSON
+  (`displayName` 등)과 `CardArtCatalog`(아이콘 Sprite)이며, `ICardStatusDisplaySource` 구현체가
+  아직 하나도 없으므로 그것을 만드는 것이 첫 작업이다. 카드에는 카드에 직접 붙은 상태만 표시하며,
+  SO나 C# 문자열 임시 fallback은 추가하지 않는다.)
 
 - [ ] **디버프 3종의 Unity 표시 확인** — 약화·취약·손상은 코어에 구현되어 있고
   [보관된 계획](archive/plans/2026-07-30-status-rule-and-debuffs.md)이 헤드리스로 검증했다. 남은 것은
