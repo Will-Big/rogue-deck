@@ -104,8 +104,8 @@ Tests/Headless/obj/
 # rot: measured 2026-08-05, the graph committed on 07-31 had 697 of 4,112 nodes
 # (17%) pointing at files deleted over the next 155 commits, and `explain`
 # reported those dead symbols with file:line and no staleness warning.
-# Regenerating is free and takes 8.7s, so every worktree builds its own:
-#   rm -f graphify-out/graph.json graphify-out/manifest.json && graphify update .
+# Regenerating is free and takes ~11s, so every worktree builds its own:
+#   Tools/graph/rebuild-graph.sh
 #
 # Untracked, and why:
 #   graph.json     rots within days; free to rebuild (AST + cached semantics)
