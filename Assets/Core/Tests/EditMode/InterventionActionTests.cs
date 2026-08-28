@@ -120,7 +120,7 @@ namespace FateWeaver.Tests
                 .Apply(new InterventionPlayContext { State = state, Target = player, Intervention = action });
 
             var afterEvents = new TurnResolver(EffectRegistry()).Resolve(state, 0);
-            var after = (CardResolved)afterEvents[1];
+            var after = afterEvents.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
 
             Assert.AreEqual(0, player.ExecutionOrder);
             Assert.AreEqual(ConditionTier.Success, after.ConditionTier);
