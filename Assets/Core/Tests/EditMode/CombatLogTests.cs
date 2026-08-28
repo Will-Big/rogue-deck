@@ -5,6 +5,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests
 {
@@ -12,6 +13,9 @@ namespace FateWeaver.Tests
     /// 타임라인 하나뿐이다.</summary>
     public class CombatLogTests
     {
+        private static readonly KoreanDescriptionCatalog Korean =
+            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+
         private static EffectRegistry Effects()
         {
             var r = new EffectRegistry();
@@ -127,6 +131,43 @@ namespace FateWeaver.Tests
 
             Assert.IsTrue(events.OfType<StatusExpired>()
                 .Any(e => e.HolderId == CombatState.SoloPlayerId && e.StatusId == "weak"));
+        }
+
+        [Test]
+        public void Formatter_spells_out_each_damage_step_and_the_deaths_door_save()
+        {
+            var timeline = new ResolutionEvent[]
+            {
+                new TurnStarted(0),
+                new CardResolved(1, "goblin", "jab", Side.Enemy, 4, "member_a")
+                {
+                    DamageSteps = new[]
+                    {
+                        new DamageStep("member_a", "vulnerable", 4, 6),
+                        new DamageStep("member_a", "block", 6, 4)
+                    }
+                },
+                new DeathsDoorSurvived("member_a"),
+                new TurnEnded(0, Outcome.Ongoing)
+            };
+
+            var text = TimelineTextFormatter.Format(timeline, Korean);
+
+            StringAssert.Contains("취약", text);
+            StringAssert.Contains("4", text);
+            StringAssert.Contains("6", text);
+            StringAssert.Contains("방어", text);
+            StringAssert.Contains("치명", text);   // 왜 살아남았는지가 반드시 보여야 한다
+            StringAssert.Contains("member_a", text);
+        }
+
+        [Test]
+        public void Formatter_handles_an_empty_timeline_without_throwing()
+        {
+            Assert.AreEqual(
+                string.Empty,
+                TimelineTextFormatter.Format(
+                    System.Array.Empty<ResolutionEvent>(), Korean));
         }
     }
 }
