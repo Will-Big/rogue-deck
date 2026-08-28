@@ -61,6 +61,7 @@ namespace FateWeaver.Core.Combat
             string targetId = null;
             var strongestTier = ConditionTier.Basic;
             var pendingDeathEvents = new List<ResolutionEvent>();
+            var damageSteps = new List<DamageStep>();
 
             var handlers = card.Def.Effects
                 .Select(effect => _effects.Resolve(effect.Key))
@@ -118,6 +119,7 @@ namespace FateWeaver.Core.Combat
                 };
                 handlers[effectIndex].Apply(ctx);
                 totalDamage += ctx.DamageDealt;
+                damageSteps.AddRange(ctx.DamageSteps);
                 if (ctx.TargetId != null)
                 {
                     targetId = ctx.TargetId;
@@ -147,7 +149,10 @@ namespace FateWeaver.Core.Combat
                 // events in the order they occurred (so a death caused by this card's own effects
                 // follows its CardResolved immediately).
                 events.Add(new CardResolved(
-                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier));
+                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier)
+                {
+                    DamageSteps = damageSteps
+                });
                 resolutionContext.MarkExecuted(card);
                 events.AddRange(pendingDeathEvents);
             }
@@ -311,12 +316,18 @@ namespace FateWeaver.Core.Combat
 
             foreach (var member in state.Party)
             {
-                member.Statuses.EndOfTurn();
+                foreach (var key in member.Statuses.EndOfTurn())
+                {
+                    events.Add(new StatusExpired(member.Id, key.Id));
+                }
             }
 
             foreach (var enemy in state.Enemies)
             {
-                enemy.Statuses.EndOfTurn();
+                foreach (var key in enemy.Statuses.EndOfTurn())
+                {
+                    events.Add(new StatusExpired(enemy.Id, key.Id));
+                }
             }
         }
 

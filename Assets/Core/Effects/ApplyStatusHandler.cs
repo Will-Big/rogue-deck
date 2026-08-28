@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
@@ -113,7 +114,8 @@ namespace FateWeaver.Core.Effects
         /// The card gives exactly one number (ctx.EffectValue, already resolved for any conditional
         /// SuccessEffectValue override). Its meaning is derived from the status's catalog lifetime kind:
         /// Permanent/ThisTurn treat it as magnitude; Turns/UntilConsumed treat it as duration.</summary>
-        private static void ApplyTo(EffectContext ctx, ApplyStatusPayload payload, StatusBag bag)
+        private static void ApplyTo(
+            EffectContext ctx, ApplyStatusPayload payload, StatusBag bag, string holderId)
         {
             var lifetimeKind = ctx.State.StatusContent.LifetimeOf(payload.Key);
             var countIsDuration = ctx.State.StatusContent.CountIsDuration(payload.Key);
@@ -125,15 +127,24 @@ namespace FateWeaver.Core.Effects
             var magnitude = StatusDamageFold.GainedMagnitude(
                 payload.Key, bag, ctx.StatusRegistry, ctx.State.StatusRules, baseMagnitude);
 
+            StatusInstance instance;
+            bool stacked;
             if (ctx.StatusRegistry != null
                 && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior)
                 && behavior.StacksMagnitude)
             {
-                bag.Stack(payload.Key, lifetime, magnitude);
-                return;
+                stacked = bag.Has(payload.Key);
+                instance = bag.Stack(payload.Key, lifetime, magnitude);
+            }
+            else
+            {
+                stacked = false;
+                bag.Add(payload.Key, lifetime, magnitude);
+                instance = bag.Get(payload.Key);
             }
 
-            bag.Add(payload.Key, lifetime, magnitude);
+            ctx.ExtraEvents.Add(new StatusApplied(
+                holderId, payload.Key.Id, instance.Count, instance.Magnitude, stacked));
         }
 
         private static void ApplySnapshotTargets(
@@ -152,7 +163,7 @@ namespace FateWeaver.Core.Effects
                         continue;
                     }
 
-                    ApplyTo(ctx, payload, target.Statuses);
+                    ApplyTo(ctx, payload, target.Statuses, target.Id);
                     onlyTargetId = target.Id;
                     affected++;
                 }
@@ -166,7 +177,7 @@ namespace FateWeaver.Core.Effects
                         continue;
                     }
 
-                    ApplyTo(ctx, payload, target.Statuses);
+                    ApplyTo(ctx, payload, target.Statuses, target.Id);
                     onlyTargetId = target.Id;
                     affected++;
                 }
@@ -190,7 +201,7 @@ namespace FateWeaver.Core.Effects
                     return;
                 }
 
-                ApplyTo(ctx, payload, member.Statuses);
+                ApplyTo(ctx, payload, member.Statuses, member.Id);
                 return;
             }
 
@@ -201,7 +212,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            ApplyTo(ctx, payload, enemy.Statuses);
+            ApplyTo(ctx, payload, enemy.Statuses, enemy.Id);
         }
 
         private static void ApplyTargetEnemy(EffectContext ctx, ApplyStatusPayload payload)
@@ -217,7 +228,7 @@ namespace FateWeaver.Core.Effects
 
                 foreach (var each in targets)
                 {
-                    ApplyTo(ctx, payload, each.Statuses);
+                    ApplyTo(ctx, payload, each.Statuses, each.Id);
                 }
 
                 return;
@@ -232,7 +243,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            ApplyTo(ctx, payload, enemy.Statuses);
+            ApplyTo(ctx, payload, enemy.Statuses, enemy.Id);
         }
 
         private static void ApplyPartyMember(EffectContext ctx, ApplyStatusPayload payload)
@@ -244,7 +255,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            ApplyTo(ctx, payload, member.Statuses);
+            ApplyTo(ctx, payload, member.Statuses, member.Id);
         }
 
         /// <summary>Applies the status to every currently-living party member as an independent bag
@@ -268,7 +279,7 @@ namespace FateWeaver.Core.Effects
 
             foreach (var member in living)
             {
-                ApplyTo(ctx, payload, member.Statuses);
+                ApplyTo(ctx, payload, member.Statuses, member.Id);
             }
         }
 
@@ -284,7 +295,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            ApplyTo(ctx, payload, member.Statuses);
+            ApplyTo(ctx, payload, member.Statuses, member.Id);
         }
 
         /// <summary>Player-side Self: the card's OwnerId party member if alive; with no OwnerId, only a

@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
@@ -149,8 +150,8 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(registry).Resolve(state, 0);
 
-            Assert.AreEqual(0, ((CardResolved)events[2]).DamageDealt);
-            Assert.AreEqual(7, ((CardResolved)events[3]).DamageDealt);
+            Assert.AreEqual(0, events.OfType<CardResolved>().Single(e => e.CardId == "block_only").DamageDealt);
+            Assert.AreEqual(7, events.OfType<CardResolved>().Single(e => e.CardId == "hybrid").DamageDealt);
             Assert.AreEqual(13, state.Enemies[0].Hp);
         }
 

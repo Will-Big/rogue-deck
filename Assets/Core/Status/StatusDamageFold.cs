@@ -7,21 +7,25 @@ namespace FateWeaver.Core.Status
     /// 자리에서 수명을 1 소비한다.</summary>
     public static class StatusDamageFold
     {
-        public static int Incoming(StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage)
+        public static int Incoming(
+            StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage,
+            string holderId = null, List<Events.DamageStep> trace = null)
         {
             if (registry == null || bag == null)
             {
                 return damage;
             }
 
-            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Multiplier);
-            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Absorb);
+            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Multiplier, holderId, trace);
+            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Absorb, holderId, trace);
             return damage;
         }
 
         /// <summary>행위자의 엔티티 스코프 상태를 접어 주는 피해를 계산한다. 흡수는 받는 쪽
         /// 개념이므로 여기서는 배율 층만 접는다.</summary>
-        public static int Outgoing(StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage)
+        public static int Outgoing(
+            StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage,
+            string holderId = null, List<Events.DamageStep> trace = null)
         {
             if (registry == null || bag == null)
             {
@@ -43,6 +47,7 @@ namespace FateWeaver.Core.Status
                     new StatusContext { Instance = status, Rules = rules });
                 if (after != damage)
                 {
+                    trace?.Add(new Events.DamageStep(holderId, status.Key.Id, damage, after));
                     bag.Consume(status);
                 }
 
@@ -95,7 +100,9 @@ namespace FateWeaver.Core.Status
             StatusRegistry registry,
             StatusRuleSet rules,
             int damage,
-            StatusDamageLayer layer)
+            StatusDamageLayer layer,
+            string holderId,
+            List<Events.DamageStep> trace)
         {
             // Snapshot: consuming may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -112,6 +119,7 @@ namespace FateWeaver.Core.Status
                     new StatusContext { Instance = status, Rules = rules });
                 if (after != damage)
                 {
+                    trace?.Add(new Events.DamageStep(holderId, status.Key.Id, damage, after));
                     bag.Consume(status);
                 }
 
