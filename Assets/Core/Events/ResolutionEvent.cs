@@ -46,7 +46,15 @@ namespace FateWeaver.Core.Events
         int InstanceId,
         string CardId,
         string OwnerId,
-        CardCancellationReason Reason) : ResolutionEvent;
+        CardCancellationReason Reason) : ResolutionEvent
+    {
+        /// <summary>취소 전에 이미 적용된 효과가 준 실제 피해와 그 단계 내역. 취소가 피해를
+        /// 되돌리지 않으므로 로그에서도 사라지면 안 된다. 효과 실행 전에 취소된 카드는 기본값
+        /// (0, 빈 목록)이다.</summary>
+        public int DamageDealt { get; init; }
+        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
+            = System.Array.Empty<DamageStep>();
+    }
 
     /// <summary>A party member's HP reached zero or below and they had no SurviveCharges left to
     /// absorb the hit.</summary>
@@ -74,6 +82,42 @@ namespace FateWeaver.Core.Events
     /// <summary>사망한 보유자의 상태가 다른 보유자에게 이전되었다 (예: 사후 전염의 독 이전).</summary>
     public sealed record StatusTransferred(
         string FromHolderId, string ToHolderId, string StatusId, int Magnitude) : ResolutionEvent;
+
+    /// <summary>HP 변화의 원인 종류. 새 원인(회복 등)이 생기면 멤버를 추가한다.</summary>
+    public enum HpChangeSource { CardDamage, StatusTick }
+
+    /// <summary>보유자의 HP가 실제로 바뀌었다. Before/After는 치명 버팀 클램프 이후의 실측값이고,
+    /// SourceId는 원인 카드 id(CardDamage) 또는 상태 키(StatusTick)다. HP가 안 바뀐 명중은
+    /// 남기지 않는다.</summary>
+    public sealed record HpChanged(
+        string HolderId, int Before, int After, HpChangeSource Source, string SourceId) : ResolutionEvent;
+
+    /// <summary>다음 플레이어 턴에 지급될 운명력이 적립되었다 (증류). 실제 지급(턴 시작 리필)과
+    /// 지출은 세션 영역이라 이 타임라인에 없다 — 개입 로그 확장에서 다룬다.</summary>
+    public sealed record FateEnergyGained(string SourceCardId, int Amount) : ResolutionEvent;
+
+    /// <summary>효과가 보유자의 상태 수치를 능동 소비했다 (수명 만료·자동 소진과 구분).</summary>
+    public sealed record StatusConsumed(string HolderId, string StatusId, int Amount) : ResolutionEvent;
+
+    /// <summary>카드 귀속 버프 식별자. 상태 키가 아닌 버프(피해 보너스)만 여기 둔다.</summary>
+    public static class CardBuffIds
+    {
+        public const string DamageBonus = "damage_bonus";
+    }
+
+    /// <summary>카드 인스턴스에 버프나 카드 귀속 상태가 부여되었다. BuffId는 상태 키
+    /// (reward_nullified 등) 또는 CardBuffIds 상수다.</summary>
+    public sealed record CardBuffGranted(
+        int CardInstanceId, string CardId, string BuffId, int Amount) : ResolutionEvent;
+
+    /// <summary>카드 인스턴스의 버프나 카드 귀속 상태가 소모되었다.</summary>
+    public sealed record CardBuffConsumed(
+        int CardInstanceId, string CardId, string BuffId, int Amount) : ResolutionEvent;
+
+    /// <summary>대형 내 위치가 이동했다. Side는 어느 진영의 대형인지, 인덱스 0이 맨 앞이다.
+    /// 클램프로 제자리에 남은 이동은 남기지 않는다.</summary>
+    public sealed record FormationMoved(
+        string MemberId, Side Side, int FromIndex, int ToIndex) : ResolutionEvent;
 
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }

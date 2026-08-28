@@ -46,7 +46,7 @@ namespace FateWeaver.Core.Combat
         {
             // Step 6 (part 1): a cancellation reason recorded before this card's turn to resolve
             // (OwnerDied from an earlier card's death sweep this same turn) skips effects entirely.
-            if (card.CancellationReason == null && IsInterceptedByStatus(state, card))
+            if (card.CancellationReason == null && IsInterceptedByStatus(state, card, events))
             {
                 card.CancellationReason = CardCancellationReason.StatusIntercepted;
             }
@@ -92,7 +92,7 @@ namespace FateWeaver.Core.Combat
                 }
 
                 var effect = card.Def.Effects[effectIndex];
-                var tier = ResolveTier(effect, card, resolutionContext);
+                var tier = ResolveTier(effect, card, resolutionContext, pendingDeathEvents);
                 if (tier > strongestTier)
                 {
                     strongestTier = tier;
@@ -161,7 +161,12 @@ namespace FateWeaver.Core.Combat
                 // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
                 // CardCancelled. State-change events from earlier, already-applied effects follow in
                 // occurrence order, then the OwnerDied sweep below uses the same newly-dead set.
-                events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
+                events.Add(new CardCancelled(
+                    card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value)
+                {
+                    DamageDealt = totalDamage,
+                    DamageSteps = damageSteps
+                });
                 events.AddRange(pendingDeathEvents);
             }
 
@@ -280,7 +285,8 @@ namespace FateWeaver.Core.Combat
             }
         }
 
-        private bool IsInterceptedByStatus(CombatState state, ExecutionCardInstance card)
+        private bool IsInterceptedByStatus(
+            CombatState state, ExecutionCardInstance card, List<ResolutionEvent> events)
         {
             if (_statuses == null)
             {
@@ -296,7 +302,16 @@ namespace FateWeaver.Core.Combat
                     && behavior.InterceptCardResolve(
                         new StatusContext { Instance = status, Rules = state.StatusRules }))
                 {
+                    var countBefore = status.Count;
                     card.Statuses.Consume(status);
+                    var remaining = card.Statuses.Get(status.Key);
+                    var consumed = countBefore - (remaining?.Count ?? 0);
+                    if (consumed > 0)
+                    {
+                        events.Add(new CardBuffConsumed(
+                            card.InstanceId, card.Def.Id, status.Key.Id, consumed));
+                    }
+
                     return true;
                 }
             }
@@ -344,20 +359,22 @@ namespace FateWeaver.Core.Combat
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, () => target.Hp,
+                    damage => target.TakeDamage(damage), events, state.StatusContent);
             }
 
             foreach (var enemy in state.Enemies)
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, () => target.Hp,
+                    damage => target.Hp -= damage, events, state.StatusContent);
             }
         }
 
         private void TickHolder(
-            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events,
-            Authoring.Statuses.StatusContentCatalog content)
+            StatusBag bag, string holderId, Func<int> getHp, Action<int> dealDamage,
+            List<ResolutionEvent> events, Authoring.Statuses.StatusContentCatalog content)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -365,6 +382,7 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior))
                 {
+                    var hpBefore = getHp();
                     behavior.OnTurnEnd(new StatusTickContext
                     {
                         Instance = status,
@@ -374,6 +392,12 @@ namespace FateWeaver.Core.Combat
                         Events = events,
                         Content = content
                     });
+                    var hpAfter = getHp();
+                    if (hpAfter != hpBefore)
+                    {
+                        events.Add(new HpChanged(
+                            holderId, hpBefore, hpAfter, HpChangeSource.StatusTick, status.Key.Id));
+                    }
                 }
             }
         }
@@ -381,7 +405,8 @@ namespace FateWeaver.Core.Combat
         private static ConditionTier ResolveTier(
             Cards.EffectData effect,
             ExecutionCardInstance card,
-            ResolutionContext resolutionContext)
+            ResolutionContext resolutionContext,
+            List<ResolutionEvent> pending)
         {
             if (effect.Condition == null)
             {
@@ -395,7 +420,17 @@ namespace FateWeaver.Core.Combat
                 var nullified = card.Statuses.Get(StatusKeys.RewardNullified);
                 if (nullified != null)
                 {
+                    var countBefore = nullified.Count;
                     card.Statuses.Consume(nullified);
+                    var remaining = card.Statuses.Get(StatusKeys.RewardNullified);
+                    var consumed = countBefore - (remaining?.Count ?? 0);
+                    if (consumed > 0)
+                    {
+                        pending.Add(new CardBuffConsumed(
+                            card.InstanceId, card.Def.Id,
+                            StatusKeys.RewardNullified.Id, consumed));
+                    }
+
                     return ConditionTier.Basic;
                 }
             }

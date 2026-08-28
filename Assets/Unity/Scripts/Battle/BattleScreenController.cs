@@ -296,7 +296,10 @@ namespace FateWeaver.Unity
             if (!_session.CurrentTurnResolved)
             {
                 _session.ResolveTurn();
-                Debug.Log(TimelineTextFormatter.Format(_session.LastTimeline, _korean));
+                foreach (var evt in _session.LastTimeline)
+                {
+                    Debug.Log(TimelineTextFormatter.FormatEvent(evt, _korean));
+                }
                 SetMessage(_session.IsComplete
                     ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
                     : "턴 해석 완료.");

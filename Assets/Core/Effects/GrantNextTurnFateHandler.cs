@@ -18,7 +18,13 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
+            var before = ctx.State.PendingNextTurnFateEnergy;
             ctx.State.PendingNextTurnFateEnergy += ctx.EffectValue;
+            var gained = ctx.State.PendingNextTurnFateEnergy - before;
+            if (gained != 0)
+            {
+                ctx.ExtraEvents.Add(new Events.FateEnergyGained(ctx.Card.Def.Id, gained));
+            }
         }
     }
 }

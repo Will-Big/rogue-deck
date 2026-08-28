@@ -63,7 +63,7 @@ namespace FateWeaver.Tests
                 EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
-            var resolved = (CardResolved)events[2];
+            var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "late_cut");
 
             Assert.AreEqual(10, state.Enemies[0].Hp);
             Assert.AreEqual(2, resolved.DamageDealt);
@@ -101,7 +101,7 @@ namespace FateWeaver.Tests
                 EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new WithinNth(2), successEffectValue: 10)));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
-            var resolved = (CardResolved)events[2];
+            var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
 
             Assert.AreEqual(10, state.Enemies[0].Hp);
             Assert.AreEqual(2, resolved.DamageDealt);
@@ -192,7 +192,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(15, state.Enemies[0].Hp); // 20 - (2 + 3)
             Assert.AreEqual(15, state.Enemies[1].Hp); // 20 - (2 + 3), same bonus applied again
-            var resolved = (CardResolved)events[2];
+            var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "sweep");
             Assert.AreEqual(10, resolved.DamageDealt); // 5 + 5
         }
     }

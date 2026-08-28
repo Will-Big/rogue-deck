@@ -3,8 +3,8 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-08-28
-- 상태: `active` — 미착수
-- 선행: [전투 상호작용 로그](../archive/plans/2026-07-31-combat-interaction-log.md) **완료·머지·보관 (2026-08-28)**
+- 상태: completed — 구현·검증 완료 (2026-08-29)
+- 선행: [전투 상호작용 로그](2026-07-31-combat-interaction-log.md) **완료·머지·보관 (2026-08-28)**
 - 설계 승인: 2026-08-28 대화에서 A안(범용 HpChanged + 신규 이벤트) + "로그 1건 = 이벤트 1건" 승인됨
 
 ---
@@ -56,6 +56,14 @@
 - **운명력의 충전·지출은 여전히 안 보인다.** 둘 다 세션 영역(`DeckCombatSession`)이라 이번
   범위(턴 해석) 밖이고, 개입 로그 확장(별도 계획)과 함께 다룬다.
 
+구현 후 최종 리뷰(2026-08-29)가 확인한 잔여 사각지대 세 가지: ① 조기 발동이 심는 잠복 마커
+(`PoisonDormant`)는 부여 이벤트 없이 턴 종료에 `StatusExpired`로만 나타난다 — 부여된 적 없는
+만료가 로그에 보인다(브랜치 이전부터의 비대칭). ② 조기 발동 틱 피해는 `CardResolved.DamageDealt`
+합산과 `HpChanged`(원인 StatusTick)로 서사가 갈린다 — 트리거 매칭이 카드 피해와 HpChanged 합을
+대조하면 트리거 카드에서만 어긋난다. ③ Permanent `reward_nullified`의 Success→Basic 강등은
+소모 0이라 이벤트가 없어 `ConditionTier` 외에 이유가 안 보인다(계획이 테스트로 못박은 선택).
+셋 다 트리거/후속 로그 계획에서 재론한다.
+
 ---
 
 ## 상세 (세션 인계용)
@@ -73,7 +81,7 @@
 
 **Spec:** 이 문서의 [`## 설계 개요 (사람 검수용)`](#설계-개요-사람-검수용). 선행 구현의
 이벤트 순서와 포매터 경계는
-[`2026-07-31-combat-interaction-log.md`](../archive/plans/2026-07-31-combat-interaction-log.md)의
+[`2026-07-31-combat-interaction-log.md`](2026-07-31-combat-interaction-log.md)의
 `## 상세 (세션 인계용)`을 따른다.
 
 ## Global Constraints

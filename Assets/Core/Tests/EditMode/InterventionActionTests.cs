@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
@@ -108,7 +109,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(player);
 
             var beforeEvents = new TurnResolver(EffectRegistry()).Resolve(CloneStateForResolution(state), 0);
-            var before = (CardResolved)beforeEvents[2];
+            var before = beforeEvents.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
             Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
             Assert.AreEqual(2, before.DamageDealt);
 
@@ -119,7 +120,7 @@ namespace FateWeaver.Tests
                 .Apply(new InterventionPlayContext { State = state, Target = player, Intervention = action });
 
             var afterEvents = new TurnResolver(EffectRegistry()).Resolve(state, 0);
-            var after = (CardResolved)afterEvents[1];
+            var after = afterEvents.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
 
             Assert.AreEqual(0, player.ExecutionOrder);
             Assert.AreEqual(ConditionTier.Success, after.ConditionTier);

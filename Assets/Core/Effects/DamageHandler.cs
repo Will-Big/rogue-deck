@@ -32,7 +32,14 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var amount = FoldOutgoing(ctx, ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus());
+            var bonus = ctx.Card.ConsumePendingDamageBonus();
+            if (bonus != 0)
+            {
+                ctx.ExtraEvents.Add(new Events.CardBuffConsumed(
+                    ctx.Card.InstanceId, ctx.Card.Def.Id, Events.CardBuffIds.DamageBonus, bonus));
+            }
+
+            var amount = FoldOutgoing(ctx, ctx.EffectValue + bonus);
             if (ctx.Targets != null)
             {
                 ApplySnapshotTargets(ctx, amount);
@@ -58,7 +65,7 @@ namespace FateWeaver.Core.Effects
                     foreach (var each in targets)
                     {
                         var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
-                        each.Hp -= dealt;
+                        HitEnemy(ctx, each, dealt);
                         total += dealt;
                     }
 
@@ -76,7 +83,7 @@ namespace FateWeaver.Core.Effects
                 }
 
                 var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                target.Hp -= damage;
+                HitEnemy(ctx, target, damage);
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
             }
@@ -95,10 +102,7 @@ namespace FateWeaver.Core.Effects
                     foreach (var each in targets)
                     {
                         var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
-                        // Routed through PartyMember.TakeDamage (not a raw Hp -=) so a lethal hit can
-                        // be absorbed by a SurviveCharges charge (DeathsDoor); TurnResolver's death
-                        // sweep reads the resulting Hp/SurviveCharges state.
-                        each.TakeDamage(dealt);
+                        HitParty(ctx, each, dealt);
                         total += dealt;
                     }
 
@@ -114,10 +118,7 @@ namespace FateWeaver.Core.Effects
                 }
 
                 var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                // Routed through PartyMember.TakeDamage (not a raw Hp -=) so a lethal hit can be
-                // absorbed by a SurviveCharges charge (DeathsDoor); TurnResolver's death sweep reads
-                // the resulting Hp/SurviveCharges state to emit DeathsDoorSurvived/PartyMemberDied.
-                target.TakeDamage(damage);
+                HitParty(ctx, target, damage);
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
             }
@@ -139,7 +140,7 @@ namespace FateWeaver.Core.Effects
                     }
 
                     var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                    target.Hp -= dealt;
+                    HitEnemy(ctx, target, dealt);
                     total += dealt;
                     onlyTargetId = target.Id;
                     affected++;
@@ -165,7 +166,7 @@ namespace FateWeaver.Core.Effects
                 }
 
                 var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                target.TakeDamage(dealt);
+                HitParty(ctx, target, dealt);
                 partyTotal += dealt;
                 partyOnlyTargetId = target.Id;
                 partyAffected++;
@@ -176,6 +177,31 @@ namespace FateWeaver.Core.Effects
             if (partyAffected == 0)
             {
                 ctx.Cancel(CardCancellationReason.NoValidTarget);
+            }
+        }
+
+        /// <summary>적에게 피해를 적용하고, HP가 실제로 바뀌었으면 HpChanged를 남긴다.</summary>
+        private static void HitEnemy(EffectContext ctx, Enemy target, int dealt)
+        {
+            var before = target.Hp;
+            target.Hp -= dealt;
+            if (target.Hp != before)
+            {
+                ctx.ExtraEvents.Add(new Events.HpChanged(
+                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
+            }
+        }
+
+        /// <summary>파티원에게 피해를 적용하고(치명 버팀 경유), HP가 실제로 바뀌었으면 HpChanged를
+        /// 남긴다. After는 클램프 이후 실측값이라 치명 버팀 발동 시 1로 남는다.</summary>
+        private static void HitParty(EffectContext ctx, PartyMember target, int dealt)
+        {
+            var before = target.Hp;
+            target.TakeDamage(dealt);
+            if (target.Hp != before)
+            {
+                ctx.ExtraEvents.Add(new Events.HpChanged(
+                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
             }
         }
 

@@ -58,6 +58,11 @@ namespace FateWeaver.Core.Effects
             var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Party.Count);
             ctx.State.Party.RemoveAt(currentIndex);
             ctx.State.Party.Insert(destinationIndex, owner);
+            if (destinationIndex != currentIndex)
+            {
+                ctx.ExtraEvents.Add(new Events.FormationMoved(
+                    owner.Id, Side.Player, currentIndex, destinationIndex));
+            }
             ctx.TargetId = owner.Id;
         }
 
@@ -75,6 +80,11 @@ namespace FateWeaver.Core.Effects
             var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Enemies.Count);
             ctx.State.Enemies.RemoveAt(currentIndex);
             ctx.State.Enemies.Insert(destinationIndex, owner);
+            if (destinationIndex != currentIndex)
+            {
+                ctx.ExtraEvents.Add(new Events.FormationMoved(
+                    owner.Id, Side.Enemy, currentIndex, destinationIndex));
+            }
             ctx.TargetId = owner.Id;
         }
 
@@ -91,6 +101,11 @@ namespace FateWeaver.Core.Effects
             var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Party.Count);
             ctx.State.Party.RemoveAt(currentIndex);
             ctx.State.Party.Insert(destinationIndex, owner);
+            if (destinationIndex != currentIndex)
+            {
+                ctx.ExtraEvents.Add(new Events.FormationMoved(
+                    owner.Id, Side.Player, currentIndex, destinationIndex));
+            }
         }
 
         private static void MoveEnemyOwner(EffectContext ctx)
@@ -121,6 +136,11 @@ namespace FateWeaver.Core.Effects
             var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Enemies.Count);
             ctx.State.Enemies.RemoveAt(currentIndex);
             ctx.State.Enemies.Insert(destinationIndex, owner);
+            if (destinationIndex != currentIndex)
+            {
+                ctx.ExtraEvents.Add(new Events.FormationMoved(
+                    owner.Id, Side.Enemy, currentIndex, destinationIndex));
+            }
         }
 
         private static int ClampDestination(int currentIndex, int distance, int formationCount)
