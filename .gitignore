@@ -140,6 +140,8 @@ Tests/Headless/obj/
 /graphify-out/view-architecture/
 /graphify-out/card-graph.html
 /graphify-out/architecture.html
+# graphify가 남기는 날짜별 그래프 백업 (전부 재생성 가능)
+/graphify-out/20*/
 
 # Superpowers plugin session scratch (brainstorm/sdd working files)
 /.superpowers/
