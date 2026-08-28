@@ -10,8 +10,9 @@
 읽지 않아도 된다.
 
 - **무엇을 만드나** — 카드·상태·풀·덱·캐릭터 JSON을 graphify 그래프에 결정론적으로 편입시키는
-  추출기와, 재생성 전 과정(삭제→AST 재생성→카드 추출→병합→뷰 생성)을 한 줄로 묶는 스크립트,
-  사람이 보는 소형 시각화 2장(카드 관계망, 코드 아키텍처)을 만든다. LLM 토큰 0, 총 십수 초.
+  추출기와, 그래프에서 잡음(참조 스텁·테스트·외부 패키지)을 걷어내는 프루너, 재생성 전 과정
+  (삭제→AST 재생성→프루닝→카드 추출→병합→뷰 생성)을 한 줄로 묶는 스크립트, 사람이 보는 소형
+  시각화 2장(카드 관계망, 코드 아키텍처)을 만든다. LLM 토큰 0, 총 십수 초.
   태그는 그래프에서 제외한다 — 모든 엣지가 엔진이 실행하는 데이터에서만 나온다.
 
 - **구조**
@@ -19,13 +20,20 @@
   | 객체 | 책임 (한 줄) | 이 객체가 모르는 것 |
   |---|---|---|
   | 카드 그래프 추출기 | Content JSON과 코어 키 정의를 읽어 카드 서브그래프 JSON을 만든다 | graphify 내부, C# AST 추출 방식 |
-  | 재생성 스크립트 | 삭제→AST 재생성→카드 추출→병합→뷰 생성을 순서대로 호출만 한다 | 각 단계의 내부 로직 |
-  | 뷰 생성기 | 서브그래프 JSON을 단독 HTML 한 장으로 렌더한다 | 그래프가 어떻게 만들어졌는지 |
-  | 아키텍처 접기 | 코드 그래프를 커뮤니티 단위 노드로 접은 소형 그래프를 만든다 | 커뮤니티가 어떻게 계산됐는지 |
+  | 그래프 프루너 | 스텁·테스트·외부 패키지 노드와 그에 딸린 엣지를 걷어낸다 | 노드가 왜 만들어졌는지 |
+  | 재생성 스크립트 | 삭제→AST 재생성→프루닝→카드 추출→병합→뷰 생성을 순서대로 호출만 한다 | 각 단계의 내부 로직 |
+  | 뷰 생성기 | 서브그래프 JSON을 graphify cluster-only로 HTML 한 장씩 렌더한다 | 그래프가 어떻게 만들어졌는지 |
+  | 아키텍처 접기 | 게임 로직 코드 그래프를 커뮤니티 단위 노드로 접은 소형 그래프를 만든다 | 커뮤니티가 어떻게 계산됐는지 |
   | AGENTS.md 규칙 개정 | 규칙 21·22의 재생성 명령과 조회 경제성 서술을 갱신한다 | — (문서) |
 
-- **의존 방향** — `재생성 스크립트 → graphify CLI → 추출기 → 접기 → 뷰 생성기` (일렬 호출,
-  역방향 없음). 추출기의 입력은 `Content/*.json` + `EffectKey.cs`·레지스트리 + AST graph.json.
+- **의존 방향** — `재생성 스크립트 → graphify CLI → 프루너 → 추출기 → 접기 → 뷰 생성기`
+  (일렬 호출, 역방향 없음). 추출기의 입력은 `Content/*.json` + `EffectKey.cs`·레지스트리 +
+  AST graph.json.
+
+- **그래프에 남는 것** — 게임 로직 코드(코어+표현, 실측 1,231노드) + 카드 서브그래프(~60) +
+  문서(1,743). 걷어내는 것: 참조 스텁 751, 테스트 1,196, 외부 패키지·잠금 파일 531 (실측,
+  전체의 45%). 테스트 제외로 "이 클래스의 테스트 찾기" 질의는 포기한다 — 원래 grep이 더 싼
+  질의라 손실이 미미하다(사용자 승인, 2026-08-28).
 
 - **뽑는 엣지** — 카드→상태(적용/소모/발동), 풀·덱→카드, 캐릭터→덱, 카드→효과 kind,
   효과 kind→핸들러 클래스(코드 노드), 상태→상태 스펙 클래스(코드 노드). 마지막 두 다리가
@@ -38,8 +46,8 @@
   - 유료 시맨틱 추출로 JSON 커버: 회당 25만~40만 토큰인데 카드는 밸런스 튜닝으로 자주 바뀜.
     AGENTS.md 규칙 23이 이미 100배 적자로 판정한 경로.
   - markdown 카드 도감 생성: 관계 질의와 시각화가 안 됨. 요청의 본질(관계망)을 못 채움.
-  - (열린 갈림길) 뷰 렌더를 graphify 재사용 vs 자체 소형 HTML: `cluster-only --graph`가 임의
-    그래프에 viz를 만들어 주는지 확인 후 결정. 안 되면 의존성 없는 자체 단일 HTML로 간다.
+  - 자체 HTML 렌더러 작성: 불필요 확인됨 — `graphify cluster-only <dir> --no-label`이 임의
+    graph.json에서 graph.html을 LLM 없이 생성함을 합성 그래프로 실증했다(2026-08-28).
 
 - **이 선택으로 나중에 어려워지는 것**
   - graphify를 업그레이드하면 graph.json 포맷·병합 동작이 바뀔 수 있고, 그때 추출기·접기
@@ -63,6 +71,14 @@
   카드 관계가 그래프에 없는 원인은 환경이 아니라 **추출기 공백**이다.
 - 코드 그래프는 5,479노드·11,475엣지·351커뮤니티로 정상 생성되나, HTML viz 한계(5,000노드)를
   넘어 graph.html이 생략된다. 사람 시야가 없는 원인이다.
+- 노드 구성 실측(2026-08-28, graph.json 직접 분석): 코드 3,736 + 문서 1,654 + 개념 89.
+  코드 3,736의 분해 — 테스트 1,196(113파일), 게임 코어 938(183파일), **참조 스텁 751**
+  (`source_file`이 빈 코드 노드: `int`×35, `IReadOnlyList`×74, NUnit `test`×104 등이
+  파일마다 복제되고 실제 클래스 노드와 연결되지 않는 막다른 노드), 외부 531
+  (`Packages/packages-lock.json` 단독 344, `manifest.json` 54, `Assets/Plugins/` DOTween
+  ~133), Unity 표현 293(35파일), 도구 27. 실제 코드 규모는 .cs 339파일·33,719줄.
+  진짜 관계망은 스텁 없이 성립한다 — 실제 노드끼리 잇는 파일 간 엣지 4,036개(calls 2,608,
+  inherits 92, implements 61, imports 784 포함)가 별도로 존재함을 확인했다.
 - 사용자 확인 사항: 카드 질의 목적은 밸런스·시너지 탐색 + 사람 시각화. 코드 측 병목은
   "AI가 안 쓰는 것" + "사람 시야 없음". 시각화는 카드 관계망 소형 + 코드 아키텍처 수준.
   재생성은 훅·watch 없이 **수동 명령 하나**. 태그는 그래프에서 **완전 제외**(사람이 임의로
@@ -124,33 +140,47 @@
   - `specified_by`: 상태→`<Pascal(key)>StatusSpec` 클래스 코드 노드(존재할 때만).
 - 태그(`tags[]`)는 읽되 무시한다. 노드·엣지를 만들지 않는다.
 
-**2. 재생성 스크립트** — `tools/graph/rebuild-graph.sh` (조정자, 로직 없음. 규칙 30).
+**2. 그래프 프루너** — `tools/graph/prune_graph.py` (stdlib 전용). graph.json에서 다음 노드와
+그 노드에 닿는 모든 엣지·하이퍼엣지를 제거한다 (2026-08-28 사용자 지시: 테스트 코드 불포함,
+중요한 것은 게임 로직 아키텍처):
+
+  - 참조 스텁: `file_type=code`이고 `source_file`이 빈 노드 (실측 751개)
+  - 테스트: `source_file`에 `/Tests/`가 포함되거나 파일명이 `*Tests.cs`·`*Test.cs`인 노드
+    (실측 1,196개)
+  - 외부: `source_file`이 `Packages/`·`Assets/Plugins/`로 시작하는 노드 (실측 531개)
+
+  결과는 게임 로직 1,231 + 문서 1,743 ≈ 3,000노드. 트레이드오프: "이 클래스의 테스트 찾기"
+  질의를 포기한다 — grep이 더 싼 질의라 손실 미미(사용자 승인). 제거 규칙은 함수 하나에 모아
+  새 잡음 유형이 나타나면 한 곳만 고치게 한다.
+
+**3. 재생성 스크립트** — `tools/graph/rebuild-graph.sh` (조정자, 로직 없음. 규칙 30).
 
   1. `rm -f graphify-out/graph.json graphify-out/manifest.json`
   2. `graphify update .` (AST 재생성, 실측 8.7초·LLM 0토큰)
-  3. `python3 tools/graph/extract_card_graph.py`
-  4. `graphify merge-graphs graphify-out/graph.json graphify-out/card-graph.json --out
-     graphify-out/graph.json` — **주의: merge-graphs의 in-place 출력 동작은 미검증.** 계획
-     단계에서 임시 출력 후 mv로 안전화할지 결정.
-  5. 뷰 2장 생성 (아래 3·4).
+  3. `python3 tools/graph/prune_graph.py` (in-place)
+  4. `python3 tools/graph/extract_card_graph.py`
+  5. `graphify merge-graphs graphify-out/graph.json graphify-out/card-graph.json --out
+     graphify-out/merged.json && mv graphify-out/merged.json graphify-out/graph.json`
+     (in-place 출력은 미검증이라 임시 파일 경유)
+  6. 뷰 2장 생성 (아래 4·5).
 
   AGENTS.md 규칙 21의 재생성 명령을 이 스크립트 한 줄로 교체한다.
 
-**3. 뷰 생성기** — 카드 서브그래프(card-graph.json + handled_by가 가리키는 코드 노드)만 담은
-단독 HTML 한 장. `graphify-out/card-graph.html`. 규모 ~60노드(카드 27 + 상태 11 + kind 8 +
-풀·덱·캐릭터 ~7 + 핸들러 ~8)라 즉시 열린다.
+**4. 뷰 생성기** — 카드 서브그래프(card-graph.json + handled_by·specified_by가 가리키는 코드
+노드)만 담은 단독 HTML 한 장. `graphify-out/card-graph.html`. 규모 ~60노드(카드 27 + 상태 11 +
+kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
 
-- **열린 갈림길(계획 단계에서 해소):** `graphify cluster-only --graph graphify-out/card-graph.json`
-  이 임의 그래프의 HTML을 생성하는지 실행으로 확인한다. 되면 그것을 쓰고, 안 되면 vis.js류
-  인라인 없이 순수 SVG/JS를 자체 생성하는 소형 렌더러를 extract 스크립트에 붙인다(stdlib 전용
-  유지).
+- 렌더 경로(갈림길 해소됨, 2026-08-28 실증): 임시 디렉터리 `<tmp>/graphify-out/graph.json`에
+  서브그래프를 놓고 `graphify cluster-only <tmp> --no-label`을 실행하면 graph.html이 LLM 없이
+  생성된다(합성 6노드 그래프로 확인). 생성된 graph.html을 목적 경로로 복사한다.
 
-**4. 아키텍처 접기** — `tools/graph/collapse_architecture.py`. 코드 그래프의 노드를
+**5. 아키텍처 접기** — `tools/graph/collapse_architecture.py`. 프루닝된 코드 그래프의 노드를
 `community` 값으로 묶어 커뮤니티당 노드 1개(label=community_name, 크기=멤버 수), 커뮤니티 간
-엣지 수를 weight로 하는 소형 그래프(~351노드 → 상위 N개 필터로 더 축소 가능)를 만들어
-`graphify-out/architecture.html`로 렌더한다. 렌더 경로는 3과 같은 갈림길을 공유한다.
+엣지 수를 weight로 하는 소형 그래프를 만들어 4와 같은 경로로
+`graphify-out/architecture.html`로 렌더한다. 문서 노드는 접기 대상에서 제외하고 게임 로직
+코드만 접는다.
 
-**5. AGENTS.md 규칙 개정** — 같은 커밋 아님, 구현 완료 후 별도 커밋.
+**6. AGENTS.md 규칙 개정** — 같은 커밋 아님, 구현 완료 후 별도 커밋.
 
 - 규칙 21: 재생성 명령을 `tools/graph/rebuild-graph.sh`로 교체. 카드 서브그래프가 함께
   생성됨을 명시.
@@ -171,12 +201,15 @@
   1. `rebuild-graph.sh` 1회 실행으로 graph.json에 카드·상태 노드와 위 엣지 7종이 존재한다.
   2. `graphify explain "맹독 찌르기"`가 poison·damage 관계를 답한다.
   3. `graphify path "PoisonStatusSpec" "<독 카드>"` 류 카드↔코드 경로가 성립한다.
-  4. card-graph.html과 architecture.html이 브라우저에서 열린다.
-  5. 전 과정 LLM 토큰 0, 벽시계 ~15초 이내.
+  4. 프루닝 후 graph.json에 스텁·테스트·`Packages/`·`Assets/Plugins/` 노드가 0개다
+     (총 노드 ~3,000).
+  5. card-graph.html과 architecture.html이 브라우저에서 열린다.
+  6. 전 과정 LLM 토큰 0, 벽시계 ~15초 이내.
 
 ### 구현 순서 제안
 
-1. 추출기 + 단위 테스트 (핵심 가치, 다른 것에 의존 없음)
-2. merge-graphs 동작 검증 → rebuild-graph.sh
-3. 뷰 갈림길 해소 → 뷰 생성기 + 아키텍처 접기
-4. AGENTS.md 규칙 개정 + docs/superpowers/README.md 색인 갱신
+1. 프루너 + 단위 테스트 (독립, 즉시 가치 — 전체 viz 한계 회복)
+2. 추출기 + 단위 테스트 (핵심 가치, 프루너와 독립)
+3. merge-graphs 동작 검증 → rebuild-graph.sh
+4. 뷰 생성기 + 아키텍처 접기 (렌더 경로는 실증된 cluster-only 사용)
+5. AGENTS.md 규칙 개정 + docs/superpowers/README.md 색인 갱신
