@@ -636,5 +636,56 @@ namespace FateWeaver.Tests
             Assert.IsEmpty(events.OfType<FormationMoved>());
             Assert.AreSame(front, state.Party[0]);
         }
+
+        [Test]
+        public void Format_event_renders_one_entry_without_trailing_newline()
+        {
+            var text = TimelineTextFormatter.FormatEvent(new TurnStarted(0), Korean);
+            Assert.AreEqual("== 1턴 시작 ==", text);
+        }
+
+        [Test]
+        public void Format_event_spells_out_hp_change_with_its_source()
+        {
+            var cardHit = TimelineTextFormatter.FormatEvent(
+                new HpChanged("goblin", 10, 6, HpChangeSource.CardDamage, "jab"), Korean);
+            StringAssert.Contains("goblin", cardHit);
+            StringAssert.Contains("10", cardHit);
+            StringAssert.Contains("6", cardHit);
+            StringAssert.Contains("jab", cardHit);
+
+            var tick = TimelineTextFormatter.FormatEvent(
+                new HpChanged("goblin", 10, 7, HpChangeSource.StatusTick, "poison"), Korean);
+            StringAssert.Contains(Korean.Statuses.Resolve(StatusKeys.Poison), tick);
+        }
+
+        [Test]
+        public void Format_event_covers_every_new_event_without_falling_to_default()
+        {
+            var samples = new ResolutionEvent[]
+            {
+                new FateEnergyGained("distill", 1),
+                new StatusConsumed("goblin", "poison", 2),
+                new CardBuffGranted(2, "strike", CardBuffIds.DamageBonus, 2),
+                new CardBuffConsumed(2, "strike", StatusKeys.RewardNullified.Id, 1),
+                new FormationMoved("member_a", Side.Player, 1, 0)
+            };
+            foreach (var evt in samples)
+            {
+                StringAssert.DoesNotContain("[미처리 이벤트]",
+                    TimelineTextFormatter.FormatEvent(evt, Korean));
+            }
+        }
+
+        [Test]
+        public void Cancelled_card_entry_includes_pre_cancel_damage()
+        {
+            var text = TimelineTextFormatter.FormatEvent(
+                new CardCancelled(1, "double_strike", "member_a", CardCancellationReason.NoValidTarget)
+                {
+                    DamageDealt = 5
+                }, Korean);
+            StringAssert.Contains("5", text);
+        }
     }
 }

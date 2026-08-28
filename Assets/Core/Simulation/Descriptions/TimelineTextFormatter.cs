@@ -27,6 +27,20 @@ namespace FateWeaver.Simulation.Descriptions
             return sb.ToString();
         }
 
+        /// <summary>이벤트 1건을 로그 1건으로 바꾼다. Unity는 이벤트마다 이것을 호출해
+        /// Debug.Log 1건씩 남긴다 (로그 1건 = 이벤트 1건).</summary>
+        public static string FormatEvent(ResolutionEvent evt, KoreanDescriptionCatalog catalog)
+        {
+            if (evt == null)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder();
+            AppendEvent(sb, evt, catalog);
+            return sb.ToString().TrimEnd('\r', '\n');
+        }
+
         private static void AppendEvent(
             StringBuilder sb, ResolutionEvent evt, KoreanDescriptionCatalog catalog)
         {
@@ -47,8 +61,50 @@ namespace FateWeaver.Simulation.Descriptions
                     }
 
                     break;
+                case HpChanged e:
+                    sb.Append("  ").Append(e.HolderId).Append(" HP ")
+                      .Append(e.Before).Append(" → ").Append(e.After)
+                      .Append(" (").Append(HpSourceName(catalog, e)).AppendLine(")");
+                    break;
+                case FateEnergyGained e:
+                    sb.Append("  다음 턴 운명력 +").Append(e.Amount)
+                      .Append(" (").Append(e.SourceCardId).AppendLine(")");
+                    break;
+                case StatusConsumed e:
+                    sb.Append("  ").Append(e.HolderId).Append('의')
+                      .Append(StatusName(catalog, e.StatusId))
+                      .Append(' ').Append(e.Amount).AppendLine(" 소비");
+                    break;
+                case CardBuffGranted e:
+                    sb.Append("  카드 ").Append(e.CardId).Append("(#").Append(e.CardInstanceId)
+                      .Append(")에 ").Append(BuffName(catalog, e.BuffId))
+                      .Append(" +").Append(e.Amount).AppendLine(" 부여");
+                    break;
+                case CardBuffConsumed e:
+                    sb.Append("  카드 ").Append(e.CardId).Append("(#").Append(e.CardInstanceId)
+                      .Append(")의 ").Append(BuffName(catalog, e.BuffId))
+                      .Append(' ').Append(e.Amount).AppendLine(" 소모");
+                    break;
+                case FormationMoved e:
+                    sb.Append("  ").Append(e.MemberId).Append(" 대형 이동: ")
+                      .Append(e.FromIndex + 1).Append("열 → ")
+                      .Append(e.ToIndex + 1).AppendLine("열");
+                    break;
                 case CardCancelled e:
-                    sb.Append("  ").Append(e.CardId).Append(" 취소 (").Append(e.Reason).AppendLine(")");
+                    sb.Append("  ").Append(e.CardId).Append(" 취소 (").Append(e.Reason).Append(')');
+                    if (e.DamageDealt > 0)
+                    {
+                        sb.Append(" — 취소 전 피해 ").Append(e.DamageDealt);
+                    }
+
+                    sb.AppendLine();
+                    foreach (var step in e.DamageSteps)
+                    {
+                        sb.Append("      ").Append(step.HolderId).Append('의')
+                          .Append(StatusName(catalog, step.StatusId))
+                          .Append(": ").Append(step.Before).Append(" → ").AppendLine(step.After.ToString());
+                    }
+
                     break;
                 case StatusApplied e:
                     sb.Append("  ").Append(e.HolderId).Append("에게 ")
@@ -93,5 +149,12 @@ namespace FateWeaver.Simulation.Descriptions
 
         private static string StatusName(KoreanDescriptionCatalog catalog, string statusId)
             => catalog.Statuses.Resolve(new StatusKey(statusId));
+
+        private static string HpSourceName(KoreanDescriptionCatalog catalog, HpChanged e)
+            => e.Source == HpChangeSource.StatusTick ? StatusName(catalog, e.SourceId) : e.SourceId;
+
+        /// <summary>버프 이름: 상태 키면 설명 레지스트리, 아니면 카드 버프 상수의 고정 문구.</summary>
+        private static string BuffName(KoreanDescriptionCatalog catalog, string buffId)
+            => buffId == CardBuffIds.DamageBonus ? "피해 보너스" : StatusName(catalog, buffId);
     }
 }
