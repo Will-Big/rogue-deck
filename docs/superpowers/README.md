@@ -119,7 +119,9 @@
 
 **3d가 3b·3c에서 물려받는 것:** 런타임이 JSON을 읽는다. `ContentBootstrap.Load(콘텐츠루트)`가
 **상태** → 카드 → 덱·풀 → 캐릭터 순서로 카탈로그 다섯을 만들어 `GameContent`로 돌려주고,
-`BattleScreenController`가 그것을 부팅 1회로 상주시킨다. Unity 쪽 경로 상수는 `UnityContentRoot.Path`
+`BattleScreenController`가 그것을 `_content`에 담아 상주시킨다 — 부팅 시가 아니라 **전투 화면
+진입 시** 첫 `StartSession()`에서 만들어지고, `static`이 아니므로 그 컨트롤러와 수명을 같이한다
+(2026-08-12 정정). Unity 쪽 경로 상수는 `UnityContentRoot.Path`
 하나뿐이다. 상태가 가장 먼저인 이유는 카드 검증이 "등록된 상태에는 저작이 있다"를 전제하기 때문이다.
 
 **상태 규칙의 원본은 이제 `Content/Statuses/*.json` 하나다** (계획 3c). `StatusSpecJsonConverter`는
@@ -255,10 +257,82 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   (c) **`BattleScreenController`의 입력 핸들러 다섯** — 전투 화면 분해가 남긴 후속이며 설계 §4.1대로
   백로그 P2(코어 이벤트 확충) 이후로 미룬다.
 
+- [ ] **상태 수치를 담을 수명별 층이 없고, 저작값 읽는 통로가 중앙에 쌓인다.** 2026-08-12 조사
+  결과이며 문제가 둘이다. 둘 다 같은 작업에서 풀리므로 따로 착수하면 두 번 뜯게 된다.
+
+  **문제 1 — 수명이 맞는 그릇이 없다.**
+  변경에는 살아야 하는 기간이 있다("이번 전투 동안 취약 200%", "이번 런 동안 독 성장량 +2").
+  변경을 그 기간만큼 사는 객체에 담으면 지우는 코드 없이 알아서 사라진다. 그런데 지금 상태 수치가
+  담기는 곳은 기간이 맞지 않는다.
+
+  | 변경이 살아야 할 기간 | 맞는 그릇 | 현재 |
+  |---|---|---|
+  | 이 전투 | `CombatState` | 객체는 전투마다 새로 만들어지는데 **자기 수치 표가 없다** — `StatusRules`가 카탈로그 것을 가리키는 위임일 뿐이다 |
+  | 이 런 | `RunState` | 객체는 있는데 **전투와 연결돼 있지 않다** (참조하는 파일이 자기 자신과 자기 테스트뿐) |
+  | 안 변함 | `GameContent` | 있다. 지금은 전부 여기 쓴다 |
+
+  `GameContent`(및 `StatusContentCatalog`)는 **콘텐츠 JSON을 읽어 만든 런타임 객체**다. 부팅 시가
+  아니라 전투 화면 진입 시 `BattleScreenController.Start()`의 첫 `StartSession()`에서 만들어지고,
+  `_content`는 `static`이 아니라 그 컨트롤러의 인스턴스 필드다. 다만 `StartSession`이 HUD 재시작
+  버튼에도 배선돼 있고 그때 `_content`를 재사용하므로 **전투를 다시 시작해도 같은 인스턴스**다.
+  그래서 `StatusContentCatalog.Rules`에 쓴 값은 전투 경계를 넘어 남는다.
+
+  **가변인 것 자체는 결함이 아니다** — 유물 같은 효과가 수치를 바꾸게 하려는 의도다. 결함은 그
+  변경이 **지워질 시점이 없다**는 것이다. 아직 피해가 없는 이유는 프로덕션에서 `Rules.Set`을 부르는
+  코드가 하나도 없어서다. 테스트는 이미 이 누수를 밟아 `TestContent.Statuses()`가 호출마다 카탈로그를
+  새로 만드는 것으로 우회한다. 프로덕션 소비자는 `TurnResolver`의 `state.StatusRules` 한 곳뿐이다.
+
+  **전투용 사본을 뜨는 방식은 안 된다** — [카드 변형 설계](specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.3이
+  이미 기각했다(전투 중 발생한 런 지속 변경이 사본과 함께 사라진다). 그 설계가 카드에 대해 정해 둔
+  `Source + Permanent(런) + Combat(전투) → Effective`가 이 문제의 해법이며, **카드에만 문서화돼 있고
+  구현은 없다**(`CardMutation` 타입이 저장소에 없고 `OwnedCard`는 `Def`+`OwnerId`뿐). 상태 수치·덱·
+  캐릭터는 문서조차 없다.
+
+  **문제 2 — 저작값 읽는 통로가 상태마다 다르고 중앙에 쌓인다.**
+  상태의 런타임 행동(`StatusBehavior` 11개)과 저작 스펙(`StatusSpec` 서브클래스 3개)은 규칙 9대로
+  갈려 있어, 상태를 추가해도 클래스 하나와 등록 한 줄이면 된다. 그런데 그 저작값을 **읽는** 쪽은
+  `StatusContentCatalog`에 상태별 메서드로 쌓인다.
+
+  | 통로 | 담는 것 | 해당 상태 | 가변? |
+  |---|---|---|---|
+  | `Rules` (`StatusRuleSet`) | `multiplierPercent` | 취약 150 · 약화 75 · 손상 75 | 가변 |
+  | `GrowthPerTurnOf` | `growthPerTurn` | 독 | 읽기 전용 |
+  | `ExecutionOrderDeltaOf` | `executionOrderDelta` | 가속 · 감속 | 읽기 전용 |
+  | 없음 | — | 방어 · 전염 · 독 잠복 · 독 안정 · 보상 무효 | — |
+
+  `is PoisonStatusSpec spec ? spec.GrowthPerTurn : 0`은 중앙 switch를 손으로 편 것이고, 파라미터를
+  가진 상태를 추가할 때마다 메서드가 하나 는다. 그리고 셋 중 하나만 가변이라 "유물이 독 성장량 +1"은
+  손댈 통로 자체가 없다.
+
+  원인은 방향이다. 행동은 `NewSpec()`으로 자기 스펙 타입을 아는데, 읽을 때 카탈로그를 거치느라 그
+  지식이 버려지고 카탈로그가 대신 알게 됐다. **카탈로그가 `StatusKey → StatusSpec`만 돌려주고 해석은
+  각 행동이 하면** 중앙이 자라지 않고, 수명별 층을 얹을 자리도 한 곳으로 모인다.
+
+  착수하려면 먼저 결정해야 할 것 둘:
+  1. §4.3의 `Source + Permanent(런) + Combat(전투) → Effective` 모델을 상태 수치·덱·캐릭터에도
+     **그대로 적용**할 것인가, 데이터 종류마다 다른 모양이 필요한가.
+  2. 계획 4의 범위를 카드에 한정할 것인가, 층 전반으로 넓힐 것인가.
+
 - [ ] **`StatusLifetime` count 의미 단일화** — 상태마다 `count`가 "남은 턴"인지 "세기"인지 다르고,
   지금은 상태 콘텐츠의 수명 종류가 그것을 정한다. 보관된 상태 규칙 계획이 "영향 범위가 넓어 별도
   계획으로 분리한다"고 명시하고 미뤄둔 항목이다. `StatusBag`·`ApplyStatusPayload`·`ApplyStatusSpec`·
   카드 JSON·설명 문법의 `LifetimeSuffix`에 걸친다. 착수하려면 먼저 스펙이 필요하다.
+
+  **2026-08-12 논의로 전제가 좁아졌다.** 사용자가 밝힌 설계 규칙은 이렇다 — 상태이상 **임시
+  객체**(캐릭터 또는 카드에 붙는다)는 `count`만 관리하고, **정보 객체**(중앙 공유)가 `magnitude`를
+  관리한다. `count`는 남은 턴·충전·스택처럼 전투 중 변하는 수치이고 상태마다 해석이 다르며,
+  `magnitude`는 임시 객체들이 참조하는 대체로 고정된 공유값이다. 둘 다 카드·유물이 바꿀 수 있다.
+
+  그 규칙에 비추면 **저작 경계는 고칠 게 없다.** 카드가 적는 `count` 하나는 임시 객체의 초기
+  `count`이므로 필드가 하나인 것이 맞고, `magnitude`는 카드가 아니라 상태 JSON에 있어야 하는데
+  이미 그렇다(`poison.json`의 `growthPerTurn`). 앞서 "카드 JSON의 `count`를 `turns`와 `magnitude`로
+  쪼개자"는 방향이 나왔으나 이 규칙과 어긋나므로 채택하지 않는다.
+
+  남는 것은 **런타임 이름이 규칙과 뒤집혀 있다**는 점이다. `StatusInstance`가 `Count`와 `Magnitude`를
+  둘 다 들고 있고, 독의 경우 전투 중 변하는 스택이 `Instance.Magnitude`(규칙상 `count`여야 한다),
+  고정 공유값인 성장량이 `Catalog.GrowthPerTurnOf`(규칙상 `magnitude`)다. 위치는 맞는데 이름이
+  서로 바뀌어 있고, 정보 객체 쪽에는 일반화된 `magnitude` 슬롯 없이 상태별 전용 접근자만 있다.
+  이 정리는 위의 **수명별 층** 항목과 같은 작업에 속한다 — 따로 하면 두 번 뜯는다.
 
 ## 재설계가 필요한 영역
 
