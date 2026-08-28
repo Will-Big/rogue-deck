@@ -55,6 +55,7 @@ namespace FateWeaver.Core.Effects
                 }
 
                 ctx.Card.RecordConsumedStatus(consumed);
+                ctx.ExtraEvents.Add(new Events.StatusConsumed(enemy.Id, payload.Key.Id, consumed));
                 if (payload.DamageBonusPerConsumed != 0)
                 {
                     ctx.Card.AddPendingDamageBonus(consumed * payload.DamageBonusPerConsumed);
@@ -89,6 +90,7 @@ namespace FateWeaver.Core.Effects
                     }
 
                     ctx.Card.RecordConsumedStatus(consumed);
+                    ctx.ExtraEvents.Add(new Events.StatusConsumed(enemy.Id, payload.Key.Id, consumed));
                     if (payload.DamageBonusPerConsumed != 0)
                     {
                         ctx.Card.AddPendingDamageBonus(consumed * payload.DamageBonusPerConsumed);

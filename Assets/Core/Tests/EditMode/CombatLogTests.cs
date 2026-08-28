@@ -266,5 +266,86 @@ namespace FateWeaver.Tests
                 TimelineTextFormatter.Format(
                     System.Array.Empty<ResolutionEvent>(), Korean));
         }
+
+        [Test]
+        public void Granting_next_turn_fate_emits_fate_energy_gained()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(20);
+            state.Enemies.Add(new Enemy("goblin", 10));
+            var def = new CardDefinition("distill", "증류", Side.Player, 5,
+                new[] { new EffectData(EffectKeys.GrantNextTurnFate, 1) });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+            var effects = new EffectRegistry();
+            effects.Register(new GrantNextTurnFateHandler());
+
+            var events = new TurnResolver(effects).Resolve(state, 0);
+            var gained = events.OfType<FateEnergyGained>().Single();
+
+            Assert.AreEqual(("distill", 1), (gained.SourceCardId, gained.Amount));
+        }
+
+        [Test]
+        public void Consuming_a_status_emits_status_consumed_with_the_amount()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(20);
+            var enemy = new Enemy("goblin", 20);
+            enemy.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 2);
+            state.Enemies.Add(enemy);
+            var def = new CardDefinition("drain", "흡수", Side.Player, 4, new[]
+            {
+                new EffectData(EffectKeys.ConsumeStatus, 0)
+                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+            var effects = new EffectRegistry();
+            effects.Register(new ConsumeStatusHandler());
+            var statuses = new StatusRegistry();
+            statuses.Register(new PoisonBehavior());
+
+            var events = new TurnResolver(effects, statuses).Resolve(state, 0);
+            var consumed = events.OfType<StatusConsumed>().Single();
+
+            Assert.AreEqual(("goblin", "poison", 2), (consumed.HolderId, consumed.StatusId, consumed.Amount));
+        }
+
+        [Test]
+        public void Zero_fate_gain_emits_no_state_change_event()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(20);
+            state.Enemies.Add(new Enemy("goblin", 10));
+            var def = new CardDefinition("empty_distill", "빈 증류", Side.Player, 5,
+                new[] { new EffectData(EffectKeys.GrantNextTurnFate, 0) });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+            var effects = new EffectRegistry();
+            effects.Register(new GrantNextTurnFateHandler());
+
+            var events = new TurnResolver(effects).Resolve(state, 0);
+
+            Assert.AreEqual(0, state.PendingNextTurnFateEnergy);
+            Assert.IsEmpty(events.OfType<FateEnergyGained>());
+        }
+
+        [Test]
+        public void Consuming_a_missing_status_emits_no_state_change_event()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(20);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("empty_drain", "빈 흡수", Side.Player, 4, new[]
+            {
+                new EffectData(EffectKeys.ConsumeStatus, 0)
+                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+            var effects = new EffectRegistry();
+            effects.Register(new ConsumeStatusHandler());
+
+            var events = new TurnResolver(effects).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<StatusConsumed>());
+        }
     }
 }

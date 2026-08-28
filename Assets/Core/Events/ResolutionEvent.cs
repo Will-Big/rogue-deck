@@ -92,5 +92,12 @@ namespace FateWeaver.Core.Events
     public sealed record HpChanged(
         string HolderId, int Before, int After, HpChangeSource Source, string SourceId) : ResolutionEvent;
 
+    /// <summary>다음 플레이어 턴에 지급될 운명력이 적립되었다 (증류). 실제 지급(턴 시작 리필)과
+    /// 지출은 세션 영역이라 이 타임라인에 없다 — 개입 로그 확장에서 다룬다.</summary>
+    public sealed record FateEnergyGained(string SourceCardId, int Amount) : ResolutionEvent;
+
+    /// <summary>효과가 보유자의 상태 수치를 능동 소비했다 (수명 만료·자동 소진과 구분).</summary>
+    public sealed record StatusConsumed(string HolderId, string StatusId, int Amount) : ResolutionEvent;
+
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }
