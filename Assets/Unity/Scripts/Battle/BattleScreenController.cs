@@ -38,6 +38,9 @@ namespace FateWeaver.Unity
         /// <summary>부팅 1회로 만들어 상주하는 콘텐츠. 씬을 리셋해도 다시 읽지 않는다(설계 §4.5).</summary>
         private GameContent _content;
 
+        /// <summary>타임라인을 한국어 문장으로 풀 때 쓰는 카탈로그. 세션과 함께 1회 만들어 재사용한다.</summary>
+        private KoreanDescriptionCatalog _korean;
+
         private void Start()
         {
             // 배선 검사는 첫 위임보다 앞서야 한다 — _hud가 비어 있으면 Initialize에서 이미
@@ -99,8 +102,8 @@ namespace FateWeaver.Unity
                 fateEnergyPerTurn: FateEnergyPerTurn,
                 seed: Seed);
 
-            var korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
-            _presenter.Initialize(OwnerNameOf, korean);
+            _korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
+            _presenter.Initialize(OwnerNameOf, _korean);
             _units.Spawn(
                 _session.State,
                 _presenter.OwnerColor,
@@ -293,6 +296,7 @@ namespace FateWeaver.Unity
             if (!_session.CurrentTurnResolved)
             {
                 _session.ResolveTurn();
+                Debug.Log(TimelineTextFormatter.Format(_session.LastTimeline, _korean));
                 SetMessage(_session.IsComplete
                     ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
                     : "턴 해석 완료.");
