@@ -46,7 +46,15 @@ namespace FateWeaver.Core.Events
         int InstanceId,
         string CardId,
         string OwnerId,
-        CardCancellationReason Reason) : ResolutionEvent;
+        CardCancellationReason Reason) : ResolutionEvent
+    {
+        /// <summary>취소 전에 이미 적용된 효과가 준 실제 피해와 그 단계 내역. 취소가 피해를
+        /// 되돌리지 않으므로 로그에서도 사라지면 안 된다. 효과 실행 전에 취소된 카드는 기본값
+        /// (0, 빈 목록)이다.</summary>
+        public int DamageDealt { get; init; }
+        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
+            = System.Array.Empty<DamageStep>();
+    }
 
     /// <summary>A party member's HP reached zero or below and they had no SurviveCharges left to
     /// absorb the hit.</summary>

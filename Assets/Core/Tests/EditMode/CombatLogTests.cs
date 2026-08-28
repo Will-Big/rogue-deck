@@ -100,6 +100,30 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void A_card_cancelled_mid_effects_keeps_its_dealt_damage_on_the_event()
+        {
+            // 효과 1(피해 5)이 마지막 적을 죽이고, 효과 2(피해)가 대상을 못 찾아 카드가 취소된다.
+            // 취소는 이미 준 피해를 되돌리지 않으므로 로그에서도 사라지면 안 된다.
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 3));
+            var def = new CardDefinition("double_strike", "double_strike", Side.Player, 1,
+                new[]
+                {
+                    new EffectData(EffectKeys.Damage, 5),
+                    new EffectData(EffectKeys.Damage, 5)
+                });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var cancelled = events.OfType<CardCancelled>().Single();
+
+            Assert.IsEmpty(events.OfType<CardResolved>());
+            Assert.AreEqual(5, cancelled.DamageDealt);
+            Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "goblin"));
+        }
+
+        [Test]
         public void Applying_a_status_emits_status_applied_with_the_folded_magnitude()
         {
             var state = new CombatState(TestContent.Statuses());

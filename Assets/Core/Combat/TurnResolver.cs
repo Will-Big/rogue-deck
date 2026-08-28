@@ -161,7 +161,12 @@ namespace FateWeaver.Core.Combat
                 // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
                 // CardCancelled. State-change events from earlier, already-applied effects follow in
                 // occurrence order, then the OwnerDied sweep below uses the same newly-dead set.
-                events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
+                events.Add(new CardCancelled(
+                    card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value)
+                {
+                    DamageDealt = totalDamage,
+                    DamageSteps = damageSteps
+                });
                 events.AddRange(pendingDeathEvents);
             }
 
