@@ -30,6 +30,10 @@ namespace FateWeaver.Core.Effects
         /// TurnResolver가 CardResolved/CardCancelled 뒤에 발생 순서대로 붙인다.</summary>
         public List<ResolutionEvent> ExtraEvents = new List<ResolutionEvent>();
 
+        /// <summary>이 효과의 피해가 상태로 바뀐 단계들. TurnResolver가 카드 단위로 모아
+        /// CardResolved에 싣는다.</summary>
+        public List<Events.DamageStep> DamageSteps = new List<Events.DamageStep>();
+
         /// <summary>Records why this card's effects could not resolve. Only the first reason is kept;
         /// handlers must not mutate state or HP after cancelling (see ExecutionCardInstance.CancellationReason).</summary>
         public void Cancel(Combat.CardCancellationReason reason)

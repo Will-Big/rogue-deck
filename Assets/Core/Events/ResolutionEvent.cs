@@ -20,6 +20,11 @@ namespace FateWeaver.Core.Events
         string TargetId,
         ConditionTier ConditionTier = ConditionTier.Basic) : ResolutionEvent
     {
+        /// <summary>이 카드가 준 피해가 상태로 어떻게 바뀌었는지의 단계별 내역. 상태가 관여하지
+        /// 않았으면 빈 목록이다. 이벤트를 새로 끼워 넣지 않으려고 페이로드로 싣는다.</summary>
+        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
+            = System.Array.Empty<DamageStep>();
+
         /// <summary>Compat constructor for pre-Task-3 callers that don't track card identity. Real
         /// resolution (TurnResolver) always uses the primary constructor with the card's actual
         /// InstanceId/OwnerId; this exists only so older unit tests keep compiling unchanged.</summary>
