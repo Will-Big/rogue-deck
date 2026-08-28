@@ -57,7 +57,7 @@ namespace FateWeaver.Core.Effects
                     var total = 0;
                     foreach (var each in targets)
                     {
-                        var dealt = FoldIncoming(ctx, each.Statuses, amount);
+                        var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
                         each.Hp -= dealt;
                         total += dealt;
                     }
@@ -75,7 +75,7 @@ namespace FateWeaver.Core.Effects
                     return;
                 }
 
-                var damage = FoldIncoming(ctx, target.Statuses, amount);
+                var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                 target.Hp -= damage;
                 ctx.DamageDealt = damage;
                 ctx.TargetId = target.Id;
@@ -94,7 +94,7 @@ namespace FateWeaver.Core.Effects
                     var total = 0;
                     foreach (var each in targets)
                     {
-                        var dealt = FoldIncoming(ctx, each.Statuses, amount);
+                        var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
                         // Routed through PartyMember.TakeDamage (not a raw Hp -=) so a lethal hit can
                         // be absorbed by a SurviveCharges charge (DeathsDoor); TurnResolver's death
                         // sweep reads the resulting Hp/SurviveCharges state.
@@ -113,7 +113,7 @@ namespace FateWeaver.Core.Effects
                     return;
                 }
 
-                var damage = FoldIncoming(ctx, target.Statuses, amount);
+                var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                 // Routed through PartyMember.TakeDamage (not a raw Hp -=) so a lethal hit can be
                 // absorbed by a SurviveCharges charge (DeathsDoor); TurnResolver's death sweep reads
                 // the resulting Hp/SurviveCharges state to emit DeathsDoorSurvived/PartyMemberDied.
@@ -138,7 +138,7 @@ namespace FateWeaver.Core.Effects
                         continue;
                     }
 
-                    var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                    var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                     target.Hp -= dealt;
                     total += dealt;
                     onlyTargetId = target.Id;
@@ -164,7 +164,7 @@ namespace FateWeaver.Core.Effects
                     continue;
                 }
 
-                var dealt = FoldIncoming(ctx, target.Statuses, amount);
+                var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                 target.TakeDamage(dealt);
                 partyTotal += dealt;
                 partyOnlyTargetId = target.Id;
@@ -206,14 +206,16 @@ namespace FateWeaver.Core.Effects
         /// <summary>Folds the target's entity-scoped statuses into incoming damage: the multiplier
         /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
         /// actually changed the damage spends a charge (auto-consume).</summary>
-        private static int FoldIncoming(EffectContext ctx, StatusBag bag, int damage)
-            => StatusDamageFold.Incoming(bag, ctx.StatusRegistry, ctx.State.StatusRules, damage);
+        private static int FoldIncoming(EffectContext ctx, StatusBag bag, string holderId, int damage)
+            => StatusDamageFold.Incoming(
+                bag, ctx.StatusRegistry, ctx.State.StatusRules, damage, holderId, ctx.DamageSteps);
 
         /// <summary>Folds the acting side's entity-scoped statuses into the damage it deals (e.g.
         /// Weak). Applied once per effect, before any target's incoming statuses — so an All-target
         /// card reduces its damage once and every target is hit with the same reduced value.</summary>
         private static int FoldOutgoing(EffectContext ctx, int damage)
             => StatusDamageFold.Outgoing(
-                ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage);
+                ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage,
+                ctx.Card.OwnerId, ctx.DamageSteps);
     }
 }

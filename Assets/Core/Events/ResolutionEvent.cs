@@ -20,6 +20,11 @@ namespace FateWeaver.Core.Events
         string TargetId,
         ConditionTier ConditionTier = ConditionTier.Basic) : ResolutionEvent
     {
+        /// <summary>이 카드가 준 피해가 상태로 어떻게 바뀌었는지의 단계별 내역. 상태가 관여하지
+        /// 않았으면 빈 목록이다. 이벤트를 새로 끼워 넣지 않으려고 페이로드로 싣는다.</summary>
+        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
+            = System.Array.Empty<DamageStep>();
+
         /// <summary>Compat constructor for pre-Task-3 callers that don't track card identity. Real
         /// resolution (TurnResolver) always uses the primary constructor with the card's actual
         /// InstanceId/OwnerId; this exists only so older unit tests keep compiling unchanged.</summary>
@@ -52,6 +57,14 @@ namespace FateWeaver.Core.Events
 
     /// <summary>An enemy's HP reached zero or below (from card effects or a status tick).</summary>
     public sealed record EnemyDied(string EnemyId) : ResolutionEvent;
+
+    /// <summary>상태가 보유자에게 부여되었다. Magnitude는 획득 훅(손상 등)을 거친 최종 값이고,
+    /// Stacked는 기존 인스턴스에 합산되었는지다(방어·독).</summary>
+    public sealed record StatusApplied(
+        string HolderId, string StatusId, int Count, int Magnitude, bool Stacked) : ResolutionEvent;
+
+    /// <summary>상태의 수명이 다해 보유자에게서 사라졌다 (ThisTurn 소멸 또는 Turns 소진).</summary>
+    public sealed record StatusExpired(string HolderId, string StatusId) : ResolutionEvent;
 
     /// <summary>상태 행동의 턴 종료 틱이 보유자에게 발동했다 (예: 독 피해). Damage는 이번 틱이 준
     /// 피해, Magnitude는 틱 이후의 상태 수치다.</summary>

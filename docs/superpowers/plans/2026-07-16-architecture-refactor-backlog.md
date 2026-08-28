@@ -533,17 +533,22 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 
 ### 13.4 P1급 — 전투가 무엇을 했는지 볼 수 없다
 
-**배틀 화면이 타임라인을 표시하지 않는다.** `BattleScreenController`는 `SetMessage`로 조작 안내만
-띄우고 해석 결과를 보여주지 않는다. 2026-07-31 검증에서 앞열 파티원이 HP 1에서 죽지 않는 현상을
-확인했는데, 실제 원인인 치명 버팀(`DeathsDoorSurvived`)이 정상 발행되고 있었는데도 화면에서 판단할
-방법이 없었다. 규칙이 맞는지 틀리는지 확인할 수 없는 상태다.
+~~**배틀 화면이 타임라인을 표시하지 않는다.** `BattleScreenController`는 `SetMessage`로 조작 안내만
+띄우고 해석 결과를 보여주지 않는다.~~ **2026-08-28 해소** — `BattleScreenController`가 턴 해석 직후
+`TimelineTextFormatter.Format`을 호출해 Console에 타임라인을 찍는다. 2026-07-31 검증에서 앞열
+파티원이 HP 1에서 죽지 않는 현상을 확인했을 때, 실제 원인인 치명 버팀(`DeathsDoorSurvived`)이 정상
+발행되고 있었는데도 화면에서 판단할 방법이 없었던 그 문제다.
 
-**타임라인이 상호작용을 다 담지 않는다.** 상태가 부여·만료되는 사건에 대응하는 이벤트가 아예 없고
+~~**타임라인이 상호작용을 다 담지 않는다.** 상태가 부여·만료되는 사건에 대응하는 이벤트가 아예 없고
 (`StatusTicked`·`StatusTransferred`만 있다), 피해가 약화·취약·방어로 어떻게 바뀌었는지는
-`CardResolved.DamageDealt` 총합 하나로만 남는다. 규칙 11이 "코어의 출력은 이벤트 타임라인뿐"이라고
-정한 이상, 타임라인에 없는 사건은 UI도 로그도 표현할 수 없다.
+`CardResolved.DamageDealt` 총합 하나로만 남는다.~~ **2026-08-28 해소** — `StatusApplied`·
+`StatusExpired` 이벤트가 상태 부여·만료를 남기고, `CardResolved.DamageSteps`가 약화·취약·방어의
+단계별 피해 변화를 싣는다. 규칙 11대로 여전히 타임라인이 유일한 원천이다.
 
-**플레이테스트 화면의 렌더링이 조용히 버린다.** `DeckPlaytestController.RefreshTimeline`은
-`CardResolved`와 `TurnEnded`만 처리하고 나머지 이벤트를 아무 표시 없이 건너뛴다.
+~~**플레이테스트 화면의 렌더링이 조용히 버린다.** `DeckPlaytestController.RefreshTimeline`은
+`CardResolved`와 `TurnEnded`만 처리하고 나머지 이벤트를 아무 표시 없이 건너뛴다.~~ **2026-08-28
+정정** — 이 관찰은 이미 낡아 있었다. `DeckPlaytestController`는 이 계획 착수 전인 `ac4e47f`
+(2026-08-03)가 삭제했다. 남은 화면은 `BattleScreenController` 하나뿐이라 위 항목으로 해소된다.
 
-[전투 상호작용 로그 계획](2026-07-31-combat-interaction-log.md)이 이 항목을 다룬다.
+**[전투 상호작용 로그 계획](2026-07-31-combat-interaction-log.md)이 이 항목을 구현 완료했다
+(머지 대기, 2026-08-28).**
