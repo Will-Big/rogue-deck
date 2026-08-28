@@ -135,6 +135,11 @@ Tests/Headless/obj/
 /graphify-out/.vocab.txt
 /graphify-out/memory/
 /graphify-out/reflections/
+/graphify-out/card-graph.json
+/graphify-out/view-card/
+/graphify-out/view-architecture/
+/graphify-out/card-graph.html
+/graphify-out/architecture.html
 
 # Superpowers plugin session scratch (brainstorm/sdd working files)
 /.superpowers/
