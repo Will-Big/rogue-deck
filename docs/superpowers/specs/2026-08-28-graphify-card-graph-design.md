@@ -36,7 +36,7 @@
   질의라 손실이 미미하다(사용자 승인, 2026-08-28).
 
 - **뽑는 엣지** — 카드→상태(적용/소모/발동), 풀·덱→카드, 캐릭터→덱, 카드→효과 kind,
-  효과 kind→핸들러 클래스(코드 노드), 상태→상태 스펙 클래스(코드 노드). 마지막 두 다리가
+  효과 kind→핸들러 클래스(코드 노드), 상태→행동 클래스(코드 노드). 마지막 두 다리가
   "이 핸들러를 고치면 어느 카드가 영향받나"를 양방향으로 답하게 한다.
 
 - **확장 축** — 갈아끼울 수 있는 것: 엣지 추출 규칙(새 JSON 필드·새 콘텐츠 종류마다 규칙 추가),
@@ -52,8 +52,8 @@
 - **이 선택으로 나중에 어려워지는 것**
   - graphify를 업그레이드하면 graph.json 포맷·병합 동작이 바뀔 수 있고, 그때 추출기·접기
     스크립트가 따라가야 한다.
-  - kind→핸들러, 상태→스펙 매핑이 코어 파일의 현재 작성 규약(`Key => EffectKeys.X`,
-    `<Pascal>StatusSpec`)에 묶인다. 그 규약을 리팩토링하면 추출기 파싱도 고쳐야 한다.
+  - kind→핸들러, 상태→행동 매핑이 코어 파일의 현재 작성 규약(`Key => EffectKeys.X`,
+    `Key => StatusKeys.X`)에 묶인다. 그 규약을 리팩토링하면 추출기 파싱도 고쳐야 한다.
   - 추출기는 아는 필드만 엣지로 만든다. 조건부 효과 같은 새 JSON 구조가 생기면 규칙을 추가하기
     전까지 그 관계는 그래프에서 침묵으로 빠진다 — 미인식 필드 경고(상세 §검증)로 침묵을 잡는다.
 
@@ -122,8 +122,8 @@
 
 - 입력: `Assets/StreamingAssets/Content/{Cards,Statuses,Pools,Decks,Characters}/*.json`,
   `Assets/Core/Effects/EffectKey.cs`, `Assets/Core/Effects/*Handler.cs`,
-  `Assets/Core/Authoring/Statuses/Specs/*StatusSpec.cs`, `graphify-out/graph.json`(AST 결과,
-  코드 노드 id 조회용).
+  `Assets/Core/Status/StatusKey.cs`(L24-34 정적 필드, EffectKeys와 동일 패턴),
+  `Assets/Core/Status/*Behavior.cs`, `graphify-out/graph.json`(AST 결과, 코드 노드 id 조회용).
 - 출력: `graphify-out/card-graph.json` (위 graph.json 포맷 준수, `_origin: "card_extractor"`).
 - 노드: 카드(`card:<id>`, label=name), 상태(`status:<key>`, label=displayName), 풀·덱·캐릭터,
   효과 kind(`effect_kind:<id>`). `file_type`은 전부 `"concept"`(추출 스펙의 허용 6종 중 하나),
@@ -137,7 +137,12 @@
   - `handled_by`: 효과 kind→핸들러 클래스 코드 노드. 매핑은 EffectKey.cs에서
     필드명→문자열 id를 파싱한 뒤, `*Handler.cs`에서 `Key => EffectKeys.<필드명>` 정규식으로
     클래스명을 얻고, AST graph.json에서 그 클래스 노드 id를 label+source_file로 찾는다.
-  - `specified_by`: 상태→`<Pascal(key)>StatusSpec` 클래스 코드 노드(존재할 때만).
+  - `handled_by`(상태): 상태→행동 클래스 코드 노드. `Assets/Core/Status/StatusKey.cs`의
+    정적 필드(필드명→문자열 key)와 `*Behavior.cs`의 `Key => StatusKeys.<필드명>` 패턴으로
+    효과 핸들러와 동일하게 파싱한다. (당초 `<Pascal(key)>StatusSpec` 규약으로 설계했으나
+    2026-08-28 확인 결과 스펙 클래스는 3개를 11개 상태가 공유해 1:1 매핑이 성립하지 않았다.
+    상태의 게임 로직은 행동 클래스가 담당하므로 다리도 행동 클래스로 잇는다 —
+    `StatusSpecJsonConverter.cs` L10-11, L48-49 주석이 근거.)
 - 태그(`tags[]`)는 읽되 무시한다. 노드·엣지를 만들지 않는다.
 
 **2. 그래프 프루너** — `tools/graph/prune_graph.py` (stdlib 전용). graph.json에서 다음 노드와
@@ -167,8 +172,8 @@
 
   AGENTS.md 규칙 21의 재생성 명령을 이 스크립트 한 줄로 교체한다.
 
-**4. 뷰 생성기** — 카드 서브그래프(card-graph.json + handled_by·specified_by가 가리키는 코드
-노드)만 담은 단독 HTML 한 장. `graphify-out/card-graph.html`. 규모 ~60노드(카드 27 + 상태 11 +
+**4. 뷰 생성기** — 카드 서브그래프(card-graph.json + handled_by가 가리키는 코드 노드)만 담은
+단독 HTML 한 장. `graphify-out/card-graph.html`. 규모 ~60노드(카드 27 + 상태 11 +
 kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
 
 - 렌더 경로(갈림길 해소됨, 2026-08-28 실증): 임시 디렉터리 `<tmp>/graphify-out/graph.json`에
@@ -201,7 +206,7 @@ kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
 - **수용 기준:**
   1. `rebuild-graph.sh` 1회 실행으로 graph.json에 카드·상태 노드와 위 엣지 7종이 존재한다.
   2. `graphify explain "맹독 찌르기"`가 poison·damage 관계를 답한다.
-  3. `graphify path "PoisonStatusSpec" "<독 카드>"` 류 카드↔코드 경로가 성립한다.
+  3. `graphify path "PoisonBehavior" "맹독 찌르기"` 류 카드↔코드 경로가 성립한다.
   4. 프루닝 후 graph.json에 스텁·테스트·`Packages/`·`Assets/Plugins/` 노드가 0개다
      (총 노드 ~3,000).
   5. card-graph.html과 architecture.html이 브라우저에서 열린다.
