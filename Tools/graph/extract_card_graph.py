@@ -18,7 +18,7 @@ GRAPH_PATH = Path("graphify-out/graph.json")
 CARD_GRAPH_PATH = Path("graphify-out/card-graph.json")
 
 ORIGIN = "card_extractor"
-KNOWN_EFFECT_FIELDS = {"kind", "value", "selector", "status", "count", "target"}
+KNOWN_EFFECT_FIELDS = {"kind", "value", "selector", "status", "count", "target", "condition", "maxAmount", "damageBonusPerConsumed"}
 STATUS_EDGE_BY_KIND = {
     "apply_status": "applies_status",
     "consume_status": "consumes_status",
@@ -126,6 +126,9 @@ def build(content_root, effect_keys, effect_owners, status_owners, ast_graph, wa
             if known_kinds and kind not in known_kinds:
                 warn(f"{rel}: EffectKeys에 없는 kind '{kind}'")
             used_kinds.add(kind)
+            cond = eff.get("condition")
+            if isinstance(cond, dict) and "status" in cond:
+                warn(f"{rel}: condition이 상태를 참조한다 — 그래프에 엣지로 반영되지 않는다")
             links.append(edge(f"card:{cid}", f"effect_kind:{kind}", "uses_effect", rel))
             status_rel = STATUS_EDGE_BY_KIND.get(kind)
             if status_rel:

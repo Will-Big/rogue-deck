@@ -1,7 +1,7 @@
 # graphify 카드 그래프 통합 구현 계획
 
 - 작성일: 2026-08-28
-- 상태: active
+- 상태: archived — 2026-08-28 구현 완료
 - 범위: [graphify 카드 그래프 통합 설계](../specs/2026-08-28-graphify-card-graph-design.md)의 구현 — 프루너, 카드 추출기, 뷰 2장, 재생성 스크립트, AGENTS.md 규칙 개정
 
 ## 설계 개요 (사람 검수용)

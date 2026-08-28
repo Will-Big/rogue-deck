@@ -73,6 +73,16 @@ def write_content(root):
             {"kind": "apply_status", "status": "ghost"},
             {"kind": "damage", "mystery_field": 1},
         ]}), encoding="utf-8")
+    (root / "Cards" / "new_fields.json").write_text(json.dumps({
+        "id": "new_fields", "name": "새필드", "effects": [
+            {"kind": "damage", "value": 1, "condition": {"threshold": 5}},
+            {"kind": "damage", "value": 2, "maxAmount": 10},
+            {"kind": "damage", "value": 3, "damageBonusPerConsumed": 1},
+        ]}), encoding="utf-8")
+    (root / "Cards" / "cond_status.json").write_text(json.dumps({
+        "id": "cond_status", "name": "조건참조", "effects": [
+            {"kind": "damage", "condition": {"status": "poison"}},
+        ]}), encoding="utf-8")
     (root / "Statuses" / "poison.json").write_text(json.dumps(
         {"key": "poison", "displayName": "독"}), encoding="utf-8")
     (root / "Pools" / "p1.json").write_text(json.dumps(
@@ -142,6 +152,17 @@ class BuildTests(unittest.TestCase):
         for e in self.links:
             self.assertEqual(e["confidence"], "EXTRACTED")
             self.assertEqual(e["confidence_score"], 1.0)
+
+    def test_condition_maxAmount_damageBonusPerConsumed_필드는_미인식_경고가_없다(self):
+        # new_fields 카드의 3개 effect가 KNOWN_EFFECT_FIELDS에 포함되므로
+        # "미인식 효과 필드" 경고가 없어야 한다.
+        unrecognized = [w for w in self.warnings if "미인식 효과 필드" in w and "new_fields" in w]
+        self.assertEqual(len(unrecognized), 0)
+
+    def test_condition이_상태를_참조하면_경고한다(self):
+        # cond_status 카드의 condition이 "status" 키를 가지므로 경고가 나야 한다.
+        condition_status_warns = [w for w in self.warnings if "condition이 상태를 참조한다" in w]
+        self.assertTrue(len(condition_status_warns) > 0)
 
 
 class MergeTests(unittest.TestCase):
