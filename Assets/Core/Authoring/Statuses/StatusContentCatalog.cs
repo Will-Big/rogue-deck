@@ -6,7 +6,7 @@ namespace FateWeaver.Core.Authoring.Statuses
 {
     /// <summary>콘텐츠 JSON(Content/Statuses/*.json)을 읽어 만든 런타임 객체. 캐릭터별 규칙은 없다.
     ///
-    /// <para><b>"전투당 하나"가 아니다 (2026-08-12 정정).</b> 만들어지는 곳은
+    /// <para><b>"전투당 하나"가 아니다 (2026-08-28 정정).</b> 만들어지는 곳은
     /// <c>StatusContentLoader</c> 하나뿐이고, 전투 화면 진입 시 <c>BattleScreenController</c>가
     /// <c>_content</c>에 담아 그 컨트롤러가 사는 동안 재사용한다. 전투를 다시 시작해도 같은
     /// 인스턴스이므로 <c>Rules</c>에 쓴 값은 전투 경계를 넘는다.
