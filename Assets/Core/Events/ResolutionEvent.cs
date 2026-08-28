@@ -114,5 +114,10 @@ namespace FateWeaver.Core.Events
     public sealed record CardBuffConsumed(
         int CardInstanceId, string CardId, string BuffId, int Amount) : ResolutionEvent;
 
+    /// <summary>대형 내 위치가 이동했다. Side는 어느 진영의 대형인지, 인덱스 0이 맨 앞이다.
+    /// 클램프로 제자리에 남은 이동은 남기지 않는다.</summary>
+    public sealed record FormationMoved(
+        string MemberId, Side Side, int FromIndex, int ToIndex) : ResolutionEvent;
+
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }

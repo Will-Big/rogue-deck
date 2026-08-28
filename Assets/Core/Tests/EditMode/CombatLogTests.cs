@@ -589,5 +589,52 @@ namespace FateWeaver.Tests
 
             Assert.IsEmpty(events.OfType<StatusConsumed>());
         }
+
+        [Test]
+        public void Formation_move_emits_formation_moved_with_from_and_to()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.Party.Clear();
+            var front = new PartyMember("member_a", "A", 10);
+            var back = new PartyMember("member_b", "B", 10);
+            state.Party.Add(front);
+            state.Party.Add(back);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("advance", "advance", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+            state.Zone.Add(new ExecutionCardInstance(def)
+                { OwnerId = back.Id, InstanceId = 3 });
+            var effects = new EffectRegistry();
+            effects.Register(new MoveFormationHandler());
+
+            var events = new TurnResolver(effects).Resolve(state, 0);
+            var moved = events.OfType<FormationMoved>().Single();
+
+            Assert.AreEqual((back.Id, Side.Player, 1, 0),
+                (moved.MemberId, moved.Side, moved.FromIndex, moved.ToIndex));
+            Assert.AreSame(back, state.Party[0]);
+        }
+
+        [Test]
+        public void A_clamped_in_place_formation_move_emits_nothing()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.Party.Clear();
+            var front = new PartyMember("member_a", "A", 10);
+            state.Party.Add(front);
+            state.Party.Add(new PartyMember("member_b", "B", 10));
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("advance", "advance", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+            state.Zone.Add(new ExecutionCardInstance(def)
+                { OwnerId = front.Id, InstanceId = 3 });
+            var effects = new EffectRegistry();
+            effects.Register(new MoveFormationHandler());
+
+            var events = new TurnResolver(effects).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<FormationMoved>());
+            Assert.AreSame(front, state.Party[0]);
+        }
     }
 }
