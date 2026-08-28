@@ -7,7 +7,7 @@
 import json
 import sys
 
-NOISE_PREFIXES = ("Packages/", "Assets/Plugins/", "tools/", "Tools/")
+NOISE_PREFIXES = ("Packages/", "Assets/Plugins/", "tools/", "Tools/", "Tests/")
 NOISE_SUFFIXES = ("Tests.cs", "Test.cs")
 
 

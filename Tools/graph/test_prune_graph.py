@@ -22,6 +22,7 @@ class IsNoiseTests(unittest.TestCase):
         self.assertTrue(is_noise(node("t1", source_file="Assets/Core/Tests/EditMode/StatusTests.cs")))
         self.assertTrue(is_noise(node("t2", source_file="Assets/Unity/CardViewTests.cs")))
         self.assertTrue(is_noise(node("t3", source_file="Assets/Unity/SmokeTest.cs")))
+        self.assertTrue(is_noise(node("t4", source_file="Tests/Headless/FateWeaver.Tests.Headless.csproj")))
 
     def test_외부_패키지와_플러그인은_잡음이다(self):
         self.assertTrue(is_noise(node("p1", source_file="Packages/packages-lock.json")))

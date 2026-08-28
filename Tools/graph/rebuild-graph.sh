@@ -9,6 +9,7 @@ rm -f graphify-out/graph.json graphify-out/manifest.json
 graphify update .
 python3 Tools/graph/prune_graph.py
 python3 Tools/graph/extract_card_graph.py
+python3 Tools/graph/name_communities.py
 python3 Tools/graph/build_card_view.py
 python3 Tools/graph/collapse_architecture.py
 
@@ -17,5 +18,7 @@ for view in view-card view-architecture; do
 done
 cp graphify-out/view-card/graphify-out/graph.html graphify-out/card-graph.html
 cp graphify-out/view-architecture/graphify-out/graph.html graphify-out/architecture.html
+python3 Tools/graph/name_communities.py --view graphify-out/view-card graphify-out/card-graph.html
+python3 Tools/graph/name_communities.py --view graphify-out/view-architecture graphify-out/architecture.html
 
 echo "재생성 완료: graph.json + card-graph.html + architecture.html"
