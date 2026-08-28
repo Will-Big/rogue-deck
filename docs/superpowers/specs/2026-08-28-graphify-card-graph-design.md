@@ -158,11 +158,12 @@
   1. `rm -f graphify-out/graph.json graphify-out/manifest.json`
   2. `graphify update .` (AST 재생성, 실측 8.7초·LLM 0토큰)
   3. `python3 tools/graph/prune_graph.py` (in-place)
-  4. `python3 tools/graph/extract_card_graph.py`
-  5. `graphify merge-graphs graphify-out/graph.json graphify-out/card-graph.json --out
-     graphify-out/merged.json && mv graphify-out/merged.json graphify-out/graph.json`
-     (in-place 출력은 미검증이라 임시 파일 경유)
-  6. 뷰 2장 생성 (아래 4·5).
+  4. `python3 tools/graph/extract_card_graph.py` — card-graph.json을 쓰고 **직접 graph.json에
+     append-merge한다.** `graphify merge-graphs`는 쓰지 않는다: 크로스 저장소 병합용이라 모든
+     노드에 `repo::` 접두사를 붙여 카드→핸들러 엣지가 진짜 AST 노드와 연결되지 않음을 합성
+     그래프로 실증했다(2026-08-28). 직접 병합은 ID 충돌이 없고(`card:` 접두사 계열), 재실행 시
+     `_origin=card_extractor`인 기존 노드·엣지를 먼저 제거해 멱등이다.
+  5. 뷰 2장 생성 (아래 4·5).
 
   AGENTS.md 규칙 21의 재생성 명령을 이 스크립트 한 줄로 교체한다.
 
@@ -209,7 +210,7 @@ kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
 ### 구현 순서 제안
 
 1. 프루너 + 단위 테스트 (독립, 즉시 가치 — 전체 viz 한계 회복)
-2. 추출기 + 단위 테스트 (핵심 가치, 프루너와 독립)
-3. merge-graphs 동작 검증 → rebuild-graph.sh
+2. 추출기(직접 병합 포함) + 단위 테스트 (핵심 가치, 프루너와 독립)
+3. rebuild-graph.sh (조정자)
 4. 뷰 생성기 + 아키텍처 접기 (렌더 경로는 실증된 cluster-only 사용)
 5. AGENTS.md 규칙 개정 + docs/superpowers/README.md 색인 갱신
