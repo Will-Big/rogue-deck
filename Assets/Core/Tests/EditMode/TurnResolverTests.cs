@@ -41,8 +41,9 @@ namespace FateWeaver.Tests
             Assert.AreEqual(7, state.Enemies[0].Hp); // took 5
 
             Assert.IsInstanceOf<TurnStarted>(events[0]);
-            var first = (CardResolved)events[1];
-            var second = (CardResolved)events[2];
+            var resolvedCards = events.OfType<CardResolved>().ToArray();
+            var first = resolvedCards[0];
+            var second = resolvedCards[1];
             Assert.AreEqual("jab", first.CardId);    // enemy first (lower executionOrder)
             Assert.AreEqual("strike", second.CardId);
             Assert.AreEqual(5, second.DamageDealt);

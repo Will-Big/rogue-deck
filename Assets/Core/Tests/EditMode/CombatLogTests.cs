@@ -31,6 +31,7 @@ namespace FateWeaver.Tests
             r.Register(new BlockBehavior());
             r.Register(new WeakBehavior());
             r.Register(new DamagedBehavior());
+            r.Register(new PoisonBehavior());
             return r;
         }
 
@@ -159,6 +160,78 @@ namespace FateWeaver.Tests
             StringAssert.Contains("방어", text);
             StringAssert.Contains("치명", text);   // 왜 살아남았는지가 반드시 보여야 한다
             StringAssert.Contains("member_a", text);
+        }
+
+        [Test]
+        public void Damage_emits_hp_changed_per_target_with_before_and_after()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin_a", 10));
+            state.Enemies.Add(new Enemy("goblin_b", 10));
+            var def = new CardDefinition("sweep", "sweep", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.All } });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var changes = events.OfType<HpChanged>().ToArray();
+
+            Assert.AreEqual(2, changes.Length);
+            Assert.AreEqual(("goblin_a", 10, 6, HpChangeSource.CardDamage, "sweep"),
+                (changes[0].HolderId, changes[0].Before, changes[0].After, changes[0].Source, changes[0].SourceId));
+            Assert.AreEqual(("goblin_b", 10, 6), (changes[1].HolderId, changes[1].Before, changes[1].After));
+        }
+
+        [Test]
+        public void Deaths_door_hp_change_shows_the_clamp_to_one()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            player.Hp = 4;
+            player.SurviveCharges = 1;
+            state.Enemies.Add(new Enemy("goblin", 10));
+            var def = new CardDefinition("jab", "jab", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.Damage, 6) });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "goblin" });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var change = events.OfType<HpChanged>().Single();
+
+            Assert.AreEqual((CombatState.SoloPlayerId, 4, 1), (change.HolderId, change.Before, change.After));
+            Assert.IsTrue(events.OfType<DeathsDoorSurvived>().Any());
+        }
+
+        [Test]
+        public void Turn_end_poison_tick_emits_hp_changed_with_status_source()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 10);
+            enemy.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 3);
+            state.Enemies.Add(enemy);
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var change = events.OfType<HpChanged>().Single();
+
+            Assert.AreEqual(("goblin", 10, 7, HpChangeSource.StatusTick, "poison"),
+                (change.HolderId, change.Before, change.After, change.Source, change.SourceId));
+        }
+
+        [Test]
+        public void A_fully_blocked_hit_leaves_no_hp_changed()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            var enemy = new Enemy("goblin", 10);
+            enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), 10);
+            state.Enemies.Add(enemy);
+            var def = new CardDefinition("strike", "strike", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 4) });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<HpChanged>());
         }
 
         [Test]

@@ -58,6 +58,12 @@ namespace FateWeaver.Core.Effects
                         Content = ctx.State.StatusContent
                     });
                     ctx.DamageDealt = hpBefore - target.Hp;
+                    if (target.Hp != hpBefore)
+                    {
+                        ctx.ExtraEvents.Add(new Events.HpChanged(
+                            target.Id, hpBefore, target.Hp,
+                            Events.HpChangeSource.StatusTick, payload.Key.Id));
+                    }
                 }
 
                 // 마커는 상태 보유 여부와 무관하게 심는다 (선점 잠복): 이 카드보다 뒤에 실행되는
@@ -102,6 +108,12 @@ namespace FateWeaver.Core.Effects
                             Content = ctx.State.StatusContent
                         });
                         ctx.DamageDealt += hpBefore - enemy.Hp;
+                        if (enemy.Hp != hpBefore)
+                        {
+                            ctx.ExtraEvents.Add(new Events.HpChanged(
+                                enemy.Id, hpBefore, enemy.Hp,
+                                Events.HpChangeSource.StatusTick, payload.Key.Id));
+                        }
                     }
 
                     behavior.SuppressThisTurn(enemy.Statuses);

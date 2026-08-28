@@ -63,7 +63,7 @@ namespace FateWeaver.Tests
                 EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
-            var resolved = (CardResolved)events[2];
+            var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "late_cut");
 
             Assert.AreEqual(10, state.Enemies[0].Hp);
             Assert.AreEqual(2, resolved.DamageDealt);

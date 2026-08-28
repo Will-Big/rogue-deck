@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
@@ -108,8 +109,8 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
 
-            Assert.AreEqual(6, ((CardResolved)events[1]).DamageDealt);
-            Assert.AreEqual(4, ((CardResolved)events[2]).DamageDealt);
+            Assert.AreEqual(6, events.OfType<CardResolved>().Single(e => e.CardId == "strike1").DamageDealt);
+            Assert.AreEqual(4, events.OfType<CardResolved>().Single(e => e.CardId == "strike2").DamageDealt);
             Assert.IsFalse(enemy.Statuses.Has(StatusKeys.Vulnerable));
         }
 

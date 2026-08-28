@@ -75,5 +75,14 @@ namespace FateWeaver.Core.Events
     public sealed record StatusTransferred(
         string FromHolderId, string ToHolderId, string StatusId, int Magnitude) : ResolutionEvent;
 
+    /// <summary>HP 변화의 원인 종류. 새 원인(회복 등)이 생기면 멤버를 추가한다.</summary>
+    public enum HpChangeSource { CardDamage, StatusTick }
+
+    /// <summary>보유자의 HP가 실제로 바뀌었다. Before/After는 치명 버팀 클램프 이후의 실측값이고,
+    /// SourceId는 원인 카드 id(CardDamage) 또는 상태 키(StatusTick)다. HP가 안 바뀐 명중은
+    /// 남기지 않는다.</summary>
+    public sealed record HpChanged(
+        string HolderId, int Before, int After, HpChangeSource Source, string SourceId) : ResolutionEvent;
+
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }

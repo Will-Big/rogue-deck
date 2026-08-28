@@ -344,20 +344,22 @@ namespace FateWeaver.Core.Combat
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, damage => target.TakeDamage(damage), events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, () => target.Hp,
+                    damage => target.TakeDamage(damage), events, state.StatusContent);
             }
 
             foreach (var enemy in state.Enemies)
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, damage => target.Hp -= damage, events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, () => target.Hp,
+                    damage => target.Hp -= damage, events, state.StatusContent);
             }
         }
 
         private void TickHolder(
-            StatusBag bag, string holderId, Action<int> dealDamage, List<ResolutionEvent> events,
-            Authoring.Statuses.StatusContentCatalog content)
+            StatusBag bag, string holderId, Func<int> getHp, Action<int> dealDamage,
+            List<ResolutionEvent> events, Authoring.Statuses.StatusContentCatalog content)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -365,6 +367,7 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior))
                 {
+                    var hpBefore = getHp();
                     behavior.OnTurnEnd(new StatusTickContext
                     {
                         Instance = status,
@@ -374,6 +377,12 @@ namespace FateWeaver.Core.Combat
                         Events = events,
                         Content = content
                     });
+                    var hpAfter = getHp();
+                    if (hpAfter != hpBefore)
+                    {
+                        events.Add(new HpChanged(
+                            holderId, hpBefore, hpAfter, HpChangeSource.StatusTick, status.Key.Id));
+                    }
                 }
             }
         }

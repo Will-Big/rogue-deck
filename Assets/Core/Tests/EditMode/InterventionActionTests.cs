@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
@@ -108,7 +109,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(player);
 
             var beforeEvents = new TurnResolver(EffectRegistry()).Resolve(CloneStateForResolution(state), 0);
-            var before = (CardResolved)beforeEvents[2];
+            var before = beforeEvents.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
             Assert.AreEqual(ConditionTier.Basic, before.ConditionTier);
             Assert.AreEqual(2, before.DamageDealt);
 
