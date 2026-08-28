@@ -4,7 +4,7 @@
 
 - 작성일: 2026-07-31
 - 개정일: 2026-08-28 — 규칙 28 골격에 맞춰 `## 설계 개요`를 앞에 얹었다. 아래 상세는 그대로다
-- 상태: `active` — 미착수
+- 상태: `active` — 구현 완료, 머지 대기 (2026-08-28)
 - 선행: [상태 규칙 파라미터화와 3종 디버프](../archive/plans/2026-07-30-status-rule-and-debuffs.md) **완료·보관 (2026-08-05)**
 
 ---
@@ -168,7 +168,7 @@
   - `StatusDamageFold.Outgoing(bag, registry, rules, damage, string holderId, List<DamageStep> trace)`
   - `EffectContext.DamageSteps` (`List<DamageStep>`)
 
-- [ ] **Step 1: 실패하는 테스트를 작성한다**
+- [x] **Step 1: 실패하는 테스트를 작성한다**
 
 Create `Assets/Core/Tests/EditMode/CombatLogTests.cs`:
 
@@ -272,13 +272,13 @@ namespace FateWeaver.Tests
 }
 ```
 
-- [ ] **Step 2: 테스트가 실패하는 것을 확인한다**
+- [x] **Step 2: 테스트가 실패하는 것을 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter "FullyQualifiedName~CombatLogTests"`
 
 Expected: 컴파일 실패 — `DamageStep`, `CardResolved.DamageSteps` 없음 (CS0246/CS1061).
 
-- [ ] **Step 3: DamageStep을 만든다**
+- [x] **Step 3: DamageStep을 만든다**
 
 Create `Assets/Core/Events/DamageStep.cs`:
 
@@ -292,7 +292,7 @@ namespace FateWeaver.Core.Events
 }
 ```
 
-- [ ] **Step 4: CardResolved에 내역을 붙인다**
+- [x] **Step 4: CardResolved에 내역을 붙인다**
 
 `Assets/Core/Events/ResolutionEvent.cs`의 `CardResolved` 본문(compat 생성자 위)에 추가한다.
 init-only 기본값이므로 기존 생성자 호출은 전부 그대로 컴파일된다.
@@ -304,7 +304,7 @@ init-only 기본값이므로 기존 생성자 호출은 전부 그대로 컴파�
             = System.Array.Empty<DamageStep>();
 ```
 
-- [ ] **Step 5: fold가 단계를 기록하게 한다**
+- [x] **Step 5: fold가 단계를 기록하게 한다**
 
 `Assets/Core/Status/StatusDamageFold.cs`의 세 공개 메서드에 `string holderId`와
 `List<Events.DamageStep> trace`를 추가한다. `trace`가 null이면 기록하지 않는다(기존 호출 호환).
@@ -322,7 +322,7 @@ init-only 기본값이므로 기존 생성자 호출은 전부 그대로 컴파�
 
 `Incoming`은 두 층을 접으므로 `FoldLayer`에도 같은 두 인자를 넘긴다.
 
-- [ ] **Step 6: EffectContext가 단계를 모으게 한다**
+- [x] **Step 6: EffectContext가 단계를 모으게 한다**
 
 `Assets/Core/Effects/IEffectHandler.cs`의 `EffectContext`에 추가한다.
 
@@ -347,7 +347,7 @@ init-only 기본값이므로 기존 생성자 호출은 전부 그대로 컴파�
                 ctx.Card.OwnerId, ctx.DamageSteps);
 ```
 
-- [ ] **Step 7: TurnResolver가 내역을 CardResolved에 싣는다**
+- [x] **Step 7: TurnResolver가 내역을 CardResolved에 싣는다**
 
 `ResolveCard`에서 카드 단위 누적 목록을 만들고 효과마다 `ctx.DamageSteps`를 붙인 뒤
 `CardResolved` 생성에 `DamageSteps = ...`를 더한다. `totalDamage` 누적 옆에 한 줄을 더하면 된다.
@@ -365,14 +365,14 @@ init-only 기본값이므로 기존 생성자 호출은 전부 그대로 컴파�
                 });
 ```
 
-- [ ] **Step 8: 테스트가 통과하는 것을 확인한다**
+- [x] **Step 8: 테스트가 통과하는 것을 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
 Expected: `Failed: 0`, 총 412 tests (409 + 신규 3). 인덱스 의존 테스트는 이벤트 개수가 그대로라
 무수정으로 통과해야 한다 — 하나라도 깨지면 페이로드가 아니라 이벤트를 늘린 것이니 되돌린다.
 
-- [ ] **Step 9: 커밋**
+- [x] **Step 9: 커밋**
 
 ```bash
 git add Assets/Core/Events Assets/Core/Status/StatusDamageFold.cs Assets/Core/Effects Assets/Core/Combat/TurnResolver.cs Assets/Core/Tests/EditMode/CombatLogTests.cs
@@ -397,7 +397,7 @@ git commit -m "feat: record per-status damage steps on CardResolved"
   - `StatusExpired(string HolderId, string StatusId)`
   - `StatusBag.EndOfTurn()` → `IReadOnlyList<StatusKey>` (만료된 키)
 
-- [ ] **Step 1: 실패하는 테스트를 작성한다**
+- [x] **Step 1: 실패하는 테스트를 작성한다**
 
 `CombatLogTests.cs`에 추가한다.
 
@@ -439,13 +439,13 @@ git commit -m "feat: record per-status damage steps on CardResolved"
         }
 ```
 
-- [ ] **Step 2: 테스트가 실패하는 것을 확인한다**
+- [x] **Step 2: 테스트가 실패하는 것을 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter "FullyQualifiedName~CombatLogTests"`
 
 Expected: 컴파일 실패 — `StatusApplied`, `StatusExpired` 없음.
 
-- [ ] **Step 3: 이벤트를 추가한다**
+- [x] **Step 3: 이벤트를 추가한다**
 
 `Assets/Core/Events/ResolutionEvent.cs`의 `StatusTicked` 위에 추가한다.
 
@@ -459,7 +459,7 @@ Expected: 컴파일 실패 — `StatusApplied`, `StatusExpired` 없음.
     public sealed record StatusExpired(string HolderId, string StatusId) : ResolutionEvent;
 ```
 
-- [ ] **Step 4: StatusBag이 만료된 키를 알려주게 한다**
+- [x] **Step 4: StatusBag이 만료된 키를 알려주게 한다**
 
 `Assets/Core/Status/StatusBag.cs`의 `EndOfTurn`이 제거한 키를 모아 반환한다. 반환값을 무시하는
 기존 호출은 그대로 컴파일된다.
@@ -492,7 +492,7 @@ Expected: 컴파일 실패 — `StatusApplied`, `StatusExpired` 없음.
         }
 ```
 
-- [ ] **Step 5: 부여·만료 이벤트를 발행한다**
+- [x] **Step 5: 부여·만료 이벤트를 발행한다**
 
 `Assets/Core/Effects/ApplyStatusHandler.cs`의 `ApplyTo`에서 적용 후 이벤트를 `ctx.ExtraEvents`에
 넣는다. 보유자 id가 필요하므로 `ApplyTo`에 `string holderId`를 더하고 각 호출 지점에서 넘긴다
@@ -520,7 +520,7 @@ Expected: 컴파일 실패 — `StatusApplied`, `StatusExpired` 없음.
 
 적 쪽 `EndOfTurn` 호출 지점에도 같은 형태를 적용한다.
 
-- [ ] **Step 6: 밀린 인덱스 의존 테스트를 고친다**
+- [x] **Step 6: 밀린 인덱스 의존 테스트를 고친다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
@@ -537,13 +537,13 @@ Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFrame
 
 카드가 여럿인 테스트는 `.Single(e => e.CardId == "strike1")`로 특정한다.
 
-- [ ] **Step 7: 전체 테스트를 확인한다**
+- [x] **Step 7: 전체 테스트를 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
 Expected: `Failed: 0`, 총 414 tests (412 + 신규 2).
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add Assets/Core
@@ -565,7 +565,7 @@ git commit -m "feat: emit status applied and expired events"
 - Consumes: `CardResolved.DamageSteps` (Task 1), `StatusApplied`·`StatusExpired` (Task 2)
 - Produces: `TimelineTextFormatter.Format(IReadOnlyList<ResolutionEvent>, KoreanDescriptionCatalog) -> string`
 
-- [ ] **Step 1: 실패하는 테스트를 작성한다**
+- [x] **Step 1: 실패하는 테스트를 작성한다**
 
 `CombatLogTests.cs`에 추가한다. 정확한 문장 전체를 단언하면 문구를 다듬을 때마다 깨지므로,
 **빠지면 안 되는 정보가 들어있는지**를 단언한다.
@@ -609,13 +609,13 @@ git commit -m "feat: emit status applied and expired events"
         }
 ```
 
-- [ ] **Step 2: 테스트가 실패하는 것을 확인한다**
+- [x] **Step 2: 테스트가 실패하는 것을 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo --filter "FullyQualifiedName~Formatter"`
 
 Expected: 컴파일 실패 — `TimelineTextFormatter` 없음.
 
-- [ ] **Step 3: 포매터를 만든다**
+- [x] **Step 3: 포매터를 만든다**
 
 Create `Assets/Core/Simulation/Descriptions/TimelineTextFormatter.cs`. 모든 이벤트 종류를 다루고,
 알 수 없는 이벤트는 조용히 건너뛰지 말고 타입 이름이라도 남긴다 — 침묵 실패를 만들지 않기 위해서다.
@@ -719,13 +719,13 @@ namespace FateWeaver.Simulation.Descriptions
 }
 ```
 
-- [ ] **Step 4: 테스트가 통과하는 것을 확인한다**
+- [x] **Step 4: 테스트가 통과하는 것을 확인한다**
 
 Run: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
 
 Expected: `Failed: 0`, 총 416 tests (414 + 신규 2).
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add Assets/Core
@@ -739,7 +739,7 @@ git commit -m "feat: add korean timeline text formatter"
 **Files:**
 - Modify: `Assets/Unity/Scripts/Battle/BattleScreenController.cs`, `Assets/Unity/DeckPlaytestController.cs`
 
-- [ ] **Step 1: 배틀 화면이 포매터를 쓰게 한다**
+- [x] **Step 1: 배틀 화면이 포매터를 쓰게 한다**
 
 `BattleScreenController`의 임시 `DebugDumpTimeline`(있다면)을 지우고, `_session.ResolveTurn()`
 직후에 포매터를 호출한다. 우클릭 디버그 훅(`DebugApply*`)도 함께 지운다 — 상태를 거는 수단은
@@ -751,7 +751,7 @@ git commit -m "feat: add korean timeline text formatter"
                     _session.LastTimeline, _korean));
 ```
 
-- [ ] **Step 2: 플레이테스트 화면의 자체 렌더링을 교체한다**
+- [x] **Step 2: 플레이테스트 화면의 자체 렌더링을 교체한다**
 
 `DeckPlaytestController.RefreshTimeline`은 `CardResolved`와 `TurnEnded`만 다루고 나머지를 조용히
 버린다. 본문을 포매터 호출로 교체해 두 화면이 같은 문장을 쓰게 한다.
@@ -762,12 +762,15 @@ git commit -m "feat: add korean timeline text formatter"
                 _session.LastTimeline, _korean);
 ```
 
-- [ ] **Step 3: Unity에서 컴파일을 확인한다**
+**2026-08-28 실측:** 이 스텝은 착수 시점에 이미 대상이 없었다 — `DeckPlaytestController`는 이 계획
+착수 전 `ac4e47f`(2026-08-03)가 삭제했으므로 `BattleScreenController`만 배선했다.
+
+- [x] **Step 3: Unity에서 컴파일을 확인한다**
 
 워크트리를 `-projectPath`로 열어 Console에 컴파일 에러가 없는지 본다(규칙 17의 예외 범위).
 씬·Prefab·ScriptableObject는 저작하지 않는다.
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 git add Assets/Unity
@@ -778,12 +781,12 @@ git commit -m "feat: dump the combat timeline to the console"
 
 ### Task 5: 문서 갱신
 
-- [ ] **Step 1: 색인과 백로그를 갱신한다**
+- [x] **Step 1: 색인과 백로그를 갱신한다**
 
 `docs/superpowers/README.md`의 활성 계획에서 이 문서의 상태를 갱신하고, 백로그 §13에 "배틀 화면이
 타임라인을 표시하지 않는다" 항목이 있으면 해소로 표시한다.
 
-- [ ] **Step 2: 전체 테스트와 워킹 트리를 확인하고 커밋한다**
+- [x] **Step 2: 전체 테스트와 워킹 트리를 확인하고 커밋한다**
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
