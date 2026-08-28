@@ -93,5 +93,40 @@ namespace FateWeaver.Tests
 
             Assert.IsEmpty(events.OfType<CardResolved>().Single().DamageSteps);
         }
+
+        [Test]
+        public void Applying_a_status_emits_status_applied_with_the_folded_magnitude()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Add(StatusKeys.Damaged, StatusLifetime.Turns(2));
+            state.Enemies.Add(new Enemy("goblin", 30));
+            var def = new CardDefinition("guard", "guard", Side.Player, 1,
+                new[]
+                {
+                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 5)
+                });
+            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var applied = events.OfType<StatusApplied>().Single(e => e.StatusId == "block");
+
+            Assert.AreEqual(CombatState.SoloPlayerId, applied.HolderId);
+            Assert.AreEqual(3, applied.Magnitude); // 손상으로 floor(5 x 0.75)
+        }
+
+        [Test]
+        public void A_status_that_runs_out_of_turns_emits_status_expired()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(1)); // 이번 턴 끝에 만료
+            state.Enemies.Add(new Enemy("goblin", 30));
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.IsTrue(events.OfType<StatusExpired>()
+                .Any(e => e.HolderId == CombatState.SoloPlayerId && e.StatusId == "weak"));
+        }
     }
 }

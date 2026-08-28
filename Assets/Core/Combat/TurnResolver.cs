@@ -316,12 +316,18 @@ namespace FateWeaver.Core.Combat
 
             foreach (var member in state.Party)
             {
-                member.Statuses.EndOfTurn();
+                foreach (var key in member.Statuses.EndOfTurn())
+                {
+                    events.Add(new StatusExpired(member.Id, key.Id));
+                }
             }
 
             foreach (var enemy in state.Enemies)
             {
-                enemy.Statuses.EndOfTurn();
+                foreach (var key in enemy.Statuses.EndOfTurn())
+                {
+                    events.Add(new StatusExpired(enemy.Id, key.Id));
+                }
             }
         }
 

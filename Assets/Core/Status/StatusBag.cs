@@ -83,15 +83,19 @@ namespace FateWeaver.Core.Status
             return created;
         }
 
-        /// <summary>End-of-turn maintenance: drop ThisTurn statuses; tick down Turns statuses (remove at 0).</summary>
-        public void EndOfTurn()
+        /// <summary>End-of-turn maintenance: drop ThisTurn statuses; tick down Turns statuses (remove
+        /// at 0). Returns the keys of statuses that were removed, so the caller can emit expiration
+        /// events; existing callers that ignore the return value still compile unchanged.</summary>
+        public IReadOnlyList<StatusKey> EndOfTurn()
         {
+            var expired = new List<StatusKey>();
             for (int i = _statuses.Count - 1; i >= 0; i--)
             {
                 var status = _statuses[i];
                 if (status.Kind == StatusLifetimeKind.ThisTurn)
                 {
                     _statuses.RemoveAt(i);
+                    expired.Add(status.Key);
                 }
                 else if (status.Kind == StatusLifetimeKind.Turns)
                 {
@@ -99,9 +103,12 @@ namespace FateWeaver.Core.Status
                     if (status.Count <= 0)
                     {
                         _statuses.RemoveAt(i);
+                        expired.Add(status.Key);
                     }
                 }
             }
+
+            return expired;
         }
     }
 
