@@ -30,7 +30,7 @@ namespace FateWeaver.Core.Combat
 
         /// <summary>상태 콘텐츠. 수치와 수명 종류의 단일 출처이며 원본은 Content/Statuses/*.json이다.
         ///
-        /// <para><b>전투 단위가 아니다 (2026-08-12 정정).</b> 이것은 콘텐츠 JSON을 읽어 만든 런타임
+        /// <para><b>전투 단위가 아니다 (2026-08-28 정정).</b> 이것은 콘텐츠 JSON을 읽어 만든 런타임
         /// 객체이고, 전투 화면에 진입할 때 <c>BattleScreenController.Start()</c>의 첫
         /// <c>StartSession()</c>에서 만들어져 그 컨트롤러의 <c>_content</c> 필드에 머문다
         /// (<c>static</c>이 아니므로 컨트롤러가 죽으면 함께 사라진다). <c>StartSession</c>은 HUD의
