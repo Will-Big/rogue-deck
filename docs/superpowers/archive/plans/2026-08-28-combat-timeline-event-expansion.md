@@ -3,8 +3,8 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 - 작성일: 2026-08-28
-- 상태: `active` — 미착수
-- 선행: [전투 상호작용 로그](../archive/plans/2026-07-31-combat-interaction-log.md) **완료·머지·보관 (2026-08-28)**
+- 상태: completed — 구현·검증 완료 (2026-08-29)
+- 선행: [전투 상호작용 로그](2026-07-31-combat-interaction-log.md) **완료·머지·보관 (2026-08-28)**
 - 설계 승인: 2026-08-28 대화에서 A안(범용 HpChanged + 신규 이벤트) + "로그 1건 = 이벤트 1건" 승인됨
 
 ---
@@ -73,7 +73,7 @@
 
 **Spec:** 이 문서의 [`## 설계 개요 (사람 검수용)`](#설계-개요-사람-검수용). 선행 구현의
 이벤트 순서와 포매터 경계는
-[`2026-07-31-combat-interaction-log.md`](../archive/plans/2026-07-31-combat-interaction-log.md)의
+[`2026-07-31-combat-interaction-log.md`](2026-07-31-combat-interaction-log.md)의
 `## 상세 (세션 인계용)`을 따른다.
 
 ## Global Constraints
