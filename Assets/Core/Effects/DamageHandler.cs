@@ -32,7 +32,14 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var amount = FoldOutgoing(ctx, ctx.EffectValue + ctx.Card.ConsumePendingDamageBonus());
+            var bonus = ctx.Card.ConsumePendingDamageBonus();
+            if (bonus != 0)
+            {
+                ctx.ExtraEvents.Add(new Events.CardBuffConsumed(
+                    ctx.Card.InstanceId, ctx.Card.Def.Id, Events.CardBuffIds.DamageBonus, bonus));
+            }
+
+            var amount = FoldOutgoing(ctx, ctx.EffectValue + bonus);
             if (ctx.Targets != null)
             {
                 ApplySnapshotTargets(ctx, amount);

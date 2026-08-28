@@ -2,6 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
@@ -33,6 +34,247 @@ namespace FateWeaver.Tests
             r.Register(new DamagedBehavior());
             r.Register(new PoisonBehavior());
             return r;
+        }
+
+        /// <summary>카드 해결을 무조건 가로채는 CardInstance 범위 테스트 전용 상태. StatusTests.cs의
+        /// NullifyingBehavior와 같은 형태이되, 테스트 파일 사이의 private 타입에 의존하지 않도록 이
+        /// 파일 전용 키를 쓴다.</summary>
+        private sealed class TimelineNullifyingBehavior : StatusBehavior
+        {
+            public static readonly StatusKey TestKey = new StatusKey("timeline_test_nullify");
+            public override StatusKey Key => TestKey;
+            public override StatusScope Scope => StatusScope.CardInstance;
+            public override bool InterceptCardResolve(StatusContext ctx) => true;
+        }
+
+        [Test]
+        public void Damage_bonus_grant_and_spend_both_reach_the_timeline()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var grant = new CardDefinition("empower", "empower", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 2) });
+            var strike = new CardDefinition("strike", "strike", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 3) });
+            state.Zone.Add(new ExecutionCardInstance(grant) { OwnerId = CombatState.SoloPlayerId, InstanceId = 1 });
+            state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new GrantNextPlayerDamageCardBonusHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+            var granted = events.OfType<CardBuffGranted>().Single();
+            var spent = events.OfType<CardBuffConsumed>().Single();
+
+            Assert.AreEqual((2, "strike", CardBuffIds.DamageBonus, 2),
+                (granted.CardInstanceId, granted.CardId, granted.BuffId, granted.Amount));
+            Assert.AreEqual((2, "strike", CardBuffIds.DamageBonus, 2),
+                (spent.CardInstanceId, spent.CardId, spent.BuffId, spent.Amount));
+            Assert.AreEqual(5, events.OfType<CardResolved>().Single(e => e.CardId == "strike").DamageDealt);
+        }
+
+        [Test]
+        public void Reward_nullify_grant_reaches_the_timeline()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 1) });
+            var strike = new CardDefinition("strike", "strike", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 3) });
+            state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
+            state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new NullifyNextPlayerConditionRewardHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+            var granted = events.OfType<CardBuffGranted>().Single();
+
+            Assert.AreEqual((2, "strike", StatusKeys.RewardNullified.Id, 1),
+                (granted.CardInstanceId, granted.CardId, granted.BuffId, granted.Amount));
+        }
+
+        [Test]
+        public void Reward_nullified_consumption_reaches_the_timeline()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
+            var strike = new CardDefinition("quick_cut", "quick_cut", Side.Player, 2,
+                new[]
+                {
+                    EffectData.Conditional(
+                        EffectKeys.Damage, 2, new WithinNth(2), successEffectValue: 10)
+                });
+            state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
+            state.Zone.Add(new ExecutionCardInstance(strike)
+                { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new NullifyNextPlayerConditionRewardHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+            var spent = events.OfType<CardBuffConsumed>()
+                .Single(e => e.BuffId == StatusKeys.RewardNullified.Id);
+
+            Assert.AreEqual((2, "quick_cut", StatusKeys.RewardNullified.Id, 1),
+                (spent.CardInstanceId, spent.CardId, spent.BuffId, spent.Amount));
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                events.OfType<CardResolved>().Single(e => e.CardId == "quick_cut").ConditionTier);
+        }
+
+        [Test]
+        public void Card_intercept_consumption_reaches_the_timeline()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("strike", "strike", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 5) });
+            var card = new ExecutionCardInstance(def)
+                { OwnerId = CombatState.SoloPlayerId, InstanceId = 7 };
+            card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
+            state.Zone.Add(card);
+
+            var statuses = Statuses();
+            statuses.Register(new TimelineNullifyingBehavior());
+            var events = new TurnResolver(Effects(), statuses).Resolve(state, 0);
+            var spent = events.OfType<CardBuffConsumed>().Single();
+
+            Assert.AreEqual((7, "strike", TimelineNullifyingBehavior.TestKey.Id, 1),
+                (spent.CardInstanceId, spent.CardId, spent.BuffId, spent.Amount));
+            Assert.AreEqual(
+                CardCancellationReason.StatusIntercepted,
+                events.OfType<CardCancelled>().Single().Reason);
+        }
+
+        [Test]
+        public void Zero_damage_bonus_grant_emits_no_state_change_event()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var grant = new CardDefinition("empty_empower", "empty_empower", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 0) });
+            var strike = new CardDefinition("strike", "strike", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 3) });
+            state.Zone.Add(new ExecutionCardInstance(grant));
+            state.Zone.Add(new ExecutionCardInstance(strike));
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new GrantNextPlayerDamageCardBonusHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<CardBuffGranted>());
+            Assert.IsEmpty(events.OfType<CardBuffConsumed>());
+        }
+
+        [Test]
+        public void Reapplying_identical_reward_nullify_emits_no_grant_event()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
+            var strike = new CardDefinition("strike", "strike", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 3) });
+            var strikeCard = new ExecutionCardInstance(strike)
+                { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
+            strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.UntilConsumed(1));
+            state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
+            state.Zone.Add(strikeCard);
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new NullifyNextPlayerConditionRewardHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<CardBuffGranted>());
+            Assert.IsTrue(strikeCard.Statuses.Has(StatusKeys.RewardNullified));
+        }
+
+        [Test]
+        public void Replacing_a_different_reward_nullify_state_emits_a_grant_event()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
+            var strike = new CardDefinition("strike", "strike", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 3) });
+            var strikeCard = new ExecutionCardInstance(strike)
+                { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
+            strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
+            state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
+            state.Zone.Add(strikeCard);
+            var effects = new EffectRegistry();
+            effects.Register(new DamageHandler());
+            effects.Register(new NullifyNextPlayerConditionRewardHandler());
+
+            var events = new TurnResolver(effects, Statuses()).Resolve(state, 0);
+            var granted = events.OfType<CardBuffGranted>().Single();
+            var stored = strikeCard.Statuses.Get(StatusKeys.RewardNullified);
+
+            Assert.AreEqual(StatusLifetimeKind.UntilConsumed, stored.Kind);
+            Assert.AreEqual(1, stored.Count);
+            Assert.AreEqual(StatusKeys.RewardNullified.Id, granted.BuffId);
+        }
+
+        [Test]
+        public void Permanent_reward_nullify_downgrades_but_emits_no_consumption()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("quick_cut", "quick_cut", Side.Player, 1,
+                new[]
+                {
+                    EffectData.Conditional(
+                        EffectKeys.Damage, 2, new WithinNth(1), successEffectValue: 10)
+                });
+            var card = new ExecutionCardInstance(def) { InstanceId = 4 };
+            card.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
+            state.Zone.Add(card);
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<CardBuffConsumed>());
+            Assert.IsTrue(card.Statuses.Has(StatusKeys.RewardNullified));
+            Assert.AreEqual(
+                ConditionTier.Basic,
+                events.OfType<CardResolved>().Single().ConditionTier);
+        }
+
+        [Test]
+        public void Permanent_intercept_status_emits_no_consumption()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 20));
+            var def = new CardDefinition("strike", "strike", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 5) });
+            var card = new ExecutionCardInstance(def) { InstanceId = 8 };
+            card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.Permanent);
+            state.Zone.Add(card);
+            var statuses = Statuses();
+            statuses.Register(new TimelineNullifyingBehavior());
+
+            var events = new TurnResolver(Effects(), statuses).Resolve(state, 0);
+
+            Assert.IsEmpty(events.OfType<CardBuffConsumed>());
+            Assert.IsTrue(card.Statuses.Has(TimelineNullifyingBehavior.TestKey));
+            Assert.AreEqual(
+                CardCancellationReason.StatusIntercepted,
+                events.OfType<CardCancelled>().Single().Reason);
         }
 
         [Test]

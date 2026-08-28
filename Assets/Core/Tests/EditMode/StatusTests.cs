@@ -126,7 +126,7 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
 
-            var cancelled = (CardCancelled)events[1];
+            var cancelled = events.OfType<CardCancelled>().Single();
             Assert.AreEqual(CardCancellationReason.StatusIntercepted, cancelled.Reason);
             Assert.AreEqual(20, state.Enemies[0].Hp);
             Assert.IsFalse(card.Statuses.Has(NullifyingBehavior.TestKey));

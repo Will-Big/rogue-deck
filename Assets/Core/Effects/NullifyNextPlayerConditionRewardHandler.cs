@@ -18,7 +18,17 @@ namespace FateWeaver.Core.Effects
                 var card = ctx.ResolutionContext.Order[i];
                 if (card.Def.Side == Side.Player)
                 {
+                    var previous = card.Statuses.Get(StatusKeys.RewardNullified);
+                    var changed = previous == null
+                        || previous.Kind != StatusLifetimeKind.UntilConsumed
+                        || previous.Count != 1
+                        || previous.Magnitude != 0;
                     card.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.UntilConsumed(1));
+                    if (changed)
+                    {
+                        ctx.ExtraEvents.Add(new Events.CardBuffGranted(
+                            card.InstanceId, card.Def.Id, StatusKeys.RewardNullified.Id, 1));
+                    }
                     ctx.TargetId = card.Def.Id;
                     return;
                 }

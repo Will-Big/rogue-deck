@@ -18,6 +18,12 @@ namespace FateWeaver.Core.Effects
                     && card.Def.HasEffect(EffectKeys.Damage))
                 {
                     card.AddPendingDamageBonus(ctx.EffectValue);
+                    if (ctx.EffectValue != 0)
+                    {
+                        ctx.ExtraEvents.Add(new Events.CardBuffGranted(
+                            card.InstanceId, card.Def.Id,
+                            Events.CardBuffIds.DamageBonus, ctx.EffectValue));
+                    }
                     ctx.TargetId = card.Def.Id;
                     return;
                 }

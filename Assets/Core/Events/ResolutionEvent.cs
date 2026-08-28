@@ -99,5 +99,20 @@ namespace FateWeaver.Core.Events
     /// <summary>효과가 보유자의 상태 수치를 능동 소비했다 (수명 만료·자동 소진과 구분).</summary>
     public sealed record StatusConsumed(string HolderId, string StatusId, int Amount) : ResolutionEvent;
 
+    /// <summary>카드 귀속 버프 식별자. 상태 키가 아닌 버프(피해 보너스)만 여기 둔다.</summary>
+    public static class CardBuffIds
+    {
+        public const string DamageBonus = "damage_bonus";
+    }
+
+    /// <summary>카드 인스턴스에 버프나 카드 귀속 상태가 부여되었다. BuffId는 상태 키
+    /// (reward_nullified 등) 또는 CardBuffIds 상수다.</summary>
+    public sealed record CardBuffGranted(
+        int CardInstanceId, string CardId, string BuffId, int Amount) : ResolutionEvent;
+
+    /// <summary>카드 인스턴스의 버프나 카드 귀속 상태가 소모되었다.</summary>
+    public sealed record CardBuffConsumed(
+        int CardInstanceId, string CardId, string BuffId, int Amount) : ResolutionEvent;
+
     public sealed record TurnEnded(int TurnIndex, Outcome Outcome) : ResolutionEvent;
 }
