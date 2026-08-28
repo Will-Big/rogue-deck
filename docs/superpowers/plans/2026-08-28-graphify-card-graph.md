@@ -65,7 +65,7 @@
 - **모든 엣지는 `confidence: "EXTRACTED"`, `confidence_score: 1.0`.**
 - **커밋 메시지는 한국어** — `타입(범위): …한다` (AGENTS.md 규칙 27). 이 계획은 `feat(tools):`·`test(tools):`·`docs:`를 쓴다.
 - **작업은 전용 워크트리에서** (AGENTS.md 규칙 15 — 코드 파일 추가이므로 master 직접 커밋 불가). 실행 시작 시 superpowers:using-git-worktrees로 워크트리를 만든다.
-- **테스트 실행:** 저장소 루트에서 `python3 -m unittest discover -s tools/graph -v` (dotnet 테스트와 무관 — 규칙 12의 헤드리스 경로는 이 계획에 해당 없음).
+- **테스트 실행:** 저장소 루트에서 `python3 -m unittest discover -s Tools/graph -v` (dotnet 테스트와 무관 — 규칙 12의 헤드리스 경로는 이 계획에 해당 없음).
 - graph.json 포맷(스펙 §상세 "graphify graph.json 포맷" 실측): 최상위 `{directed, multigraph, graph, nodes, links, hyperedges}`. 노드 필수 필드 `id, label, file_type, source_file, source_location, _origin`. 엣지 필수 필드 `relation, confidence, confidence_score, weight, source, target, source_file, source_location, _origin`.
 
 ---
@@ -73,16 +73,16 @@
 ### Task 1: 그래프 프루너
 
 **Files:**
-- Create: `tools/graph/prune_graph.py`
-- Test: `tools/graph/test_prune_graph.py`
+- Create: `Tools/graph/prune_graph.py`
+- Test: `Tools/graph/test_prune_graph.py`
 
 **Interfaces:**
-- Produces: `is_noise(node: dict) -> bool`, `prune(graph: dict) -> int` (제거한 노드 수 반환, graph를 in-place 수정), CLI `python3 tools/graph/prune_graph.py [graph_path]` (기본 `graphify-out/graph.json`, in-place).
+- Produces: `is_noise(node: dict) -> bool`, `prune(graph: dict) -> int` (제거한 노드 수 반환, graph를 in-place 수정), CLI `python3 Tools/graph/prune_graph.py [graph_path]` (기본 `graphify-out/graph.json`, in-place).
 - Task 3의 rebuild 스크립트와 Task 5의 접기가 프루닝된 graph.json을 전제한다.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`tools/graph/test_prune_graph.py`:
+`Tools/graph/test_prune_graph.py`:
 
 ```python
 import unittest
@@ -115,7 +115,7 @@ class IsNoiseTests(unittest.TestCase):
         self.assertTrue(is_noise(node("p2", source_file="Assets/Plugins/Demigiant/DOTween/DOTweenModuleUI.cs")))
 
     def test_도구_코드는_잡음이다(self):
-        self.assertTrue(is_noise(node("g1", source_file="tools/graph/prune_graph.py")))
+        self.assertTrue(is_noise(node("g1", source_file="Tools/graph/prune_graph.py")))
         self.assertTrue(is_noise(node("g2", source_file="Tools/Something/Foo.cs")))
 
     def test_게임_로직과_문서는_남는다(self):
@@ -146,12 +146,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: 실패 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'prune_graph'`
 
 - [ ] **Step 3: 구현**
 
-`tools/graph/prune_graph.py`:
+`Tools/graph/prune_graph.py`:
 
 ```python
 """graphify graph.json에서 게임 로직 아키텍처와 무관한 잡음 노드를 걷어낸다.
@@ -203,13 +203,13 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: 통과 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: PASS (테스트 7개)
 
 - [ ] **Step 5: 실물 검증** — 실제 그래프에 돌려 스펙 실측치와 대조:
 
 ```bash
-rm -f graphify-out/graph.json graphify-out/manifest.json && graphify update . && python3 tools/graph/prune_graph.py
+rm -f graphify-out/graph.json graphify-out/manifest.json && graphify update . && python3 Tools/graph/prune_graph.py
 ```
 
 Expected: `prune_graph: 24xx개 노드 제거, 30xx개 남음` — 제거 수는 스텁 751 + 테스트 1,196 + 외부 531 + 도구 ~27 ≈ 2,505 부근이어야 한다. 1,000 이상 벗어나면 규칙 오류이니 멈추고 분류를 다시 확인한다.
@@ -217,7 +217,7 @@ Expected: `prune_graph: 24xx개 노드 제거, 30xx개 남음` — 제거 수는
 - [ ] **Step 6: 커밋**
 
 ```bash
-git add tools/graph/prune_graph.py tools/graph/test_prune_graph.py
+git add Tools/graph/prune_graph.py Tools/graph/test_prune_graph.py
 git commit -m "feat(tools): graphify 그래프에서 스텁·테스트·외부 노드를 걷어내는 프루너를 추가한다"
 ```
 
@@ -226,8 +226,8 @@ git commit -m "feat(tools): graphify 그래프에서 스텁·테스트·외부 �
 ### Task 2: 카드 그래프 추출기
 
 **Files:**
-- Create: `tools/graph/extract_card_graph.py`
-- Test: `tools/graph/test_extract_card_graph.py`
+- Create: `Tools/graph/extract_card_graph.py`
+- Test: `Tools/graph/test_extract_card_graph.py`
 
 **Interfaces:**
 - Consumes: 없음 (Task 1과 독립 — 파이프라인에서만 프루닝 이후에 실행될 뿐).
@@ -237,13 +237,13 @@ git commit -m "feat(tools): graphify 그래프에서 스텁·테스트·외부 �
   - `find_code_node_id(graph: dict, class_name: str) -> str | None`
   - `build(content_root: Path, effect_keys: dict, effect_owners: dict, status_owners: dict, ast_graph: dict, warn) -> (list, list)` — (nodes, links)
   - `merge_into(graph: dict, nodes: list, links: list) -> None` — `_origin="card_extractor"` 기존 산출물 제거 후 추가(멱등)
-  - CLI `python3 tools/graph/extract_card_graph.py` — `graphify-out/card-graph.json`을 쓰고 `graphify-out/graph.json`에 병합
+  - CLI `python3 Tools/graph/extract_card_graph.py` — `graphify-out/card-graph.json`을 쓰고 `graphify-out/graph.json`에 병합
 - 노드 ID 규약 (Task 4가 의존): `card:<id>`, `status:<key>`, `pool:<id>`, `deck:<id>`, `character:<id>`, `effect_kind:<kind>`. `_origin`은 `"card_extractor"`.
 - 엣지 relation (Task 4·수용 기준이 의존): `applies_status`, `consumes_status`, `triggers_status`, `uses_effect`, `contains_card`, `owns_deck`, `handled_by`.
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`tools/graph/test_extract_card_graph.py`:
+`Tools/graph/test_extract_card_graph.py`:
 
 ```python
 import json
@@ -409,12 +409,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: 실패 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'extract_card_graph'` (Task 1 테스트는 PASS 유지)
 
 - [ ] **Step 3: 구현**
 
-`tools/graph/extract_card_graph.py`:
+`Tools/graph/extract_card_graph.py`:
 
 ```python
 """콘텐츠 JSON을 graphify 그래프에 결정론적으로 편입시키는 추출기.
@@ -621,13 +621,13 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: 통과 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: PASS (Task 1 포함 전체)
 
 - [ ] **Step 5: 실물 검증** — Task 1 Step 5를 이미 돌린 상태(프루닝된 graph.json 존재)에서:
 
 ```bash
-python3 tools/graph/extract_card_graph.py
+python3 Tools/graph/extract_card_graph.py
 python3 - <<'EOF'
 import json
 g = json.load(open('graphify-out/graph.json'))
@@ -642,7 +642,7 @@ Expected: 카드 ~27개, handled_by는 효과 kind(~8) + 상태(11) 부근. stde
 - [ ] **Step 6: 커밋**
 
 ```bash
-git add tools/graph/extract_card_graph.py tools/graph/test_extract_card_graph.py
+git add Tools/graph/extract_card_graph.py Tools/graph/test_extract_card_graph.py
 git commit -m "feat(tools): 콘텐츠 JSON을 graphify 그래프에 편입시키는 카드 추출기를 추가한다"
 ```
 
@@ -651,9 +651,9 @@ git commit -m "feat(tools): 콘텐츠 JSON을 graphify 그래프에 편입시키
 ### Task 3: 뷰 서브그래프 생성기 (카드 관계망 + 아키텍처 접기)
 
 **Files:**
-- Create: `tools/graph/build_card_view.py`
-- Create: `tools/graph/collapse_architecture.py`
-- Test: `tools/graph/test_views.py`
+- Create: `Tools/graph/build_card_view.py`
+- Create: `Tools/graph/collapse_architecture.py`
+- Test: `Tools/graph/test_views.py`
 
 **Interfaces:**
 - Consumes: Task 2의 노드 ID 규약(`_origin="card_extractor"`)과 병합된 graph.json, graphify가 붙인 노드 필드 `community`(int)·`community_name`(str).
@@ -664,7 +664,7 @@ git commit -m "feat(tools): 콘텐츠 JSON을 graphify 그래프에 편입시키
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`tools/graph/test_views.py`:
+`Tools/graph/test_views.py`:
 
 ```python
 import unittest
@@ -728,12 +728,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: 실패 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'build_card_view'`
 
 - [ ] **Step 3: 구현**
 
-`tools/graph/build_card_view.py`:
+`Tools/graph/build_card_view.py`:
 
 ```python
 """병합된 graph.json에서 카드 관계망 서브그래프를 뷰 디렉터리로 추린다.
@@ -772,7 +772,7 @@ if __name__ == "__main__":
     main()
 ```
 
-`tools/graph/collapse_architecture.py`:
+`Tools/graph/collapse_architecture.py`:
 
 ```python
 """프루닝된 그래프의 게임 로직 코드를 커뮤니티 단위 노드로 접는다.
@@ -832,13 +832,13 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: 통과 확인**
 
-Run: `python3 -m unittest discover -s tools/graph -v`
+Run: `python3 -m unittest discover -s Tools/graph -v`
 Expected: PASS (전체)
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add tools/graph/build_card_view.py tools/graph/collapse_architecture.py tools/graph/test_views.py
+git add Tools/graph/build_card_view.py Tools/graph/collapse_architecture.py Tools/graph/test_views.py
 git commit -m "feat(tools): 카드 관계망·아키텍처 뷰 서브그래프 생성기를 추가한다"
 ```
 
@@ -847,7 +847,7 @@ git commit -m "feat(tools): 카드 관계망·아키텍처 뷰 서브그래프 �
 ### Task 4: 재생성 조정 스크립트
 
 **Files:**
-- Create: `tools/graph/rebuild-graph.sh` (실행 권한 `chmod +x`)
+- Create: `Tools/graph/rebuild-graph.sh` (실행 권한 `chmod +x`)
 
 **Interfaces:**
 - Consumes: Task 1~3의 CLI 전부, graphify CLI (`update`, `cluster-only`).
@@ -855,7 +855,7 @@ git commit -m "feat(tools): 카드 관계망·아키텍처 뷰 서브그래프 �
 
 - [ ] **Step 1: 구현** (셸 조정자 — 로직 없음, 단위 테스트 대신 Step 2의 통합 검증)
 
-`tools/graph/rebuild-graph.sh`:
+`Tools/graph/rebuild-graph.sh`:
 
 ```bash
 #!/bin/bash
@@ -867,10 +867,10 @@ cd "$(cd "$(dirname "$0")/../.." && pwd)"
 
 rm -f graphify-out/graph.json graphify-out/manifest.json
 graphify update .
-python3 tools/graph/prune_graph.py
-python3 tools/graph/extract_card_graph.py
-python3 tools/graph/build_card_view.py
-python3 tools/graph/collapse_architecture.py
+python3 Tools/graph/prune_graph.py
+python3 Tools/graph/extract_card_graph.py
+python3 Tools/graph/build_card_view.py
+python3 Tools/graph/collapse_architecture.py
 
 for view in view-card view-architecture; do
   graphify cluster-only "graphify-out/$view" --no-label
@@ -888,7 +888,7 @@ echo "재생성 완료: graph.json + card-graph.html + architecture.html"
 - [ ] **Step 2: 통합 검증** — 수용 기준(스펙 §검증) 확인:
 
 ```bash
-chmod +x tools/graph/rebuild-graph.sh && time tools/graph/rebuild-graph.sh
+chmod +x Tools/graph/rebuild-graph.sh && time Tools/graph/rebuild-graph.sh
 ```
 
 Expected: 종료 코드 0, 벽시계 ~15초 이내. 이어서:
@@ -914,7 +914,7 @@ Expected: 잡음 0, 카드 ~27. explain이 poison·damage 관계를 답하고, p
 - [ ] **Step 3: 커밋**
 
 ```bash
-git add tools/graph/rebuild-graph.sh
+git add Tools/graph/rebuild-graph.sh
 git commit -m "feat(tools): 그래프 재생성 전 과정을 명령 하나로 묶는다"
 ```
 
@@ -927,7 +927,7 @@ git commit -m "feat(tools): 그래프 재생성 전 과정을 명령 하나로 �
 - Modify: `docs/superpowers/README.md` (이 계획 완료 처리)
 
 **Interfaces:**
-- Consumes: Task 4의 `tools/graph/rebuild-graph.sh` 경로와 산출물 이름.
+- Consumes: Task 4의 `Tools/graph/rebuild-graph.sh` 경로와 산출물 이름.
 
 - [ ] **Step 1: 규칙 21의 재생성 명령 교체**
 
@@ -940,7 +940,7 @@ rm -f graphify-out/graph.json graphify-out/manifest.json && graphify update .
 아래로 교체한다 (앞뒤 산문은 유지):
 
 ```bash
-tools/graph/rebuild-graph.sh
+Tools/graph/rebuild-graph.sh
 ```
 
 그리고 그 블록 바로 다음 문단("실측 결과 5,300노드…"로 시작)을 다음으로 교체한다:
@@ -966,10 +966,10 @@ tools/graph/rebuild-graph.sh
 
 - [ ] **Step 3: README 색인 갱신** — `docs/superpowers/README.md`의 활성 계획 표에서 이 계획 행을 지우고, 계획 파일을 `docs/superpowers/archive/plans/`로 옮긴 뒤 완료 기록 관례에 따라 처리한다 (규칙 20). 작업 환경과 도구 표의 스펙 행은 `current`로 유지한다.
 
-- [ ] **Step 4: 검증** — AGENTS.md 개정이 실제 산출물과 일치하는지 재확인: 인용한 경로 4개(`tools/graph/rebuild-graph.sh`, `graphify-out/card-graph.html`, `graphify-out/architecture.html`, `cache/semantic/`)가 모두 존재한다.
+- [ ] **Step 4: 검증** — AGENTS.md 개정이 실제 산출물과 일치하는지 재확인: 인용한 경로 4개(`Tools/graph/rebuild-graph.sh`, `graphify-out/card-graph.html`, `graphify-out/architecture.html`, `cache/semantic/`)가 모두 존재한다.
 
 ```bash
-ls tools/graph/rebuild-graph.sh graphify-out/card-graph.html graphify-out/architecture.html && ls -d graphify-out/cache/semantic
+ls Tools/graph/rebuild-graph.sh graphify-out/card-graph.html graphify-out/architecture.html && ls -d graphify-out/cache/semantic
 ```
 
 Expected: 4개 경로 모두 출력, 종료 코드 0.
@@ -986,6 +986,6 @@ git commit -m "docs: 그래프 재생성 규정을 rebuild-graph.sh 기준으로
 
 ## 완료 후
 
-- 전체 테스트 최종 확인: `python3 -m unittest discover -s tools/graph -v` 전부 PASS.
+- 전체 테스트 최종 확인: `python3 -m unittest discover -s Tools/graph -v` 전부 PASS.
 - 워크트리 브랜치를 master에 머지하기 전 사용자 승인을 받는다 (규칙 19). 이 계획은 C#을 건드리지 않으므로 dotnet 헤드리스 테스트 재실행은 불필요하다 — 단 머지 시점에 master가 코어 변경을 품고 있으면 규칙 19의 전체 테스트 통과 확인을 따른다.
 - HTML 2장의 시각 품질 평가와 카드 관계망의 내용 검수(엣지가 게임 지식과 맞는지)는 사용자에게 요청한다.

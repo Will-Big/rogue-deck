@@ -117,7 +117,7 @@
 
 ### 객체별 상세
 
-**1. 카드 그래프 추출기** — `tools/graph/extract_card_graph.py` (Python 3 stdlib 전용, 규칙 14
+**1. 카드 그래프 추출기** — `Tools/graph/extract_card_graph.py` (Python 3 stdlib 전용, 규칙 14
 준수·의존성 0).
 
 - 입력: `Assets/StreamingAssets/Content/{Cards,Statuses,Pools,Decks,Characters}/*.json`,
@@ -145,7 +145,7 @@
     `StatusSpecJsonConverter.cs` L10-11, L48-49 주석이 근거.)
 - 태그(`tags[]`)는 읽되 무시한다. 노드·엣지를 만들지 않는다.
 
-**2. 그래프 프루너** — `tools/graph/prune_graph.py` (stdlib 전용). graph.json에서 다음 노드와
+**2. 그래프 프루너** — `Tools/graph/prune_graph.py` (stdlib 전용). graph.json에서 다음 노드와
 그 노드에 닿는 모든 엣지·하이퍼엣지를 제거한다 (2026-08-28 사용자 지시: 테스트 코드 불포함,
 중요한 것은 게임 로직 아키텍처):
 
@@ -160,12 +160,12 @@
   질의를 포기한다 — grep이 더 싼 질의라 손실 미미(사용자 승인). 제거 규칙은 함수 하나에 모아
   새 잡음 유형이 나타나면 한 곳만 고치게 한다.
 
-**3. 재생성 스크립트** — `tools/graph/rebuild-graph.sh` (조정자, 로직 없음. 규칙 30).
+**3. 재생성 스크립트** — `Tools/graph/rebuild-graph.sh` (조정자, 로직 없음. 규칙 30).
 
   1. `rm -f graphify-out/graph.json graphify-out/manifest.json`
   2. `graphify update .` (AST 재생성, 실측 8.7초·LLM 0토큰)
-  3. `python3 tools/graph/prune_graph.py` (in-place)
-  4. `python3 tools/graph/extract_card_graph.py` — card-graph.json을 쓰고 **직접 graph.json에
+  3. `python3 Tools/graph/prune_graph.py` (in-place)
+  4. `python3 Tools/graph/extract_card_graph.py` — card-graph.json을 쓰고 **직접 graph.json에
      append-merge한다.** `graphify merge-graphs`는 쓰지 않는다: 크로스 저장소 병합용이라 모든
      노드에 `repo::` 접두사를 붙여 카드→핸들러 엣지가 진짜 AST 노드와 연결되지 않음을 합성
      그래프로 실증했다(2026-08-28). 직접 병합은 ID 충돌이 없고(`card:` 접두사 계열), 재실행 시
@@ -182,7 +182,7 @@ kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
   서브그래프를 놓고 `graphify cluster-only <tmp> --no-label`을 실행하면 graph.html이 LLM 없이
   생성된다(합성 6노드 그래프로 확인). 생성된 graph.html을 목적 경로로 복사한다.
 
-**5. 아키텍처 접기** — `tools/graph/collapse_architecture.py`. 프루닝된 코드 그래프의 노드를
+**5. 아키텍처 접기** — `Tools/graph/collapse_architecture.py`. 프루닝된 코드 그래프의 노드를
 `community` 값으로 묶어 커뮤니티당 노드 1개(label=community_name, 크기=멤버 수), 커뮤니티 간
 엣지 수를 weight로 하는 소형 그래프를 만들어 4와 같은 경로로
 `graphify-out/architecture.html`로 렌더한다. 문서 노드는 접기 대상에서 제외하고 게임 로직
@@ -190,7 +190,7 @@ kind 8 + 풀·덱·캐릭터 ~7 + 핸들러·스펙 ~12)라 즉시 열린다.
 
 **6. AGENTS.md 규칙 개정** — 같은 커밋 아님, 구현 완료 후 별도 커밋.
 
-- 규칙 21: 재생성 명령을 `tools/graph/rebuild-graph.sh`로 교체. 카드 서브그래프가 함께
+- 규칙 21: 재생성 명령을 `Tools/graph/rebuild-graph.sh`로 교체. 카드 서브그래프가 함께
   생성됨을 명시.
 - 규칙 22: 갈림길 목록에 카드 질의 항목 추가 — "카드·상태·시너지 관계 질문(어느 카드가 X를
   쌓나/소모하나, 이 핸들러 영향 카드)은 그래프가 1순위다. 엣지가 엔진 실행 데이터에서 나오므로
