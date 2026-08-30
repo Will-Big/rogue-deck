@@ -17,6 +17,7 @@ namespace FateWeaver.Unity.Editor
         private const string UnitPrefabPath = "Assets/Unity/Prefabs/UnitView.prefab";
         private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
         private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
+        private const string FloatingNumberPrefabPath = "Assets/Unity/Prefabs/FloatingNumberView.prefab";
         private const string MemberAPath = "Assets/Unity/Data/member_a.asset";
         private const string MemberBPath = "Assets/Unity/Data/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Input/UIInputActions.inputactions";
@@ -49,6 +50,7 @@ namespace FateWeaver.Unity.Editor
             EnsureUnitPrefab();
             EnsureRailCardPrefab();
             EnsureTargetingArrowPrefab();
+            EnsureFloatingNumberPrefab();
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -270,6 +272,22 @@ namespace FateWeaver.Unity.Editor
                 var view = UnitView.EditorCreate((RectTransform)temporaryRoot.transform, new Vector2(180f, 250f));
                 view.gameObject.name = "UnitView";
                 PrefabUtility.SaveAsPrefabAsset(view.gameObject, UnitPrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
+        }
+
+        private static void EnsureFloatingNumberPrefab()
+        {
+            var temporaryRoot = new GameObject("FloatingNumberPrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = FloatingNumberView.EditorCreate(
+                    (RectTransform)temporaryRoot.transform, new Vector2(120f, 48f));
+                view.gameObject.name = "FloatingNumberView";
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, FloatingNumberPrefabPath);
             }
             finally
             {

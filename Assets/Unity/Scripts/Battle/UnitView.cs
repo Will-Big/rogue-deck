@@ -22,6 +22,8 @@ namespace FateWeaver.Unity
         private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
 
         private Color _aliveTint = Color.white;
+        private int _maxHp;
+        private int _currentHp;
 
         public void Bind(string displayName, Color portraitTint)
         {
@@ -32,12 +34,27 @@ namespace FateWeaver.Unity
 
         public void SetHp(int current, int max)
         {
-            float t = max > 0 ? Mathf.Clamp01((float)current / max) : 0f;
+            _maxHp = max;
+            Render(current);
+        }
+
+        /// <summary>HP 막대를 트윈하기 위한 지점. 최대 HP는 마지막 SetHp가 준 값을 쓴다 —
+        /// HpChanged 이벤트가 최대 HP를 싣지 않기 때문이다(설계 「어려워지는 것」 4번).</summary>
+        public int DisplayedHp
+        {
+            get => _currentHp;
+            set => Render(value);
+        }
+
+        private void Render(int current)
+        {
+            _currentHp = current;
+            float t = _maxHp > 0 ? Mathf.Clamp01((float)current / _maxHp) : 0f;
             _hpFill.anchorMin = new Vector2(0f, 0f);
             _hpFill.anchorMax = new Vector2(t, 1f);
             _hpFill.offsetMin = Vector2.zero;
             _hpFill.offsetMax = Vector2.zero;
-            _hpText.text = Mathf.Max(0, current) + " / " + max;
+            _hpText.text = Mathf.Max(0, current) + " / " + _maxHp;
             _portrait.color = current > 0 ? _aliveTint : DeadTint;
         }
 
@@ -100,6 +117,9 @@ namespace FateWeaver.Unity
             view._hpText = hpText;
             view._nameText = nameText;
             view._statusText = statusText;
+
+            // 몸짓은 루트가 아니라 초상에 건다 — 루트는 UnitRow의 레이아웃 그룹이 통제한다.
+            root.gameObject.AddComponent<UnitMotionView>().EditorBind(portrait);
             return view;
         }
     }
