@@ -46,7 +46,21 @@ namespace FateWeaver.Unity
                     _duration * _fadeStartRatio,
                     _group.DOFade(0f, _duration * (1f - _fadeStartRatio)))
                 .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
-                .OnComplete(() => Destroy(gameObject));
+                .OnComplete(DestroySelf);
+        }
+
+        /// <summary>EditMode 테스트에서는 Destroy가 금지되어 에러 로그를 남긴다. 재생 계층을
+        /// 에디터 없이 검증하려면 이 갈래가 필요하다.</summary>
+        private void DestroySelf()
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                DestroyImmediate(gameObject);
+            }
         }
 
         /// <summary>프리팹 저작용 훅. BattleSceneBuilder가 부른다(UnitView.EditorCreate와 같은 관례).</summary>

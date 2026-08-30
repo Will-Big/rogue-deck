@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using FateWeaver.Core.Status;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,9 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _hpText;
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _statusText;
+
+        [Tooltip("HP 막대가 새 값까지 흐르는 시간(초).")]
+        [SerializeField] private float _hpTweenDuration = 0.25f;
 
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
         private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
@@ -45,6 +49,14 @@ namespace FateWeaver.Unity
             get => _currentHp;
             set => Render(value);
         }
+
+        /// <summary>HP 막대를 현재 표시값에서 target까지 흐르게 한다. 시작값을 인자로 받지 않고
+        /// getter에서 읽으므로, 한 턴에 같은 유닛이 여러 번 맞아도 앞 트윈이 끝난 값에서 이어진다.
+        /// 막대가 UnitView의 것이므로 그것이 움직이는 속도도 여기 있다(규칙 8).</summary>
+        public Tween TweenHpTo(int target)
+            => DOTween.To(() => DisplayedHp, value => DisplayedHp = value, target, _hpTweenDuration)
+                .SetEase(Ease.OutQuad)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
 
         private void Render(int current)
         {
