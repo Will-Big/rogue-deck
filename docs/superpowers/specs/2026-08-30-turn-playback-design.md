@@ -37,8 +37,12 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 - **규칙 레이어(`FateWeaver.Core`)를 수정하지 않는다.** 이 계층은 코어 이벤트를 읽기만 한다.
   `FateWeaver.Simulation`에 순수 표현 로직을 더하는 것은 별개이며 `TimelineTextFormatter`의 선례를
   따른다. 규칙 판정·상태·효과에 손이 가야 한다면 범위를 벗어난 신호이므로 멈추고 보고한다.
-- Unity EditMode 기준선은 착수 세션이 첫 실행에서 실측한다(README의 672는 계획 3.5 시점 수치로 낡았다).
+- **Unity EditMode 기준선: 714 total / 707 passed / 0 failed / 7 skipped** (2026-08-30 이 워크트리에서
+  Task 1 완료 시점 실측. Task 1의 신규 9개를 포함한 수치다. README의 672는 계획 3.5 시점이라 낡았다).
   `-runTests`에 `-quit`를 같이 주지 않는다 — 테스트 없이 exit 0이 된다.
+- **새 `.cs`의 `.meta`는 Unity 배치 실행이 만들어 준다.** 손으로 만들지 말고 배치를 한 번 돌린 뒤
+  `git status`로 확인한다(2026-08-30 확인). 워크트리 첫 배치는 `Library/`가 없어 수 분 걸리고,
+  그 뒤로는 빠르다.
 - 규칙 32: 연출은 DOTween·Particle System 등 기존 도구로 한다. 직접 구현하는 칸은 개요의
   「도구 선택」 표에 이유가 적힌 것뿐이다. 새 의존성은 사전 승인(규칙 14).
 - 규칙 1·2·3: 런타임 `new GameObject` 금지(프리팹 인스턴스화만), `Resources.Load`·
@@ -213,8 +217,14 @@ public void 턴_경계는_단독_비트다()
 - `CueRole { Lead, Follow }` — 비트 안에서 개시인지 후속인지.
 - `PlaybackCue` — `Tween Tween`, `CueRole Role`. `Tween`이 `null`이면 "연출 없음"이며 director가
   건너뛴다.
-- `IResolutionEventPresenter` — `Type EventType { get; }`,
-  `PlaybackCue Build(ResolutionEvent evt, BattleStage stage)`.
+- `IResolutionEventPresenter` — `Type EventType { get; }`, `PlaybackCue Build(ResolutionEvent evt)`.
+  **`BattleStage`는 매개변수가 아니라 구현체의 생성자로 받는다.** 스테이지는 이벤트마다 달라지는
+  값이 아니라 고정 협력자이고, 이렇게 두면 이 계약이 스테이지 타입을 몰라도 되어 Task 2가 Task 3에
+  묶이지 않는다.
+- 그릴 것이 없으면 `PlaybackCue.None`을 돌려주고 **예외를 던지지 않는다.** 재생 도중 이벤트 하나
+  때문에 턴 전체가 멈추면 안 된다.
+- 연출 시간·강도는 연출자가 아니라 뷰 컴포넌트(`UnitMotionView` 등)의 `[SerializeField]`에 둔다
+  (규칙 8). 연출자는 순수 C# 클래스라 자체 직렬화 필드를 가질 수 없다.
 - `EventPresenterRegistry` — `Register(IResolutionEventPresenter)`,
   `TryResolve(ResolutionEvent, out IResolutionEventPresenter)`. 키는 이벤트의 `Type`이며 중복
   등록은 예외다(규칙 9의 부팅 검증에 해당).
