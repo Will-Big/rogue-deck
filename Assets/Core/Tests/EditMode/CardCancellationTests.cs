@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
 {
     /// <summary>Task 3: execution-card cancellation events (CardCancelled) and the per-effect death
     /// sweep (PartyMemberDied / DeathsDoorSurvived), including the owner-death cascade that cancels a
-    /// dead party member's still-pending cards.</summary>
+    /// dead owner's still-pending cards — symmetrically for party members and enemies.</summary>
     public class CardCancellationTests
     {
         private static EffectRegistry Registry()
@@ -201,6 +201,83 @@ namespace FateWeaver.Tests
             Assert.AreEqual(CardCancellationReason.OwnerDied, pending.Reason);
             Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "kill_then_cancel"));
             Assert.AreEqual(1, events.OfType<CardCancelled>().Count(e => e.CardId == "kill_then_cancel"));
+        }
+
+        [Test]
+        public void Enemy_death_cancels_that_enemys_own_pending_cards()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 5));
+
+            // The player card kills the goblin before the goblin's own card gets its turn.
+            var playerKill = Card("player_kill", Side.Player, executionOrder: 1, damage: 9, instanceId: 1);
+            var goblinStrike = Card(
+                "goblin_strike", Side.Enemy, executionOrder: 2, damage: 4, ownerId: "goblin", instanceId: 2);
+            state.Zone.Add(playerKill);
+            state.Zone.Add(goblinStrike);
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "goblin"));
+            var cancelled = events.OfType<CardCancelled>().Single(e => e.CardId == "goblin_strike");
+            Assert.AreEqual(CardCancellationReason.OwnerDied, cancelled.Reason);
+            Assert.AreEqual("goblin", cancelled.OwnerId);
+            Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "goblin_strike"));
+            Assert.AreEqual(30, state.Party[0].Hp);
+        }
+
+        [Test]
+        public void Enemy_death_marks_only_pending_cards_owned_by_that_enemy()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("front", 5));
+            state.Enemies.Add(new Enemy("back", 100));
+
+            // FrontOne default targeting kills "front" only; "back" keeps acting.
+            var playerKill = Card("player_kill", Side.Player, executionOrder: 1, damage: 9, instanceId: 1);
+            var frontStrike = Card(
+                "front_strike", Side.Enemy, executionOrder: 2, damage: 4, ownerId: "front", instanceId: 2);
+            var backStrike = Card(
+                "back_strike", Side.Enemy, executionOrder: 3, damage: 3, ownerId: "back", instanceId: 3);
+            state.Zone.Add(playerKill);
+            state.Zone.Add(frontStrike);
+            state.Zone.Add(backStrike);
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            var cancelled = events.OfType<CardCancelled>().Single(e => e.CardId == "front_strike");
+            Assert.AreEqual(CardCancellationReason.OwnerDied, cancelled.Reason);
+            Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "back_strike"));
+            Assert.IsFalse(events.OfType<CardCancelled>().Any(e => e.CardId == "back_strike"));
+            Assert.AreEqual(27, state.Party[0].Hp); // back's 3 damage only
+        }
+
+        [Test]
+        public void Enemy_death_leaves_already_resolved_and_ownerless_enemy_cards_alone()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(30);
+            state.Enemies.Add(new Enemy("goblin", 5));
+
+            // Resolves before the death; must stay resolved.
+            var earlyStrike = Card(
+                "early_strike", Side.Enemy, executionOrder: 1, damage: 2, ownerId: "goblin", instanceId: 1);
+            var playerKill = Card("player_kill", Side.Player, executionOrder: 2, damage: 9, instanceId: 2);
+            // No owner recorded: the sweep must not guess an owner for it.
+            var ownerless = Card(
+                "ownerless_strike", Side.Enemy, executionOrder: 3, damage: 1, ownerId: null, instanceId: 3);
+            state.Zone.Add(earlyStrike);
+            state.Zone.Add(playerKill);
+            state.Zone.Add(ownerless);
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "early_strike"));
+            Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "ownerless_strike"));
+            Assert.IsFalse(events.OfType<CardCancelled>().Any());
+            Assert.AreEqual(27, state.Party[0].Hp);
         }
 
         [Test]

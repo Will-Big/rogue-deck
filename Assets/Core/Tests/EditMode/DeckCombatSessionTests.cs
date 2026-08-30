@@ -215,6 +215,34 @@ namespace FateWeaver.Tests
             Assert.AreEqual(TargetKind.None, session.DescribeTargeting(99).Kind);
         }
 
+        /// <summary>적이 하나뿐인 지금의 모든 전투에서는 소유자가 확정된다 — 이것이 죽은 적의 남은
+        /// 카드를 OwnerDied로 취소하는 근거다.</summary>
+        [Test]
+        public void Enemy_cards_are_owned_by_the_only_enemy_in_the_fight()
+        {
+            var session = NewSession(
+                new[] { CardFixtures.Damage("slash_fx", damage: 4, executionOrder: 4) }, Goblin(4, 3));
+
+            CollectionAssert.AreEqual(
+                new[] { "goblin" }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
+        }
+
+        /// <summary>IEnemyTurnPolicy는 어느 적의 카드인지 말하지 않는다. 그래서 적이 둘 이상이면
+        /// 소유자를 비워 둔다 — 임의로 Enemies[0]을 찍으면 그 적이 먼저 죽었을 때 남의 카드가
+        /// OwnerDied로 취소된다.</summary>
+        [Test]
+        public void Enemy_cards_have_no_owner_when_the_owning_enemy_is_ambiguous()
+        {
+            var session = new DeckCombatSession(TestContent.Statuses(),
+                new[] { CardFixtures.Damage("slash_fx", damage: 4, executionOrder: 4) },
+                playerHp: 30,
+                enemies: new[] { new Enemy("front", 100), new Enemy("back", 100) },
+                enemyPolicy: Goblin(4, 3), fateEnergyPerTurn: 3, handSize: 5, seed: 1);
+
+            CollectionAssert.AreEqual(
+                new string[] { null }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
+        }
+
         private static DeckCombatSession NewSession(
             IReadOnlyList<CardDefinition> deck, EnemyIntent intent)
             => new DeckCombatSession(TestContent.Statuses(),

@@ -141,7 +141,7 @@ namespace FateWeaver.Core.Combat
                 }
             }
 
-            var newlyDeadMemberIds = pendingDeathEvents.OfType<PartyMemberDied>().Select(e => e.MemberId);
+            var newlyDeadOwnerIds = CollectNewlyDeadOwnerIds(pendingDeathEvents);
 
             if (card.CancellationReason == null)
             {
@@ -170,11 +170,11 @@ namespace FateWeaver.Core.Combat
                 events.AddRange(pendingDeathEvents);
             }
 
-            // Step 5: mark OwnerDied on every not-yet-resolved card owned by a member who just died,
+            // Step 5: mark OwnerDied on every not-yet-resolved card owned by an actor who just died,
             // regardless of whether the current card itself ended up resolved or cancelled.
-            foreach (var memberId in newlyDeadMemberIds)
+            foreach (var ownerId in newlyDeadOwnerIds)
             {
-                MarkOwnerDiedForFutureCards(resolutionContext, card, memberId);
+                MarkOwnerDiedForFutureCards(resolutionContext, card, ownerId);
             }
         }
 
@@ -267,18 +267,45 @@ namespace FateWeaver.Core.Combat
             }
         }
 
+        /// <summary>사망 이벤트에서 소유자 id를 뽑는다. 파티원과 적을 대칭으로 다뤄, 한 턴 안에서 먼저
+        /// 죽은 적의 남은 카드도 파티원과 똑같이 OwnerDied로 취소되게 한다. 소유자를 모르는 카드
+        /// (OwnerId가 비어 있는 단일 적 호환 경로)를 잘못 지목하지 않도록 빈 id는 제외한다.</summary>
+        private static List<string> CollectNewlyDeadOwnerIds(List<ResolutionEvent> pendingDeathEvents)
+        {
+            var ownerIds = new List<string>();
+            foreach (var pending in pendingDeathEvents)
+            {
+                string ownerId = null;
+                if (pending is PartyMemberDied partyDeath)
+                {
+                    ownerId = partyDeath.MemberId;
+                }
+                else if (pending is EnemyDied enemyDeath)
+                {
+                    ownerId = enemyDeath.EnemyId;
+                }
+
+                if (!string.IsNullOrEmpty(ownerId))
+                {
+                    ownerIds.Add(ownerId);
+                }
+            }
+
+            return ownerIds;
+        }
+
         /// <summary>Records OwnerDied on every card later in the frozen resolution order that belongs
-        /// to the given (now-dead) party member and has not already concluded.</summary>
+        /// to the given (now-dead) party member or enemy and has not already concluded.</summary>
         private static void MarkOwnerDiedForFutureCards(
             ResolutionContext resolutionContext,
             ExecutionCardInstance current,
-            string deadMemberId)
+            string deadOwnerId)
         {
             var currentIndex = resolutionContext.IndexOf(current);
             for (int i = currentIndex + 1; i < resolutionContext.Order.Count; i++)
             {
                 var future = resolutionContext.Order[i];
-                if (future.CancellationReason == null && future.OwnerId == deadMemberId)
+                if (future.CancellationReason == null && future.OwnerId == deadOwnerId)
                 {
                     future.CancellationReason = CardCancellationReason.OwnerDied;
                 }

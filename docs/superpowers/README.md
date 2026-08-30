@@ -222,17 +222,20 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 
 ## 후속 작업 대기열
 
-- [ ] **적이 죽어도 그 적의 남은 카드가 실행된다 — 버그, 2026-08-30 실증.** 파티원은 죽으면 남은
-  카드가 `OwnerDied`로 취소되는데 적에게는 그 처리가 없다. `TurnResolver.MarkOwnerDiedForFutureCards`를
-  부르는 지점이 `pendingDeathEvents.OfType<PartyMemberDied>()`만 훑고, `CollectEnemyDeathEvents`는
-  `EnemyDied`를 낼 뿐 뒤쪽 카드에 표시하지 않는다. 헤드리스로 재현 확인: 고블린이 죽고 `EnemyDied`가
-  나온 뒤 그 고블린의 카드가 `CardResolved`로 해결되어 파티에 피해를 넣었고 `Outcome`은 이미 `Win`이었다.
-  실행 순서 조작이 이 게임의 핵심 기믹이라 개입 카드의 가치를 직접 깎는다.
+- [x] **적이 죽어도 그 적의 남은 카드가 실행된다 — 2026-08-30 수정 완료.** 파티원만 `OwnerDied`로
+  취소되던 스윕에 적 사망을 대칭으로 넣었다. `TurnResolver.CollectNewlyDeadOwnerIds`가
+  `PartyMemberDied`와 `EnemyDied`에서 모두 소유자 id를 뽑고, 그 id로
+  `MarkOwnerDiedForFutureCards`가 실행 순서상 뒤쪽 카드를 취소한다
+  (`Assets/Core/Combat/TurnResolver.cs:144`·`270`). 헤드리스 557 → 562, 실패 0.
 
-  **착수 전 선행 확인:** 적 카드의 `OwnerId`가 지금 전부 `_state.Enemies[0].Id`로 찍힌다
-  (`DeckCombatSession.cs` 약 387줄). 적 1마리라 아직 안 드러나지만 이 수정은 소유자 정보에 의존하므로,
-  귀속을 함께 바로잡을지 적 1마리 전제를 테스트로 못 박고 미룰지 먼저 정해야 한다.
-  (2026-08-30 턴 재생 계층 설계 중 `CardCancelled` 조사에서 발견. 재생 계층 작업과는 독립이다.)
+  선행 확인이던 소유자 귀속은 **정책 API를 바꾸지 않고 귀속을 정직하게** 만드는 쪽으로 정했다.
+  `IEnemyTurnPolicy.CardsForTurn`은 `IReadOnlyList<CardDefinition>`만 돌려주어 어느 적의 카드인지
+  말할 수단이 아예 없으므로(`Assets/Core/Simulation/Enemies/IEnemyTurnPolicy.cs:16`), 올바른 귀속은
+  인터페이스 재설계다. 대신 `DeckCombatSession`이 **적이 정확히 하나일 때만** 소유자를 확정하고
+  둘 이상이면 비워 둔다(`Assets/Core/Simulation/DeckCombatSession.cs:387`) — `CardActor`가 이미
+  문서화한 규약과 같다(`Assets/Core/Combat/CardActor.cs:3`). 이러면 다중 적에서 남의 카드가
+  잘못 취소되는 일은 생기지 않고, 그 경우 죽은 적의 카드는 여전히 실행된다. 다중 적을 실제로
+  도입할 때 정책 API를 소유자 인지형으로 재설계하면서 함께 닫는다.
 
 - [ ] **카드 상태 UI의 JSON 런타임 연계 — 막혀 있지 않다. 배선만 남았다.** 완료된 범위는 JSON과
   독립적인 `CardStatusDisplayContent`·`ICardStatusDisplaySource` 경계, 4열 하향 그리드, 상태
