@@ -1,0 +1,821 @@
+<title>턴 재생 계층</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground:      #F1EFF5;
+    --surface:     #FCFBFE;
+    --surface-sunk:#E7E3EE;
+    --ink:         #1C1A24;
+    --ink-soft:    #56525F;
+    --ink-faint:   #7E7A89;
+    --line:        #D6D1E0;
+    --line-strong: #B7B0C6;
+    --accent:      #96690F;
+    --accent-face: #F2C14E;
+    --player:      #6A55A6;
+    --enemy:       #A04646;
+    --vital:       #2E8B56;
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #141319;
+      --surface:     #1D1B24;
+      --surface-sunk:#26232F;
+      --ink:         #E8EDF2;
+      --ink-soft:    #A29DAE;
+      --ink-faint:   #7C7788;
+      --line:        #322E3C;
+      --line-strong: #4A4557;
+      --accent:      #F2C14E;
+      --accent-face: #F2C14E;
+      --player:      #A796DA;
+      --enemy:       #CE7B7B;
+      --vital:       #5FC489;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #141319;
+    --surface:     #1D1B24;
+    --surface-sunk:#26232F;
+    --ink:         #E8EDF2;
+    --ink-soft:    #A29DAE;
+    --ink-faint:   #7C7788;
+    --line:        #322E3C;
+    --line-strong: #4A4557;
+    --accent:      #F2C14E;
+    --accent-face: #F2C14E;
+    --player:      #A796DA;
+    --enemy:       #CE7B7B;
+    --vital:       #5FC489;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+
+  .masthead {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  .masthead .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 18px;
+    padding-top: 34px;
+    padding-bottom: 26px;
+  }
+
+  h1 {
+    font-family: "Gothic A1", "Apple SD Gothic Neo", sans-serif;
+    font-weight: 800;
+    font-size: clamp(30px, 5vw, 42px);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .meta {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 26px;
+    margin-top: 6px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .meta b {
+    font-weight: 600;
+    color: var(--ink-faint);
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-right: 7px;
+  }
+
+  .reader-note {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 14px 20px;
+    margin: 34px 0 0;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+  }
+
+  main { padding: 8px 0 80px; }
+
+  section { margin-top: 54px; }
+
+  h2 {
+    font-family: "Gothic A1", "Apple SD Gothic Neo", sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+
+  h2::before {
+    content: "";
+    display: block;
+    width: 34px;
+    height: 2px;
+    background: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  h3 {
+    font-family: "Gothic A1", "Apple SD Gothic Neo", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 30px 0 2px;
+    color: var(--ink);
+  }
+
+  p { margin: 12px 0; max-width: var(--measure); }
+
+  ul, ol { max-width: var(--measure); padding-left: 1.15em; }
+  li { margin: 9px 0; }
+
+  code, .id {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.855em;
+    background: var(--surface-sunk);
+    padding: 1px 5px;
+    border-radius: 2px;
+    word-break: break-all;
+  }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  .scroll { overflow-x: auto; margin: 20px 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 540px;
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: 11px 16px 11px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th {
+    font-family: "Gothic A1", sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom-color: var(--line-strong);
+    white-space: nowrap;
+  }
+
+  td:first-child { font-weight: 500; }
+
+  figure {
+    margin: 26px 0;
+    padding: 22px 22px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow-x: auto;
+  }
+
+  figure svg {
+    display: block;
+    width: 100%;
+    min-width: 560px;
+    max-width: 100%;
+    height: auto;
+    color: var(--ink);
+  }
+
+  figcaption {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    margin: 22px 0;
+    max-width: var(--measure);
+  }
+
+  .callout p { margin: 0; }
+  .callout p + p { margin-top: 10px; }
+
+  .steps { list-style: none; padding: 0; margin: 20px 0; max-width: var(--measure); counter-reset: step; }
+
+  .steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 42px;
+    margin: 20px 0;
+  }
+
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+  }
+
+  .steps h3 { margin-top: 0; }
+
+  .events {
+    list-style: none;
+    padding: 14px 18px;
+    margin: 12px 0;
+    background: var(--surface-sunk);
+    border-radius: 3px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+  }
+
+  .events li { margin: 4px 0; }
+  .events b { color: var(--accent); font-weight: 500; }
+
+  .decide {
+    border: 1px solid var(--accent);
+    padding: 20px 24px;
+    margin-top: 22px;
+    background: var(--surface);
+    max-width: var(--measure);
+  }
+
+  .decide h2 { margin-top: 0; }
+
+  .out-of-scope {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-top: 26px;
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px; }
+    body { font-size: 15px; }
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <h1>턴 재생 계층</h1>
+    <span class="chip">검수 대기</span>
+    <div class="meta">
+      <span><b>작성일</b>2026-08-30</span>
+      <span><b>범위</b>한 턴의 해석 결과를 시간축 위에서 재생하는 표현 계층</span>
+      <span><b>세션 인계용</b><a href="2026-08-30-turn-playback-design.md">2026-08-30-turn-playback-design.md</a></span>
+    </div>
+    <p class="reader-note">
+      이 문서만 보고 구조를 승인할 수 있어야 한다. 구현 근거는 짝이 되는 <code>.md</code>의
+      <code>## 상세</code>에만 있으며, 사람은 그쪽을 읽지 않아도 된다.
+    </p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <h2>무엇을 만드나</h2>
+    <p>
+      지금 한 턴은 한 프레임에 끝난다. <code>OnTurnButton</code>이 타임라인을 <code>Debug.Log</code>로
+      흘리고 <code>RefreshAll()</code>로 모든 뷰를 즉시 최종 상태로 갈아끼운다
+      (<code>BattleScreenController.cs:296</code>). 코어는 17종 이벤트로 턴의 서사를 다 아는데 화면에는
+      결과만 나타난다.
+    </p>
+    <p>
+      이벤트를 <b>비트</b> — 동시에 보여야 할 이벤트 묶음 — 로 나눠 순서대로 재생하는 계층을 만든다.
+      공격·피격·상태 표기는 이것이 생긴 뒤에야 걸 자리가 생긴다.
+    </p>
+    <p class="out-of-scope">
+      <b>범위 밖:</b> 턴 해석 중 플레이어 개입. 재생은 조작이 끝난 뒤 처음부터 끝까지 흐른다.
+      개별 연출의 모양과 수치도 이 문서가 정하지 않는다.
+    </p>
+  </section>
+
+  <section>
+    <h2>구조</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>객체</th><th>책임 (한 줄)</th><th>이 객체가 모르는 것</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>TurnPlaybackDirector</code></td>
+            <td>비트를 순서대로 재생하고 배속·스킵을 관장한다</td>
+            <td>이벤트의 의미, 뷰의 존재, 코어 상태</td>
+          </tr>
+          <tr>
+            <td><code>TimelineBeatPlanner</code></td>
+            <td>이벤트 목록을 동시 재생 단위인 비트로 묶는다</td>
+            <td>연출, 시간, 뷰</td>
+          </tr>
+          <tr>
+            <td><code>EventPresenterRegistry</code></td>
+            <td>이벤트 타입에 맞는 연출자를 찾아준다</td>
+            <td>재생 순서, 연출의 내용</td>
+          </tr>
+          <tr>
+            <td><code>IResolutionEventPresenter</code> 구현체들</td>
+            <td>이벤트 하나를 큐(트윈 + 선후 역할) 하나로 바꾼다</td>
+            <td>재생 순서, 다른 이벤트, 전체 타임라인</td>
+          </tr>
+          <tr>
+            <td><code>BattleStage</code></td>
+            <td>id로 해당 뷰와 화면 앵커를 찾아준다</td>
+            <td>이벤트 종류, 시간축</td>
+          </tr>
+          <tr>
+            <td><code>UnitMotionView</code></td>
+            <td>유닛 하나의 몸짓을 수행한다</td>
+            <td>왜 움직이는지, HP·상태 값</td>
+          </tr>
+          <tr>
+            <td><code>FloatingNumberView</code></td>
+            <td>숫자 하나를 띄우고 사라진다</td>
+            <td>그 숫자의 의미</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <code>UnitView</code>는 지금대로 상태 표시만 맡는다. 몸짓을 얹으면 책임이 “표시하고
+      <b>그리고</b> 움직인다”가 되므로 가른다(규칙 30).
+    </p>
+  </section>
+
+  <section>
+    <h2>의존 방향</h2>
+
+    <figure>
+      <svg viewBox="0 0 800 440" role="img"
+           aria-label="제어 흐름은 BattleScreenController에서 TurnPlaybackDirector, EventPresenterRegistry, 연출자로 내려가고, Director는 TimelineBeatPlanner에, 연출자는 BattleStage에 조회한다. BattleStage 아래에 UnitMotionView, FloatingNumberView, UnitView가 있다.">
+        <defs>
+          <marker id="dep-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="currentColor">
+          <!-- spine -->
+          <rect x="40" y="20" width="250" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="165" y="48" text-anchor="middle">BattleScreenController</text>
+
+          <rect x="40" y="112" width="250" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="165" y="140" text-anchor="middle">TurnPlaybackDirector</text>
+
+          <rect x="40" y="204" width="250" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="165" y="232" text-anchor="middle">EventPresenterRegistry</text>
+
+          <rect x="40" y="296" width="250" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="165" y="324" text-anchor="middle">…EventPresenter 구현체</text>
+
+          <!-- side -->
+          <rect x="440" y="112" width="220" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="550" y="140" text-anchor="middle">TimelineBeatPlanner</text>
+
+          <rect x="440" y="296" width="220" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <text x="550" y="324" text-anchor="middle">BattleStage</text>
+
+          <!-- views -->
+          <rect x="360" y="386" width="128" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75"/>
+          <text x="424" y="410" text-anchor="middle" font-size="11" opacity="0.85">UnitMotionView</text>
+
+          <rect x="500" y="386" width="140" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75"/>
+          <text x="570" y="410" text-anchor="middle" font-size="11" opacity="0.85">FloatingNumberView</text>
+
+          <rect x="652" y="386" width="108" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75"/>
+          <text x="706" y="410" text-anchor="middle" font-size="11" opacity="0.85">UnitView</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#dep-arrow)">
+          <line x1="165" y1="66"  x2="165" y2="108"/>
+          <line x1="165" y1="158" x2="165" y2="200"/>
+          <line x1="165" y1="250" x2="165" y2="292"/>
+          <line x1="290" y1="135" x2="436" y2="135"/>
+          <line x1="290" y1="319" x2="436" y2="319"/>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.75" marker-end="url(#dep-arrow)">
+          <path d="M 550 342 L 550 364 L 424 364 L 424 382"/>
+          <path d="M 550 342 L 550 382"/>
+          <path d="M 550 342 L 550 364 L 706 364 L 706 382"/>
+        </g>
+
+        <g font-family="IBM Plex Sans KR, sans-serif" font-size="11.5" fill="currentColor" opacity="0.8">
+          <text x="176" y="92">LastTimeline 전달</text>
+          <text x="176" y="184">비트 순서대로</text>
+          <text x="176" y="276">이 이벤트의 연출자는?</text>
+          <text x="363" y="128" text-anchor="middle">이벤트 → 비트</text>
+          <text x="363" y="312" text-anchor="middle">id → 뷰 · 앵커</text>
+        </g>
+      </svg>
+      <figcaption>
+        제어는 위에서 아래로 한 방향으로만 흐르고, 가로 화살표 둘은 조회다. 세로축의 어느 상자도
+        아래 상자가 무엇을 그리는지 모르며, 연출자는 <code>BattleStage</code>를 거치지 않고는 어떤
+        뷰에도 닿지 못한다.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>매개변수는 어디서 오나</h2>
+    <p>
+      연출 하나에 필요한 값은 출처가 셋이고, 셋이 섞이지 않는 것이 이 설계의 요점이다.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 800 300" role="img"
+           aria-label="코어 이벤트는 누가·누구에게·얼마나를, BattleStage는 화면 좌표를, 연출자의 인스펙터 값은 지속 시간과 강도를 제공하며 셋이 모여 연출 큐 하나가 된다.">
+        <defs>
+          <marker id="param-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <g fill="none" stroke-width="1.6">
+          <rect x="20" y="26" width="300" height="62" rx="3" stroke="var(--vital)"/>
+          <rect x="20" y="118" width="300" height="62" rx="3" stroke="var(--player)"/>
+          <rect x="20" y="210" width="300" height="62" rx="3" stroke="var(--accent)"/>
+          <rect x="556" y="112" width="224" height="74" rx="3" stroke="currentColor"/>
+        </g>
+
+        <g font-family="Gothic A1, sans-serif" font-size="13" font-weight="700">
+          <text x="40" y="52" fill="var(--vital)">코어 이벤트 페이로드</text>
+          <text x="40" y="144" fill="var(--player)">BattleStage</text>
+          <text x="40" y="236" fill="var(--accent)">연출자의 인스펙터 값</text>
+          <text x="668" y="146" fill="currentColor" text-anchor="middle">연출 큐 하나</text>
+        </g>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.8">
+          <text x="40" y="74">OwnerId · HolderId · Before→After</text>
+          <text x="40" y="166">id → RectTransform 앵커 · 뷰</text>
+          <text x="40" y="258">0.25초 · 셰이크 6px · 이징</text>
+          <text x="668" y="168" text-anchor="middle">트윈 + 개시/후속 역할</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.3" fill="none" marker-end="url(#param-arrow)">
+          <path d="M 320 57  L 430 57  L 430 140 L 552 140"/>
+          <path d="M 320 149 L 552 149"/>
+          <path d="M 320 241 L 430 241 L 430 158 L 552 158"/>
+        </g>
+
+        <g font-family="IBM Plex Sans KR, sans-serif" font-size="11.5" fill="currentColor" opacity="0.8">
+          <text x="326" y="46">누가 · 누구에게 · 얼마나</text>
+          <text x="326" y="138">어디에</text>
+          <text x="326" y="230">얼마나 오래 · 세게</text>
+        </g>
+
+        <line x1="20" y1="288" x2="780" y2="288" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+      </svg>
+      <figcaption>
+        화살표 셋은 서로 다른 소유자에게서 온다 — 코어(규칙), Unity 런타임 레이아웃, 사람의 눈(규칙 17).
+        좌표가 이벤트에 실리는 경로는 그림에 없고, 있어서도 안 된다. 실리는 순간 코어가 화면을 알게 된다.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>도구 선택</h2>
+    <p>
+      이 계층은 전부 연출이고 헤드리스로 검증하지 않는다. 그러므로 규칙 32에 따라 이미 설치된 도구를
+      쓰고, 손으로 만드는 칸에는 이유를 적는다.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>무엇</th><th>쓰는 도구</th><th>손으로 만든다면 그 이유</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>비트 시퀀스 조립·배속·스킵</td>
+            <td>DOTween <code>Sequence</code> (<code>timeScale</code>, <code>Complete</code>)</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>유닛 몸짓 (셰이크·플래시·전진)</td>
+            <td>DOTween <code>DOShakeAnchorPos</code> · <code>DOColor</code> · <code>DOAnchorPos</code></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>피격 이펙트</td>
+            <td>Particle System</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>캐릭터 공격·피격 모션 (아트 도입 후)</td>
+            <td>2D Animation 15.1.0 · Aseprite 임포터 → <code>Animator</code></td>
+            <td>스프라이트가 아직 없어 지금은 트랜스폼 트윈으로 대신한다. 교체 지점은
+              <code>UnitMotionView</code> 하나이며, 연출자는 바뀌지 않는다.</td>
+          </tr>
+          <tr>
+            <td>피해 숫자 표시</td>
+            <td>TextMeshPro + DOTween</td>
+            <td>부동 전투 텍스트에 해당하는 내장 컴포넌트가 없다. 조립만 한다.</td>
+          </tr>
+          <tr>
+            <td>비트 분할</td>
+            <td>없음 — <code>TimelineBeatPlanner</code>를 직접 만든다</td>
+            <td>순수 계산이고 EditMode로 단언하므로 규칙 32의 대상이 아니다.
+              <code>PlacementFlightPath</code>와 같은 분할이다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>확장 축</h2>
+    <ul>
+      <li><b>갈아끼울 수 있는 것</b> — 이벤트별 연출자 등록(규칙 9: 클래스 하나 + 키 등록), 연출
+        시간·강도, 비트 분할 규칙.</li>
+      <li><b>한번 정하면 고정되는 것</b> — 이벤트 어휘는 코어가 소유한다. 비트끼리는 순차, 비트 안은
+        동시다. 연출은 이벤트 페이로드만 읽고 <code>CombatState</code>를 보지 않는다(규칙 11).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>대안과 기각 이유</h2>
+
+    <h3>상태 diff로 애니메이션한다 — 기각</h3>
+    <p>
+      <code>RefreshAll()</code> 전후를 비교해 변화를 그리는 방식. 순서와 인과(어느 카드가 어느 피해를
+      냈는지)가 diff에 없다. 코어가 이미 이벤트로 주는 정보를 버리고 복원하는 꼴이다.
+    </p>
+
+    <h3>전부 순차 재생하고 동시 연출을 포기한다 — 기각</h3>
+    <p>
+      광역 공격은 이미 코어에 있다. <code>DamageHandler</code>가 대상마다 <code>HpChanged</code>를
+      남기고, 다중 대상일 때 <code>CardResolved.TargetId</code>를 <code>null</code>로 둔다
+      (<code>DamageHandler.cs:176</code>). 순차로만 재생하면 한 번의 광역 타격이 여러 번의 타격으로
+      보인다.
+    </p>
+
+    <h3>Unity Timeline으로 재생한다 — 기각</h3>
+    <p>
+      <code>com.unity.timeline</code> 1.8.12가 설치돼 있고 <code>PlayableDirector</code>는 배속과
+      시크를 기본으로 준다. 그럼에도 쓰지 않는 이유는 <b>재생할 시퀀스를 저작할 수 없기 때문</b>이다.
+      Timeline의 값어치는 에디터에서 트랙을 짜 두는 데 있는데, 우리 시퀀스는 매 턴 이벤트 목록에서
+      새로 나온다. 런타임에 <code>TimelineAsset</code>을 조립하면 턴마다 에셋 객체를 만들었다 버리게
+      되고, 그러면 남는 것은 DOTween이 이미 주는 배속·즉시완료뿐이다.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 800 330" role="img"
+           aria-label="순차 재생은 고블린 돌진 0.18초 뒤 두 파티원의 피격이 차례로 일어나 0.68초가 걸리고, 비트 재생은 돌진 뒤 두 피격이 동시에 일어나 0.43초에 끝난다.">
+        <g font-family="Gothic A1, sans-serif" font-size="13" font-weight="700">
+          <text x="20" y="26" fill="currentColor" opacity="0.55">순차 재생 — 기각</text>
+          <text x="20" y="150" fill="var(--accent)">비트 재생 — 채택</text>
+        </g>
+
+        <!-- rejected: sequential -->
+        <g opacity="0.5">
+          <rect x="110" y="44" width="144" height="32" rx="2" fill="none" stroke="var(--enemy)" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <rect x="254" y="44" width="200" height="32" rx="2" fill="none" stroke="var(--player)" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <rect x="454" y="44" width="200" height="32" rx="2" fill="none" stroke="var(--player)" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <g font-family="IBM Plex Sans KR, sans-serif" font-size="11" fill="currentColor">
+            <text x="182" y="65" text-anchor="middle">고블린 돌진</text>
+            <text x="354" y="65" text-anchor="middle">member_a 피격</text>
+            <text x="554" y="65" text-anchor="middle">member_b 피격</text>
+          </g>
+        </g>
+        <text x="110" y="100" font-family="IBM Plex Sans KR, sans-serif" font-size="11.5" fill="currentColor" opacity="0.65">
+          0.68초 — 한 번의 광역 타격이 세 번으로 보인다
+        </text>
+
+        <!-- accepted: beat -->
+        <rect x="110" y="168" width="144" height="32" rx="2" fill="none" stroke="var(--enemy)" stroke-width="1.6"/>
+        <rect x="254" y="206" width="200" height="32" rx="2" fill="none" stroke="var(--player)" stroke-width="1.6"/>
+        <rect x="254" y="244" width="200" height="32" rx="2" fill="none" stroke="var(--player)" stroke-width="1.6"/>
+        <g font-family="IBM Plex Sans KR, sans-serif" font-size="11" fill="currentColor">
+          <text x="182" y="189" text-anchor="middle">고블린 돌진</text>
+          <text x="354" y="227" text-anchor="middle">member_a 피격</text>
+          <text x="354" y="265" text-anchor="middle">member_b 피격</text>
+        </g>
+
+        <g stroke="var(--accent)" stroke-width="1.2" fill="none">
+          <path d="M 254 184 L 240 184 L 240 222 L 250 222"/>
+          <path d="M 240 222 L 240 260 L 250 260"/>
+        </g>
+        <text x="470" y="230" font-family="IBM Plex Sans KR, sans-serif" font-size="11.5" fill="var(--accent)">
+          개시 하나, 후속 둘은 동시
+        </text>
+
+        <!-- shared time axis -->
+        <line x1="110" y1="296" x2="700" y2="296" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+        <g stroke="currentColor" stroke-width="1" opacity="0.4">
+          <line x1="110" y1="292" x2="110" y2="300"/>
+          <line x1="270" y1="292" x2="270" y2="300"/>
+          <line x1="430" y1="292" x2="430" y2="300"/>
+          <line x1="590" y1="292" x2="590" y2="300"/>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.6" text-anchor="middle">
+          <text x="110" y="316">0.0초</text>
+          <text x="270" y="316">0.2</text>
+          <text x="430" y="316">0.4</text>
+          <text x="590" y="316">0.6</text>
+        </g>
+
+        <g stroke-dasharray="3 4" stroke-width="1" opacity="0.55">
+          <line x1="454" y1="276" x2="454" y2="292" stroke="var(--accent)"/>
+          <line x1="654" y1="76" x2="654" y2="292" stroke="currentColor"/>
+        </g>
+      </svg>
+      <figcaption>
+        같은 이벤트 셋, 같은 시간축. 차이는 <code>member_a</code>와 <code>member_b</code>의 피격이
+        이어 붙느냐 겹치느냐 하나뿐이고, 그것이 0.25초와 “광역으로 보이는가”를 가른다.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>이 선택으로 나중에 어려워지는 것</h2>
+    <ol>
+      <li><b>재생 중 상호작용.</b> 범위에서 뺐으므로 director에 일시정지·입력·재개가 없다. 나중에
+        해석 도중 반응하는 개입을 넣으려면 이 계층을 다시 설계해야 한다.</li>
+      <li><b>스킵 계약이 앞으로 만들 모든 연출자에 붙는다.</b> 스킵은 루트 시퀀스를 즉시 완료시키는
+        방식이라, 연출자는 최종 상태를 트윈의 끝값이나 완료 콜백으로 표현해야 한다. 임의 시점의
+        일회성 부수효과로 쓰면 스킵 후 화면이 어긋나고, 하나만 어겨도 티가 난다.</li>
+      <li>
+        <b>코어를 고치면 재생이 조용히 어긋날 수 있다.</b>
+        <p>
+          코어는 사건을 줄줄이 늘어놓을 뿐 “이 셋은 한 건이다”라고 묶어 주지 않는다. 재생 계층은
+          <b>순서</b>로 추측한다 — <code>CardResolved</code>가 비트를 열고, 다음 개시 이벤트를 만날
+          때까지 뒤따르는 것들이 그 비트에 속한다. 지금 이 추측이 맞는 것은
+          <code>TurnResolver.cs:151</code>이 <code>CardResolved</code>를 넣고 곧바로 그 카드가 낸
+          이벤트들을 이어 붙이기 때문일 뿐, 코어가 보장하는 계약이 아니다.
+        </p>
+        <p>
+          그래서 코어가 <code>HpChanged</code>를 턴 끝에 몰아서 내보내게 바뀌면 비트가 전부
+          1개짜리가 되어 <b>광역 공격이 다시 순차로 보인다.</b>
+        </p>
+        <p>
+          <b>문제는 그때 아무 빨간불도 켜지지 않는다는 것이다.</b> 타입이 그대로라 컴파일은 되고,
+          코어 헤드리스 테스트도 통과한다 — 그 테스트가 단언하는 것은 “무슨 이벤트가 나왔나”이지
+          “어떻게 묶이나”가 아니다. 티가 나는 곳은 Play를 눌러 눈으로 볼 때뿐이다.
+        </p>
+        <p>
+          <code>TimelineBeatPlanner</code>를 순수 함수로 두는 이유가 이것이다. “이 이벤트들은 한
+          비트가 된다”를 EditMode 테스트로 못 박고, 한 비트에 담긴 <code>HpChanged</code>의
+          <code>SourceId</code>가 그 비트를 연 카드와 같은지도 함께 단언한다 — 순서로 묶되
+          <code>SourceId</code>로 검산하는 것이다. 그러면 위와 같은 코어 변경 때 코어 테스트는
+          통과해도 비트 테스트가 걸린다. <b>코어 이벤트의 순서나 <code>SourceId</code> 의미를 바꿀
+          때는 비트 테스트를 같이 봐야 한다.</b>
+        </p>
+      </li>
+      <li><b>최대 HP를 이벤트가 싣지 않는다.</b> <code>HpChanged</code>는 <code>Before</code>와
+        <code>After</code>만 준다(<code>ResolutionEvent.cs:92</code>). HP바 비율을 그리려면
+        <code>BattleStage</code>가 스폰 시점의 최대 HP를 들어야 하고, 전투 중 최대 HP가 변하는 기능이
+        생기면 그때 갱신 경로를 새로 만들어야 한다.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>실행 예시 — 적의 광역 공격이 파티 2명을 친다</h2>
+    <p>
+      고블린의 <code>sweep</code> 카드(인스턴스 7)가 <code>member_a</code>(HP 20)와
+      <code>member_b</code>(HP 18)를 각각 5, 4 피해로 친다. 플레이어 배속은 1배.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <h3>코어가 이벤트 셋을 내놓는다</h3>
+        <p>
+          <code>DamageHandler</code>가 대상마다 <code>HpChanged</code>를 남기고,
+          <code>TurnResolver</code>가 <code>CardResolved</code>를 먼저 넣은 뒤 그것들을 잇는다
+          (<code>TurnResolver.cs:151</code>).
+        </p>
+        <ul class="events">
+          <li><b>CardResolved</b> — InstanceId 7, OwnerId goblin, CardId sweep, DamageDealt 9, TargetId <b>null</b></li>
+          <li><b>HpChanged</b> — HolderId member_a, Before 20, After 15, CardDamage, SourceId sweep</li>
+          <li><b>HpChanged</b> — HolderId member_b, Before 18, After 14, CardDamage, SourceId sweep</li>
+        </ul>
+        <p>대상이 둘이라 단일 대상 id가 없어 <code>TargetId</code>가 <code>null</code>이다. 이것이
+          “광역이다”라는 신호다.</p>
+      </li>
+
+      <li>
+        <h3><code>TimelineBeatPlanner</code>가 비트 하나로 묶는다</h3>
+        <p>
+          <code>CardResolved</code>가 비트를 열고, 뒤따르는 <code>SourceId</code>가 <code>sweep</code>인
+          <code>HpChanged</code> 둘을 같은 비트에 담는다. 비트 = 이벤트 3개.
+        </p>
+      </li>
+
+      <li>
+        <h3>연출자들이 큐를 만든다</h3>
+        <p>
+          <code>CardResolvedPresenter</code>는 <code>BattleStage</code>에 <code>goblin</code>의
+          <code>UnitMotionView</code>를 물어 전진 트윈을 만든다. <code>TargetId</code>가
+          <code>null</code>이라 특정 대상 쪽이 아니라 정면으로 돌진한다. 0.18초(인스펙터 값).
+          역할 <b>개시</b>.
+        </p>
+        <p>
+          <code>HpChangedPresenter</code> 둘은 <code>member_a</code>의 <code>UnitMotionView</code>와
+          앵커를 물어 셰이크 + 붉은 플래시, 그 앵커에 <code>FloatingNumberView</code>로 −5, HP바를
+          20 → 15로 0.25초 트윈. <code>member_b</code>는 −4, 18 → 14. 역할 <b>후속</b>.
+        </p>
+      </li>
+
+      <li>
+        <h3>director가 배치한다</h3>
+        <p>
+          개시 큐를 이어 붙이고, 후속 큐 둘을 그 뒤에 겹쳐 넣는다. 고블린이 0.18초간 돌진하고
+          <b>두 파티원이 동시에</b> 0.25초간 맞는다. 비트 총 0.43초.
+        </p>
+      </li>
+
+      <li>
+        <h3>배속과 스킵</h3>
+        <p>
+          2배속은 루트 시퀀스의 시간 스케일을 2로 두는 것뿐이라 각 연출자는 아무것도 모른다.
+          스킵은 루트 시퀀스를 즉시 완료시켜 HP바 15·14, 숫자 소멸, 유닛 원위치가 한 번에 확정된다.
+        </p>
+      </li>
+
+      <li>
+        <h3>재생이 끝난다</h3>
+        <p><code>RefreshAll()</code>이 한 번 돌아 손패·레일·더미를 최종 상태로 맞춘다.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="decide">
+    <h2>사용자 판단이 필요한 지점</h2>
+    <p>
+      <code>BattleScreenController</code>의 <code>[SerializeField]</code>가 8개에서 9개가 된다.
+      규칙 30의 보고 기준(10개) 아래지만, 입력 핸들러 다섯이 컨트롤러에 남은 것은 이미 기록된
+      미해결 후속이다.
+    </p>
+    <p>
+      <b>재생 계층을 붙이는 김에 입력도 함께 뺄지, 재생만 붙일지</b> 정해 주면 상세로 들어간다.
+    </p>
+  </section>
+
+</main>
