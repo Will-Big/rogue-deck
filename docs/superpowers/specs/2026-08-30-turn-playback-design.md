@@ -32,12 +32,13 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 
 - 작업은 **전용 워크트리**에서 한다(규칙 15). 메인 체크아웃의 브랜치를 전환하지 않는다.
 - 헤드리스: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-- **기준선: 557 passed / 0 failed (2026-08-30 master `cdb2545` 실측).** 이 계획은 `Assets/Core`를
-  건드리지 않으므로 이 수치가 끝까지 변하지 않아야 한다. 변했다면 코어를 건드린 것이다.
+- **기준선: 557 passed / 0 failed (2026-08-30 master `cdb2545` 실측).** 기존 557개는 끝까지 전부
+  통과해야 하고, 총계는 Task 1이 더하는 비트 분할 테스트만큼만 는다.
+- **규칙 레이어(`FateWeaver.Core`)를 수정하지 않는다.** 이 계층은 코어 이벤트를 읽기만 한다.
+  `FateWeaver.Simulation`에 순수 표현 로직을 더하는 것은 별개이며 `TimelineTextFormatter`의 선례를
+  따른다. 규칙 판정·상태·효과에 손이 가야 한다면 범위를 벗어난 신호이므로 멈추고 보고한다.
 - Unity EditMode 기준선은 착수 세션이 첫 실행에서 실측한다(README의 672는 계획 3.5 시점 수치로 낡았다).
   `-runTests`에 `-quit`를 같이 주지 않는다 — 테스트 없이 exit 0이 된다.
-- **`Assets/Core`를 수정하지 않는다.** 이 계층은 코어 이벤트를 읽기만 한다. 코어에 손이 가야 한다면
-  그것은 이 계획의 범위를 벗어난 신호이므로 멈추고 보고한다.
 - 규칙 32: 연출은 DOTween·Particle System 등 기존 도구로 한다. 직접 구현하는 칸은 개요의
   「도구 선택」 표에 이유가 적힌 것뿐이다. 새 의존성은 사전 승인(규칙 14).
 - 규칙 1·2·3: 런타임 `new GameObject` 금지(프리팹 인스턴스화만), `Resources.Load`·
@@ -55,7 +56,7 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 
 | 파일 | 책임 |
 |---|---|
-| `Assets/Unity/Scripts/Battle/Playback/TimelineBeatPlanner.cs` | 이벤트 목록 → 비트 목록. 순수 정적 클래스, UnityEngine 미사용 |
+| `Assets/Core/Simulation/Playback/TimelineBeatPlanner.cs` | 이벤트 목록 → 비트 목록. 순수 정적 클래스 |
 | `Assets/Unity/Scripts/Battle/Playback/PlaybackCue.cs` | `PlaybackCue`(Tween + `CueRole`)와 `CueRole` enum |
 | `Assets/Unity/Scripts/Battle/Playback/IResolutionEventPresenter.cs` | 연출자 계약 |
 | `Assets/Unity/Scripts/Battle/Playback/EventPresenterRegistry.cs` | 이벤트 타입 → 연출자 (규칙 9) |
@@ -74,8 +75,17 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 | `Assets/Unity/Editor/BattleSceneBuilder.cs` | 재생 계층 배선 + 씬 재생성 |
 | `Assets/Scenes/FateWeaverBattle.unity` | 위 배선의 결과 |
 
-테스트: `Assets/Tests/UnityEditMode/TimelineBeatPlannerTests.cs`,
-`EventPresenterRegistryTests.cs`, `TurnPlaybackDirectorTests.cs`.
+테스트: `Assets/Core/Tests/EditMode/TimelineBeatPlannerTests.cs`(헤드리스),
+`Assets/Tests/UnityEditMode/EventPresenterRegistryTests.cs`,
+`Assets/Tests/UnityEditMode/TurnPlaybackDirectorTests.cs`(둘 다 Unity EditMode).
+
+**`TimelineBeatPlanner`만 `FateWeaver.Simulation`에 둔다.** 처음에는 Unity 레이어에 두려 했으나,
+같은 모양의 선례가 이미 있다 — `TimelineTextFormatter`(타임라인 → 한국어 텍스트)가
+`Assets/Core/Simulation/Descriptions/`에 살고 `CombatLogTests`가 헤드리스로 덮는다. 둘 다 이벤트
+목록을 받아 표현용 구조로 바꾸는 순수 함수이고 UnityEngine을 쓰지 않는다. `FateWeaver.Simulation`은
+`noEngineReferences: true`라 규칙 6과 충돌하지 않으며, 헤드리스가 이 폴더를 컴파일하므로 검증이
+2초 만에 끝난다(Unity 배치는 수 분). 나머지 여섯은 MonoBehaviour·DOTween에 묶여 있어 Unity
+레이어에 남는다.
 
 ---
 
