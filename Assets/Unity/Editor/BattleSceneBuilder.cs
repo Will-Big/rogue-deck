@@ -176,6 +176,10 @@ namespace FateWeaver.Unity.Editor
             Place((RectTransform)turnButton.transform, new Vector2(1f, 0.3f), new Vector2(-120f, 0f), new Vector2(180f, 56f));
             var resetButton = MakeButton(canvasRect, "ResetButton", "초기화", 18f, out _);
             Place((RectTransform)resetButton.transform, new Vector2(0f, 1f), new Vector2(90f, -40f), new Vector2(120f, 40f));
+            var skipButton = MakeButton(canvasRect, "SkipButton", "스킵", 18f, out _);
+            Place((RectTransform)skipButton.transform, new Vector2(1f, 0.3f), new Vector2(-120f, -64f), new Vector2(84f, 40f));
+            var speedButton = MakeButton(canvasRect, "SpeedButton", "1배", 18f, out var speedLabel);
+            Place((RectTransform)speedButton.transform, new Vector2(1f, 0.3f), new Vector2(-30f, -64f), new Vector2(84f, 40f));
 
             var confirmButton = MakeButton(canvasRect, "ConfirmButton", "확인", 22f, out _);
             Place((RectTransform)confirmButton.transform, new Vector2(1f, 0f), new Vector2(-120f, 150f), new Vector2(160f, 52f));
@@ -249,7 +253,21 @@ namespace FateWeaver.Unity.Editor
             hudSo.FindProperty("_turnButton").objectReferenceValue = turnButton;
             hudSo.FindProperty("_turnButtonLabel").objectReferenceValue = turnLabel;
             hudSo.FindProperty("_resetButton").objectReferenceValue = resetButton;
+            hudSo.FindProperty("_skipButton").objectReferenceValue = skipButton;
+            hudSo.FindProperty("_speedButton").objectReferenceValue = speedButton;
+            hudSo.FindProperty("_speedButtonLabel").objectReferenceValue = speedLabel;
             hudSo.ApplyModifiedPropertiesWithoutUndo();
+
+            // --- 재생 계층 (관리자 객체: 화면에 보이지 않고 역할이 배선뿐이다) ---
+            var playbackGo = new GameObject("BattlePlayback");
+            playbackGo.transform.SetParent(controllerGo.transform, false);
+            var battleStage = playbackGo.AddComponent<Playback.BattleStage>();
+            var director = playbackGo.AddComponent<Playback.TurnPlaybackDirector>();
+            battleStage.EditorBind(
+                units,
+                AssetDatabase.LoadAssetAtPath<FloatingNumberView>(FloatingNumberPrefabPath),
+                overlay);
+            playbackGo.AddComponent<Playback.PlaybackInstaller>().EditorBind(battleStage, director);
 
             so.FindProperty("_presenter").objectReferenceValue = presenter;
             so.FindProperty("_hand").objectReferenceValue = hand;
@@ -258,6 +276,7 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_piles").objectReferenceValue = piles;
             so.FindProperty("_hud").objectReferenceValue = hud;
             so.FindProperty("_selection").objectReferenceValue = selection;
+            so.FindProperty("_playback").objectReferenceValue = director;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
