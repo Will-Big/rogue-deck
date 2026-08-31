@@ -33,30 +33,41 @@ namespace FateWeaver.Tests.UnityEditMode
             var presenter = new FakePresenter(typeof(CardResolved));
             registry.Register(presenter);
 
-            Assert.IsTrue(registry.TryResolve(AnyCard(), out var resolved));
-            Assert.AreSame(presenter, resolved);
+            var resolved = registry.PresentersFor(AnyCard());
+
+            Assert.AreEqual(1, resolved.Count);
+            Assert.AreSame(presenter, resolved[0]);
         }
 
         [Test]
-        public void 미등록_이벤트는_예외가_아니라_해결_실패다()
+        public void 미등록_이벤트는_예외가_아니라_빈_목록이다()
         {
             var registry = new EventPresenterRegistry();
             registry.Register(new FakePresenter(typeof(CardResolved)));
 
-            Assert.IsFalse(registry.TryResolve(
-                new HpChanged("goblin", 10, 6, HpChangeSource.CardDamage, "sweep"),
-                out var resolved));
-            Assert.IsNull(resolved);
+            Assert.AreEqual(
+                0,
+                registry.PresentersFor(
+                    new HpChanged("goblin", 10, 6, HpChangeSource.CardDamage, "sweep")).Count);
+            Assert.AreEqual(0, registry.PresentersFor(null).Count);
         }
 
         [Test]
-        public void 같은_타입을_두_번_등록하면_예외다()
+        public void 한_이벤트에_연출자를_여럿_붙일_수_있다()
         {
+            // 카드가 해결되면 시전자가 움직이고(유닛) 그 카드에 아웃라인이 켜진다(레일). 같은
+            // 사건의 두 얼굴이므로 한 연출자에 몰지 않는다.
             var registry = new EventPresenterRegistry();
-            registry.Register(new FakePresenter(typeof(CardResolved)));
+            var first = new FakePresenter(typeof(CardResolved));
+            var second = new FakePresenter(typeof(CardResolved));
+            registry.Register(first);
+            registry.Register(second);
 
-            Assert.Throws<ArgumentException>(
-                () => registry.Register(new FakePresenter(typeof(CardResolved))));
+            var resolved = registry.PresentersFor(AnyCard());
+
+            Assert.AreEqual(2, resolved.Count);
+            Assert.AreSame(first, resolved[0], "등록 순서가 유지되지 않았다");
+            Assert.AreSame(second, resolved[1]);
         }
 
         [Test]

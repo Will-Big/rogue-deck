@@ -12,8 +12,9 @@ namespace FateWeaver.Unity.Playback
     {
         [SerializeField] private BattleStage _stage;
         [SerializeField] private TurnPlaybackDirector _director;
+        [SerializeField] private ExecutionRailView _rail;
 
-        public bool IsBound => _stage != null && _director != null;
+        public bool IsBound => _stage != null && _director != null && _rail != null;
 
         private void Awake() => Install();
 
@@ -28,14 +29,20 @@ namespace FateWeaver.Unity.Playback
             var registry = new EventPresenterRegistry();
             registry.Register(new CardResolvedPresenter(_stage));
             registry.Register(new HpChangedPresenter(_stage));
+            registry.Register(
+                new RailCardHighlightPresenter(_rail, typeof(FateWeaver.Core.Events.CardResolved)));
+            registry.Register(
+                new RailCardHighlightPresenter(_rail, typeof(FateWeaver.Core.Events.CardCancelled)));
             _director.Initialize(registry);
         }
 
         /// <summary>씬 저작용 배선 훅(BattleSceneBuilder가 부른다).</summary>
-        public void EditorBind(BattleStage stage, TurnPlaybackDirector director)
+        public void EditorBind(
+            BattleStage stage, TurnPlaybackDirector director, ExecutionRailView rail)
         {
             _stage = stage;
             _director = director;
+            _rail = rail;
         }
     }
 }

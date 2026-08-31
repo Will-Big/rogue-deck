@@ -267,7 +267,8 @@ namespace FateWeaver.Unity.Editor
                 units,
                 AssetDatabase.LoadAssetAtPath<FloatingNumberView>(FloatingNumberPrefabPath),
                 overlay);
-            playbackGo.AddComponent<Playback.PlaybackInstaller>().EditorBind(battleStage, director);
+            playbackGo.AddComponent<Playback.PlaybackInstaller>()
+                .EditorBind(battleStage, director, rail);
 
             so.FindProperty("_presenter").objectReferenceValue = presenter;
             so.FindProperty("_hand").objectReferenceValue = hand;

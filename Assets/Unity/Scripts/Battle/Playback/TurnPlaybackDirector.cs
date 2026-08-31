@@ -114,56 +114,71 @@ namespace FateWeaver.Unity.Playback
             return root;
         }
 
-        /// <summary>비트 하나. 개시 큐들이 차례로 흐른 뒤, 후속 큐들이 그 지점에서 함께 시작한다.
-        /// 첫 후속만 Append하고 나머지를 Join하는 것이 "동시"를 만드는 지점이다 — 전부 Join하면
-        /// 개시와 같은 시점에서 시작해 버린다.</summary>
+        /// <summary>비트 하나. 개시 큐들이 함께 흐른 뒤, 후속 큐들이 그 지점에서 함께 시작한다.
+        /// 개시가 서로 나란한 이유는 한 비트의 원인이 하나이기 때문이다 — 시전자의 몸짓과 그 카드의
+        /// 아웃라인은 같은 사건의 두 얼굴이지 순서가 있는 두 사건이 아니다.
+        ///
+        /// 각 무리의 첫 큐만 Append하고 나머지를 Join하는 것이 "동시"를 만드는 지점이다. 전부
+        /// Join하면 후속까지 개시와 같은 시점에서 시작하고, 전부 Append하면 무엇도 겹치지 않는다.</summary>
         private Sequence BuildBeat(PlaybackBeat beat)
         {
-            Sequence sequence = null;
+            List<Tween> leads = null;
             List<Tween> follows = null;
 
             foreach (var evt in beat.Events)
             {
-                if (!_registry.TryResolve(evt, out var presenter))
+                foreach (var presenter in _registry.PresentersFor(evt))
                 {
-                    continue;
-                }
-
-                var cue = presenter.Build(evt);
-                if (!cue.HasTween)
-                {
-                    continue;
-                }
-
-                if (cue.Role == CueRole.Lead)
-                {
-                    sequence = sequence ?? DOTween.Sequence();
-                    sequence.Append(cue.Tween);
-                }
-                else
-                {
-                    follows = follows ?? new List<Tween>();
-                    follows.Add(cue.Tween);
-                }
-            }
-
-            if (follows != null)
-            {
-                sequence = sequence ?? DOTween.Sequence();
-                for (int i = 0; i < follows.Count; i++)
-                {
-                    if (i == 0)
+                    var cue = presenter.Build(evt);
+                    if (!cue.HasTween)
                     {
-                        sequence.Append(follows[i]);
+                        continue;
+                    }
+
+                    if (cue.Role == CueRole.Lead)
+                    {
+                        leads = leads ?? new List<Tween>();
+                        leads.Add(cue.Tween);
                     }
                     else
                     {
-                        sequence.Join(follows[i]);
+                        follows = follows ?? new List<Tween>();
+                        follows.Add(cue.Tween);
                     }
                 }
             }
 
+            if (leads == null && follows == null)
+            {
+                return null;
+            }
+
+            var sequence = DOTween.Sequence();
+            AppendTogether(sequence, leads);
+            AppendTogether(sequence, follows);
             return sequence;
+        }
+
+        /// <summary>무리 하나를 앞 무리가 끝난 시점에 통째로 얹는다. 첫 큐가 시점을 정하고 나머지가
+        /// 거기에 붙는다.</summary>
+        private static void AppendTogether(Sequence sequence, List<Tween> group)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < group.Count; i++)
+            {
+                if (i == 0)
+                {
+                    sequence.Append(group[i]);
+                }
+                else
+                {
+                    sequence.Join(group[i]);
+                }
+            }
         }
 
         private void StopCurrent()

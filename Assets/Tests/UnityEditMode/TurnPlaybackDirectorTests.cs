@@ -136,6 +136,31 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void 한_이벤트의_개시_큐_둘은_나란히_흐른다()
+        {
+            // 시전자의 몸짓과 그 카드의 아웃라인은 같은 사건의 두 얼굴이므로 겹쳐야 한다.
+            var registry = new EventPresenterRegistry();
+            registry.Register(
+                new StubPresenter(typeof(CardResolved), CueRole.Lead, LeadSeconds));
+            registry.Register(
+                new StubPresenter(typeof(CardResolved), CueRole.Lead, LeadSeconds));
+            _director.Initialize(registry);
+
+            _director.Play(
+                new ResolutionEvent[]
+                {
+                    new CardResolved(7, "goblin", "sweep", Side.Enemy, 9, null),
+                },
+                null);
+
+            Assert.AreEqual(
+                LeadSeconds,
+                CurrentRoot().Duration(),
+                0.001f,
+                "개시 큐 둘이 겹치지 않고 이어 붙었다");
+        }
+
+        [Test]
         public void 스킵하면_완료가_정확히_한_번_불린다()
         {
             _director.Initialize(Registry());
