@@ -34,8 +34,9 @@ namespace FateWeaver.Unity.Editor
             "Assets/Tests"
         };
 
-        // The playtest scenes (FateWeaverPlaytest / FateWeaverWardenPlaytest) reference this guid for
-        // every TMP label. Pinning the generated asset to it makes the scenes render Pretendard directly.
+        // Scenes reference this guid for every TMP label. Pinning the generated asset to it makes them
+        // render Pretendard directly. (The two playtest scenes this once named are both long gone; the
+        // live scene is Assets/Scenes/FateWeaverBattle.unity.)
         private const string PinnedGuid = "008df83b1c9db764c8fd208abe909623";
 
         [MenuItem("Fate Weaver/Create Korean TMP Font")]

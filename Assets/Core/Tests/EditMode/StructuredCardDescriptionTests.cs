@@ -104,11 +104,10 @@ namespace FateWeaver.Tests.EditMode
         public void Every_default_and_generated_card_composes_deterministically()
         {
             // TestContent.Cards().Cards.Values는 Content/Cards/*.json 전부다 — 시작 풀 22장과
-            // fixture_* 4종을 모두 포함한다(합 26장, 파일 개수와 실측 일치). 적 카드(GoblinDeck·
-            // WardenDeck)는 아직 JSON이 아니므로(범위 밖) 따로 붙인다.
+            // fixture_* 4종을 모두 포함한다(합 26장, 파일 개수와 실측 일치). 적 카드(GoblinDeck)는
+            // 아직 JSON이 아니므로(범위 밖) 따로 붙인다.
             var cards = TestContent.Cards().Cards.Values
-                .Concat(GoblinDeck.AllCards())
-                .Concat(WardenDeck.Deck());
+                .Concat(GoblinDeck.AllCards());
             foreach (var card in cards)
             {
                 var first = DescriptionComposer.Compose(card, Korean);

@@ -15,7 +15,6 @@ namespace FateWeaver.Tests.EditMode
         private static IReadOnlyList<CardDefinition> DefaultCards()
             => TestContent.StarterDeckCards()
                 .Concat(GoblinDeck.AllCards())
-                .Concat(WardenDeck.Deck())
                 .Concat(PartyPrototypeCards())
                 .ToArray();
 

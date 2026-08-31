@@ -15,16 +15,13 @@ namespace FateWeaver.Tests
         private const int PlayerHp = 30;
         private const int Turns = 8;
 
-        private static string RunSignature(string enemyKind, int seed)
+        private static string RunSignature(int seed)
         {
-            var policy = enemyKind == "warden" ? WardenDeck.Policy() : GoblinDeck.Policy();
-            var enemyId = enemyKind == "warden" ? WardenDeck.EnemyId : GoblinDeck.EnemyId;
-            var enemyHp = enemyKind == "warden" ? WardenDeck.StartingHp : GoblinDeck.StartingHp;
             var session = new DeckCombatSession(TestContent.Statuses(),
                 TestContent.StarterDeckCards(),
                 PlayerHp,
-                new[] { new Enemy(enemyId, enemyHp) },
-                policy,
+                new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
+                GoblinDeck.Policy(),
                 seed: seed);
 
             var signature = new StringBuilder();
@@ -43,20 +40,18 @@ namespace FateWeaver.Tests
             return signature.ToString();
         }
 
-        [TestCase("goblin")]
-        [TestCase("warden")]
-        public void Same_seed_produces_identical_full_run(string enemyKind)
+        [Test]
+        public void Same_seed_produces_identical_full_run()
         {
-            Assert.AreEqual(RunSignature(enemyKind, seed: 7), RunSignature(enemyKind, seed: 7));
-            Assert.AreEqual(RunSignature(enemyKind, seed: 41), RunSignature(enemyKind, seed: 41));
+            Assert.AreEqual(RunSignature(seed: 7), RunSignature(seed: 7));
+            Assert.AreEqual(RunSignature(seed: 41), RunSignature(seed: 41));
         }
 
-        [TestCase("goblin")]
-        [TestCase("warden")]
-        public void Different_seeds_produce_meaningful_variance(string enemyKind)
+        [Test]
+        public void Different_seeds_produce_meaningful_variance()
         {
             var signatures = new HashSet<string>(
-                Enumerable.Range(0, 6).Select(seed => RunSignature(enemyKind, seed)));
+                Enumerable.Range(0, 6).Select(seed => RunSignature(seed)));
             Assert.Greater(signatures.Count, 1);
         }
     }

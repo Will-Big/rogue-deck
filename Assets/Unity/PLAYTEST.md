@@ -19,7 +19,6 @@ JSON을 직접 읽어 로드하므로 별도 세팅 단계가 없다.
 ## 실행
 
 1. `Assets/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
-   - 간수 잠금 적 테스트는 `Assets/Scenes/FateWeaverWardenPlaytest.unity`를 연다.
 2. 손패의 실행 카드를 클릭하면 운명력을 지불하고 미래 영역에 직접 배치된다.
 3. 손패의 개입 카드를 클릭한 뒤 미래 영역의 대상 카드를 선택하면 실행 순서 변경/교환 같은 개입이 적용된다.
 4. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나면 종료.

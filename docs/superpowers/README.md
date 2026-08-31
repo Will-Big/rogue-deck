@@ -42,7 +42,6 @@
 |---|---|---|---|
 | [무작위 10장 시작 덱 구성](specs/2026-07-30-random-starter-deck-design.md) | `current` | 22장 풀에서 역할별 2/2/2/4를 한 번 추첨해 고정하는 시작 덱 | 시작 덱 10장 추첨·에셋 교체·검증 |
 | [캐릭터 및 카드풀 설계 규칙](specs/2026-07-20-character-card-pools-design.md) | `current` | 카드 소유권, 카드풀, 독 아키타입, 유산 | 캐릭터·카드·독 카드풀 디자인 |
-| [간수 적 설계](specs/2026-06-27-warden-lock-enemy-design.md) | `current` | 잠금 입문 적의 카드·행동 패턴 | 간수 조정 또는 잠금 적 확장 |
 | [카드 변형과 런타임 콘텐츠 로딩](specs/2026-07-30-card-mutation-and-runtime-content-design.md) | `current` | OwnedCard의 영구·전투 변형 2목록과 Effective 카드, 코드 생성의 JSON 런타임 로딩 대체, UGC 경계 | 카드 강화·변경 구현, 모딩 지원 착수 |
 
 카드 디자인을 새 세션에서 이어갈 때는
@@ -154,8 +153,9 @@
    **남은 이중성 하나:** (a) ~~`StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`가
    골든 테스트 축으로 살아 있다~~ **계획 3d가 지웠다** — 테스트는 이제 `CardFixtures`·
    `UnityCardFixtures` 합성 픽스처와 `TestContent`·`UnityTestContent` JSON 카탈로그, 둘로만 카드를
-   얻는다. (b) **적 카드는 아직 JSON이 아니다** — `GoblinDeck`·`WardenDeck`의 순수 C#에서 나오며,
-   옮기려면 적 정책·행동 패턴 설계가 딸려 온다(아직 계획 없음).
+   얻는다. (b) **적 카드는 아직 JSON이 아니다** — `GoblinDeck`의 순수 C#에서 나오며,
+   옮기려면 적 정책·행동 패턴 설계가 딸려 온다(아직 계획 없음). `WardenDeck`은 2026-08-31에
+   삭제했다 — 몬스터를 묶음 기반으로 재작업할 예정이다.
    그리고 ~~`ContentExportWriter`는 카드도 상태도 쓰지 않는다 — 저작이 JSON에만 있어 다시 쓰면
    지워지기 때문이다(`WriteAllDoesNotTouchCards`·`WriteAllDoesNotTouchStatuses`가 막는다)~~
    **계획 3d가 지웠다** — 코드에서 JSON으로 내보내는 경로 자체가 없다. 저작은 JSON에서 시작해
