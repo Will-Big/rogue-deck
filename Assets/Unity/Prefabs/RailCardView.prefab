@@ -577,6 +577,9 @@ MonoBehaviour:
   _orderText: {fileID: 7597662328242712152}
   _selectionOutline: {fileID: 4989242491881433417}
   _executionOutline: {fileID: 7067839438096674101}
+  _primaryOutlineColor: {r: 0.95, g: 0.72, b: 0.25, a: 1}
+  _secondaryOutlineColor: {r: 0.35, g: 0.75, b: 0.95, a: 1}
+  _executingOutlineColor: {r: 1, g: 0.95, b: 0.62, a: 1}
   _lockIcon: {fileID: 7726023168518066720}
   _ownerChip: {fileID: 4161955013045786501}
   _ownerChipBackground: {fileID: 4112573432912979462}

@@ -566,6 +566,7 @@ MonoBehaviour:
   _nameText: {fileID: 3697894110122556850}
   _statusText: {fileID: 8323195994224078078}
   _hpTweenDuration: 0.25
+  _deadTint: {r: 0.35, g: 0.35, b: 0.35, a: 0.5}
 --- !u!114 &2586039872579160899
 MonoBehaviour:
   m_ObjectHideFlags: 0

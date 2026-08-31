@@ -22,8 +22,12 @@ namespace FateWeaver.Unity
         [Tooltip("HP 막대가 새 값까지 흐르는 시간(초).")]
         [SerializeField] private float _hpTweenDuration = 0.25f;
 
+        [Tooltip("쓰러진 유닛의 초상 색.")]
+        [SerializeField] private Color _deadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
+
+        /// <summary>HP 막대의 색. EditorCreate가 프리팹에 굽는 값이라 실물 조절은 프리팹의
+        /// HpFill 이미지에서 한다.</summary>
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
-        private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
 
         private Color _aliveTint = Color.white;
         private int _maxHp;
@@ -67,7 +71,7 @@ namespace FateWeaver.Unity
             _hpFill.offsetMin = Vector2.zero;
             _hpFill.offsetMax = Vector2.zero;
             _hpText.text = Mathf.Max(0, current) + " / " + _maxHp;
-            _portrait.color = current > 0 ? _aliveTint : DeadTint;
+            _portrait.color = current > 0 ? _aliveTint : _deadTint;
         }
 
         public void SetStatuses(

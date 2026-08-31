@@ -18,6 +18,16 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _orderText;
         [SerializeField] private Image _selectionOutline;
         [SerializeField] private Image _executionOutline;
+
+        [Header("아웃라인 색")]
+        [Tooltip("대상 선택의 첫 대상.")]
+        [SerializeField] private Color _primaryOutlineColor = new Color(0.95f, 0.72f, 0.25f, 1f);
+
+        [Tooltip("대상 선택의 두 번째 대상.")]
+        [SerializeField] private Color _secondaryOutlineColor = new Color(0.35f, 0.75f, 0.95f, 1f);
+
+        [Tooltip("재생 중 지금 실행되고 있는 카드. 두께는 ExecutionOutline 자식의 RectTransform에서 조절한다.")]
+        [SerializeField] private Color _executingOutlineColor = new Color(1f, 0.95f, 0.62f, 1f);
         [SerializeField] private Image _lockIcon;
         [SerializeField] private GameObject _ownerChip;
         [SerializeField] private Image _ownerChipBackground;
@@ -29,10 +39,8 @@ namespace FateWeaver.Unity
         private static readonly Color InterventionFrame = new Color(0.24f, 0.45f, 0.55f, 1f);
         private static readonly Color EnemyTint = new Color(0.45f, 0.18f, 0.18f, 1f);
         private static readonly Color PlayerTint = new Color(0.22f, 0.28f, 0.36f, 1f);
+        /// <summary>아웃라인이 꺼진 상태. 투명은 튜닝 값이 아니라 "없음"의 표현이라 상수로 둔다.</summary>
         private static readonly Color OutlineNone = new Color(0f, 0f, 0f, 0f);
-        private static readonly Color OutlinePrimary = new Color(0.95f, 0.72f, 0.25f, 1f);
-        private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
-        private static readonly Color OutlineExecuting = new Color(1f, 0.95f, 0.62f, 1f);
 
         private Action<bool> _onHover;
         private bool _inputEnabled = true;
@@ -92,15 +100,15 @@ namespace FateWeaver.Unity
         {
             if (_executionOutline != null)
             {
-                _executionOutline.color = executing ? OutlineExecuting : OutlineNone;
+                _executionOutline.color = executing ? _executingOutlineColor : OutlineNone;
             }
         }
 
         public void SetSelection(CardView.SelectionKind kind)
         {
             _selectionOutline.color =
-                kind == CardView.SelectionKind.Primary ? OutlinePrimary :
-                kind == CardView.SelectionKind.Secondary ? OutlineSecondary :
+                kind == CardView.SelectionKind.Primary ? _primaryOutlineColor :
+                kind == CardView.SelectionKind.Secondary ? _secondaryOutlineColor :
                 OutlineNone;
         }
 
