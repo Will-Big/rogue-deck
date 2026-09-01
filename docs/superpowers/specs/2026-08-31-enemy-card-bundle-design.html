@@ -323,7 +323,7 @@
 <header class="masthead">
   <div class="wrap">
     <h1>적 카드 묶음</h1>
-    <span class="chip">검수 대기</span>
+    <span class="chip">검수 대기 · 2판</span>
     <div class="meta">
       <span><b>작성일</b>2026-08-31</span>
       <span><b>범위</b>적이 매 턴 어떤 카드를 미래 존에 올리는지 정하는 방식</span>
@@ -332,6 +332,8 @@
     <p class="reader-note">
       이 문서만 보고 구조를 승인할 수 있어야 한다. 구현 근거는 짝이 되는 <code>.md</code>의
       <code>## 상세</code>에만 있으며, 사람은 그쪽을 읽지 않아도 된다.
+      <br><b>2판에서 바뀐 것:</b> 조건부 선택이 들어오면서 <code>IEnemyTurnPolicy</code>의 계약이
+      바뀐다. 1판의 “시그니처 불변”은 더 이상 사실이 아니다.
     </p>
   </div>
 </header>
@@ -346,13 +348,17 @@
     </p>
     <p>
       선택 단위를 낱장에서 <b>묶음</b>으로 바꾼다. 적은 묶음 여러 개를 가지고, 한 턴에 묶음
-      하나가 통째로 전개된다. 어느 묶음을 고르는지는 <b>패턴</b>이 정한다 — 몹은 무작위로,
-      보스는 정해진 순서로 같은 기계를 돌린다. 카드 한 장짜리도 묶음으로 만든다.
+      하나가 통째로 전개된다. 카드 한 장짜리도 묶음으로 만든다.
+    </p>
+    <p>
+      어느 묶음을 고르는지는 <b>정책</b>이 정한다. 기본 선택자 셋(무작위 · 비복원 · 정해진 순서)
+      위에, <b>조건이 맞으면 특정 묶음을 강제하는</b> 각본을 덧씌울 수 있다. 둘은 합성이라
+      “무작위 + 조건”, “순서 + 조건” 같은 조합에 새 클래스가 필요 없다.
     </p>
 
     <figure>
       <svg viewBox="0 0 800 300" role="img"
-           aria-label="지금은 카탈로그 3장에서 개수 1~2를 무작위로 정해 낱장을 뽑으므로 저작되지 않은 조합 6가지가 나온다. 바뀐 뒤에는 저작된 묶음 3개 중 하나를 골라 통째로 전개하므로 조합이 3가지이고 모두 저작돼 있다.">
+           aria-label="지금은 카탈로그 3장에서 개수 1~2를 무작위로 정해 낱장을 뽑으므로 저작되지 않은 조합 6가지가 나온다. 바뀐 뒤에는 저작된 묶음 4개 중 하나를 골라 통째로 전개하므로 조합이 4가지이고 모두 저작돼 있다.">
         <defs>
           <marker id="bd-arrow" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -363,16 +369,15 @@
         <line x1="400" y1="16" x2="400" y2="284" stroke="currentColor" stroke-width="1"
               stroke-dasharray="3 5" opacity="0.35"/>
 
-        <!-- 지금 -->
         <text x="20" y="26" font-size="13" font-weight="700" fill="currentColor">지금 — 선택 단위: 낱장</text>
         <text x="20" y="52" font-size="11.5" fill="currentColor" opacity="0.65">카탈로그</text>
 
         <rect x="32" y="62" width="100" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        <text x="82" y="84" font-size="11.5" text-anchor="middle" fill="currentColor">찌르기</text>
+        <text x="82" y="84" font-size="11" text-anchor="middle" fill="currentColor">찌르기</text>
         <rect x="140" y="62" width="100" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        <text x="190" y="84" font-size="11.5" text-anchor="middle" fill="currentColor">조잡한 방어</text>
+        <text x="190" y="84" font-size="11" text-anchor="middle" fill="currentColor">조잡한 방어</text>
         <rect x="248" y="62" width="100" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        <text x="298" y="84" font-size="11.5" text-anchor="middle" fill="currentColor">약삭빠른 찌르기</text>
+        <text x="298" y="84" font-size="10" text-anchor="middle" fill="currentColor">약삭빠른 찌르기</text>
 
         <line x1="190" y1="104" x2="190" y2="152" stroke="currentColor" stroke-width="1.4"
               marker-end="url(#bd-arrow)"/>
@@ -385,45 +390,48 @@
         <text x="190" y="228" font-size="12.5" text-anchor="middle" font-weight="700" fill="currentColor">가능한 조합 6가지</text>
         <text x="190" y="248" font-size="11.5" text-anchor="middle" fill="currentColor" opacity="0.7">저작자가 정한 적 없는 조합</text>
 
-        <!-- 바뀐 뒤 -->
         <text x="440" y="26" font-size="13" font-weight="700" fill="currentColor">바뀐 뒤 — 선택 단위: 묶음</text>
         <text x="440" y="52" font-size="11.5" fill="currentColor" opacity="0.65">덱 = 묶음 목록</text>
 
-        <rect x="452" y="62" width="100" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
-        <text x="502" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 A</text>
-        <rect x="462" y="84" width="80" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="440" y="62" width="76" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="478" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">A</text>
+        <rect x="450" y="84" width="56" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
 
-        <rect x="560" y="62" width="100" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
-        <text x="610" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 B</text>
-        <rect x="570" y="84" width="38" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
-        <rect x="612" y="84" width="38" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="524" y="62" width="76" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="562" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">B</text>
+        <rect x="534" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="564" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
 
-        <rect x="668" y="62" width="100" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
-        <text x="718" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 C</text>
-        <rect x="678" y="84" width="38" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
-        <rect x="720" y="84" width="38" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="608" y="62" width="76" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="646" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">C</text>
+        <rect x="618" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="648" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
 
-        <line x1="610" y1="112" x2="610" y2="152" stroke="currentColor" stroke-width="1.4"
+        <rect x="692" y="62" width="76" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+        <text x="730" y="78" font-size="10.5" text-anchor="middle" fill="var(--accent)">D</text>
+        <rect x="702" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+        <rect x="732" y="84" width="26" height="12" rx="1" fill="var(--accent)" opacity="0.5"/>
+
+        <line x1="604" y1="112" x2="604" y2="152" stroke="currentColor" stroke-width="1.4"
               marker-end="url(#bd-arrow)"/>
-        <text x="620" y="136" font-size="11.5" fill="currentColor">패턴이 묶음 하나를 고른다</text>
+        <text x="614" y="136" font-size="11.5" fill="currentColor">정책이 묶음 하나를 고른다</text>
 
-        <rect x="510" y="158" width="200" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="610" y="183" font-size="12" text-anchor="middle" fill="currentColor">그 묶음의 카드 전부</text>
+        <rect x="504" y="158" width="200" height="40" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="604" y="183" font-size="12" text-anchor="middle" fill="currentColor">그 묶음의 카드 전부</text>
 
-        <text x="610" y="228" font-size="12.5" text-anchor="middle" font-weight="700" fill="var(--accent)">가능한 조합 3가지</text>
-        <text x="610" y="248" font-size="11.5" text-anchor="middle" fill="currentColor" opacity="0.7">전부 저작된 조합</text>
+        <text x="604" y="228" font-size="12.5" text-anchor="middle" font-weight="700" fill="var(--accent)">가능한 조합 4가지</text>
+        <text x="604" y="248" font-size="11.5" text-anchor="middle" fill="currentColor" opacity="0.7">전부 저작된 조합</text>
       </svg>
       <figcaption>
         바뀌는 것은 무작위성의 유무가 아니라 <b>무작위가 작용하는 단위</b>다. 지금은 고블린 카드
         3장에서 개수와 조합이 함께 굴러 저작되지 않은 6가지가 나오고, 바뀐 뒤에는 저작된 묶음
-        3개 중 하나만 나온다. 무작위를 없애는 것이 아니라, 무작위가 고를 수 있는 후보를 저작자가
-        정한다.
+        중 하나만 나온다. 무작위를 없애는 것이 아니라, 무작위가 고를 수 있는 후보를 저작자가 정한다.
       </figcaption>
     </figure>
 
     <p class="out-of-scope">
       <b>범위 밖:</b> 적 콘텐츠의 JSON 저작(별도 단계), 다중 적, 묶음을 플레이어에게 보여주는 표현.
-      이 문서는 <code>GoblinDeck</code>이 C#으로 남아 있는 상태에서 선택 단위만 바꾼다.
+      이 문서는 <code>GoblinDeck</code>이 C#으로 남아 있는 상태에서 선택 단위와 선택 방식만 바꾼다.
     </p>
   </section>
 
@@ -441,43 +449,43 @@
             <td>언제 선택되는지, 소유자, 존, 실행 순서</td>
           </tr>
           <tr>
+            <td><code>EnemyTurnContext</code></td>
+            <td>선택 시점에 읽을 수 있는 것을 한데 넘긴다 (턴 번호 · RNG · 전투 상태 · 주인 적)</td>
+            <td>무엇이 선택될지, 조건이 무엇을 볼지</td>
+          </tr>
+          <tr>
             <td><code>IEnemyTurnPolicy</code></td>
-            <td>이번 턴 전개할 카드 목록을 답한다 <span class="id">계약 불변</span></td>
+            <td>이번 턴 전개할 카드 목록을 답한다 <span class="id">계약 변경</span></td>
             <td>카드의 효과, 존, 소유자, 실행 순서</td>
           </tr>
           <tr>
-            <td><code>RandomBundlePolicy</code></td>
-            <td>묶음 목록에서 하나를 무작위로 고른다</td>
-            <td>묶음의 내용, 지난 턴에 무엇이 나왔는지</td>
+            <td><code>RandomPickPolicy</code> · <code>ShuffleBagPolicy</code> · <code>SequencePolicy</code></td>
+            <td>묶음 목록에서 하나를 고른다 (각각 무작위 · 비복원 · 정해진 순서)</td>
+            <td>조건, 다른 정책, 묶음의 내용</td>
           </tr>
           <tr>
-            <td><code>ShuffleBagPolicy</code></td>
-            <td>묶음을 비복원으로 하나씩 내고 소진되면 다시 섞는다</td>
-            <td>묶음의 내용, 턴 번호</td>
+            <td><code>ScriptedPolicy</code></td>
+            <td>조건이 맞는 첫 규칙의 묶음을 내고, 없으면 기본 정책에 넘긴다</td>
+            <td><b>조건의 내용</b>, 묶음의 내용, 기본 정책의 고르는 법</td>
           </tr>
           <tr>
-            <td><code>EnemyIntent</code></td>
-            <td>묶음을 정해진 순서로 하나씩 낸다</td>
-            <td>묶음의 내용, RNG</td>
-          </tr>
-          <tr>
-            <td><code>GoblinDeck</code></td>
-            <td>고블린의 묶음 목록과 기본 패턴을 제공한다</td>
-            <td>고르는 방식의 구현</td>
+            <td><code>IBundleCondition</code> 구현체 + 레지스트리</td>
+            <td>맥락을 보고 지금 참인지 답한다</td>
+            <td>어느 묶음과 짝인지, 다른 조건, 규칙 순서</td>
           </tr>
           <tr>
             <td><code>DeckCombatSession.BeginTurn</code></td>
-            <td>받은 카드 목록을 실행 인스턴스로 만들어 존에 올린다 <span class="id">불변</span></td>
-            <td>어떤 패턴이었는지, 왜 그 카드인지, 묶음의 존재</td>
+            <td>받은 카드 목록을 실행 인스턴스로 만들어 존에 올린다</td>
+            <td>어떤 정책이었는지, 왜 그 카드인지, 묶음의 존재</td>
           </tr>
         </tbody>
       </table>
     </div>
     <p>
-      정책 셋은 전부 <b>“묶음 목록에서 하나를 고른다”</b>는 한 문장으로 책임이 적힌다. 고르는
-      규칙만 다르므로 쪼갤 이유가 없다(규칙 30). <code>EnemyIntent</code>는 이름이 이미 “적의
-      의도 = 정해진 순서”를 뜻해 그대로 두지만, JSON 저작 때 <code>kind</code> 값과 1:1로 읽히게
-      할지는 아래에서 판단을 받는다.
+      <b><code>Enemy</code>에 <code>MaxHp</code>를 더한다.</b> 지금 <code>Enemy</code>는
+      <code>Id</code>·<code>Hp</code>·<code>Statuses</code>뿐이라 “체력 절반 이하” 같은 조건을
+      계산할 수 없다. <code>Enemy(id, hp)</code>가 <code>MaxHp = hp</code>로 채우게 하면 기존
+      생성 지점은 그대로 컴파일된다.
     </p>
   </section>
 
@@ -485,71 +493,76 @@
     <h2>의존 방향</h2>
 
     <figure>
-      <svg viewBox="0 0 800 330" role="img"
-           aria-label="BattleScreenController가 적과 패턴을 짝지어 DeckCombatSession에 넘긴다. BeginTurn이 패턴에 CardsForTurn을 물으면 패턴은 자기가 가진 묶음 목록에서 하나를 골라 그 카드 목록만 돌려준다. 묶음 자체는 패턴 경계를 넘지 않는다. 세션은 받은 카드로 실행 인스턴스를 만들어 존에 올린다.">
+      <svg viewBox="0 0 800 400" role="img"
+           aria-label="BeginTurn이 EnemyTurnContext를 만들어 ScriptedPolicy에 넘긴다. ScriptedPolicy는 규칙의 조건들에게 참인지 묻고, 참인 것이 없으면 기본 정책에 위임한다. 조건은 맥락에서 전투 상태를 읽는다. 어느 경로든 경계를 넘어 세션으로 돌아가는 것은 카드 목록뿐이며, 묶음은 정책 안에 남는다.">
         <defs>
           <marker id="dep-arrow" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
           </marker>
-          <marker id="dep-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5"
+          <marker id="dep-accent" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
           </marker>
         </defs>
 
-        <!-- 패턴 경계 -->
-        <rect x="470" y="16" width="312" height="196" rx="3" fill="none"
+        <rect x="300" y="14" width="486" height="286" rx="3" fill="none"
               stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>
-        <text x="484" y="36" font-size="11" fill="var(--accent)" font-weight="700">패턴 안 — 묶음은 이 선을 넘지 않는다</text>
+        <text x="314" y="34" font-size="11" fill="var(--accent)" font-weight="700">정책 안 — 묶음도 조건도 이 선을 넘지 않는다</text>
 
-        <!-- 좌측 열 -->
-        <rect x="20" y="52" width="180" height="44" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="110" y="79" font-size="11.5" text-anchor="middle" fill="currentColor">BattleScreenController</text>
+        <rect x="20" y="60" width="176" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="108" y="82" font-size="11.5" text-anchor="middle" fill="currentColor">DeckCombatSession</text>
+        <text x="108" y="100" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.7">BeginTurn</text>
 
-        <line x1="110" y1="96" x2="110" y2="140" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
-        <text x="120" y="122" font-size="11" fill="currentColor">적 + 패턴을 짝지어 넘김</text>
+        <line x1="196" y1="76" x2="324" y2="76" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
+        <text x="260" y="68" font-size="10.5" text-anchor="middle" fill="currentColor">맥락을 넘김</text>
 
-        <rect x="20" y="146" width="180" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <text x="110" y="168" font-size="11.5" text-anchor="middle" fill="currentColor">DeckCombatSession</text>
-        <text x="110" y="186" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.7">BeginTurn</text>
+        <rect x="330" y="54" width="180" height="48" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="420" y="74" font-size="11.5" text-anchor="middle" fill="currentColor">ScriptedPolicy</text>
+        <text x="420" y="91" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.7">규칙을 위에서부터 훑는다</text>
 
-        <!-- 좌 → 패턴 -->
-        <line x1="200" y1="162" x2="514" y2="162" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
-        <text x="357" y="154" font-size="11" text-anchor="middle" fill="currentColor">CardsForTurn(턴, RNG)</text>
+        <line x1="420" y1="102" x2="420" y2="142" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
+        <text x="430" y="126" font-size="10.5" fill="currentColor">“지금 참이야?”</text>
 
-        <!-- 패턴 → 좌 (반환) -->
-        <path d="M 514 190 L 357 190 L 357 206 L 200 206" fill="none"
-              stroke="var(--accent)" stroke-width="1.6" marker-end="url(#dep-arrow-accent)"/>
-        <text x="357" y="224" font-size="11" text-anchor="middle" fill="var(--accent)" font-weight="700">카드 목록 — 묶음이 아니다</text>
+        <rect x="330" y="146" width="180" height="42" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="420" y="163" font-size="11" text-anchor="middle" fill="currentColor">IBundleCondition</text>
+        <text x="420" y="179" font-size="10" text-anchor="middle" fill="currentColor" opacity="0.7">체력 절반 이하 · 3턴마다 · …</text>
 
-        <!-- 패턴 내부 -->
-        <rect x="520" y="140" width="180" height="44" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="610" y="167" font-size="11.5" text-anchor="middle" fill="currentColor">IEnemyTurnPolicy</text>
+        <line x1="510" y1="167" x2="600" y2="167" stroke="currentColor" stroke-width="1.3" marker-end="url(#dep-arrow)"/>
+        <text x="555" y="159" font-size="10" text-anchor="middle" fill="currentColor">읽는다</text>
+        <rect x="606" y="146" width="164" height="42" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="688" y="172" font-size="11" text-anchor="middle" fill="currentColor">맥락 = 전투 상태</text>
 
-        <line x1="610" y1="112" x2="610" y2="136" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
-        <text x="622" y="128" font-size="11" fill="currentColor">하나를 고른다</text>
+        <path d="M 530 78 L 640 78" fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
+        <text x="585" y="70" font-size="10.5" text-anchor="middle" fill="currentColor">안 맞으면 위임</text>
+        <rect x="646" y="54" width="124" height="48" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="708" y="74" font-size="10.5" text-anchor="middle" fill="currentColor">기본 정책</text>
+        <text x="708" y="90" font-size="9.5" text-anchor="middle" fill="currentColor" opacity="0.7">무작위·비복원·순서</text>
 
-        <rect x="500" y="58" width="64" height="46" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
-        <text x="532" y="86" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 A</text>
-        <rect x="578" y="58" width="64" height="46" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
-        <text x="610" y="86" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 B</text>
-        <rect x="656" y="58" width="64" height="46" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
-        <text x="688" y="86" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 C</text>
+        <rect x="330" y="222" width="76" height="40" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="368" y="247" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 A</text>
+        <rect x="414" y="222" width="76" height="40" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="452" y="247" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 B</text>
+        <rect x="498" y="222" width="76" height="40" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="536" y="247" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 C</text>
+        <rect x="582" y="222" width="76" height="40" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="620" y="247" font-size="10.5" text-anchor="middle" fill="var(--accent)">묶음 D</text>
 
-        <!-- 아래: 존 -->
-        <line x1="110" y1="198" x2="110" y2="256" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
-        <text x="122" y="232" font-size="11" fill="currentColor">실행 인스턴스 생성</text>
+        <path d="M 324 282 L 108 282 L 108 200" fill="none"
+              stroke="var(--accent)" stroke-width="1.8" marker-end="url(#dep-accent)"/>
+        <text x="330" y="286" font-size="11" fill="var(--accent)" font-weight="700">고른 묶음의 카드 목록 — 묶음도 조건도 아니다</text>
 
-        <rect x="20" y="262" width="180" height="44" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="110" y="289" font-size="11.5" text-anchor="middle" fill="currentColor">미래 존</text>
-
-        <text x="240" y="285" font-size="11" fill="currentColor" opacity="0.7">존은 낱장만 안다 — 지금과 같다</text>
+        <line x1="108" y1="316" x2="108" y2="352" stroke="currentColor" stroke-width="1.4" marker-end="url(#dep-arrow)"/>
+        <text x="120" y="340" font-size="10.5" fill="currentColor">실행 인스턴스 생성</text>
+        <rect x="20" y="356" width="176" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="108" y="380" font-size="11.5" text-anchor="middle" fill="currentColor">미래 존</text>
+        <text x="236" y="380" font-size="10.5" fill="currentColor" opacity="0.7">존은 낱장만 안다 — 지금과 같다</text>
       </svg>
       <figcaption>
-        핵심은 <b>경계를 넘는 것이 카드 목록뿐</b>이라는 점이다. 묶음은 패턴 안에서 태어나 패턴
-        안에서 죽는다. 그래서 <code>IEnemyTurnPolicy</code>의 시그니처, <code>BeginTurn</code>의
-        본문, 존과 이벤트 타임라인이 전부 그대로다 — 이 설계가 싼 이유가 이 화살표 하나에 있다.
+        조건이 붙어도 <b>경계를 넘는 것은 여전히 카드 목록뿐</b>이다. 묶음도 조건도 정책 안에서
+        태어나 정책 안에서 죽는다. 그래서 <code>BeginTurn</code>의 본문, 존, 이벤트 타임라인이
+        그대로다. 바뀌는 것은 <b>안으로 들어가는 쪽</b>이다 — 턴 번호와 RNG만 넘기던 자리에
+        맥락 객체가 들어간다.
       </figcaption>
     </figure>
   </section>
@@ -563,19 +576,23 @@
         </thead>
         <tbody>
           <tr>
-            <td>적이 쓰는 패턴 (무작위 / 비복원 / 정해진 순서)</td>
+            <td>기본 선택자 (무작위 / 비복원 / 정해진 순서)</td>
             <td>한 턴에 묶음 <b>하나</b></td>
           </tr>
           <tr>
-            <td>묶음의 구성과 개수, 묶음당 카드 수</td>
-            <td>경계를 넘는 것은 카드 목록 — 묶음은 넘지 않는다</td>
+            <td>조건 규칙의 목록과 순서</td>
+            <td>조건은 <b>선택 시점의 상태만</b> 본다 — 이력은 상태로 적어야 읽힌다</td>
           </tr>
           <tr>
-            <td>같은 묶음 목록에 다른 패턴을 물리는 것</td>
+            <td>새 조건 (클래스 1개 + 키 등록, <code>ScriptedPolicy</code>는 불변)</td>
+            <td>경계를 넘는 것은 카드 목록 — 묶음도 조건도 넘지 않는다</td>
+          </tr>
+          <tr>
+            <td>묶음의 구성·개수, 같은 묶음에 다른 정책 물리기</td>
             <td>묶음은 플레이어에게 보이지 않는다</td>
           </tr>
           <tr>
-            <td>새 패턴 추가 (클래스 1개 + 등록)</td>
+            <td>각본을 각본으로 감싸기 (<code>ScriptedPolicy</code>가 스스로 정책이다)</td>
             <td>묶음 안 카드의 실행 순서는 카드 자신이 정한다</td>
           </tr>
         </tbody>
@@ -586,77 +603,101 @@
   <section>
     <h2>대안과 기각 이유</h2>
 
-    <h3>묶음 정체성을 존까지 내보낸다 — 기각</h3>
+    <h3>조건이 이벤트를 구독한다 — 기각</h3>
     <p>
-      <code>ExecutionCardInstance</code>에 묶음 id를 달아 존·이벤트·표현까지 흘리는 안이다.
-      “이 3장은 한 세트”를 플레이어가 볼 수 있고, 훗날 묶음을 통째로 조작하는 개입 카드도
-      열린다. 그러나 <b>묶음을 보여주지 않기로 했으므로</b> 지금은 값이 없고, 값을 못 받는 대신
-      비용은 세 겹으로 든다.
+      정책이 코어의 이벤트 타임라인을 구독해 “피해를 받았다”를 듣고 내부에 누적해 두는 안이다.
+      매 턴 상태를 다시 읽지 않아도 되고, 상태에 남지 않는 이력(“이번 턴에 세 번 맞았다”)까지
+      답할 수 있다. 그런데 얻는 것에 비해 잃는 것이 구조적이다.
     </p>
 
     <figure>
-      <svg viewBox="0 0 800 250" role="img"
-           aria-label="채택안에서는 패턴 경계를 카드 목록만 넘어가고 존, 이벤트, 표현 계층이 그대로다. 기각안에서는 묶음 id가 경계를 넘어 존, 이벤트, 표현 세 곳에 모두 추가로 실린다.">
+      <svg viewBox="0 0 800 260" role="img"
+           aria-label="채택안에서는 조건이 전투 상태를 한 방향으로 읽고 이벤트 타임라인은 표현 계층으로만 흐른다. 기각안에서는 타임라인이 정책으로도 흘러 정책 내부에 누적되고, 그 누적이 다시 규칙 판단에 들어가 순환이 생긴다.">
         <defs>
-          <marker id="alt-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+          <marker id="alt2-arrow" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
           </marker>
+          <marker id="alt2-accent" viewBox="0 0 10 10" refX="9" refY="5"
+                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
         </defs>
 
-        <line x1="400" y1="14" x2="400" y2="236" stroke="currentColor" stroke-width="1"
+        <line x1="400" y1="14" x2="400" y2="246" stroke="currentColor" stroke-width="1"
               stroke-dasharray="3 5" opacity="0.35"/>
 
-        <!-- 채택 -->
-        <text x="20" y="26" font-size="13" font-weight="700" fill="var(--accent)">채택 — 경계에서 버린다</text>
-        <rect x="20" y="44" width="110" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="75" y="68" font-size="11" text-anchor="middle" fill="currentColor">패턴</text>
-        <line x1="130" y1="63" x2="186" y2="63" stroke="currentColor" stroke-width="1.4" marker-end="url(#alt-arrow)"/>
-        <text x="158" y="55" font-size="10.5" text-anchor="middle" fill="currentColor">카드</text>
-        <rect x="192" y="44" width="110" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="247" y="68" font-size="11" text-anchor="middle" fill="currentColor">존</text>
+        <text x="20" y="26" font-size="13" font-weight="700" fill="var(--accent)">채택 — 상태를 읽는다</text>
 
-        <rect x="20" y="112" width="110" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
-        <text x="75" y="134" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.55">이벤트</text>
-        <rect x="192" y="112" width="110" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
-        <text x="247" y="134" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.55">표현</text>
-        <text x="20" y="180" font-size="11.5" fill="currentColor">이 둘은 손대지 않는다</text>
-        <text x="20" y="206" font-size="12.5" font-weight="700" fill="var(--accent)">바뀌는 파일 0개</text>
+        <rect x="20" y="44" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="72" y="68" font-size="10.5" text-anchor="middle" fill="currentColor">전투 상태</text>
+        <line x1="124" y1="63" x2="182" y2="63" stroke="currentColor" stroke-width="1.4" marker-end="url(#alt2-arrow)"/>
+        <text x="153" y="55" font-size="10" text-anchor="middle" fill="currentColor">읽음</text>
+        <rect x="188" y="44" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="240" y="68" font-size="10.5" text-anchor="middle" fill="currentColor">조건</text>
 
-        <!-- 기각 -->
-        <text x="440" y="26" font-size="13" font-weight="700" fill="currentColor">기각 — 존까지 흘린다</text>
-        <rect x="440" y="44" width="110" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="495" y="68" font-size="11" text-anchor="middle" fill="currentColor">패턴</text>
-        <line x1="550" y1="63" x2="606" y2="63" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#alt-arrow)"/>
-        <text x="578" y="55" font-size="10.5" text-anchor="middle" fill="var(--accent)">카드 + 묶음id</text>
-        <rect x="612" y="44" width="110" height="38" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
-        <text x="667" y="62" font-size="11" text-anchor="middle" fill="currentColor">존</text>
-        <text x="667" y="76" font-size="9.5" text-anchor="middle" fill="var(--accent)">+ 묶음id</text>
+        <rect x="20" y="124" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+        <text x="72" y="148" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.6">타임라인</text>
+        <line x1="124" y1="143" x2="182" y2="143" stroke="currentColor" stroke-width="1.2" opacity="0.6" marker-end="url(#alt2-arrow)"/>
+        <rect x="188" y="124" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+        <text x="240" y="148" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.6">표현 계층</text>
 
-        <rect x="440" y="112" width="110" height="34" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
-        <text x="495" y="128" font-size="11" text-anchor="middle" fill="currentColor">이벤트</text>
-        <text x="495" y="141" font-size="9.5" text-anchor="middle" fill="var(--accent)">+ 묶음id</text>
-        <rect x="612" y="112" width="110" height="34" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
-        <text x="667" y="128" font-size="11" text-anchor="middle" fill="currentColor">표현</text>
-        <text x="667" y="141" font-size="9.5" text-anchor="middle" fill="var(--accent)">+ 묶음id</text>
+        <text x="20" y="196" font-size="11.5" fill="currentColor">타임라인은 한 방향으로만 흐른다</text>
+        <text x="20" y="222" font-size="12.5" font-weight="700" fill="var(--accent)">규칙은 타임라인을 보지 않는다</text>
 
-        <text x="440" y="180" font-size="11.5" fill="currentColor">셋 다 묶음 id를 나르고 검증해야 한다</text>
-        <text x="440" y="206" font-size="12.5" font-weight="700" fill="currentColor">보여주지 않을 정보를 위해</text>
+        <text x="440" y="26" font-size="13" font-weight="700" fill="currentColor">기각 — 이벤트를 구독한다</text>
+
+        <rect x="440" y="44" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="492" y="68" font-size="10.5" text-anchor="middle" fill="currentColor">전투 상태</text>
+        <line x1="544" y1="63" x2="602" y2="63" stroke="currentColor" stroke-width="1.4" marker-end="url(#alt2-arrow)"/>
+        <text x="573" y="55" font-size="10" text-anchor="middle" fill="currentColor">발행</text>
+        <rect x="608" y="44" width="104" height="38" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="660" y="68" font-size="10.5" text-anchor="middle" fill="currentColor">타임라인</text>
+
+        <path d="M 660 82 L 660 104 L 560 104 L 560 124" fill="none"
+              stroke="var(--accent)" stroke-width="1.6" marker-end="url(#alt2-accent)"/>
+        <text x="676" y="100" font-size="10" fill="currentColor" opacity="0.6">→ 표현 계층</text>
+        <rect x="500" y="128" width="120" height="42" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="560" y="146" font-size="10.5" text-anchor="middle" fill="currentColor">정책 내부 누적</text>
+        <text x="560" y="161" font-size="9.5" text-anchor="middle" fill="var(--accent)">두 번째 진실</text>
+
+        <path d="M 500 149 L 452 149 L 452 90" fill="none"
+              stroke="var(--accent)" stroke-width="1.6" marker-end="url(#alt2-accent)"/>
+        <text x="440" y="196" font-size="11.5" fill="var(--accent)">출력이 입력으로 되돌아온다</text>
+        <text x="440" y="222" font-size="12.5" font-weight="700" fill="currentColor">타임라인이 규칙의 일부가 된다</text>
       </svg>
       <figcaption>
-        기각안이 비싼 이유는 상자가 많아서가 아니라, <b>묶음 id가 실어 날라야 할 지점이 셋으로
-        늘기 때문</b>이다. 코어의 출력은 이벤트 타임라인뿐이므로(규칙 11) 화면이 묶음을 알려면
-        이벤트가 먼저 알아야 하고, 그러면 이벤트 계약이 넓어진다. 보여주지 않기로 한 정보에
-        치를 값이 아니다.
+        기각의 핵심은 화살표 하나다. 코어의 출력은 이벤트 타임라인뿐이고(규칙 11) 그것은 표현
+        계층이 소비하라고 있는 것인데, 규칙 판단이 그걸 되먹으면 <b>발행 순서가 규칙의 결과를
+        바꾸기 시작한다.</b> 게다가 정책이 내부에 쌓은 값이 상태와 별개인 “두 번째 진실”이 되어
+        시드 재현이 구독 시점에 의존한다(규칙 7). 구독·해지 수명 관리도 새로 생긴다.
       </figcaption>
     </figure>
 
-    <h3>패턴을 없애고 덱만 둔다 — 기각</h3>
+    <div class="callout">
+      <p>
+        <b>그러면 상태에 없는 이력은?</b> “이번 턴에 세 번 맞았다” 같은 조건은 현재 상태를 아무리
+        봐도 알 수 없다. 그때의 답은 구독이 아니라 <b>그 사실을 상태에 적는 것</b>이다 — 상태로
+        적히면 조건은 그대로 읽고, 재현도 보장된다. 적의 특성을 전부 상태이상·버프로 처리하기로
+        한 결정과 같은 방향이다.
+      </p>
+    </div>
+
+    <h3>순서와 조건을 한 클래스에 넣는다 — 기각</h3>
     <p>
-      적도 플레이어처럼 덱에서 뽑기만 하게 하고 <code>IEnemyTurnPolicy</code>를 지우는 안이다.
-      구조가 가장 단순해지고 “적대적인 유저” 픽션에도 맞는다. 그러나 <b>보스의 정해진 순서를
-      표현할 수 없다.</b> 덱은 “무엇이 들었나”를 말할 뿐 “3턴엔 반드시 이것”을 말하지 못한다.
-      선택 규칙이 적마다 달라야 한다는 요구가 곧 이 seam이 존재하는 이유다.
+      <code>ScriptedPolicy</code> 하나가 “각본”이라는 이름으로 순서와 조건을 다 담고, 순서는
+      <code>턴이 N이면</code> 조건으로 표현하는 안이다. 이름이 셋으로 끝난다. 그러나 둘은
+      <b>평가 방식이 실제로 다르다</b> — 순서는 턴 번호로 진행하고, 조건은 상태를 보고 가로챈다.
+      한 상자에 넣으면 5턴짜리 각본이 규칙 다섯 줄이 되고, “무작위 + 조건”처럼 둘을 겹치는
+      조합을 표현할 자리가 없어진다. 이름 하나를 더 쓰고 합성으로 두는 편이 싸다.
+    </p>
+
+    <h3>묶음 정체성을 존까지 내보낸다 — 기각</h3>
+    <p>
+      <code>ExecutionCardInstance</code>에 묶음 id를 달아 존·이벤트·표현까지 흘리면 “이 3장은 한
+      세트”를 플레이어가 볼 수 있고, 묶음을 통째로 조작하는 개입 카드도 열린다. 그러나
+      <b>묶음을 보여주지 않기로 했으므로</b> 지금은 값이 없고, 비용은 세 겹(존·이벤트·표현)으로
+      든다. 코어의 출력이 이벤트뿐이라 화면이 알려면 이벤트 계약부터 넓어진다.
     </p>
   </section>
 
@@ -664,84 +705,105 @@
     <h2>이 선택으로 나중에 어려워지는 것</h2>
     <ul>
       <li>
+        <b>기존 정책 계약이 깨진다.</b> <code>CardsForTurn(턴, RNG)</code>가
+        <code>CardsForTurn(맥락)</code>이 되므로 구현 셋과 호출부(9개 파일 15곳)가 모두 바뀐다.
+        묶음 전환으로 어차피 다시 쓸 파일들이라 추가분은 작지만, 1판에서 약속한 “계약 불변”은
+        더 이상 사실이 아니다.
+      </li>
+      <li>
+        <b>조건은 상태에 적힌 것만 볼 수 있다.</b> 이력을 묻는 조건을 원할 때마다 그 이력을 먼저
+        상태로 만들어야 한다. 조건 하나 추가가 아니라 “무엇을 상태로 남길지” 결정이 선행한다.
+      </li>
+      <li>
         <b>묶음 단위 개입 카드를 못 만든다.</b> “이 묶음을 통째로 뒤로 민다” 같은 카드를 넣으려면
         위에서 기각한 안을 그때 실행해야 한다 — 존·이벤트·표현에 묶음 id를 다시 얹는 일이다.
       </li>
       <li>
         <b>묶음이 실행 순서를 강제하지 못한다.</b> 묶음 안 카드들도 각자의
-        <code>ExecutionOrder</code>로 존에서 정렬되므로, “이 묶음은 반드시 A 다음 B”를 묶음이
-        보장할 수 없다. 카드에 적힌 순서값으로 저작해야 하고, 플레이어의 개입 카드가 그 사이를
-        가른다. 묶음은 <b>함께 등장한다</b>는 뜻이지 <b>붙어서 실행된다</b>는 뜻이 아니다.
+        <code>ExecutionOrder</code>로 존에서 정렬되므로 “반드시 A 다음 B”를 묶음이 보장할 수
+        없고, 플레이어의 개입 카드가 그 사이를 가른다. 묶음은 <b>함께 등장한다</b>는 뜻이지
+        <b>붙어서 실행된다</b>는 뜻이 아니다. 다만 <b>실행 순서가 같을 때는</b> 존의 정렬이
+        안정적이라 묶음에 적은 순서가 유지된다.
       </li>
       <li>
         <b>“한 턴에 묶음 하나”는 매개변수가 아니라 계약이다.</b> 두 묶음을 동시에 전개하고
-        싶어지면 패턴에 인자를 더하는 것으로 안 되고, 이 문서의 전제를 다시 여는 일이 된다.
+        싶어지면 정책에 인자를 더하는 것으로 안 되고, 이 문서의 전제를 다시 여는 일이 된다.
       </li>
       <li>
         <b>플레이어는 세트를 읽을 수 없다.</b> 묶음이 화면에 드러나지 않으므로, 묶음 안 카드끼리
-        시너지를 설계해도 플레이어는 그것이 한 세트라는 단서를 얻지 못한다. 시너지는 카드 텍스트로
-        스스로 설명되어야 한다.
+        시너지를 설계해도 플레이어는 그것이 한 세트라는 단서를 얻지 못한다.
       </li>
       <li>
-        <b>기존 전투의 시드 재현이 깨진다.</b> 무작위가 소비되는 방식이 “개수 + 낱장 뽑기”에서
-        “묶음 하나 고르기”로 바뀌므로, 같은 시드라도 이전과 다른 전개가 나온다. 결정론 자체는
-        유지되지만(규칙 7) 과거 시드로 기록한 기대값은 무효다.
+        <b>기존 전투의 시드 재현이 깨진다.</b> 무작위 소비가 “개수 + 낱장”에서 “묶음 하나”로
+        바뀌므로 같은 시드라도 다른 전개가 나온다. 결정론 자체는 유지되지만(규칙 7) 과거 시드로
+        기록한 기대값은 무효다.
       </li>
     </ul>
   </section>
 
   <section>
-    <h2>실행 예시 — 고블린이 3턴에 묶음 B를 낸다</h2>
+    <h2>실행 예시 — 고블린이 체력 절반 아래로 떨어져 농성한다</h2>
     <p>
-      <code>GoblinDeck</code>이 묶음 셋을 들고 있고, 패턴은 <code>RandomBundlePolicy</code>다.
-      전투 RNG는 시드 7로 3턴째까지 진행된 상태다.
+      고블린은 묶음 넷을 갖는다. 실행 순서는 찌르기 <b>6</b>, 약삭빠른 찌르기 <b>3</b>,
+      조잡한 방어 <b>4</b>다.
     </p>
     <ul class="events">
-      <li><b>묶음 A</b> = [찌르기(실행순서 6)]</li>
-      <li><b>묶음 B</b> = [약삭빠른 찌르기(3), 조잡한 방어(4)]</li>
-      <li><b>묶음 C</b> = [찌르기(6), 찌르기(6)]</li>
+      <li><b>A</b> = 찌르기 <span style="opacity:.65">— 늦은 단타</span></li>
+      <li><b>B</b> = 약삭빠른 찌르기 + 조잡한 방어 <span style="opacity:.65">— 선공 후 방어</span></li>
+      <li><b>C</b> = 약삭빠른 찌르기 + 찌르기 <span style="opacity:.65">— 앞뒤로 벌린 2연타</span></li>
+      <li><b>D</b> = 조잡한 방어 + 조잡한 방어 <span style="opacity:.65">— 농성, 방어도 6</span></li>
     </ul>
+    <p>
+      정책은 <code>ScriptedPolicy(규칙: [(체력 절반 이하) → D], 기본: RandomPickPolicy([A,B,C]))</code>다.
+      고블린 최대 체력은 28이므로 문턱은 14다.
+    </p>
     <ol class="steps">
       <li>
-        <h3><code>BeginTurn(3)</code>이 존을 비운다</h3>
-        <p>지난 턴의 실행 카드가 모두 사라진다. 지금과 같다.</p>
-      </li>
-      <li>
-        <h3><code>CardsForTurn(3, rng)</code>를 부른다</h3>
+        <h3>3턴이 시작되고 고블린 체력은 20이다</h3>
         <p>
-          <code>RandomBundlePolicy</code>가 <code>rng.Next(3)</code>을 한 번 굴려 <code>1</code>을
-          얻는다 — 묶음 B다. RNG 소비는 <b>턴당 한 번</b>으로, 지금의 “개수 뽑기 1회 + 카드 뽑기
-          1~2회”보다 줄어든다.
+          <code>BeginTurn(3)</code>이 존을 비우고 맥락을 만든다 — 턴 <b>3</b>, 전투 RNG,
+          전투 상태, 주인은 <span class="id">goblin</span>.
         </p>
       </li>
       <li>
-        <h3>묶음 B의 카드 목록만 돌려준다</h3>
+        <h3><code>ScriptedPolicy</code>가 첫 규칙에게 묻는다</h3>
         <p>
-          <code>[약삭빠른 찌르기, 조잡한 방어]</code>. 묶음 B라는 사실은 여기서 버려진다 — 세션은
-          이것이 어느 묶음이었는지 모른다.
+          “체력 절반 이하가 지금 참이야?” 조건이 맥락에서 <code>Hp 20</code>,
+          <code>MaxHp 28</code>을 읽어 <b>거짓</b>을 답한다. 규칙이 더 없으므로 기본 정책에 넘긴다.
         </p>
       </li>
       <li>
-        <h3>세션이 실행 인스턴스 둘을 만든다</h3>
+        <h3><code>RandomPickPolicy</code>가 A·B·C 중 하나를 고른다</h3>
         <p>
-          <code>InstanceId</code> 7·8, <code>OwnerId</code> <span class="id">goblin</span>,
-          <code>IsLocked</code> 둘 다 <code>false</code>. 실행 순서는 고블린의 상태 가방을 통과해
-          정해지는데, 이 턴에 둔화·가속이 없으므로 카드에 적힌 <b>3</b>과 <b>4</b> 그대로다.
+          <code>rng.Next(3)</code>을 한 번 굴려 <b>2</b> — 묶음 C다. RNG 소비는 턴당 한 번으로,
+          지금의 “개수 뽑기 1회 + 카드 뽑기 1~2회”보다 줄어든다.
         </p>
       </li>
       <li>
-        <h3>존에 올라가 플레이어 카드와 섞인다</h3>
+        <h3>C의 카드 목록만 경계를 넘는다</h3>
         <p>
-          정렬 결과는 <code>약삭빠른 찌르기(3)</code> → <code>조잡한 방어(4)</code>다. 플레이어가
-          실행 순서 <b>3</b>짜리 카드를 배치하거나 개입 카드로 순서를 틀면 <b>두 카드 사이로 끼어들 수
-          있다.</b> 묶음이었다는 사실은 아무것도 막지 않는다.
+          <code>[약삭빠른 찌르기, 찌르기]</code>. 세션은 이것이 C였는지, 조건이 걸렸었는지 모른다.
+          실행 인스턴스 둘이 만들어지고 존에서 <b>3 → 6</b>으로 정렬된다. 플레이어는 그 사이에
+          자기 카드를 끼워 넣을 수 있다.
         </p>
       </li>
       <li>
-        <h3>턴이 해석된다</h3>
+        <h3>플레이어가 이 턴에 9 피해를 넣어 고블린이 11이 된다</h3>
+        <p>턴이 해석되고 끝난다. <code>TurnResolver</code>는 묶음이라는 단어를 모른 채 지금과 같이 돈다.</p>
+      </li>
+      <li>
+        <h3>4턴 — 같은 첫 규칙이 이번엔 참이다</h3>
         <p>
-          <code>TurnResolver</code>는 지금과 완전히 같게 돈다. 묶음이라는 단어가 코어에 등장하지
-          않는다.
+          조건이 <code>Hp 11 ≤ 14</code>로 <b>참</b>을 답한다. <code>ScriptedPolicy</code>가
+          기본 정책을 <b>부르지 않고</b> 묶음 <b>D</b>를 낸다 — <code>RandomPickPolicy</code>는
+          이 턴에 RNG를 한 번도 굴리지 않는다.
+        </p>
+      </li>
+      <li>
+        <h3>조잡한 방어 둘이 같은 순서 4로 깔린다</h3>
+        <p>
+          <code>BlockBehavior</code>가 재부여를 합산하므로 방어도가 <b>3 + 3 = 6</b>이 된다.
+          체력이 14 아래로 유지되는 한 고블린은 매 턴 D로 농성한다.
         </p>
       </li>
     </ol>
@@ -750,22 +812,17 @@
   <section class="decide">
     <h2>사용자 판단이 필요한 지점</h2>
     <p>
-      <b>1. <code>SelfLockPolicy</code>를 지울까.</b> 간수 삭제로 사용처가 0이 됐다. 새 설계에서
-      “잠긴 채 나오는 카드”는 카드의 <code>StartsLocked</code>로 저작하므로 쓰임이 없어 보이지만,
-      간수 전용은 아니라 남겨 뒀다.
+      <b>1. 첫 조건을 무엇으로 열까.</b> 위 예시는 “체력 절반 이하”를 썼다. 문턱을 비율로 둘지
+      (<code>MaxHp</code> 필요) 절대값으로 둘지, 그리고 함께 열 조건이 더 있는지 —
+      “N턴마다”, “특정 상태를 갖고 있을 때” 같은 것 — 은 밸런스 판단이다.
     </p>
     <p>
-      <b>2. <code>EnemyIntent</code>를 패턴 가족에 맞춰 개명할까.</b> 지금 이름은 뜻이 맞지만,
-      나중에 JSON의 <code>kind</code>가 <code>random</code>·<code>shuffle_bag</code>·
-      <code>sequence</code>로 갈릴 때 셋 중 하나만 이름이 어긋난다. 개명하면 테스트 12개 파일에서
-      생성자 이름 한 줄씩을 바꿔야 한다 — 기계적이지만 공짜는 아니다.
+      <b>2. 고블린이 조건을 쓸지.</b> 묶음 A~D는 확정됐지만, 고블린이 지금부터 농성 규칙을 갖는지
+      아니면 <code>RandomPickPolicy</code>만으로 시작하고 조건은 다음 적에서 처음 쓸지는 정해지지
+      않았다. 조건 없이 시작해도 구조는 그대로다.
     </p>
     <p>
-      <b>3. 고블린의 묶음을 어떻게 짤까.</b> 위 예시의 A·B·C는 설명용으로 지어낸 것이다. 현재 카드
-      3장으로 묶음을 몇 개, 어떤 조합으로 만들지는 밸런스 판단이라 사람이 정해야 한다.
-    </p>
-    <p>
-      셋 다 정해지면 <code>.md</code>에 상세를 쓰고 구현으로 들어간다.
+      정해지면 <code>.md</code>에 상세를 쓰고 구현으로 들어간다.
     </p>
   </section>
 
