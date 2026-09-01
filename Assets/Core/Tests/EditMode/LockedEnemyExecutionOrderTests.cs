@@ -23,7 +23,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Locked_enemy_cards_ignore_enemy_slow_when_entering_the_zone()
         {
-            var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[]
+            var intent = new SequencePolicy(new IReadOnlyList<CardDefinition>[]
             {
                 new[] { EnemyJab(false) },
                 new[] { EnemyJab(true) }

@@ -122,6 +122,6 @@ namespace FateWeaver.Tests
         }
 
         private static IEnemyTurnPolicy EnemyPolicy(CardDefinition enemyCard)
-            => new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { enemyCard } });
+            => new SequencePolicy(new IReadOnlyList<CardDefinition>[] { new[] { enemyCard } });
     }
 }

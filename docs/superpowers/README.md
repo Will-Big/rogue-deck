@@ -54,7 +54,7 @@
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
 | [전투 화면 컴포넌트 분해](specs/2026-08-04-battle-screen-decomposition-design.md) | `current` | 전투 화면 Unity 컴포넌트의 경계와 책임 분배 | 전투 화면에 컴포넌트·표현 추가, 캐릭터 아트 도입 |
 | [턴 재생 계층](specs/2026-08-30-turn-playback-design.md) — 개요는 [HTML](specs/2026-08-30-turn-playback-design.html) | `active` | 이벤트 타임라인의 비트 분할·시간축 재생·배속·스킵, 이벤트별 연출자 레지스트리 | 턴 해석 결과에 연출을 붙이거나 재생 동작을 바꿀 때 |
-| [적 카드 묶음](specs/2026-08-31-enemy-card-bundle-design.html) — 개요만, 상세는 승인 후 | `검수 대기 · 2판` | 적이 매 턴 어떤 카드를 존에 올리는지: 선택 단위를 낱장에서 묶음으로, 기본 선택자(무작위·비복원·순서) 위에 조건 각본을 합성 | 몬스터 행동 재작업, 보스 패턴 설계, 적 조건 추가 |
+| [적 카드 묶음](specs/2026-08-31-enemy-card-bundle-design.md) — 개요는 [HTML](specs/2026-08-31-enemy-card-bundle-design.html) | `active` | 적이 매 턴 어떤 카드를 존에 올리는지: 선택 단위가 묶음이고 기본 선택자(무작위·비복원·순서)가 고른다. 1단계 구현 완료, 조건 각본은 2단계 | 몬스터 행동 재작업, 보스 패턴 설계, 적 조건 추가 |
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위와 자신, 실행 시 대상 고정, 대상 칸과 진영별 본문 | 카드 대상·설명·프레임 설계 |
 | [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
 | [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |

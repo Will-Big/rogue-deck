@@ -4,51 +4,49 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Simulation
 {
-    /// <summary>Stateful no-replacement enemy policy. When fewer than the draw count remains, it discards
-    /// the partial remainder and starts a freshly shuffled full deck. Shuffles draw from the combat RNG
-    /// passed to <see cref="CardsForTurn"/>.</summary>
+    /// <summary>묶음을 비복원으로 하나씩 낸다. 가방이 비면 전체 목록을 다시 섞어 새 가방을 만든다.
+    /// 복원 추출인 RandomPickPolicy와 달리 한 바퀴 안에서는 같은 묶음이 두 번 나오지 않는다.
+    ///
+    /// 셔플은 CardsForTurn에 넘어온 전투 RNG에서만 나온다(AGENTS.md 규칙 7).</summary>
     public sealed class ShuffleBagPolicy : IEnemyTurnPolicy
     {
-        private readonly IReadOnlyList<CardDefinition> _deck;
-        private readonly int _drawPerTurn;
-        private List<CardDefinition> _bag = new List<CardDefinition>();
+        private readonly IReadOnlyList<EnemyCardBundle> _bundles;
+        private List<EnemyCardBundle> _bag = new List<EnemyCardBundle>();
 
-        public ShuffleBagPolicy(IReadOnlyList<CardDefinition> deck, int drawPerTurn)
+        public ShuffleBagPolicy(IReadOnlyList<EnemyCardBundle> bundles)
         {
-            _deck = deck ?? Array.Empty<CardDefinition>();
-            _drawPerTurn = Math.Max(0, drawPerTurn);
+            _bundles = bundles ?? Array.Empty<EnemyCardBundle>();
         }
 
         public IReadOnlyList<CardDefinition> CardsForTurn(int turnIndex, Random rng)
         {
-            if (_deck.Count == 0 || _drawPerTurn == 0)
+            if (_bundles.Count == 0)
             {
                 return Array.Empty<CardDefinition>();
             }
 
-            if (_bag.Count < _drawPerTurn)
+            if (_bag.Count == 0)
             {
-                _bag = ShuffledDeck(rng);
+                _bag = Shuffled(rng);
             }
 
-            var count = Math.Min(_drawPerTurn, _bag.Count);
-            var drawn = _bag.GetRange(0, count);
-            _bag.RemoveRange(0, count);
-            return drawn;
+            var drawn = _bag[0];
+            _bag.RemoveAt(0);
+            return drawn.Cards;
         }
 
-        private List<CardDefinition> ShuffledDeck(Random rng)
+        private List<EnemyCardBundle> Shuffled(Random rng)
         {
-            var cards = new List<CardDefinition>(_deck);
-            for (int i = cards.Count - 1; i > 0; i--)
+            var bundles = new List<EnemyCardBundle>(_bundles);
+            for (int i = bundles.Count - 1; i > 0; i--)
             {
                 int j = rng.Next(i + 1);
-                var tmp = cards[i];
-                cards[i] = cards[j];
-                cards[j] = tmp;
+                var tmp = bundles[i];
+                bundles[i] = bundles[j];
+                bundles[j] = tmp;
             }
 
-            return cards;
+            return bundles;
         }
     }
 }

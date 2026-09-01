@@ -93,7 +93,7 @@ namespace FateWeaver.Tests
             "e_jab", "적찌르기", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
 
-        private static EnemyIntent JabEachTurn() => new EnemyIntent(new IReadOnlyList<CardDefinition>[]
+        private static SequencePolicy JabEachTurn() => new SequencePolicy(new IReadOnlyList<CardDefinition>[]
         {
             new[] { EnemyJab() }, new[] { EnemyJab() }
         });

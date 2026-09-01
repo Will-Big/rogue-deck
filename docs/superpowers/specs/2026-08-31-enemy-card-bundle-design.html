@@ -429,6 +429,20 @@
       </figcaption>
     </figure>
 
+    <div class="callout">
+      <p>
+        <b>구현은 두 단계로 나눈다.</b> <b>1단계</b>는 묶음까지다 — 선택 단위를 바꾸고 정책 셋을
+        묶음 기반으로 옮긴다. 고블린은 <code>RandomPickPolicy</code>만 쓴다. 계약
+        <code>CardsForTurn(턴, RNG)</code>는 <b>그대로 둔다.</b>
+      </p>
+      <p>
+        <b>2단계</b>는 조건이 처음 필요한 적이 나올 때다. <code>ScriptedPolicy</code>,
+        <code>IBundleCondition</code>과 레지스트리, <code>Enemy.MaxHp</code>, 그리고 계약을
+        <code>CardsForTurn(맥락)</code>으로 넓히는 일이 함께 간다. 셋 다 조건만을 위한 것이라
+        쓰는 곳 없이 미리 넣지 않는다 — 아래 조건 설계는 <b>1단계가 그 길을 막지 않음을 보이려고</b>
+        적어 둔 것이지, 지금 만들 목록이 아니다.
+      </p>
+    </div>
     <p class="out-of-scope">
       <b>범위 밖:</b> 적 콘텐츠의 JSON 저작(별도 단계), 다중 적, 묶음을 플레이어에게 보여주는 표현.
       이 문서는 <code>GoblinDeck</code>이 C#으로 남아 있는 상태에서 선택 단위와 선택 방식만 바꾼다.

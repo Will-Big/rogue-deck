@@ -52,16 +52,52 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Policy_telegraphs_one_or_two_distinct_cards_per_turn()
+        public void Bundles_are_the_four_authored_combinations()
+        {
+            var bundles = GoblinDeck.Bundles()
+                .Select(b => string.Join(",", b.Cards.Select(c => c.Id)))
+                .ToArray();
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "goblin_jab",                 // A 늦은 단타
+                    "sly_jab,crude_guard",        // B 선공 후 방어
+                    "sly_jab,goblin_jab",         // C 앞뒤로 벌린 2연타
+                    "crude_guard,crude_guard"     // D 농성 (방어 재부여는 합산 → 방어도 6)
+                },
+                bundles);
+        }
+
+        [Test]
+        public void Policy_deploys_exactly_one_authored_bundle_each_turn()
+        {
+            var authored = GoblinDeck.Bundles()
+                .Select(b => string.Join(",", b.Cards.Select(c => c.Id)))
+                .ToArray();
+            var policy = GoblinDeck.Policy();
+            var rng = new Random(17);
+
+            for (int turn = 0; turn < 50; turn++)
+            {
+                var deployed = string.Join(",", policy.CardsForTurn(turn, rng).Select(c => c.Id));
+                CollectionAssert.Contains(authored, deployed,
+                    "저작되지 않은 조합이 나오면 안 된다");
+            }
+        }
+
+        [Test]
+        public void Every_bundle_is_reachable()
         {
             var policy = GoblinDeck.Policy();
             var rng = new Random(17);
-            for (int turn = 0; turn < 50; turn++)
-            {
-                var cards = policy.CardsForTurn(turn, rng);
-                Assert.That(cards.Count, Is.InRange(1, 2));
-                Assert.AreEqual(cards.Count, cards.Select(c => c.Id).Distinct().Count());
-            }
+            var seen = Enumerable.Range(0, 200)
+                .Select(turn => string.Join(",", policy.CardsForTurn(turn, rng).Select(c => c.Id)))
+                .Distinct()
+                .ToArray();
+
+            Assert.AreEqual(GoblinDeck.Bundles().Count, seen.Length,
+                "닿을 수 없는 묶음이 있으면 저작이 죽은 것이다");
         }
 
         [Test]

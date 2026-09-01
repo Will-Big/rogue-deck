@@ -18,7 +18,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Locked_enemy_card_enters_zone_locked()
         {
-            var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
+            var intent = new SequencePolicy(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { new CardDefinition("p", "p", Side.Player, 6,
                     new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
@@ -31,7 +31,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Fate_cannot_reorder_a_locked_card()
         {
-            var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
+            var intent = new SequencePolicy(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var pull = new CardDefinition("pull", "앞당김", Side.Player, 0,
                 System.Array.Empty<EffectData>())
                 { EnergyCost = 1, Category = CardCategory.Intervention,

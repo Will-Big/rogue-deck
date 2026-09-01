@@ -86,7 +86,7 @@ namespace FateWeaver.Tests
             => new DeckCombatSession(TestContent.Statuses(),
                 party,
                 new[] { new Enemy("goblin", 100) },
-                new EnemyIntent(new IReadOnlyList<CardDefinition>[]
+                new SequencePolicy(new IReadOnlyList<CardDefinition>[]
                 {
                     enemyCards ?? Array.Empty<CardDefinition>()
                 }),
@@ -119,7 +119,7 @@ namespace FateWeaver.Tests
             Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
                 new[] { Loadout("a") },
                 new[] { new Enemy("goblin", 100) },
-                new EnemyIntent(Array.Empty<IReadOnlyList<CardDefinition>>()),
+                new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()),
                 tuning: null));
             Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a") }, tuning: new PartyTuning
             {
@@ -210,7 +210,7 @@ namespace FateWeaver.Tests
                 new[] { DirectBlock() },
                 playerHp: 30,
                 enemies: Array.Empty<Enemy>(),
-                enemyPolicy: new EnemyIntent(Array.Empty<IReadOnlyList<CardDefinition>>())));
+                enemyPolicy: new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>())));
         }
 
         [Test]

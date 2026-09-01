@@ -14,58 +14,73 @@ namespace FateWeaver.Tests
             id, id, Side.Enemy, 5, new[] { new EffectData(EffectKeys.Damage, 1) })
             { EnergyCost = 0, Category = CardCategory.Execution };
 
-        private static IReadOnlyList<CardDefinition> Catalog(params string[] ids) =>
-            ids.Select(Card).ToArray();
+        /// <summary>id 문자열 하나가 묶음 하나다 — "ab"는 카드 a와 b를 함께 내는 묶음.</summary>
+        private static IReadOnlyList<EnemyCardBundle> Bundles(params string[] specs) =>
+            specs
+                .Select(spec => new EnemyCardBundle(
+                    spec.Select(ch => Card(ch.ToString())).ToArray()))
+                .ToArray();
 
         private static string Signature(ShuffleBagPolicy policy, Random rng, int turns)
             => string.Join("|", Enumerable.Range(0, turns)
                 .Select(t => string.Join(",", policy.CardsForTurn(t, rng).Select(c => c.Id))));
 
+        private static string PickAt(ShuffleBagPolicy policy, int turn, Random rng)
+            => string.Join("", policy.CardsForTurn(turn, rng).Select(c => c.Id));
+
         [Test]
-        public void Draws_each_card_once_before_reshuffling()
+        public void Draws_each_bundle_once_before_reshuffling()
         {
-            var policy = new ShuffleBagPolicy(Catalog("a", "b", "c", "d", "e", "f"), 2);
+            var policy = new ShuffleBagPolicy(Bundles("a", "bc", "d", "ef"));
             var rng = new Random(11);
-            var firstCycle = Enumerable.Range(0, 3)
-                .SelectMany(t => policy.CardsForTurn(t, rng).Select(c => c.Id))
+            var firstCycle = Enumerable.Range(0, 4).Select(t => PickAt(policy, t, rng)).ToArray();
+
+            CollectionAssert.AreEquivalent(new[] { "a", "bc", "d", "ef" }, firstCycle);
+        }
+
+        [Test]
+        public void Reshuffles_a_full_bag_once_the_previous_one_is_spent()
+        {
+            var policy = new ShuffleBagPolicy(Bundles("a", "bc", "d"));
+            var rng = new Random(3);
+            var twoCycles = Enumerable.Range(0, 6).Select(t => PickAt(policy, t, rng)).ToArray();
+
+            CollectionAssert.AreEquivalent(new[] { "a", "bc", "d" }, twoCycles.Take(3).ToArray());
+            CollectionAssert.AreEquivalent(new[] { "a", "bc", "d" }, twoCycles.Skip(3).ToArray());
+        }
+
+        [Test]
+        public void Each_turn_still_deploys_exactly_one_bundle()
+        {
+            var policy = new ShuffleBagPolicy(Bundles("a", "bc", "def"));
+            var rng = new Random(5);
+            var sizes = Enumerable.Range(0, 9)
+                .Select(t => policy.CardsForTurn(t, rng).Count)
+                .Distinct()
+                .OrderBy(n => n)
                 .ToArray();
 
-            CollectionAssert.AreEquivalent(new[] { "a", "b", "c", "d", "e", "f" }, firstCycle);
-            Assert.AreEqual(6, firstCycle.Distinct().Count());
-            Assert.AreEqual(2, policy.CardsForTurn(3, rng).Count);
+            // 카드 수는 묶음 크기를 따라 1·2·3이 나오지만, 매 턴 나오는 묶음은 언제나 하나다.
+            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, sizes);
         }
 
         [Test]
         public void Same_rng_seed_matches_and_different_seed_differs()
         {
             Assert.AreEqual(
-                Signature(new ShuffleBagPolicy(Catalog("a", "b", "c", "d"), 2), new Random(7), 6),
-                Signature(new ShuffleBagPolicy(Catalog("a", "b", "c", "d"), 2), new Random(7), 6));
+                Signature(new ShuffleBagPolicy(Bundles("a", "bc", "d", "ef")), new Random(7), 6),
+                Signature(new ShuffleBagPolicy(Bundles("a", "bc", "d", "ef")), new Random(7), 6));
             Assert.AreNotEqual(
-                Signature(new ShuffleBagPolicy(Catalog("a", "b", "c", "d"), 2), new Random(7), 6),
-                Signature(new ShuffleBagPolicy(Catalog("a", "b", "c", "d"), 2), new Random(8), 6));
+                Signature(new ShuffleBagPolicy(Bundles("a", "bc", "d", "ef")), new Random(7), 6),
+                Signature(new ShuffleBagPolicy(Bundles("a", "bc", "d", "ef")), new Random(8), 6));
         }
 
         [Test]
-        public void Reshuffles_full_deck_when_remaining_cards_are_insufficient()
+        public void Empty_bundle_list_yields_no_cards()
         {
-            var policy = new ShuffleBagPolicy(Catalog("a", "b", "c", "d", "e"), 3);
-            var rng = new Random(3);
-            var first = policy.CardsForTurn(0, rng).Select(c => c.Id).ToArray();
-            var second = policy.CardsForTurn(1, rng).Select(c => c.Id).ToArray();
-
-            Assert.AreEqual(3, first.Length);
-            Assert.AreEqual(3, second.Length);
-            Assert.AreEqual(3, second.Distinct().Count());
-        }
-
-        [Test]
-        public void Empty_or_zero_draw_yields_no_cards()
-        {
-            var rng = new Random(1);
-            Assert.AreEqual(0, new ShuffleBagPolicy(Array.Empty<CardDefinition>(), 2).CardsForTurn(0, rng).Count);
-            Assert.AreEqual(0, new ShuffleBagPolicy(Catalog("a", "b"), 0).CardsForTurn(0, rng).Count);
-            Assert.AreEqual(0, new ShuffleBagPolicy(Catalog("a", "b"), -2).CardsForTurn(0, rng).Count);
+            Assert.AreEqual(
+                0,
+                new ShuffleBagPolicy(Array.Empty<EnemyCardBundle>()).CardsForTurn(0, new Random(1)).Count);
         }
     }
 }

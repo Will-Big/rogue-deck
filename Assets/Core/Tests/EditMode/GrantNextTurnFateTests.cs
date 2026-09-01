@@ -35,7 +35,7 @@ namespace FateWeaver.Tests
                     new[] { new EffectData(EffectKeys.GrantNextTurnFate, 1) })
                     { EnergyCost = 1, Category = CardCategory.Execution }
             };
-            var intent = new EnemyIntent(new IReadOnlyList<CardDefinition>[]
+            var intent = new SequencePolicy(new IReadOnlyList<CardDefinition>[]
             {
                 new[] { CardFixtures.EnemyAttack("goblin_jab", 4, 0) }
             });

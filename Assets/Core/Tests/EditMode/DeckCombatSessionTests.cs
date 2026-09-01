@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
 {
     public class DeckCombatSessionTests
     {
-        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
+        private static SequencePolicy Goblin(int executionOrder, int damage) => new SequencePolicy(
             new IReadOnlyList<CardDefinition>[]
             {
                 new[] { CardFixtures.EnemyAttack("goblin_jab", executionOrder, damage) }
@@ -244,7 +244,7 @@ namespace FateWeaver.Tests
         }
 
         private static DeckCombatSession NewSession(
-            IReadOnlyList<CardDefinition> deck, EnemyIntent intent)
+            IReadOnlyList<CardDefinition> deck, SequencePolicy intent)
             => new DeckCombatSession(TestContent.Statuses(),
                 deck, playerHp: 30,
                 enemies: new[] { new Enemy("goblin", 100) },

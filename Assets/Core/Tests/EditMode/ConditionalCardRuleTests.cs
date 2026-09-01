@@ -12,7 +12,7 @@ namespace FateWeaver.Tests
     /// 입력은 합성 픽스처다 — 특정 카드의 밸런스가 아니라 조건 판정 규칙이 검증 대상이다.</summary>
     public class ConditionalCardRuleTests
     {
-        private static EnemyIntent Goblin(int executionOrder, int damage) => new EnemyIntent(
+        private static SequencePolicy Goblin(int executionOrder, int damage) => new SequencePolicy(
             new IReadOnlyList<CardDefinition>[]
             {
                 new[] { CardFixtures.EnemyAttack("goblin_jab", executionOrder, damage) }

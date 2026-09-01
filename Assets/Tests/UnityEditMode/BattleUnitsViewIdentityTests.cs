@@ -46,7 +46,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     new Enemy("enemy_b", 20),
                     new Enemy("enemy_c", 30)
                 },
-                new EnemyIntent(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
+                new SequencePolicy(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
                 new PartyTuning
                 {
                     DefaultMemberMaxHp = 10,
