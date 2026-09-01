@@ -25,7 +25,9 @@ namespace FateWeaver.Unity
 
         public bool IsBound => _label != null && _group != null;
 
-        /// <summary>delta가 음수면 피해, 양수면 회복이다. 다 뜨고 나면 스스로 사라진다.</summary>
+        /// <summary>delta가 음수면 피해, 양수면 회복이다. 구분은 색이 맡고 숫자는 언제나 양수로
+        /// 적는다 — 피해에 붙는 빼기표는 "HP가 줄었다"를 두 번 말한다. 다 뜨고 나면 스스로
+        /// 사라진다.</summary>
         public Tween Play(int delta)
         {
             if (!IsBound)
@@ -33,7 +35,7 @@ namespace FateWeaver.Unity
                 return null;
             }
 
-            _label.text = delta > 0 ? "+" + delta : delta.ToString();
+            _label.text = Mathf.Abs(delta).ToString();
             _label.color = delta > 0 ? _healColor : _damageColor;
             _group.alpha = 1f;
 
