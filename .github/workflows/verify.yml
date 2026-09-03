@@ -1,0 +1,30 @@
+name: verify
+
+# AGENTS.md 규칙 19는 머지 전 전체 테스트 통과를 요구한다. 사람과 AI가 잊어도 남는 게이트가
+# 여기다. Unity 에디터가 필요한 EditMode 테스트는 라이선스가 필요해 CI에 넣지 않는다 —
+# 그쪽은 AGENTS.md 「명령」 절의 배치 실행으로 로컬에서 확인한다.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          # Tests/Headless의 TargetFramework와 같은 6.0. 로컬 머신에 .NET 5뿐일 때는
+          # Tools/verify.sh가 알아서 net5.0으로 내려간다.
+          dotnet-version: '6.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 규칙 검사 + 헤드리스 테스트 + 노트북 테스트
+        run: Tools/verify.sh
