@@ -73,6 +73,11 @@
 |---|---|---|---|
 | [graphify 카드 그래프 통합](specs/2026-08-28-graphify-card-graph-design.md) | `current` | 카드·상태 JSON의 그래프 편입, 재생성 단일 명령, 카드·아키텍처 시각화 | 그래프 도구 확장(새 프루닝 규칙, 새 뷰) |
 
+검증과 실행 명령은 문서가 아니라 [`AGENTS.md`](../../AGENTS.md)의 「명령」 절이 권위다 —
+`Tools/verify.sh` 하나가 규칙 검사·헤드리스·노트북을 돌리고, CI(`.github/workflows/verify.yml`)가
+push·PR마다 같은 것을 돌린다. 상황별 절차는 두 스킬에 있다: `.claude/skills/graphify-usage`
+(그래프 조회·재생성·비용), `.claude/skills/unity-batch-runs`(EditMode 배치 실행, 라이선싱 장애).
+
 ## 활성 계획과 로드맵
 
 | 문서 | 상태 | 범위 |
@@ -195,7 +200,7 @@
 1,955줄이다. `시작 카드 풀.md`는 지워졌고 `적 타입 A.md`는 참고 메모로 남았다. 실행 계획은
 [노트북 저장소 반영](archive/plans/2026-08-11-notebook-repo-write.md)에 있다.
 
-검증 명령 둘:
+검증 명령은 둘을 묶은 `Tools/verify.sh` 하나다(AGENTS.md 「명령」 절). 개별로 부를 때:
 
 ```bash
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
