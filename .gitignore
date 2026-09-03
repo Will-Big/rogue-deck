@@ -155,3 +155,10 @@ __pycache__/
 # macOS Finder metadata
 # ============================================
 .DS_Store
+
+# ============================================
+# Claude Code — 공유 설정(.claude/settings.json, hooks, skills)은 커밋한다.
+# 개인 설정과 세션 워크트리만 무시한다.
+# ============================================
+/.claude/settings.local.json
+/.claude/worktrees/
