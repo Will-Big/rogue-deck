@@ -138,11 +138,18 @@ Unity **6000.5.2f1** 프로젝트입니다. 게임 규칙은 UnityEngine을 참�
 에디터 없이 검증됩니다.
 
 ```bash
+Tools/setup-dev.sh
+```
+
+받은 뒤 한 번 돌립니다. 공유 git 훅을 켜고 `dotnet`·`node`가 있는지 확인합니다.
+
+```bash
 Tools/verify.sh
 ```
 
 규칙 검사 + 헤드리스 코어 테스트 + 카드 저작 노트북 테스트를 약 10초에 돌립니다. `--quick`은
-헤드리스만, `--lint`는 규칙 검사만 합니다. push·PR마다 CI가 같은 명령을 돌립니다.
+헤드리스만, `--lint`는 규칙 검사만 합니다. 커밋할 때 `.githooks/pre-commit`이 바뀐 영역만,
+push·PR마다 CI가 전체를 돌립니다.
 
 | 경로 | 내용 |
 |---|---|
@@ -152,6 +159,9 @@ Tools/verify.sh
 | `Tests/Headless` | Unity 없이 도는 코어 테스트 하니스 |
 | `Tools/card-idea-notebook` | 브라우저에서 카드를 저작하는 노트북 |
 | `docs/superpowers/README.md` | 설계·계획 문서 색인. 새 작업은 여기서 시작합니다 |
+| `docs/agents/` | 작업 절차 문서 (그래프 조회, Unity 배치 실행) |
 
 AI 에이전트와 함께 작업할 때의 규칙은 [`AGENTS.md`](AGENTS.md)에 있습니다. 명령과 아키텍처
-경계, 병렬 워크트리 규약이 거기 정리돼 있습니다.
+경계, 병렬 워크트리 규약이 거기 정리돼 있습니다. Codex·Cursor·Gemini CLI·Copilot 등 대부분의
+도구가 `AGENTS.md`를 그대로 읽으므로, 어떤 도구로 열어도 같은 규칙과 같은 검증이 걸립니다.
+`.claude/`는 Claude Code에서 그것들을 자동으로 물어 오게 하는 껍데기이며, 내용의 원본이 아닙니다.

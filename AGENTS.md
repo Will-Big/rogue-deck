@@ -5,6 +5,12 @@
 
 ## 명령
 
+저장소를 처음 받았으면 한 번 돌린다. 공유 git 훅을 켜고 필요한 도구가 있는지 확인한다.
+
+```bash
+Tools/setup-dev.sh
+```
+
 검증은 이 하나로 한다. 규칙 검사 + 헤드리스 코어 테스트 + 카드 저작 노트북 테스트를 순서대로 돌고,
 실패하면 0이 아닌 코드로 끝난다. Unity 에디터는 필요 없다.
 
@@ -14,6 +20,7 @@ Tools/verify.sh
 
 | 명령 | 무엇을 하나 | 걸리는 시간 |
 |---|---|---|
+| `Tools/setup-dev.sh` | 공유 git 훅 활성화 + 도구 확인 (최초 1회) | 약 2초 |
 | `Tools/verify.sh` | 규칙 검사 + 헤드리스 + 노트북 전부 | 약 10초 |
 | `Tools/verify.sh --quick` | 헤드리스 코어 테스트만 | 약 10초 |
 | `Tools/verify.sh --lint` | 규칙 3·4·6의 기계 검사만 | 1초 미만 |
@@ -33,11 +40,22 @@ node --test "Tools/card-idea-notebook/"*.test.mjs
 ```
 
 Unity EditMode 배치 실행(씬·프리팹·에셋을 건드렸을 때, 규칙 17)은 `-quit`를 붙이면 테스트 없이
-exit 0으로 끝나는 함정이 있다. 검증된 전체 명령과 실행 장애 대응은 **`unity-batch-runs` 스킬**에 있다.
+exit 0으로 끝나는 함정이 있다. 검증된 전체 명령과 실행 장애 대응은
+[`docs/agents/unity-batch-runs.md`](docs/agents/unity-batch-runs.md)에 있다.
 
-CI(`.github/workflows/verify.yml`)가 push·PR마다 같은 `Tools/verify.sh`를 돌린다. 규칙 검사가
-잡는 것은 규칙 3·4·6뿐이고 기존 예외는 `Tools/lint-allow.txt`에 있다 — 그 목록은 부채 목록이며
-줄이는 쪽으로만 쓴다.
+검증이 걸리는 자리는 셋이고, 어느 도구로 작업하든 같다:
+
+| 자리 | 무엇을 잡나 | 우회 |
+|---|---|---|
+| `.githooks/pre-commit` | 커밋 직전, 바뀐 영역만 (`Tools/setup-dev.sh`로 활성화) | `--no-verify`로 가능 |
+| CI (`.github/workflows/verify.yml`) | push·PR마다 전체 | 불가 — 실질 게이트 |
+| Claude Code Stop 훅 (`.claude/`) | 턴이 끝날 때 코어 C#이 변했으면 | Claude 세션 전용 |
+
+규칙 검사가 잡는 것은 규칙 3·4·6뿐이고 기존 예외는 `Tools/lint-allow.txt`에 있다 — 그 목록은
+부채 목록이며 줄이는 쪽으로만 쓴다.
+
+**절차 문서는 `docs/agents/`에 둔다.** 어떤 도구로 열어도 읽히는 자리다. `.claude/`의 스킬·훅·권한은
+Claude Code에서 그것을 자동으로 물어 오게 하는 껍데기일 뿐이며, 내용을 복사해 두지 않는다.
 
 ## Unity 레이어
 
@@ -85,7 +103,7 @@ CI(`.github/workflows/verify.yml`)가 push·PR마다 같은 `Tools/verify.sh`를
     사용자 몫은 **보이는 결과가 기준인 것**뿐이다: 레이아웃·크기·색·연출처럼 눈으로 맞춰야 하는
     저작과, 조작감을 확인하는 Play. 어느 쪽인지 판단이 서지 않으면 손대기 전에 묻는다.
 
-    씬을 건드렸으면 `-batchmode` EditMode로 회귀를 확인한다(명령은 **`unity-batch-runs` 스킬** —
+    씬을 건드렸으면 `-batchmode` EditMode로 회귀를 확인한다(명령은 [`docs/agents/unity-batch-runs.md`](docs/agents/unity-batch-runs.md) —
     `-quit`를 붙이면 테스트 없이 exit 0으로 끝난다). **종료 후 `git status`로 의도한
     변경만 스테이징한다** — Play는 폰트 아틀라스 같은 런타임 부산물을 남기고 그것은 소스 변경이
     아니다(2026-08-03 `KoreanTMP.asset` 121줄로 실증). 배치 결과와 로그는 `/private/tmp`에
@@ -101,7 +119,7 @@ CI(`.github/workflows/verify.yml`)가 push·PR마다 같은 `Tools/verify.sh`를
 
 ## 코드베이스 탐색 (graphify 지식 그래프)
 
-> 이 절의 상세(명령·수치·함정)는 **`graphify-usage` 스킬**에 있다. 여기에는 판단 기준만 남긴다.
+> 이 절의 상세(명령·수치·함정)는 [`docs/agents/graphify-usage.md`](docs/agents/graphify-usage.md)에 있다. 여기에는 판단 기준만 남긴다.
 
 21. **그래프는 커밋되지 않는 로컬 산출물이다. 조회 전에 재생성한다.** 커밋해 두면 조용히 썩는다 —
     2026-08-05 실측으로 155커밋 뒤 4,112노드 중 **697개(17%)가 삭제된 파일을 가리켰고**, `explain`은
@@ -135,8 +153,8 @@ CI(`.github/workflows/verify.yml`)가 push·PR마다 같은 `Tools/verify.sh`를
     클라이언트부터 의심한다.** 원인은 라이선스도 Hub 버전도 아니라, **기동 중 행(hang)에 걸린
     클라이언트가 글로벌 뮤텍스를 점유**한 것이다(2026-07-20·07-31 두 번 확인). `pgrep -lf
     Unity.Licensing.Client`로 **에디터 버전 전용** 클라이언트를 찾아 그것만 죽인다. 판별·해결
-    절차와 오진 금지 항목(로그의 505 거부는 정상 동작이다)은 **`unity-batch-runs` 스킬**에 있다.
-    EditMode 배치 실행 명령도 같은 스킬에 있다 — `-quit`를 붙이면 테스트 없이 exit 0으로 끝난다.
+    절차와 오진 금지 항목(로그의 505 거부는 정상 동작이다)은 [`docs/agents/unity-batch-runs.md`](docs/agents/unity-batch-runs.md)에
+    있다. EditMode 배치 실행 명령도 같은 문서에 있다 — `-quit`를 붙이면 테스트 없이 exit 0으로 끝난다.
 
 26. **다른 세션의 Unity 프로세스를 죽이지 않는다.** 규칙 15·17대로 여러 워크트리가 동시에 `-batchmode`를 돌린다.
     좀비를 정리할 때는 `ps`의 `-projectPath` 인자로 소유 워크트리를 확인하고, **라이선싱 클라이언트만** 죽인다.

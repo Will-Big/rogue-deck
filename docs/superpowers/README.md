@@ -74,9 +74,11 @@
 | [graphify 카드 그래프 통합](specs/2026-08-28-graphify-card-graph-design.md) | `current` | 카드·상태 JSON의 그래프 편입, 재생성 단일 명령, 카드·아키텍처 시각화 | 그래프 도구 확장(새 프루닝 규칙, 새 뷰) |
 
 검증과 실행 명령은 문서가 아니라 [`AGENTS.md`](../../AGENTS.md)의 「명령」 절이 권위다 —
-`Tools/verify.sh` 하나가 규칙 검사·헤드리스·노트북을 돌리고, CI(`.github/workflows/verify.yml`)가
-push·PR마다 같은 것을 돌린다. 상황별 절차는 두 스킬에 있다: `.claude/skills/graphify-usage`
-(그래프 조회·재생성·비용), `.claude/skills/unity-batch-runs`(EditMode 배치 실행, 라이선싱 장애).
+`Tools/verify.sh` 하나가 규칙 검사·헤드리스·노트북을 돌리고, `.githooks/pre-commit`과
+CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다. 상황별 절차는
+[`docs/agents/`](../agents/)에 있다: [그래프 조회·재생성·비용](../agents/graphify-usage.md),
+[EditMode 배치 실행과 라이선싱 장애](../agents/unity-batch-runs.md). 이 문서들은 설계 스펙이 아니라
+**작업 절차**라 위 상태표의 관리 대상이 아니며, 도구에 매이지 않도록 `.claude/` 바깥에 둔다.
 
 ## 활성 계획과 로드맵
 
