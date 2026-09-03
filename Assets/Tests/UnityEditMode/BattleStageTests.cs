@@ -36,7 +36,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 UnityTestContent.Statuses(),
                 new[] { Loadout("a", "Member A", 25) },
                 new[] { new Enemy("goblin", 12) },
-                new EnemyIntent(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
+                new SequencePolicy(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
                 new PartyTuning
                 {
                     DefaultMemberMaxHp = 25,
