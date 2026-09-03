@@ -10,7 +10,10 @@
 
 set -uo pipefail
 
-ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+# 루트는 이 스크립트의 위치에서 구한다. git에게 묻지 않는다 — git 훅 안에서는 GIT_DIR이 설정돼
+# 있어 `rev-parse --show-toplevel`이 워크트리가 아니라 메인 체크아웃을 가리킬 수 있고, 그러면
+# 훅이 엉뚱한 트리를 검사하고 조용히 통과한다(2026-09-04 실측).
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 GREP=/usr/bin/grep   # bare grep이 셸 알리아스로 실패하는 환경이 있어 절대 경로를 쓴다
