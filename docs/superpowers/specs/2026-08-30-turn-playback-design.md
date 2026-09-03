@@ -1,7 +1,7 @@
 # 턴 재생 계층 설계 — 상세
 
 - 작성일: 2026-08-30
-- 상태: `active` (설계 개요 승인 2026-08-30)
+- 상태: `active` — Task 1~6 완료(2026-08-30), Task 7의 사용자 Play 확인만 남았다
 - 범위: 한 턴의 해석 결과를 시간축 위에서 재생하는 표현 계층. 개별 연출의 모양·수치는 범위 밖이다.
 - **사람 검수용 개요:** [2026-08-30-turn-playback-design.html](2026-08-30-turn-playback-design.html)
 
@@ -32,12 +32,17 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 
 - 작업은 **전용 워크트리**에서 한다(규칙 15). 메인 체크아웃의 브랜치를 전환하지 않는다.
 - 헤드리스: `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo`
-- **기준선: 557 passed / 0 failed (2026-08-30 master `cdb2545` 실측).** 이 계획은 `Assets/Core`를
-  건드리지 않으므로 이 수치가 끝까지 변하지 않아야 한다. 변했다면 코어를 건드린 것이다.
-- Unity EditMode 기준선은 착수 세션이 첫 실행에서 실측한다(README의 672는 계획 3.5 시점 수치로 낡았다).
+- **기준선: 557 passed / 0 failed (2026-08-30 master `cdb2545` 실측).** 기존 557개는 끝까지 전부
+  통과해야 하고, 총계는 Task 1이 더하는 비트 분할 테스트만큼만 는다.
+- **규칙 레이어(`FateWeaver.Core`)를 수정하지 않는다.** 이 계층은 코어 이벤트를 읽기만 한다.
+  `FateWeaver.Simulation`에 순수 표현 로직을 더하는 것은 별개이며 `TimelineTextFormatter`의 선례를
+  따른다. 규칙 판정·상태·효과에 손이 가야 한다면 범위를 벗어난 신호이므로 멈추고 보고한다.
+- **Unity EditMode 기준선: 714 total / 707 passed / 0 failed / 7 skipped** (2026-08-30 이 워크트리에서
+  Task 1 완료 시점 실측. Task 1의 신규 9개를 포함한 수치다. README의 672는 계획 3.5 시점이라 낡았다).
   `-runTests`에 `-quit`를 같이 주지 않는다 — 테스트 없이 exit 0이 된다.
-- **`Assets/Core`를 수정하지 않는다.** 이 계층은 코어 이벤트를 읽기만 한다. 코어에 손이 가야 한다면
-  그것은 이 계획의 범위를 벗어난 신호이므로 멈추고 보고한다.
+- **새 `.cs`의 `.meta`는 Unity 배치 실행이 만들어 준다.** 손으로 만들지 말고 배치를 한 번 돌린 뒤
+  `git status`로 확인한다(2026-08-30 확인). 워크트리 첫 배치는 `Library/`가 없어 수 분 걸리고,
+  그 뒤로는 빠르다.
 - 규칙 32: 연출은 DOTween·Particle System 등 기존 도구로 한다. 직접 구현하는 칸은 개요의
   「도구 선택」 표에 이유가 적힌 것뿐이다. 새 의존성은 사전 승인(규칙 14).
 - 규칙 1·2·3: 런타임 `new GameObject` 금지(프리팹 인스턴스화만), `Resources.Load`·
@@ -55,10 +60,12 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 
 | 파일 | 책임 |
 |---|---|
-| `Assets/Unity/Scripts/Battle/Playback/TimelineBeatPlanner.cs` | 이벤트 목록 → 비트 목록. 순수 정적 클래스, UnityEngine 미사용 |
+| `Assets/Core/Simulation/Playback/TimelineBeatPlanner.cs` | 이벤트 목록 → 비트 목록. 순수 정적 클래스 |
 | `Assets/Unity/Scripts/Battle/Playback/PlaybackCue.cs` | `PlaybackCue`(Tween + `CueRole`)와 `CueRole` enum |
 | `Assets/Unity/Scripts/Battle/Playback/IResolutionEventPresenter.cs` | 연출자 계약 |
-| `Assets/Unity/Scripts/Battle/Playback/EventPresenterRegistry.cs` | 이벤트 타입 → 연출자 (규칙 9) |
+| `Assets/Unity/Scripts/Battle/Playback/EventPresenterRegistry.cs` | 이벤트 타입 → 연출자 **여럿** (규칙 9) |
+| `Assets/Unity/Scripts/Battle/Playback/PlaybackInstaller.cs` | 어떤 이벤트에 어떤 연출자가 붙는지 조립 |
+| `Assets/Unity/Scripts/Battle/Playback/RailCardHighlightPresenter.cs` | 실행 중인 레일 카드의 아웃라인 (개시) |
 | `Assets/Unity/Scripts/Battle/Playback/BattleStage.cs` | id → `UnitMotionView`·앵커·숫자 스포너 |
 | `Assets/Unity/Scripts/Battle/Playback/TurnPlaybackDirector.cs` | 비트 시퀀스 조립, 배속, 스킵, 완료 통지 |
 | `Assets/Unity/Scripts/Battle/Playback/CardResolvedPresenter.cs` | 시전자 전진 (개시) |
@@ -74,8 +81,17 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 | `Assets/Unity/Editor/BattleSceneBuilder.cs` | 재생 계층 배선 + 씬 재생성 |
 | `Assets/Scenes/FateWeaverBattle.unity` | 위 배선의 결과 |
 
-테스트: `Assets/Tests/UnityEditMode/TimelineBeatPlannerTests.cs`,
-`EventPresenterRegistryTests.cs`, `TurnPlaybackDirectorTests.cs`.
+테스트: `Assets/Core/Tests/EditMode/TimelineBeatPlannerTests.cs`(헤드리스),
+`Assets/Tests/UnityEditMode/EventPresenterRegistryTests.cs`,
+`Assets/Tests/UnityEditMode/TurnPlaybackDirectorTests.cs`(둘 다 Unity EditMode).
+
+**`TimelineBeatPlanner`만 `FateWeaver.Simulation`에 둔다.** 처음에는 Unity 레이어에 두려 했으나,
+같은 모양의 선례가 이미 있다 — `TimelineTextFormatter`(타임라인 → 한국어 텍스트)가
+`Assets/Core/Simulation/Descriptions/`에 살고 `CombatLogTests`가 헤드리스로 덮는다. 둘 다 이벤트
+목록을 받아 표현용 구조로 바꾸는 순수 함수이고 UnityEngine을 쓰지 않는다. `FateWeaver.Simulation`은
+`noEngineReferences: true`라 규칙 6과 충돌하지 않으며, 헤드리스가 이 폴더를 컴파일하므로 검증이
+2초 만에 끝난다(Unity 배치는 수 분). 나머지 여섯은 MonoBehaviour·DOTween에 묶여 있어 Unity
+레이어에 남는다.
 
 ---
 
@@ -100,7 +116,7 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 단언한다. 순서로 묶고 `SourceId`로 검산하는 구조라 코어가 순서를 바꾸면 테스트가 걸린다
 (개요 「이 선택으로 나중에 어려워지는 것」 3번).
 
-- [ ] **Step 1: RED 테스트를 쓴다**
+- [x] **Step 1: RED 테스트를 쓴다**
 
 ```csharp
 [Test]
@@ -188,11 +204,11 @@ public void 턴_경계는_단독_비트다()
 }
 ```
 
-- [ ] **Step 2: RED 확인** — `TimelineBeatPlannerTests` 필터로 EditMode 실행. 타입이 없어 컴파일 실패.
-- [ ] **Step 3: 최소 구현** — `PlaybackBeat`는 `IReadOnlyList<ResolutionEvent> Events`만 갖는
+- [x] **Step 2: RED 확인** — `TimelineBeatPlannerTests` 필터로 EditMode 실행. 타입이 없어 컴파일 실패.
+- [x] **Step 3: 최소 구현** — `PlaybackBeat`는 `IReadOnlyList<ResolutionEvent> Events`만 갖는
       불변 타입. `Plan`은 목록을 한 번 훑으며 위 표대로 자른다. `switch` 하나에 개시 이벤트 판정만
       담고, 이벤트 종류별 분기를 여기 쌓지 않는다.
-- [ ] **Step 4: GREEN 확인 후 커밋** — `feat(ui): 타임라인을 동시 재생 단위인 비트로 나눈다`
+- [x] **Step 4: GREEN 확인 후 커밋** — `feat(ui): 타임라인을 동시 재생 단위인 비트로 나눈다`
 
 ---
 
@@ -203,8 +219,14 @@ public void 턴_경계는_단독_비트다()
 - `CueRole { Lead, Follow }` — 비트 안에서 개시인지 후속인지.
 - `PlaybackCue` — `Tween Tween`, `CueRole Role`. `Tween`이 `null`이면 "연출 없음"이며 director가
   건너뛴다.
-- `IResolutionEventPresenter` — `Type EventType { get; }`,
-  `PlaybackCue Build(ResolutionEvent evt, BattleStage stage)`.
+- `IResolutionEventPresenter` — `Type EventType { get; }`, `PlaybackCue Build(ResolutionEvent evt)`.
+  **`BattleStage`는 매개변수가 아니라 구현체의 생성자로 받는다.** 스테이지는 이벤트마다 달라지는
+  값이 아니라 고정 협력자이고, 이렇게 두면 이 계약이 스테이지 타입을 몰라도 되어 Task 2가 Task 3에
+  묶이지 않는다.
+- 그릴 것이 없으면 `PlaybackCue.None`을 돌려주고 **예외를 던지지 않는다.** 재생 도중 이벤트 하나
+  때문에 턴 전체가 멈추면 안 된다.
+- 연출 시간·강도는 연출자가 아니라 뷰 컴포넌트(`UnitMotionView` 등)의 `[SerializeField]`에 둔다
+  (규칙 8). 연출자는 순수 C# 클래스라 자체 직렬화 필드를 가질 수 없다.
 - `EventPresenterRegistry` — `Register(IResolutionEventPresenter)`,
   `TryResolve(ResolutionEvent, out IResolutionEventPresenter)`. 키는 이벤트의 `Type`이며 중복
   등록은 예외다(규칙 9의 부팅 검증에 해당).
@@ -212,10 +234,10 @@ public void 턴_경계는_단독_비트다()
 **미등록 이벤트는 조용히 건너뛴다.** 17종 전부에 연출을 다는 것이 목표가 아니므로 정상 동작이다.
 대신 EditMode 테스트가 "등록된 타입 집합"을 단언해, 등록을 빠뜨린 것과 의도적 미등록을 가른다.
 
-- [ ] **Step 1: RED** — 중복 등록 예외, 미등록 조회 실패, 타입별 정확한 해결을 단언한다.
-- [ ] **Step 2: RED 확인**
-- [ ] **Step 3: 구현**
-- [ ] **Step 4: GREEN 후 커밋** — `feat(ui): 이벤트별 연출자를 레지스트리로 등록한다`
+- [x] **Step 1: RED** — 중복 등록 예외, 미등록 조회 실패, 타입별 정확한 해결을 단언한다.
+- [x] **Step 2: RED 확인**
+- [x] **Step 3: 구현**
+- [x] **Step 4: GREEN 후 커밋** — `feat(ui): 이벤트별 연출자를 레지스트리로 등록한다`
 
 ---
 
@@ -246,10 +268,10 @@ public void 턴_경계는_단독_비트다()
 `FloatingNumberView`: TMP 하나짜리 프리팹. `Tween Play(int delta)`가 위로 떠오르며 페이드아웃하고
 완료 시 자신을 파괴한다. 부호에 따른 색은 `[SerializeField]`.
 
-- [ ] **Step 1: 프리팹·컴포넌트 구조를 만든다** (규칙 17: 구조는 직접, 수치는 사용자 체크포인트)
-- [ ] **Step 2: `BattleStage` 조회 테스트** — 없는 id에 `null`/기본값을 돌려주는지, 최대 HP 스냅샷이
+- [x] **Step 1: 프리팹·컴포넌트 구조를 만든다** (규칙 17: 구조는 직접, 수치는 사용자 체크포인트)
+- [x] **Step 2: `BattleStage` 조회 테스트** — 없는 id에 `null`/기본값을 돌려주는지, 최대 HP 스냅샷이
       스폰 시점 값인지 단언한다.
-- [ ] **Step 3: 커밋** — `feat(ui): 유닛 몸짓과 부동 숫자 뷰를 더한다`
+- [x] **Step 3: 커밋** — `feat(ui): 유닛 몸짓과 부동 숫자 뷰를 더한다`
 
 ---
 
@@ -276,8 +298,8 @@ public void 턴_경계는_단독_비트다()
 생긴다. 이 범위에서는 그대로 두고, `CardCancelledPresenter`(레일 카드가 흔들리며 회색으로 꺼지는
 연출)를 후속으로 남긴다. 재생이 붙은 뒤 Play에서 실제로 어색한지 먼저 보고 판단한다.
 
-- [ ] **Step 1: 구현** — 각 연출자는 `DOTween.Sequence()`를 조립해 `PlaybackCue`로 돌려준다.
-- [ ] **Step 2: 커밋** — `feat(ui): 카드 실행과 HP 변화의 연출자를 더한다`
+- [x] **Step 1: 구현** — 각 연출자는 `DOTween.Sequence()`를 조립해 `PlaybackCue`로 돌려준다.
+- [x] **Step 2: 커밋** — `feat(ui): 카드 실행과 HP 변화의 연출자를 더한다`
 
 ---
 
@@ -297,11 +319,11 @@ public void 턴_경계는_단독_비트다()
 **중복 완료를 막는다** — `OnComplete`와 `OnKill` 양쪽에서 콜백을 부르되 플래그로 한 번만 통과시킨다
 (`ExecutionRailView`의 `completionSent` 관례).
 
-- [ ] **Step 1: RED** — 빈 타임라인이 즉시 완료 콜백을 부르는지, `Skip()` 후 `IsPlaying`이 `false`이고
+- [x] **Step 1: RED** — 빈 타임라인이 즉시 완료 콜백을 부르는지, `Skip()` 후 `IsPlaying`이 `false`이고
       완료 콜백이 정확히 한 번 불리는지, `Speed` 변경이 루트 `timeScale`에 반영되는지 단언한다.
-- [ ] **Step 2: RED 확인**
-- [ ] **Step 3: 구현**
-- [ ] **Step 4: GREEN 후 커밋** — `feat(ui): 비트를 순서대로 재생하는 디렉터를 더한다`
+- [x] **Step 2: RED 확인**
+- [x] **Step 3: 구현**
+- [x] **Step 4: GREEN 후 커밋** — `feat(ui): 비트를 순서대로 재생하는 디렉터를 더한다`
 
 ---
 
@@ -322,11 +344,11 @@ public void 턴_경계는_단독_비트다()
 - `[SerializeField]`는 `_playback` 하나만 는다(8 → 9). 입력 핸들러 분리는 **이번 범위 밖**이다
   (2026-08-30 사용자 결정).
 
-- [ ] **Step 1: 컨트롤러·HUD 수정**
-- [ ] **Step 2: `BattleSceneBuilder` 수정 후 씬 재생성**
-- [ ] **Step 3: EditMode 회귀 확인 후 `git status`로 의도한 변경만 스테이징**(규칙 17 — 폰트 아틀라스
+- [x] **Step 1: 컨트롤러·HUD 수정**
+- [x] **Step 2: `BattleSceneBuilder` 수정 후 씬 재생성**
+- [x] **Step 3: EditMode 회귀 확인 후 `git status`로 의도한 변경만 스테이징**(규칙 17 — 폰트 아틀라스
       같은 Play 부산물을 섞지 않는다)
-- [ ] **Step 4: 커밋** — `feat(ui): 턴 해석 결과를 재생으로 보여준다`
+- [x] **Step 4: 커밋** — `feat(ui): 턴 해석 결과를 재생으로 보여준다`
 
 ---
 
@@ -340,6 +362,39 @@ public void 턴_경계는_단독_비트다()
       **눈으로 판단할 것이므로 사용자 몫이다**(규칙 17)
 - [ ] **Step 5:** 승인 후 이 계획을 `archive/plans/`로 옮기고 `docs/superpowers/README.md`를 같은
       커밋에서 갱신한다(규칙 20)
+
+## 구현 중 바뀐 것 (2026-08-30)
+
+계획대로 되지 않은 곳과 그 이유다. 다음 세션은 이 절을 계획 본문보다 우선해 읽는다.
+
+1. **`TimelineBeatPlanner`를 `FateWeaver.Simulation`으로 옮겼다.** 위 「파일 구조」의 설명 참고 —
+   `TimelineTextFormatter`의 선례를 따랐고 검증이 수 분에서 2초가 됐다.
+2. **`IResolutionEventPresenter.Build`가 `BattleStage`를 매개변수로 받지 않는다.** 생성자로 받는다.
+   매개변수로 두면 이 계약이 스테이지 타입을 알아야 해서 Task 2가 Task 3에 묶였다.
+3. **레지스트리가 이벤트 하나에 연출자 여럿을 받는다.** 원래는 하나만 허용하고 중복을 예외로
+   막았다. 레일 카드 아웃라인 요구가 그 가정을 깼다 — 카드가 해결되면 시전자가 움직이고(유닛)
+   그 카드에 아웃라인이 켜진다(레일). 같은 사건의 두 얼굴이지 순서 있는 두 사건이 아니며, 한
+   연출자에 몰면 책임을 '그리고' 없이 못 쓴다(규칙 30). 등록 순서가 큐 순서다.
+4. **비트 안에서 개시 큐들도 서로 나란히 흐른다.** 3번의 따름 결과다. 한 비트의 원인은 하나이므로
+   개시가 여럿인 것은 그 하나를 여러 곳에서 보이는 것뿐이다.
+5. **`PlaybackInstaller`가 늘어 객체가 여덟이 됐다.** 조립을 디렉터에 두면 "이벤트의 의미를
+   모른다"는 계약이 깨지고, 컨트롤러에 두면 조정자가 조립까지 한다(규칙 30). 덕분에 컨트롤러의
+   `[SerializeField]`는 약속대로 8 → 9로만 늘었다.
+6. **`FloatingNumberView`가 Play 모드와 에디터에서 다르게 자신을 지운다.** EditMode에서 `Destroy`는
+   에러 로그를 남겨 테스트가 실패한다. 재생 계층을 에디터 없이 검증하려면 이 갈래가 필요하다.
+7. **실행 아웃라인 색과 두께는 아직 코드 상수다**(`RailCardView`의 `OutlineExecuting`, 9px).
+   기존 `OutlinePrimary`·`OutlineSecondary`와 같은 자리라 관례는 지켰으나 인스펙터에 없다.
+   사용자가 조정을 원하면 `[SerializeField]`로 뺀다.
+
+## 남은 검증 (Task 7)
+
+- [x] 헤드리스 566 / 0 failed (기준선 557 + 신규 9)
+- [x] Unity EditMode 749 / 742 passed / 0 failed (기준선 714)
+- [x] 금지 패턴 감사 — `Resources.Load`·`GameObject.Find`·`FindObjectOfType`·런타임 `new GameObject`
+      모두 재생 계층 신규 파일에 없음. 코어 순수성 유지
+- [x] 사용자 Play 확인 — 전반적인 연출 승인(2026-08-30). 레일 아웃라인은 그 뒤 추가분이라 색·두께
+      미확정
+- [ ] 계획 보관과 색인 갱신은 나머지 연출이 붙은 뒤로 미룬다
 
 ## 범위 밖
 

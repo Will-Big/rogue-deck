@@ -160,6 +160,16 @@ namespace FateWeaver.Unity
             }
         }
 
+        /// <summary>지금 실행 중인 카드에만 아웃라인을 켠다. 모르는 id를 주면 전부 꺼지므로
+        /// 재생이 끝날 때 따로 지울 필요가 없다.</summary>
+        public void SetExecutingCard(int instanceId)
+        {
+            foreach (var view in _views)
+            {
+                view.SetExecuting(view.InstanceId == instanceId);
+            }
+        }
+
         public void ShowPlacementHover(CardPresentation card, int insertionIndex)
         {
             if (insertionIndex < 0 || insertionIndex > _views.Count)

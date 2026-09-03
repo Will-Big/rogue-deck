@@ -497,6 +497,7 @@ GameObject:
   - component: {fileID: 2326202241393802445}
   - component: {fileID: 7578024464327345833}
   - component: {fileID: 5043400901355706048}
+  - component: {fileID: 2586039872579160899}
   m_Layer: 0
   m_Name: UnitView
   m_TagString: Untagged
@@ -564,6 +565,32 @@ MonoBehaviour:
   _hpText: {fileID: 1774568412740533433}
   _nameText: {fileID: 3697894110122556850}
   _statusText: {fileID: 8323195994224078078}
+  _hpTweenDuration: 0.25
+  _deadTint: {r: 0.35, g: 0.35, b: 0.35, a: 0.5}
+--- !u!114 &2586039872579160899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6472299122339324308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26521897f272a459581c55a27214d25d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.UnitMotionView
+  _body: {fileID: 6075345708919951242}
+  _bodyImage: {fileID: 7338233685488391623}
+  _lungeDistance: 42
+  _lungeDuration: 0.18
+  _lungeEase: 6
+  _shakeDuration: 0.25
+  _shakeStrength: 14
+  _shakeVibrato: 18
+  _flashColor: {r: 1, g: 0.45, b: 0.45, a: 1}
+  _flashDuration: 0.09
+  _fadeDuration: 0.35
+  _fadeAlpha: 0.25
 --- !u!1 &7804634547163919776
 GameObject:
   m_ObjectHideFlags: 0

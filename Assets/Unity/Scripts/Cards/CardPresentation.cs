@@ -25,6 +25,10 @@ namespace FateWeaver.Unity
         public Color OwnerColor { get; }
         public bool IsPartyOwned { get; }
 
+        /// <summary>배치된 카드 인스턴스의 식별자. 손패·더미 카드처럼 인스턴스가 없으면 -1이다.
+        /// 재생 계층이 CardResolved.InstanceId로 레일의 어느 카드인지 찾는 데 쓴다.</summary>
+        public int InstanceId { get; }
+
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
             CardDescriptionLayout descriptionLayout, Sprite art, bool isLocked,
@@ -32,8 +36,10 @@ namespace FateWeaver.Unity
             CardCategory category = CardCategory.Execution,
             string ownerDisplayName = null,
             Color ownerColor = default,
-            bool isPartyOwned = false)
+            bool isPartyOwned = false,
+            int instanceId = -1)
         {
+            InstanceId = instanceId;
             Id = id;
             DisplayName = displayName;
             ExecutionOrder = executionOrder;
@@ -63,7 +69,8 @@ namespace FateWeaver.Unity
                 Category,
                 OwnerDisplayName,
                 OwnerColor,
-                IsPartyOwned);
+                IsPartyOwned,
+                InstanceId);
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
         /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
@@ -89,7 +96,8 @@ namespace FateWeaver.Unity
                 def.Category,
                 ownerDisplayName,
                 ownerColor,
-                isPartyOwned);
+                isPartyOwned,
+                card.InstanceId);
         }
 
         /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>

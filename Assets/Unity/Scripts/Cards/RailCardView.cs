@@ -17,6 +17,17 @@ namespace FateWeaver.Unity
         [SerializeField] private Image _artFallback;
         [SerializeField] private TMP_Text _orderText;
         [SerializeField] private Image _selectionOutline;
+        [SerializeField] private Image _executionOutline;
+
+        [Header("아웃라인 색")]
+        [Tooltip("대상 선택의 첫 대상.")]
+        [SerializeField] private Color _primaryOutlineColor = new Color(0.95f, 0.72f, 0.25f, 1f);
+
+        [Tooltip("대상 선택의 두 번째 대상.")]
+        [SerializeField] private Color _secondaryOutlineColor = new Color(0.35f, 0.75f, 0.95f, 1f);
+
+        [Tooltip("재생 중 지금 실행되고 있는 카드. 두께는 ExecutionOutline 자식의 RectTransform에서 조절한다.")]
+        [SerializeField] private Color _executingOutlineColor = new Color(1f, 0.95f, 0.62f, 1f);
         [SerializeField] private Image _lockIcon;
         [SerializeField] private GameObject _ownerChip;
         [SerializeField] private Image _ownerChipBackground;
@@ -28,16 +39,21 @@ namespace FateWeaver.Unity
         private static readonly Color InterventionFrame = new Color(0.24f, 0.45f, 0.55f, 1f);
         private static readonly Color EnemyTint = new Color(0.45f, 0.18f, 0.18f, 1f);
         private static readonly Color PlayerTint = new Color(0.22f, 0.28f, 0.36f, 1f);
+        /// <summary>아웃라인이 꺼진 상태. 투명은 튜닝 값이 아니라 "없음"의 표현이라 상수로 둔다.</summary>
         private static readonly Color OutlineNone = new Color(0f, 0f, 0f, 0f);
-        private static readonly Color OutlinePrimary = new Color(0.95f, 0.72f, 0.25f, 1f);
-        private static readonly Color OutlineSecondary = new Color(0.35f, 0.75f, 0.95f, 1f);
 
         private Action<bool> _onHover;
         private bool _inputEnabled = true;
 
+        /// <summary>이 뷰가 그리고 있는 카드 인스턴스의 식별자. 재생 계층이 CardResolved의
+        /// InstanceId로 레일의 어느 카드인지 찾는 데 쓴다.</summary>
+        public int InstanceId { get; private set; } = -1;
+
         public void Bind(CardPresentation data, Action onClick, Action<bool> onHover)
         {
             _onHover = onHover;
+            InstanceId = data.InstanceId;
+            SetExecuting(false);
             _frame.color = data.Category == CardCategory.Intervention ? InterventionFrame : ExecutionFrame;
             _orderText.text = data.ExecutionOrder.ToString();
 
@@ -78,11 +94,21 @@ namespace FateWeaver.Unity
             _button.interactable = value;
         }
 
+        /// <summary>이 카드가 지금 실행 중인지. 대상 선택 아웃라인과 겹치지 않도록 별도 그래픽을
+        /// 쓴다 — 선택은 플레이어의 조작, 실행은 재생의 진행이라 동시에 보일 수 있다.</summary>
+        public void SetExecuting(bool executing)
+        {
+            if (_executionOutline != null)
+            {
+                _executionOutline.color = executing ? _executingOutlineColor : OutlineNone;
+            }
+        }
+
         public void SetSelection(CardView.SelectionKind kind)
         {
             _selectionOutline.color =
-                kind == CardView.SelectionKind.Primary ? OutlinePrimary :
-                kind == CardView.SelectionKind.Secondary ? OutlineSecondary :
+                kind == CardView.SelectionKind.Primary ? _primaryOutlineColor :
+                kind == CardView.SelectionKind.Secondary ? _secondaryOutlineColor :
                 OutlineNone;
         }
 
@@ -117,6 +143,13 @@ namespace FateWeaver.Unity
             root.sizeDelta = size;
 
             var view = root.gameObject.AddComponent<RailCardView>();
+
+            var execution = BattleUiKit.Image(root, "ExecutionOutline", OutlineNone);
+            var executionRect = execution.rectTransform;
+            BattleUiKit.Stretch(executionRect);
+            executionRect.offsetMin = new Vector2(-9f, -9f);
+            executionRect.offsetMax = new Vector2(9f, 9f);
+            execution.raycastTarget = false;
 
             var selection = BattleUiKit.Image(root, "Selection", OutlineNone);
             var selectionRect = selection.rectTransform;
@@ -186,6 +219,7 @@ namespace FateWeaver.Unity
             view._artFallback = artFallback;
             view._orderText = orderText;
             view._selectionOutline = selection;
+            view._executionOutline = execution;
             view._lockIcon = lockIcon;
             view._ownerChip = ownerChip.gameObject;
             view._ownerChipBackground = ownerBackground;

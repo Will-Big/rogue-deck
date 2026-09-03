@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using FateWeaver.Core.Status;
 using TMPro;
 using UnityEngine;
@@ -18,10 +19,19 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _statusText;
 
+        [Tooltip("HP 막대가 새 값까지 흐르는 시간(초).")]
+        [SerializeField] private float _hpTweenDuration = 0.25f;
+
+        [Tooltip("쓰러진 유닛의 초상 색.")]
+        [SerializeField] private Color _deadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
+
+        /// <summary>HP 막대의 색. EditorCreate가 프리팹에 굽는 값이라 실물 조절은 프리팹의
+        /// HpFill 이미지에서 한다.</summary>
         private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
-        private static readonly Color DeadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
 
         private Color _aliveTint = Color.white;
+        private int _maxHp;
+        private int _currentHp;
 
         public void Bind(string displayName, Color portraitTint)
         {
@@ -32,13 +42,36 @@ namespace FateWeaver.Unity
 
         public void SetHp(int current, int max)
         {
-            float t = max > 0 ? Mathf.Clamp01((float)current / max) : 0f;
+            _maxHp = max;
+            Render(current);
+        }
+
+        /// <summary>HP 막대를 트윈하기 위한 지점. 최대 HP는 마지막 SetHp가 준 값을 쓴다 —
+        /// HpChanged 이벤트가 최대 HP를 싣지 않기 때문이다(설계 「어려워지는 것」 4번).</summary>
+        public int DisplayedHp
+        {
+            get => _currentHp;
+            set => Render(value);
+        }
+
+        /// <summary>HP 막대를 현재 표시값에서 target까지 흐르게 한다. 시작값을 인자로 받지 않고
+        /// getter에서 읽으므로, 한 턴에 같은 유닛이 여러 번 맞아도 앞 트윈이 끝난 값에서 이어진다.
+        /// 막대가 UnitView의 것이므로 그것이 움직이는 속도도 여기 있다(규칙 8).</summary>
+        public Tween TweenHpTo(int target)
+            => DOTween.To(() => DisplayedHp, value => DisplayedHp = value, target, _hpTweenDuration)
+                .SetEase(Ease.OutQuad)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+
+        private void Render(int current)
+        {
+            _currentHp = current;
+            float t = _maxHp > 0 ? Mathf.Clamp01((float)current / _maxHp) : 0f;
             _hpFill.anchorMin = new Vector2(0f, 0f);
             _hpFill.anchorMax = new Vector2(t, 1f);
             _hpFill.offsetMin = Vector2.zero;
             _hpFill.offsetMax = Vector2.zero;
-            _hpText.text = Mathf.Max(0, current) + " / " + max;
-            _portrait.color = current > 0 ? _aliveTint : DeadTint;
+            _hpText.text = Mathf.Max(0, current) + " / " + _maxHp;
+            _portrait.color = current > 0 ? _aliveTint : _deadTint;
         }
 
         public void SetStatuses(
@@ -100,6 +133,9 @@ namespace FateWeaver.Unity
             view._hpText = hpText;
             view._nameText = nameText;
             view._statusText = statusText;
+
+            // 몸짓은 루트가 아니라 초상에 건다 — 루트는 UnitRow의 레이아웃 그룹이 통제한다.
+            root.gameObject.AddComponent<UnitMotionView>().EditorBind(portrait);
             return view;
         }
     }

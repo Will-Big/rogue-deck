@@ -29,6 +29,7 @@ namespace FateWeaver.Unity
         [SerializeField] private BattlePilesView _piles;
         [SerializeField] private BattleHudView _hud;
         [SerializeField] private CardSelectionController _selection;
+        [SerializeField] private Playback.TurnPlaybackDirector _playback;
 
         private const int FateEnergyPerTurn = 3;
         private const int Seed = 1;
@@ -51,7 +52,9 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            _hud.Initialize(OnTurnButton, StartSession);
+            _hud.Initialize(
+                OnTurnButton, StartSession, _playback.Skip, speed => _playback.Speed = speed);
+            _playback.Speed = _hud.Speed;
             _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
             StartSession();
         }
@@ -61,7 +64,8 @@ namespace FateWeaver.Unity
                 && _units != null && _units.IsBound
                 && _piles != null && _piles.IsBound
                 && _hud != null && _hud.IsBound
-                && _hand != null && _rail != null && _selection != null;
+                && _hand != null && _rail != null && _selection != null
+                && _playback != null;
 
         private void StartSession()
         {
@@ -138,7 +142,8 @@ namespace FateWeaver.Unity
 
         private void OnHandClicked(int handIndex)
         {
-            if (_session == null || handIndex < 0 || handIndex >= _session.Hand.Count)
+            if (_session == null || _playback.IsPlaying
+                || handIndex < 0 || handIndex >= _session.Hand.Count)
             {
                 return;
             }
@@ -198,7 +203,7 @@ namespace FateWeaver.Unity
 
         private void OnZoneClicked(int zoneIndex)
         {
-            if (_session == null || _session.CurrentTurnResolved)
+            if (_session == null || _playback.IsPlaying || _session.CurrentTurnResolved)
             {
                 return;
             }
@@ -214,7 +219,7 @@ namespace FateWeaver.Unity
 
         private void OnHandHovered(int handIndex, bool hovering)
         {
-            if (_session == null || _selection.SelectionActive)
+            if (_session == null || _playback.IsPlaying || _selection.SelectionActive)
             {
                 return;
             }
@@ -288,27 +293,47 @@ namespace FateWeaver.Unity
 
         private void OnTurnButton()
         {
-            if (_session == null || _session.IsComplete || _selection.SelectionActive)
+            if (_session == null || _session.IsComplete
+                || _selection.SelectionActive || _playback.IsPlaying)
             {
                 return;
             }
 
             if (!_session.CurrentTurnResolved)
             {
-                _session.ResolveTurn();
-                foreach (var evt in _session.LastTimeline)
-                {
-                    Debug.Log(TimelineTextFormatter.FormatEvent(evt, _korean));
-                }
-                SetMessage(_session.IsComplete
-                    ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
-                    : "턴 해석 완료.");
+                ResolveAndPlay();
+                return;
             }
-            else if (_session.BeginNextTurn())
+
+            if (_session.BeginNextTurn())
             {
                 SetMessage((_session.TurnIndex + 1) + "턴 준비 완료.");
             }
 
+            RefreshAll();
+        }
+
+        /// <summary>해석은 한 프레임에 끝나지만 화면은 타임라인을 따라 흐른다. 뷰는 재생이 끝날
+        /// 때까지 턴 이전 상태로 남아 있고, 완료 콜백의 RefreshAll이 최종 상태로 맞춘다 —
+        /// 재생 중 RefreshAll을 부르면 연출이 결과로 덮인다.</summary>
+        private void ResolveAndPlay()
+        {
+            _session.ResolveTurn();
+            foreach (var evt in _session.LastTimeline)
+            {
+                Debug.Log(TimelineTextFormatter.FormatEvent(evt, _korean));
+            }
+
+            SetMessage("턴 해석 재생 중…");
+            _playback.Play(_session.LastTimeline, OnPlaybackComplete);
+            RefreshSelections();
+        }
+
+        private void OnPlaybackComplete()
+        {
+            SetMessage(_session.IsComplete
+                ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
+                : "턴 해석 완료.");
             RefreshAll();
         }
 
@@ -348,9 +373,10 @@ namespace FateWeaver.Unity
 
         private void RefreshSelections()
         {
-            bool selectionActive = _selection.SelectionActive;
-            _piles.SetInputEnabled(!selectionActive);
-            _hud.SetInputEnabled(!selectionActive, !selectionActive && !_session.IsComplete);
+            bool blocked = _selection.SelectionActive || _playback.IsPlaying;
+            _piles.SetInputEnabled(!blocked);
+            _hud.SetInputEnabled(!blocked, !blocked && !_session.IsComplete);
+            _hud.SetSkipEnabled(_playback.IsPlaying);
         }
 
         private void SetMessage(string message) => _hud.SetMessage(message);
