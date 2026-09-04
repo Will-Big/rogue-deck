@@ -170,3 +170,10 @@ __pycache__/
 # ============================================
 /.claude/settings.local.json
 /.claude/worktrees/
+
+# ============================================
+# com.unity.pipeline — 빌드가 만들었다 지우는 임시 에셋.
+# 빌드가 중간에 죽으면 남는다. 원본 설정은 ProjectSettings/ 쪽이며 그건 커밋한다.
+# ============================================
+/Assets/Settings/Pipeline/Resources/RuntimePipelineConfig.asset*
+/Assets/Settings/Pipeline/Resources/RuntimePipelineBuildInfo.asset*
