@@ -337,7 +337,7 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            image.sprite = PlaytestCardArt.StatusIconSprite(icon);
+            image.sprite = CardStatusIconSprites.StatusIconSprite(icon);
             if (image.sprite != null)
             {
                 image.color = Color.white;

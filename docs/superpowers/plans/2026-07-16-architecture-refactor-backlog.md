@@ -552,3 +552,49 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 
 **[전투 상호작용 로그 계획](2026-07-31-combat-interaction-log.md)이 이 항목을 구현 완료했다
 (머지 대기, 2026-08-28).**
+
+## 14. 2026-09-04 규칙 부채 점검에서 추가된 항목
+
+`Tools/verify.sh`의 규칙 검사를 도입하면서 드러난 것들이다. 검사가 잡아 허용목록
+(`Tools/lint-allow.txt`)에 사유와 함께 적힌 항목이 여기 대응한다 — **그 두 줄이 사라지는 것이 이 절의
+완료 조건이다.**
+
+### 14.1 P1급 — 표현 자원을 문자열 경로로 찾는다
+
+**문제.** 두 곳이 규칙 3을 어긴다. `BattleUiKit.KoreanFont()`가 한글 폰트를
+`Resources.Load<TMP_FontAsset>("Fonts/KoreanTMP")`로, `CardStatusIconSprites`가 상태 아이콘을
+`Resources.Load`로 찾는다. 문자열이라 컴파일러도 헤드리스 테스트도 검사하지 못하고, 파일을 옮기거나
+이름을 바꾸면 예외 없이 `null`이 돌아온다. 폰트가 빠지면 TMP 기본 폰트로 떨어져 한글이 네모로 나오고,
+아이콘이 빠지면 그냥 보이지 않는다. **사람이 화면을 봐야만 안다.**
+
+인스펙터 참조(GUID)로 바꾸면 해소되지만 둘 다 정적 클래스이고 전투 UI가 프리팹 없이 코드로 지어져
+참조를 둘 자리가 없다. 구조 문제이지 한 줄 고칠 문제가 아니다.
+
+**중간 조치(2026-09-04 완료).** `Tools/verify.sh`에 `check_resource_paths`를 넣어, 코드가 문자열로
+부르는 Resources 경로에 실제 파일이 있는지 커밋 훅과 CI가 검사한다. 문자열과 파일이 어긋나는 사고는
+막지만 구조는 그대로다. 경로를 변수로 조립하는 호출은 여전히 잡지 못한다.
+
+**목표 구조.** 표현 자원을 든 ScriptableObject로 옮겨 GUID 참조가 되게 한다. `CardArtCatalog`가 이미
+그 모양이므로 따라 할 본보기가 저장소 안에 있다(규칙 5의 "표현 자원 전용" 경계 안이다).
+
+- 아이콘: `CardStatusIconSprites`의 `enum → 경로 → Resources` 사슬을 아이콘 카탈로그로 교체
+- 폰트: 폰트를 든 SO(`UiTheme` 등)를 씬에서 주입. `BattleUiKit`이 문자열을 모르게 한다
+
+**언제.** lock 아이콘을 폐기하고 새 아이콘을 넣을 때 함께 한다. **등록된 아이콘이 하나뿐인 지금이
+가장 싸고**, 아이콘이 늘어난 뒤에는 그만큼 비싸진다. 폰트도 같은 자리를 열게 되므로 함께 처리한다.
+
+**완료 조건.** `Tools/lint-allow.txt`의 R3 두 줄이 사라진다. `Assets/Unity`에 `Resources.Load` 호출이
+남지 않는다.
+
+### 14.2 P2급 — playtest 시절 이름이 실 코드에 남아 있다
+
+**문제.** 덱 플레이테스트 씬 시절(`1adfb23`)의 이름이 정식 코드에 그대로 남아, 클래스 이름만 보면
+테스트 도구로 오해된다. `PlaytestCardArt`는 2026-09-04에 `CardStatusIconSprites`로 고쳤고,
+`PlaytestKoreanText`가 남았다.
+
+`PlaytestKoreanText`는 이름 문제만이 아니다. 카드·적·시나리오의 한글 이름을 `switch`로 코드에 박고
+있는데(`BattleScreenController`·`CardPresentation` 등 7곳에서 호출), 카드 원본은 이미
+`Assets/StreamingAssets/Content`의 JSON이다(규칙 5). **이름의 단일 원본이 둘로 갈려 있는 것**이므로,
+개명만 하지 말고 JSON 쪽으로 흡수할 수 있는지 함께 본다.
+
+**완료 조건.** `Playtest` 접두가 붙은 실 코드 클래스가 없다. 한글 표시 이름의 원본이 하나다.

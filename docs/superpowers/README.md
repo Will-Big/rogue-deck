@@ -86,7 +86,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
-| [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목 |
+| [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
 | [전투 상호작용 로그](archive/plans/2026-07-31-combat-interaction-log.md) | **완료·머지·보관 (2026-08-28)** | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
 | [전투 타임라인 이벤트 확장](archive/plans/2026-08-28-combat-timeline-event-expansion.md) | **완료·머지·보관 (2026-08-29)** | 캐릭터별 HP 변화, 운명력 적립, 상태 소비, 카드 귀속 버프, 대형 이동, 취소 카드 부분 피해의 이벤트화와 이벤트당 Console 로그 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |

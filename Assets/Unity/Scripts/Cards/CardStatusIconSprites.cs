@@ -5,7 +5,7 @@ namespace FateWeaver.Unity
 {
     /// <summary>Resolves card status icons from Resources. Card face art comes from CardArtCatalog
     /// (inspector-assigned, GUID-based); there is no id→path fallback.</summary>
-    public static class PlaytestCardArt
+    public static class CardStatusIconSprites
     {
         private static readonly Dictionary<CardStatusIcon, Sprite> StatusIconCache = new Dictionary<CardStatusIcon, Sprite>();
 

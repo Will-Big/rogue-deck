@@ -101,11 +101,57 @@ check_public_fields() {
   fi
 }
 
+# 규칙 3이 남긴 위험을 좁힌다. 문자열로 부르는 Resources 경로는 컴파일러도 테스트도 검사하지
+# 않아, 파일을 옮기거나 이름을 바꾸면 예외 없이 null이 돌아오고 화면에서만 티가 난다(폰트가
+# 빠지면 한글이 네모로, 아이콘이 빠지면 그냥 안 보인다). 문자열과 파일이 어긋나는 순간 여기서
+# 잡는다. 경로를 변수로 조립하는 호출은 잡지 못하며, 그런 경로는 인스펙터 참조로 옮기는 것이 답이다.
+check_resource_paths() {
+  local name="규칙 3 보조 — Resources 경로에 실제 파일이 있는가"
+  local paths missing=""
+  paths=$(
+    {
+      "$GREP" -rhoE 'Resources\.Load[A-Za-z]*(<[^>]*>)?\("[^"]+"' --include=*.cs Assets/Unity Assets/Core
+      "$GREP" -rhoE 'ResourcePath[[:space:]]*=[[:space:]]*"[^"]+"' --include=*.cs Assets/Unity Assets/Core
+    } 2>/dev/null | sed 's/.*"\([^"]*\)"$/\1/' | sort -u
+  )
+  local roots
+  roots=$(find Assets -type d -name Resources)
+  local p root f found
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    found=0
+    while IFS= read -r root; do
+      [ -n "$root" ] || continue
+      for f in "$root/$p".*; do
+        [ -e "$f" ] || continue
+        [ "${f##*.}" = "meta" ] && continue
+        found=1
+        break
+      done
+      [ "$found" -eq 1 ] && break
+    done <<ROOTS
+$roots
+ROOTS
+    [ "$found" -eq 1 ] || missing="$missing
+      $p"
+  done <<PATHS
+$paths
+PATHS
+  if [ -n "$missing" ]; then
+    fail "$name"
+    echo "$missing"
+    echo "      (Assets/**/Resources 아래에 해당 파일이 없다)"
+  else
+    ok "$name"
+  fi
+}
+
 run_lint() {
   step "AGENTS.md 규칙 검사"
   check R3 "규칙 3 — 런타임 문자열 탐색 금지" \
         'GameObject\.Find|FindObjectOfType|FindAnyObjectByType|FindObjectsByType|Resources\.Load' \
         Assets/Unity Assets/Core
+  check_resource_paths
   check_public_fields
   check R6 "규칙 6 — 코어는 UnityEngine을 참조하지 않는다" \
         'using[[:space:]]+UnityEngine|UnityEngine\.[A-Za-z]' \

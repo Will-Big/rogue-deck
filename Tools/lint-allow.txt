@@ -11,4 +11,4 @@
 # Tools/lint-public-fields.awk가 문맥으로 가려낸다 (2026-09-04).
 
 R3 Assets/Unity/Scripts/Battle/BattleUiKit.cs   # Resources.Load<TMP_FontAsset>("Fonts/KoreanTMP"). 에셋은 커밋돼 있으나 BattleUiKit이 public static class고 전투 UI가 프리팹 없이 코드로 지어져 인스펙터 참조를 둘 자리가 없다. 경로가 틀리면 예외 없이 TMP 기본 폰트로 떨어져 한글이 깨진다 — 구조를 바꾸기보다 부팅 시 시끄럽게 실패시키는 쪽이 값싸다.
-R3 Assets/Unity/Scripts/Cards/PlaytestCardArt.cs  # 상태 아이콘("Status/icon_lock") 경로 저작. 이름과 달리 테스트용이 아니라 CardView·RailCardView가 부르는 실 코드이며(playtest 씬 시절 이름이 남은 것), 카드 앞면 아트가 CardArtCatalog로 빠진 뒤 남은 일은 아이콘 해석뿐이다. lock은 폐기되지만 아이콘 기능은 남아 새 아이콘이 이 구조를 물려받는다 — CardArtCatalog와 같은 모양의 아이콘 카탈로그로 바꾸면 해소되고, 아이콘이 하나뿐인 지금이 가장 싸다.
+R3 Assets/Unity/Scripts/Cards/CardStatusIconSprites.cs  # 상태 아이콘("Status/icon_lock") 경로 저작. 이름은 2026-09-04에 PlaytestCardArt에서 고쳤다. CardView·RailCardView가 부르는 실 코드이며(playtest 씬 시절 이름이 남은 것), 카드 앞면 아트가 CardArtCatalog로 빠진 뒤 남은 일은 아이콘 해석뿐이다. lock은 폐기되지만 아이콘 기능은 남아 새 아이콘이 이 구조를 물려받는다 — CardArtCatalog와 같은 모양의 아이콘 카탈로그로 바꾸면 해소되고, 아이콘이 하나뿐인 지금이 가장 싸다.

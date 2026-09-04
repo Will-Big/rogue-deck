@@ -188,7 +188,7 @@ namespace FateWeaver.Unity
             lockRect.anchorMin = lockRect.anchorMax = new Vector2(0f, 1f);
             lockRect.anchoredPosition = new Vector2(14f, -14f);
             lockRect.sizeDelta = new Vector2(20f, 20f);
-            lockIcon.sprite = PlaytestCardArt.StatusIconSprite(CardStatusIcon.Lock);
+            lockIcon.sprite = CardStatusIconSprites.StatusIconSprite(CardStatusIcon.Lock);
             lockIcon.preserveAspect = true;
             lockIcon.raycastTarget = false;
             lockIcon.gameObject.SetActive(false);
