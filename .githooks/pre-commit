@@ -14,10 +14,11 @@ set -uo pipefail
 STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
 [ -n "$STAGED" ] || exit 0
 
-# 스테이지 목록을 얻은 뒤에 git 환경에서 벗어난다. 훅 실행 중에는 GIT_DIR이 설정돼 있어,
-# 이후 도는 스크립트가 워크트리 대신 메인 체크아웃을 보게 된다(2026-09-04 실측 — 훅이 위반을
-# 놓치고 통과시켰다). 루트는 이 훅 파일의 위치에서 구한다.
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# 검사할 트리는 **git에게 묻는다.** 이 훅 파일의 위치로 구하면 안 된다 — core.hooksPath가
+# 상대 경로(.githooks)라 워크트리에서 커밋해도 메인 체크아웃의 훅 파일이 실행되고, 그러면
+# 워크트리의 커밋이 엉뚱하게 메인 체크아웃을 검사하고 통과한다(2026-09-04 실측: 훅 안에서
+# pwd와 rev-parse --show-toplevel은 워크트리를 가리키는데 BASH_SOURCE만 메인을 가리켰다).
+ROOT="$(git rev-parse --show-toplevel)"
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 cd "$ROOT" || exit 0
 [ -x Tools/verify.sh ] || exit 0
