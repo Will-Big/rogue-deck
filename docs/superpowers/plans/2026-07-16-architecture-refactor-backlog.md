@@ -589,8 +589,15 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 ### 14.2 P2급 — playtest 시절 이름이 실 코드에 남아 있다
 
 **문제.** 덱 플레이테스트 씬 시절(`1adfb23`)의 이름이 정식 코드에 그대로 남아, 클래스 이름만 보면
-테스트 도구로 오해된다. `PlaytestCardArt`는 2026-09-04에 `CardStatusIconSprites`로 고쳤고,
-`PlaytestKoreanText`가 남았다.
+테스트 도구로 오해된다. 2026-09-04 점검(367개 타입)에서 셋이 나왔고 둘은 닫혔다.
+
+- `PlaytestCardArt` → `CardStatusIconSprites`로 개명 (2026-09-04 완료)
+- ~~`PlaytestSession`(94줄)·`MultiTurnPlaytestSession`(133줄)~~ **2026-09-04 삭제.** 개명이 아니라
+  제거였다 — 요약은 "used by the Unity playtest screen"이라 말했지만 그 화면이 없었고, 자기
+  테스트(103줄) 말고 부르는 곳이 없었다. 전투 화면은 `DeckCombatSession`, CLI 비교 하니스는
+  `ScenarioRunner`·`MultiTurnRunner`를 쓴다. **죽은 코드를 가려 준 것이 잘못된 이름이었다** —
+  이름이 "playtest"라 아무도 이상하게 여기지 않았다.
+- `PlaytestKoreanText`가 남았다.
 
 `PlaytestKoreanText`는 이름 문제만이 아니다. 카드·적·시나리오의 한글 이름을 `switch`로 코드에 박고
 있는데(`BattleScreenController`·`CardPresentation` 등 7곳에서 호출), 카드 원본은 이미
@@ -598,3 +605,14 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 개명만 하지 말고 JSON 쪽으로 흡수할 수 있는지 함께 본다.
 
 **완료 조건.** `Playtest` 접두가 붙은 실 코드 클래스가 없다. 한글 표시 이름의 원본이 하나다.
+
+### 14.3 P2급 — `Sample` 접두가 예제가 아닌 것에 붙어 있다
+
+**문제.** `SampleScenarios`(197줄)와 `SampleMultiTurnScenarios`(290줄)는 이름이 예제를 뜻하지만,
+실제로는 `ScenarioCliReport`가 시나리오를 찾는 **유일한 카탈로그**다(`ScenarioCliReport.cs:9`·`16`).
+지우거나 건너뛰어도 되는 예제처럼 보이는 것이 문제다. `ScenarioCatalog`·`MultiTurnScenarioCatalog`
+정도가 역할에 맞다.
+
+오해의 폭이 §14.2보다 작아 우선순위는 낮다. 시나리오 카탈로그를 손댈 일이 생길 때 함께 고친다.
+
+**완료 조건.** 이름이 "예제 모음"이 아니라 "카탈로그"임을 말한다.
