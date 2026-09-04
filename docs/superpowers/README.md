@@ -77,7 +77,9 @@
 `Tools/verify.sh` 하나가 규칙 검사·헤드리스·노트북을 돌리고, `.githooks/pre-commit`과
 CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다. 상황별 절차는
 [`docs/agents/`](../agents/)에 있다: [그래프 조회·재생성·비용](../agents/graphify-usage.md),
-[EditMode 배치 실행과 라이선싱 장애](../agents/unity-batch-runs.md). 이 문서들은 설계 스펙이 아니라
+[EditMode 배치 실행과 라이선싱 장애](../agents/unity-batch-runs.md),
+[설계·계획 문서 골격](../agents/design-doc-format.md)(규칙 28·29의 상세 — **새 문서를 쓰기 전에
+읽는다**). 이 문서들은 설계 스펙이 아니라
 **작업 절차**라 위 상태표의 관리 대상이 아니며, 도구에 매이지 않도록 `.claude/` 바깥에 둔다.
 
 ## 활성 계획과 로드맵

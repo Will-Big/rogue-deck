@@ -77,9 +77,13 @@ kill <좀비 PID>
 - 라이선스 자체는 멀쩡하다. `ULF license activated successfully` / `Found 1 entitlements`가 찍히면
   재로그인·캐시 삭제는 불필요하다.
 
-## 남의 프로세스를 죽이지 않는다 (규칙 26)
+## 소유 워크트리 판별 (규칙 26)
 
-여러 워크트리가 동시에 `-batchmode`를 돌린다. 좀비를 정리할 때는 `ps`의 `-projectPath` 인자로
-소유 워크트리를 확인하고 **라이선싱 클라이언트만** 죽인다. 남의 Editor·batchmode 프로세스가 같은
-좀비에 막혀 있더라도 직접 죽이지 말고, 실패 사실과 로그 경로를 사용자에게 보고해 해당 세션이
-재실행하게 한다.
+여러 워크트리가 동시에 `-batchmode`를 돌리므로, 죽이기 전에 그 프로세스가 누구 것인지 본다.
+
+```bash
+ps -o pid,command -p <PID> | tr ' ' '\n' | /usr/bin/grep -A1 projectPath
+```
+
+`-projectPath`가 가리키는 워크트리가 소유자다. 내 워크트리가 아니면 손대지 않는다 — 무엇을 죽여도
+되고 무엇을 보고해야 하는지는 AGENTS.md 규칙 26에 있다.
