@@ -6,8 +6,9 @@
 # 이 목록은 **부채 목록이다.** 새 위반을 여기에 추가해 통과시키지 않는다 — 항목을 지우는 쪽으로만
 # 쓴다. 검사가 처음부터 빨간 상태로 도입되면 아무도 보지 않기 때문에, 도입 시점의 기존 위반만
 # 여기 적고 게이트는 초록으로 시작한다 (2026-09-03 도입).
+#
+# 규칙 4의 중첩 [Serializable] DTO는 여기가 아니라 규칙 자체의 예외이며,
+# Tools/lint-public-fields.awk가 문맥으로 가려낸다 (2026-09-04).
 
-R3 Assets/Unity/Scripts/Battle/BattleUiKit.cs   # Resources.Load<TMP_FontAsset>("Fonts/KoreanTMP") — 머신별 생성 폰트라 인스펙터 참조가 불가능하다. 폰트 생성 파이프라인을 바꿀 때 함께 해소한다.
-R3 Assets/Unity/Scripts/Cards/PlaytestCardArt.cs  # Resources.Load/LoadAll 경로 저작. CardArtCatalog로 옮기면 해소된다.
-
-R4 Assets/Unity/Scripts/Content/CardArtCatalog.cs  # 중첩 [Serializable] 엔트리의 public 필드 2개(Id·Art). [SerializeField] private으로 바꿔도 직렬화 이름이 같아 에셋은 유지되지만, 에셋 재직렬화 검증이 필요해 별도 작업으로 둔다.
+R3 Assets/Unity/Scripts/Battle/BattleUiKit.cs   # Resources.Load<TMP_FontAsset>("Fonts/KoreanTMP"). 에셋은 커밋돼 있으나 BattleUiKit이 public static class고 전투 UI가 프리팹 없이 코드로 지어져 인스펙터 참조를 둘 자리가 없다. 경로가 틀리면 예외 없이 TMP 기본 폰트로 떨어져 한글이 깨진다 — 구조를 바꾸기보다 부팅 시 시끄럽게 실패시키는 쪽이 값싸다.
+R3 Assets/Unity/Scripts/Cards/PlaytestCardArt.cs  # 상태 아이콘("Status/icon_lock") 경로 저작. 카드 앞면 아트는 이미 CardArtCatalog로 옮겨졌고 여기 남은 것은 lock 아이콘뿐이다. lock 아이콘 폐기가 결정돼 있어(2026-09-04) 이 파일이 통째로 사라지면 함께 해소된다 — 대체 카탈로그를 만들지 않는다.

@@ -82,17 +82,31 @@ check() { # check <키> <이름> <패턴> <경로...>
   fi
 }
 
+# 규칙 4는 줄 하나로 판정할 수 없다 — 예외인 중첩 [Serializable] DTO를 가리려면 중괄호 깊이라는
+# 문맥이 필요하다. 그 판정은 Tools/lint-public-fields.awk에 있다.
+check_public_fields() {
+  local name="규칙 4 — public 필드 금지, [SerializeField] private을 쓴다"
+  local hits
+  hits=$(find Assets/Unity -name '*.cs' -exec awk -f Tools/lint-public-fields.awk {} + 2>/dev/null | "$GREP" -vE '/Tests?/')
+  local allowed
+  allowed=$("$GREP" -E "^R4 " "$ALLOW" 2>/dev/null | sed "s/^R4 //" | sed 's/[[:space:]]*#.*$//')
+  if [ -n "$allowed" ]; then
+    hits=$(echo "$hits" | "$GREP" -vFf <(echo "$allowed"))
+  fi
+  if [ -n "$hits" ]; then
+    fail "$name"
+    echo "$hits" | sed 's/^/      /'
+  else
+    ok "$name"
+  fi
+}
+
 run_lint() {
   step "AGENTS.md 규칙 검사"
   check R3 "규칙 3 — 런타임 문자열 탐색 금지" \
         'GameObject\.Find|FindObjectOfType|FindAnyObjectByType|FindObjectsByType|Resources\.Load' \
         Assets/Unity Assets/Core
-  # public 프로퍼티(=>)·const·static·event는 규칙 4의 대상이 아니다. 잡는 것은 인스턴스 필드다.
-  EXCLUDE='=>|[[:space:]]const[[:space:]]|[[:space:]]static[[:space:]]|[[:space:]]event[[:space:]]|[[:space:]]delegate[[:space:]]|[[:space:]]class[[:space:]]|[[:space:]]struct[[:space:]]|[[:space:]]enum[[:space:]]'
-  check R4 "규칙 4 — public 필드 금지, [SerializeField] private을 쓴다" \
-        '^[[:space:]]*public[[:space:]]+[A-Za-z_][A-Za-z0-9_<>,.[:space:]]*[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*[=;]' \
-        Assets/Unity
-  EXCLUDE=
+  check_public_fields
   check R6 "규칙 6 — 코어는 UnityEngine을 참조하지 않는다" \
         'using[[:space:]]+UnityEngine|UnityEngine\.[A-Za-z]' \
         Assets/Core

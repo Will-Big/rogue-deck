@@ -63,6 +63,9 @@ Claude Code에서 그것을 자동으로 물어 오게 하는 껍데기일 뿐�
 2. **참조와 파일 경로를 하드코딩하지 않는다.** 인스펙터에서 할당하거나 프리팹을 사용한다.
 3. **런타임 문자열 탐색을 금지한다.** `GameObject.Find`, `FindObjectOfType`, 태그·레이어 이름 문자열 비교, `Resources.Load("magic/string")` 모두 사용하지 않는다.
 4. **`public` 필드 대신 `[SerializeField] private`을 쓴다.** 인스펙터 노출과 캡슐화를 분리한다.
+   예외는 **중첩 `[Serializable]` DTO**다 — 배열 항목처럼 값만 담고 로직이 없는 타입은 public 필드를
+   쓴다(`CardArtCatalog.Entry`가 그 예다). 그것을 담는 바깥 필드는 여전히 `[SerializeField] private`이며,
+   DTO가 규칙 판단이나 상태 변경을 하기 시작하면 예외가 아니다.
 5. **콘텐츠는 코드가 아니라 JSON으로 저작한다.** 카드·상태·덱·풀·캐릭터의 원본은
    `Assets/StreamingAssets/Content/<종류>/*.json`이고, 부팅 시 `ContentBootstrap.Load`가 읽어 코어
    데이터로 만든다. 새 카드를 C# 상수로 박지 않는다. **SO 카드 저작 파이프라인은 없다** —
