@@ -9,9 +9,10 @@ namespace FateWeaver.Unity.Editor
 {
     /// <summary>Creates a Korean TMP font asset from the bundled Pretendard TTF
     /// (<see cref="SourceTtfAssetPath"/>, OFL, committed to the repo — works on macOS/Windows/Linux
-    /// with no OS font dependency). The generated <c>Resources/Fonts/KoreanTMP.asset</c> is gitignored,
-    /// so run this once per machine. The asset is pinned to <see cref="PinnedGuid"/> — the guid the
-    /// playtest scenes already reference — so their labels resolve without any manual rewiring.
+    /// with no OS font dependency). The generated <c>Resources/Fonts/KoreanTMP.asset</c> is committed
+    /// (2026-09-04 decision), so a fresh clone already has it — run this only when the in-game character
+    /// set changes. The asset is pinned to <see cref="PinnedGuid"/> — the guid the battle scene already
+    /// references — so its labels resolve without any manual rewiring.
     ///
     /// Every Hangul glyph used anywhere in the FateWeaver C# sources is <b>pre-baked</b> into the atlas
     /// at generation time. Labels whose text is assigned at runtime (State/Message/Timeline/Piles) would

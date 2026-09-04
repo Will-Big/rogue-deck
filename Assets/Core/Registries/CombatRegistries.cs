@@ -5,7 +5,7 @@ using FateWeaver.Core.Status;
 namespace FateWeaver.Core
 {
     /// <summary>Single source of truth for the default effect / status / fate-action registries used by
-    /// the runners and the playtest session — so a new handler is registered everywhere at once.</summary>
+    /// the runners and DeckCombatSession — so a new handler is registered everywhere at once.</summary>
     public static class CombatRegistries
     {
         public static EffectRegistry Effects()
