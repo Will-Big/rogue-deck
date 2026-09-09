@@ -240,7 +240,8 @@ PreToolUse(Bash). `git checkout` · `git switch`이고 메인 체크아웃이면
 잘라낸 문구를 전부 `docs/agents/`에서 역검색해 걸렀고, 그 과정에서 `Tools/FateWeaver.Headless/`가
 **빌드되지 않는 상태**임이 드러났다 — `.csproj`가 없고 `Program.cs:11`이 인자 하나짜리 옛
 시그니처를 부른다. 코어의 `ScenarioRunner.Compare`·`MultiTurnRunner.Compare`는 테스트 8곳이 쓰는
-현역이라, 규칙 12에는 **테스트에서 쓰는 형태**로 되살렸다. 죽은 CLI 정리는 별도 작업으로 뺐다.
+현역이라, 규칙 12에는 **테스트에서 쓰는 형태**로 되살렸다. 죽은 CLI 정리는 별도 작업으로 뺐고,
+2026-09-09에 `Tools/FateWeaver.Headless/`를 커밋된 `bin/`째 제거해 마무리했다.
 
 ### 검증
 

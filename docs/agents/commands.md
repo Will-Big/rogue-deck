@@ -52,9 +52,10 @@ node --test "Tools/card-idea-notebook/"*.test.mjs
 [`MultiTurnRunnerTests.cs`](../../Assets/Core/Tests/EditMode/MultiTurnRunnerTests.cs).
 `ScenarioCliReport.Build(scenarioId, statusContent)`가 그 결과를 마크다운으로 만든다.
 
-**CLI로 부르지 마라.** `Tools/FateWeaver.Headless/`는 `.csproj`가 없어 빌드되지 않고, 남아 있는
-`Program.cs`는 인자 하나짜리 옛 시그니처를 부른다(2026-09-09 확인). 커밋된 `bin/`은 그 시절의
-산출물이다. Compare는 **테스트에서** 쓴다.
+**CLI는 없다.** `Tools/FateWeaver.Headless/`가 있었지만 `.csproj`가 이력에 한 번도 커밋된 적이
+없어 소스만으로는 빌드된 적이 없고, `Build`가 `StatusContentCatalog`를 받도록 바뀐 뒤로는
+`Program.cs`도 옛 시그니처를 부른 채였다. 2026-09-09에 커밋돼 있던 `bin/`과 함께 지웠다.
+Compare는 **테스트에서** 쓴다.
 
 Unity EditMode 배치 실행(씬·프리팹·에셋을 건드렸을 때, 규칙 17)은 `-quit`를 붙이면 테스트 없이
 exit 0으로 끝나는 함정이 있다. 검증된 전체 명령과 실행 장애 대응은

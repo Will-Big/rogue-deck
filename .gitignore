@@ -85,6 +85,13 @@ Tests/Headless/obj/
 !Tests/Headless/FateWeaver.Tests.Headless.csproj
 
 # ============================================
+# Tools/ 아래 .NET 빌드 산출물 — 소스가 아니다.
+# Tools/FateWeaver.Headless/bin/ 이 커밋된 채 방치돼 있었다(2026-09-09 제거).
+# ============================================
+Tools/**/bin/
+Tools/**/obj/
+
+# ============================================
 # Art reference images (third-party — kept local, not versioned).
 # Keep our own prompt doc tracked.
 # ============================================
