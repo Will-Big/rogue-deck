@@ -1,0 +1,201 @@
+# AGENTS.md 경량화 — 상세
+
+사람 검수용 개요는 [`2026-09-09-agents-md-slimming-design.html`](2026-09-09-agents-md-slimming-design.html)에 있다.
+구조 승인은 그쪽으로 받는다. 이 문서는 세션 인계용이며 `## 상세`만 담는다.
+
+**상태:** 1단계(아카이브 절단) 완료 — `288f61d`, 2026-09-09. 2단계 이후 착수 전.
+
+## 상세
+
+### 지키는 계약
+
+이 작업이 끝나도 아래 넷은 그대로여야 한다. 어기면 되돌린다.
+
+| 계약 | 왜 |
+|---|---|
+| 규칙 번호 1~32는 영구 ID다 | 살아 있는 인용 155곳(`Assets/Core` C# 주석 14곳 포함)이 번호로 가리킨다. 재사용 금지, 결번 허용 |
+| 근거의 사본은 문서 하나 | 훅 스크립트에 근거 문장을 넣지 않는다. `awk`로 절을 뽑아 낼 뿐이다 |
+| `.claude/`는 껍데기다 | 강제는 `.githooks/`가 원본, `.claude/hooks/`는 더 이른 시점의 미러. 다른 도구로 열어도 나머지가 동작한다 |
+| 새 lint 검사는 초록으로 시작한다 | `Tools/verify.sh:60` — 처음부터 빨간 게이트는 무시된다 |
+
+### 근거 절의 형식 — 훅이 자르는 계약
+
+훅이 문서에서 절을 잘라 내므로 제목 형식이 계약이다. `docs/agents/*.md`의 근거 절은 반드시 이 꼴이다:
+
+```markdown
+## 규칙 15 — 메인 체크아웃의 브랜치를 전환하지 않는다
+
+(근거 본문. stderr로 통째로 나가므로 200토큰 안쪽으로 유지한다.)
+
+## 규칙 16 — ...
+```
+
+훅의 추출은 이 한 줄이다:
+
+```bash
+awk '/^## 규칙 15 /{p=1} /^## 규칙 1[6-9] /{p=0} p' docs/agents/worktrees.md >&2
+```
+
+실제 구현은 규칙 번호를 인자로 받는 공용 함수 `Tools/rule-note.sh <번호>`로 두고 두 훅 층이 함께
+쓴다. **이 파일이 근거를 담지 않는다** — 문서를 찾아 절을 자르기만 한다.
+
+### 규칙 32개 배치
+
+지금 줄 수는 2026-09-09 기준 `AGENTS.md` 실측이다.
+
+| 규칙 | 지금 | 뒤 | 근거가 가는 곳 |
+|---|---|---|---|
+| 1·2·8·9·10 | 각 1줄 | 그대로 | — |
+| 3·4·6 | 6줄 | 3줄 | 이미 lint가 강제한다(변경 없음) |
+| 5 | 9줄 | 2줄 | `docs/agents/content-authoring.md` — SO 파이프라인 제거 이력 |
+| 7 | 1줄 | 1줄 | **lint R7 신규** |
+| 11·12·13·14 | 15줄 | 4줄 | — |
+| 15·16 | 18줄 | 4줄 | `docs/agents/worktrees.md` **신규** |
+| 17 | 28줄 | 3줄 | 기존 `unity-batch-runs.md` · `unity-mcp.md` |
+| 18·19 | 4줄 | 2줄 | `docs/agents/worktrees.md` |
+| 20 | 12줄 | 3줄 | `docs/agents/doc-lifecycle.md` **신규** |
+| 21·22·23·24 | 29줄 | 7줄 | 기존 `graphify-usage.md` |
+| 25·26 | 13줄 | 2줄 | 기존 `unity-batch-runs.md` |
+| 27 | 16줄 | 2줄 | `docs/agents/commit-messages.md` **신규** |
+| 28·29 | 13줄 | 5줄 | 기존 `design-doc-format.md` |
+| 30 | 18줄 | 4줄 | `docs/agents/responsibility.md` **신규** |
+| **31** | 17줄 | **12줄 (거의 유지)** | — **훅으로 잡을 수 없다** |
+| 32 | 18줄 | 5줄 | `docs/agents/presentation-tools.md` **신규** |
+| `## 명령` 절 | 53줄 | 10줄 | `docs/agents/commands.md` **신규** |
+
+합계 약 100줄. 규칙 31만 예외로 두는 이유는 [AGENTS.md:248](../../../AGENTS.md)이 스스로 적었다 —
+*"「항상 확인해라」류 지시는 몇 턴 만에 감쇠하므로, 확인을 지시가 아니라 답의 형식으로 강제한다."*
+근거를 빼면 그 규칙이 자기가 진단한 감쇠에 걸린다.
+
+### 각 규칙의 뒤 모양 — 형식 고정
+
+명령 한 줄 + **우회 차단 한 줄(볼드)** + 포인터 한 줄. 세 줄을 넘으면 문서로 더 내린다.
+
+```markdown
+15. **메인 체크아웃의 브랜치를 전환하지 않는다.** 그 폴더에는 사용자의 Unity 에디터가 떠 있고,
+    전환하면 대량 리임포트가 돌아 참조가 깨진다. **세션이 하나뿐인 날에도 유효하다.**
+    워크트리 비용·정리 기준: [`docs/agents/worktrees.md`](docs/agents/worktrees.md)
+```
+
+우회 차단 한 줄은 **실제로 우회당한 문장**을 쓴다. 규칙 15의 그것은 AI가 "지금은 나 혼자니까
+괜찮다"로 빠져나간 뒤에 붙었다.
+
+### 신규 문서 6개
+
+`docs/agents/`에 만든다. **스킬로 만들지 않는다** — 스킬 `description`은 매 세션 목록에 실려서
+지금 4개가 이미 약 150토큰을 상시로 먹는다.
+
+| 문서 | 담을 것 | 훅이 절을 읽나 |
+|---|---|---|
+| `commands.md` | 지금 `## 명령` 절의 표·개별 명령·검증 3자리 설명 | 아니오 |
+| `worktrees.md` | 규칙 15·16·18·19의 근거. 51MB vs 2.4GB, 머지 20건 중 3~4건, manifest.json 관찰, 워크트리 정리 기준 | **예** (15·16) |
+| `doc-lifecycle.md` | 규칙 20의 절차. 색인 갱신, `.archive/` 이동, 행 삭제 | **예** (20) |
+| `commit-messages.md` | 규칙 27의 "쓴다 / 쓰지 않는다" 예시 4줄과 타입·범위 목록 | **예** (27) |
+| `responsibility.md` | 규칙 30의 실측(`BattleScreenController` 18개·467줄 → 8개·347줄)과 판정 절차 | **예** (30) |
+| `presentation-tools.md` | 규칙 32의 설치 목록(DOTween, Timeline 1.8.12, 2D Animation 15.1.0, Aseprite 5.0.3, PSD, URP 17.5, TMP, Input System 1.19.0)과 쪼개기 예시 | 아니오 |
+| `content-authoring.md` | 규칙 5의 SO 제거 이력(계획 3b·3c), 남은 SO 셋의 경계 | 아니오 |
+
+### git 훅 — 강제의 원본
+
+#### 1. `.githooks/commit-msg` (신규) — 규칙 27
+
+머지·리버트 커밋은 통과시킨다. 그 외 제목을 검사한다.
+
+```
+^(feat|fix|docs|refactor|test|chore)(\([a-z]+\))?: .*[가-힣].*한다\.?$
+```
+
+실패하면 `Tools/rule-note.sh 27`을 출력한다. AGENTS.md에서 예시 4줄이 빠지는 대가다.
+
+#### 2. `pre-commit` 블록 추가 — 규칙 15·16 (차단)
+
+메인 체크아웃 판별:
+
+```bash
+[ "$(git rev-parse --absolute-git-dir)" = "$(cd "$(git rev-parse --git-common-dir)" && pwd)" ]
+```
+
+실측으로 확인했다 — 메인은 둘 다 `.git`, 링크된 워크트리는 갈린다. 메인이면 스테이지 경로를 본다:
+
+```
+^(Assets/|Packages/|ProjectSettings/)   → 차단 + Tools/rule-note.sh 15
+```
+
+**허용 목록이 아니라 차단 목록이다.** 최근 비머지 커밋 60개 실측: 허용 목록은 44건 차단 중 16건
+오탐(`.html` 설계문서·`docs/agents/`·`Tools/`·`.githooks/`·`.claude/`), 차단 목록은 29건 차단
+오탐 0. **규칙 16 본문도 이에 맞춰 다시 쓴다.** 머지는 `pre-merge-commit`을 부르므로 영향 없다.
+
+#### 3. `pre-commit` 블록 추가 — 규칙 20 (차단)
+
+`docs/superpowers/{specs,plans}/` 아래가 추가·삭제·이동됐는데 `docs/superpowers/README.md`가
+스테이지에 없으면 차단하고 `Tools/rule-note.sh 20`을 출력한다.
+
+#### 4. `pre-commit` 블록 추가 — 규칙 30 (경고, 비차단)
+
+스테이지된 `Assets/Unity/**/*.cs` 중 `[SerializeField]`가 10개를 넘으면 경고하고
+`Tools/rule-note.sh 30`을 출력한다. **전체 검사로 하지 않는다** — 지금 `CardView`(19)·
+`RailCardView`(15)·`UnitMotionView`(12)·`HandFanView`(11) 네 파일이 걸려 상시 경고 4건이 되고,
+상시 경고는 곧 무시된다. 스테이지 한정이 규칙 30의 실제 트리거("기존 클래스에 기능을 추가할 때")와
+일치한다.
+
+### `Tools/verify.sh --lint` 신규 검사
+
+기존 `check <키> <이름> <패턴> <경로...>` 형태를 그대로 쓴다.
+
+| 키 | 패턴 / 판정 | 현재 위반 |
+|---|---|---|
+| R5 | `CardAsset\|CardPoolAsset\|DeckAsset` in `Assets` | 0 (주석 1건은 기존 `:\s*//` 필터가 제외) |
+| R7 | 무인자 `new[[:space:]]+Random\(\)` · `DateTime\.(Now\|UtcNow\|Today)` · `Guid\.NewGuid` in `Assets/Core` | **0** |
+| R-doc | 아래 셋 | 착수 시 측정 |
+
+**R7 패턴을 넓히면 안 된다.** `new Random(` 전체를 잡으면
+[CombatState.cs:68](../../../Assets/Core/Combat/CombatState.cs)과
+[RunState.cs:35](../../../Assets/Core/Simulation/Run/RunState.cs)이 걸리는데, 이 둘은 위반이 아니라
+**규칙 7이 요구하는 시드 RNG 그 자체다.** `lint-allow.txt`에 넣으면 "부채 목록"에 영구히 옳은
+항목이 섞여 목록의 의미가 망가진다([Tools/lint-allow.txt:6](../../../Tools/lint-allow.txt)).
+
+**R-doc이 검사하는 셋:**
+
+1. `.githooks/`·`.claude/`·`Tools/`·`docs/agents/`·`Assets/`가 인용한 모든 `규칙 N` / `rule N`이
+   AGENTS.md에 실재하는가
+2. AGENTS.md의 모든 `docs/agents/` 링크가 해석되는가
+3. 훅이 읽는 근거 문서의 `## 규칙 N` 절이 AGENTS.md의 규칙과 1:1인가
+
+세 자리 분산의 유일한 안전장치다. 규칙 21의 교훈이 그대로 적용된다 — **낡은 참조는 침묵하지 않고
+틀린 것을 확신 있게 말한다.** 이 검사가 없으면 훅이 삭제된 규칙 번호를 계속 인용해도 아무도 모른다.
+
+### Claude 훅 — 미러
+
+#### 5. `.claude/hooks/block-main-branch-switch.sh` (신규) — 규칙 15
+
+PreToolUse(Bash). `git checkout` · `git switch`이고 메인 체크아웃이면 exit 2 +
+`Tools/rule-note.sh 15`.
+
+**여기만 Claude 전용이 불가피하다.** git 훅은 커밋 시점이라 브랜치 전환을 못 잡는다. 지금은
+`settings.json`의 `ask`뿐이라 클릭 한 번으로 통과하고, 규칙 15가 막으려는 사고가 정확히 거기서 난다.
+
+#### 6. `verify-core-on-stop.sh` 확장 — 규칙 18
+
+턴 종료 시 워킹 트리가 더러우면 exit 2로 한 번 되돌린다. 기존 `stop_hook_active` 가드가 루프를
+막으므로 한 번만 뜬다.
+
+### 실행 순서
+
+1. ~~아카이브 절단 (D+A)~~ — **완료** `288f61d`
+2. `Tools/rule-note.sh` + 근거 문서 6개 생성 (AGENTS.md는 아직 안 건드린다)
+3. lint R5·R7·R-doc 추가 — 셋 다 초록 확인
+4. git 훅 4개 (commit-msg 신규, pre-commit 블록 3개)
+5. Claude 훅 2개
+6. **마지막에** AGENTS.md를 100줄로 줄인다 — 근거가 갈 자리가 전부 준비된 뒤에
+7. 규칙 16 본문을 차단 목록 기준으로 다시 쓴다
+
+**6번을 먼저 하면 안 된다.** 근거를 지운 뒤 훅이 준비 안 되어 있으면 그 사이 세션들이 근거 없는
+규칙만 받는다.
+
+### 검증
+
+- `Tools/verify.sh` 전체 통과 (규칙 19)
+- R-doc 0건
+- 훅 실동작: 메인 체크아웃에서 `Assets/` 파일을 스테이지해 차단되는지, 영어 커밋 제목이 막히는지,
+  워크트리에서는 둘 다 안 걸리는지
+- AGENTS.md 줄 수와 추정 토큰을 재고 목표(약 100줄 / 2,500토큰) 대비 기록
