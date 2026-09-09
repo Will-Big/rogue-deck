@@ -12,7 +12,10 @@
 set -uo pipefail
 
 STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
-[ -n "$STAGED" ] || exit 0
+# 삭제·이동도 봐야 하는 검사가 있다(규칙 15·16은 Assets/ 파일을 지우는 커밋도 막아야 하고,
+# 규칙 20은 문서가 사라진 것을 잡는다). 그래서 필터 없는 목록을 따로 둔다.
+STAGED_ALL="$(git diff --cached --name-only)"
+[ -n "$STAGED_ALL" ] || exit 0
 
 # 검사할 트리는 **git에게 묻는다.** 이 훅 파일의 위치로 구하면 안 된다 — core.hooksPath가
 # 상대 경로(.githooks)라 워크트리에서 커밋해도 메인 체크아웃의 훅 파일이 실행되고, 그러면
@@ -22,6 +25,8 @@ ROOT="$(git rev-parse --show-toplevel)"
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 cd "$ROOT" || exit 0
 [ -x Tools/verify.sh ] || exit 0
+
+GREP=/usr/bin/grep   # bare grep이 셸 알리아스로 실패하는 환경이 있어 절대 경로를 쓴다
 
 run() {
   echo "pre-commit: $1"
@@ -35,6 +40,56 @@ run() {
   }
 }
 
+# 규칙 위반을 막을 때 근거는 이것으로만 배달한다. **훅에 근거 문장을 쓰지 않는다** — 사본은
+# docs/agents/의 문서 하나뿐이고, 복사하면 규칙이 바뀔 때 한쪽만 낡는다. 절이 없는 규칙이면
+# rule-note.sh가 exit 1로 조용히 끝나므로, 판정 결과는 훅이 따로 말해 둔다.
+rule_note() {
+  Tools/rule-note.sh "$1" >&2
+  return 0
+}
+
+# 규칙 15·16 — 메인 체크아웃에서는 에디터가 보는 경로를 건드리지 않는다.
+#
+# 메인 체크아웃 판별: 링크된 워크트리는 자기 gitdir(.git/worktrees/<이름>)을 갖고 공용 gitdir와
+# 갈리지만, 메인 체크아웃은 둘이 같은 곳이다(2026-09-08 실측). --git-common-dir는 상대 경로로
+# 나올 수 있어 절대 경로로 맞춘 뒤 비교한다.
+#
+# 판정은 **허용 목록이 아니라 차단 목록**이다. 확장자 허용 목록은 규칙 28이 요구하는 .html 설계
+# 문서까지 막아 규칙끼리 충돌했다(실측은 규칙 16의 근거 절에 있다). 뒤집지 않는다.
+if [ "$(git rev-parse --absolute-git-dir)" = "$(cd "$(git rev-parse --git-common-dir)" && pwd)" ]; then
+  EDITOR_PATHS="$(printf '%s\n' "$STAGED_ALL" | "$GREP" -E '^(Assets/|Packages/|ProjectSettings/)')"
+  if [ -n "$EDITOR_PATHS" ]; then
+    {
+      echo "pre-commit: 규칙 15·16 위반 — 메인 체크아웃에서 에디터가 임포트하는 경로를 커밋하려 한다."
+      printf '%s\n' "$EDITOR_PATHS" | sed 's/^/    /'
+      echo "  여기: $ROOT (메인 체크아웃)"
+      echo "  전용 워크트리에서 커밋한다. 그 밖의 경로는 여기서 커밋해도 된다."
+      echo "  건너뛰려면 --no-verify (CI가 다시 잡는다)"
+      echo
+    } >&2
+    rule_note 15
+    exit 1
+  fi
+fi
+
+# 규칙 20 — 문서 색인을 같은 커밋에서 갱신한다.
+#
+# 추가·삭제·이동(ADR)만 본다. 단순 수정(M)까지 걸면 오탐이 나고 곧 --no-verify로 우회된다.
+# specs/·plans/ 밖으로 옮긴 것은 경로 제한 때문에 삭제(D)로 보인다 — 그래서 그것도 잡힌다.
+SPEC_LIFECYCLE="$(git diff --cached --name-only --diff-filter=ADR \
+  -- docs/superpowers/specs/ docs/superpowers/plans/)"
+if [ -n "$SPEC_LIFECYCLE" ] && ! printf '%s\n' "$STAGED_ALL" | "$GREP" -qx 'docs/superpowers/README.md'; then
+  {
+    echo "pre-commit: 규칙 20 위반 — 스펙·계획이 추가·삭제·이동됐는데 색인이 스테이지에 없다."
+    printf '%s\n' "$SPEC_LIFECYCLE" | sed 's/^/    /'
+    echo "  같은 커밋에 docs/superpowers/README.md를 담는다."
+    echo "  건너뛰려면 --no-verify (CI가 다시 잡는다)"
+    echo
+  } >&2
+  rule_note 20
+  exit 1
+fi
+
 case "$STAGED" in
   *.cs*) run "규칙 검사" Tools/verify.sh --lint ;;
 esac
@@ -46,5 +101,31 @@ esac
 case "$STAGED" in
   *Tools/card-idea-notebook/*) run "노트북 테스트" node --test Tools/card-idea-notebook/*.test.mjs ;;
 esac
+
+# 규칙 30 — 조정자가 커진 것을 [SerializeField] 개수로 알린다. **경고이고 막지 않는다.**
+#
+# **스테이지된 파일만 본다.** 전체 검사로 만들면 지금 걸리는 네 파일(CardView 19·RailCardView 15·
+# UnitMotionView 12·HandFanView 11)이 상시 경고가 되고, 상시 경고는 곧 무시된다. 스테이지 한정이
+# 규칙 30의 실제 트리거("기존 클래스에 기능을 추가할 때")와 맞는다.
+SF_LIMIT=10
+SF_OVER=""
+while IFS= read -r f; do
+  case "$f" in Assets/Unity/*.cs) ;; *) continue ;; esac
+  [ -f "$f" ] || continue
+  n="$("$GREP" -o '\[SerializeField\]' "$f" | wc -l | tr -d ' ')"
+  [ "$n" -gt "$SF_LIMIT" ] && SF_OVER="$SF_OVER    $f ([SerializeField] $n개)"$'\n'
+done <<EOF
+$STAGED
+EOF
+
+if [ -n "$SF_OVER" ]; then
+  {
+    echo "pre-commit: 규칙 30 경고 — [SerializeField]가 ${SF_LIMIT}개를 넘는 파일을 커밋한다. (막지 않는다)"
+    printf '%s' "$SF_OVER"
+    echo "  쪼갤지 말지는 사람이 정한다. 얹기 전에 보고하고 결정을 받는 기준이다."
+    echo
+  } >&2
+  rule_note 30
+fi
 
 exit 0
