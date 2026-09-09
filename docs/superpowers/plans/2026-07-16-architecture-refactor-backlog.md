@@ -66,7 +66,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ## 3. P0-A — 전투 RNG를 CombatState로 단일화
 
 - 상태: **완료 (2026-07-18)** — 구현 기록:
-  [`2026-07-18-p0a-rng-unification.md`](../archive/plans/2026-07-18-p0a-rng-unification.md)
+  [`2026-07-18-p0a-rng-unification.md`](../.archive/plans/2026-07-18-p0a-rng-unification.md)
 
 ### 문제
 
@@ -91,7 +91,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ## 4. P0-B — 열린 카드 저작 구조
 
 - 상태: **완료 (2026-07-19)** — 구현 기록:
-  [`2026-07-19-p0b-implementation-record.md`](../archive/plans/2026-07-19-p0b-implementation-record.md)
+  [`2026-07-19-p0b-implementation-record.md`](../.archive/plans/2026-07-19-p0b-implementation-record.md)
 - 최종 검증: SO 재생성 diff 없음, 헤드리스 307/307, Unity EditMode 356/356, 사용자 Play 확인
 
 ### 문제
@@ -127,7 +127,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ## 4.1 P0-B2 — `CardType` 제거와 효과 기반 카드 성질 합성
 
 - 상태: **구현 완료, 머지 후 사용자 Play 검증 대기 (2026-07-20)** — 구현 기록:
-  [`2026-07-19-p0b2-implementation-record.md`](../archive/plans/2026-07-19-p0b2-implementation-record.md)
+  [`2026-07-19-p0b2-implementation-record.md`](../.archive/plans/2026-07-19-p0b2-implementation-record.md)
 - 우선순위: **P0** — 복합 효과 카드 확장을 직접 왜곡하므로 P0-C와 새 콘텐츠 확대 전에 해결
 
 ### 문제
@@ -173,7 +173,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 - 상태: **구현 완료 (2026-07-28), 머지 후 사용자 Play 검증 대기** — 권위 문서:
   [`2026-07-28-p0c-targeting-metadata-design.md`](../specs/2026-07-28-p0c-targeting-metadata-design.md),
-  구현 기록: [`2026-07-28-p0c-targeting-metadata.md`](../archive/plans/2026-07-28-p0c-targeting-metadata.md).
+  구현 기록: [`2026-07-28-p0c-targeting-metadata.md`](../.archive/plans/2026-07-28-p0c-targeting-metadata.md).
   설계 과정에서 두 가지 정책이 확정되어 원 목표 구조를 좁혔다: 실행 카드는 플레이 시 대상을
   고르지 않으며(대상은 저작 데이터로 명시), 아군·적 등 새 대상 종류는 개입 카드 설계가 확정될 때
   `TargetKind` 값 추가로 진행한다. 아래 원문 중 "아군 1명"·"적 1명" 요구사항 예시는 그 시점의
@@ -212,7 +212,7 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 > `StatusContentDefaults`는 3a–3c가, 골든 축으로 남아 있던 C# 목록(`StarterPoolSpecs`·
 > `StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`StarterDeck`·`PartyPrototypeDeck`·
 > `PartyPrototypeCharacterSpecs`·`ContentExportWriter`·`CardContentExporter`)은 계획 3d
-> ([구현 기록](../archive/plans/2026-08-05-card-spec-removal.md))가 지웠다.
+> ([구현 기록](../.archive/plans/2026-08-05-card-spec-removal.md))가 지웠다.
 >
 > **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 남은 잔여는
 > **적 카드(`GoblinDeck`·`WardenDeck`)의 JSON 전환** 하나뿐이다 — 적 정책·행동 패턴 설계가 딸려
@@ -333,7 +333,7 @@ Assets/Unity/
 합친다. 폴더 이동은 `.meta`가 함께 움직이면 GUID가 보존되어 씬·프리팹 참조가 깨지지 않는다.
 
 **2026-08-05 진행 결과 — 1단계(폴더 재정리) 완료.** 위 목표 구조대로 스크립트·데이터 에셋·카드
-아트·입력 에셋을 옮겼다(계획: `docs/superpowers/archive/plans/2026-08-05-asset-folder-reorg.md`).
+아트·입력 에셋을 옮겼다(계획: `docs/superpowers/.archive/plans/2026-08-05-asset-folder-reorg.md`).
 **단 `Editor/`는 예외다.** 위 스케치는 `Scripts/Editor/`로 `Scripts/` 아래 중첩했지만, 실제 구현은
 `Assets/Unity/Editor/`를 루트에 그대로 두었다 — 그 폴더는 자체 `.asmdef`
 (`FateWeaver.Unity.Editor.asmdef`)를 가지고 있고, Unity는 이름이 `Editor`인 폴더를 트리의 어느
@@ -414,7 +414,7 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 
 전투 시스템 전면 점검(코어·Unity·저작 파이프라인)에서 확인했으나 기존 P0~P2 항목에 포함되지 않던
 구조 문제다. 정합성 결함 4건은 별도 계획
-[`2026-07-25-combat-consistency-cleanup.md`](../archive/plans/2026-07-25-combat-consistency-cleanup.md)에서 처리하며,
+[`2026-07-25-combat-consistency-cleanup.md`](../.archive/plans/2026-07-25-combat-consistency-cleanup.md)에서 처리하며,
 아래는 그 범위 밖으로 남은 항목이다.
 
 ### 12.1 P0급 — 확장을 직접 막거나 조용히 실패하는 구조
@@ -550,8 +550,7 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 정정** — 이 관찰은 이미 낡아 있었다. `DeckPlaytestController`는 이 계획 착수 전인 `ac4e47f`
 (2026-08-03)가 삭제했다. 남은 화면은 `BattleScreenController` 하나뿐이라 위 항목으로 해소된다.
 
-**[전투 상호작용 로그 계획](2026-07-31-combat-interaction-log.md)이 이 항목을 구현 완료했다
-(머지 대기, 2026-08-28).**
+**전투 상호작용 로그 계획이 이 항목을 구현 완료했다 (머지 대기, 2026-08-28).**
 
 ## 14. 2026-09-04 규칙 부채 점검에서 추가된 항목
 

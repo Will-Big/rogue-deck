@@ -9,7 +9,7 @@
 - 관련 권위 문서:
   - `docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md`
   - `docs/superpowers/specs/2026-07-19-open-card-authoring-design.md`
-  - `docs/superpowers/archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
+  - `docs/superpowers/.archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
   - `docs/superpowers/specs/2026-07-16-description-registry-design.md`
 
 ## 1. 목적
@@ -92,7 +92,7 @@ CardAsset (SO, 인스펙터 저작)
 - 세이브 파일의 저장·로드 구현 자체 (이 문서는 담길 수 있는 형태까지 확정한다)
 - 손패의 카드를 대상으로 삼는 강화
 - 덱 전체를 한 번에 강화하는 효과 (캐릭터 단위 버프는 기존 상태 이상으로 표현한다)
-- 상태 이상의 강도·수명 파라미터화 — `archive/plans/2026-07-30-status-rule-and-debuffs.md`가
+- 상태 이상의 강도·수명 파라미터화 — `.archive/plans/2026-07-30-status-rule-and-debuffs.md`가
   다뤘다(2026-08-05 완료·보관). 남은 `StatusLifetime` count 단일화는 README 후속 작업 대기열에 있다
 
 ## 4. 결정

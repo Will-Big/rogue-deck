@@ -883,9 +883,9 @@ git commit -m "chore(ui): retire poster card frame assets"
 ### Task 7: Run full verification and archive the plan
 
 **Files:**
-- Move after successful verification: this plan to `docs/superpowers/archive/plans/2026-07-31-primitive-card-frame.md`
+- Move after successful verification: this plan to `docs/superpowers/.archive/plans/2026-07-31-primitive-card-frame.md`
 - Modify: `docs/superpowers/README.md`
-- Modify: `docs/superpowers/archive/README.md`
+- Modify: `docs/superpowers/.archive/README.md`
 
 - [x] **Step 1: Run the full headless suite**
 
@@ -960,13 +960,13 @@ Present the seven captures to the user and wait for approval before archiving.
 
 - [ ] **Step 7: Archive the completed plan and update indexes**
 
-Move this file to `docs/superpowers/archive/plans/`, remove its active row from `docs/superpowers/README.md`, add the archived row to `docs/superpowers/archive/README.md`, and keep the design spec current.
+Move this file to `docs/superpowers/.archive/plans/`, remove its active row from `docs/superpowers/README.md`, add the archived row to `docs/superpowers/.archive/README.md`, and keep the design spec current.
 
 - [ ] **Step 8: Commit the completion record**
 
 ```bash
-git add docs/superpowers/README.md docs/superpowers/archive/README.md \
-  docs/superpowers/archive/plans/2026-07-31-primitive-card-frame.md
+git add docs/superpowers/README.md docs/superpowers/.archive/README.md \
+  docs/superpowers/.archive/plans/2026-07-31-primitive-card-frame.md
 git commit -m "docs: archive primitive card frame implementation"
 ```
 

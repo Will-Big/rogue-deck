@@ -153,10 +153,10 @@ Use a focused implementation commit followed by a documentation checkpoint commi
 ### Task 3: Close and archive the primitive-card-frame work
 
 **Files:**
-- Move: `docs/superpowers/plans/2026-07-31-primitive-card-frame.md` to `docs/superpowers/archive/plans/`
-- Move after all handoff tasks finish: this file to `docs/superpowers/archive/plans/`
+- Move: `docs/superpowers/plans/2026-07-31-primitive-card-frame.md` to `docs/superpowers/.archive/plans/`
+- Move after all handoff tasks finish: this file to `docs/superpowers/.archive/plans/`
 - Modify: `docs/superpowers/README.md`
-- Modify: `docs/superpowers/archive/README.md`
+- Modify: `docs/superpowers/.archive/README.md`
 
 **Interfaces:**
 - The primitive card-frame design remains `current`.
@@ -187,7 +187,7 @@ Regenerate the seven card-frame captures. The user verifies the execution-order 
 
 - [ ] **Step 3: Archive both completed plans and update indexes**
 
-Remove both active plan rows from `docs/superpowers/README.md`, add both plans to `docs/superpowers/archive/README.md`, keep the card-status tooltip plan active/deferred, and commit the completion record.
+Remove both active plan rows from `docs/superpowers/README.md`, add both plans to `docs/superpowers/.archive/README.md`, keep the card-status tooltip plan active/deferred, and commit the completion record.
 
 - [ ] **Step 4: Confirm branch state**
 

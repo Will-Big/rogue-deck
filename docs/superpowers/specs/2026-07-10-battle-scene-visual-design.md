@@ -5,8 +5,8 @@
 - 주 도메인: `battle-scene`
 - 상태: `current` — 구현된 전투 화면의 상위 구도와 표현 방향
 - 원천 흐름: `superpowers:brainstorming` (와이어프레임 시안 3종 → 구도 C 수정안 확정 → 연출/입력 규칙 확정)
-- 과거 설계: [`deck-playtest-ui-design`](../archive/specs/2026-06-23-deck-playtest-ui-design.md),
-  [`ugui-card-ui-design`](../archive/specs/2026-06-22-ugui-card-ui-design.md)
+- 과거 설계: [`deck-playtest-ui-design`](../.archive/specs/2026-06-23-deck-playtest-ui-design.md),
+  [`ugui-card-ui-design`](../.archive/specs/2026-06-22-ugui-card-ui-design.md)
 - 아트 방향 탐색: `art_style_prompts_2026-07-07/prompt_v2/README.md`
 
 ---

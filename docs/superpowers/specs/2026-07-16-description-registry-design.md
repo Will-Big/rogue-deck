@@ -5,7 +5,7 @@
 - 문서 유형: `architecture`
 - 주 도메인: `card-description`
 - 상태: `current` — 구현된 카드 설명 확장 구조
-- 선행 설계: [기존 동적 카드 설명 설계](../archive/specs/2026-06-26-card-descriptions-design.md)
+- 선행 설계: [기존 동적 카드 설명 설계](../.archive/specs/2026-06-26-card-descriptions-design.md)
 - 후속 표현 규칙: [위치 대상과 카드 텍스트 설계](2026-07-27-position-targeting-card-text-design.md)
 
 ## 1. 배경
