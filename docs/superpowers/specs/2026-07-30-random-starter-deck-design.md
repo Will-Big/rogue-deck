@@ -5,7 +5,7 @@
 - 주 도메인: `card-content`
 - 상태: `current`
 - 관련 권위 문서:
-  - `docs/superpowers/archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
+  - `docs/superpowers/.archive/specs/2026-07-29-starter-pool-so-authoring-design.md` (보관: SO 저작 파이프라인은 제거됨, 22장 설계 의도만 참고)
   - `docs/superpowers/specs/2026-07-20-character-card-pools-design.md`
 
 ## 1. 목적

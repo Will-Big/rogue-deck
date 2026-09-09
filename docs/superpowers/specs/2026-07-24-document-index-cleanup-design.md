@@ -25,7 +25,7 @@ docs/superpowers/
 ├── README.md
 ├── specs/
 ├── plans/
-└── archive/
+└── .archive/
     ├── README.md
     ├── specs/
     └── plans/
@@ -114,7 +114,7 @@ docs/superpowers/
 
 ### 6.1 보관할 설계 스펙 15개
 
-다음 파일을 `docs/superpowers/archive/specs/`로 이동한다.
+다음 파일을 `docs/superpowers/.archive/specs/`로 이동한다.
 
 1. `2026-06-22-ugui-card-ui-design.md`
 2. `2026-06-23-deck-playtest-ui-design.md`
@@ -135,7 +135,7 @@ docs/superpowers/
 ### 6.2 보관할 계획과 구현 기록 42개
 
 `docs/superpowers/plans/2026-07-16-architecture-refactor-backlog.md`를 제외한 기존 `plans` Markdown 파일
-42개를 모두 `docs/superpowers/archive/plans/`로 이동한다. 여기에는 다음 묶음이 포함된다.
+42개를 모두 `docs/superpowers/.archive/plans/`로 이동한다. 여기에는 다음 묶음이 포함된다.
 
 - 초기 코어 M0~M5 계획 11개
 - 덱 루프·카드 UI·SO 저작·상태·설명·간수 구현 계획 7개
@@ -151,7 +151,7 @@ docs/superpowers/
 ### 6.3 보관소 정책
 
 - 보관 문서는 역사 기록이며 현재 규칙의 권위가 아니다.
-- `archive/README.md`에서 설계 스펙과 구현 계획을 나누어 링크한다.
+- `.archive/README.md`에서 설계 스펙과 구현 계획을 나누어 링크한다.
 - 이동으로 깨지는 상대 링크는 현행 또는 보관 위치에 맞게 수정한다.
 - 보관 문서 본문은 링크와 상단 보관 표시 외에는 다시 작성하지 않는다.
 - 중앙 색인에서는 기존 보관 대상 57개와 이 작업의 완료된 구현 계획을 합친 58개 문서를 하나씩
@@ -193,7 +193,7 @@ docs/superpowers/
 문서 정리 이후 다음 규칙을 적용한다.
 
 1. 새 스펙·계획을 추가할 때 같은 커밋에서 중앙 색인에 등록한다.
-2. 구현이 끝난 세부 계획과 구현 기록은 현행 `plans`에 계속 두지 않고 `archive/plans`로 옮긴다.
+2. 구현이 끝난 세부 계획과 구현 기록은 현행 `plans`에 계속 두지 않고 `.archive/plans`로 옮긴다.
 3. 대체된 설계는 역사적 구현 근거가 있으면 보관하고, 승인되지 않은 WIP는 삭제한다.
 4. 현행 결정을 바꾸는 문서는 기존 권위 문서와 중앙 색인의 대체 관계를 함께 갱신한다.
 5. 현행 디렉터리에는 `current` 또는 `active` 문서만 둔다.
@@ -224,7 +224,7 @@ docs/superpowers/
 
 - 현행 `specs`에는 기존 유지 대상 8개와 이 관리 스펙만 존재한다.
 - 현행 `plans`에는 아키텍처 백로그 1개만 존재한다.
-- `archive/specs`에는 15개, `archive/plans`에는 완료된 문서 정리 구현 계획을 포함해 43개가 존재한다.
+- `.archive/specs`에는 15개, `.archive/plans`에는 완료된 문서 정리 구현 계획을 포함해 43개가 존재한다.
 - 폐기 대상 2개는 작업 트리에 존재하지 않는다.
 - 중앙 색인의 모든 현행 링크와 보관소 색인의 모든 링크가 실제 파일을 가리킨다.
 - 저장소 Markdown의 로컬 `.md` 링크가 이동 때문에 깨지지 않는다.

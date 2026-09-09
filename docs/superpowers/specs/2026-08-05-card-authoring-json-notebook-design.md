@@ -8,7 +8,7 @@
   [플레이어 캐릭터 및 카드풀](2026-07-20-character-card-pools-design.md),
   [위치 대상과 카드 텍스트](2026-07-27-position-targeting-card-text-design.md),
   [카드 변형과 런타임 콘텐츠 로딩](2026-07-30-card-mutation-and-runtime-content-design.md)
-- 대체: [카드 아이디어 노트](../archive/specs/2026-07-27-card-idea-notebook-design.md)
+- 대체: [카드 아이디어 노트](../.archive/specs/2026-07-27-card-idea-notebook-design.md)
 - 개정일: 2026-08-06 — 계획 3.5(개입 다형화·카드 스펙 분리)에 맞춰 §4·§5·§6·§8·§9·§16을 고쳤다
 - 개정일: 2026-08-28 — 계획 D(반영·정리) 완료에 맞춰 §10.2·§10.4·§11.3·§12를 고쳤다.
   `격리`를 `읽기 오류`로 바꾸고, §12의 `저장소에만 있음` 한 줄을 `읽기 오류`와 `미참조 파일`로 갈랐다.

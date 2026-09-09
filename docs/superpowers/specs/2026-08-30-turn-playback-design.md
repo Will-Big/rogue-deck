@@ -360,7 +360,7 @@ public void 턴_경계는_단독_비트다()
       런타임 `new GameObject`가 새 파일에 없는지, 연출 수치가 코드 상수로 박히지 않았는지
 - [ ] **Step 4: 사용자 Play 확인** — 광역 공격의 동시 피격, 배속, 스킵 후 화면이 최종 상태인지.
       **눈으로 판단할 것이므로 사용자 몫이다**(규칙 17)
-- [ ] **Step 5:** 승인 후 이 계획을 `archive/plans/`로 옮기고 `docs/superpowers/README.md`를 같은
+- [ ] **Step 5:** 승인 후 이 계획을 `.archive/plans/`로 옮기고 `docs/superpowers/README.md`를 같은
       커밋에서 갱신한다(규칙 20)
 
 ## 구현 중 바뀐 것 (2026-08-30)

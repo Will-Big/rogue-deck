@@ -3,8 +3,15 @@
 - 개정일: 2026-08-28
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
-새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다. `archive/`의 문서는 과거
-설계·구현 근거이며 현재 규칙으로 직접 사용하지 않는다.
+새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다.
+
+`.archive/`는 **폐기된 이력이며 읽지 않는다.** 아래 문서 표는 그곳을 한 줄도 올리지 않고, 검색
+도구도 점 디렉터리를 기본으로 건너뛴다(`rg --hidden`으로만 보인다). 본문에 남은 몇 개의 링크는
+"이 부채는 저 계획이 해결했다"는 **완료 표시**이며 열어 보라는 뜻이 아니다.
+
+그 안의 `규칙 N` 인용은 **작성 당시의 AGENTS.md** 기준이라 지금과 뜻이 다를 수 있다 — 규칙 5는
+"ScriptableObject로 저작한다"에서 "JSON으로 저작한다"로, 규칙 17은 "GUI 에디터를 열지 않는다"에서
+"직접 저작한다"로 뒤집혔다.
 
 ## 문서 상태
 
@@ -58,7 +65,6 @@
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위와 자신, 실행 시 대상 고정, 대상 칸과 진영별 본문 | 카드 대상·설명·프레임 설계 |
 | [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
 | [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |
-| [카드 아이디어 노트](archive/specs/2026-07-27-card-idea-notebook-design.md) | `archived` | Markdown 저작 시절의 노트북. 아래 JSON 전환 설계가 대체했다 — 구현 완료로 보관 | 참조 전용 |
 | [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마. **계획 A~D 완료** | 카드 저작 도구 구현·변경 |
 
 ### 문서 관리
@@ -87,27 +93,22 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | 문서 | 상태 | 범위 |
 |---|---|---|
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
-| [전투 상호작용 로그](archive/plans/2026-07-31-combat-interaction-log.md) | **완료·머지·보관 (2026-08-28)** | 피해 계산 단계별 내역, 상태 부여·만료 이벤트, 한국어 타임라인 포매터, 개발용 Console 덤프 |
-| [전투 타임라인 이벤트 확장](archive/plans/2026-08-28-combat-timeline-event-expansion.md) | **완료·머지·보관 (2026-08-29)** | 캐릭터별 HP 변화, 운명력 적립, 상태 소비, 카드 귀속 버프, 대형 이동, 취소 카드 부분 피해의 이벤트화와 이벤트당 Console 로그 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
+| [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
 
 [카드 변형과 런타임 콘텐츠 로딩 설계](specs/2026-07-30-card-mutation-and-runtime-content-design.md)를
 여러 계획으로 나눠 구현하는 중이다. 새 세션은 이 절을 먼저 읽고 다음 계획 문서로 들어간다.
 
+1단계부터 3.5단계까지는 **전부 완료·머지됐다** — JSON 직렬화·로딩, 상태 콘텐츠 JSON화와 저작 표면
+축소, 상태 등록 지점 통합, 덱·풀·캐릭터 스키마, 런타임 콘텐츠 전환, 상태 원본 확정, C# 카드 스펙
+제거, 개입 액션 다형화. 남은 것은 하나다.
+
 | | 계획 | 상태 |
 |---|---|---|
-| 1 | [카드 콘텐츠 JSON 직렬화·로딩](archive/plans/2026-07-31-card-content-json-loading.md) | **완료·머지** |
-| 2 | [상태 콘텐츠 JSON화와 카드 저작 표면 축소](archive/plans/2026-08-02-status-content-and-authoring-surface.md) | **완료·머지** |
-| 2.5 | [상태 등록 지점 통합](archive/plans/2026-08-03-status-registration-consolidation.md) | **완료·머지** |
-| 3a | [덱·풀·캐릭터 콘텐츠 스키마](archive/plans/2026-08-03-deck-pool-character-content.md) | **완료·머지** |
-| 3b | [런타임 콘텐츠 전환](archive/plans/2026-08-03-runtime-content-switch.md) | **완료** |
-| 3c | [상태 원본 확정](archive/plans/2026-08-04-status-content-single-source.md) | **완료** |
-| 3d | [C# 카드 스펙 제거](archive/plans/2026-08-05-card-spec-removal.md) | **완료** |
-| 3.5 | [개입 액션 다형화·카드 스펙 분리](archive/plans/2026-08-06-intervention-action-polymorphism.md) | **완료** |
 | 4 | 카드 변형 `CardMutation` (미작성) | 대기 |
 
 설계 §4.5의 "콘텐츠 원본 전환"은 한 계획으로 담기에 커서 넷으로 나눴다. 각각 독립 실행 가능하고,
@@ -179,7 +180,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
   `CreateDefault()`와 전역 `Default` 싱글턴은 제거됐다.
 - ~~**`CardSO`의 규칙 필드가 검증 없이 남아 있다.**~~ **계획 3b가 해결했다.** `CardAsset` 자체가
   사라졌다. `CardArtCatalog`(id → Sprite, 항목 3개)만 남고 규칙은 전부 JSON이다.
-- ~~**`BattleScreenController`에 책임이 몰려 있다.**~~ **[전투 화면 컴포넌트 분해 계획](archive/plans/2026-08-04-battle-screen-decomposition.md)이
+- ~~**`BattleScreenController`에 책임이 몰려 있다.**~~ **[전투 화면 컴포넌트 분해 계획](.archive/plans/2026-08-04-battle-screen-decomposition.md)이
   해결했다** (2026-08-04). 467줄 → 347줄, `[SerializeField]` 18개 → 8개. 표현 변환은
   `BattlePresenter`, 유닛은 `BattleUnitsView`, 파일 셋은 `BattlePilesView`, HUD는 `BattleHudView`가
   가져갔고 씬은 `BattleSceneBuilder`가 재생성했다. **남은 후속:** 입력 핸들러 다섯이 아직
@@ -202,7 +203,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 계획 D는 `Tools/card-idea-notebook/index.html`을 Markdown 저작 경로 제거로 3,206줄까지 줄였고
 (`<script>` 블록도 셋에서 `data-card-idea-core`·`data-repo-ui` 둘로 줄었다), `index.test.mjs`는
 1,955줄이다. `시작 카드 풀.md`는 지워졌고 `적 타입 A.md`는 참고 메모로 남았다. 실행 계획은
-[노트북 저장소 반영](archive/plans/2026-08-11-notebook-repo-write.md)에 있다.
+[노트북 저장소 반영](.archive/plans/2026-08-11-notebook-repo-write.md)에 있다.
 
 검증 명령은 둘을 묶은 `Tools/verify.sh` 하나다(AGENTS.md 「명령」 절). 개별로 부를 때:
 
@@ -272,7 +273,7 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   SO나 C# 문자열 임시 fallback은 추가하지 않는다.)
 
 - [ ] **디버프 3종의 Unity 표시 확인** — 약화·취약·손상은 코어에 구현되어 있고
-  [보관된 계획](archive/plans/2026-07-30-status-rule-and-debuffs.md)이 헤드리스로 검증했다. 남은 것은
+  [보관된 계획](.archive/plans/2026-07-30-status-rule-and-debuffs.md)이 헤드리스로 검증했다. 남은 것은
   전투 화면에서 세 상태가 유닛에 옳게 표시되는지 **눈으로** 보는 것뿐이다(규칙 17: 시각 확인은
   사용자 몫). 표시가 어긋나면 그때 별도 작업으로 잡는다.
 - [ ] **계획 3.5가 남긴 콘텐츠·구조 항목 셋** — 전부 코드는 준비돼 있고 결정만 남았다.
@@ -368,8 +369,6 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 | 런 원 사이클 | `needs-redesign` | 과거 설계가 `재화 없음`, `사망 카드 인계 없음`, 이전 보상 모델을 전제한다. 재개 시 현재 카드풀 문서의 유산·소유권 규칙을 기준으로 새 스펙을 작성한다. |
 | 카드 유효 수치 색상 피드백 | `needs-redesign` | 카드 변형과 런·전투 상태 중앙관리 작업이 원본값·유효값의 표현 계약을 확정한 뒤 피해·방어·비용 등 변경된 텍스트 span만 색으로 표시한다. 상태 아이콘은 사용하지 않는다. |
 
-과거 런 설계와 계획은 [보관 문서 색인](archive/README.md)에서 참고할 수 있다.
-
 ## 문서 수명주기
 
 1. 새 스펙·계획은 **`<이름>.html`(사람 검수용) + `<이름>.md`의 `## 상세`(세션 인계용)** 두 파일로
@@ -378,12 +377,9 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
    상세에서 얻는다. 골격과 제약은 `AGENTS.md` 규칙 28·29에 있다. 기존 문서는 소급해 고치지 않고,
    수정할 일이 생겼을 때 이 골격으로 맞춘다.
 2. 새 스펙·계획을 추가할 때 이 색인을 같은 커밋에서 갱신한다.
-3. 구현이 끝난 세부 계획과 구현 기록은 `archive/plans/`로 옮긴다.
-4. 대체된 설계는 구현의 역사적 근거가 있으면 `archive/specs/`로 옮긴다.
-5. 승인되지 않은 WIP와 유효한 내용이 완전히 흡수된 문서는 삭제한다.
-6. 현행 `specs/`와 `plans/`에는 `current` 또는 `active` 문서만 둔다.
-7. 보관 문서는 현재 규칙의 권위가 아니며, 현재 문서가 명시적으로 연결할 때만 참고한다.
-
-## 보관소
-
-완료된 설계·계획·구현 기록은 [보관 문서 색인](archive/README.md)에 분리되어 있다.
+3. 구현이 끝난 세부 계획과 구현 기록은 `.archive/plans/`로, 대체된 설계는 구현의 역사적 근거가
+   있으면 `.archive/specs/`로 옮긴다. **옮긴 뒤 이 색인에서 그 행을 지운다** — 링크를 남기면
+   아카이브가 자랄 때 색인도 같이 자라고, 새 세션이 폐기된 문서를 현행으로 착각한다.
+4. 승인되지 않은 WIP와 유효한 내용이 완전히 흡수된 문서는 삭제한다.
+5. 현행 `specs/`와 `plans/`에는 `current` 또는 `active` 문서만 둔다.
+6. 옮긴 문서는 다시 읽지 않는다. 남겨 두는 이유는 이력 보존이지 재사용이 아니다.

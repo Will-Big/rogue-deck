@@ -390,8 +390,8 @@ git commit -m "feat(ui): wire shared card status tooltip"
 
 **Files:**
 - Modify: `Assets/Unity/PLAYTEST.md`
-- Modify after completion: `docs/superpowers/README.md`, `docs/superpowers/archive/README.md`
-- Move after completion: this plan to `docs/superpowers/archive/plans/2026-08-03-card-status-grid-tooltip.md`
+- Modify after completion: `docs/superpowers/README.md`, `docs/superpowers/.archive/README.md`
+- Move after completion: this plan to `docs/superpowers/.archive/plans/2026-08-03-card-status-grid-tooltip.md`
 
 - [ ] **Step 1: Run focused structural tests**
 
@@ -432,12 +432,12 @@ The user verifies:
 
 - [ ] **Step 5: Update checklist, archive and commit after approval**
 
-Add the six checks to `PLAYTEST.md`, move this plan to `archive/plans`, remove its active README row, add its archive row, then commit:
+Add the six checks to `PLAYTEST.md`, move this plan to `.archive/plans`, remove its active README row, add its archive row, then commit:
 
 ```bash
 git add Assets/Unity/PLAYTEST.md docs/superpowers/README.md \
-  docs/superpowers/archive/README.md \
-  docs/superpowers/archive/plans/2026-08-03-card-status-grid-tooltip.md
+  docs/superpowers/.archive/README.md \
+  docs/superpowers/.archive/plans/2026-08-03-card-status-grid-tooltip.md
 git commit -m "docs: archive card status tooltip plan"
 ```
 
