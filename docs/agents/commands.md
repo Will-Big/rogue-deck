@@ -43,6 +43,19 @@ dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=n
 node --test "Tools/card-idea-notebook/"*.test.mjs
 ```
 
+## 밸런스 변경은 Compare로 본다 (규칙 12)
+
+`ScenarioRunner.Compare` / `MultiTurnRunner.Compare`가 **무조작 실행과 조작 실행을 나란히** 돌려
+차이를 낸다. 밸런스에 영향을 주는 변경은 이걸로 확인한다 — 쓰는 법은 기존 테스트를 따르면 된다:
+[`ScenarioComparisonTests.cs`](../../Assets/Core/Tests/EditMode/ScenarioComparisonTests.cs) ·
+[`DesignInvariantTests.cs`](../../Assets/Core/Tests/EditMode/DesignInvariantTests.cs) ·
+[`MultiTurnRunnerTests.cs`](../../Assets/Core/Tests/EditMode/MultiTurnRunnerTests.cs).
+`ScenarioCliReport.Build(scenarioId, statusContent)`가 그 결과를 마크다운으로 만든다.
+
+**CLI로 부르지 마라.** `Tools/FateWeaver.Headless/`는 `.csproj`가 없어 빌드되지 않고, 남아 있는
+`Program.cs`는 인자 하나짜리 옛 시그니처를 부른다(2026-09-09 확인). 커밋된 `bin/`은 그 시절의
+산출물이다. Compare는 **테스트에서** 쓴다.
+
 Unity EditMode 배치 실행(씬·프리팹·에셋을 건드렸을 때, 규칙 17)은 `-quit`를 붙이면 테스트 없이
 exit 0으로 끝나는 함정이 있다. 검증된 전체 명령과 실행 장애 대응은
 [`unity-batch-runs.md`](unity-batch-runs.md)에 있다.
