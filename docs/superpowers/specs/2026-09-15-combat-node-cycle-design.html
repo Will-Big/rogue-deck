@@ -356,7 +356,7 @@
       <tr><td><code>CombatNode</code></td><td>전투 한 판의 단계(전투·보상·패배·완료)를 전이시키고 결과를 런에 반영한다</td><td>화면, 콘텐츠 파일, 적이 어디서 왔는지</td></tr>
       <tr><td><code>SeedDerivation</code></td><td>런 시드와 노드 순번에서 노드 시드를, 노드 시드에서 목적별 스트림 시드를 만든다</td><td>전투·보상이 무엇인지</td></tr>
       <tr><td><code>RunState</code></td><td>런 시드·파티원(덱·HP)·진입한 노드 수를 들고 있다</td><td>전투, 맵, 노드 종류</td></tr>
-      <tr><td><code>IEncounterSource</code></td><td>편성 스트림을 받아 이번 전투의 적과 정책을 새로 만든다</td><td>파티, 보상</td></tr>
+      <tr><td><code>IEncounterSource</code></td><td>편성 스트림을 받아 이번 전투의 적마다 (적, 정책) 쌍을 새로 만든다</td><td>파티, 보상</td></tr>
       <tr><td><code>IRewardCandidateSource</code></td><td>보상에 나올 수 있는 카드 전체를 정해진 순서로 돌려준다</td><td>시드, 소유자, 몇 장 뽑는지</td></tr>
       <tr><td><code>CombatNodeFlow</code> <small>(Unity)</small></td><td>런 상태를 들고 전투 노드를 시작·종료시키는 호출 순서를 정한다</td><td>승패 판정, 보상 규칙, 카드 표시 방법</td></tr>
       <tr><td><code>RewardChoiceView</code> · <code>CombatResultView</code></td><td>보상 후보(또는 패배)를 보여주고 누른 버튼을 알린다</td><td>후보가 어떻게 뽑혔는지, 선택이 어디 반영되는지</td></tr>
@@ -506,7 +506,7 @@
       </tr>
       <tr>
         <td><code>Battles/goblin_single.json</code><br><small>신규</small></td>
-        <td>편성 후보 하나: <code>id</code> · <code>enemies</code>(적 id 배열)</td>
+        <td>편성 후보 하나: <code>id</code> · <code>enemies</code>(적 id 배열 — 지금은 정확히 1개, 다중 적 후속에서 해제)</td>
         <td><code>BattleContentLoader</code> → <code>ContentEncounterSource</code>가 편성 스트림으로 후보 중 하나 선택</td>
         <td>1단계의 <code>GoblinEncounterSource</code>, 컨트롤러의 <code>new Enemy(GoblinDeck.EnemyId, …)</code></td>
       </tr>
@@ -534,7 +534,7 @@
   <table>
     <thead><tr><th>갈아끼울 수 있는 것</th><th>한번 정하면 고정되는 것</th></tr></thead>
     <tbody>
-      <tr><td>보상 후보 공급(<code>IRewardCandidateSource</code>) — 나중에 캐릭터 풀 소유권으로</td><td>보상 추첨의 RNG 소비량(후보당 2회). 바꾸면 모든 기존 시드의 보상이 바뀐다</td></tr>
+      <tr><td>보상 후보 공급(<code>IRewardCandidateSource</code>) — 나중에 캐릭터 풀 소유권으로</td><td>보상 추첨 순서: 승리 직후 카드 n장을 먼저 뽑고, 그다음 소유자 n명. 바꾸면 모든 기존 시드의 보상이 바뀐다 — 단 소유자 뽑기를 통째로 없애는 것은 카드 목록에 영향이 없도록 이 순서로 정했다</td></tr>
       <tr><td>편성 공급(<code>IEncounterSource</code>) — 1단계 고블린 → 2단계 JSON</td><td>스트림 이름표 상수와 해시 혼합식. 바꾸면 모든 기존 시드가 바뀐다</td></tr>
       <tr><td>적 정책 — 레지스트리에 키 하나 등록</td><td>노드 단계 네 가지(전투·보상·패배·완료)의 전이 순서</td></tr>
       <tr><td>보상 장수 — <code>combat_rules.json</code></td><td>"보상은 승리에만, 패배는 런 종료"</td></tr>
@@ -600,11 +600,10 @@
   <h2>이 선택으로 나중에 어려워지는 것</h2>
   <ul>
     <li><b>콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.</b> 보상 대상 카드 목록과 편성 후보 목록이 길이·순서째 RNG 입력이다. 시드는 콘텐츠 버전에 묶인다.</li>
-    <li><b>보상 추첨 방식을 바꾸는 순간 기존 시드가 모두 무효가 된다.</b> 후보당 RNG 2회 소비, 이름표 상수, 해시 혼합식이 사실상 저장 형식처럼 굳는다.</li>
+    <li><b>보상 추첨 방식을 바꾸는 순간 기존 시드가 모두 무효가 된다.</b> 추첨 순서(카드 먼저·소유자 나중), 이름표 상수, 해시 혼합식이 사실상 저장 형식처럼 굳는다. 예외로 소유자 뽑기를 없애는 변경만은 카드 목록을 바꾸지 않는다.</li>
     <li><b>기존 Run 뼈대의 노드 목록 계열이 지워진다.</b> <code>RunDefinition</code>·<code>RunNodeData</code>·<code>RunNodeRegistry</code>·<code>IRunNodeHandler</code> 등 7개 타입. 노드 목록은 런이 아니라 맵의 범주로 정했으므로, 맵은 이 뼈대를 되살리지 않고 새로 설계해야 한다.</li>
-    <li><b>한 편성에 같은 적을 둘 넣을 수 없다.</b> 전투 안 적 id가 유일해야 해서다. "고블린 둘"을 하려면 전투 안 적 식별 방식을 바꿔야 한다.</li>
-    <li><b>적이 둘 이상인 편성에서는 적 카드의 주인이 비워진다.</b> 기존 세션이 적이 하나일 때만 소유자를 확정한다. 이번 편성은 한 마리라 드러나지 않는다.</li>
-    <li><b>HP가 전투 사이에 이어지지 않는다.</b> 세션이 최대 HP만 받는다. 인계하려면 로드아웃·세션 생성자를 바꿔야 한다.</li>
+    <li><b>편성에는 적을 한 마리만 저작할 수 있다.</b> 기존 세션이 정책 하나만 받고, 적이 둘 이상이면 적 카드의 주인을 비운다. 다중 적과 같은 적 여럿은 <b>반드시 할 후속 작업</b>이다. 그 비용을 줄이려고 이번에 <b>적 JSON id와 전투 안 id(<code>goblin#0</code>)를 분리</b>하고 <b>편성 공급자가 적마다 (적, 정책) 쌍</b>을 돌려주게 한다 — 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.</li>
+    <li><b>HP가 전투 사이에 이어지지 않는다.</b> 세션이 최대 HP만 받는다. <b>반드시 할 후속 작업</b>이며 <code>RunMember.Hp</code> 자리는 이미 있다. 그 전에 "전투 중 HP 0이 됐지만 파티가 이긴 파티원"의 런 처리 규칙을 정해야 한다.</li>
     <li><b>C#에서 JSON으로 옮기는 동안 고블린 테스트 6개 파일을 옮겨야 한다.</b> 옮기기 전에 같은 시드 타임라인을 골든으로 잡아 동등성을 먼저 증명한다.</li>
   </ul>
 </section>
@@ -625,7 +624,7 @@
       <ul class="events">
         <li>run.EnterNode() → nodeIndex=<b>0</b>, NodesEntered=1</li>
         <li>SeedDerivation.NodeSeed(1, 0) → nodeSeed=<b>0x5A1C3E07</b></li>
-        <li>Stream(nodeSeed, Encounter) → 편성 공급자 Pick → [goblin 28HP], RandomPickPolicy</li>
+        <li>Stream(nodeSeed, Encounter) → 편성 공급자 Pick → [(<b>goblin#0</b> · specId goblin · 28HP, RandomPickPolicy)]</li>
         <li>Stream(nodeSeed, Combat) → DeckCombatSession(seed=<b>0x1F9B20D4</b>)</li>
         <li>Flow → BattleScreenController.Bind(session)</li>
       </ul>
@@ -640,7 +639,7 @@
       <h3><code>CombatNode.Conclude()</code></h3>
       <ul class="events">
         <li>rng = Random(Stream(nodeSeed, Reward)) · 대상 22장(id 정렬) · 생존자 [member_a]</li>
-        <li>후보 0: riposte → member_a · 후보 1: hasten → member_a · 후보 2: distill → member_a</li>
+        <li>카드 3회 먼저: riposte · hasten · distill → 그다음 소유자 3회: member_a · member_a · member_a</li>
         <li>Phase=<b>Reward</b> → Flow → RewardChoiceView.Show(후보 3, 소유자 이름)</li>
       </ul>
       <p>같은 런 시드로 3턴 만에 이겼어도 카드 셋은 riposte·hasten·distill로 같다. member_b가 살아 있었다면 일부 소유자가 member_b였을 수 있다.</p>
@@ -675,7 +674,7 @@
   </table>
   </div>
   <p class="out-of-scope"><b>범위 밖:</b> 맵(노드 목록은 <code>Map/</code> 범주로 따로 설계), 세이브, 새 게임마다 런 시드 새로 뽑기, HP 인계, 보스·엘리트·영입,
-  사망 파티원의 카드 처리(유산), 보상 후보의 캐릭터 풀 소유권, 패널 등장 연출.</p>
+  사망 파티원의 카드 처리(유산), 보상 후보의 캐릭터 풀 소유권, 패널 등장 연출.<br><b>반드시 할 후속 작업(색인 기록):</b> HP 인계, 다중 적(적마다 정책·카드 주인), 같은 적 여럿.</p>
 </section>
 
 <section class="decide">

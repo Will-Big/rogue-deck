@@ -38,6 +38,12 @@
 8. 전투 규칙 파일 이름은 `combat_rules.json`.
 9. `BattleScreenController`에 흐름을 얹지 않고 **`CombatNodeFlow`로 분리한다**(규칙 30).
 10. "다음 전투"는 같은 `RunState`로 전투 노드를 한 번 더 시작한다(노드 순번이 1 증가).
+11. **보상 추첨은 카드를 모두 뽑은 뒤 소유자를 뽑는다.** 나중에 소유자가 캐릭터 풀로 정해져 소유자
+    뽑기가 사라져도 카드 목록이 그대로 남게 하기 위해서다(2026-09-15).
+12. **HP 인계는 이번 범위 밖**이고, 전투 중 HP 0이 된 파티원의 런 처리 규칙도 이번엔 정하지 않는다.
+    반드시 할 후속 작업으로 색인에 기록한다.
+13. **같은 적 여럿·다중 적 카드 주인은 이번엔 모양만 맞춘다.** 적 JSON id와 전투 안 id를 분리하고,
+    편성 공급자는 적마다 (적, 정책) 쌍을 돌려준다. 세션이 여러 쌍을 받는 일은 반드시 할 후속 작업이다.
 
 ---
 
@@ -130,10 +136,17 @@ public interface IEncounterSource
     EncounterSetup Pick(Random encounterRng);
 }
 
+/// 적마다 자기 정책을 든다. 편성 전체에 정책 하나를 두면 "이 카드가 어느 적 것인가"를 말할 수단이
+/// 없어진다 — 지금 세션이 적 둘 이상에서 카드 주인을 비우는 원인이 그것이다(DeckCombatSession.cs:382-391).
+public sealed class EncounterEnemy
+{
+    public Enemy Enemy { get; }
+    public IEnemyTurnPolicy Policy { get; }
+}
+
 public sealed class EncounterSetup
 {
-    public IReadOnlyList<Enemy> Enemies { get; }
-    public IEnemyTurnPolicy Policy { get; }
+    public IReadOnlyList<EncounterEnemy> Enemies { get; }
 }
 
 public interface IRewardCandidateSource
@@ -173,8 +186,10 @@ public sealed class CombatNode
 3. `setup = context.Encounters.Pick(new Random(Stream(nodeSeed, Encounter)))`.
 4. 파티 로드아웃: `run.LivingMembers`를 파티 순서대로 `PartyMemberLoadout(member.Id, member.Name,
    member.MaxHp, member.Cards)`로. **HP 인계 없음** — 세션이 최대 HP로 시작한다.
-5. `new DeckCombatSession(context.Statuses, loadouts, setup.Enemies, setup.Policy, context.PartyTuning,
-   partyCards: null, fateEnergyPerTurn: context.FateEnergyPerTurn, seed: Stream(nodeSeed, Combat))`.
+5. **세션은 아직 정책 하나만 받는다.** `setup.Enemies.Count != 1`이면 `InvalidOperationException`
+   ("다중 적은 세션이 적마다 정책을 받게 된 뒤 지원" — 후속 작업). 그 뒤
+   `new DeckCombatSession(context.Statuses, loadouts, [setup.Enemies[0].Enemy], setup.Enemies[0].Policy,
+   context.PartyTuning, partyCards: null, fateEnergyPerTurn: context.FateEnergyPerTurn, seed: Stream(nodeSeed, Combat))`.
 
 **`Conclude`**
 - `Session.Outcome == Win` → 보상 제안 생성(아래) → `Phase = Reward`.
@@ -187,13 +202,17 @@ rng      = new Random(Stream(nodeSeed, Reward))
 pool     = context.RewardCandidates.Eligible() 의 복사본
 living   = Session.State.Party 중 IsAlive, 파티 순서
 n        = min(context.RewardChoices, pool.Count)   // 부팅 검증으로 pool.Count ≥ RewardChoices 보장(2단계)
-for i in 0..n-1:
+for i in 0..n-1:                                   // ① 카드 n장을 먼저 전부 뽑는다
     j = rng.Next(i, pool.Count); swap(pool[i], pool[j])   // 부분 Fisher–Yates, 중복 없음
+for i in 0..n-1:                                   // ② 그다음 소유자 n명
     owner = living[rng.Next(living.Count)]
     candidates.Add(new RewardCandidate(pool[i], owner.Id))
 ```
-- 후보 하나당 RNG 소비는 **정확히 2회**다. 살아있는 인원이 달라져도 소비량은 같으므로 **카드 목록은
-  전투 수행과 무관**하고, **소유자만** 생존자가 바뀌면 달라진다. 이 성질을 테스트로 고정한다.
+- 호출 시점: **승리 직후 `Conclude()` 안에서 한 번.** 전투 중에는 보상 스트림을 쓰지 않는다.
+- 소비량은 카드 n회 + 소유자 n회로 고정이다(n=3이면 6회). 살아있는 인원이 달라져도 소비량은 같다.
+- **카드를 먼저 전부 뽑는 이유(결정 11):** 소유자 뽑기가 나중에 사라져도(캐릭터 풀 소유권) 카드 목록의
+  RNG 값이 밀리지 않는다. 번갈아 뽑으면 후보 1·2의 카드가 바뀌어 기존 시드가 무효가 된다.
+- 결과: **카드 목록은 전투 수행과 무관**하고, **소유자만** 생존자가 바뀌면 달라질 수 있다. 테스트로 고정한다.
 - 승리했는데 `living.Count == 0`은 불가능하다(전멸 = 패배). 방어 코드를 넣지 않는다.
 
 **`Choose(i)`**: `i`가 범위 밖이면 `ArgumentOutOfRangeException`. `run.Party`에서 `OwnerId`가 같은 멤버의
@@ -203,7 +222,14 @@ for i in 0..n-1:
 
 | 타입 | 위치 | 구현 |
 |---|---|---|
-| `GoblinEncounterSource : IEncounterSource` | `Assets/Core/Simulation/` | `Pick`이 RNG를 무시하고 `new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp)` + `GoblinDeck.Policy()` |
+| `GoblinEncounterSource : IEncounterSource` | `Assets/Core/Simulation/` | `Pick`이 RNG를 무시하고 쌍 하나: `new Enemy(id: "goblin#0", specId: GoblinDeck.EnemyId, hp: GoblinDeck.StartingHp)` + `GoblinDeck.Policy()` |
+
+**적 id 분리 (결정 13, 1단계에서 도입):** `Enemy`(`Assets/Core/Combat/Enemy.cs`)에 `SpecId`를 추가한다.
+`Id`는 **전투 안 식별자**(대상 지정·사망 이벤트·카드 소유), `SpecId`는 **적 정의 식별자**(이름·저작 조회).
+전투 안 id 규칙은 `"{specId}#{편성 내 순번}"`. 기존 생성자 `Enemy(string id, int hp)`는 `SpecId = id`로 남겨
+기존 테스트를 건드리지 않는다. 적 이름 표시는 `Id`가 아니라 **`SpecId`로** 조회한다 — 1단계는
+`PlaytestKoreanText.EnemyName(enemy.SpecId, …)`, 2단계는 적 JSON `displayName`. `BattleUnitsView.Spawn`에
+넘기는 이름 함수가 전투 id를 받으므로, 컨트롤러가 `_session.State.Enemies`에서 그 id의 `SpecId`를 찾아 넘긴다.
 | `GradedPlayerCardSource : IRewardCandidateSource` | `Assets/Core/Simulation/Run/` | `CardContentCatalog.Specs`에서 `Side == Player && Grade != CardGrade.None`, id 서수 정렬, `Cards[id]` |
 
 `CardSpec.Grade`는 `Assets/Core/Authoring/CardSpec.cs:42`, 등급 없는 픽스처 4장은 `fixture_*`.
@@ -222,6 +248,9 @@ for i in 0..n-1:
 1. **같은 런 시드·같은 노드 순번이면 전투를 다르게 싸워도 보상 카드 목록이 같다.** (턴 수가 다른 두 진행)
 2. **노드 순번이 다르면 보상 카드 목록이 다르다.** (순번 0 vs 1, 고정 시드에서 실측 확인)
 3. 같은 노드 시드에서 **생존자가 달라지면 카드 목록은 같고 소유자만 달라질 수 있다.**
+3a. **보상 스트림을 손으로 굴린 결과와 일치:** 같은 시드의 `Random`으로 카드 n회를 먼저 뽑은 값이 후보 카드와
+    같다(소유자 뽑기를 빼도 카드 목록이 불변임을 잠근다).
+3b. 편성 공급자가 적 둘을 돌려주면 `Begin`이 예외(세션 제약이 조용히 무시되지 않음).
 4. 후보는 중복 없음, 전부 `Side.Player`이고 `Grade != None`, 소유자는 전부 생존 파티원.
 5. `Choose(i)` → 그 소유자 덱만 +1, 다른 멤버 덱 불변, `Phase == Done`.
 6. `Skip()` → 모든 덱 불변, `Phase == Done`.
@@ -344,9 +373,11 @@ for i in 0..n-1:
 ```
 
 - 로더 `BattleContentLoader.Load(sources, EnemyContentCatalog enemies)` → `BattleContentCatalog`.
-  검증: 파일 1개 이상, `enemies` 1개 이상, 적 id 존재, **한 편성 안에 같은 적 id 중복 금지**(전투 안 `Enemy.Id`가
-  유일해야 한다 — 복수 동종 적은 범위 밖).
-- 사용처: `ContentEncounterSource.Pick(rng)` = id 서수 정렬 후 `battles[rng.Next(count)]`.
+  검증: 파일 1개 이상, 적 id 존재, **`enemies`가 정확히 1개**. 이 마지막 검증은 세션이 정책 하나만 받는
+  제약 때문이며, 다중 적 후속 작업에서 지운다. 같은 id 중복은 형식상 막지 않는다 — 전투 안 id가
+  `"{specId}#{순번}"`이라 충돌하지 않는다.
+- 사용처: `ContentEncounterSource.Pick(rng)` = id 서수 정렬 후 `battles[rng.Next(count)]`, 적마다
+  `new Enemy($"{specId}#{i}", specId, spec.MaxHp)`와 `EnemyPolicyRegistry`로 만든 새 정책을 쌍으로 돌려준다.
 
 **④ `Characters/<id>.json` (수정)** — `CharacterSpec`에 두 필드 추가
 
@@ -428,7 +459,17 @@ for i in 0..n-1:
 
 - **콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.** 보상 대상·편성 후보 목록이 길이·순서째 RNG 입력이다.
   시드는 콘텐츠 버전에 묶인다.
-- **적이 둘 이상인 편성은 적 카드의 소유자가 비워진다.** `DeckCombatSession`이 적이 정확히 하나일 때만
-  소유자를 확정한다(`DeckCombatSession.cs:387` 부근, README 후속 작업 대기열). 이번 저작 편성은 1마리다.
-- **한 편성 안 동종 적 중복 불가.** 전투 안 `Enemy.Id` 유일성 때문이다.
+- **편성은 적 한 마리만 저작할 수 있다.** 세션이 정책 하나만 받기 때문이다. 모양(적 id 분리, 적마다 정책 쌍)은
+  이번에 맞추므로 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.
+- **HP가 전투 사이에 이어지지 않는다.** 매 전투 최대 HP로 시작한다. `RunMember.Hp` 자리는 이미 있다.
 - 런 시드는 `CombatNodeFlow` 인스펙터 값이다. 새 게임마다 바꾸는 입력 경로는 없다.
+
+### 반드시 할 후속 작업 (사용자 지정 필수, 색인 「후속 작업 대기열」에 기록)
+
+1. **HP 인계.** 로드아웃에 현재 HP, 세션이 그 HP로 시작, `Conclude`가 `RunMember.Hp`에 기록.
+   선행 결정: 전투 중 HP 0이 됐지만 파티가 이긴 파티원의 런 처리(사망 유지 / 부활 / 기타).
+2. **다중 적.** `DeckCombatSession`이 `EncounterEnemy` 목록을 받아 적마다 정책을 호출하고 그 적을 카드
+   주인으로 확정. 실행 순서 보정도 적별 상태로(`DeckCombatSession.cs:381`의 `Enemies[0].Statuses` 가정 제거).
+   선행 결정: 죽은 적의 정책을 건너뛰는지. 끝나면 `BattleContentLoader`의 "적 정확히 1개" 검증을 지운다.
+3. **같은 적 여럿.** 2가 끝나면 추가 작업 없이 `["goblin", "goblin"]` 편성이 가능해야 한다 — 전투 안 id 분리는
+   이번에 끝난다. 확인 테스트만 더한다.
