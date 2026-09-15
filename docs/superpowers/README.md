@@ -93,6 +93,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
+| [전투 노드 1단계 구현](plans/2026-09-15-combat-node-stage1.md) — 개요는 [HTML](plans/2026-09-15-combat-node-stage1.html) | `active` | 시드 파생·RunState 정리·캐릭터 pool 키·RunSetup·적 id 분리·풀 보상 공급자·CombatNode(코어 7) → 보상·패배 뷰·컨트롤러 분리와 CombatNodeFlow(Unity 2) → 사용자 확인. 승인 대기 |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |

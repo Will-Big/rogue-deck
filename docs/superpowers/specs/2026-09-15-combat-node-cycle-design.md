@@ -190,12 +190,14 @@ public sealed class CombatNode
 
 **`Begin`이 하는 일 (순서 고정)**
 1. `run.Outcome != InProgress`면 `InvalidOperationException`.
-2. `nodeIndex = run.EnterNode()`, `nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex)`.
-3. `setup = context.Encounters.Pick(new Random(Stream(nodeSeed, Encounter)))`.
-4. 파티 로드아웃: `run.LivingMembers`를 파티 순서대로 `PartyMemberLoadout(member.Id, member.Name,
-   member.MaxHp, member.Cards)`로. **HP 인계 없음** — 세션이 최대 HP로 시작한다.
-5. **세션은 아직 정책 하나만 받는다.** `setup.Enemies.Count != 1`이면 `InvalidOperationException`
-   ("다중 적은 세션이 적마다 정책을 받게 된 뒤 지원" — 후속 작업). 그 뒤
+2. `setup = context.Encounters.Pick(new Random(Stream(NodeSeed(run.RunSeed, run.NodesEntered), Encounter)))` —
+   곧 들어갈 순번의 노드 시드에서 편성 스트림을 파생한다.
+3. **세션은 아직 정책 하나만 받는다.** `setup.Enemies.Count != 1`이면 `InvalidOperationException`
+   ("다중 적은 세션이 적마다 정책을 받게 된 뒤 지원" — 후속 작업). **`EnterNode` 전에** 검사하므로
+   잘못된 편성이 노드 순번을 헛되이 늘리지 않는다(시드 결과는 2의 파생과 같다).
+4. `nodeIndex = run.EnterNode()`, `nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex)`.
+5. 파티 로드아웃: `run.LivingMembers`를 파티 순서대로 `PartyMemberLoadout(member.Id, member.Name,
+   member.MaxHp, member.Cards의 복사본)`으로. **HP 인계 없음** — 세션이 최대 HP로 시작한다. 그 뒤
    `new DeckCombatSession(context.Statuses, loadouts, [setup.Enemies[0].Enemy], setup.Enemies[0].Policy,
    context.PartyTuning, partyCards: null, fateEnergyPerTurn: context.FateEnergyPerTurn, seed: Stream(nodeSeed, Combat))`.
 
@@ -284,7 +286,9 @@ repeat n times:
 **`CombatNodeFlow`** (신규, `Assets/Unity/Scripts/Battle/CombatNodeFlow.cs`, 관리자 객체)
 - 책임: 런 상태를 들고 전투 노드를 시작·종료시키는 호출 순서를 정한다.
 - `[SerializeField] private`: `BattleScreenController _battle`, `RewardChoiceView _reward`,
-  `CombatResultView _result`, `CharacterAsset[] _party`(1단계: 시작 파티 순서 + 색), `int _runSeed = 1`.
+  `CombatResultView _result`, `CharacterAsset[] _party`(1단계: 시작 파티 순서), `int _runSeed = 1`,
+  `int _fateEnergyPerTurn = 3`·`int _rewardChoices = 3`(1단계 임시 튜닝 — 코드 상수로 박지 않기 위해 인스펙터
+  값으로 두고, 2단계에서 `combat_rules.json`으로 옮긴다, 규칙 8).
 - `Start()`: 콘텐츠 로드(`ContentBootstrap.Load(UnityContentRoot.Path)`, 실패 시 지금과 같은 메시지 +
   `Debug.LogError` — 현재 `BattleScreenController.cs:79-91`) → 컨텍스트 조립 → `_battle.Initialize(onRestart:
   NewRun, onCombatFinished: OnCombatFinished)` → `NewRun()`.
@@ -316,7 +320,10 @@ repeat n times:
 - `ShowNextButton(Action onNext)`: 슬롯·건너뛰기 비활성, 다음 버튼 표시. `Hide()`.
 - 소유자 이름은 `CombatNodeFlow`가 `_run.Party`의 `RunMember.Name`으로 조회하는 함수를 넘긴다.
   **`BattleScreenController`는 보상 표시에 관여하지 않는다.**
-- 버튼 문구(`건너뛰기`·`다음 전투`)는 **프리팹 TMP 텍스트**로 저작한다. C#에 새 한글 문자열 없음.
+- 버튼 문구(`선택`·`건너뛰기`·`다음 전투`)는 **프리팹 TMP 텍스트**다. 기존 관례대로 뷰의 `EditorCreate`가
+  에디터 저작 시점에 굽고(`FloatingNumberView.EditorCreate`·`BattleSceneBuilder.MakeButton`과 같다), **런타임
+  C#에는 새 한글 문자열이 없다.** 슬롯마다 카드 아래에 `선택` 버튼을 둔다 — 카드 프리팹이 클릭을 먹을 수 있어
+  카드 자체를 버튼으로 쓰지 않는다.
 
 **`CombatResultView`** (신규 뷰 + `Assets/Unity/Prefabs/CombatResultView.prefab`)
 - 책임: 패배 결과를 보여주고 다시 시작을 알린다.
