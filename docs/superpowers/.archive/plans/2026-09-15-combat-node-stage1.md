@@ -3,7 +3,7 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 사람 검수용 개요는 [`2026-09-15-combat-node-stage1.html`](2026-09-15-combat-node-stage1.html)에 있다.
-설계 권위는 [`../specs/2026-09-15-combat-node-cycle-design.md`](../specs/2026-09-15-combat-node-cycle-design.md)의
+설계 권위는 [`../../specs/2026-09-15-combat-node-cycle-design.md`](../../specs/2026-09-15-combat-node-cycle-design.md)의
 「1단계 — 흐름」이다. **이 계획과 설계 상세가 어긋나면 구현을 멈추고 사용자에게 묻는다(규칙 29).**
 
 **Goal:** 전투 한 판이 승리 → 생존 캐릭터 풀 기반 보상 선택 → 덱 반영 → 다음 전투, 패배 → 처음부터로 돈다.

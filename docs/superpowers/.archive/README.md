@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-08-05
+- 개정일: 2026-09-15
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -132,3 +132,7 @@
 - [카드 저작 노트북 JSON 코어 구현 기록 (계획 A)](plans/2026-08-05-notebook-json-core.md)
 - [노트북 저장소 읽기 UI 구현 기록 (계획 B)](plans/2026-08-07-notebook-repo-read-ui.md)
 - [노트북 저작 편집 구현 기록 (계획 C)](plans/2026-08-07-notebook-authoring-edit.md)
+
+### 전투 노드
+
+- [전투 노드 한 사이클 1단계 구현 계획](plans/2026-09-15-combat-node-stage1.md) — 개요는 [HTML](plans/2026-09-15-combat-node-stage1.html). 2026-09-15 완료·머지. 설계는 현행 `specs/2026-09-15-combat-node-cycle-design.md`(2단계 남음).
