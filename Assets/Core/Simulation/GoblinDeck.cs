@@ -11,7 +11,8 @@ namespace FateWeaver.Simulation
     /// 정책이 갈아끼우는 자리다. 콘텐츠 원본을 JSON으로 옮기는 것은 별도 단계다.</summary>
     public static class GoblinDeck
     {
-        /// <summary>Combat id this enemy is created with (single source so UI/localization can resolve it).</summary>
+        /// <summary>적 정의 id(Enemy.SpecId). 전투 안 id는 이것과 다르며 "{EnemyId}#0"이다
+        /// (GoblinEncounterSource 참고).</summary>
         public const string EnemyId = "goblin";
 
         public const int StartingHp = 28;

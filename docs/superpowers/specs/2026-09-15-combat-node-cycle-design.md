@@ -4,7 +4,7 @@
 구조 승인은 그쪽으로 받는다. 이 문서는 세션 인계용이며 `## 상세`만 담는다. 개요와 상세가 어긋나면
 상세를 따르지 않고 멈추고 묻는다(규칙 29).
 
-**상태:** `active` — 설계 승인 대기. 구현 착수 전.
+**상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 착수 전. 1단계 구현 계획은 보관됐다.
 
 ## 상세
 
@@ -106,9 +106,10 @@ public enum SeedStream : ulong
 }
 ```
 
-- 혼합은 **SplitMix64 finalizer**로 한다: `x = (ulong)parent * 0x9E3779B97F4A7C15 ^ tag` 후
+- 혼합은 **SplitMix64 finalizer**로 한다: `x = ((ulong)(uint)parent * 0x9E3779B97F4A7C15) ^ tag` 후
   `x ^= x >> 30; x *= 0xBF58476D1CE4E5B9; x ^= x >> 27; x *= 0x94D049BB133111EB; x ^= x >> 31;`
   결과의 하위 32비트를 `int`로 자른다. `NodeSeed`의 tag는 `(ulong)nodeIndex + 1`.
+  음수 시드를 부호 확장하지 않도록 `(uint)`를 거쳐 0 확장한다 — 골든 테스트 `SeedDerivationTests`가 이 식을 잠근다.
 - **`seed + index` 같은 선형 파생을 쓰지 않는다.** 인접 시드로 초기화한 `System.Random`들의 첫 출력이
   상관되는 문제가 Slay the Spire 2에서 실제로 보고됐다(개요 문서 출처). 해시 혼합으로 스트림을 분리한다.
 - **`string.GetHashCode()`로 tag를 만들지 않는다** — .NET Core에서 프로세스마다 무작위화된다. tag는 위
@@ -289,9 +290,11 @@ repeat n times:
   `CombatResultView _result`, `CharacterAsset[] _party`(1단계: 시작 파티 순서), `int _runSeed = 1`,
   `int _fateEnergyPerTurn = 3`·`int _rewardChoices = 3`(1단계 임시 튜닝 — 코드 상수로 박지 않기 위해 인스펙터
   값으로 두고, 2단계에서 `combat_rules.json`으로 옮긴다, 규칙 8).
-- `Start()`: 콘텐츠 로드(`ContentBootstrap.Load(UnityContentRoot.Path)`, 실패 시 지금과 같은 메시지 +
-  `Debug.LogError` — 현재 `BattleScreenController.cs:79-91`) → 컨텍스트 조립 → `_battle.Initialize(onRestart:
-  NewRun, onCombatFinished: OnCombatFinished)` → `NewRun()`.
+- `Start()`: 배선 확인(`_battle`·`_reward`·`_result` null 아님) → `_battle.Initialize(onRestart: NewRun,
+  onCombatFinished: OnCombatFinished)` → 콘텐츠 로드(`ContentBootstrap.Load(UnityContentRoot.Path)`, 실패
+  시 지금과 같은 메시지 + `Debug.LogError` — 현재 `BattleScreenController.cs:79-91`) → 컨텍스트 조립 →
+  `NewRun()`. Initialize를 먼저 하는 이유는 로드 실패 메시지를 HUD에 쓰기 위해서이며, 그 대가로 로드
+  실패 뒤 재시작은 로드를 다시 시도하지 않는다.
 - `NewRun()`: `RunSetup.NewRun(...)` → `BeginNode()`.
 - `BeginNode()`: `_node = CombatNode.Begin(_run, _context)` → 패널 둘 숨김 → `_battle.Bind(_node.Session, content)`.
 - `OnCombatFinished()`: `_node.Conclude()` → `Reward`면 `_reward.Show(offer 표시값, OnChoose, OnSkip)`,

@@ -82,7 +82,8 @@ namespace FateWeaver.Tests
         {
             var result = CharacterContentLoader.Load(
                 CardContentFiles.ReadDirectory(Folder(CardContentFiles.CharactersFolderName)),
-                Decks());
+                Decks(),
+                Pools());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             return result.Catalog;
@@ -141,6 +142,17 @@ namespace FateWeaver.Tests
             Assert.AreEqual(
                 PartyPrototypeDeckId,
                 characters.Get(PartyPrototypeRoster.MemberBId).Deck);
+        }
+
+        /// <summary>임시 데이터(전투 노드 설계 결정 3a): 캐릭터가 아직 설계되지 않아 둘 다 starter
+        /// 풀을 가리킨다. 캐릭터 설계 때 이 테스트를 실제 풀 id로 바꾼다.</summary>
+        [Test]
+        public void CharacterJsonPointsAtTheTemporaryStarterPool()
+        {
+            var characters = Characters();
+
+            Assert.AreEqual(StarterPoolId, characters.Get(PartyPrototypeRoster.MemberAId).Pool);
+            Assert.AreEqual(StarterPoolId, characters.Get(PartyPrototypeRoster.MemberBId).Pool);
         }
 
         [Test]

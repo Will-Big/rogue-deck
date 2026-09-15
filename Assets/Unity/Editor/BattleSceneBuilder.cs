@@ -18,6 +18,8 @@ namespace FateWeaver.Unity.Editor
         private const string RailCardPrefabPath = "Assets/Unity/Prefabs/RailCardView.prefab";
         private const string TargetingArrowPrefabPath = "Assets/Unity/Prefabs/TargetingArrowView.prefab";
         private const string FloatingNumberPrefabPath = "Assets/Unity/Prefabs/FloatingNumberView.prefab";
+        private const string RewardChoicePrefabPath = "Assets/Unity/Prefabs/RewardChoiceView.prefab";
+        private const string CombatResultPrefabPath = "Assets/Unity/Prefabs/CombatResultView.prefab";
         private const string MemberAPath = "Assets/Unity/Data/member_a.asset";
         private const string MemberBPath = "Assets/Unity/Data/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Input/UIInputActions.inputactions";
@@ -51,6 +53,8 @@ namespace FateWeaver.Unity.Editor
             EnsureRailCardPrefab();
             EnsureTargetingArrowPrefab();
             EnsureFloatingNumberPrefab();
+            EnsureRewardChoicePrefab();
+            EnsureCombatResultPrefab();
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -221,12 +225,6 @@ namespace FateWeaver.Unity.Editor
             var controllerGo = new GameObject("BattleScreenController");
             var controller = controllerGo.AddComponent<BattleScreenController>();
             var so = new SerializedObject(controller);
-            var serializedParty = so.FindProperty("_party");
-            serializedParty.arraySize = party.Length;
-            for (int i = 0; i < party.Length; i++)
-            {
-                serializedParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
-            }
             var presenterGo = new GameObject("BattlePresenter");
             presenterGo.transform.SetParent(controllerGo.transform, false);
             var presenter = presenterGo.AddComponent<BattlePresenter>();
@@ -280,6 +278,34 @@ namespace FateWeaver.Unity.Editor
             so.FindProperty("_playback").objectReferenceValue = director;
             so.ApplyModifiedPropertiesWithoutUndo();
 
+            // --- 전투 노드 흐름: 보상·패배 패널은 overlay 위, 흐름은 관리자 객체 ---
+            var rewardObject = (GameObject)PrefabUtility.InstantiatePrefab(
+                AssetDatabase.LoadAssetAtPath<GameObject>(RewardChoicePrefabPath), overlay);
+            var reward = rewardObject.GetComponent<RewardChoiceView>();
+            reward.EditorBind(cardPrefabs, presenter);
+            EditorUtility.SetDirty(reward);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(reward);
+
+            var resultObject = (GameObject)PrefabUtility.InstantiatePrefab(
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatResultPrefabPath), overlay);
+            var result = resultObject.GetComponent<CombatResultView>();
+
+            var flowGo = new GameObject("CombatNodeFlow");
+            var flow = flowGo.AddComponent<CombatNodeFlow>();
+            var flowSo = new SerializedObject(flow);
+            flowSo.FindProperty("_battle").objectReferenceValue = controller;
+            flowSo.FindProperty("_reward").objectReferenceValue = reward;
+            flowSo.FindProperty("_result").objectReferenceValue = result;
+            var flowParty = flowSo.FindProperty("_party");
+            flowParty.arraySize = party.Length;
+            for (int i = 0; i < party.Length; i++)
+            {
+                flowParty.GetArrayElementAtIndex(i).objectReferenceValue = party[i];
+            }
+
+            flowSo.ApplyModifiedPropertiesWithoutUndo();
+            overlay.SetAsLastSibling();
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("BattleSceneBuilder: saved " + ScenePath);
         }
@@ -308,6 +334,34 @@ namespace FateWeaver.Unity.Editor
                     (RectTransform)temporaryRoot.transform, new Vector2(120f, 48f));
                 view.gameObject.name = "FloatingNumberView";
                 PrefabUtility.SaveAsPrefabAsset(view.gameObject, FloatingNumberPrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
+        }
+
+        private static void EnsureRewardChoicePrefab()
+        {
+            var temporaryRoot = new GameObject("RewardChoicePrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = RewardChoiceView.EditorCreate((RectTransform)temporaryRoot.transform);
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, RewardChoicePrefabPath);
+            }
+            finally
+            {
+                Object.DestroyImmediate(temporaryRoot);
+            }
+        }
+
+        private static void EnsureCombatResultPrefab()
+        {
+            var temporaryRoot = new GameObject("CombatResultPrefabBuilder", typeof(RectTransform));
+            try
+            {
+                var view = CombatResultView.EditorCreate((RectTransform)temporaryRoot.transform);
+                PrefabUtility.SaveAsPrefabAsset(view.gameObject, CombatResultPrefabPath);
             }
             finally
             {

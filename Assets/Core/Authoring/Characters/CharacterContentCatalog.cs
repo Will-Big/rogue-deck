@@ -7,11 +7,12 @@ namespace FateWeaver.Core.Authoring.Characters
     /// 존재가 확인된 것이다.</summary>
     public sealed class CharacterContent
     {
-        public CharacterContent(string id, string displayName, string deck)
+        public CharacterContent(string id, string displayName, string deck, string pool)
         {
             Id = id;
             DisplayName = displayName;
             Deck = deck;
+            Pool = pool;
         }
 
         public string Id { get; }
@@ -19,6 +20,9 @@ namespace FateWeaver.Core.Authoring.Characters
 
         /// <summary>시작 덱의 id. DeckContentCatalog가 이것을 푼다.</summary>
         public string Deck { get; }
+
+        /// <summary>소유 카드풀의 id. PoolContentCatalog가 이것을 푼다. 보상 후보의 출처다.</summary>
+        public string Pool { get; }
     }
 
     /// <summary>부팅 시 한 번 만들어져 상주하는 id → CharacterContent 사전. 색 틴트는 표현

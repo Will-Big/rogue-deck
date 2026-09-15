@@ -75,7 +75,8 @@ namespace FateWeaver.Core.Authoring
 
             var characters = CharacterContentLoader.Load(
                 Read(contentRoot, CardContentFiles.CharactersFolderName, errors),
-                decks.Catalog);
+                decks.Catalog,
+                pools.Catalog);
             if (!characters.Succeeded)
             {
                 errors.AddRange(characters.Errors);

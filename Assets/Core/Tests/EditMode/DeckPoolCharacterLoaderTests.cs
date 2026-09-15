@@ -50,6 +50,16 @@ namespace FateWeaver.Tests
             return result.Catalog;
         }
 
+        private static PoolContentCatalog Pools(params CardContentSource[] sources)
+        {
+            var result = PoolContentLoader.Load(sources, Cards("hasten", "breather"));
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            return result.Catalog;
+        }
+
+        private static PoolContentCatalog StarterPool()
+            => Pools(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }"));
+
         // --- 덱 -------------------------------------------------------------
 
         [Test]
@@ -244,15 +254,17 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"파티원 A\", \"deck\": \"starter\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"파티원 A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
                 },
-                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")));
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             var member = result.Catalog.Get("member_a");
             Assert.AreEqual("member_a", member.Id);
             Assert.AreEqual("파티원 A", member.DisplayName);
             Assert.AreEqual("starter", member.Deck);
+            Assert.AreEqual("starter", member.Pool);
         }
 
         [Test]
@@ -262,10 +274,11 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("b.json", "{ \"id\": \"member_b\", \"displayName\": \"B\", \"deck\": \"starter\" }"),
-                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\" }")
+                    Source("b.json", "{ \"id\": \"member_b\", \"displayName\": \"B\", \"deck\": \"starter\", \"pool\": \"starter\" }"),
+                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
                 },
-                decks);
+                decks,
+                StarterPool());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
             CollectionAssert.AreEqual(new[] { "member_a", "member_b" }, result.Catalog.Ids);
@@ -279,9 +292,10 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"ghost_deck\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"ghost_deck\", \"pool\": \"starter\" }")
                 },
-                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")));
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(result.Errors, "member_a.json: unknown deck id 'ghost_deck'.");
@@ -295,9 +309,10 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"\", \"deck\": \"starter\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"\", \"deck\": \"starter\", \"pool\": \"starter\" }")
                 },
-                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")));
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(result.Errors, "member_a.json: requires a displayName.");
@@ -309,9 +324,10 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("member_a.json", "{ \"id\": \"\", \"displayName\": \"A\", \"deck\": \"starter\" }")
+                    Source("member_a.json", "{ \"id\": \"\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
                 },
-                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")));
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(
@@ -325,15 +341,50 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\" }"),
-                    Source("b.json", "{ \"id\": \"member_a\", \"displayName\": \"A2\", \"deck\": \"starter\" }")
+                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }"),
+                    Source("b.json", "{ \"id\": \"member_a\", \"displayName\": \"A2\", \"deck\": \"starter\", \"pool\": \"starter\" }")
                 },
-                decks);
+                decks,
+                StarterPool());
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(
                 result.Errors,
                 "b.json: duplicate character id 'member_a' (already defined in a.json).");
+        }
+
+        [Test]
+        public void CharacterLoaderRejectsAnUnknownPoolId()
+        {
+            var result = CharacterContentLoader.Load(
+                new[]
+                {
+                    Source(
+                        "member_a.json",
+                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"ghost_pool\" }")
+                },
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(result.Errors, "member_a.json: unknown pool id 'ghost_pool'.");
+        }
+
+        [Test]
+        public void CharacterLoaderRequiresAPoolKey()
+        {
+            var result = CharacterContentLoader.Load(
+                new[]
+                {
+                    Source(
+                        "member_a.json",
+                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\" }")
+                },
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(result.Errors, "member_a.json: required key 'pool' is missing.");
         }
 
         // --- 공통 -----------------------------------------------------------
