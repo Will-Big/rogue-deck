@@ -55,6 +55,20 @@ namespace FateWeaver.Unity
             return text;
         }
 
+        /// <summary>배경 이미지와 가운데 라벨을 가진 버튼. 라벨 문구는 에디터 저작 시점에 굽는다.</summary>
+        public static Button LabeledButton(RectTransform parent, string name, string label, float fontSize)
+        {
+            var root = Rect(parent, name);
+            var background = Image(root, "Background", new Color(0.22f, 0.28f, 0.42f, 1f));
+            Stretch(background.rectTransform);
+            var button = root.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+            var text = Text(root, "Label", fontSize, TextAlignmentOptions.Center);
+            Stretch(text.rectTransform);
+            text.text = label;
+            return button;
+        }
+
         public static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
