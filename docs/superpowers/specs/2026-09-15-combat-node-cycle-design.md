@@ -19,14 +19,20 @@
 | 2 | 구성 저작: 적 카드·적·편성·캐릭터 스탯·전투 규칙 JSON | C# 원본(`GoblinDeck` 등)이 사라진다 |
 
 **범위 밖:** 맵·노드 목록, 세이브, 새 게임마다 런 시드 새로 뽑기, HP 인계(매 전투 최대 HP로 시작),
-보스·엘리트·영입, 사망 파티원의 카드 처리(유산), 패널 등장 연출, 보상 후보의 캐릭터 풀 소유권(§4.1).
+보스·엘리트·영입, 사망 파티원의 카드 처리(유산), 패널 등장 연출, 캐릭터별 실제 풀 저작(이번엔 두 캐릭터 모두
+`starter` 풀을 가리키는 임시 데이터).
 
 ### 결정 기록 (2026-09-14~15 사용자 결정)
 
 1. **한 사이클 = 전투 노드 하나.** 노드 진입 과정·보스·맵은 아니다.
-2. 보상은 **모든 카드에서 무작위** — 단 `Side == Player && Grade != None`만(픽스처·적 카드 제외).
-   후보 공급은 `IRewardCandidateSource` 하나에 가둬 나중에 파티 소유 풀로 교체한다.
-3. 후보마다 **소유 파티원이 함께 정해져** 나온다. 고른 카드는 그 파티원의 덱에 들어간다.
+2. **보상은 살아남은 캐릭터를 기반으로 정해진다.** 살아남은 캐릭터 → 각자의 캐릭터 풀 → 그 풀에서 뽑을
+   수 있는 카드. 후보는 **생존 캐릭터 풀의 합집합에서 카드가 겹치지 않게 n장**이다(2026-09-15 정정).
+3. **소유자는 카드가 속한 풀에서 따라온다.** 카드를 뽑은 뒤 캐릭터에 붙이는 방식이 아니다. 고른 카드는 그
+   풀 주인의 덱에 들어간다.
+3a. **임시 방편은 데이터에 둔다.** 캐릭터가 아직 설계되지 않아 풀도 없으므로, 캐릭터 JSON에 `pool` 키를
+   더하고 `member_a`·`member_b` 모두 기존 `starter` 풀(등급 있는 22장 전부)을 가리키게 한다. 캐릭터를
+   설계하면 코드 변경 없이 JSON만 바꾼다. 카드풀 설계 §4.1은 "현재 파티에 포함된 캐릭터"라고 적었으나
+   이 설계는 사용자 지시대로 "살아남은 캐릭터"를 쓴다.
 4. **노드 시드 방식(B안).** 노드 진입 전에 노드 시드를 확정하고, 그 노드 안의 스트림(편성·전투·보상)을
    노드 시드에서 **목적별로** 파생한다. 보상은 전투 수행과 무관하고, 노드마다 다르다. Slay the Spire의
    런 전체 `cardRng` 방식(k번째 보상이 경로와 거의 무관)은 기각했다.
@@ -38,8 +44,8 @@
 8. 전투 규칙 파일 이름은 `combat_rules.json`.
 9. `BattleScreenController`에 흐름을 얹지 않고 **`CombatNodeFlow`로 분리한다**(규칙 30).
 10. "다음 전투"는 같은 `RunState`로 전투 노드를 한 번 더 시작한다(노드 순번이 1 증가).
-11. **보상 추첨은 카드를 모두 뽑은 뒤 소유자를 뽑는다.** 나중에 소유자가 캐릭터 풀로 정해져 소유자
-    뽑기가 사라져도 카드 목록이 그대로 남게 하기 위해서다(2026-09-15).
+11. **보상 추첨에 소유자 뽑기가 없다.** 공급자가 (카드, 소유자) 쌍을 돌려주고 노드는 쌍을 뽑는다. 앞서 정한
+    "카드 먼저·소유자 나중" 순서는 결정 2·3으로 대체됐다(2026-09-15).
 12. **HP 인계는 이번 범위 밖**이고, 전투 중 HP 0이 된 파티원의 런 처리 규칙도 이번엔 정하지 않는다.
     반드시 할 후속 작업으로 색인에 기록한다.
 13. **같은 적 여럿·다중 적 카드 주인은 이번엔 모양만 맞춘다.** 적 JSON id와 전투 안 id를 분리하고,
@@ -151,8 +157,10 @@ public sealed class EncounterSetup
 
 public interface IRewardCandidateSource
 {
-    /// 결정론적 순서(id 서수 정렬)로 정렬된 후보 카드 전체.
-    IReadOnlyList<CardDefinition> Eligible();
+    /// 살아남은 캐릭터 각자의 풀에서 뽑을 수 있는 (카드, 소유자) 쌍 전체.
+    /// 순서: 인자로 받은 캐릭터 순서(파티 순서) → 풀 안에서는 카드 id 서수 정렬.
+    /// 소유자는 그 카드가 속한 풀의 주인이다. 한 카드가 여러 풀에 있으면 쌍이 여러 개 나온다(임시 데이터 기간).
+    IReadOnlyList<RewardCandidate> Eligible(IReadOnlyList<string> livingCharacterIds);
 }
 
 public sealed class RewardCandidate
@@ -196,24 +204,27 @@ public sealed class CombatNode
 - `Session.Outcome == Lose` → `run.SetOutcome(RunOutcome.Defeat)` → `Phase = Defeated`. 보상 없음.
 - 그 밖(`IsComplete == false`이거나 Phase 위반) → `InvalidOperationException`.
 
-**보상 제안 생성 (소비량 고정)**
+**보상 제안 생성**
 ```
-rng      = new Random(Stream(nodeSeed, Reward))
-pool     = context.RewardCandidates.Eligible() 의 복사본
-living   = Session.State.Party 중 IsAlive, 파티 순서
-n        = min(context.RewardChoices, pool.Count)   // 부팅 검증으로 pool.Count ≥ RewardChoices 보장(2단계)
-for i in 0..n-1:                                   // ① 카드 n장을 먼저 전부 뽑는다
-    j = rng.Next(i, pool.Count); swap(pool[i], pool[j])   // 부분 Fisher–Yates, 중복 없음
-for i in 0..n-1:                                   // ② 그다음 소유자 n명
-    owner = living[rng.Next(living.Count)]
-    candidates.Add(new RewardCandidate(pool[i], owner.Id))
+rng    = new Random(Stream(nodeSeed, Reward))
+living = Session.State.Party 중 IsAlive 의 Id, 파티 순서
+pairs  = context.RewardCandidates.Eligible(living) 의 복사본 (List)
+n      = min(context.RewardChoices, pairs 안의 서로 다른 카드 id 수)
+repeat n times:
+    j    = rng.Next(pairs.Count)
+    pick = pairs[j]
+    candidates.Add(pick)                           // 소유자는 쌍에 이미 들어 있다
+    pairs.RemoveAll(p => p.Card.Id == pick.Card.Id) // 같은 카드의 다른 소유자 쌍 제거 → 카드 중복 없음
 ```
 - 호출 시점: **승리 직후 `Conclude()` 안에서 한 번.** 전투 중에는 보상 스트림을 쓰지 않는다.
-- 소비량은 카드 n회 + 소유자 n회로 고정이다(n=3이면 6회). 살아있는 인원이 달라져도 소비량은 같다.
-- **카드를 먼저 전부 뽑는 이유(결정 11):** 소유자 뽑기가 나중에 사라져도(캐릭터 풀 소유권) 카드 목록의
-  RNG 값이 밀리지 않는다. 번갈아 뽑으면 후보 1·2의 카드가 바뀌어 기존 시드가 무효가 된다.
-- 결과: **카드 목록은 전투 수행과 무관**하고, **소유자만** 생존자가 바뀌면 달라질 수 있다. 테스트로 고정한다.
+- 소비량은 **정확히 n회**다. 소유자를 따로 뽑지 않는다(결정 11).
+- `RemoveAll`은 임시 데이터(두 캐릭터가 같은 풀) 기간에만 실제로 쌍을 지운다. 카드마다 풀이 하나뿐인 진짜
+  데이터에서는 뽑힌 쌍 하나만 지워지므로 **추첨 코드를 바꾸지 않고** 풀 데이터만 바뀐다.
+- 결과: **같은 노드·같은 생존자 구성이면 전투를 어떻게 싸웠든 같은 후보**다. **생존자 구성이 다르면**
+  쌍 목록이 달라지므로 후보·소유자가 달라질 수 있다 — 결정 2의 의도된 동작이다.
 - 승리했는데 `living.Count == 0`은 불가능하다(전멸 = 패배). 방어 코드를 넣지 않는다.
+- 서로 다른 카드 수가 `RewardChoices`보다 적으면 있는 만큼만 제시한다(생존자 한 명의 풀이 작을 수 있어
+  런타임에 생긴다). 0장이면 `Phase = Reward`로 가되 후보가 비고, 뷰는 건너뛰기만 보인다.
 
 **`Choose(i)`**: `i`가 범위 밖이면 `ArgumentOutOfRangeException`. `run.Party`에서 `OwnerId`가 같은 멤버의
 `Cards`에 `Candidates[i].Card`를 추가 → `Phase = Done`. **`Skip()`**: 덱 불변 → `Phase = Done`.
@@ -223,6 +234,14 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 | 타입 | 위치 | 구현 |
 |---|---|---|
 | `GoblinEncounterSource : IEncounterSource` | `Assets/Core/Simulation/` | `Pick`이 RNG를 무시하고 쌍 하나: `new Enemy(id: "goblin#0", specId: GoblinDeck.EnemyId, hp: GoblinDeck.StartingHp)` + `GoblinDeck.Policy()` |
+| `CharacterPoolRewardSource : IRewardCandidateSource` | `Assets/Core/Simulation/Run/` | 캐릭터마다 `content.Characters.Get(id).Pool` → `content.Pools`의 카드 id를 서수 정렬 → `(content.Cards.Get(cardId), id)` 쌍. **임시가 아니라 최종 구현이다** — 임시인 것은 데이터(결정 3a) |
+
+**캐릭터 풀 연결 (결정 3a, 1단계에서 도입):** `CharacterSpec`(`Assets/Core/Authoring/Characters/CharacterSpec.cs`)에
+`Pool` 필드를 더하고, `CharacterContentLoader.Load`에 풀 카탈로그를 넘겨 `pool` 필수 키와 "존재하는 풀 id" 검증을
+더한다(기존 `deck` 검증과 같은 모양). 부팅 순서는 이미 덱·풀이 캐릭터보다 먼저다(`ContentBootstrap.cs:56-79`).
+`member_a.json`·`member_b.json`에 `"pool": "starter"`. 풀 로더가 등급·태그 없는 카드를 거부하므로
+(`PoolContentLoader.cs:131`) 픽스처·적 카드는 보상에 들어올 수 없다. **"카드는 정확히 한 풀에만" 검증은 켜지
+않는다** — 임시 데이터가 그것을 어긴다. 캐릭터 설계 때 켠다.
 
 **적 id 분리 (결정 13, 1단계에서 도입):** `Enemy`(`Assets/Core/Combat/Enemy.cs`)에 `SpecId`를 추가한다.
 `Id`는 **전투 안 식별자**(대상 지정·사망 이벤트·카드 소유), `SpecId`는 **적 정의 식별자**(이름·저작 조회).
@@ -230,10 +249,6 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 기존 테스트를 건드리지 않는다. 적 이름 표시는 `Id`가 아니라 **`SpecId`로** 조회한다 — 1단계는
 `PlaytestKoreanText.EnemyName(enemy.SpecId, …)`, 2단계는 적 JSON `displayName`. `BattleUnitsView.Spawn`에
 넘기는 이름 함수가 전투 id를 받으므로, 컨트롤러가 `_session.State.Enemies`에서 그 id의 `SpecId`를 찾아 넘긴다.
-| `GradedPlayerCardSource : IRewardCandidateSource` | `Assets/Core/Simulation/Run/` | `CardContentCatalog.Specs`에서 `Side == Player && Grade != CardGrade.None`, id 서수 정렬, `Cards[id]` |
-
-`CardSpec.Grade`는 `Assets/Core/Authoring/CardSpec.cs:42`, 등급 없는 픽스처 4장은 `fixture_*`.
-2026-09-15 기준 대상은 22장이다(`Pools/starter.json`의 22장과 같은 집합이어야 한다 — 테스트로 확인).
 
 런 시작 파티 생성 헬퍼 `RunSetup.NewRun(GameContent content, IReadOnlyList<string> characterIds, PartyTuning tuning, int runSeed)`:
 캐릭터마다 `new RunMember(id, displayName, tuning.DefaultMemberMaxHp, 덱 카드들)`. 덱 카드는 기존
@@ -245,19 +260,22 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 `CombatNodeTests` — 전투를 끝내는 헬퍼는 `SequencePolicy`로 적 행동을 고정한 테스트용 `IEncounterSource`와
 짧은 HP를 쓴다.
 
-1. **같은 런 시드·같은 노드 순번이면 전투를 다르게 싸워도 보상 카드 목록이 같다.** (턴 수가 다른 두 진행)
-2. **노드 순번이 다르면 보상 카드 목록이 다르다.** (순번 0 vs 1, 고정 시드에서 실측 확인)
-3. 같은 노드 시드에서 **생존자가 달라지면 카드 목록은 같고 소유자만 달라질 수 있다.**
-3a. **보상 스트림을 손으로 굴린 결과와 일치:** 같은 시드의 `Random`으로 카드 n회를 먼저 뽑은 값이 후보 카드와
-    같다(소유자 뽑기를 빼도 카드 목록이 불변임을 잠근다).
-3b. 편성 공급자가 적 둘을 돌려주면 `Begin`이 예외(세션 제약이 조용히 무시되지 않음).
-4. 후보는 중복 없음, 전부 `Side.Player`이고 `Grade != None`, 소유자는 전부 생존 파티원.
+1. **같은 런 시드·같은 노드 순번·같은 생존자 구성이면 전투를 다르게 싸워도 보상 후보가 같다.** (턴 수가 다른 두 진행, 둘 다 전원 생존)
+2. **노드 순번이 다르면 보상 후보가 다르다.** (순번 0 vs 1, 고정 시드에서 실측 확인)
+3. **죽은 캐릭터는 소유자로 나오지 않는다.** 서로 다른 풀을 가진 합성 캐릭터 둘로, 한 명이 죽으면 모든 후보가
+   살아남은 캐릭터 풀의 카드이고 소유자도 그 캐릭터다.
+3a. **보상 스트림을 손으로 굴린 결과와 일치:** 같은 시드의 `Random`으로 위 알고리즘을 따라 굴린 쌍이 후보와
+    같다(소비량 n회를 잠근다).
+3b. **풀이 겹치는 임시 데이터에서도 카드 중복 없음:** 두 캐릭터가 같은 풀일 때 후보 카드 id가 서로 다르다.
+3c. 편성 공급자가 적 둘을 돌려주면 `Begin`이 예외(세션 제약이 조용히 무시되지 않음).
+4. 모든 후보의 카드는 그 소유자 캐릭터 풀에 들어 있고, 소유자는 전부 생존 파티원.
+4a. 생존자 풀의 서로 다른 카드가 `RewardChoices`보다 적으면 그 수만큼만 제시.
 5. `Choose(i)` → 그 소유자 덱만 +1, 다른 멤버 덱 불변, `Phase == Done`.
 6. `Skip()` → 모든 덱 불변, `Phase == Done`.
 7. 패배 → `Phase == Defeated`, `Offer == null`, `run.Outcome == Defeat`, 이후 `Begin`은 예외.
 8. `Conclude`를 전투 중에, `Choose`를 `Reward` 밖에서, 범위 밖 번호로 부르면 예외.
 9. 다음 전투: `Choose` 후 `Begin` → 새 세션의 전체 덱에 고른 카드가 있고, `NodeIndex == 1`.
-10. `GradedPlayerCardSource.Eligible()`의 id 집합 == `Pools/starter.json`의 id 집합.
+10. 캐릭터 로더: `pool` 키 누락·존재하지 않는 풀 id가 각각 오류. 저장소 캐릭터 둘이 `starter` 풀로 로드된다.
 
 `SeedDerivationTests`(1.2), `RunStateTests` 재작성(`EnterNode` 증가, `LivingMembers`).
 
@@ -379,13 +397,14 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 - 사용처: `ContentEncounterSource.Pick(rng)` = id 서수 정렬 후 `battles[rng.Next(count)]`, 적마다
   `new Enemy($"{specId}#{i}", specId, spec.MaxHp)`와 `EnemyPolicyRegistry`로 만든 새 정책을 쌍으로 돌려준다.
 
-**④ `Characters/<id>.json` (수정)** — `CharacterSpec`에 두 필드 추가
+**④ `Characters/<id>.json` (수정)** — `CharacterSpec`에 필드 추가. `pool`은 **1단계**(1.4), 스탯 둘은 2단계
 
 ```json
-{ "id": "member_a", "displayName": "파티원 A", "deck": "starter", "maxHp": 25, "surviveCharges": 1 }
+{ "id": "member_a", "displayName": "파티원 A", "deck": "starter", "pool": "starter", "maxHp": 25, "surviveCharges": 1 }
 ```
 
 - 로더 `CharacterContentLoader`에 필수 키 두 개와 검증(`maxHp > 0`, `surviveCharges >= 0`) 추가.
+- `pool`의 사용처: `CharacterPoolRewardSource`가 생존 캐릭터의 보상 후보를 이 풀에서 만든다(1.3·1.4).
   기존 `member_a.json`·`member_b.json`에 25·1을 넣는다(현재 `PartyTuning.Prototype` 값,
   `Assets/Core/Simulation/PartyTuning.cs:29-30`).
 - 사용처: `RunSetup.NewRun`이 `RunMember`의 `MaxHp`·`SurviveCharges`를 캐릭터에서 채운다.
@@ -402,9 +421,9 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 }
 ```
 
-- 로더 `CombatRulesLoader.Load(source, GradedPlayerCardSource eligible)`. 검증: 필수 키,
-  `fateEnergyPerTurn > 0`, `1 <= minPartySize <= maxPartySize`, `drawByLivingCount`가 1..maxPartySize 전부를
-  양수로 덮음, `rewardChoices > 0`, **보상 대상 카드 수 >= rewardChoices**.
+- 로더 `CombatRulesLoader.Load(source)`. 검증: 필수 키, `fateEnergyPerTurn > 0`,
+  `1 <= minPartySize <= maxPartySize`, `drawByLivingCount`가 1..maxPartySize 전부를 양수로 덮음, `rewardChoices > 0`.
+  보상 후보 수는 생존자에 따라 런타임에 정해지므로 부팅에서 검증하지 않는다(1.3 — 모자라면 있는 만큼).
 - 사용처: `CombatNodeContext`의 `FateEnergyPerTurn`·`RewardChoices`와 `PartyTuning` 생성.
 
 #### 2.2 부팅 순서
@@ -457,8 +476,9 @@ for i in 0..n-1:                                   // ② 그다음 소유자 n�
 
 ### 알려진 제약
 
-- **콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.** 보상 대상·편성 후보 목록이 길이·순서째 RNG 입력이다.
-  시드는 콘텐츠 버전에 묶인다.
+- **콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.** 캐릭터 풀의 카드 목록과 편성 후보 목록이 길이·순서째
+  RNG 입력이다. 시드는 콘텐츠 버전에 묶인다. 임시 풀 데이터를 실제 캐릭터 풀로 바꾸는 순간에도 바뀐다.
+- **임시 데이터 기간에는 "카드는 정확히 한 풀에만" 검증을 켤 수 없다.** 두 캐릭터가 같은 `starter` 풀을 가리킨다.
 - **편성은 적 한 마리만 저작할 수 있다.** 세션이 정책 하나만 받기 때문이다. 모양(적 id 분리, 적마다 정책 쌍)은
   이번에 맞추므로 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.
 - **HP가 전투 사이에 이어지지 않는다.** 매 전투 최대 HP로 시작한다. `RunMember.Hp` 자리는 이미 있다.

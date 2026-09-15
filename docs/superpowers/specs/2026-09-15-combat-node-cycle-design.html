@@ -341,7 +341,7 @@
 <section>
   <h2>무엇을 만드나</h2>
   <p>지금 전투 화면은 승패가 나면 안내 문구 한 줄로 끝난다. 이 작업은 <b>전투 노드 하나를 처음부터 끝까지</b> 완성한다 —
-  전투를 치르고, 이기면 시드로 뽑힌 카드 세 장 중 하나를 골라 그 카드 주인의 덱에 넣고, 바뀐 덱으로 다음 전투를 시작한다.
+  전투를 치르고, 이기면 <b>살아남은 캐릭터들의 풀</b>에서 시드로 뽑힌 카드 세 장 중 하나를 골라 그 풀 주인의 덱에 넣고, 바뀐 덱으로 다음 전투를 시작한다.
   지면 처음부터 다시 한다.</p>
   <p>두 단계로 나눈다. <b>1단계</b>는 흐름(시드·결과·보상·덱 반영·화면)을 만들고 적과 수치는 지금의 C#을 그대로 쓴다.
   <b>2단계</b>는 적·편성·캐릭터 스탯·전투 규칙을 JSON 저작으로 옮기고 C# 원본을 지운다. 두 단계 모두 끝에서 머지할 수 있다.</p>
@@ -357,7 +357,7 @@
       <tr><td><code>SeedDerivation</code></td><td>런 시드와 노드 순번에서 노드 시드를, 노드 시드에서 목적별 스트림 시드를 만든다</td><td>전투·보상이 무엇인지</td></tr>
       <tr><td><code>RunState</code></td><td>런 시드·파티원(덱·HP)·진입한 노드 수를 들고 있다</td><td>전투, 맵, 노드 종류</td></tr>
       <tr><td><code>IEncounterSource</code></td><td>편성 스트림을 받아 이번 전투의 적마다 (적, 정책) 쌍을 새로 만든다</td><td>파티, 보상</td></tr>
-      <tr><td><code>IRewardCandidateSource</code></td><td>보상에 나올 수 있는 카드 전체를 정해진 순서로 돌려준다</td><td>시드, 소유자, 몇 장 뽑는지</td></tr>
+      <tr><td><code>IRewardCandidateSource</code></td><td>살아남은 캐릭터 각자의 풀에서 뽑을 수 있는 (카드, 소유자) 쌍을 돌려준다</td><td>시드, 몇 장 뽑는지, 누가 왜 살아남았는지</td></tr>
       <tr><td><code>CombatNodeFlow</code> <small>(Unity)</small></td><td>런 상태를 들고 전투 노드를 시작·종료시키는 호출 순서를 정한다</td><td>승패 판정, 보상 규칙, 카드 표시 방법</td></tr>
       <tr><td><code>RewardChoiceView</code> · <code>CombatResultView</code></td><td>보상 후보(또는 패배)를 보여주고 누른 버튼을 알린다</td><td>후보가 어떻게 뽑혔는지, 선택이 어디 반영되는지</td></tr>
       <tr><td><code>BattleScreenController</code> <small>(줄어듦)</small></td><td>주어진 전투 세션 하나를 화면에 붙여 입력을 전달한다</td><td>파티·적·수치를 어떻게 구성하는지, 전투 뒤에 무엇이 오는지</td></tr>
@@ -427,11 +427,11 @@
       <line x1="612" y1="314" x2="160" y2="370" stroke="currentColor" stroke-width="1.2" marker-end="url(#dep-arrow)"/>
       <text x="250" y="352" font-size="10.5" text-anchor="middle" fill="currentColor" class="halo">Pick(편성 스트림)</text>
       <line x1="640" y1="314" x2="460" y2="370" stroke="currentColor" stroke-width="1.2" marker-end="url(#dep-arrow)"/>
-      <text x="560" y="348" font-size="10.5" text-anchor="middle" fill="currentColor" class="halo">Eligible()</text>
+      <text x="560" y="348" font-size="10.5" text-anchor="middle" fill="currentColor" class="halo">Eligible(생존자)</text>
 
       <text x="20" y="436" font-size="10.5" fill="currentColor" opacity="0.6">점선 위(Unity)는 아래(코어)를 호출만 한다. 코어는 Unity를 모른다. 뷰끼리는 서로 모른다.</text>
     </svg>
-    <figcaption><code>CombatNode</code>는 두 공급자를 인터페이스로만 안다. 1단계 구현은 고블린 C#·"등급 있는 모든 카드",
+    <figcaption><code>CombatNode</code>는 두 공급자를 인터페이스로만 안다. 1단계 구현은 고블린 C#·"생존 캐릭터의 풀"(풀 데이터는 임시로 두 캐릭터 모두 <code>starter</code>),
     2단계에서 편성 JSON 구현으로 <b>공급자만</b> 바뀌고 <code>CombatNode</code>는 그대로다. 전투 자체는 기존 <code>DeckCombatSession</code>이 한다(그림 생략).</figcaption>
   </figure>
 </section>
@@ -480,12 +480,12 @@
       <text x="500" y="226" font-size="11" fill="currentColor">→ 다른 노드는 다른 보상</text>
     </svg>
     <figcaption>스트림은 순서가 아니라 <b>이름표로</b> 파생된다. 그래서 1단계가 편성 스트림을 쓰지 않아도 2단계에서 전투·보상 스트림 값은 그대로다.
-    예외 하나: 보상 <b>카드 목록</b>은 전투 수행과 무관하지만 <b>소유자</b>는 전투 끝에 살아있는 파티원 중에서 뽑으므로, 누가 죽었느냐에 따라 달라질 수 있다.</figcaption>
+    보상은 <b>살아남은 캐릭터를 기반으로</b> 정해진다. 그래서 같은 노드라도 <b>생존자 구성이 다르면</b> 후보가 달라질 수 있고, 생존자 구성이 같으면 몇 턴에 이겼든 같다.</figcaption>
   </figure>
 </section>
 
 <section>
-  <h2>새 JSON 형식과 사용처, 대체되는 것 <small>(2단계)</small></h2>
+  <h2>새 JSON 형식과 사용처, 대체되는 것 <small>(캐릭터 <code>pool</code>만 1단계, 나머지 2단계)</small></h2>
   <style>.formats td:first-child code{white-space:nowrap;word-break:normal}.formats td:first-child{min-width:190px}</style>
   <p>모두 <code>Assets/StreamingAssets/Content/</code> 아래. 부팅 순서는 상태 → 카드 → 덱·풀 → 캐릭터 → <b>적 → 편성 → 전투 규칙</b>이며, 뒤쪽이 앞쪽을 id로 참조한다.</p>
   <div class="scroll">
@@ -512,9 +512,9 @@
       </tr>
       <tr>
         <td><code>Characters/member_a.json</code><br><small>기존 · 필드 추가</small></td>
-        <td>id로 인덱싱되는 멤버 원본에 <code>maxHp</code> · <code>surviveCharges</code>(죽을 피해를 버티는 횟수, 전투마다 충전)</td>
-        <td><code>CharacterContentLoader</code> → 런 시작 시 <code>RunMember</code> → 전투 로드아웃</td>
-        <td><code>PartyTuning.DefaultMemberMaxHp</code> · <code>SurviveChargesPerCombat</code>(모든 멤버에 같은 값)</td>
+        <td>id로 인덱싱되는 멤버 원본에 <code>pool</code>(1단계, 이 캐릭터의 풀 id) · <code>maxHp</code> · <code>surviveCharges</code>(죽을 피해를 버티는 횟수, 전투마다 충전)</td>
+        <td><code>CharacterContentLoader</code> → <code>pool</code>은 보상 공급자가 생존 캐릭터의 후보를 만들 때 · 스탯은 런 시작 시 <code>RunMember</code> → 전투 로드아웃</td>
+        <td><code>PartyTuning.DefaultMemberMaxHp</code> · <code>SurviveChargesPerCombat</code>(모든 멤버에 같은 값). <code>pool</code>은 대체가 아니라 신규 — <b>임시로 둘 다 <code>starter</code></b>, 캐릭터 설계 때 JSON만 교체</td>
       </tr>
       <tr>
         <td><code>combat_rules.json</code><br><small>신규 · 단일 파일</small></td>
@@ -534,7 +534,7 @@
   <table>
     <thead><tr><th>갈아끼울 수 있는 것</th><th>한번 정하면 고정되는 것</th></tr></thead>
     <tbody>
-      <tr><td>보상 후보 공급(<code>IRewardCandidateSource</code>) — 나중에 캐릭터 풀 소유권으로</td><td>보상 추첨 순서: 승리 직후 카드 n장을 먼저 뽑고, 그다음 소유자 n명. 바꾸면 모든 기존 시드의 보상이 바뀐다 — 단 소유자 뽑기를 통째로 없애는 것은 카드 목록에 영향이 없도록 이 순서로 정했다</td></tr>
+      <tr><td>캐릭터 풀 데이터 — 임시 <code>starter</code>에서 캐릭터별 실제 풀로 JSON만 교체</td><td>보상 추첨 방식: 승리 직후 (카드, 소유자) 쌍에서 n회, 뽑힌 카드의 다른 쌍은 제거. 바꾸면 모든 기존 시드의 보상이 바뀐다</td></tr>
       <tr><td>편성 공급(<code>IEncounterSource</code>) — 1단계 고블린 → 2단계 JSON</td><td>스트림 이름표 상수와 해시 혼합식. 바꾸면 모든 기존 시드가 바뀐다</td></tr>
       <tr><td>적 정책 — 레지스트리에 키 하나 등록</td><td>노드 단계 네 가지(전투·보상·패배·완료)의 전이 순서</td></tr>
       <tr><td>보상 장수 — <code>combat_rules.json</code></td><td>"보상은 승리에만, 패배는 런 종료"</td></tr>
@@ -600,7 +600,8 @@
   <h2>이 선택으로 나중에 어려워지는 것</h2>
   <ul>
     <li><b>콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.</b> 보상 대상 카드 목록과 편성 후보 목록이 길이·순서째 RNG 입력이다. 시드는 콘텐츠 버전에 묶인다.</li>
-    <li><b>보상 추첨 방식을 바꾸는 순간 기존 시드가 모두 무효가 된다.</b> 추첨 순서(카드 먼저·소유자 나중), 이름표 상수, 해시 혼합식이 사실상 저장 형식처럼 굳는다. 예외로 소유자 뽑기를 없애는 변경만은 카드 목록을 바꾸지 않는다.</li>
+    <li><b>보상 추첨 방식을 바꾸는 순간 기존 시드가 모두 무효가 된다.</b> 쌍 목록 순서(파티 순서 → 카드 id), 이름표 상수, 해시 혼합식이 사실상 저장 형식처럼 굳는다.</li>
+    <li><b>임시 풀 데이터 기간에는 "카드는 정확히 한 풀에만" 검증을 켤 수 없다.</b> 두 캐릭터가 같은 <code>starter</code> 풀을 가리키기 때문이다. 캐릭터 설계로 풀을 나누는 순간 같은 시드의 보상도 바뀐다.</li>
     <li><b>기존 Run 뼈대의 노드 목록 계열이 지워진다.</b> <code>RunDefinition</code>·<code>RunNodeData</code>·<code>RunNodeRegistry</code>·<code>IRunNodeHandler</code> 등 7개 타입. 노드 목록은 런이 아니라 맵의 범주로 정했으므로, 맵은 이 뼈대를 되살리지 않고 새로 설계해야 한다.</li>
     <li><b>편성에는 적을 한 마리만 저작할 수 있다.</b> 기존 세션이 정책 하나만 받고, 적이 둘 이상이면 적 카드의 주인을 비운다. 다중 적과 같은 적 여럿은 <b>반드시 할 후속 작업</b>이다. 그 비용을 줄이려고 이번에 <b>적 JSON id와 전투 안 id(<code>goblin#0</code>)를 분리</b>하고 <b>편성 공급자가 적마다 (적, 정책) 쌍</b>을 돌려주게 한다 — 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.</li>
     <li><b>HP가 전투 사이에 이어지지 않는다.</b> 세션이 최대 HP만 받는다. <b>반드시 할 후속 작업</b>이며 <code>RunMember.Hp</code> 자리는 이미 있다. 그 전에 "전투 중 HP 0이 됐지만 파티가 이긴 파티원"의 런 처리 규칙을 정해야 한다.</li>
@@ -638,11 +639,11 @@
     <li>
       <h3><code>CombatNode.Conclude()</code></h3>
       <ul class="events">
-        <li>rng = Random(Stream(nodeSeed, Reward)) · 대상 22장(id 정렬) · 생존자 [member_a]</li>
-        <li>카드 3회 먼저: riposte · hasten · distill → 그다음 소유자 3회: member_a · member_a · member_a</li>
+        <li>rng = Random(Stream(nodeSeed, Reward)) · 생존자 [member_a] → member_a의 풀 <b>starter</b> → 쌍 22개 (카드, member_a)</li>
+        <li>3회 뽑기: (riposte, member_a) · (hasten, member_a) · (distill, member_a) — 소유자는 풀에서 따라온다</li>
         <li>Phase=<b>Reward</b> → Flow → RewardChoiceView.Show(후보 3, 소유자 이름)</li>
       </ul>
-      <p>같은 런 시드로 3턴 만에 이겼어도 카드 셋은 riposte·hasten·distill로 같다. member_b가 살아 있었다면 일부 소유자가 member_b였을 수 있다.</p>
+      <p>같은 런 시드로 3턴 만에 이겼어도 <b>생존자가 member_a뿐이면</b> 후보는 같다. member_b도 살아 있었다면 쌍이 44개(두 캐릭터가 임시로 같은 풀)가 되어 후보와 소유자가 달라질 수 있고, 한 카드를 뽑으면 그 카드의 다른 소유자 쌍은 지워져 카드가 겹치지 않는다.</p>
     </li>
     <li>
       <h3>플레이어가 첫 카드를 누른다 — <code>CombatNode.Choose(0)</code></h3>
@@ -674,7 +675,7 @@
   </table>
   </div>
   <p class="out-of-scope"><b>범위 밖:</b> 맵(노드 목록은 <code>Map/</code> 범주로 따로 설계), 세이브, 새 게임마다 런 시드 새로 뽑기, HP 인계, 보스·엘리트·영입,
-  사망 파티원의 카드 처리(유산), 보상 후보의 캐릭터 풀 소유권, 패널 등장 연출.<br><b>반드시 할 후속 작업(색인 기록):</b> HP 인계, 다중 적(적마다 정책·카드 주인), 같은 적 여럿.</p>
+  사망 파티원의 카드 처리(유산), 캐릭터별 실제 풀 저작(이번엔 임시로 두 캐릭터 모두 <code>starter</code>), 패널 등장 연출.<br><b>반드시 할 후속 작업(색인 기록):</b> HP 인계, 다중 적(적마다 정책·카드 주인), 같은 적 여럿.</p>
 </section>
 
 <section class="decide">
