@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Combat;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;
 using FateWeaver.Core.Authoring;
@@ -14,13 +13,10 @@ using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>Party battle UI. Core rules remain in DeckCombatSession; this component only translates
-    /// authored assets into a session and renders its snapshots.</summary>
+    /// <summary>주어진 전투 세션 하나를 화면에 붙여 입력을 전달한다. 전투 구성과 전투 뒤의 흐름은
+    /// CombatNodeFlow가 맡는다.</summary>
     public sealed class BattleScreenController : MonoBehaviour
     {
-        [Header("Data")]
-        [SerializeField] private CharacterAsset[] _party = Array.Empty<CharacterAsset>();
-
         [Header("Views")]
         [SerializeField] private BattlePresenter _presenter;
         [SerializeField] private HandFanView _hand;
@@ -31,33 +27,35 @@ namespace FateWeaver.Unity
         [SerializeField] private CardSelectionController _selection;
         [SerializeField] private Playback.TurnPlaybackDirector _playback;
 
-        private const int FateEnergyPerTurn = 3;
-        private const int Seed = 1;
-
         private DeckCombatSession _session;
 
-        /// <summary>부팅 1회로 만들어 상주하는 콘텐츠. 씬을 리셋해도 다시 읽지 않는다(설계 §4.5).</summary>
+        /// <summary>전투 화면에 바인딩된 콘텐츠. 소유는 CombatNodeFlow다.</summary>
         private GameContent _content;
 
         /// <summary>타임라인을 한국어 문장으로 풀 때 쓰는 카탈로그. 세션과 함께 1회 만들어 재사용한다.</summary>
         private KoreanDescriptionCatalog _korean;
 
-        private void Start()
+        private Action _onCombatFinished;
+
+        /// <summary>CombatNodeFlow가 한 번 부른다. 배선이 비었으면 false — 그때는 콘솔로만 보고한다
+        /// (_hud가 비어 있으면 메시지도 못 쓴다, 설계 §6).</summary>
+        public bool Initialize(Action onRestart, Action onCombatFinished)
         {
-            // 배선 검사는 첫 위임보다 앞서야 한다 — _hud가 비어 있으면 Initialize에서 이미
-            // 터지고, SetMessage도 못 쓴다. 그래서 여기서는 콘솔로만 보고한다(설계 §6).
             if (!IsWired())
             {
                 Debug.LogError("전투 화면 컴포넌트 배선이 비어 있습니다.");
-                return;
+                return false;
             }
 
+            _onCombatFinished = onCombatFinished;
             _hud.Initialize(
-                OnTurnButton, StartSession, _playback.Skip, speed => _playback.Speed = speed);
+                OnTurnButton, () => onRestart(), _playback.Skip, speed => _playback.Speed = speed);
             _playback.Speed = _hud.Speed;
             _selection.Initialize(TryApplySelection, CurrentValidTargets, RefreshAll);
-            StartSession();
+            return true;
         }
+
+        public void ShowMessage(string message) => SetMessage(message);
 
         private bool IsWired()
             => _presenter != null
@@ -67,51 +65,18 @@ namespace FateWeaver.Unity
                 && _hand != null && _rail != null && _selection != null
                 && _playback != null;
 
-        private void StartSession()
+        /// <summary>전투 세션 하나를 화면에 붙인다. 파티·적·수치 구성은 모른다 — CombatNode가 만든다.</summary>
+        public void Bind(DeckCombatSession session, GameContent content)
         {
             _selection.CancelSelection();
-            if (_party == null || _party.Length == 0 || _party.Any(member => member == null))
-            {
-                SetMessage("파티 CharacterAsset이 연결되지 않았습니다.");
-                return;
-            }
-
-            if (_content == null)
-            {
-                var loaded = ContentBootstrap.Load(UnityContentRoot.Path);
-                if (!loaded.Succeeded)
-                {
-                    var reasons = string.Join("\n", loaded.Errors);
-                    SetMessage("콘텐츠 로드 실패:\n" + reasons);
-                    Debug.LogError("콘텐츠 로드 실패:\n" + reasons);
-                    return;
-                }
-
-                _content = loaded.Content;
-            }
-
-            var tuning = PartyPrototypeRoster.Tuning;
-            var loadouts = _party
-                .Select(member => ContentLoadouts.For(
-                    _content, member.Id, tuning.DefaultMemberMaxHp))
-                .ToList();
-            var enemies = new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) };
-            _session = new DeckCombatSession(
-                _content.Statuses,
-                loadouts,
-                enemies,
-                GoblinDeck.Policy(),
-                tuning,
-                partyCards: null,
-                fateEnergyPerTurn: FateEnergyPerTurn,
-                seed: Seed);
-
+            _session = session;
+            _content = content;
             _korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
             _presenter.Initialize(OwnerNameOf, _korean);
             _units.Spawn(
                 _session.State,
                 _presenter.OwnerColor,
-                id => PlaytestKoreanText.EnemyName(id, id),
+                EnemyNameOf,
                 key => _content.Statuses.DisplayNameOf(key));
             _piles.Bind(
                 () => Presentations(_session.DrawPile)
@@ -121,6 +86,20 @@ namespace FateWeaver.Unity
                 () => Presentations(_session.AllDeckCards));
             SetMessage("전투 시작.");
             RefreshAll();
+        }
+
+        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)로 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
+        private string EnemyNameOf(string combatId)
+        {
+            foreach (var enemy in _session.State.Enemies)
+            {
+                if (enemy.Id == combatId)
+                {
+                    return PlaytestKoreanText.EnemyName(enemy.SpecId, enemy.SpecId);
+                }
+            }
+
+            return combatId;
         }
 
         private IReadOnlyList<CardPresentation> Presentations(IReadOnlyList<OwnedCard> cards)
@@ -335,6 +314,10 @@ namespace FateWeaver.Unity
                 ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
                 : "턴 해석 완료.");
             RefreshAll();
+            if (_session.IsComplete)
+            {
+                _onCombatFinished?.Invoke();
+            }
         }
 
         private IReadOnlyList<SelectionTargetRef> CurrentValidTargets(SelectionTargetKind kind)
