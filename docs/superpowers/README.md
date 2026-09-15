@@ -133,9 +133,9 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 
 **3d가 3b·3c에서 물려받는 것:** 런타임이 JSON을 읽는다. `ContentBootstrap.Load(콘텐츠루트)`가
 **상태** → 카드 → 덱·풀 → 캐릭터 순서로 카탈로그 다섯을 만들어 `GameContent`로 돌려주고,
-`BattleScreenController`가 그것을 `_content`에 담아 상주시킨다 — 부팅 시가 아니라 **전투 화면
-진입 시** 첫 `StartSession()`에서 만들어지고, `static`이 아니므로 그 컨트롤러와 수명을 같이한다
-(2026-08-28 정정). Unity 쪽 경로 상수는 `UnityContentRoot.Path`
+`CombatNodeFlow`가 그것을 `_content`에 담아 상주시킨다 — 부팅 시가 아니라 **`CombatNodeFlow.Start()`
+에서 한 번** 만들어지고, `static`이 아니므로 그 흐름 객체와 수명을 같이한다(2026-08-28 정정,
+2026-09-15 배선 갱신). Unity 쪽 경로 상수는 `UnityContentRoot.Path`
 하나뿐이다. 상태가 가장 먼저인 이유는 카드 검증이 "등록된 상태에는 저작이 있다"를 전제하기 때문이다.
 
 **상태 규칙의 원본은 이제 `Content/Statuses/*.json` 하나다** (계획 3c). `StatusSpecJsonConverter`는
@@ -253,7 +253,9 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 - [ ] **[필수] 전투 사이 HP 인계** — 사용자 지정 필수(2026-09-15). 지금은 매 전투 최대 HP로 시작한다.
   로드아웃에 현재 HP를 더하고, 세션이 그 HP로 시작하고, `CombatNode.Conclude`가 `RunMember.Hp`에
   기록한다. **선행 결정:** 전투 중 HP 0이 됐지만 파티가 이긴 파티원의 런 처리(사망 유지 / 부활 / 기타).
-  선행 작업: [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) 1단계.
+  선행 작업: [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) 1단계. 착수 시
+  `CombatNode.Begin`의 로드아웃이 `RunMember.Cards`를 복사하는지 잠그는 테스트를 함께 더한다(현재는
+  세션이 한 번 더 복사해 관찰되지 않는다).
 
 - [ ] **[필수] 다중 적 — 적마다 정책과 카드 주인** — 사용자 지정 필수(2026-09-15). 위 항목이 미룬 "정책 API
   재설계"다. [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md)이 모양을 먼저 맞춘다 —
@@ -323,9 +325,9 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   | 안 변함 | `GameContent` | 있다. 지금은 전부 여기 쓴다 |
 
   `GameContent`(및 `StatusContentCatalog`)는 **콘텐츠 JSON을 읽어 만든 런타임 객체**다. 부팅 시가
-  아니라 전투 화면 진입 시 `BattleScreenController.Start()`의 첫 `StartSession()`에서 만들어지고,
-  `_content`는 `static`이 아니라 그 컨트롤러의 인스턴스 필드다. 다만 `StartSession`이 HUD 재시작
-  버튼에도 배선돼 있고 그때 `_content`를 재사용하므로 **전투를 다시 시작해도 같은 인스턴스**다.
+  아니라 `CombatNodeFlow.Start()`에서 한 번 만들어지고, `_content`는 `static`이 아니라 그 흐름
+  객체의 인스턴스 필드다. 다만 런을 재시작하거나(HUD `초기화`) 다음 노드로 넘어갈 때도 `_content`를
+  재사용하므로 **전투를 다시 시작해도 같은 인스턴스**다.
   그래서 `StatusContentCatalog.Rules`에 쓴 값은 전투 경계를 넘어 남는다.
 
   **가변인 것 자체는 결함이 아니다** — 유물 같은 효과가 수치를 바꾸게 하려는 의도다. 결함은 그
