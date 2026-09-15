@@ -1,5 +1,6 @@
 {
   "id": "member_a",
   "displayName": "파티원 A",
-  "deck": "starter"
+  "deck": "starter",
+  "pool": "starter"
 }

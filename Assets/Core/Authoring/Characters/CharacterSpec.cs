@@ -7,5 +7,8 @@ namespace FateWeaver.Core.Authoring.Characters
         public string Id;
         public string DisplayName;
         public string Deck;
+
+        /// <summary>이 캐릭터가 소유한 카드풀 id. 전투 보상 후보가 여기서 나온다(전투 노드 설계 결정 2·3).</summary>
+        public string Pool;
     }
 }

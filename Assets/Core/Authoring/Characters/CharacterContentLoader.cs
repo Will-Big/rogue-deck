@@ -28,15 +28,16 @@ namespace FateWeaver.Core.Authoring.Characters
             => new CharacterContentLoadResult(null, errors);
     }
 
-    /// <summary>캐릭터 콘텐츠 소스 목록을 파싱·검증해 카탈로그로 만든다. 덱 카탈로그를 인자로
+    /// <summary>캐릭터 콘텐츠 소스 목록을 파싱·검증해 카탈로그로 만든다. 덱·풀 카탈로그를 인자로
     /// 받으므로 부팅 순서의 마지막이다 — 카드 → 덱·풀 → 캐릭터.</summary>
     public static class CharacterContentLoader
     {
-        private static readonly string[] RequiredKeys = { "id", "displayName", "deck" };
+        private static readonly string[] RequiredKeys = { "id", "displayName", "deck", "pool" };
 
         public static CharacterContentLoadResult Load(
             IEnumerable<CardContentSource> sources,
-            DeckContentCatalog decks)
+            DeckContentCatalog decks,
+            PoolContentCatalog pools)
         {
             var errors = new List<string>();
             var characters = new Dictionary<string, CharacterContent>();
@@ -91,10 +92,17 @@ namespace FateWeaver.Core.Authoring.Characters
                     rejected = true;
                 }
 
+                if (!pools.Contains(spec.Pool))
+                {
+                    errors.Add(source.Name + ": unknown pool id '" + spec.Pool + "'.");
+                    rejected = true;
+                }
+
                 if (!rejected)
                 {
                     characters.Add(
-                        spec.Id, new CharacterContent(spec.Id, spec.DisplayName, spec.Deck));
+                        spec.Id,
+                        new CharacterContent(spec.Id, spec.DisplayName, spec.Deck, spec.Pool));
                 }
             }
 
