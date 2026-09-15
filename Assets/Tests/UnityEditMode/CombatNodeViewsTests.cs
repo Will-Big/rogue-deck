@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Simulation.Run;
 using FateWeaver.Unity;
@@ -32,16 +33,37 @@ namespace FateWeaver.Tests.UnityEditMode
             return (RectTransform)_root.transform;
         }
 
-        private RewardChoiceView BoundReward()
+        private RewardChoiceView BoundReward() => BoundReward(out _);
+
+        private RewardChoiceView BoundReward(out BattlePresenter presenter)
         {
             var parent = Canvas();
             var view = RewardChoiceView.EditorCreate(parent);
-            var presenter = new GameObject("Presenter").AddComponent<BattlePresenter>();
+            presenter = new GameObject("Presenter").AddComponent<BattlePresenter>();
             presenter.transform.SetParent(parent, false);
             presenter.Initialize(id => id, KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses()));
             var cards = AssetDatabase.LoadAssetAtPath<CardPrefabCatalog>(CardPrefabCatalogTests.CatalogPath);
             view.EditorBind(cards, presenter);
             return view;
+        }
+
+        /// <summary>CardPrefabCatalog.Create는 프리팹만 만든다 — 내용은 CardView.Bind가 채운다.
+        /// Bind를 빠뜨리면 카드가 프리팹 기본값("Name", 빈 설명)으로 보인다(2026-09-15 Play에서 발견).</summary>
+        [Test]
+        public void Show_binds_each_card_to_its_candidate()
+        {
+            var view = BoundReward(out var presenter);
+            var candidates = Candidates(("hasten", "member_a"), ("breather", "member_b"));
+
+            view.Show(candidates, id => id, _ => { }, () => { });
+
+            var slots = CardPrefabCatalogTests.Field<RectTransform[]>(view, "_slots");
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                var expected = presenter.For(new OwnedCard(candidates[i].Card, candidates[i].OwnerId)).DisplayName;
+                var card = slots[i].GetComponentInChildren<CardView>(true);
+                Assert.AreEqual(expected, CardPrefabCatalogTests.Field<TMP_Text>(card, "_nameText").text);
+            }
         }
 
         private static IReadOnlyList<RewardCandidate> Candidates(params (string cardId, string owner)[] items)

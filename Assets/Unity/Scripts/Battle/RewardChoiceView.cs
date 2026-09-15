@@ -51,8 +51,11 @@ namespace FateWeaver.Unity
                 }
 
                 var candidate = candidates[i];
-                _spawned.Add(_cards.Create(
-                    _presenter.For(new OwnedCard(candidate.Card, candidate.OwnerId)), _slots[i]));
+                // Create는 프리팹만 만든다 — 내용은 Bind가 채운다(PileView와 같은 관례). 선택은 슬롯 버튼이 받는다.
+                var presentation = _presenter.For(new OwnedCard(candidate.Card, candidate.OwnerId));
+                var card = _cards.Create(presentation, _slots[i]);
+                card.Bind(presentation, null);
+                _spawned.Add(card);
                 var index = i;
                 _slotButtons[i].onClick.AddListener(() => onChoose(index));
             }
