@@ -1,56 +1,30 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace FateWeaver.Simulation.Run
 {
-    /// <summary>Run-persistent state between combats: node progress, party, seeded run-level RNG.
-    /// All run-level randomness (combat seed derivation, reward rolls) must go through Rng
-    /// (AGENTS.md rule 7) so the same run seed replays the same run.</summary>
+    /// <summary>전투 사이에 이어지는 런 상태: 런 시드, 파티원(덱·HP), 진입한 노드 수.
+    /// 노드 목록은 여기 없다 — 노드 목록은 맵의 범주다(전투 노드 설계 결정 6). 무작위는 이 객체가
+    /// 들고 있지 않고, SeedDerivation이 런 시드와 노드 순번에서 노드마다 새로 파생한다.</summary>
     public sealed class RunState
     {
-        private Random _rng;
-
-        public RunState(
-            RunDefinition definition,
-            IReadOnlyList<RunMember> startingParty,
-            PartyTuning tuning,
-            int runSeed)
+        public RunState(IReadOnlyList<RunMember> startingParty, int runSeed)
         {
-            Nodes = definition.Nodes;
             Party = new List<RunMember>(startingParty);
-            Tuning = tuning;
             RunSeed = runSeed;
         }
 
-        public IReadOnlyList<RunNodeData> Nodes { get; }
-        public int CurrentNodeIndex { get; private set; }
-        public RunNodeData CurrentNode => Nodes[CurrentNodeIndex];
-        public List<RunMember> Party { get; }
-        public PartyTuning Tuning { get; }
-        public RunOutcome Outcome { get; private set; } = RunOutcome.InProgress;
         public int RunSeed { get; }
+        public List<RunMember> Party { get; }
+        public RunOutcome Outcome { get; private set; } = RunOutcome.InProgress;
 
-        /// <summary>Seeded run-level RNG (lazy, same pattern as CombatState.Rng).</summary>
-        public Random Rng => _rng ??= new Random(RunSeed);
+        /// <summary>진입한 노드 수. 다음에 진입할 노드의 순번이기도 하다.</summary>
+        public int NodesEntered { get; private set; }
 
         public IReadOnlyList<RunMember> LivingMembers => Party.Where(m => m.IsAlive).ToList();
 
-        /// <summary>Draws the next combat's seed from the run RNG —
-        /// same run seed ⇒ same combat seed sequence (spec §3.1).</summary>
-        public int NextCombatSeed() => Rng.Next();
-
-        /// <summary>Returns false when already on the last node.</summary>
-        public bool AdvanceToNextNode()
-        {
-            if (CurrentNodeIndex + 1 >= Nodes.Count)
-            {
-                return false;
-            }
-
-            CurrentNodeIndex++;
-            return true;
-        }
+        /// <summary>현재 순번을 돌려주고 1 늘린다. 노드 시드는 이 순번에서 파생된다.</summary>
+        public int EnterNode() => NodesEntered++;
 
         public void SetOutcome(RunOutcome outcome) => Outcome = outcome;
     }
