@@ -4,7 +4,7 @@
 구조 승인은 그쪽으로 받는다. 이 문서는 세션 인계용이며 `## 상세`만 담는다. 개요와 상세가 어긋나면
 상세를 따르지 않고 멈추고 묻는다(규칙 29).
 
-**상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 착수 전. 1단계 구현 계획은 보관됐다.
+**상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 설계를 1단계 코드와 대조해 확정(2026-09-17), 구현 계획 작성 전. 1단계 구현 계획은 보관됐다.
 
 ## 상세
 
@@ -50,6 +50,15 @@
     반드시 할 후속 작업으로 색인에 기록한다.
 13. **같은 적 여럿·다중 적 카드 주인은 이번엔 모양만 맞춘다.** 적 JSON id와 전투 안 id를 분리하고,
     편성 공급자는 적마다 (적, 정책) 쌍을 돌려준다. 세션이 여러 쌍을 받는 일은 반드시 할 후속 작업이다.
+14. **적 정책은 Core로 옮긴다(2026-09-17).** `IEnemyTurnPolicy`·정책 3종·`EnemyCardBundle`을 `FateWeaver.Core`로 옮기고
+    정책 레지스트리를 `CombatRegistries`에 둔다. 적 로더가 효과 키와 같은 방식(`AuthoringContext`)으로 정책 키를 검증해
+    **오타가 부팅 오류 목록에 섞여 잡힌다.** 기각: (B) Core에는 키 문자열만 두고 Simulation의 편성 공급자 생성 때 검증 —
+    부팅 성공이 콘텐츠 유효를 보장하지 않고 오류 경로가 둘이 된다. (C) 적·편성·규칙 부팅을 Simulation에 따로 둠 —
+    콘텐츠 묶음과 진입점이 둘이 되고 규칙 5의 "`ContentBootstrap.Load`가 읽는다"가 깨진다.
+15. **`PartyTuning`도 Core로 옮기고 `CombatRules`가 품는다(2026-09-17).** `CombatRules { Party; FateEnergyPerTurn; RewardChoices }`.
+    세션은 지금처럼 `PartyTuning`을 받는다. 기각: Core에 수치만 담은 별도 타입 + Simulation 변환(같은 필드가 두 타입에 중복),
+    세션이 `CombatRules`를 직접 받음(전투와 무관한 `RewardChoices`를 세션이 알고, 세션 생성 테스트 약 20곳 변경).
+16. **동등성 먼저(2026-09-17).** C# 고블린 경로의 전투 서명을 픽스처로 잡은 뒤 JSON 경로가 같은 서명을 내게 하고, 원본은 마지막에 지운다.
 
 ---
 
@@ -349,26 +358,91 @@ repeat n times:
 
 ### 2단계 — 구성 저작
 
-#### 2.1 새 JSON 형식
+2026-09-17 1단계 머지 후 코드와 대조해 다시 썼다(결정 14~16). 초안은 로더가 Simulation 타입을 받는
+모양이라 컴파일되지 않았다 — `FateWeaver.Core`는 아무것도 참조하지 않고(`Assets/Core/FateWeaver.Core.asmdef`
+`"references": []`) `FateWeaver.Simulation`만 Core를 참조한다(`Assets/Core/Simulation/FateWeaver.Simulation.asmdef`).
+
+#### 2.1 어셈블리 이동 (결정 14·15)
+
+코드는 바꾸지 않고 파일 위치와 네임스페이스만 옮긴다. 옮기는 커밋에서는 동작 변경을 섞지 않는다.
+
+| 타입 | 지금 | 옮길 곳 | 근거 |
+|---|---|---|---|
+| `IEnemyTurnPolicy`, `RandomPickPolicy`, `ShuffleBagPolicy`, `SequencePolicy`, `EnemyCardBundle` | `Assets/Core/Simulation/Enemies/` (`namespace FateWeaver.Simulation`) | `Assets/Core/Enemies/` (`namespace FateWeaver.Core.Enemies`) | 다섯 파일은 `System`·`FateWeaver.Core.Cards`만 쓴다(`RandomPickPolicy.cs:1-3`, `IEnemyTurnPolicy.cs:1-3`) |
+| `PartyTuning` | `Assets/Core/Simulation/PartyTuning.cs` | `Assets/Core/Combat/PartyTuning.cs` (`namespace FateWeaver.Core.Combat`) | `System`·`System.Collections.Generic`만 쓴다 |
+
+- 참조를 고칠 파일(2026-09-17 grep): 정책 타입 — 프로덕션 `DeckCombatSession.cs`·`GoblinDeck.cs`·`Run/Encounters.cs`,
+  테스트 `CombatNodeTests`·`ConditionalCardRuleTests`·`DeckCombatSessionTests`·`EncounterSourceTests`·`GrantNextTurnFateTests`·
+  `LockCardTests`·`LockedEnemyExecutionOrderTests`·`OwnedCardDeckTests`·`PartyDeckCombatSessionTests`·`RandomPickPolicyTests`·
+  `SequencePolicyTests`·`ShuffleBagPolicyTests`·`SlowHasteStatusTests`, Unity `BattleStageTests`·`BattleUnitsViewIdentityTests`·
+  `ResolutionEventPresenterTests`. `PartyTuning` — 프로덕션 `DeckCombatSession.cs`·`PartyPrototypeRoster.cs`·`Run/CombatNode.cs`·
+  `Run/RunSetup.cs`, 테스트 `CombatNodeTests`·`PartyDeckCombatSessionTests`·`RunSetupTests`와 위 Unity 테스트 셋.
+  구현 착수 시 grep으로 다시 확인한다(규칙 31).
+- Unity가 옮긴 파일의 `.meta` GUID를 유지하도록 `git mv`로 `.cs`와 `.meta`를 함께 옮긴다.
+
+`PartyTuning`은 이관 6단계(2.7)에서 HP·생존 충전 필드를 잃는다(`Prototype`의 두 값도 함께 지운다). 남는 모양:
+
+```csharp
+public sealed class PartyTuning
+{
+    public int MinPartySize { get; init; }
+    public int MaxPartySize { get; init; }
+    public IReadOnlyDictionary<int, int> DrawByLivingCount { get; init; }
+    public int DrawFor(int livingCount);   // 기존 그대로
+}
+```
+
+`Prototype` 자체는 9단계(2.8)에서 지운다. 1~5단계의 동등성 테스트와 `RunSetup`이 쓰기 때문이다.
+
+#### 2.2 정책 레지스트리 (규칙 9)
+
+`Assets/Core/Enemies/EnemyPolicyRegistry.cs` (신규)
+
+```csharp
+public readonly struct EnemyPolicyKey : IEquatable<EnemyPolicyKey> { public string Id { get; } }  // EffectKey.cs:7과 같은 모양
+public sealed class EnemyPolicyRegistry
+{
+    public void Register(EnemyPolicyKey key, Func<IReadOnlyList<EnemyCardBundle>, IEnemyTurnPolicy> create);
+    public bool Contains(EnemyPolicyKey key);
+    public IEnemyTurnPolicy Create(EnemyPolicyKey key, IReadOnlyList<EnemyCardBundle> bundles);  // 미등록이면 예외
+}
+```
+
+- 키 타입은 `EffectKey`(`Assets/Core/Effects/EffectKey.cs:7-20` — `record struct` 아닌 일반 `readonly struct`, Unity C# 9)와
+  같은 모양이고, 상수는 `EnemyPolicyKeys.RandomPick` 등으로 둔다(`EffectKeys`와 같다).
+- `CombatRegistries.EnemyPolicies()`(`Assets/Core/Registries/CombatRegistries.cs`)에 등록: `random_pick` →
+  `RandomPickPolicy`, `shuffle_bag` → `ShuffleBagPolicy`, `sequence` → `SequencePolicy`. 셋 다
+  `IReadOnlyList<EnemyCardBundle>` 생성자가 있다(`RandomPickPolicy.cs:16`, `ShuffleBagPolicy.cs:16`, `SequencePolicy.cs:15`).
+- `AuthoringContext`(`Assets/Core/Authoring/AuthoringContext.cs:9-35`)에 레지스트리를 하나 더 받고
+  `HasEnemyPolicy(EnemyPolicyKey)`를 더한다. `Default()`는 `CombatRegistries.EnemyPolicies()`를 넘긴다.
+- **카탈로그는 키만 든다.** 정책 인스턴스는 쓰는 쪽(`ContentEncounterSource`)이 레지스트리로 매번 새로 만든다.
+  카드 효과가 `EffectKey`를 들고 실행 시 레지스트리로 해석되는 것과 같다.
+
+#### 2.3 새 JSON 형식과 로더
 
 모든 파일은 `Assets/StreamingAssets/Content/` 아래. 폴더 이름 상수는 `CardContentFiles`
-(`Assets/Core/Authoring/CardContentFiles.cs:12-16`)에 더한다.
+(`Assets/Core/Authoring/CardContentFiles.cs:12-16`)에 `EnemiesFolderName = "Enemies"`, `BattlesFolderName = "Battles"`,
+`CombatRulesFileName = "combat_rules.json"`을 더한다.
 
 **① 적 카드 — 기존 `Cards/`**
 
-`goblin_jab.json`·`crude_guard.json`·`sly_jab.json`. 기존 `ExecutionCardSpec` 모양 그대로, `"side": "Enemy"`,
-`grade`·`tags` 생략. 값은 `GoblinDeck.cs`의 `Thrust`·`CrudeGuard`·`SlyJab`에서 옮긴다:
+`goblin_jab.json`·`crude_guard.json`·`sly_jab.json`. 기존 `CardSpec` 모양, `"side": "Enemy"`, `grade`·`tags` 생략.
+값은 `GoblinDeck.cs:20-33`에서 옮긴다:
 
 | id | name | order | energyCost | effects |
 |---|---|---|---|---|
 | `goblin_jab` | 찌르기 | 6 | 0 | damage 4 |
-| `crude_guard` | 조잡한 방어 | 4 | 0 | apply_status block 3, target Self |
+| `crude_guard` | 조잡한 방어 | 4 | 0 | apply_status block 3, 대상 `Self` |
 | `sly_jab` | 약삭빠른 찌르기 | 3 | 0 | damage 3, `condition: { kind: NoPrecedingPlayerCard, successEffectValue: 6 }` |
 
-**손으로 쓰지 않는다.** 카드 왕복 바이트 테스트가 키 순서·생략을 잠그므로 `CardSpec`을 만들어
-`ContentJson` 직렬화기로 산출한다. 조건 객체 모양은 `foresight.json:13-16`과 같다.
+- **손으로 쓰지 않는다.** 카드 왕복 바이트 테스트(`CardContentJsonTests.cs:236`, 노트북 `index.test.mjs:192`)가 키
+  순서·생략을 잠그므로 `CardSpec`을 만들어 `ContentJson` 직렬화기로 산출한다.
+- `StatusApplyTarget.Self`는 enum 값 0이라(`ApplyStatusHandler.cs:12`) `ContentJson`이 기본값으로 생략한다
+  (`ContentJson.cs:37`). 산출 파일에 `"target"`이 없는 것이 정상이다.
+- `NoPrecedingPlayerCard`는 `NoPrecedingCardOfSide(Side.Player)`로 매핑된다(`EffectSpec.cs:44-45`).
+- 풀 로더의 등급·태그 검사는 풀 소속 카드에만 걸리므로(`PoolContentLoader.cs:122-131`) 적 카드가 보상에 들어갈 수 없다.
 
-**② `Enemies/<id>.json`** — `EnemySpec` (`Assets/Core/Authoring/Enemies/EnemySpec.cs`)
+**② `Enemies/<id>.json`** — `EnemySpec` → `EnemyDefinition` (`Assets/Core/Authoring/Enemies/`)
 
 ```json
 {
@@ -385,41 +459,46 @@ repeat n times:
 }
 ```
 
-- 로더 `EnemyContentLoader.Load(sources, CardContentCatalog cards, EnemyPolicyRegistry policies)` →
-  `EnemyContentCatalog`. 검증: 필수 키, `maxHp > 0`, `bundles` 1개 이상, 빈 묶음 없음, 카드 id 존재,
-  카드 `Side == Enemy`, `policy` 등록됨, id 중복 없음.
-- `EnemyPolicyRegistry` (`Assets/Core/Simulation/Enemies/`, 규칙 9): 키 → `Func<IReadOnlyList<EnemyCardBundle>, IEnemyTurnPolicy>`.
-  등록: `random_pick` → `RandomPickPolicy`, `shuffle_bag` → `ShuffleBagPolicy`, `sequence` → `SequencePolicy`
-  (셋 다 `IReadOnlyList<EnemyCardBundle>` 생성자가 있다).
-- 사용처: `ContentEncounterSource`가 편성의 적 id로 조회해 `Enemy`와 정책을 **매번 새로** 만든다.
-  `BattleScreenController`의 적 이름 표시(`PlaytestKoreanText.EnemyName` 호출부)가 `displayName`을 쓴다.
+- 묶음 = 적이 한 턴에 통째로 존에 올리는 카드 세트. 순서·구성은 `GoblinDeck.Bundles()`(`GoblinDeck.cs:59-65`)와 같다.
+- 카탈로그 항목:
+  ```csharp
+  public sealed class EnemyDefinition
+  {
+      public string Id { get; }
+      public string DisplayName { get; }
+      public int MaxHp { get; }
+      public EnemyPolicyKey Policy { get; }
+      public IReadOnlyList<EnemyCardBundle> Bundles { get; }   // 카드 카탈로그의 CardDefinition을 공유
+  }
+  ```
+- 로더 `EnemyContentLoader.Load(IEnumerable<CardContentSource>, CardContentCatalog, AuthoringContext)` → `EnemyContentCatalog`
+  (`Get(id)`, `Ids`). 결과 타입은 기존 `CharacterContentLoadResult` 모양을 따른다.
+- 검증(각각 별도 오류): 필수 키(`id`·`displayName`·`maxHp`·`policy`·`bundles`), 빈 id, id 중복, `maxHp <= 0`,
+  묶음 0개, 빈 묶음, 없는 카드 id, 카드 `Side != Enemy`, `HasEnemyPolicy`가 거짓.
+- 사용처: `ContentEncounterSource`(2.5), `BattleScreenController.EnemyNameOf`의 이름(2.6).
 
-**③ `Battles/<id>.json`** — `BattleSpec` (`Assets/Core/Authoring/Battles/BattleSpec.cs`)
+**③ `Battles/<id>.json`** — `BattleSpec` → `BattleDefinition` (`Assets/Core/Authoring/Battles/`)
 
 ```json
 { "id": "goblin_single", "enemies": ["goblin"] }
 ```
 
-- 로더 `BattleContentLoader.Load(sources, EnemyContentCatalog enemies)` → `BattleContentCatalog`.
-  검증: 파일 1개 이상, 적 id 존재, **`enemies`가 정확히 1개**. 이 마지막 검증은 세션이 정책 하나만 받는
-  제약 때문이며, 다중 적 후속 작업에서 지운다. 같은 id 중복은 형식상 막지 않는다 — 전투 안 id가
-  `"{specId}#{순번}"`이라 충돌하지 않는다.
-- 사용처: `ContentEncounterSource.Pick(rng)` = id 서수 정렬 후 `battles[rng.Next(count)]`, 적마다
-  `new Enemy($"{specId}#{i}", specId, spec.MaxHp)`와 `EnemyPolicyRegistry`로 만든 새 정책을 쌍으로 돌려준다.
+- 로더 `BattleContentLoader.Load(sources, EnemyContentCatalog)` → `BattleContentCatalog`(`Ids`는 서수 정렬, `Get(id)`).
+- 검증: 파일 1개 이상, 필수 키, id 중복, 없는 적 id, **`enemies`가 정확히 1개**. 마지막 검증은 세션이 정책 하나만 받는
+  제약 때문이며 다중 적 후속 작업에서 지운다. 같은 적 id 반복은 형식상 막지 않는다(전투 안 id가 `"{specId}#{순번}"`).
 
-**④ `Characters/<id>.json` (수정)** — `CharacterSpec`에 필드 추가. `pool`은 **1단계**(1.4), 스탯 둘은 2단계
+**④ `Characters/<id>.json` (수정)** — `CharacterSpec`(`Assets/Core/Authoring/Characters/CharacterSpec.cs`)에 두 필드
 
 ```json
 { "id": "member_a", "displayName": "파티원 A", "deck": "starter", "pool": "starter", "maxHp": 25, "surviveCharges": 1 }
 ```
 
-- 로더 `CharacterContentLoader`에 필수 키 두 개와 검증(`maxHp > 0`, `surviveCharges >= 0`) 추가.
-- `pool`의 사용처: `CharacterPoolRewardSource`가 생존 캐릭터의 보상 후보를 이 풀에서 만든다(1.3·1.4).
-  기존 `member_a.json`·`member_b.json`에 25·1을 넣는다(현재 `PartyTuning.Prototype` 값,
-  `Assets/Core/Simulation/PartyTuning.cs:29-30`).
-- 사용처: `RunSetup.NewRun`이 `RunMember`의 `MaxHp`·`SurviveCharges`를 캐릭터에서 채운다.
+- `CharacterContentLoader.RequiredKeys`(`CharacterContentLoader.cs:35`)에 `maxHp`·`surviveCharges`를 더하고
+  `maxHp <= 0`, `surviveCharges < 0`을 오류로 잡는다.
+- `member_a.json`·`member_b.json`에 25·1(현재 `PartyTuning.Prototype` 값, `PartyTuning.cs:29-30`). `member_b`의 덱은
+  `party_prototype` 그대로다.
 
-**⑤ `combat_rules.json` (Content 루트 단일 파일)** — `CombatRulesSpec` → `CombatRules`
+**⑤ `combat_rules.json` (Content 루트 단일 파일)** — `CombatRulesSpec` → `CombatRules` (`Assets/Core/Authoring/Rules/`)
 
 ```json
 {
@@ -431,64 +510,159 @@ repeat n times:
 }
 ```
 
-- 로더 `CombatRulesLoader.Load(source)`. 검증: 필수 키, `fateEnergyPerTurn > 0`,
-  `1 <= minPartySize <= maxPartySize`, `drawByLivingCount`가 1..maxPartySize 전부를 양수로 덮음, `rewardChoices > 0`.
-  보상 후보 수는 생존자에 따라 런타임에 정해지므로 부팅에서 검증하지 않는다(1.3 — 모자라면 있는 만큼).
-- 사용처: `CombatNodeContext`의 `FateEnergyPerTurn`·`RewardChoices`와 `PartyTuning` 생성.
+```csharp
+public sealed class CombatRules
+{
+    public PartyTuning Party { get; }        // Min·Max·DrawByLivingCount (결정 15)
+    public int FateEnergyPerTurn { get; }
+    public int RewardChoices { get; }
+}
+```
 
-#### 2.2 부팅 순서
+- 로더 `CombatRulesLoader.Load(CardContentSource)`. 파일이 없으면 오류.
+- 검증: 필수 키, `fateEnergyPerTurn <= 0`, `minPartySize < 1`, `minPartySize > maxPartySize`,
+  `drawByLivingCount`가 1..maxPartySize 중 하나라도 빠지거나 0 이하, `rewardChoices <= 0`.
+- 보상 후보 수는 생존자에 따라 런타임에 정해지므로 부팅에서 검증하지 않는다(1.3 — 모자라면 있는 만큼).
 
-`ContentBootstrap.Load`(`Assets/Core/Authoring/ContentBootstrap.cs:35-91`) 뒤에 이어 붙인다:
-상태 → 카드 → 덱·풀 → 캐릭터 → **적 → 편성 → 전투 규칙**. 각 단계 실패 시 지금처럼 오류를 모아
-`Failed`로 끝낸다. `GameContent`에 `Enemies`·`Battles`·`CombatRules`를 더한다.
+#### 2.4 부팅 순서
 
-#### 2.3 코드 변경과 대체
+`ContentBootstrap.Load`(`Assets/Core/Authoring/ContentBootstrap.cs:35-91`)가 한 번에 읽는다:
+상태 → 카드 → 덱·풀 → 캐릭터 → **적 → 편성 → 전투 규칙**.
 
-| 대체되는 것 | 위치 | 대체하는 것 |
+- 적 로더는 카드 카탈로그와 `AuthoringContext.Default()`를, 편성 로더는 적 카탈로그를 받는다.
+- 전투 규칙은 다른 카탈로그에 의존하지 않지만 오류를 한 목록에 모으려고 같은 부팅에서 읽는다. 캐릭터까지 성공한 뒤
+  적·편성·규칙 세 단계는 **오류를 모두 모은 뒤** `Failed`로 끝낸다(편성은 적이 실패하면 건너뛴다).
+- `GameContent`(`Assets/Core/Authoring/GameContent.cs`)에 `Enemies`·`Battles`·`CombatRules`를 더한다. 생성자 호출부는
+  `ContentBootstrap.cs:90` 한 곳이다.
+- 클래스 주석(`ContentBootstrap.cs:30-32`의 "카탈로그 다섯")을 고친다.
+
+#### 2.5 Simulation 쪽 변경
+
+**`ContentEncounterSource : IEncounterSource`** (`Assets/Core/Simulation/Run/ContentEncounterSource.cs`, 신규)
+
+```csharp
+public ContentEncounterSource(GameContent content, EnemyPolicyRegistry policies);
+public EncounterSetup Pick(Random encounterRng)
+{
+    var ids   = content.Battles.Ids;              // 서수 정렬
+    var battle = content.Battles.Get(ids[encounterRng.Next(ids.Count)]);
+    // 적마다 i = 편성 내 순번
+    //   enemy  = new Enemy($"{specId}#{i}", specId, def.MaxHp)
+    //   policy = policies.Create(def.Policy, def.Bundles)     // 매 호출 새 인스턴스
+}
+```
+
+- 편성이 하나뿐이어도 `Next`를 한 번 부른다. 편성 스트림은 태그로 파생되므로(1.2) 전투·보상 스트림 값에 영향이 없다.
+- `Flow`는 `CombatRegistries.EnemyPolicies()`를 넘긴다.
+
+**`RunMember`·`PartyMemberLoadout`** — `SurviveCharges`(int, get-only)를 생성자 인자로 더한다.
+- `RunMember(id, name, maxHp, surviveCharges, cards)` (`Assets/Core/Simulation/Run/RunMember.cs`)
+- `PartyMemberLoadout(id, name, maxHp, surviveCharges, cards)` (`Assets/Core/Simulation/PartyMemberLoadout.cs`)
+- `CombatNode.Begin`의 로드아웃 조립(`CombatNode.cs:106`)이 `member.SurviveCharges`를 넘긴다. 전투마다 전량 충전이다
+  (`RunMember` 값은 전투 중 줄지 않는다).
+
+**`DeckCombatSession`**
+- `new PartyMember(..., partyTuning.SurviveChargesPerCombat)`(`DeckCombatSession.cs:127-131`) → `loadout.SurviveCharges`.
+- `ValidateParty`의 튜닝 검사(`:458-460`)에서 HP·충전 조건을 빼고, 로드아웃마다 `MaxHp > 0`·`SurviveCharges >= 0`을 검사한다.
+- 생성자 시그니처(`:82-90`)는 그대로다.
+
+**`RunSetup.NewRun(GameContent content, IReadOnlyList<string> characterIds, int runSeed)`** — `PartyTuning` 인자 제거.
+`RunMember`의 `MaxHp`·`SurviveCharges`를 `content.Characters.Get(id)`에서 채운다(`RunSetup.cs:11-27`).
+
+**`CombatNodeContext`** (`CombatNode.cs:20-44`) — 생성자가 `(StatusContentCatalog statuses, CombatRules rules,
+IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다. 속성 `Rules` 하나가 기존
+`PartyTuning`·`FateEnergyPerTurn`·`RewardChoices` 셋을 대체한다. `Begin`은 `rules.Party`·`rules.FateEnergyPerTurn`을,
+보상 제안은 `rules.RewardChoices`를 쓴다. 클래스 주석의 "2단계에서 바뀐다" 문장을 지운다.
+
+#### 2.6 Unity 쪽 변경
+
+**`CombatNodeFlow`** (`Assets/Unity/Scripts/Battle/CombatNodeFlow.cs`)
+- `_fateEnergyPerTurn`·`_rewardChoices` 필드 삭제(`:14-26`). `_runSeed`·`_party`·뷰 참조는 그대로.
+- 컨텍스트 조립(`:56-62`): `new CombatNodeContext(_content.Statuses, _content.CombatRules,
+  new ContentEncounterSource(_content, CombatRegistries.EnemyPolicies()), new CharacterPoolRewardSource(_content))`.
+- `NewRun`(`:80`): `RunSetup.NewRun(_content, ids, _runSeed)`. `PartyPrototypeRoster` 참조가 사라진다.
+
+**`BattleScreenController`**
+- `EnemyNameOf`(`:92-98`): `_content.Enemies.Get(enemy.SpecId).DisplayName`. `Bind`가 이미 `GameContent`를 받는다.
+
+**`PlaytestKoreanText`** (`Assets/Unity/Scripts/Text/PlaytestKoreanText.cs`)
+- `EnemyName`(`:46-50`) 삭제. `CardName`의 고블린 카드 3건(`:33-35`)은 JSON `name`과 같으므로 삭제.
+
+**씬** — `BattleSceneBuilder`로 `Assets/Scenes/FateWeaverBattle.unity`를 재생성한다. 지운 필드의 직렬화 값
+(`FateWeaverBattle.unity:2198-2199`)이 남지 않아야 한다. 배치 실행은 `docs/agents/unity-batch-runs.md`.
+
+**Unity EditMode 테스트** — `BattleStageTests`·`BattleUnitsViewIdentityTests`·`ResolutionEventPresenterTests`가
+`new PartyTuning { DefaultMemberMaxHp, SurviveChargesPerCombat, … }`를 직접 만든다. 로드아웃 인자로 옮긴다.
+
+#### 2.7 이관 순서 (동등성 먼저)
+
+단계마다 `Tools/verify.sh`가 통과해야 커밋한다. C# 원본은 마지막에 지운다.
+
+| # | 작업 | 확인 |
 |---|---|---|
-| `GoblinDeck` (카드 3장·묶음 4개·정책·`EnemyId`·`StartingHp`) | `Assets/Core/Simulation/GoblinDeck.cs` | `Cards/` 적 카드 3장 + `Enemies/goblin.json` |
-| `GoblinEncounterSource` (1단계 산물) | `Assets/Core/Simulation/` | `ContentEncounterSource` + `Battles/` |
-| `PartyTuning.Prototype` | `PartyTuning.cs:27` | `combat_rules.json` |
-| `PartyTuning.DefaultMemberMaxHp`·`SurviveChargesPerCombat` | `PartyTuning.cs:11-12` | 캐릭터 JSON `maxHp`·`surviveCharges` |
-| `PartyPrototypeRoster` (id·이름 상수, `Tuning`) | `Assets/Core/Simulation/PartyPrototypeRoster.cs` | 캐릭터 JSON + `combat_rules.json` |
-| `PlaytestKoreanText.EnemyName` | `Assets/Unity/Scripts/Text/PlaytestKoreanText.cs:46` | `Enemies/*.json`의 `displayName` |
-| 세션의 전역 생존 충전 | `DeckCombatSession.cs:131`, 검증 `:459-460` | `PartyMemberLoadout.SurviveCharges` |
-| `CombatNodeContext`의 1단계 값 필드 | 1.3 | `CombatRules` 하나 |
+| 1 | **골든 캡처** `GoblinParityTests`: `GoblinEncounterSource`·`PartyTuning.Prototype`·저장소 캐릭터 둘로 런 시드 고정, 노드 0에서 `CombatNode.Begin`, 고정 입력 시퀀스로 전투가 끝날 때까지 진행(입력 규칙은 계획에서 정하되, 승패가 나고 운명력을 쓰는 카드가 한 장 이상 배치되게 한다). 서명은 `CombatRngDeterminismTests.RunSignature`(`:18-41`)와 같은 형식(턴별 손패 id + 해석 이벤트 `ToString`). 서명 문자열을 **테스트 픽스처 파일**로 저장하고 비교한다 | 새 테스트 통과 |
+| 2 | 어셈블리 이동(2.1). 동작 변경 없음 | 전체 통과 |
+| 3 | 적 카드 JSON 3장(2.3①). `ContentBootstrapTests.cs:20`의 26 → 29, `StructuredCardDescriptionTests.cs:106-110`의 `GoblinDeck.AllCards()` 이어 붙이기 제거 | 카드 왕복·노트북 테스트 |
+| 4 | 정책 레지스트리·적 로더·`Enemies/goblin.json`(2.2, 2.3②) | 로더 테스트 |
+| 5 | 편성 로더·`Battles/goblin_single.json`·부팅 연결·`ContentEncounterSource`(2.3③, 2.4, 2.5). **동등성 테스트의 공급자를 `ContentEncounterSource`로 바꾼다** | 픽스처와 동일 |
+| 6 | 캐릭터 스탯·멤버별 생존 충전·`RunSetup` 인자 정리(2.3④, 2.5). `DeckPoolCharacterLoaderTests`의 인라인 캐릭터 JSON에 새 키 추가 | 픽스처와 동일 |
+| 7 | `combat_rules.json`·`CombatRules`·`CombatNodeContext` 생성자(2.3⑤, 2.5). 동등성 테스트가 `content.CombatRules`를 쓰게 한다 | 픽스처와 동일 |
+| 8 | Unity 변경·씬 재생성·Unity EditMode 테스트(2.6) | 배치 EditMode 통과 |
+| 9 | 삭제와 테스트 이전(2.8)·문서 갱신(2.10) | `Tools/verify.sh` 전체 |
 
-`PartyMemberLoadout`에 `SurviveCharges`, `RunMember`에 `SurviveCharges`(기본값, 전투마다 로드아웃으로 전달)를 추가한다.
+픽스처는 9단계 뒤에도 남는다 — C# 원본이 사라진 뒤에도 JSON 경로가 그 서명과 계속 비교된다.
 
-#### 2.4 이관 순서 (동등성 먼저)
+#### 2.8 삭제와 테스트 이전
 
-1. **골든 캡처:** `GoblinDeck`이 살아 있는 상태에서 고정 런 시드·노드 순번 0으로 `CombatNode`를 만들고
-   고정 입력 시퀀스로 전투를 끝까지 돌려 타임라인 전체를 테스트 픽스처로 박는다(`GoblinParityTests`).
-2. JSON 적 카드·적·편성·로더를 추가하고 `ContentEncounterSource`로 **같은 테스트를 통과**시킨다.
-3. 그 뒤에야 `GoblinDeck`·`GoblinEncounterSource`·`PartyPrototypeRoster`·`PartyTuning.Prototype`·
-   `EnemyName`을 지운다.
-4. `GoblinDeck`을 참조하던 테스트를 `TestContent`(`Assets/Core/Tests/EditMode/TestContent.cs`)의 JSON
-   고블린으로 옮긴다. 2026-09-15 기준 참조 파일: `GoblinDeckTests`·`DescriptionComposerTests`·
-   `DescriptionCatalogValidatorTests`·`DeckPileVisibilityTests`·`StructuredCardDescriptionTests`·
-   `CombatRngDeterminismTests`(Core). `PartyPrototypeRoster`는
-   `DeckPoolCharacterContentTests`, `PartyTuning.Prototype`은 `PartyDeckCombatSessionTests`·`RunStateTests`.
+| 삭제 | 위치 |
+|---|---|
+| `GoblinDeck` | `Assets/Core/Simulation/GoblinDeck.cs` |
+| `GoblinEncounterSource` | `Assets/Core/Simulation/GoblinEncounterSource.cs` |
+| `PartyPrototypeRoster` | `Assets/Core/Simulation/PartyPrototypeRoster.cs` |
+| `PartyTuning.Prototype`, `DefaultMemberMaxHp`, `SurviveChargesPerCombat` | `PartyTuning.cs` (2.1의 이동 후 위치) |
+| `PlaytestKoreanText.EnemyName`, `CardName`의 고블린 3건 | 2.6 |
 
-#### 2.5 2단계 테스트
+원본을 참조하는 테스트(2026-09-17 조사, 착수 시 grep 재확인):
 
-- 로더마다 위 검증 항목이 각각 오류로 잡히는지(파일 하나씩 깨뜨린 입력).
-- 부팅: 저장소 콘텐츠 전체가 `Succeeded`.
-- 편성 선택: 같은 노드 시드 = 같은 편성, 편성 후보 둘인 합성 콘텐츠에서 노드 순번에 따라 달라짐.
-- 카드 왕복 바이트 테스트에 적 카드 3장 포함 통과. 노트북 테스트(`node --test "Tools/card-idea-notebook/*.test.mjs"`) 통과.
-- `GoblinParityTests` 통과 후 C# 원본 삭제.
+| 테스트 | 조치 |
+|---|---|
+| `GoblinDeckTests` | 고블린 JSON을 검증하는 테스트로 바꾸거나(묶음 4개·정책 키·카드 3장) 로더 테스트에 흡수 |
+| `EncounterSourceTests` | `ContentEncounterSource` 테스트로 교체 |
+| `DescriptionComposerTests`·`DescriptionCatalogValidatorTests`·`DeckPileVisibilityTests`·`StructuredCardDescriptionTests`·`CombatRngDeterminismTests` | `TestContent.Content()`의 JSON 고블린(카드·적 정의)으로 이전 |
+| `DeckPoolCharacterContentTests` (`:124-155`) | `PartyPrototypeRoster` 상수 대신 캐릭터 JSON 값으로 |
+| `PartyDeckCombatSessionTests` (`:166-174` `Prototype` 단언, HP·충전 검증 테스트) | `combat_rules.json` 값 단언으로, 검증 테스트는 로드아웃 검증으로 |
+| `RunSetupTests`·`CombatNodeTests` | 새 `NewRun`·`CombatNodeContext` 시그니처로 |
 
-#### 2.6 문서 갱신 (2단계 커밋에 포함)
+#### 2.9 2단계 테스트
 
-- `docs/agents/content-authoring.md` 「원본의 위치」에 적·편성·전투 규칙 JSON 추가.
-- `docs/superpowers/README.md` 카드 콘텐츠 흐름의 "적 카드는 아직 JSON이 아니다" 문장 갱신.
-- 백로그 §14.2의 `PlaytestKoreanText` 항목에 `EnemyName` 제거 반영.
+- 로더마다 2.3의 검증 항목을 하나씩 깨뜨린 입력이 각각 오류로 잡힌다(적·편성·캐릭터 추가분·전투 규칙).
+- 부팅: 저장소 콘텐츠 전체가 `Succeeded`이고 `Enemies`·`Battles`·`CombatRules`가 채워진다. 적 정책 키 오타는 부팅
+  `Failed`의 오류 목록에 들어간다.
+- `EnemyPolicyRegistry`: 기본 세 키 등록, 미등록 키 `Create` 예외.
+- `ContentEncounterSource`: 같은 노드 시드 = 같은 편성. 편성 후보 둘인 합성 콘텐츠에서 노드 순번에 따라 달라짐.
+  `Pick` 두 번이 서로 다른 정책 인스턴스를 돌려줌. 전투 안 id가 `goblin#0`, `SpecId`가 `goblin`.
+- 멤버별 생존 충전: 충전 0인 멤버와 1인 멤버가 한 세션에서 따로 동작한다.
+- `GoblinParityTests` 통과. 카드 왕복 바이트 테스트·노트북 테스트(`node --test "Tools/card-idea-notebook/*.test.mjs"`) 통과.
+  노트북의 카드 수 단언(`index.test.mjs:192`, `>= 26`)은 그대로 통과한다.
+
+#### 2.10 문서 갱신 (9단계 커밋에 포함)
+
+- `docs/agents/content-authoring.md` 「원본의 위치」: `Content/<종류>/*.json` 한 줄에 `Enemies`·`Battles`를 더하고, 루트 단일
+  파일 `combat_rules.json`을 별도 문장으로 적는다.
+- `docs/superpowers/README.md:168`의 "적 카드는 아직 JSON이 아니다" 문장 갱신.
+- 백로그 §14.2(`plans/2026-07-16-architecture-refactor-backlog.md:588-601`)의 `PlaytestKoreanText` 항목에 `EnemyName`·고블린
+  카드 이름 제거 반영.
+- 이 문서의 상태를 2단계 완료로, 색인 행 갱신, 2단계 계획 보관(규칙 20).
+
+**사용자 확인(2단계 끝):** Play로 1단계와 같은 사이클(승리 → 보상 → 다음 전투, 패배 → 처음부터)과 적 이름 "고블린" 표시.
 
 ### 알려진 제약
 
 - **콘텐츠를 추가하면 같은 시드의 결과가 바뀐다.** 캐릭터 풀의 카드 목록과 편성 후보 목록이 길이·순서째
   RNG 입력이다. 시드는 콘텐츠 버전에 묶인다. 임시 풀 데이터를 실제 캐릭터 풀로 바꾸는 순간에도 바뀐다.
 - **임시 데이터 기간에는 "카드는 정확히 한 풀에만" 검증을 켤 수 없다.** 두 캐릭터가 같은 `starter` 풀을 가리킨다.
+- **Core가 적 정책과 파티 튜닝을 안다.** 결정 14·15로 "적이 턴마다 무엇을 내놓는가"의 선택 규칙과 파티 규모·드로우 표가
+  `FateWeaver.Core`에 들어간다. Simulation에서만 쓰던 타입이지만 콘텐츠 검증이 코어에 있으므로 따라 들어간다.
 - **편성은 적 한 마리만 저작할 수 있다.** 세션이 정책 하나만 받기 때문이다. 모양(적 id 분리, 적마다 정책 쌍)은
   이번에 맞추므로 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.
 - **HP가 전투 사이에 이어지지 않는다.** 매 전투 최대 HP로 시작한다. `RunMember.Hp` 자리는 이미 있다.

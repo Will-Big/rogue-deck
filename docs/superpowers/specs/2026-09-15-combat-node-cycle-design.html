@@ -323,9 +323,9 @@
 <header class="masthead">
   <div class="wrap">
     <h1>전투 노드 한 사이클</h1>
-    <span class="chip">1단계 구현 완료</span>
+    <span class="chip">1단계 구현 완료 · 2단계 설계 확정</span>
     <div class="meta">
-      <span><b>작성일</b>2026-09-15</span>
+      <span><b>작성일</b>2026-09-15 · 2단계 개정 2026-09-17</span>
       <span><b>범위</b>구성 → 전투 → 승패 → 보상 선택 → 덱 반영 → 다음 전투</span>
       <span><b>세션 인계용</b><code>2026-09-15-combat-node-cycle-design.md</code></span>
     </div>
@@ -501,14 +501,14 @@
       <tr>
         <td><code>Enemies/goblin.json</code><br><small>신규</small></td>
         <td><code>id</code> · <code>displayName</code> · <code>maxHp</code> · <code>policy</code>(<code>random_pick</code>/<code>shuffle_bag</code>/<code>sequence</code>) · <code>bundles</code>(카드 id 배열의 배열)</td>
-        <td><code>EnemyContentLoader</code> → 편성 공급자가 적·정책 인스턴스 생성, 전투 화면이 적 이름 표시</td>
+        <td><code>EnemyContentLoader</code>(정책 키는 <code>CombatRegistries</code>의 정책 레지스트리로 검증) → 편성 공급자가 적·정책 인스턴스를 매번 새로 생성, 전투 화면이 적 이름 표시</td>
         <td><code>GoblinDeck</code>의 묶음·정책·<code>EnemyId</code>·<code>StartingHp</code>, <code>PlaytestKoreanText.EnemyName</code></td>
       </tr>
       <tr>
         <td><code>Battles/goblin_single.json</code><br><small>신규</small></td>
-        <td>편성 후보 하나: <code>id</code> · <code>enemies</code>(적 id 배열 — 지금은 정확히 1개, 다중 적 후속에서 해제)</td>
+        <td>편성 후보 하나: <code>id</code> · <code>enemies</code>(적 id 배열 — 지금은 정확히 1개, 다중 적 후속에서 해제). <code>bundles</code>는 적이 한 턴에 통째로 올리는 카드 세트의 목록이다</td>
         <td><code>BattleContentLoader</code> → <code>ContentEncounterSource</code>가 편성 스트림으로 후보 중 하나 선택</td>
-        <td>1단계의 <code>GoblinEncounterSource</code>, 컨트롤러의 <code>new Enemy(GoblinDeck.EnemyId, …)</code></td>
+        <td>1단계의 <code>GoblinEncounterSource</code></td>
       </tr>
       <tr>
         <td><code>Characters/member_a.json</code><br><small>기존 · 필드 추가</small></td>
@@ -519,13 +519,76 @@
       <tr>
         <td><code>combat_rules.json</code><br><small>신규 · 단일 파일</small></td>
         <td>파티 전체에 걸리는 규칙: <code>fateEnergyPerTurn</code> · <code>minPartySize</code> · <code>maxPartySize</code> · <code>drawByLivingCount</code> · <code>rewardChoices</code></td>
-        <td><code>CombatRulesLoader</code> → 노드 문맥(운명력·드로우·보상 장수)</td>
-        <td><code>PartyTuning.Prototype</code>, <code>PartyPrototypeRoster</code>, 컨트롤러 상수 <code>FateEnergyPerTurn</code></td>
+        <td><code>CombatRulesLoader</code> → <code>CombatRules</code>(안에 <code>PartyTuning</code>) → 노드 문맥 하나로 운명력·드로우·보상 장수</td>
+        <td><code>PartyTuning.Prototype</code>, <code>PartyPrototypeRoster</code>, 1단계 <code>CombatNodeFlow</code> 인스펙터 값 <code>_fateEnergyPerTurn</code>·<code>_rewardChoices</code></td>
       </tr>
     </tbody>
   </table>
   </div>
   <p><b>JSON이 아닌 것:</b> 런 시드(플레이 입력이라 <code>CombatNodeFlow</code> 인스펙터 값), 파티원 색(표현 자원이라 <code>CharacterAsset</code>에 남는다).</p>
+</section>
+
+<section>
+  <h2>2단계: 콘텐츠 검증에 필요한 타입을 코어로 옮긴다</h2>
+  <p>콘텐츠 로더는 <code>FateWeaver.Core</code>에 있고 이 어셈블리는 아무것도 참조하지 않는다. 그런데 적 JSON을 검증하려면 정책 키를,
+  전투 규칙 JSON을 담으려면 <code>PartyTuning</code>을 알아야 한다 — 둘 다 지금은 Core를 참조하는 쪽인 <code>FateWeaver.Simulation</code>에 있다.
+  그래서 <b>그 타입들을 Core로 옮기고</b>, 효과·상태 키와 같은 방식으로 부팅에서 검증한다.</p>
+  <figure>
+    <svg viewBox="0 0 820 300" role="img" aria-label="2단계 어셈블리 배치">
+      <defs>
+        <marker id="asm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="800" y="24" font-size="12" font-weight="700" text-anchor="end" fill="currentColor" opacity="0.6">FateWeaver.Simulation</text>
+      <line x1="20" y1="118" x2="800" y2="118" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.35"/>
+      <text x="800" y="140" font-size="12" font-weight="700" text-anchor="end" fill="currentColor" opacity="0.6">FateWeaver.Core (참조 없음)</text>
+
+      <rect x="20" y="40" width="230" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text x="135" y="64" font-size="12.5" text-anchor="middle" fill="currentColor">ContentEncounterSource</text>
+      <text x="135" y="82" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">편성 선택 · 적·정책 새로 생성</text>
+      <rect x="290" y="40" width="200" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text x="390" y="64" font-size="12.5" text-anchor="middle" fill="currentColor">CombatNode</text>
+      <text x="390" y="82" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">문맥 = CombatRules 하나</text>
+      <rect x="530" y="40" width="270" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text x="665" y="64" font-size="12.5" text-anchor="middle" fill="currentColor">DeckCombatSession</text>
+      <text x="665" y="82" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">생존 충전은 멤버 로드아웃에서</text>
+
+      <rect x="20" y="160" width="230" height="56" rx="3" fill="none" stroke-width="1.8" style="stroke:var(--accent)"/>
+      <text x="135" y="184" font-size="12.5" text-anchor="middle" fill="currentColor">정책 3종 · 레지스트리</text>
+      <text x="135" y="202" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">옮겨 옴 · CombatRegistries에 등록</text>
+      <rect x="290" y="160" width="200" height="56" rx="3" fill="none" stroke-width="1.8" style="stroke:var(--accent)"/>
+      <text x="390" y="184" font-size="12.5" text-anchor="middle" fill="currentColor">PartyTuning</text>
+      <text x="390" y="202" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">옮겨 옴 · 파티 규모·드로우 표</text>
+      <rect x="530" y="160" width="270" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text x="665" y="184" font-size="12.5" text-anchor="middle" fill="currentColor">ContentBootstrap.Load</text>
+      <text x="665" y="202" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.7">… 캐릭터 → 적 → 편성 → 전투 규칙</text>
+
+      <line x1="135" y1="98" x2="135" y2="158" stroke="currentColor" stroke-width="1.2" marker-end="url(#asm-arrow)"/>
+      <text x="145" y="134" font-size="10.5" fill="currentColor">키로 정책 생성</text>
+      <line x1="390" y1="98" x2="390" y2="158" stroke="currentColor" stroke-width="1.2" marker-end="url(#asm-arrow)"/>
+      <text x="400" y="134" font-size="10.5" fill="currentColor">rules.Party 전달</text>
+      <line x1="528" y1="188" x2="492" y2="188" stroke="currentColor" stroke-width="1.2" marker-end="url(#asm-arrow)"/>
+      <line x1="665" y1="218" x2="665" y2="250" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="665" y1="250" x2="135" y2="250" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="135" y1="250" x2="135" y2="220" stroke="currentColor" stroke-width="1.2" marker-end="url(#asm-arrow)"/>
+      <text x="400" y="244" font-size="10.5" text-anchor="middle" fill="currentColor">적 JSON의 정책 키가 등록됐나 (AuthoringContext)</text>
+      <text x="510" y="180" font-size="10" text-anchor="middle" fill="currentColor">담음</text>
+      <text x="20" y="284" font-size="10.5" fill="currentColor" opacity="0.6">화살표는 모두 위에서 아래(또는 Core 안)로만 간다. Core는 Simulation을 모른다.</text>
+    </svg>
+    <figcaption>강조한 두 상자가 이번에 Simulation에서 Core로 내려오는 타입이다. 코드는 바뀌지 않고 위치와 네임스페이스만 바뀐다.</figcaption>
+  </figure>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>객체 (2단계 신규·변경)</th><th>책임 (한 줄)</th><th>이 객체가 모르는 것</th></tr></thead>
+    <tbody>
+      <tr><td><code>EnemyPolicyRegistry</code> <small>(Core)</small></td><td>정책 키를 정책 생성 함수로 바꿔 준다</td><td>어느 적이 어떤 키를 쓰는지</td></tr>
+      <tr><td><code>EnemyContentLoader</code> · <code>BattleContentLoader</code> · <code>CombatRulesLoader</code> <small>(Core)</small></td><td>각자의 JSON을 읽어 검증된 카탈로그로 만든다</td><td>정책 인스턴스, 이번에 무엇이 뽑힐지</td></tr>
+      <tr><td><code>CombatRules</code> <small>(Core)</small></td><td>파티 튜닝·턴당 운명력·보상 장수를 한 묶음으로 든다</td><td>세션, 노드</td></tr>
+      <tr><td><code>ContentEncounterSource</code> <small>(Simulation)</small></td><td>편성 스트림으로 편성 하나를 골라 적마다 (적, 새 정책) 쌍을 만든다</td><td>파티, 보상, JSON 파일</td></tr>
+    </tbody>
+  </table>
+  </div>
 </section>
 
 <section>
@@ -536,7 +599,7 @@
     <tbody>
       <tr><td>캐릭터 풀 데이터 — 임시 <code>starter</code>에서 캐릭터별 실제 풀로 JSON만 교체</td><td>보상 추첨 방식: 승리 직후 (카드, 소유자) 쌍에서 n회, 뽑힌 카드의 다른 쌍은 제거. 바꾸면 모든 기존 시드의 보상이 바뀐다</td></tr>
       <tr><td>편성 공급(<code>IEncounterSource</code>) — 1단계 고블린 → 2단계 JSON</td><td>스트림 이름표 상수와 해시 혼합식. 바꾸면 모든 기존 시드가 바뀐다</td></tr>
-      <tr><td>적 정책 — 레지스트리에 키 하나 등록</td><td>노드 단계 네 가지(전투·보상·패배·완료)의 전이 순서</td></tr>
+      <tr><td>적 정책 — <code>CombatRegistries</code>에 키 하나 등록하면 적 JSON이 바로 쓸 수 있다</td><td>노드 단계 네 가지(전투·보상·패배·완료)의 전이 순서</td></tr>
       <tr><td>보상 장수 — <code>combat_rules.json</code></td><td>"보상은 승리에만, 패배는 런 종료"</td></tr>
     </tbody>
   </table>
@@ -594,6 +657,40 @@
       <text x="440" y="150" font-size="10.5" fill="currentColor" style="fill:var(--vital)">승패·보상·반영을 Unity 없이 테스트, 컨트롤러는 오히려 줄어든다</text>
     </svg>
   </figure>
+  <h3>3. 적 정책 키를 언제 검증하나 — 코어로 옮김 vs 데이터만 코어 vs 부팅 둘</h3>
+  <figure>
+    <svg viewBox="0 0 820 230" role="img" aria-label="정책 배치 대안 비교">
+      <line x1="273" y1="12" x2="273" y2="220" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+      <line x1="546" y1="12" x2="546" y2="220" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+      <text x="14" y="26" font-size="12.5" font-weight="700" fill="currentColor">채택 — 정책을 Core로</text>
+      <text x="14" y="44" font-size="10.5" fill="currentColor" opacity="0.7">"policy": "random_pik" 오타</text>
+      <rect x="20" y="60" width="236" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="138" y="80" font-size="11" text-anchor="middle" fill="currentColor">ContentBootstrap.Load</text>
+      <text x="20" y="116" font-size="11" fill="currentColor">→ <tspan style="fill:var(--vital)" font-weight="700">Failed</tspan>, 카드 효과 오타와</text>
+      <text x="20" y="134" font-size="11" fill="currentColor">  같은 오류 목록</text>
+      <text x="20" y="166" font-size="10.5" fill="currentColor" style="fill:var(--vital)">부팅 성공 = 콘텐츠 유효</text>
+      <text x="20" y="190" font-size="10.5" fill="currentColor" opacity="0.7">대가: 파일 6개 이동, using 약 20곳</text>
+
+      <text x="287" y="26" font-size="12.5" font-weight="700" fill="currentColor">기각 — 키 문자열만 Core</text>
+      <text x="287" y="44" font-size="10.5" fill="currentColor" opacity="0.7">같은 오타</text>
+      <rect x="293" y="60" width="236" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="411" y="80" font-size="11" text-anchor="middle" fill="currentColor">Load → Succeeded</text>
+      <text x="293" y="116" font-size="11" fill="currentColor">→ 편성 공급자 생성에서</text>
+      <text x="293" y="134" font-size="11" fill="currentColor">  <tspan style="fill:var(--enemy)" font-weight="700">따로</tspan> 터진다</text>
+      <text x="293" y="166" font-size="10.5" fill="currentColor" style="fill:var(--enemy)">부팅 통과한 콘텐츠가 전투에서 실패</text>
+      <text x="293" y="190" font-size="10.5" fill="currentColor" opacity="0.7">오류 경로 둘, 테스트도 둘</text>
+
+      <text x="560" y="26" font-size="12.5" font-weight="700" fill="currentColor">기각 — 부팅을 둘로</text>
+      <text x="560" y="44" font-size="10.5" fill="currentColor" opacity="0.7">같은 오타</text>
+      <rect x="566" y="60" width="236" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="684" y="80" font-size="11" text-anchor="middle" fill="currentColor">Load → CombatContentBootstrap</text>
+      <text x="566" y="116" font-size="11" fill="currentColor">→ 두 번째 부팅의 오류 목록</text>
+      <text x="566" y="166" font-size="10.5" fill="currentColor" style="fill:var(--enemy)">콘텐츠 묶음·진입점이 둘</text>
+      <text x="566" y="190" font-size="10.5" fill="currentColor" opacity="0.7">규칙 5 "ContentBootstrap.Load가 읽는다" 수정</text>
+    </svg>
+    <figcaption><code>PartyTuning</code>도 같은 논리로 Core로 옮기고 <code>CombatRules</code>가 품는다. 기각안은 Core에 같은 필드를 가진 수치 타입을 하나 더 두는 것(필드 중복)과
+    세션이 <code>CombatRules</code>를 직접 받는 것(전투와 무관한 보상 장수를 세션이 알게 됨)이었다.</figcaption>
+  </figure>
 </section>
 
 <section>
@@ -605,7 +702,9 @@
     <li><b>기존 Run 뼈대의 노드 목록 계열이 지워진다.</b> <code>RunDefinition</code>·<code>RunNodeData</code>·<code>RunNodeRegistry</code>·<code>IRunNodeHandler</code> 등 7개 타입. 노드 목록은 런이 아니라 맵의 범주로 정했으므로, 맵은 이 뼈대를 되살리지 않고 새로 설계해야 한다.</li>
     <li><b>편성에는 적을 한 마리만 저작할 수 있다.</b> 기존 세션이 정책 하나만 받고, 적이 둘 이상이면 적 카드의 주인을 비운다. 다중 적과 같은 적 여럿은 <b>반드시 할 후속 작업</b>이다. 그 비용을 줄이려고 이번에 <b>적 JSON id와 전투 안 id(<code>goblin#0</code>)를 분리</b>하고 <b>편성 공급자가 적마다 (적, 정책) 쌍</b>을 돌려주게 한다 — 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.</li>
     <li><b>HP가 전투 사이에 이어지지 않는다.</b> 세션이 최대 HP만 받는다. <b>반드시 할 후속 작업</b>이며 <code>RunMember.Hp</code> 자리는 이미 있다. 그 전에 "전투 중 HP 0이 됐지만 파티가 이긴 파티원"의 런 처리 규칙을 정해야 한다.</li>
-    <li><b>C#에서 JSON으로 옮기는 동안 고블린 테스트 6개 파일을 옮겨야 한다.</b> 옮기기 전에 같은 시드 타임라인을 골든으로 잡아 동등성을 먼저 증명한다.</li>
+    <li><b>C#에서 JSON으로 옮기는 동안 고블린·튜닝 원본을 참조하는 테스트 약 10개 파일을 옮겨야 한다.</b> 옮기기 전에 같은 시드의 전투 서명을 픽스처로 잡아 동등성을 먼저 증명하고, 픽스처는 원본 삭제 뒤에도 남긴다.</li>
+    <li><b>Core가 "적이 턴마다 무엇을 내놓는가"와 파티 규모·드로우 표를 안다.</b> 콘텐츠 검증이 Core에 있어 따라 내려온 것이다. 앞으로 정책이 Simulation 타입(세션 상태 등)을 보고 싶어지면 이 배치와 부딪힌다 — 그때는 정책 인터페이스가 Core 타입만 받게 설계해야 한다.</li>
+    <li><b>정책 키 문자열이 저장 형식처럼 굳는다.</b> <code>random_pick</code> 같은 키 이름을 바꾸면 모든 적 JSON을 함께 고쳐야 한다.</li>
   </ul>
 </section>
 
@@ -661,6 +760,34 @@
     </li>
   </ol>
   <p>패배했다면 4단계에서 <code>Phase=Defeated</code>, <code>RunOutcome=Defeat</code>, 보상 없음 → <code>CombatResultView</code>의 "처음부터" → 새 <code>RunState</code>.</p>
+
+  <h3>2단계가 끝난 뒤 같은 첫 노드</h3>
+  <ol class="steps">
+    <li>
+      <h3><code>ContentBootstrap.Load</code></h3>
+      <ul class="events">
+        <li>… 캐릭터 → member_a { maxHp 25, surviveCharges 1 } · member_b { 25, 1 }</li>
+        <li>적 → goblin { displayName "고블린", maxHp 28, policy <b>random_pick</b>(등록됨), 묶음 4개 }</li>
+        <li>편성 → [goblin_single: enemies ["goblin"]] · 전투 규칙 → { Party { 1~3명, 드로우 1:3 2:4 3:5 }, 운명력 3, 보상 3 } → <b>Succeeded</b></li>
+      </ul>
+    </li>
+    <li>
+      <h3><code>CombatNodeFlow.Start</code></h3>
+      <ul class="events">
+        <li>context = (Statuses, <b>CombatRules</b>, ContentEncounterSource(content, 정책 레지스트리), CharacterPoolRewardSource)</li>
+        <li>RunSetup.NewRun(content, [member_a, member_b], runSeed=1) → HP·생존 충전을 캐릭터 JSON에서</li>
+      </ul>
+    </li>
+    <li>
+      <h3><code>CombatNode.Begin</code></h3>
+      <ul class="events">
+        <li>편성 스트림 → 편성 id 정렬 [goblin_single] → rng.Next(1)=0</li>
+        <li>goblin → Enemy(<b>goblin#0</b>, specId goblin, 28) + 레지스트리.Create(random_pick, 묶음 4개) = <b>새</b> RandomPickPolicy</li>
+        <li>DeckCombatSession(로드아웃마다 SurviveCharges 1, rules.Party, 운명력 3, 전투 스트림) — 1단계와 같은 값이므로 <b>같은 입력이면 전투 서명이 같다</b></li>
+      </ul>
+    </li>
+  </ol>
+  <p>적 JSON에 <code>"policy": "random_pik"</code> 오타가 있었다면 1번에서 <code>Failed</code>로 끝나고, Flow는 기존 "콘텐츠 로드 실패" 메시지를 띄운 채 노드를 시작하지 않는다.</p>
 </section>
 
 <section>
@@ -670,7 +797,7 @@
     <thead><tr><th>단계</th><th>끝났을 때</th><th>사용자 몫</th></tr></thead>
     <tbody>
       <tr><td>1 — 흐름</td><td>승리→보상→덱 반영→다음 전투, 패배→처음부터가 돈다. 적·수치는 C# 그대로. 머지 가능.</td><td>두 패널의 위치·크기·색 조정, Play로 한 사이클</td></tr>
-      <tr><td>2 — 구성 저작</td><td>위 표의 JSON 넷이 원본이 되고 대체 대상 C#이 사라진다. 1단계와 똑같이 돈다.</td><td>Play로 동일 동작 확인</td></tr>
+      <tr><td>2 — 구성 저작</td><td>위 표의 JSON 다섯이 원본이 되고 대체 대상 C#이 사라진다. 순서: 전투 서명 캡처 → 타입 Core 이동 → 적 카드 → 적 → 편성(여기서 서명 일치 확인) → 캐릭터 스탯 → 전투 규칙 → Unity·씬 재생성 → 원본 삭제. 1단계와 똑같이 돈다.</td><td>Play로 동일 동작과 적 이름 "고블린" 확인</td></tr>
     </tbody>
   </table>
   </div>
@@ -684,6 +811,8 @@
     <li>위 구조와 두 단계 분할.</li>
     <li><b>앞선 합의에서 바뀐 점 하나:</b> 처음엔 전투 노드를 기존 <code>IRunNodeHandler</code>의 첫 구현으로 두려 했으나, "노드 목록은 맵의 범주"로 정한 뒤에는
     그 뼈대를 해석할 호출자가 없다. 그래서 <code>CombatNode</code>를 독립 객체로 두고 노드 목록 계열 7개 타입을 지운다(프로덕션 참조 0).</li>
+    <li><b>2단계 개정(2026-09-17):</b> 적 정책 3종·<code>EnemyCardBundle</code>·<code>PartyTuning</code>을 Core로 옮기고, 정책 키를 부팅에서 검증하며,
+    <code>CombatRules</code>가 <code>PartyTuning</code>을 품는다. 전투 서명 동등성을 먼저 잡고 C# 원본은 마지막에 지운다.</li>
   </ol>
 </section>
 
