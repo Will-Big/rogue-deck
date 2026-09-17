@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Json;
 using FateWeaver.Core.Combat;
 using Newtonsoft.Json;
@@ -25,7 +26,7 @@ namespace FateWeaver.Core.Authoring.Rules
     /// <summary>Content 루트의 단일 파일 combat_rules.json을 검증한다. 다른 카탈로그에 의존하지 않는다.</summary>
     public static class CombatRulesLoader
     {
-        public const string FileName = "combat_rules.json";
+        public const string FileName = CardContentFiles.CombatRulesFileName;
 
         private static readonly string[] RequiredKeys =
             { "fateEnergyPerTurn", "minPartySize", "maxPartySize", "drawByLivingCount", "rewardChoices" };

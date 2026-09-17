@@ -153,6 +153,29 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Zero_and_nonzero_survive_charges_resolve_independently_on_a_shared_lethal_hit()
+        {
+            var session = Session(
+                new[]
+                {
+                    Loadout("a", maxHp: 10, surviveCharges: 0),
+                    Loadout("b", maxHp: 10, surviveCharges: 1)
+                },
+                new[] { EnemyStrike(damage: 50, selector: TargetSelector.All) });
+
+            var timeline = session.ResolveTurn();
+
+            var a = session.State.Party.Single(member => member.Id == "a");
+            var b = session.State.Party.Single(member => member.Id == "b");
+            Assert.IsFalse(a.IsAlive);
+            Assert.IsTrue(b.IsAlive);
+            Assert.AreEqual(1, b.Hp);
+            Assert.AreEqual(0, b.SurviveCharges);
+            Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "a"));
+            Assert.IsTrue(timeline.OfType<DeathsDoorSurvived>().Any(e => e.MemberId == "b"));
+        }
+
+        [Test]
         public void Session_rejects_player_execution_card_that_requires_direct_target()
         {
             var direct = DirectBlock();
