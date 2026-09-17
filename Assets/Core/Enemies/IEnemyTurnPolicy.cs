@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Enemies
 {
     /// <summary>Decides which enemy cards land on the future zone each turn — the seam that lets an enemy
     /// pick its bundle at random, without replacement, or from a fixed script, without touching the combat

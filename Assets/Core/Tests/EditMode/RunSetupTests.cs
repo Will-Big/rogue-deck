@@ -1,4 +1,5 @@
 using System.Linq;
+using FateWeaver.Core.Combat;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
 using NUnit.Framework;

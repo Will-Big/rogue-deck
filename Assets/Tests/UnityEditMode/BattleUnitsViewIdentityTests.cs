@@ -5,6 +5,7 @@ using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Unity;

@@ -4,6 +4,7 @@ using System.Reflection;
 using DG.Tweening;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Simulation;
 using FateWeaver.Unity;

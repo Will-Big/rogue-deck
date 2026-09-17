@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Enemies
 {
     /// <summary>묶음을 비복원으로 하나씩 낸다. 가방이 비면 전체 목록을 다시 섞어 새 가방을 만든다.
     /// 복원 추출인 RandomPickPolicy와 달리 한 바퀴 안에서는 같은 묶음이 두 번 나오지 않는다.

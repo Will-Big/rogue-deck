@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Simulation;
 using FateWeaver.Unity;
 using FateWeaver.Unity.Playback;

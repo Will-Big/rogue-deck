@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Combat;
 
 namespace FateWeaver.Simulation.Run
 {

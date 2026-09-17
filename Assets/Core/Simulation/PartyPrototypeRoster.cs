@@ -1,3 +1,5 @@
+using FateWeaver.Core.Combat;
+
 namespace FateWeaver.Simulation
 {
     /// <summary>파티 프로토타입의 id·표시명·튜닝. 로드아웃 조립은 콘텐츠가 한다 —

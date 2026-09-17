@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;

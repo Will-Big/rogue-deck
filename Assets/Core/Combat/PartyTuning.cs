@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Combat
 {
     /// <summary>Party-size limits and per-living-member combat economy values.</summary>
     public sealed class PartyTuning

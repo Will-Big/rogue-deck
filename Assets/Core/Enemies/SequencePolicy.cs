@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Enemies
 {
     /// <summary>정해진 순서대로 묶음을 하나씩 전개한다. 턴 번호로 색인하며, 목록 끝을 넘어선 턴은
     /// 마지막 묶음에 고정된다. 대본이 있는 전투(보스·튜토리얼)와 테스트가 쓴다.

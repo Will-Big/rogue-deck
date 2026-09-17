@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Enemies
 {
     /// <summary>매 턴 묶음 목록에서 하나를 무작위로 골라 통째로 전개한다. 복원 추출이라 같은 묶음이
     /// 연달아 나올 수 있다 — 턴 간 기억이 필요하면 ShuffleBagPolicy를 쓴다.

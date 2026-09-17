@@ -1,5 +1,6 @@
 using System;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
 using NUnit.Framework;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 
-namespace FateWeaver.Simulation
+namespace FateWeaver.Core.Enemies
 {
     /// <summary>적의 선택 단위. 한 턴에 함께 미래 존에 전개될 카드들을 담는다. 카드 한 장짜리도
     /// 묶음으로 만든다 — 선택 단위가 하나뿐이라야 정책이 낱장과 묶음을 갈라 다루지 않는다.
