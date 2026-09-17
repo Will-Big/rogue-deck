@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using FateWeaver.Core;
 using FateWeaver.Core.Authoring;
-using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
 using UnityEngine;
 
@@ -52,7 +52,7 @@ namespace FateWeaver.Unity
             _context = new CombatNodeContext(
                 _content.Statuses,
                 _content.CombatRules,
-                new GoblinEncounterSource(),
+                new ContentEncounterSource(_content, CombatRegistries.EnemyPolicies()),
                 new CharacterPoolRewardSource(_content));
             NewRun();
         }

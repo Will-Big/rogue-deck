@@ -36,6 +36,12 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.IsNull(
                     typeof(BattleScreenController).GetField("_party", BindingFlags.Instance | BindingFlags.NonPublic),
                     "파티 구성은 컨트롤러가 아니라 흐름이 든다.");
+                foreach (var removed in new[] { "_fateEnergyPerTurn", "_rewardChoices" })
+                {
+                    Assert.IsNull(
+                        typeof(CombatNodeFlow).GetField(removed, BindingFlags.Instance | BindingFlags.NonPublic),
+                        removed + "는 combat_rules.json으로 옮겨졌다.");
+                }
             }
             finally
             {

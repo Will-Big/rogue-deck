@@ -88,14 +88,14 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)로 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
+        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)로 적 JSON의 displayName을 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
         private string EnemyNameOf(string combatId)
         {
             foreach (var enemy in _session.State.Enemies)
             {
                 if (enemy.Id == combatId)
                 {
-                    return PlaytestKoreanText.EnemyName(enemy.SpecId, enemy.SpecId);
+                    return _content.Enemies.Get(enemy.SpecId).DisplayName;
                 }
             }
 
