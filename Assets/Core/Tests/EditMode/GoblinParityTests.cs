@@ -33,11 +33,9 @@ namespace FateWeaver.Tests
                 content, new[] { "member_a", "member_b" }, RunSeed);
             var context = new CombatNodeContext(
                 content.Statuses,
-                PartyTuning.Prototype,
-                fateEnergyPerTurn: 3,
-                rewardChoices: 3,
-                encounters: new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()),
-                rewardCandidates: new CharacterPoolRewardSource(content));
+                content.CombatRules,
+                new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()),
+                new CharacterPoolRewardSource(content));
             return CombatNode.Begin(run, context);
         }
 

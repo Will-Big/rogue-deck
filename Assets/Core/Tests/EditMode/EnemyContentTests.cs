@@ -63,5 +63,19 @@ namespace FateWeaver.Tests
                 },
                 goblin.Bundles.Select(b => string.Join(",", b.Cards.Select(c => c.Id))).ToArray());
         }
+
+        [Test]
+        public void Combat_rules_json_matches_the_prototype_values()
+        {
+            var rules = TestContent.Content().CombatRules;
+
+            Assert.AreEqual(3, rules.FateEnergyPerTurn);
+            Assert.AreEqual(3, rules.RewardChoices);
+            Assert.AreEqual(1, rules.Party.MinPartySize);
+            Assert.AreEqual(3, rules.Party.MaxPartySize);
+            Assert.AreEqual(3, rules.Party.DrawFor(1));
+            Assert.AreEqual(4, rules.Party.DrawFor(2));
+            Assert.AreEqual(5, rules.Party.DrawFor(3));
+        }
     }
 }

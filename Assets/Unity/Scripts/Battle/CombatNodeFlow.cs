@@ -21,10 +21,6 @@ namespace FateWeaver.Unity
         [Tooltip("런 시드. 같은 시드 + 같은 행동 = 같은 결과.")]
         [SerializeField] private int _runSeed = 1;
 
-        [Tooltip("1단계 임시 튜닝. 2단계에서 combat_rules.json으로 옮긴다.")]
-        [SerializeField] private int _fateEnergyPerTurn = 3;
-        [SerializeField] private int _rewardChoices = 3;
-
         private GameContent _content;
         private CombatNodeContext _context;
         private RunState _run;
@@ -55,9 +51,7 @@ namespace FateWeaver.Unity
             _content = loaded.Content;
             _context = new CombatNodeContext(
                 _content.Statuses,
-                PartyPrototypeRoster.Tuning,
-                _fateEnergyPerTurn,
-                _rewardChoices,
+                _content.CombatRules,
                 new GoblinEncounterSource(),
                 new CharacterPoolRewardSource(_content));
             NewRun();

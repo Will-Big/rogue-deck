@@ -4,6 +4,7 @@ using FateWeaver.Core.Authoring.Battles;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
 using FateWeaver.Core.Authoring.Enemies;
+using FateWeaver.Core.Authoring.Rules;
 using FateWeaver.Core.Authoring.Statuses;
 
 namespace FateWeaver.Core.Authoring
@@ -30,7 +31,7 @@ namespace FateWeaver.Core.Authoring
     }
 
     /// <summary>콘텐츠 루트 하나를 받아 카탈로그를 만든다. 순서는 상태 → 카드 → 덱·풀 → 캐릭터 →
-    /// 적 → 편성으로 고정이다 — 뒤 단계가 앞 단계의 카탈로그를 필요로 한다. 파일 I/O는
+    /// 적 → 편성 → 전투 규칙으로 고정이다 — 뒤 단계가 앞 단계의 카탈로그를 필요로 한다. 파일 I/O는
     /// CardContentFiles가 맡으므로 Unity 없이 돈다.</summary>
     public static class ContentBootstrap
     {
@@ -110,6 +111,12 @@ namespace FateWeaver.Core.Authoring
                 }
             }
 
+            var rules = CombatRulesLoader.Load(ReadFile(contentRoot, CardContentFiles.CombatRulesFileName));
+            if (!rules.Succeeded)
+            {
+                errors.AddRange(rules.Errors);
+            }
+
             if (errors.Count > 0)
             {
                 return ContentBootstrapResult.Failed(errors);
@@ -117,7 +124,7 @@ namespace FateWeaver.Core.Authoring
 
             return ContentBootstrapResult.Ok(new GameContent(
                 statuses.Catalog, cards.Catalog, decks.Catalog, pools.Catalog, characters.Catalog,
-                enemies.Catalog, battles.Catalog));
+                enemies.Catalog, battles.Catalog, rules.Rules));
         }
 
         /// <summary>상태 카탈로그만 읽는다. 부팅의 첫 단계이자, 카탈로그 하나만 필요한 곳
@@ -143,6 +150,13 @@ namespace FateWeaver.Core.Authoring
             }
 
             return CardContentFiles.ReadDirectory(directory);
+        }
+
+        /// <summary>루트 단일 파일. 없으면 null — 파일 없음 오류는 로더가 자기 이름으로 낸다.</summary>
+        private static CardContentSource ReadFile(string contentRoot, string fileName)
+        {
+            var path = Path.Combine(contentRoot, fileName);
+            return File.Exists(path) ? new CardContentSource(fileName, File.ReadAllText(path)) : null;
         }
     }
 }

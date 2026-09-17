@@ -54,7 +54,7 @@ namespace FateWeaver.Tests
                 { "goblin_single", new BattleDefinition("goblin_single", new[] { "goblin" }) },
                 { "rat_single", new BattleDefinition("rat_single", new[] { "rat" }) }
             });
-            var content = new GameContent(null, null, null, null, null, enemies, battles);
+            var content = new GameContent(null, null, null, null, null, enemies, battles, null);
             return new ContentEncounterSource(content, CombatRegistries.EnemyPolicies());
         }
 

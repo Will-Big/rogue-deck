@@ -23,6 +23,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(2, result.Content.Characters.Ids.Count);
             CollectionAssert.AreEqual(new[] { "goblin" }, result.Content.Enemies.Ids);
             CollectionAssert.AreEqual(new[] { "goblin_single" }, result.Content.Battles.Ids);
+            Assert.AreEqual(3, result.Content.CombatRules.RewardChoices);
         }
 
         [Test]
