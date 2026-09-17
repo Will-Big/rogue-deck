@@ -261,17 +261,17 @@ namespace FateWeaver.Tests.EditMode
         [Test]
         public void Korean_goblin_jab() =>
             Assert.AreEqual("[◆] 피해 4.",
-                DescriptionComposer.Describe(GoblinDeck.Thrust(), Korean));
+                DescriptionComposer.Describe(TestContent.Cards().Get("goblin_jab"), Korean));
 
         [Test]
         public void Korean_crude_guard() =>
             Assert.AreEqual("[◆] 방어 3.",
-                DescriptionComposer.Describe(GoblinDeck.CrudeGuard(), Korean));
+                DescriptionComposer.Describe(TestContent.Cards().Get("crude_guard"), Korean));
 
         [Test]
         public void Korean_sly_jab() =>
             Assert.AreEqual("[◆] 피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
-                DescriptionComposer.Describe(GoblinDeck.SlyJab(), Korean));
+                DescriptionComposer.Describe(TestContent.Cards().Get("sly_jab"), Korean));
 
         [Test]
         public void Korean_no_following_enemy_card_condition() =>

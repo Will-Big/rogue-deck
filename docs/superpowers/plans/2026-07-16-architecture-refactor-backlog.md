@@ -596,7 +596,8 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
   테스트(103줄) 말고 부르는 곳이 없었다. 전투 화면은 `DeckCombatSession`, CLI 비교 하니스는
   `ScenarioRunner`·`MultiTurnRunner`를 쓴다. **죽은 코드를 가려 준 것이 잘못된 이름이었다** —
   이름이 "playtest"라 아무도 이상하게 여기지 않았다.
-- `PlaytestKoreanText`가 남았다.
+- `PlaytestKoreanText`가 남았다. `EnemyName`과 고블린 카드 이름 3건은 전투 노드 2단계에서
+  제거했다(적 JSON `displayName`·카드 JSON `name`이 원본이다).
 
 `PlaytestKoreanText`는 이름 문제만이 아니다. 카드·적·시나리오의 한글 이름을 `switch`로 코드에 박고
 있는데(`BattleScreenController`·`CardPresentation` 등 7곳에서 호출), 카드 원본은 이미

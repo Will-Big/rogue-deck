@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using FateWeaver.Core;
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;

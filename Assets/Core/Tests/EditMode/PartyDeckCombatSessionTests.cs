@@ -144,18 +144,6 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Prototype_tuning_is_party_1_to_3_and_draw_3_4_5()
-        {
-            var tuning = PartyTuning.Prototype;
-
-            Assert.AreEqual(1, tuning.MinPartySize);
-            Assert.AreEqual(3, tuning.MaxPartySize);
-            Assert.AreEqual(3, tuning.DrawFor(1));
-            Assert.AreEqual(4, tuning.DrawFor(2));
-            Assert.AreEqual(5, tuning.DrawFor(3));
-        }
-
-        [Test]
         public void Each_member_starts_with_its_own_survive_charges()
         {
             var session = Session(new[] { Loadout("a", surviveCharges: 0), Loadout("b", surviveCharges: 2) });

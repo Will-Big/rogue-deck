@@ -21,15 +21,5 @@ namespace FateWeaver.Core.Combat
 
             return drawCount;
         }
-
-        public static PartyTuning Prototype => new PartyTuning
-        {
-            DrawByLivingCount = new Dictionary<int, int>
-            {
-                { 1, 3 },
-                { 2, 4 },
-                { 3, 5 }
-            }
-        };
     }
 }

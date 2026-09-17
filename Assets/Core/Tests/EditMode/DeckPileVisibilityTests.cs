@@ -12,9 +12,10 @@ namespace FateWeaver.Tests
         private static DeckCombatSession NewSession()
         {
             var deck = TestContent.StarterDeckCards();
+            var goblin = TestContent.Goblin();
             return new DeckCombatSession(TestContent.Statuses(),
-                deck, 30, new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
-                GoblinDeck.Policy(), 3, 5, 1);
+                deck, 30, new[] { new Enemy(goblin.Enemy.SpecId, goblin.Enemy.Hp) },
+                goblin.Policy, 3, 5, 1);
         }
 
         private static int IndexOfAffordableExecution(DeckCombatSession session)

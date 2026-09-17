@@ -9,6 +9,10 @@
 Assets/StreamingAssets/Content/<종류>/*.json
 ```
 
+종류는 `Cards`·`Decks`·`Pools`·`Characters`·`Statuses`·`Enemies`·`Battles`다. 전투 규칙(턴당
+운명력·파티 규모·생존자 수별 드로우·보상 장수)은 종류 폴더가 아니라 루트 단일 파일
+`Content/combat_rules.json`이다.
+
 부팅 시 `ContentBootstrap.Load`가 읽어 코어 데이터로 만든다. **새 카드를 C# 상수로 박지 않는다.**
 
 ## SO 카드 저작 파이프라인은 없다
