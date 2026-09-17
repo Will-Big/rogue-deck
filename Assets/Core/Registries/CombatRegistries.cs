@@ -1,4 +1,5 @@
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
 
@@ -46,6 +47,15 @@ namespace FateWeaver.Core
             actions.Register(new SwapExecutionOrderHandler());
             actions.Register(new LockHandler());
             return actions;
+        }
+
+        public static EnemyPolicyRegistry EnemyPolicies()
+        {
+            var policies = new EnemyPolicyRegistry();
+            policies.Register(EnemyPolicyKeys.RandomPick, bundles => new RandomPickPolicy(bundles));
+            policies.Register(EnemyPolicyKeys.ShuffleBag, bundles => new ShuffleBagPolicy(bundles));
+            policies.Register(EnemyPolicyKeys.Sequence, bundles => new SequencePolicy(bundles));
+            return policies;
         }
     }
 }

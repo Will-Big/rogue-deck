@@ -1,7 +1,11 @@
+using System.IO;
 using System.Linq;
+using FateWeaver.Core.Authoring;
+using FateWeaver.Core.Authoring.Enemies;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Status;
 using NUnit.Framework;
 
@@ -43,6 +47,28 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, sly.Effects.Single().EffectValue);
             Assert.AreEqual(6, sly.Effects.Single().SuccessEffectValue);
             Assert.AreEqual(Side.Player, ((NoPrecedingCardOfSide)sly.Effects.Single().Condition).Side);
+        }
+
+        [Test]
+        public void Goblin_is_authored_with_four_bundles_and_random_pick()
+        {
+            var sources = CardContentFiles.ReadDirectory(Path.Combine(TestContent.Root(), "Enemies"));
+            var result = EnemyContentLoader.Load(sources, TestContent.Cards(), AuthoringContext.Default());
+
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            var goblin = result.Catalog.Get("goblin");
+            Assert.AreEqual("고블린", goblin.DisplayName);
+            Assert.AreEqual(28, goblin.MaxHp);
+            Assert.AreEqual(EnemyPolicyKeys.RandomPick, goblin.Policy);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "goblin_jab",                 // A 늦은 단타
+                    "sly_jab,crude_guard",        // B 선공 후 방어
+                    "sly_jab,goblin_jab",         // C 앞뒤로 벌린 2연타
+                    "crude_guard,crude_guard"     // D 농성 (방어 재부여는 합산 → 방어도 6)
+                },
+                goblin.Bundles.Select(b => string.Join(",", b.Cards.Select(c => c.Id))).ToArray());
         }
     }
 }

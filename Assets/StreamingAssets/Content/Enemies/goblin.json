@@ -1,0 +1,12 @@
+{
+  "id": "goblin",
+  "displayName": "고블린",
+  "maxHp": 28,
+  "policy": "random_pick",
+  "bundles": [
+    ["goblin_jab"],
+    ["sly_jab", "crude_guard"],
+    ["sly_jab", "goblin_jab"],
+    ["crude_guard", "crude_guard"]
+  ]
+}
