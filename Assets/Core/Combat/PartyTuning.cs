@@ -3,13 +3,11 @@ using System.Collections.Generic;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Party-size limits and per-living-member combat economy values.</summary>
+    /// <summary>파티 규모 한계와 생존자 수별 드로우 표. 멤버 HP·생존 충전은 캐릭터 JSON이 원본이다.</summary>
     public sealed class PartyTuning
     {
         public int MinPartySize { get; init; } = 1;
         public int MaxPartySize { get; init; } = 3;
-        public int DefaultMemberMaxHp { get; init; }
-        public int SurviveChargesPerCombat { get; init; }
         public IReadOnlyDictionary<int, int> DrawByLivingCount { get; init; }
 
         public int DrawFor(int livingCount)
@@ -26,8 +24,6 @@ namespace FateWeaver.Core.Combat
 
         public static PartyTuning Prototype => new PartyTuning
         {
-            DefaultMemberMaxHp = 25,
-            SurviveChargesPerCombat = 1,
             DrawByLivingCount = new Dictionary<int, int>
             {
                 { 1, 3 },

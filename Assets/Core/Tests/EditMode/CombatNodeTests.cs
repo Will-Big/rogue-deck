@@ -18,14 +18,12 @@ namespace FateWeaver.Tests
         private static CardDefinition Hit() => CardFixtures.Damage("hit", 5, cost: 0);
 
         private static RunMember Member(string id, int hitCount)
-            => new RunMember(id, id, 20, Enumerable.Range(0, hitCount).Select(_ => Hit()));
+            => new RunMember(id, id, 20, 0, Enumerable.Range(0, hitCount).Select(_ => Hit()));
 
         private static PartyTuning Tuning() => new PartyTuning
         {
             MinPartySize = 1,
             MaxPartySize = 3,
-            DefaultMemberMaxHp = 20,
-            SurviveChargesPerCombat = 0,
             DrawByLivingCount = new Dictionary<int, int> { { 1, 3 }, { 2, 4 }, { 3, 5 } }
         };
 

@@ -77,7 +77,7 @@ namespace FateWeaver.Unity
             }
 
             _run = RunSetup.NewRun(
-                _content, _party.Select(member => member.Id).ToList(), PartyPrototypeRoster.Tuning, _runSeed);
+                _content, _party.Select(member => member.Id).ToList(), _runSeed);
             BeginNode();
         }
 

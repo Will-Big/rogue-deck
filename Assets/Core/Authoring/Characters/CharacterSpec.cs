@@ -10,5 +10,11 @@ namespace FateWeaver.Core.Authoring.Characters
 
         /// <summary>이 캐릭터가 소유한 카드풀 id. 전투 보상 후보가 여기서 나온다(전투 노드 설계 결정 2·3).</summary>
         public string Pool;
+
+        /// <summary>최대 HP. 매 전투 이 값으로 시작한다(HP 인계는 후속 작업).</summary>
+        public int MaxHp;
+
+        /// <summary>죽을 피해를 버티는 횟수. 전투마다 전량 충전된다.</summary>
+        public int SurviveCharges;
     }
 }

@@ -8,8 +8,8 @@ namespace FateWeaver.Tests
         private static RunState NewRun(int seed) => new RunState(
             new[]
             {
-                new RunMember("member_a", "파티원 A", 25, null),
-                new RunMember("member_b", "파티원 B", 25, null)
+                new RunMember("member_a", "파티원 A", 25, 1, null),
+                new RunMember("member_b", "파티원 B", 25, 1, null)
             },
             seed);
 

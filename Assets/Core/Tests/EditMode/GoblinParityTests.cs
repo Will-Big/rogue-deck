@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
         {
             var content = TestContent.Content();
             var run = RunSetup.NewRun(
-                content, new[] { "member_a", "member_b" }, PartyTuning.Prototype, RunSeed);
+                content, new[] { "member_a", "member_b" }, RunSeed);
             var context = new CombatNodeContext(
                 content.Statuses,
                 PartyTuning.Prototype,

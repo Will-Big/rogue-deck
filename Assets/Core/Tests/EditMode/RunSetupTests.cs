@@ -1,5 +1,4 @@
 using System.Linq;
-using FateWeaver.Core.Combat;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
 using NUnit.Framework;
@@ -15,7 +14,7 @@ namespace FateWeaver.Tests
             var content = TestContent.Content();
 
             var run = RunSetup.NewRun(
-                content, new[] { "member_a", "member_b" }, PartyTuning.Prototype, runSeed: 7);
+                content, new[] { "member_a", "member_b" }, runSeed: 7);
 
             Assert.AreEqual(7, run.RunSeed);
             Assert.AreEqual(0, run.NodesEntered);
@@ -23,7 +22,8 @@ namespace FateWeaver.Tests
             var a = run.Party[0];
             Assert.AreEqual("member_a", a.Id);
             Assert.AreEqual("파티원 A", a.Name);
-            Assert.AreEqual(PartyTuning.Prototype.DefaultMemberMaxHp, a.MaxHp);
+            Assert.AreEqual(25, a.MaxHp);
+            Assert.AreEqual(1, a.SurviveCharges);
             Assert.AreEqual(a.MaxHp, a.Hp);
             CollectionAssert.AreEqual(
                 content.Decks.Get("starter").ToArray(),
@@ -34,7 +34,7 @@ namespace FateWeaver.Tests
         public void NewRun_shares_one_definition_per_card_id()
         {
             var run = RunSetup.NewRun(
-                TestContent.Content(), new[] { "member_b" }, PartyTuning.Prototype, runSeed: 1);
+                TestContent.Content(), new[] { "member_b" }, runSeed: 1);
             var attacks = run.Party[0].Cards.Where(card => card.Id == "fixture_attack").ToArray();
 
             Assert.AreEqual(2, attacks.Length, "party_prototype 덱은 fixture_attack을 둘 갖는다.");
@@ -45,7 +45,7 @@ namespace FateWeaver.Tests
         public void NewRun_keeps_the_given_party_order()
         {
             var run = RunSetup.NewRun(
-                TestContent.Content(), new[] { "member_b", "member_a" }, PartyTuning.Prototype, runSeed: 1);
+                TestContent.Content(), new[] { "member_b", "member_a" }, runSeed: 1);
 
             CollectionAssert.AreEqual(
                 new[] { "member_b", "member_a" }, run.Party.Select(m => m.Id).ToArray());
@@ -56,7 +56,7 @@ namespace FateWeaver.Tests
         {
             var content = TestContent.Content();
 
-            var run = RunSetup.NewRun(content, content.Characters.Ids, PartyTuning.Prototype, runSeed: 1);
+            var run = RunSetup.NewRun(content, content.Characters.Ids, runSeed: 1);
 
             CollectionAssert.AreEqual(content.Characters.Ids, run.Party.Select(m => m.Id).ToArray());
             foreach (var member in run.Party)
