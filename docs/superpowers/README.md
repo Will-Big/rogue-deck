@@ -42,7 +42,7 @@
 |---|---|---|---|
 | [덱 기반 코어 루프](specs/2026-06-22-deck-loop-design.md) | `current` | 덱·손패·행동 턴과 상태 타이밍 | 전투 흐름 또는 드로우 경제 변경 |
 | [파티 기반 전투](specs/2026-07-15-party-foundation-design.md) | `current` | 파티, 개별 HP, 대형, 전투 중 사망 | 캐릭터 영입·사망·대형 변경 |
-| [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) — 개요는 [HTML](specs/2026-09-15-combat-node-cycle-design.html) | `active` | 전투 한 판의 시작~끝(승패·보상 선택·덱 반영·다음 전투), 노드 시드와 목적별 스트림 파생, 적·편성·캐릭터 스탯·전투 규칙 JSON. 1단계 흐름 → 2단계 구성 저작. 1단계 구현 완료(2026-09-15). 2단계 설계 확정(2026-09-17: 적 정책·`PartyTuning`을 Core로, 동등성 먼저), 구현 계획 작성 전 | 전투 결과·보상 구현, 시드 동작 추가, 적·편성 저작 |
+| [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) — 개요는 [HTML](specs/2026-09-15-combat-node-cycle-design.html) | `active` | 전투 한 판의 시작~끝(승패·보상 선택·덱 반영·다음 전투), 노드 시드와 목적별 스트림 파생, 적·편성·캐릭터 스탯·전투 규칙 JSON. 1단계 흐름 → 2단계 구성 저작. 1단계 구현 완료(2026-09-15). 2단계 설계 확정(2026-09-17: 적 정책·`PartyTuning`을 Core로, 동등성 먼저), [구현 계획](plans/2026-09-17-combat-node-stage2.md) 실행 전 | 전투 결과·보상 구현, 시드 동작 추가, 적·편성 저작 |
 
 ### 카드풀과 콘텐츠
 
@@ -96,6 +96,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
+| [전투 노드 2단계 구현](plans/2026-09-17-combat-node-stage2.md) — 개요는 [HTML](plans/2026-09-17-combat-node-stage2.html) | `active` | 9태스크: 노드 0 전투 서명 골든 → 정책·`PartyTuning` Core 이동 → 적 카드·적·편성·캐릭터 스탯·`combat_rules.json` → Unity 배선·씬 → C# 원본 삭제. 실행 전 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
 | [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
