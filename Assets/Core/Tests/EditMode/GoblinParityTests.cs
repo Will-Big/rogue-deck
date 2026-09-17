@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using FateWeaver.Core;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -35,7 +36,7 @@ namespace FateWeaver.Tests
                 PartyTuning.Prototype,
                 fateEnergyPerTurn: 3,
                 rewardChoices: 3,
-                encounters: new GoblinEncounterSource(),
+                encounters: new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()),
                 rewardCandidates: new CharacterPoolRewardSource(content));
             return CombatNode.Begin(run, context);
         }

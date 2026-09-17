@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
+using FateWeaver.Core.Authoring.Battles;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
+using FateWeaver.Core.Authoring.Enemies;
 using FateWeaver.Core.Authoring.Statuses;
 
 namespace FateWeaver.Core.Authoring
@@ -27,9 +29,9 @@ namespace FateWeaver.Core.Authoring
             => new ContentBootstrapResult(null, errors);
     }
 
-    /// <summary>콘텐츠 루트 하나를 받아 카탈로그 다섯을 만든다. 순서는 상태 → 카드 → 덱·풀 →
-    /// 캐릭터로 고정이다 — 카드 검증이 상태 저작을, 덱·풀 로더가 카드 카탈로그를, 캐릭터 로더가
-    /// 덱 카탈로그를 필요로 한다. 파일 I/O는 CardContentFiles가 맡으므로 Unity 없이 돈다.</summary>
+    /// <summary>콘텐츠 루트 하나를 받아 카탈로그를 만든다. 순서는 상태 → 카드 → 덱·풀 → 캐릭터 →
+    /// 적 → 편성으로 고정이다 — 뒤 단계가 앞 단계의 카탈로그를 필요로 한다. 파일 I/O는
+    /// CardContentFiles가 맡으므로 Unity 없이 돈다.</summary>
     public static class ContentBootstrap
     {
         public static ContentBootstrapResult Load(string contentRoot)
@@ -87,8 +89,35 @@ namespace FateWeaver.Core.Authoring
                 return ContentBootstrapResult.Failed(errors);
             }
 
+            // 적·편성은 오류를 모두 모은 뒤 한 번에 실패한다. 편성은 적 카탈로그가 있어야 검증된다.
+            var enemies = EnemyContentLoader.Load(
+                Read(contentRoot, CardContentFiles.EnemiesFolderName, errors),
+                cards.Catalog,
+                AuthoringContext.Default());
+            if (!enemies.Succeeded)
+            {
+                errors.AddRange(enemies.Errors);
+            }
+
+            BattleContentLoadResult battles = null;
+            if (enemies.Succeeded)
+            {
+                battles = BattleContentLoader.Load(
+                    Read(contentRoot, CardContentFiles.BattlesFolderName, errors), enemies.Catalog);
+                if (!battles.Succeeded)
+                {
+                    errors.AddRange(battles.Errors);
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                return ContentBootstrapResult.Failed(errors);
+            }
+
             return ContentBootstrapResult.Ok(new GameContent(
-                statuses.Catalog, cards.Catalog, decks.Catalog, pools.Catalog, characters.Catalog));
+                statuses.Catalog, cards.Catalog, decks.Catalog, pools.Catalog, characters.Catalog,
+                enemies.Catalog, battles.Catalog));
         }
 
         /// <summary>상태 카탈로그만 읽는다. 부팅의 첫 단계이자, 카탈로그 하나만 필요한 곳

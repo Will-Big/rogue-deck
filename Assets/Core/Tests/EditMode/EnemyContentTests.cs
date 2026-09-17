@@ -1,7 +1,4 @@
-using System.IO;
 using System.Linq;
-using FateWeaver.Core.Authoring;
-using FateWeaver.Core.Authoring.Enemies;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
@@ -52,11 +49,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Goblin_is_authored_with_four_bundles_and_random_pick()
         {
-            var sources = CardContentFiles.ReadDirectory(Path.Combine(TestContent.Root(), "Enemies"));
-            var result = EnemyContentLoader.Load(sources, TestContent.Cards(), AuthoringContext.Default());
-
-            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-            var goblin = result.Catalog.Get("goblin");
+            var goblin = TestContent.Content().Enemies.Get("goblin");
             Assert.AreEqual("고블린", goblin.DisplayName);
             Assert.AreEqual(28, goblin.MaxHp);
             Assert.AreEqual(EnemyPolicyKeys.RandomPick, goblin.Policy);

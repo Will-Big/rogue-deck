@@ -1,5 +1,7 @@
+using FateWeaver.Core.Authoring.Battles;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
+using FateWeaver.Core.Authoring.Enemies;
 using FateWeaver.Core.Authoring.Statuses;
 
 namespace FateWeaver.Core.Authoring
@@ -13,13 +15,17 @@ namespace FateWeaver.Core.Authoring
             CardContentCatalog cards,
             DeckContentCatalog decks,
             PoolContentCatalog pools,
-            CharacterContentCatalog characters)
+            CharacterContentCatalog characters,
+            EnemyContentCatalog enemies,
+            BattleContentCatalog battles)
         {
             Statuses = statuses;
             Cards = cards;
             Decks = decks;
             Pools = pools;
             Characters = characters;
+            Enemies = enemies;
+            Battles = battles;
         }
 
         public StatusContentCatalog Statuses { get; }
@@ -27,5 +33,7 @@ namespace FateWeaver.Core.Authoring
         public DeckContentCatalog Decks { get; }
         public PoolContentCatalog Pools { get; }
         public CharacterContentCatalog Characters { get; }
+        public EnemyContentCatalog Enemies { get; }
+        public BattleContentCatalog Battles { get; }
     }
 }

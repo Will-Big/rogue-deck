@@ -14,6 +14,8 @@ namespace FateWeaver.Core.Authoring
         public const string DecksFolderName = "Decks";
         public const string PoolsFolderName = "Pools";
         public const string CharactersFolderName = "Characters";
+        public const string EnemiesFolderName = "Enemies";
+        public const string BattlesFolderName = "Battles";
 
         public static IReadOnlyList<CardContentSource> ReadDirectory(string directory)
         {
