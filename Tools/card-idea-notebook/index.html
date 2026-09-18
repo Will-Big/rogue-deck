@@ -338,7 +338,7 @@
     .effect-params label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
     .effect-params input[type="number"] { width: 84px; }
     .effect-common,
-    .effect-reference > div { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-reference { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
     .effect-common label,
     .effect-reference label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
     .effect-common input[type="number"],
@@ -2852,37 +2852,54 @@
       return block;
     }
 
-    /// 결과 참조 하나(requires 또는 scaleBy). 참조 대상은 이 효과보다 앞의 소비 효과만 고를 수 있다.
-    function referenceBlock(card, index, effect, field, label, amountKey, amountLabel) {
-      const wrap = document.createElement("details");
-      wrap.className = "effect-reference";
-      wrap.open = Boolean(effect[field]);
+    /// 결과 참조의 종류. 데이터에서는 requires·scaleBy 두 필드지만 편집 화면은 한 줄에서 하나를 고른다.
+    const REFERENCE_KINDS = Object.freeze([
+      { field: "requires", label: "소비했다면", amountKey: "minimumConsumed", amountLabel: "최소 소비량" },
+      { field: "scaleBy", label: "소비량 비례", amountKey: "perConsumed", amountLabel: "1당 가산" },
+    ]);
 
-      const summary = document.createElement("summary");
-      summary.textContent = effect[field]
-        ? `${label}: ${effect[field].sourceEffectId} · ${amountLabel} ${effect[field][amountKey]}`
-        : label;
-      wrap.append(summary);
-
-      const body = document.createElement("div");
+    /// 효과 한 줄의 결과 참조 편집부. 이 효과보다 앞에 소비 효과가 없고 이미 걸린 참조도 없으면 그리지 않는다 —
+    /// 고를 대상이 없는 칸은 편집을 방해할 뿐이다. 종류를 바꾸면 이전 종류의 참조는 뗀다.
+    function referenceLines(card, index, effect) {
       const sources = core.consumptionSources(card, index, repoStore.schema);
-      const current = effect[field]?.sourceEffectId ?? NONE;
-      const options = [NONE, ...sources];
-      if (current !== NONE && !sources.includes(current)) options.push(current);
-      body.append(formField("앞 소비 효과", selectControl(options, current, (value) => {
-        applyCardEdit(value === NONE
-          ? core.setEffectReference(card, index, field, null)
-          : core.setEffectReference(card, index, field, { sourceEffectId: value }));
-      })));
+      const active = REFERENCE_KINDS.filter((kind) => effect[kind.field]);
+      if (!sources.length && !active.length) return [];
 
-      if (effect[field]) {
-        body.append(formField(amountLabel, numberControl(effect[field][amountKey], (value) => {
-          applyCardEdit(core.setEffectReference(card, index, field, { [amountKey]: value }));
+      const lines = active.length ? active : [null];
+      return lines.map((current) => {
+        const line = document.createElement("div");
+        line.className = "effect-reference";
+
+        const labels = [NONE, ...REFERENCE_KINDS.map((kind) => kind.label)];
+        line.append(formField("소비 결과 사용", selectControl(labels, current?.label ?? NONE, (next) => {
+          let edited = card;
+          if (current) edited = core.setEffectReference(edited, index, current.field, null);
+          const chosen = REFERENCE_KINDS.find((kind) => kind.label === next);
+          if (chosen) {
+            edited = core.setEffectReference(edited, index, chosen.field, {
+              sourceEffectId: effect[current?.field]?.sourceEffectId ?? sources[0] ?? "",
+              [chosen.amountKey]: 1,
+            });
+          }
+          applyCardEdit(edited);
         })));
-      }
 
-      wrap.append(body);
-      return wrap;
+        if (current) {
+          const reference = effect[current.field];
+          const options = [...sources];
+          if (reference.sourceEffectId && !options.includes(reference.sourceEffectId)) {
+            options.push(reference.sourceEffectId);
+          }
+          line.append(formField("소비 효과", selectControl(options, reference.sourceEffectId, (value) => {
+            applyCardEdit(core.setEffectReference(card, index, current.field, { sourceEffectId: value }));
+          })));
+          line.append(formField(current.amountLabel, numberControl(reference[current.amountKey], (value) => {
+            applyCardEdit(core.setEffectReference(card, index, current.field, { [current.amountKey]: value }));
+          })));
+        }
+
+        return line;
+      });
     }
 
     function actionButton(label, onClick) {
@@ -2932,8 +2949,7 @@
         (name, value) => applyCardEdit(
           core.setEffectParam(card, index, name, value, repoStore.schema)),
       ));
-      row.append(referenceBlock(card, index, effect, "requires", "소비했다면", "minimumConsumed", "최소 소비량"));
-      row.append(referenceBlock(card, index, effect, "scaleBy", "소비량 비례", "perConsumed", "1당 가산"));
+      row.append(...referenceLines(card, index, effect));
       return row;
     }
 
