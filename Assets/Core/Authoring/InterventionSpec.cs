@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Intervention;
@@ -9,7 +8,6 @@ namespace FateWeaver.Core.Authoring
     /// <summary>저작된 개입 액션 하나. 각 구체 스펙이 자기 파라미터(실타입)와 런타임 페이로드로의
     /// 변환, 검증을 소유한다 — 액션을 더해도 중앙 enum/switch가 자라지 않는다(AGENTS.md 규칙 9).
     /// InterventionSpecCatalog에 명시적으로 등록한다. EffectSpec과 같은 형태다.</summary>
-    [Serializable]
     public abstract class InterventionSpec
     {
         [JsonIgnore]

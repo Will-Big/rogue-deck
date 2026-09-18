@@ -8,7 +8,6 @@ namespace FateWeaver.Core.Authoring.Statuses
 {
     /// <summary>저작된 만료 정책(JSON "expiry"). 지금은 시점 방문(PhaseVisits)만 저작한다 — 영구·소모는 lifetime으로 적는다.
     /// 세 칸을 항상 쓴다: 기본값(Prepare 등)이 생략되면 뜻이 흐려진다.</summary>
-    [Serializable]
     public sealed class ExpirySpec
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]

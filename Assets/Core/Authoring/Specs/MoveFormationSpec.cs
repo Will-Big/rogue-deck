@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
@@ -6,7 +5,6 @@ using FateWeaver.Core.Effects;
 namespace FateWeaver.Core.Authoring
 {
     /// <summary>Moves the formation by <see cref="Value"/> (negative = forward). 대상은 카드 쪽 진영의 Self다.</summary>
-    [Serializable]
     public sealed class MoveFormationSpec : EffectSpec
     {
         public int Value;

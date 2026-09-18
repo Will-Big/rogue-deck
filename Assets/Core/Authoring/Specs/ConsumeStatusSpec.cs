@@ -8,7 +8,6 @@ namespace FateWeaver.Core.Authoring
 {
     /// <summary>적 진영 위치 규칙이 고른 적의 상태를 Amount만큼 Mode 방식으로 소비한다(스펙 §5).
     /// 실제 소비량은 이 효과의 결과가 되고, 뒤 효과가 requires·scaleBy로 이 효과의 id를 가리켜 읽는다.</summary>
-    [Serializable]
     public sealed class ConsumeStatusSpec : EffectSpec
     {
         public StatusKeyRef Status;

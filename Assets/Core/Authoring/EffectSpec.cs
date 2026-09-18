@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
@@ -12,7 +11,6 @@ namespace FateWeaver.Core.Authoring
     /// <summary>카드 시작 조건(전투 실행 계약 스펙 §2·§4). 카드가 차례를 맞을 때 한 번 평가한다.
     /// Closed condition combinator (백로그 §10): the kind enum + central switch stay by design.
     /// 앞 효과의 결과를 읽는 요건은 여기가 아니라 효과의 requires다.</summary>
-    [Serializable]
     public sealed class StartConditionSpec
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
@@ -46,7 +44,6 @@ namespace FateWeaver.Core.Authoring
 
     /// <summary>카드 한 장의 위치 규칙. 진영마다 하나의 범위만 가진다 — 같은 진영에 두 범위를 쓰는
     /// 카드는 로딩에서 거부된다(스펙 §4). 진영은 절대 진영이다(Ally=파티, Enemy=적).</summary>
-    [Serializable]
     public sealed class CardTargetsSpec
     {
         public CardTargetRange? Ally;
@@ -57,7 +54,6 @@ namespace FateWeaver.Core.Authoring
     }
 
     /// <summary>앞 효과의 실제 소비량이 MinimumConsumed 이상일 때만 수행한다 — "소비했다면".</summary>
-    [Serializable]
     public sealed class EffectRequirementSpec
     {
         public string SourceEffectId;
@@ -65,7 +61,6 @@ namespace FateWeaver.Core.Authoring
     }
 
     /// <summary>앞 효과의 실제 소비량 × PerConsumed를 이 효과의 수치에 더한다 — "소비 1당 +k".</summary>
-    [Serializable]
     public sealed class EffectScalingSpec
     {
         public string SourceEffectId;
@@ -80,7 +75,6 @@ namespace FateWeaver.Core.Authoring
     /// 축을 쓰는가), 카드 시작 조건에 따른 성공 수치·생략, 앞 효과 결과 참조(requires·scaleBy).
     /// 기반 필드의 Order는 CardSpec과 같은 이유로 명시한다 — 파생 필드(무순서)보다 id·진영이 앞에,
     /// 조건·참조가 뒤에 오게 고정한다.</summary>
-    [Serializable]
     public abstract class EffectSpec
     {
         [JsonProperty(Order = -20)]
