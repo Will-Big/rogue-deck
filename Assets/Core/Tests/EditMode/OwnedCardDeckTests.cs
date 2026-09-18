@@ -14,8 +14,10 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition Card(string id, Side side = Side.Player) => new CardDefinition(
             id, id, side, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) })
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardFixtures.Opposing(side) } })
         {
+            AllyTarget = CardTargetRange.FrontOne,
+            EnemyTarget = CardTargetRange.FrontOne,
             Category = CardCategory.Execution,
             EnergyCost = 1
         };

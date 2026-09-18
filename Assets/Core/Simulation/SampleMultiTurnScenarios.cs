@@ -103,7 +103,7 @@ namespace FateWeaver.Simulation
                             },
                             new ZoneCardSpec(
                                 "slash", "Slash", Side.Player, executionOrder: 3,
-                                effects: new[] { new EffectData(EffectKeys.Damage, 2) })
+                                effects: new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne }
                         },
                         interventionPlays: new[]
                         {
@@ -131,7 +131,7 @@ namespace FateWeaver.Simulation
                         zoneCards: new[]
                         {
                             new ZoneCardSpec("prep", "Prep", Side.Player, 1,
-                                new[] { new EffectData(EffectKeys.Damage, 1) }),
+                                new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne },
                             ChainSlashCard("chain", executionOrder: 2)
                         },
                         interventionPlays: new InterventionPlaySpec[0])
@@ -143,10 +143,11 @@ namespace FateWeaver.Simulation
                 id, "Chain Slash", Side.Player, executionOrder,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 1),
-                    new EffectData(EffectKeys.Damage, 0) { SuccessEffectValue = 5 }
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy },
+                    new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 5 }
                 })
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 StartCondition = new AllOf(new Condition[]
                 {
                     new PreviousExecutedCardIs(Side.Player), // any player execution card
@@ -186,9 +187,9 @@ namespace FateWeaver.Simulation
                         executionOrder: 1,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 3),
+                            new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally },
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
-                        }),
+                        }) { AllyTarget = CardTargetRange.FrontOne },
                     QuickCut(quickCutId, executionOrder: 2)
                 },
                 interventionPlays: new[]
@@ -207,9 +208,10 @@ namespace FateWeaver.Simulation
                 executionOrder,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 }
+                    new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 }
                 })
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 StartCondition = new FirstToTrigger()
             };
 
@@ -219,7 +221,7 @@ namespace FateWeaver.Simulation
                 id,
                 Side.Enemy,
                 executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
     }
 
     public sealed class SampleMultiTurnScenarioEntry

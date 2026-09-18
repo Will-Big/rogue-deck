@@ -12,19 +12,14 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.MoveFormation;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-            => new CardTargetKey(
-                card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
-                CardTargetRange.Self);
-
         public void Apply(EffectContext ctx)
         {
-            foreach (var owner in ctx.Targets.Party)
+            foreach (var owner in ctx.RequireTargets().Party)
             {
                 Move(ctx, ctx.State.Party, owner, owner.Id, Side.Player);
             }
 
-            foreach (var owner in ctx.Targets.Enemies)
+            foreach (var owner in ctx.RequireTargets().Enemies)
             {
                 Move(ctx, ctx.State.Enemies, owner, owner.Id, Side.Enemy);
             }

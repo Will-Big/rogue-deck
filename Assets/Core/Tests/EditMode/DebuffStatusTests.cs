@@ -35,9 +35,9 @@ namespace FateWeaver.Tests
         /// ApplyStatusHandler만 효과 적용 경계로 돌려 정리 전 상태를 확인한다.</summary>
         private static PartyMember ApplyGuard(CombatState state, string ownerId, int block)
         {
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, block);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, block);
             var card = new ExecutionCardInstance(
-                new CardDefinition("guard", "guard", Side.Player, 1, new[] { effect }))
+                new CardDefinition("guard", "guard", Side.Player, 1, new[] { effect }) { AllyTarget = CardTargetRange.Self })
                 { OwnerId = ownerId };
             EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect, Statuses());
             return PartyTargeting.LivingById(state, ownerId);
@@ -46,7 +46,7 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance PlayerStrike(string id, int damage)
         {
             var def = new CardDefinition(id, id, Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             return new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId };
         }
 
@@ -155,8 +155,8 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("hex", "hex", Side.Player, 1,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Vulnerable, StatusApplyTarget.Self, count: 4)
-                });
+                    EffectData.ApplyStatus(StatusKeys.Vulnerable, CardTargetFaction.Ally, count: 4)
+                }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);

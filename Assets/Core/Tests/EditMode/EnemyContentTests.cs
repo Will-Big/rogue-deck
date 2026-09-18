@@ -38,7 +38,9 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, guard.Effects.Single().EffectValue);
             var payload = (ApplyStatusPayload)guard.Effects.Single().Payload;
             Assert.AreEqual(StatusKeys.Block, payload.Key);
-            Assert.AreEqual(StatusApplyTarget.Self, payload.Target);
+            Assert.AreEqual(
+                new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.Self),
+                guard.TargetOf(guard.Effects.Single()));
 
             Assert.AreEqual("약삭빠른 찌르기", sly.Name);
             Assert.AreEqual(3, sly.BaseExecutionOrder);

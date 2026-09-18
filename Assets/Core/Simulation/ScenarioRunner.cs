@@ -75,7 +75,9 @@ namespace FateWeaver.Simulation
                     card.ExecutionOrder,
                     card.Effects)
                 {
-                    StartCondition = card.StartCondition
+                    StartCondition = card.StartCondition,
+                    AllyTarget = card.AllyTarget,
+                    EnemyTarget = card.EnemyTarget
                 };
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);

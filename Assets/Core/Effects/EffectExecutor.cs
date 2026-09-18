@@ -33,7 +33,7 @@ namespace FateWeaver.Core.Effects
 
             var card = context.Card;
             var handler = _effects.Resolve(effect.Key);
-            var key = handler.TargetFor(card.Def, effect);
+            var key = card.Def.TargetOf(effect);
             EffectTargetSnapshot targets = null;
             if (key.HasValue)
             {

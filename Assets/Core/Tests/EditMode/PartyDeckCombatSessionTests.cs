@@ -30,27 +30,19 @@ namespace FateWeaver.Tests
                 EnergyCost = cost
             };
 
-        private static CardDefinition DirectBlock(string id = "direct_block")
-            => Execution(
-                id,
-                cost: 1,
-                effects: new[]
-                {
-                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, count: 3)
-                });
-
         private static CardDefinition EnemyStrike(
             string id = "enemy_strike",
             int order = 1,
             int damage = 50,
-            TargetSelector selector = TargetSelector.FrontOne)
+            CardTargetRange range = CardTargetRange.FrontOne)
             => new CardDefinition(
                 id,
                 id,
                 Side.Enemy,
                 order,
-                new[] { new EffectData(EffectKeys.Damage, damage) { TargetSelector = selector } })
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } })
             {
+                AllyTarget = range,
                 Category = CardCategory.Execution
             };
 
@@ -150,25 +142,13 @@ namespace FateWeaver.Tests
                     Loadout("a", maxHp: 10),
                     Loadout("b", maxHp: 10)
                 },
-                new[] { EnemyStrike(damage: 50, selector: TargetSelector.All) });
+                new[] { EnemyStrike(damage: 50, range: CardTargetRange.All) });
 
             var timeline = session.ResolveTurn();
 
             Assert.IsTrue(session.State.Party.All(member => !member.IsAlive));
             Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "a"));
             Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "b"));
-        }
-
-        [Test]
-        public void Session_rejects_player_execution_card_that_requires_direct_target()
-        {
-            var direct = DirectBlock();
-
-            Assert.Throws<ArgumentException>(() => Session(new[]
-            {
-                Loadout("a", new[] { direct }),
-                Loadout("b")
-            }));
         }
 
         [Test]
@@ -184,18 +164,7 @@ namespace FateWeaver.Tests
 
             var placed = session.CurrentOrder.Single(card => card.Def.Id == "guard");
             Assert.AreEqual("a", placed.OwnerId);
-            Assert.IsNull(placed.TargetId);
             Assert.AreEqual(energyBefore - placed.Def.EnergyCost, session.FateEnergy);
-        }
-
-        [Test]
-        public void Legacy_session_also_rejects_direct_target_execution_definition()
-        {
-            Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
-                new[] { DirectBlock() },
-                playerHp: 30,
-                enemies: Array.Empty<Enemy>(),
-                enemyPolicy: new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>())));
         }
 
         [Test]
@@ -229,10 +198,11 @@ namespace FateWeaver.Tests
                 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 25),
-                    new EffectData(EffectKeys.Damage, 1)
+                    new EffectData(EffectKeys.Damage, 25) { TargetFaction = CardTargetFaction.Ally },
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally }
                 })
             {
+                AllyTarget = CardTargetRange.FrontOne,
                 Category = CardCategory.Execution
             };
             var session = Session(

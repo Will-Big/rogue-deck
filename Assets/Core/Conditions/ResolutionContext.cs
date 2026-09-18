@@ -32,23 +32,6 @@ namespace FateWeaver.Core.Conditions
         public ExecutionCardInstance LastExecutedCard
             => _executedCards.Count > 0 ? _executedCards[^1] : null;
 
-        /// <summary>The most recently executed player-side card, or null if none has executed yet.</summary>
-        public ExecutionCardInstance LastExecutedPlayerCard
-        {
-            get
-            {
-                for (int i = _executedCards.Count - 1; i >= 0; i--)
-                {
-                    if (_executedCards[i].Def.Side == Side.Player)
-                    {
-                        return _executedCards[i];
-                    }
-                }
-
-                return null;
-            }
-        }
-
         public static ResolutionContext From(CombatState state)
             => new ResolutionContext(state.Zone);
 

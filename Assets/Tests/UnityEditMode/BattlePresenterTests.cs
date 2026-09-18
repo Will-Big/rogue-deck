@@ -20,13 +20,13 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private static CardDefinition PlayerCard() => new CardDefinition(
             "probing_strike", "견제타", Side.Player, 4,
-            new[] { new EffectData(EffectKeys.Damage, 4) })
-            { EnergyCost = 1, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } })
+            { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 1, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyCard() => new CardDefinition(
             "goblin_jab", "잽", Side.Enemy, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) })
-            { EnergyCost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } })
+            { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
         [SetUp]
         public void SetUp()

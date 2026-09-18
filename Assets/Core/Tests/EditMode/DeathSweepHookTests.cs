@@ -42,7 +42,7 @@ namespace FateWeaver.Tests
             state.Enemies[0].Statuses.Add(RecorderKey, StatusLifetime.Permanent);
 
             var def = new CardDefinition("slash", "베기", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), statuses).Resolve(state, 0);

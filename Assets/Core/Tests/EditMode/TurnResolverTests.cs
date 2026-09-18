@@ -21,7 +21,11 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } })
+            {
+                AllyTarget = CardTargetRange.FrontOne,
+                EnemyTarget = CardTargetRange.FrontOne
+            };
             return new ExecutionCardInstance(def);
         }
 
@@ -121,16 +125,14 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("front", 12));
             state.Enemies.Add(new Enemy("back", 12));
-            var self = EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusApplyTarget.Self,
-                count: 1);
-            var all = new EffectData(EffectKeys.Damage, 2)
-            {
-                TargetSelector = TargetSelector.All
-            };
+            var self = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: 1);
+            var all = new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy };
             state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "self_then_all", "Self Then All", Side.Player, 1, new[] { self, all }))
+                "self_then_all", "Self Then All", Side.Player, 1, new[] { self, all })
+            {
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.All
+            })
             {
                 OwnerId = CombatState.SoloPlayerId
             });

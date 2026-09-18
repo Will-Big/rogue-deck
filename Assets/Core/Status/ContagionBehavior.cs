@@ -19,7 +19,7 @@ namespace FateWeaver.Core.Status
                 return;
             }
 
-            var recipient = EnemyTargeting.Select(ctx.State, TargetSelector.FrontOne);
+            var recipient = EnemyTargeting.Select(ctx.State, CardTargetRange.FrontOne);
             if (recipient == null)
             {
                 return;

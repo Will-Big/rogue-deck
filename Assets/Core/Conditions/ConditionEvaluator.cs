@@ -112,17 +112,6 @@ namespace FateWeaver.Core.Conditions
                         : ConditionTier.Basic;
             }
 
-            if (condition is SameTarget)
-            {
-                // 실행 이력의 마지막 플레이어 카드와 비교한다. 차례가 왔지만 대상을 못 찾은 카드도 이력에 있다.
-                var previous = ctx.LastExecutedPlayerCard;
-                return previous != null
-                    && !string.IsNullOrEmpty(card.TargetId)
-                    && card.TargetId == previous.TargetId
-                        ? ConditionTier.Success
-                        : ConditionTier.Basic;
-            }
-
             if (condition is AllOf allOf)
             {
                 var tier = ConditionTier.Success;

@@ -14,12 +14,12 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab(bool locked) => new CardDefinition(
             locked ? "locked_jab" : "enemy_jab", "찌르기", Side.Enemy, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) })
-            { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = locked };
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } })
+            { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = locked };
 
         [Test]
         public void Locked_enemy_cards_ignore_enemy_slow_when_entering_the_zone()

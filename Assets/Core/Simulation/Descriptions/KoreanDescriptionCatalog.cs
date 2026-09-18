@@ -33,8 +33,7 @@ namespace FateWeaver.Simulation.Descriptions
         public DescriptionContext ContextFor(CardDefinition card)
         {
             if (card == null) throw new ArgumentNullException(nameof(card));
-            return new DescriptionContext(
-                Grammar, Statuses, StatusContent, card.Id, card.Side);
+            return new DescriptionContext(Grammar, Statuses, StatusContent, card);
         }
 
         /// <summary>상태 이름을 넘겨받은 콘텐츠에서 읽는다. 로더가 파일에서 만든 카탈로그를 넘기면

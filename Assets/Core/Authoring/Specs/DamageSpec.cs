@@ -15,8 +15,7 @@ namespace FateWeaver.Core.Authoring
 
         public override bool IsTargeted => true;
 
-        protected override EffectData Build(Side cardSide, CardTargetKey? target)
-            => new EffectData(Key, Value) { TargetSelector = SelectorFor(target.Value.Range) };
+        protected override EffectData Build() => new EffectData(Key, Value);
 
         public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
             => RequirePositional(target, OpposingFaction(cardSide));

@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
             id, id, Side.Player, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 1 };
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 1 };
 
         [Test]
         public void Draw_moves_cards_from_draw_pile_to_hand()

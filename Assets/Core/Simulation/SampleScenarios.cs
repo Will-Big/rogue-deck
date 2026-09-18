@@ -42,7 +42,7 @@ namespace FateWeaver.Simulation
                         "Enemy Jab",
                         Side.Enemy,
                         executionOrder: 1,
-                        effects: new[] { new EffectData(EffectKeys.Damage, 1) }),
+                        effects: new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne },
                     new ZoneCardSpec(
                         "quick_cut",
                         "Quick Cut",
@@ -50,9 +50,10 @@ namespace FateWeaver.Simulation
                         executionOrder: 2,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 }
+                            new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 }
                         })
                     {
+                        EnemyTarget = CardTargetRange.FrontOne,
                         StartCondition = new FirstToTrigger()
                     }
                 },
@@ -82,9 +83,10 @@ namespace FateWeaver.Simulation
                         executionOrder: 1,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 }
+                            new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 }
                         })
                     {
+                        EnemyTarget = CardTargetRange.FrontOne,
                         StartCondition = new FirstToTrigger()
                     },
                     new ZoneCardSpec(
@@ -94,9 +96,9 @@ namespace FateWeaver.Simulation
                         executionOrder: 2,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 1),
+                            new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally },
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
-                        })
+                        }) { AllyTarget = CardTargetRange.FrontOne }
                 },
                 interventionPlays: new[]
                 {
@@ -124,9 +126,9 @@ namespace FateWeaver.Simulation
                         executionOrder: 3,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 3),
+                            new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally },
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
-                        }),
+                        }) { AllyTarget = CardTargetRange.FrontOne },
                     new ZoneCardSpec(
                         "mark_target",
                         "Mark Target",
@@ -149,9 +151,10 @@ namespace FateWeaver.Simulation
                         executionOrder: 4,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 6 }
+                            new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 6 }
                         })
                     {
+                        EnemyTarget = CardTargetRange.FrontOne,
                         StartCondition = new AllOf(new Condition[]
                         {
                             new PreviousExecutedCardIs(Side.Player),
@@ -163,7 +166,7 @@ namespace FateWeaver.Simulation
                         "Gap Exposure",
                         Side.Enemy,
                         executionOrder: 6,
-                        effects: new[] { new EffectData(EffectKeys.Damage, 2) })
+                        effects: new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne }
                 },
                 interventionPlays: new[]
                 {

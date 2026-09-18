@@ -163,7 +163,7 @@ namespace FateWeaver.Simulation.Descriptions
                     targets.Add(lineTargets[i].Value);
             }
 
-            ValidateSingleRangePerFaction(targets, context.CardId);
+            // 진영마다 범위가 하나인 것은 카드 축이 보장한다(효과 대상 = 효과 진영 + 카드의 그 진영 축).
             var entries = targets
                 .OrderBy(target => target.Faction == CardTargetFaction.Ally ? 0 : 1)
                 .ThenBy(target => (int)target.Range)
@@ -174,25 +174,6 @@ namespace FateWeaver.Simulation.Descriptions
                     ? "[" + context.Symbol(line.Target.Value) + "] " + line.Text
                     : line.Text));
             return new CardDescriptionLayout(entries, lines, plainText);
-        }
-
-        private static void ValidateSingleRangePerFaction(
-            IReadOnlyList<CardTargetKey> targets,
-            string cardId)
-        {
-            foreach (var faction in new[] { CardTargetFaction.Ally, CardTargetFaction.Enemy })
-            {
-                var ranges = targets
-                    .Where(target => target.Faction == faction)
-                    .Select(target => target.Range)
-                    .Distinct()
-                    .OrderBy(range => (int)range)
-                    .ToArray();
-                if (ranges.Length > 1)
-                    throw new InvalidOperationException(
-                        "Card '" + cardId + "' declares conflicting " + faction
-                        + " target ranges: " + string.Join(", ", ranges) + ".");
-            }
         }
     }
 }

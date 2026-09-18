@@ -9,11 +9,6 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.TriggerStatus;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-            => new CardTargetKey(
-                CardTargetFaction.Enemy,
-                EffectTargetResolver.RangeFor(effect.TargetSelector ?? TargetSelector.FrontOne));
-
         public void Apply(EffectContext ctx)
         {
             if (!(ctx.Effect?.Payload is TriggerStatusPayload payload))
@@ -26,7 +21,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            foreach (var enemy in ctx.Targets.Enemies)
+            foreach (var enemy in ctx.RequireTargets().Enemies)
             {
                 var status = enemy.Statuses.Get(payload.Key);
                 if (status != null)

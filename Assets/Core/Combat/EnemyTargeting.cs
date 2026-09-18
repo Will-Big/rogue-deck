@@ -8,13 +8,13 @@ namespace FateWeaver.Core.Combat
     /// skipped, never reindexed) — the enemy-side mirror of PartyTargeting.</summary>
     public static class EnemyTargeting
     {
-        public static Enemy Select(CombatState state, TargetSelector selector)
+        public static Enemy Select(CombatState state, CardTargetRange range)
         {
             var living = SelectAll(state);
-            switch (selector)
+            switch (range)
             {
-                case TargetSelector.FrontOne: return living.Count > 0 ? living[0] : null;
-                case TargetSelector.BackOne: return living.Count > 0 ? living[living.Count - 1] : null;
+                case CardTargetRange.FrontOne: return living.Count > 0 ? living[0] : null;
+                case CardTargetRange.BackOne: return living.Count > 0 ? living[living.Count - 1] : null;
                 default: return null; // All은 다중 대상 — SelectAll을 쓴다.
             }
         }
@@ -33,11 +33,11 @@ namespace FateWeaver.Core.Combat
             return living;
         }
 
-        public static List<Enemy> SelectRange(CombatState state, TargetSelector selector)
+        public static List<Enemy> SelectRange(CombatState state, CardTargetRange range)
         {
             var living = SelectAll(state);
-            var take = TakeCount(selector, living.Count);
-            if (selector == TargetSelector.BackOne || selector == TargetSelector.BackTwo)
+            var take = TakeCount(range, living.Count);
+            if (range == CardTargetRange.BackOne || range == CardTargetRange.BackTwo)
             {
                 return living.GetRange(living.Count - take, take);
             }
@@ -45,16 +45,16 @@ namespace FateWeaver.Core.Combat
             return living.GetRange(0, take);
         }
 
-        private static int TakeCount(TargetSelector selector, int livingCount)
+        private static int TakeCount(CardTargetRange range, int livingCount)
         {
-            switch (selector)
+            switch (range)
             {
-                case TargetSelector.FrontOne:
-                case TargetSelector.BackOne: return Math.Min(1, livingCount);
-                case TargetSelector.FrontTwo:
-                case TargetSelector.BackTwo: return Math.Min(2, livingCount);
-                case TargetSelector.All: return livingCount;
-                default: throw new ArgumentOutOfRangeException(nameof(selector));
+                case CardTargetRange.FrontOne:
+                case CardTargetRange.BackOne: return Math.Min(1, livingCount);
+                case CardTargetRange.FrontTwo:
+                case CardTargetRange.BackTwo: return Math.Min(2, livingCount);
+                case CardTargetRange.All: return livingCount;
+                default: throw new ArgumentOutOfRangeException(nameof(range), range, "Self is not a formation position.");
             }
         }
     }

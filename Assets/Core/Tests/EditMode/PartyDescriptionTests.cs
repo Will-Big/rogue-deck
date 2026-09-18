@@ -15,40 +15,29 @@ namespace FateWeaver.Tests
         private static CardDefinition Execution(params EffectData[] effects) =>
             new CardDefinition("party_test", "파티 테스트", Side.Player, 0, effects)
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 Category = CardCategory.Execution
             };
 
-        [TestCase(TargetSelector.FrontOne, "[◆] 피해 4.")]
-        [TestCase(TargetSelector.FrontTwo, "[◆] 피해 4.")]
-        [TestCase(TargetSelector.BackOne, "[◆] 피해 4.")]
-        [TestCase(TargetSelector.BackTwo, "[◆] 피해 4.")]
-        public void Position_selector_uses_target_symbol(TargetSelector selector, string expected)
+        private static EffectData Hit(int value)
+            => new EffectData(EffectKeys.Damage, value) { TargetFaction = CardTargetFaction.Enemy };
+
+        [TestCase(CardTargetRange.FrontOne, "[◆] 피해 4.")]
+        [TestCase(CardTargetRange.FrontTwo, "[◆] 피해 4.")]
+        [TestCase(CardTargetRange.BackOne, "[◆] 피해 4.")]
+        [TestCase(CardTargetRange.BackTwo, "[◆] 피해 4.")]
+        public void Position_range_uses_target_symbol(CardTargetRange range, string expected)
         {
-            var card = Execution(new EffectData(EffectKeys.Damage, 4) { TargetSelector = selector });
+            var card = Execution(Hit(4)) with { EnemyTarget = range };
 
             Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
-        public void Party_member_status_fails_because_direct_selection_has_no_frame_schema()
-        {
-            var card = Execution(EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusApplyTarget.PartyMember,
-                4));
-
-            var ex = Assert.Throws<System.InvalidOperationException>(() =>
-                DescriptionComposer.Describe(card, Korean));
-            StringAssert.Contains("party_test", ex.Message);
-        }
-
-        [Test]
         public void All_party_status_uses_ally_symbol()
         {
-            var card = Execution(EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusApplyTarget.AllPartyMembers,
-                4));
+            var card = Execution(EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 4))
+                with { AllyTarget = CardTargetRange.All };
 
             Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
@@ -56,7 +45,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_executed_condition_names_execution_history()
         {
-            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+            var card = Execution(Hit(1) with { SuccessEffectValue = 2 })
                 with { StartCondition = new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage) };
 
             Assert.AreEqual(
@@ -67,7 +56,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_adjacent_condition_names_frozen_placement_order()
         {
-            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+            var card = Execution(Hit(1) with { SuccessEffectValue = 2 })
                 with { StartCondition = new AdjacentCardHasEffect(AdjacentDirection.Previous, Side.Player, EffectKeys.Damage) };
 
             Assert.AreEqual(
@@ -78,7 +67,7 @@ namespace FateWeaver.Tests
         [Test]
         public void No_preceding_condition_names_execution_history()
         {
-            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+            var card = Execution(Hit(1) with { SuccessEffectValue = 2 })
                 with { StartCondition = new NoPrecedingCardOfSide(Side.Player) };
 
             Assert.AreEqual(
@@ -89,7 +78,7 @@ namespace FateWeaver.Tests
         [Test]
         public void No_following_condition_names_frozen_placement_order()
         {
-            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+            var card = Execution(Hit(1) with { SuccessEffectValue = 2 })
                 with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) };
 
             Assert.AreEqual(

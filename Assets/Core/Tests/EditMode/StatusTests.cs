@@ -42,7 +42,11 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } })
+            {
+                AllyTarget = CardTargetRange.FrontOne,
+                EnemyTarget = CardTargetRange.FrontOne
+            };
             return new ExecutionCardInstance(def);
         }
 

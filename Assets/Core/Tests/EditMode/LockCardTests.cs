@@ -13,8 +13,8 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition LockedJab() => new CardDefinition(
             "locked_jab", "고정된 일격", Side.Enemy, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) })
-            { EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
+            new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally } })
+            { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution, StartsLocked = true };
 
         [Test]
         public void Locked_enemy_card_enters_zone_locked()
@@ -22,7 +22,7 @@ namespace FateWeaver.Tests
             var intent = new SequencePolicy(new IReadOnlyList<CardDefinition>[] { new[] { LockedJab() } });
             var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { new CardDefinition("p", "p", Side.Player, 6,
-                    new[] { new EffectData(EffectKeys.Damage, 1) }) { EnergyCost = 0, Category = CardCategory.Execution } },
+                    new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution } },
                 100, new[] { new Enemy("goblin", 100) }, intent, 3, 5, 1);
 
             var jab = session.CurrentOrder.First(c => c.Def.Id == "locked_jab");

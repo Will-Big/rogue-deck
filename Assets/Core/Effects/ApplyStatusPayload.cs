@@ -7,7 +7,5 @@ namespace FateWeaver.Core.Effects
     /// here as a second field that could disagree with it. Its meaning (magnitude vs. duration) and the
     /// resulting StatusLifetime's Kind are looked up from the combat's StatusContentCatalog by Key at
     /// apply time; the card never chooses a lifetime.</summary>
-    public sealed record ApplyStatusPayload(
-        StatusKey Key,
-        StatusApplyTarget Target) : IEffectPayload;
+    public sealed record ApplyStatusPayload(StatusKey Key) : IEffectPayload;
 }

@@ -75,6 +75,10 @@ namespace FateWeaver.Simulation
         /// <summary>카드 시작 조건(null이면 없음). 효과의 SuccessEffectValue·SkipOnBasic이 이 결과를 읽는다.</summary>
         public FateWeaver.Core.Conditions.Condition StartCondition { get; init; }
 
+        /// <summary>아군·적 진영 효과가 대상을 고르는 위치(CardDefinition.AllyTarget·EnemyTarget).</summary>
+        public CardTargetRange? AllyTarget { get; init; }
+        public CardTargetRange? EnemyTarget { get; init; }
+
         public ZoneCardSpec(
             string id,
             string name,

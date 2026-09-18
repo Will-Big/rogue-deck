@@ -37,8 +37,6 @@ namespace FateWeaver.Core.Conditions
         Side Side,
         EffectKey EffectKey) : Condition;
 
-    public sealed record SameTarget : Condition;
-
     /// <summary>Success when no card of the given side resolves before this one (e.g. an enemy card that
     /// strikes before any player card acts). Mirror of BeforeNextEnemyDamageCard for an arbitrary side.</summary>
     public sealed record NoPrecedingCardOfSide(Side Side) : Condition;

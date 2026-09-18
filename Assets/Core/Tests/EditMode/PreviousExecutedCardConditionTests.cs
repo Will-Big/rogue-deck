@@ -49,23 +49,22 @@ namespace FateWeaver.Tests
             int executionOrder,
             Condition condition,
             int baseDamage,
-            int successDamage,
-            string targetId = null)
+            int successDamage)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, baseDamage) { SuccessEffectValue = successDamage } })
-            {
+                new[] { new EffectData(EffectKeys.Damage, baseDamage) { TargetFaction = CardFixtures.Opposing(side), SuccessEffectValue = successDamage } })
+            { AllyTarget = CardTargetRange.FrontOne, EnemyTarget = CardTargetRange.FrontOne,
                 StartCondition = condition
             };
-            return new ExecutionCardInstance(def) { TargetId = targetId };
+            return new ExecutionCardInstance(def);
         }
 
         private static ExecutionCardInstance PlainCard(
-            string id, Side side, int executionOrder, int damage, string targetId = null)
+            string id, Side side, int executionOrder, int damage)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
-            return new ExecutionCardInstance(def) { TargetId = targetId };
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } }) { AllyTarget = CardTargetRange.FrontOne, EnemyTarget = CardTargetRange.FrontOne };
+            return new ExecutionCardInstance(def);
         }
 
         [Test]
@@ -81,7 +80,7 @@ namespace FateWeaver.Tests
             // B: ally가 죽으면 실행선에서 빠져 차례가 오지 않는다.
             var b = new ExecutionCardInstance(new CardDefinition(
                 "b_card", "b_card", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 1) }))
+                new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne })
             { OwnerId = "ally" };
             // C: succeeds only if the "previous executed card" is A (an enemy attack), i.e. B is skipped.
             var c = ConditionalCard("c_card", Side.Player, executionOrder: 3,
@@ -111,7 +110,7 @@ namespace FateWeaver.Tests
 
                 var a = PlainCard("a_hit", Side.Enemy, executionOrder: 1, damage: 2);
                 var b = new ExecutionCardInstance(new CardDefinition("b_hit", "b_hit", Side.Player, 2,
-                    new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) }))
+                    new[] { EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 3) }) { AllyTarget = CardTargetRange.Self })
                 {
                     OwnerId = "no-such-member"
                 };
@@ -187,31 +186,6 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Same_target_reads_the_player_card_that_executed_last()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.AddSoloPlayer(30);
-            state.Enemies.Add(new Enemy("goblinA", 100));
-
-            var a = PlainCard("a_mark", Side.Player, executionOrder: 1, damage: 1, targetId: "goblinA");
-            // b의 차례가 와서 이력에 남는다. b의 TargetId는 다른 id이므로 c와 같은 대상이 아니다.
-            var b = PlainCard("b_mark", Side.Player, executionOrder: 2, damage: 1, targetId: "phantom");
-            var c = ConditionalCard("c_strike", Side.Player, executionOrder: 3,
-                new SameTarget(), baseDamage: 0, successDamage: 8, targetId: "goblinA");
-
-            state.Zone.Add(a);
-            state.Zone.Add(b);
-            state.Zone.Add(c);
-
-            var events = new TurnResolver(Registry()).Resolve(state, 0);
-
-            Assert.IsNotNull(Resolved(events, "b_mark"));
-            var resolvedC = Resolved(events, "c_strike");
-            Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
-            Assert.AreEqual(0, resolvedC.DamageDealt);
-        }
-
-        [Test]
         public void Placement_conditions_count_every_card_on_the_line_including_cancelled_ones()
         {
             var state = new CombatState(TestContent.Statuses());
@@ -254,7 +228,7 @@ namespace FateWeaver.Tests
             var strike = PlainCard("strike", Side.Enemy, executionOrder: 1, damage: 10);
             var allyCard = new ExecutionCardInstance(new CardDefinition(
                 "ally_card", "ally_card", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 1) }))
+                new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne })
             { OwnerId = "ally" };
             var last = ConditionalCard("last", Side.Player, executionOrder: 3,
                 new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy), baseDamage: 0, successDamage: 4);

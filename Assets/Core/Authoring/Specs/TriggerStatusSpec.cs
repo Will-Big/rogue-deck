@@ -17,12 +17,8 @@ namespace FateWeaver.Core.Authoring
 
         public override bool IsTargeted => true;
 
-        protected override EffectData Build(Side cardSide, CardTargetKey? target)
-            => new EffectData(Key, 0)
-            {
-                Payload = new TriggerStatusPayload(Status.ToKey()),
-                TargetSelector = SelectorFor(target.Value.Range)
-            };
+        protected override EffectData Build()
+            => new EffectData(Key, 0) { Payload = new TriggerStatusPayload(Status.ToKey()) };
 
         public override IEnumerable<string> Validate(AuthoringContext context)
         {

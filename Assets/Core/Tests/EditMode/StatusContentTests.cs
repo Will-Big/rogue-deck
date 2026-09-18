@@ -231,9 +231,9 @@ namespace FateWeaver.Tests
                 => new CardDefinition("fixture_card", "fixture_card", Side.Player, 1,
                     new[]
                     {
-                        EffectData.ApplyStatus(new StatusKey(statusId), StatusApplyTarget.TargetEnemy, count)
+                        EffectData.ApplyStatus(new StatusKey(statusId), CardTargetFaction.Enemy, count)
                     })
-                    { Category = CardCategory.Execution };
+                    { EnemyTarget = CardTargetRange.FrontOne, Category = CardCategory.Execution };
 
             public static void Resolve(CombatState state, CardDefinition cardDef)
             {

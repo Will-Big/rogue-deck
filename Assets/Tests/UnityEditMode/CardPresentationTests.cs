@@ -16,8 +16,8 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private static CardDefinition EnemyCard() => new CardDefinition(
             "locked_jab", "잠긴 일격", Side.Enemy, 5,
-            new[] { new EffectData(EffectKeys.Damage, 1) })
-            { EnergyCost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } })
+            { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
         [Test]
         public void Presentation_constructor_does_not_accept_a_lossy_string_description()
@@ -52,7 +52,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var definition = new CardDefinition(
                 "owned_guard", "소유 방어", Side.Player, 5,
-                new[] { new EffectData(EffectKeys.Damage, 0) });
+                new[] { new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var instance = new ExecutionCardInstance(definition);
             var ownerColor = new Color(0.35f, 0.65f, 0.95f, 1f);
 
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var definition = new CardDefinition(
                 "party_guard", "공용 방어", Side.Player, 5,
-                new[] { new EffectData(EffectKeys.Damage, 0) });
+                new[] { new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
 
             var presentation = CardPresentation.FromDefinition(
                 definition, Korean, null, PlaytestKoreanText.PartyOwnerName(), Color.white, true);

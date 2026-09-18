@@ -25,22 +25,29 @@ namespace FateWeaver.Tests.EditMode
         private static readonly KoreanDescriptionCatalog Korean =
             KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
 
+        /// <summary>플레이어 실행 카드. 아군 효과는 자신, 적 효과는 적 전열 하나를 고른다.</summary>
         private static CardDefinition Execution(string id, params EffectData[] effects)
             => new CardDefinition(id, id, Side.Player, 5, effects)
-               { Category = CardCategory.Execution };
+               {
+                   AllyTarget = CardTargetRange.Self,
+                   EnemyTarget = CardTargetRange.FrontOne,
+                   Category = CardCategory.Execution
+               };
+
+        private static EffectData Hit(int value)
+            => new EffectData(EffectKeys.Damage, value) { TargetFaction = CardTargetFaction.Enemy };
 
         [Test]
         public void Single_damage_effect_is_one_sentence()
         {
-            var card = Execution("slash", new EffectData(EffectKeys.Damage, 4));
+            var card = Execution("slash", Hit(4));
             Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
         }
 
         [Test]
-        public void Target_selector_prefixes_the_effect_fragment_through_the_vocabulary()
+        public void Target_range_prefixes_the_effect_fragment_through_the_vocabulary()
         {
-            var card = Execution("aimed_slash",
-                new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackOne });
+            var card = Execution("aimed_slash", Hit(4)) with { EnemyTarget = CardTargetRange.BackOne };
             Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
         }
 
@@ -48,7 +55,7 @@ namespace FateWeaver.Tests.EditMode
         public void Conditional_effect_appends_condition_then_success_sentence()
         {
             var card = Execution("quick_cut",
-                new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 8 })
+                Hit(2) with { SuccessEffectValue = 8 })
                 with { StartCondition = new FirstToTrigger() };
             Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.", DescriptionComposer.Describe(card, Korean));
         }
@@ -57,7 +64,7 @@ namespace FateWeaver.Tests.EditMode
         public void Multiple_effects_join_with_a_space()
         {
             var card = Execution("wrist_cut",
-                new EffectData(EffectKeys.Damage, 3),
+                Hit(3),
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
             Assert.AreEqual("[◆] 피해 3.\n다음 플레이어 조건 보상을 무효화.",
                 DescriptionComposer.Describe(card, Korean));
@@ -67,7 +74,7 @@ namespace FateWeaver.Tests.EditMode
         public void Apply_status_uses_amount_as_magnitude()
         {
             var card = Execution("guard",
-                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4));
+                EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 4));
             Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
         }
 
@@ -75,7 +82,7 @@ namespace FateWeaver.Tests.EditMode
         public void Conditional_status_reuses_success_amount_for_the_success_fragment()
         {
             var card = Execution("cover",
-                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2)
+                EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 2)
                     with { SuccessEffectValue = 7 })
                 with { StartCondition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage) };
             Assert.AreEqual(
@@ -166,7 +173,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution(
                 "move",
-                new EffectData(EffectKeys.MoveFormation, distance));
+                new EffectData(EffectKeys.MoveFormation, distance) { TargetFaction = CardTargetFaction.Ally });
 
             Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
         }
@@ -196,7 +203,7 @@ namespace FateWeaver.Tests.EditMode
 
             Assert.Throws<InvalidOperationException>(() =>
                 DescriptionComposer.Describe(
-                    Execution("empty", new EffectData(EffectKeys.Damage, 1)),
+                    Execution("empty", Hit(1)),
                     catalog));
         }
 
@@ -276,7 +283,7 @@ namespace FateWeaver.Tests.EditMode
             Assert.AreEqual("[◆] 피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
                 DescriptionComposer.Describe(
                     Execution("warden_smash",
-                        new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 7 })
+                        Hit(2) with { SuccessEffectValue = 7 })
                         with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) },
                     Korean));
 
@@ -284,7 +291,7 @@ namespace FateWeaver.Tests.EditMode
         public void Korean_number_token_follows_data()
         {
             var tuned = new CardDefinition("slash", "베기", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 99) }) { Category = CardCategory.Execution };
+                new[] { new EffectData(EffectKeys.Damage, 99) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, Category = CardCategory.Execution };
             Assert.AreEqual("[◆] 피해 99.", DescriptionComposer.Describe(tuned, Korean));
         }
 
@@ -297,8 +304,8 @@ namespace FateWeaver.Tests.EditMode
             var card = new CardDefinition("slow_hex", "둔화 저주", Side.Player, 5,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Slow, StatusApplyTarget.TargetEnemy, count: 2)
-                }) { Category = CardCategory.Execution };
+                    EffectData.ApplyStatus(StatusKeys.Slow, CardTargetFaction.Enemy, count: 2)
+                }) { EnemyTarget = CardTargetRange.FrontOne, Category = CardCategory.Execution };
             Assert.AreEqual("[◆] 둔화 (2턴).", DescriptionComposer.Describe(card, Korean));
         }
 
@@ -309,9 +316,10 @@ namespace FateWeaver.Tests.EditMode
             var card = new CardDefinition("chain", "연쇄 베기", Side.Player, 5,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 6 }
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 6 }
                 })
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 Category = CardCategory.Execution,
                 StartCondition = new AllOf(new Condition[]
                 {

@@ -44,46 +44,27 @@ namespace FateWeaver.Simulation.Descriptions
             IDescriptionGrammar grammar,
             StatusDescriptionRegistry statuses,
             StatusContentCatalog statusContent,
-            string cardId,
-            Side cardSide)
+            CardDefinition card)
         {
             _grammar = grammar ?? throw new ArgumentNullException(nameof(grammar));
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
             StatusContent = statusContent ?? throw new ArgumentNullException(nameof(statusContent));
-            CardId = cardId ?? throw new ArgumentNullException(nameof(cardId));
-            CardSide = cardSide;
+            Card = card ?? throw new ArgumentNullException(nameof(card));
         }
 
         public StatusDescriptionRegistry Statuses { get; }
-        public string CardId { get; }
-        public Side CardSide { get; }
+
+        /// <summary>설명하는 카드. 효과의 대상 위치는 효과가 아니라 카드의 축이 갖는다.</summary>
+        public CardDefinition Card { get; }
+        public string CardId => Card.Id;
+        public Side CardSide => Card.Side;
 
         /// <summary>이 전투의 상태 저작 콘텐츠. 카드 텍스트에서 숫자가 세기인지 지속인지는 카드가
         /// 아니라 이 카탈로그만 안다(규칙 10) — 설명 컴포저가 이걸 못 보면 규칙 10을 지킬 수 없다.</summary>
         public StatusContentCatalog StatusContent { get; }
-        public CardTargetRange Range(TargetSelector? selector)
-        {
-            switch (selector ?? TargetSelector.FrontOne)
-            {
-                case TargetSelector.FrontOne: return CardTargetRange.FrontOne;
-                case TargetSelector.FrontTwo: return CardTargetRange.FrontTwo;
-                case TargetSelector.BackOne: return CardTargetRange.BackOne;
-                case TargetSelector.BackTwo: return CardTargetRange.BackTwo;
-                case TargetSelector.All: return CardTargetRange.All;
-                default: throw new ArgumentOutOfRangeException(nameof(selector));
-            }
-        }
-
-        public CardTargetKey EnemyRange(TargetSelector? selector)
-            => new CardTargetKey(CardTargetFaction.Enemy, Range(selector));
-
-        public CardTargetKey AllyRange(TargetSelector? selector)
-            => new CardTargetKey(CardTargetFaction.Ally, Range(selector));
-
-        public CardTargetKey OpposingRange(TargetSelector? selector)
-            => new CardTargetKey(
-                CardSide == Side.Player ? CardTargetFaction.Enemy : CardTargetFaction.Ally,
-                Range(selector));
+        /// <summary>효과가 대상을 고르는 위치(효과 진영 + 카드의 그 진영 축). 실행과 같은 계산이다
+        /// (CardDefinition.TargetOf). 대상을 고르지 않는 효과는 null.</summary>
+        public CardTargetKey? TargetOf(EffectData effect) => Card.TargetOf(effect);
 
         public CardTargetKey SelfTarget()
             => new CardTargetKey(

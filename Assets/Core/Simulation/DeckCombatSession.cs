@@ -141,7 +141,7 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
-            ValidateBaseExecutionDefinitions(deckCards);
+            ValidateDeckCards(deckCards);
             _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
             _deck = new Deck(deckCards, _state.Rng);
             _enemyPolicy = enemyPolicy;
@@ -231,7 +231,7 @@ namespace FateWeaver.Simulation
                 card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses, _state.StatusRules,
                 _state.StatusContent);
 
-        private static void ValidateBaseExecutionDefinitions(IReadOnlyList<OwnedCard> cards)
+        private static void ValidateDeckCards(IReadOnlyList<OwnedCard> cards)
         {
             if (cards == null)
             {
@@ -243,13 +243,6 @@ namespace FateWeaver.Simulation
                 if (card == null || card.Def == null)
                 {
                     throw new System.ArgumentException("Deck contains an invalid owned card.");
-                }
-
-                if (!PartyTargetRules.IsValidBaseExecutionDefinition(card.Def))
-                {
-                    throw new System.ArgumentException(
-                        "Player execution cards cannot require a directly selected target: "
-                        + card.Def.Id);
                 }
             }
         }
@@ -268,8 +261,8 @@ namespace FateWeaver.Simulation
         }
 
         /// <summary>Answers what the player must pick before playing this hand card.
-        /// Execution cards never require explicit targets (targets are authored via
-        /// StatusApplyTarget / TargetSelector and resolved by the core).</summary>
+        /// Execution cards never require explicit targets (targets are authored as the card's ally/enemy
+        /// ranges plus each effect's faction, and resolved by the core per effect).</summary>
         public TargetingRequirement DescribeTargeting(int handIndex)
         {
             if (handIndex < 0 || handIndex >= _deck.Hand.Count)

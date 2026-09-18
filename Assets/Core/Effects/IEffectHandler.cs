@@ -21,9 +21,15 @@ namespace FateWeaver.Core.Effects
         public EffectData Effect;
         public int EffectValue;
 
-        /// <summary>이 효과가 시작할 때 고른 대상(대상을 고르지 않는 효과는 null). 비어 있지 않다 —
+        /// <summary>이 효과가 시작할 때 고른 대상(진영이 없는 효과는 null). 비어 있지 않다 —
         /// 대상이 없으면 EffectExecutor가 처리기를 부르지 않는다.</summary>
         public EffectTargetSnapshot Targets;
+
+        /// <summary>대상을 고르는 효과의 대상. 진영 없이 저작된 효과면 데이터 오류로 예외를 던진다 — 저작 콘텐츠는
+        /// 로딩 검증(EffectSpec.IsTargeted)이 진영을 요구하므로 C# 정의 오류다.</summary>
+        public EffectTargetSnapshot RequireTargets()
+            => Targets ?? throw new System.InvalidOperationException(
+                "Effect '" + Effect?.Key.Id + "' on card '" + Card?.Def.Id + "' needs a TargetFaction.");
 
         // outputs (read by EffectExecutor)
         public int DamageDealt;
@@ -40,13 +46,11 @@ namespace FateWeaver.Core.Effects
     }
 
     /// <summary>효과 하나를 적용한다. 처리기는 받은 대상에만 적용하며 카드 전체를 취소하거나 다음 효과를
-    /// 부르지 않는다(전투 실행 계약 스펙 §3).</summary>
+    /// 부르지 않는다(전투 실행 계약 스펙 §3). 누구를 고를지는 처리기가 아니라 데이터(효과 진영 + 카드 축)가
+    /// 정한다.</summary>
     public interface IEffectHandler
     {
         EffectKey Key { get; }
-
-        /// <summary>이 효과가 대상을 고르는 위치 규칙. 대상을 고르지 않는 효과는 null.</summary>
-        CardTargetKey? TargetFor(CardDefinition card, EffectData effect);
 
         void Apply(EffectContext ctx);
     }

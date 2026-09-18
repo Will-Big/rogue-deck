@@ -57,11 +57,9 @@ namespace FateWeaver.Tests
             var ownerBlock = PrototypeDeckCards()
                 .First(card => card.Id == "fixture_selected_block");
 
-            Assert.IsTrue(PartyTargetRules.IsValidBaseExecutionDefinition(ownerBlock));
-            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(ownerBlock));
             Assert.AreEqual(
-                StatusApplyTarget.Self,
-                ((ApplyStatusPayload)ownerBlock.Effects.Single().Payload).Target);
+                new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self),
+                ownerBlock.TargetOf(ownerBlock.Effects.Single()));
         }
 
         [Test]
@@ -70,10 +68,9 @@ namespace FateWeaver.Tests
             var allBlock = PrototypeDeckCards()
                 .Single(card => card.Id == "fixture_all_block");
 
-            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(allBlock));
             Assert.AreEqual(
-                StatusApplyTarget.AllPartyMembers,
-                ((ApplyStatusPayload)allBlock.Effects.Single().Payload).Target);
+                new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.All),
+                allBlock.TargetOf(allBlock.Effects.Single()));
         }
     }
 }

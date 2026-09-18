@@ -99,7 +99,9 @@ namespace FateWeaver.Simulation
                 var def = new CardDefinition(
                     card.Id, card.Name, card.Side, card.ExecutionOrder, card.Effects)
                 {
-                    StartCondition = card.StartCondition
+                    StartCondition = card.StartCondition,
+                    AllyTarget = card.AllyTarget,
+                    EnemyTarget = card.EnemyTarget
                 };
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);

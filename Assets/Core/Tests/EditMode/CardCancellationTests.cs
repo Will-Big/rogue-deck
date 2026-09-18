@@ -25,15 +25,13 @@ namespace FateWeaver.Tests
             int executionOrder,
             int damage,
             string ownerId = null,
-            string targetId = null,
             int instanceId = -1)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } }) { AllyTarget = CardTargetRange.FrontOne, EnemyTarget = CardTargetRange.FrontOne };
             return new ExecutionCardInstance(def)
             {
                 OwnerId = ownerId,
-                TargetId = targetId,
                 InstanceId = instanceId
             };
         }
@@ -175,9 +173,9 @@ namespace FateWeaver.Tests
                 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 5),
-                    new EffectData(EffectKeys.Damage, 1)
-                });
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Ally },
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally }
+                }) { AllyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(killThenCancel) { InstanceId = 1, OwnerId = "goblin" });
             state.Zone.Add(Card(
                 "a_pending",

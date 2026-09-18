@@ -57,8 +57,6 @@ namespace FateWeaver.Simulation.Descriptions
                     return w.N + "번째 안";
                 case BeforeNextEnemyDamageCard _:
                     return "다음 적 피해 카드 전";
-                case SameTarget _:
-                    return "같은 대상";
                 case AdjacentCardIs a:
                     return AdjacentStem(a);
                 case AdjacentCardHasEffect a:

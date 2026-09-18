@@ -30,7 +30,6 @@ namespace FateWeaver.Core.Combat
         /// side as a whole, e.g. all pre-Task-4 content). Drives strict Self-target resolution.</summary>
         public string OwnerId { get; set; }
 
-        public string TargetId { get; set; }
         public bool IsLocked { get; set; }
         public StatusBag Statuses { get; } = new();
 

@@ -56,7 +56,7 @@ namespace FateWeaver.Tests
             var grant = new CardDefinition("empower", "empower", Side.Player, 1,
                 new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 2) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(grant) { OwnerId = CombatState.SoloPlayerId, InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
             var effects = new EffectRegistry();
@@ -83,7 +83,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 1) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
             var effects = new EffectRegistry();
@@ -106,8 +106,9 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("quick_cut", "quick_cut", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 } })
+                new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 } })
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 StartCondition = new WithinNth(2)
             };
             state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
@@ -135,7 +136,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var card = new ExecutionCardInstance(def)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 7 };
             card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
@@ -162,7 +163,7 @@ namespace FateWeaver.Tests
             var grant = new CardDefinition("empty_empower", "empty_empower", Side.Player, 1,
                 new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(grant));
             state.Zone.Add(new ExecutionCardInstance(strike));
             var effects = new EffectRegistry();
@@ -184,7 +185,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var strikeCard = new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
             strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.UntilConsumed(1));
@@ -209,7 +210,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var strikeCard = new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
             strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
@@ -235,8 +236,9 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("quick_cut", "quick_cut", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 } })
+                new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 } })
             {
+                EnemyTarget = CardTargetRange.FrontOne,
                 StartCondition = new WithinNth(1)
             };
             var card = new ExecutionCardInstance(def) { InstanceId = 4 };
@@ -259,7 +261,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var card = new ExecutionCardInstance(def) { InstanceId = 8 };
             card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.Permanent);
             state.Zone.Add(card);
@@ -287,7 +289,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
 
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 10) });
+                new[] { new EffectData(EffectKeys.Damage, 10) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -314,7 +316,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
 
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 10) });
+                new[] { new EffectData(EffectKeys.Damage, 10) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -331,7 +333,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 30));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -350,9 +352,9 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("double_strike", "double_strike", Side.Player, 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 5),
-                    new EffectData(EffectKeys.Damage, 5)
-                });
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy },
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy }
+                }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -373,8 +375,8 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("guard", "guard", Side.Player, 1,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 5)
-                });
+                    EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 5)
+                }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -432,7 +434,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin_a", 10));
             state.Enemies.Add(new Enemy("goblin_b", 10));
             var def = new CardDefinition("sweep", "sweep", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.All } });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.All };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -469,7 +471,7 @@ namespace FateWeaver.Tests
             enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), 10);
             state.Enemies.Add(enemy);
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -514,9 +516,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
             var def = new CardDefinition("drain", "흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0)
-                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
-            });
+                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();
             effects.Register(new ConsumeStatusHandler());
@@ -555,9 +556,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("empty_drain", "빈 흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0)
-                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
-            });
+                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();
             effects.Register(new ConsumeStatusHandler());
@@ -578,7 +578,7 @@ namespace FateWeaver.Tests
             state.Party.Add(back);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("advance", "advance", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def)
                 { OwnerId = back.Id, InstanceId = 3 });
             var effects = new EffectRegistry();
@@ -602,7 +602,7 @@ namespace FateWeaver.Tests
             state.Party.Add(new PartyMember("member_b", "B", 10));
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("advance", "advance", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def)
                 { OwnerId = front.Id, InstanceId = 3 });
             var effects = new EffectRegistry();

@@ -26,6 +26,20 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(Side side, params EffectData[] effects)
             => new ExecutionCardInstance(new CardDefinition("card", "card", side, 1, effects));
 
+        private static ExecutionCardInstance Card(
+            CardTargetRange? ally, CardTargetRange? enemy, params EffectData[] effects)
+            => new ExecutionCardInstance(new CardDefinition("card", "card", Side.Player, 1, effects)
+            {
+                AllyTarget = ally,
+                EnemyTarget = enemy
+            })
+            {
+                OwnerId = CombatState.SoloPlayerId
+            };
+
+        private static EffectData Hit(string id, int value)
+            => new EffectData(EffectKeys.Damage, value) { Id = id, TargetFaction = CardTargetFaction.Enemy };
+
         [Test]
         public void A_new_effect_selects_the_new_front_enemy()
         {
@@ -112,12 +126,7 @@ namespace FateWeaver.Tests
             var b = new Enemy("b", 10);
             state.Enemies.Add(a);
             state.Enemies.Add(b);
-            var hit = new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.FrontOne };
-            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "double_hit", "double_hit", Side.Player, 1, new[] { hit with { Id = "e0" }, hit with { Id = "e1" } }))
-            {
-                OwnerId = CombatState.SoloPlayerId
-            });
+            state.Zone.Add(Card(null, CardTargetRange.FrontOne, Hit("e0", 3), Hit("e1", 3)));
 
             new TurnResolver(Effects(), new StatusRegistry()).Resolve(state, 0);
 
@@ -137,13 +146,23 @@ namespace FateWeaver.Tests
             state.Party.Add(b);
             state.Enemies.Add(new Enemy("enemy", 10));
             var move = new EffectData(EffectKeys.MoveFormation, -1) { Id = "move" };
-            var block = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyBySelector, count: 3) with
-            {
-                Id = "block",
-                TargetSelector = TargetSelector.FrontOne
-            };
+            var block = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: 3) with { Id = "block" };
+            // 카드의 아군 축은 하나다. 이동은 아군 Self, 방어는 아군 FrontOne이라 한 카드에 둘 수 없다(로딩이 거부하는
+            // 조합) — 이동 카드와 방어 카드로 나눠 같은 주인이 차례로 쓴다. 방어 카드는 차례가 왔을 때의 대형으로 고른다.
             state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "step_guard", "step_guard", Side.Player, 1, new[] { move, block }))
+                "step", "step", Side.Player, 1,
+                new[] { move with { TargetFaction = CardTargetFaction.Ally } })
+            {
+                AllyTarget = CardTargetRange.Self
+            })
+            {
+                OwnerId = "b"
+            });
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
+                "guard", "guard", Side.Player, 2, new[] { block })
+            {
+                AllyTarget = CardTargetRange.FrontOne
+            })
             {
                 OwnerId = "b"
             });
@@ -164,14 +183,8 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(10);
             var only = new Enemy("only", 2);
             state.Enemies.Add(only);
-            var hit = new EffectData(EffectKeys.Damage, 2) { TargetSelector = TargetSelector.FrontOne };
             var fate = new EffectData(EffectKeys.GrantNextTurnFate, 1) { Id = "fate" };
-            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "overkill", "overkill", Side.Player, 1,
-                new[] { hit with { Id = "e0" }, hit with { Id = "e1" }, fate }))
-            {
-                OwnerId = CombatState.SoloPlayerId
-            });
+            state.Zone.Add(Card(null, CardTargetRange.FrontOne, Hit("e0", 2), Hit("e1", 2), fate));
 
             var events = new TurnResolver(Effects(), new StatusRegistry()).Resolve(state, 0);
 
@@ -187,9 +200,8 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(10);
-            var hit = new EffectData(EffectKeys.Damage, 2) { Id = "hit", TargetSelector = TargetSelector.FrontOne };
-            var card = Card(Side.Player, hit);
-            card.OwnerId = CombatState.SoloPlayerId;
+            var hit = Hit("hit", 2);
+            var card = Card(null, CardTargetRange.FrontOne, hit);
             var context = new CardExecutionContext(
                 card, ConditionTier.Basic, state, ResolutionContext.From(state));
 
@@ -211,9 +223,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(a);
             state.Enemies.Add(b);
             state.Enemies.Add(c);
-            var sweep = new EffectData(EffectKeys.Damage, 2) { Id = "sweep", TargetSelector = TargetSelector.All };
-            var card = Card(Side.Player, sweep);
-            card.OwnerId = CombatState.SoloPlayerId;
+            var sweep = Hit("sweep", 2);
+            var card = Card(null, CardTargetRange.All, sweep);
             var context = new CardExecutionContext(
                 card, ConditionTier.Basic, state, ResolutionContext.From(state));
 
@@ -233,13 +244,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("a", 10));
             state.Enemies.Add(new Enemy("b", 10));
             var fate = new EffectData(EffectKeys.GrantNextTurnFate, 1) { Id = "fate" };
-            var sweep = new EffectData(EffectKeys.Damage, 1) { Id = "sweep", TargetSelector = TargetSelector.All };
-            var back = new EffectData(EffectKeys.Damage, 1) { Id = "back", TargetSelector = TargetSelector.BackOne };
-            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "mixed", "mixed", Side.Player, 1, new[] { fate, sweep, back }))
-            {
-                OwnerId = CombatState.SoloPlayerId
-            });
+            var guard = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: 1) with { Id = "guard" };
+            state.Zone.Add(Card(CardTargetRange.Self, CardTargetRange.All, fate, Hit("sweep", 1), guard));
 
             var events = new TurnResolver(Effects(), new StatusRegistry()).Resolve(state, 0);
 
@@ -264,39 +270,42 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Damage_handler_declares_the_default_enemy_front_target()
+        public void Target_key_is_the_effect_faction_with_the_card_range_on_that_side()
         {
-            var effect = new EffectData(EffectKeys.Damage, 2);
-            var card = new CardDefinition("strike", "Strike", Side.Player, 1, new[] { effect });
+            var hit = Hit("hit", 2);
+            var guard = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: 1);
+            var fate = new EffectData(EffectKeys.GrantNextTurnFate, 1);
+            var card = new CardDefinition("c", "c", Side.Player, 1, new[] { hit, guard, fate })
+            {
+                AllyTarget = CardTargetRange.FrontTwo,
+                EnemyTarget = CardTargetRange.BackOne
+            };
 
-            var key = new DamageHandler().TargetFor(card, effect);
-
-            Assert.AreEqual(
-                new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne),
-                key.Value);
+            Assert.AreEqual(new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.BackOne), card.TargetOf(hit));
+            Assert.AreEqual(new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.FrontTwo), card.TargetOf(guard));
+            Assert.IsNull(card.TargetOf(fate), "진영이 없는 효과는 대상을 고르지 않는다");
         }
 
         [Test]
-        public void A_card_target_id_does_not_override_the_effect_position()
+        public void A_faction_without_a_card_range_is_a_contract_violation()
+        {
+            var hit = Hit("hit", 2);
+            var card = new CardDefinition("c", "c", Side.Player, 1, new[] { hit }) { AllyTarget = CardTargetRange.Self };
+
+            Assert.Throws<InvalidOperationException>(() => card.TargetOf(hit));
+        }
+
+        [Test]
+        public void A_targeted_handler_without_a_faction_reports_the_missing_faction()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(10);
-            state.Enemies.Add(new Enemy("front", 10));
-            state.Enemies.Add(new Enemy("middle", 10));
-            state.Enemies.Add(new Enemy("explicit", 10));
-            var effect = new EffectData(EffectKeys.Damage, 2) { TargetSelector = TargetSelector.FrontTwo };
-            state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "positional", "Positional", Side.Player, 1, new[] { effect }))
-            {
-                OwnerId = CombatState.SoloPlayerId,
-                TargetId = "explicit"
-            });
+            state.Enemies.Add(new Enemy("a", 10));
+            var unaimed = new EffectData(EffectKeys.Damage, 2);
 
-            new TurnResolver(Effects()).Resolve(state, 0);
-
-            Assert.AreEqual(8, state.Enemies[0].Hp);
-            Assert.AreEqual(8, state.Enemies[1].Hp);
-            Assert.AreEqual(10, state.Enemies[2].Hp);
+            var error = Assert.Throws<InvalidOperationException>(
+                () => EffectHarness.Apply(new DamageHandler(), state, Card(Side.Player, unaimed)));
+            StringAssert.Contains("TargetFaction", error.Message);
         }
     }
 }

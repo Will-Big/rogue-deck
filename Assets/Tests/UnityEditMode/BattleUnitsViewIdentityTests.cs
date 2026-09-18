@@ -132,9 +132,14 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private void ApplyMove(Side side, string ownerId, int distance)
         {
-            var effect = new EffectData(EffectKeys.MoveFormation, distance);
+            var faction = side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy;
+            var effect = new EffectData(EffectKeys.MoveFormation, distance) { TargetFaction = faction };
             var definition = new CardDefinition(
-                "move", "move", side, 1, new[] { effect });
+                "move", "move", side, 1, new[] { effect })
+            {
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.Self
+            };
             var effects = new EffectRegistry();
             effects.Register(new MoveFormationHandler());
             var context = new CardExecutionContext(

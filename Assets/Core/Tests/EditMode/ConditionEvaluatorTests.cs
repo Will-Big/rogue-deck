@@ -23,16 +23,15 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(
             string id,
             Side side,
-            int executionOrder,
-            string targetId = null)
+            int executionOrder)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
                 new[] { new EffectData(EffectKeys.Damage, 1) });
-            return new ExecutionCardInstance(def) { TargetId = targetId };
+            return new ExecutionCardInstance(def);
         }
 
         private static EffectData Block()
-            => EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2);
+            => EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 2);
 
         [Test]
         public void AdjacentCardHasEffect_matches_damage_in_a_composite_card_only()
@@ -155,23 +154,6 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new BeforeNextEnemyDamageCard(), player, ctx));
             Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new BeforeNextEnemyDamageCard(), enemy, ctx));
-        }
-
-        [Test]
-        public void SameTarget_succeeds_when_previous_player_card_targets_same_entity()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            var mark = Card("mark", Side.Player, 1, targetId: "goblin");
-            var strike = Card("strike", Side.Player, 2, targetId: "goblin");
-            var other = Card("other", Side.Player, 3, targetId: "slime");
-            state.Zone.Add(other);
-            state.Zone.Add(strike);
-            state.Zone.Add(mark);
-            var ctx = ResolutionContext.From(state);
-            ctx.MarkExecuted(mark); // simulates mark having already resolved, ahead of strike/other
-
-            Assert.AreEqual(ConditionTier.Success, ConditionEvaluator.Evaluate(new SameTarget(), strike, ctx));
-            Assert.AreEqual(ConditionTier.Basic, ConditionEvaluator.Evaluate(new SameTarget(), other, ctx));
         }
 
         [Test]

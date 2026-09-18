@@ -29,6 +29,7 @@ namespace FateWeaver.Tests
 
         private static EffectData Trigger() => new EffectData(EffectKeys.TriggerStatus, 0)
         {
+            TargetFaction = CardTargetFaction.Enemy,
             Payload = new TriggerStatusPayload(StatusKeys.Poison)
         };
 
@@ -41,9 +42,9 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("early_onset", "조기 발병", Side.Player, 3, new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.TargetEnemy, 1),
+                EffectData.ApplyStatus(StatusKeys.Poison, CardTargetFaction.Enemy, 1),
                 Trigger()
-            });
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -69,7 +70,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
             var effect = Trigger();
             var card = new ExecutionCardInstance(
-                new CardDefinition("t", "발동", Side.Player, 3, new[] { effect }))
+                new CardDefinition("t", "발동", Side.Player, 3, new[] { effect }) { EnemyTarget = CardTargetRange.FrontOne })
                 { OwnerId = CombatState.SoloPlayerId };
             var result = EffectHarness.Apply(new TriggerStatusHandler(), state, card, effect, Statuses());
 

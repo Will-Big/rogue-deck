@@ -5,52 +5,13 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Where an ApplyStatus effect puts the status, from the acting card's perspective.</summary>
-    public enum StatusApplyTarget
-    {
-        Self,             // the card's own side entity: player card -> its OwnerId party member; enemy card -> itself
-        TargetEnemy,      // enemies at the effect's TargetSelector position (null = FrontOne)
-        PartyMember,      // 명시 선택한 파티원 — 효과 단위 대상 선택(계획 T3)에서 실행 경로가 없어졌다. T3b에서 지운다
-        AllPartyMembers,  // every living party member, applied as independent per-member instances
-        PartyBySelector   // 아군 위치 범위 — effect.TargetSelector로 확정, null이면 FrontOne
-    }
-
     /// <summary>Applies a status (key + lifetime + magnitude) to every target this effect chose at its start.
     /// Magnitude rides on the resolved EffectValue (e.g. block points). Which holders are chosen comes from
-    /// the payload's StatusApplyTarget and the effect's TargetSelector (TargetFor); a Self whose owner is
-    /// dead or ambiguous has no target, so the effect is not applied.</summary>
+    /// the effect's faction and the card's range on that side; a Self whose owner is dead or ambiguous has
+    /// no target, so the effect is not applied.</summary>
     public sealed class ApplyStatusHandler : IEffectHandler, IEffectDataValidator
     {
         public EffectKey Key => EffectKeys.ApplyStatus;
-
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-        {
-            if (!(effect.Payload is ApplyStatusPayload payload))
-            {
-                return null;
-            }
-
-            switch (payload.Target)
-            {
-                case StatusApplyTarget.Self:
-                    return new CardTargetKey(
-                        card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
-                        CardTargetRange.Self);
-                case StatusApplyTarget.TargetEnemy:
-                    return new CardTargetKey(
-                        CardTargetFaction.Enemy,
-                        EffectTargetResolver.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
-                case StatusApplyTarget.PartyBySelector:
-                    return new CardTargetKey(
-                        CardTargetFaction.Ally,
-                        EffectTargetResolver.RangeFor(effect.TargetSelector ?? Cards.TargetSelector.FrontOne));
-                case StatusApplyTarget.AllPartyMembers:
-                    return new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.All);
-                default:
-                    throw new System.NotSupportedException(
-                        "apply_status target " + payload.Target + " has no position rule.");
-            }
-        }
 
         public void Apply(EffectContext ctx)
         {
@@ -59,12 +20,12 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            foreach (var target in ctx.Targets.Party)
+            foreach (var target in ctx.RequireTargets().Party)
             {
                 ApplyTo(ctx, payload, target.Statuses, target.Id);
             }
 
-            foreach (var target in ctx.Targets.Enemies)
+            foreach (var target in ctx.RequireTargets().Enemies)
             {
                 ApplyTo(ctx, payload, target.Statuses, target.Id);
             }
@@ -81,11 +42,6 @@ namespace FateWeaver.Core.Effects
             if (string.IsNullOrEmpty(payload.Key.Id))
             {
                 yield return "apply_status payload requires a status key.";
-            }
-
-            if (payload.Target == StatusApplyTarget.PartyMember)
-            {
-                yield return "apply_status PartyMember target has no position rule.";
             }
         }
 

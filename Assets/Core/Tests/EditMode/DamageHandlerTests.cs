@@ -10,7 +10,11 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(Side side, int amount)
         {
             var def = new CardDefinition("c", "c", side, 1,
-                new[] { new EffectData(EffectKeys.Damage, amount) });
+                new[] { new EffectData(EffectKeys.Damage, amount) { TargetFaction = CardFixtures.Opposing(side) } })
+            {
+                AllyTarget = CardTargetRange.FrontOne,
+                EnemyTarget = CardTargetRange.FrontOne
+            };
             return new ExecutionCardInstance(def);
         }
 
@@ -25,23 +29,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(7, state.Enemies[0].Hp);
             Assert.AreEqual(5, result.DamageDealt);
             CollectionAssert.AreEqual(new[] { "goblin" }, result.TargetIds);
-        }
-
-        [Test]
-        public void Player_damage_ignores_a_card_target_id_and_uses_its_position()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.AddSoloPlayer(30);
-            state.Enemies.Add(new Enemy("a", 10));
-            state.Enemies.Add(new Enemy("b", 10));
-            var card = Card(Side.Player, 4);
-            card.TargetId = "b";
-
-            var result = EffectHarness.Apply(new DamageHandler(), state, card);
-
-            Assert.AreEqual(6, state.Enemies[0].Hp);   // FrontOne "a" hit
-            Assert.AreEqual(10, state.Enemies[1].Hp);  // 구형 명시 대상 "b"는 대상 선택에 쓰이지 않는다
-            CollectionAssert.AreEqual(new[] { "a" }, result.TargetIds);
         }
 
         [Test]

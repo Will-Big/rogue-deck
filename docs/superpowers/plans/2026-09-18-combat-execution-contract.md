@@ -30,15 +30,16 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T3b이다.** T0·T1·T2a·T2b·T3는 끝났다. T3b는 착수 전에 사용자에게 절을 보여 주고 확인을 받는다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**다음 작업은 T4이다.** T0·T1·T2a·T2b·T3·T3b는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
   `combat-execution-contract`. **master에 아직 머지하지 않았다**(머지는 사용자 승인 후, 규칙 19). 새 세션은 이 워크트리로
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
-  `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · T3 커밋(아래 T3 절).
-- 기준 수치(T3 끝): 헤드리스 698 · 편집 도구 157 · Unity EditMode 891(통과 884, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · `c06b2e4`(T3) ·
+  `fdccf6f`(T3b 계획) · T3b 커밋(아래 T3b 절).
+- 기준 수치(T3b 끝): 헤드리스 689 · 편집 도구 157 · Unity EditMode 882(통과 875, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -59,6 +60,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 - **인앱 브라우저는 폴더 연결(File System Access API)과 `data:` 주소의 localStorage를 지원하지 않는다.** 편집 도구를 확인하려면
   `index.html` 앞에 메모리 폴더·메모리 localStorage를 주입한 임시 페이지를 워크트리 안에 만들어 열고, 확인 뒤 지운다.
 - 워크트리 격리 세션은 복잡한 셸 한 줄(루프·치환이 섞인 명령)을 거부한다. 긴 편집은 scratchpad의 파이썬 스크립트로 나눠 돌렸다.
+- 위치는 T3b부터 **카드의 두 축 + 효과의 진영**뿐이다(`CardDefinition.TargetOf`). C# 픽스처도 진영과 축을 적어야 한다.
+  빠뜨리면 "needs a TargetFaction" 또는 "has no … target range" 예외가 난다.
 - 대상은 T3부터 **효과마다** 고른다. 처리기를 직접 부르던 테스트는 `EffectHarness.Apply`(테스트 전용, EffectExecutor 경유)로
   돌린다. 대상 선택·미적용 판정이 실제 실행 경로와 같아진다.
 
@@ -494,7 +497,24 @@ public void A_new_effect_selects_the_new_front_enemy()
 
 ### T3b. 런타임 위치 축 전환 (D9)
 
-상태: **미착수 — 착수 전에 사용자에게 이 절을 보여 주고 아래 「착수 전 결정」을 받는다.**
+완료(2026-09-18). 「착수 전 결정」 1·2·3은 사용자가 모두 권장안으로 정했다. 구현 중 결정과 계획과 달라진 점:
+- 위치 키 계산은 `CardDefinition.TargetOf(EffectData)` 한 곳이다. `EffectExecutor`와 설명 생성기(`DescriptionContext.TargetOf`)가
+  같은 메서드를 쓴다. 그래서 설명의 대상 기호와 실제 대상이 어긋날 수 없다.
+- 대상을 고르는 처리기는 `EffectContext.RequireTargets()`로 대상을 읽는다. 진영 없이 만든 C# 픽스처는
+  "Effect 'damage' on card 'x' needs a TargetFaction" 예외로 바로 드러난다.
+- `DescriptionContext`는 카드 id·진영 대신 `CardDefinition`을 받는다. 진영마다 범위가 하나인지 검사하던
+  `DescriptionComposer.ValidateSingleRangePerFaction`은 지웠다. 이제 카드 축이 구조로 보장한다(근본 제거).
+- `SameTarget`을 지우면서 이것만 쓰던 `ResolutionContext.LastExecutedPlayerCard`도 지웠다.
+  `DeckCombatSession.ValidateBaseExecutionDefinitions`는 null 검사만 남아 `ValidateDeckCards`로 이름을 바꿨다.
+- 시나리오 카드 `ZoneCardSpec`에 `AllyTarget`·`EnemyTarget`을 더했다. `SampleScenarios`·`SampleMultiTurnScenarios`는 예전 기본값
+  (상대 FrontOne)을 명시했다.
+- 테스트 픽스처(결정 1): 진영이 변수인 헬퍼는 `CardFixtures.Opposing(side)`로 상대 진영을 구한다. 저작 로더가 거부하던
+  "한 카드에 아군 Self 이동 + 아군 FrontOne 방어" 조합은 이제 C#으로도 만들 수 없다. 그래서 V06 테스트는 이동 카드와
+  방어 카드 두 장으로 나눴다. 지운 테스트 9개: 명시 아군 대상 5(`PartyTargetRules` 2·세션 거부 2·설명 1),
+  `SameTarget` 2, 카드 TargetId 무시 1, 설명 범위 충돌 1. 더한 테스트 3개: 위치 키 계산, 축 없는 진영 예외, 진영 없는 효과 오류.
+- 동작 불변 확인: `GoblinParityTests` 고정 서명이 바뀌지 않았다. 콘텐츠 카드 47장의 설명 평문과 구조화 레이아웃,
+  샘플 시나리오 6개의 Compare 보고서를 변경 전후로 파일로 떠서 비교했더니 바이트 단위로 같았다. 스키마·카드 JSON도 바뀌지 않았다.
+- 검증: 헤드리스 689 · 편집 도구 157 · Unity EditMode 882(통과 875, 실패 0, 건너뜀 7). T3 대비 9개가 준 것은 위의 지운 테스트 수와 같다.
 
 왜: T3 뒤에도 위치 표현이 둘이다. 저작 쪽은 카드의 두 축(`targets.ally`·`targets.enemy`)과 효과의 진영(`targetFaction`)을
 갖는다. 런타임 쪽은 효과마다 `EffectData.TargetSelector`와 `ApplyStatusPayload.Target`(`StatusApplyTarget`)을 갖는다.
@@ -551,18 +571,18 @@ public void A_new_effect_selects_the_new_front_enemy()
    `ConditionKind`에 없어 저작할 수 없다(`EffectSpec.cs:10`). 읽는 곳은 `ConditionEvaluator.cs:120`뿐이다. 권장: 이 작업에서 함께 지운다
    (`Condition.cs`, `KoreanDescriptionGrammar`, 관련 테스트). 남기면 T7 검색에 걸린다.
 
-- [ ] 실패 테스트: 카드 축 + 효과 진영만으로 대상을 고르는 `EffectExecutor` 테스트(아군 FrontTwo 방어, 적 BackOne 피해, 진영 없는
+- [x] 실패 테스트: 카드 축 + 효과 진영만으로 대상을 고르는 `EffectExecutor` 테스트(아군 FrontTwo 방어, 적 BackOne 피해, 진영 없는
   효과는 대상 없이 적용). 진영은 있는데 축이 없는 C# 정의는 예외. `Tools/verify.sh --quick`에서 새 API 부재 실패를 확인한다.
-- [ ] `CardDefinition`·`EffectData`·`ApplyStatusPayload` 계약을 바꾸고 `EffectExecutor`가 키를 만든다. `IEffectHandler.TargetFor`를 지운다.
-- [ ] `TargetSelector`·`StatusApplyTarget`을 지우고 대상 유틸리티·전염을 `CardTargetRange`로 옮긴다.
-- [ ] 저작 변환(`EffectSpec`·스펙 5종·`CardSpecMapper`)을 새 계약으로 바꾼다. 29장 로딩 결과가 이전과 같은 대상을 고르는지
+- [x] `CardDefinition`·`EffectData`·`ApplyStatusPayload` 계약을 바꾸고 `EffectExecutor`가 키를 만든다. `IEffectHandler.TargetFor`를 지운다.
+- [x] `TargetSelector`·`StatusApplyTarget`을 지우고 대상 유틸리티·전염을 `CardTargetRange`로 옮긴다.
+- [x] 저작 변환(`EffectSpec`·스펙 5종·`CardSpecMapper`)을 새 계약으로 바꾼다. 29장 로딩 결과가 이전과 같은 대상을 고르는지
   `CardSpecMapperTests`로 잠근다(카드별 축·효과별 진영).
-- [ ] 설명 생성기를 옮기고 29장 설명 문구가 변환 전과 같은지 비교한다(전후 출력을 파일로 떠서 diff).
-- [ ] `PartyTargetRules`와 세션 검사를 지운다. 「착수 전 결정」 3에 따라 `SameTarget`·`TargetId`를 처리한다.
-- [ ] 테스트 픽스처를 「착수 전 결정」 1에 따라 옮긴다.
-- [ ] 동작 불변 확인: `GoblinParityTests` 고정 서명이 **바뀌지 않아야 한다**(표현만 바꾸는 작업이다). 바뀌면 멈추고 원인을 찾는다.
+- [x] 설명 생성기를 옮기고 29장 설명 문구가 변환 전과 같은지 비교한다(전후 출력을 파일로 떠서 diff).
+- [x] `PartyTargetRules`와 세션 검사를 지운다. 「착수 전 결정」 3에 따라 `SameTarget`·`TargetId`를 처리한다.
+- [x] 테스트 픽스처를 「착수 전 결정」 1에 따라 옮긴다.
+- [x] 동작 불변 확인: `GoblinParityTests` 고정 서명이 **바뀌지 않아야 한다**(표현만 바꾸는 작업이다). 바뀌면 멈추고 원인을 찾는다.
   같은 시드 `ScenarioRunner`·`MultiTurnRunner` **Compare**도 전후가 같아야 한다.
-- [ ] `Tools/verify.sh` 전체와 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
+- [x] `Tools/verify.sh` 전체와 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
   `refactor(core): 런타임 위치를 카드 축과 효과 진영 하나로 표현한다`.
 
 ### T4. 공통 사건·직접 반응·공통 피해 경로

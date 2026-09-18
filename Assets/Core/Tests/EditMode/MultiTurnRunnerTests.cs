@@ -11,11 +11,11 @@ namespace FateWeaver.Tests
     {
         private static ZoneCardSpec Strike(string id, int damage, int executionOrder = 1)
             => new ZoneCardSpec(id, id, Side.Player, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
 
         private static ZoneCardSpec EnemyHit(string id, int damage, int executionOrder = 1)
             => new ZoneCardSpec(id, id, Side.Enemy, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
 
         private static TurnScript Turn(params ZoneCardSpec[] cards)
             => new TurnScript(fateEnergy: 3, zoneCards: cards, interventionPlays: new InterventionPlaySpec[0]);

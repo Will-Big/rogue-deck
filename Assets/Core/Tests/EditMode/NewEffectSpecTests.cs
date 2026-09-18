@@ -11,7 +11,7 @@ namespace FateWeaver.Tests
     public class NewEffectSpecTests
     {
         [Test]
-        public void Consume_status_spec_maps_payload_and_selector()
+        public void Consume_status_spec_maps_payload_and_faction()
         {
             var spec = new ConsumeStatusSpec
             {
@@ -21,15 +21,14 @@ namespace FateWeaver.Tests
                 Amount = 3,
                 Mode = ConsumptionMode.UpTo
             };
-            var effect = spec.ToEffectData(
-                Side.Player, new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne));
+            var effect = spec.ToEffectData();
 
             Assert.AreEqual(EffectKeys.ConsumeStatus, effect.Key);
             var payload = (ConsumeStatusPayload)effect.Payload;
             Assert.AreEqual(StatusKeys.Poison, payload.Key);
             Assert.AreEqual(3, payload.Amount);
             Assert.AreEqual(ConsumptionMode.UpTo, payload.Mode);
-            Assert.AreEqual(TargetSelector.FrontOne, effect.TargetSelector);
+            Assert.AreEqual(CardTargetFaction.Enemy, effect.TargetFaction);
             Assert.IsEmpty(spec.Validate(AuthoringContext.Default()).ToList());
             Assert.IsTrue(spec.ProducesConsumption);
         }
@@ -52,7 +51,7 @@ namespace FateWeaver.Tests
                 Requires = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
             };
 
-            var effect = spec.ToEffectData(Side.Player, null);
+            var effect = spec.ToEffectData();
 
             Assert.AreEqual(EffectKeys.GrantNextTurnFate, effect.Key);
             Assert.AreEqual("reward", effect.Id);

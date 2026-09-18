@@ -6,15 +6,10 @@ using FateWeaver.Core.Combat;
 namespace FateWeaver.Core.Effects
 {
     /// <summary>이 효과가 고른 적의 상태(예: 독)를 소비 방식(ConsumptionMode)대로 소비한다. 소비 0은 취소가
-    /// 아니라 그냥 무소득(독성 환원의 첫 사용). 위치는 effect.TargetSelector(없으면 FrontOne)다.</summary>
+    /// 아니라 그냥 무소득(독성 환원의 첫 사용).</summary>
     public sealed class ConsumeStatusHandler : IEffectHandler, IEffectDataValidator
     {
         public EffectKey Key => EffectKeys.ConsumeStatus;
-
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-            => new CardTargetKey(
-                CardTargetFaction.Enemy,
-                EffectTargetResolver.RangeFor(effect.TargetSelector ?? TargetSelector.FrontOne));
 
         public void Apply(EffectContext ctx)
         {
@@ -23,7 +18,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            foreach (var enemy in ctx.Targets.Enemies)
+            foreach (var enemy in ctx.RequireTargets().Enemies)
             {
                 ctx.ConsumedAmount += ConsumeFrom(ctx, enemy, payload);
             }

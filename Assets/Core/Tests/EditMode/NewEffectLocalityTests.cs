@@ -41,7 +41,7 @@ namespace FateWeaver.Tests
 
             public override EffectKey Key => HealKey;
 
-            protected override EffectData Build(Side cardSide, CardTargetKey? target) => new EffectData(Key, Value);
+            protected override EffectData Build() => new EffectData(Key, Value);
         }
 
         private sealed class HealDescriptionHandler : IEffectDescriptionHandler
@@ -56,7 +56,7 @@ namespace FateWeaver.Tests
         public void Heal_spec_maps_and_validates_without_central_changes()
         {
             var spec = new HealSpec { Value = 3 };
-            var effect = spec.ToEffectData(Side.Player, null);
+            var effect = spec.ToEffectData();
             Assert.AreEqual(HealKey, effect.Key);
             Assert.AreEqual(3, effect.EffectValue);
             Assert.IsEmpty(spec.Validate(AuthoringContext.Default()).ToList());
@@ -82,8 +82,7 @@ namespace FateWeaver.Tests
                 new KoreanDescriptionGrammar(),
                 new StatusDescriptionRegistry(),
                 TestContent.Statuses(),
-                card.Id,
-                card.Side);
+                card);
             Assert.AreEqual("치유 5",
                 registry.Resolve(HealKey).Describe(new EffectData(HealKey, 5), 5, context).Text);
         }

@@ -112,12 +112,13 @@ namespace FateWeaver.Core.Authoring
         [JsonIgnore]
         public virtual bool ProducesConsumption => false;
 
-        /// <summary>코어 EffectData로 바꾼다. target은 이 효과의 진영 축에서 고른 위치(대상 효과가 아니면 null).
-        /// 공통 필드(id·성공 수치·생략·결과 참조)는 여기서 붙인다.</summary>
-        public EffectData ToEffectData(Side cardSide, CardTargetKey? target)
-            => Build(cardSide, target) with
+        /// <summary>코어 EffectData로 바꾼다. 공통 필드(id·진영·성공 수치·생략·결과 참조)는 여기서 붙인다.
+        /// 위치는 효과가 아니라 카드의 축이 갖는다(CardSpecMapper가 CardDefinition에 옮긴다).</summary>
+        public EffectData ToEffectData()
+            => Build() with
             {
                 Id = Id,
+                TargetFaction = IsTargeted ? TargetFaction : null,
                 SuccessEffectValue = SuccessEffectValue,
                 SkipOnBasic = SkipOnBasic,
                 Requirement = Requires == null
@@ -128,7 +129,7 @@ namespace FateWeaver.Core.Authoring
                     : new EffectResultScaling(ScaleBy.SourceEffectId, ScaleBy.PerConsumed)
             };
 
-        protected abstract EffectData Build(Side cardSide, CardTargetKey? target);
+        protected abstract EffectData Build();
 
         public virtual IEnumerable<string> Validate(AuthoringContext context)
         {
@@ -148,21 +149,6 @@ namespace FateWeaver.Core.Authoring
         /// <summary>상대 진영.</summary>
         protected static CardTargetFaction OpposingFaction(Side cardSide)
             => cardSide == Side.Player ? CardTargetFaction.Enemy : CardTargetFaction.Ally;
-
-        /// <summary>위치 범위를 처리기가 읽는 선택자로. Self는 선택자가 아니므로 호출 전에 검증에서 거른다.</summary>
-        protected static TargetSelector SelectorFor(CardTargetRange range)
-        {
-            switch (range)
-            {
-                case CardTargetRange.FrontOne: return TargetSelector.FrontOne;
-                case CardTargetRange.FrontTwo: return TargetSelector.FrontTwo;
-                case CardTargetRange.BackOne: return TargetSelector.BackOne;
-                case CardTargetRange.BackTwo: return TargetSelector.BackTwo;
-                case CardTargetRange.All: return TargetSelector.All;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(range), range, "Range has no position selector.");
-            }
-        }
 
         /// <summary>진영이 정해진 위치 효과의 공통 검증: 그 진영이어야 하고 Self가 아니어야 한다.</summary>
         protected IEnumerable<string> RequirePositional(CardTargetKey target, CardTargetFaction faction)

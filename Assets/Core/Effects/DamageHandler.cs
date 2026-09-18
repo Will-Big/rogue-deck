@@ -4,21 +4,11 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>상대 진영에서 이 효과가 고른 대상 모두에게 고정 피해를 준다. 위치는 effect.TargetSelector
-    /// (없으면 FrontOne)이며 대상은 EffectExecutor가 효과 시작 때 고른다. 광역이면 그 목록 전체에 같은
-    /// 수치로 적용한다. 받는 피해는 대상의 개체 상태(취약·방어 등)로 접힌다(StatusRegistry가 있을 때).</summary>
+    /// <summary>이 효과가 고른 대상 모두에게 고정 피해를 준다. 대상은 효과 진영과 카드의 그 진영 축으로
+    /// EffectExecutor가 효과 시작 때 고른다. 광역이면 그 목록 전체에 같은 수치로 적용한다. 받는 피해는 대상의 개체 상태(취약·방어 등)로 접힌다(StatusRegistry가 있을 때).</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
-
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-        {
-            var faction = card.Side == Side.Player
-                ? CardTargetFaction.Enemy
-                : CardTargetFaction.Ally;
-            var selector = effect.TargetSelector ?? Cards.TargetSelector.FrontOne;
-            return new CardTargetKey(faction, EffectTargetResolver.RangeFor(selector));
-        }
 
         public void Apply(EffectContext ctx)
         {
@@ -34,14 +24,14 @@ namespace FateWeaver.Core.Effects
             }
 
             var amount = FoldOutgoing(ctx, ctx.EffectValue + bonus);
-            foreach (var target in ctx.Targets.Enemies)
+            foreach (var target in ctx.RequireTargets().Enemies)
             {
                 var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                 HitEnemy(ctx, target, dealt);
                 ctx.DamageDealt += dealt;
             }
 
-            foreach (var target in ctx.Targets.Party)
+            foreach (var target in ctx.RequireTargets().Party)
             {
                 var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
                 HitParty(ctx, target, dealt);

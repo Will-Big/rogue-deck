@@ -25,16 +25,25 @@ namespace FateWeaver.Tests
 
         private static EffectData Single(ExecutionCardSpec spec) => CardSpecMapper.ToDefinition(spec).Effects[0];
 
+        /// <summary>첫 효과가 실행에서 고를 위치 키(효과 진영 + 카드의 그 진영 축).</summary>
+        private static CardTargetKey? TargetOfSingle(ExecutionCardSpec spec)
+        {
+            var def = CardSpecMapper.ToDefinition(spec);
+            return def.TargetOf(def.Effects[0]);
+        }
+
+        private static CardTargetKey Key(CardTargetFaction faction, CardTargetRange range) => new CardTargetKey(faction, range);
+
         private static CardTargetsSpec Enemy(CardTargetRange range) => new CardTargetsSpec { Enemy = range };
 
         private static CardTargetsSpec Ally(CardTargetRange range) => new CardTargetsSpec { Ally = range };
 
         [Test]
-        public void Target_selector_schema_contains_only_approved_ranges()
+        public void Target_range_schema_contains_only_approved_ranges()
         {
             CollectionAssert.AreEqual(
-                new[] { "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" },
-                Enum.GetNames(typeof(TargetSelector)));
+                new[] { "Self", "FrontOne", "FrontTwo", "BackOne", "BackTwo", "All" },
+                Enum.GetNames(typeof(CardTargetRange)));
         }
 
         [Test]
@@ -51,7 +60,9 @@ namespace FateWeaver.Tests
             Assert.AreEqual(EffectKeys.Damage, effect.Key);
             Assert.AreEqual("hit", effect.Id);
             Assert.AreEqual(3, effect.EffectValue);
-            Assert.AreEqual(TargetSelector.FrontOne, effect.TargetSelector);
+            Assert.AreEqual(CardTargetFaction.Enemy, effect.TargetFaction);
+            Assert.AreEqual(CardTargetRange.FrontOne, def.EnemyTarget);
+            Assert.IsNull(def.AllyTarget);
         }
 
         [Test]
@@ -83,7 +94,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(2, effect.EffectValue);
             Assert.AreEqual(7, effect.SuccessEffectValue);
             Assert.AreEqual(StatusKeys.Block, ((ApplyStatusPayload)effect.Payload).Key);
-            Assert.AreEqual(StatusApplyTarget.Self, ((ApplyStatusPayload)effect.Payload).Target);
+            Assert.AreEqual(Key(CardTargetFaction.Ally, CardTargetRange.Self), def.TargetOf(effect));
             var adjacent = (AdjacentCardHasEffect)def.StartCondition;
             Assert.AreEqual(AdjacentDirection.Next, adjacent.Direction);
             Assert.AreEqual(Side.Enemy, adjacent.Side);
@@ -106,85 +117,82 @@ namespace FateWeaver.Tests
             Assert.AreEqual(-2, ((ChangeExecutionOrderPayload)def.InterventionAction.Payload).Delta);
         }
 
-        [TestCase(CardTargetRange.FrontOne, TargetSelector.FrontOne)]
-        [TestCase(CardTargetRange.FrontTwo, TargetSelector.FrontTwo)]
-        [TestCase(CardTargetRange.BackOne, TargetSelector.BackOne)]
-        [TestCase(CardTargetRange.BackTwo, TargetSelector.BackTwo)]
-        [TestCase(CardTargetRange.All, TargetSelector.All)]
-        public void Enemy_axis_range_becomes_the_damage_selector(CardTargetRange range, TargetSelector selector)
+        [TestCase(CardTargetRange.FrontOne)]
+        [TestCase(CardTargetRange.FrontTwo)]
+        [TestCase(CardTargetRange.BackOne)]
+        [TestCase(CardTargetRange.BackTwo)]
+        [TestCase(CardTargetRange.All)]
+        public void Enemy_axis_range_is_where_damage_picks_its_targets(CardTargetRange range)
         {
-            var effect = Single(Execution(
-                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 4 }, Enemy(range)));
-
-            Assert.AreEqual(selector, effect.TargetSelector);
+            Assert.AreEqual(
+                Key(CardTargetFaction.Enemy, range),
+                TargetOfSingle(Execution(
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 4 }, Enemy(range))));
         }
 
         [Test]
-        public void Enemy_axis_status_targets_the_enemy_with_that_selector()
+        public void Enemy_axis_status_targets_the_enemy_at_that_range()
         {
-            var effect = Single(Execution(
+            var spec = Execution(
                 new ApplyStatusSpec
                 {
                     Id = "slow", TargetFaction = CardTargetFaction.Enemy, Count = 2, Status = StatusKeyRef.Of(StatusKeys.Slow)
                 },
-                Enemy(CardTargetRange.BackOne)));
+                Enemy(CardTargetRange.BackOne));
 
-            var payload = (ApplyStatusPayload)effect.Payload;
-            Assert.AreEqual(StatusKeys.Slow, payload.Key);
-            Assert.AreEqual(StatusApplyTarget.TargetEnemy, payload.Target);
-            Assert.AreEqual(TargetSelector.BackOne, effect.TargetSelector);
+            Assert.AreEqual(StatusKeys.Slow, ((ApplyStatusPayload)Single(spec).Payload).Key);
+            Assert.AreEqual(Key(CardTargetFaction.Enemy, CardTargetRange.BackOne), TargetOfSingle(spec));
         }
 
         [Test]
         public void Ally_all_status_targets_every_party_member()
         {
-            var effect = Single(Execution(
+            var spec = Execution(
                 new ApplyStatusSpec
                 {
                     Id = "wall", TargetFaction = CardTargetFaction.Ally, Count = 4, Status = StatusKeyRef.Of(StatusKeys.Block)
                 },
-                Ally(CardTargetRange.All)));
+                Ally(CardTargetRange.All));
 
-            Assert.AreEqual(StatusApplyTarget.AllPartyMembers, ((ApplyStatusPayload)effect.Payload).Target);
+            Assert.AreEqual(Key(CardTargetFaction.Ally, CardTargetRange.All), TargetOfSingle(spec));
         }
 
         [Test]
-        public void Ally_position_status_targets_the_party_by_selector()
+        public void Ally_position_status_targets_the_party_at_that_range()
         {
-            var effect = Single(Execution(
+            var spec = Execution(
                 new ApplyStatusSpec
                 {
                     Id = "cover", TargetFaction = CardTargetFaction.Ally, Count = 4, Status = StatusKeyRef.Of(StatusKeys.Block)
                 },
-                Ally(CardTargetRange.FrontOne)));
+                Ally(CardTargetRange.FrontOne));
 
-            Assert.AreEqual(StatusApplyTarget.PartyBySelector, ((ApplyStatusPayload)effect.Payload).Target);
-            Assert.AreEqual(TargetSelector.FrontOne, effect.TargetSelector);
+            Assert.AreEqual(Key(CardTargetFaction.Ally, CardTargetRange.FrontOne), TargetOfSingle(spec));
         }
 
         [Test]
         public void Enemy_card_self_status_stays_on_the_enemy_itself()
         {
-            var effect = Single(Execution(
+            var spec = Execution(
                 new ApplyStatusSpec
                 {
                     Id = "guard", TargetFaction = CardTargetFaction.Enemy, Count = 3, Status = StatusKeyRef.Of(StatusKeys.Block)
                 },
                 Enemy(CardTargetRange.Self),
-                side: Side.Enemy));
+                side: Side.Enemy);
 
-            Assert.AreEqual(StatusApplyTarget.Self, ((ApplyStatusPayload)effect.Payload).Target);
+            Assert.AreEqual(Key(CardTargetFaction.Enemy, CardTargetRange.Self), TargetOfSingle(spec));
         }
 
         [Test]
         public void Enemy_card_damage_uses_the_ally_axis()
         {
-            var effect = Single(Execution(
+            var spec = Execution(
                 new DamageSpec { Id = "jab", TargetFaction = CardTargetFaction.Ally, Value = 4 },
                 Ally(CardTargetRange.FrontOne),
-                side: Side.Enemy));
+                side: Side.Enemy);
 
-            Assert.AreEqual(TargetSelector.FrontOne, effect.TargetSelector);
+            Assert.AreEqual(Key(CardTargetFaction.Ally, CardTargetRange.FrontOne), TargetOfSingle(spec));
         }
 
         [Test]
@@ -231,7 +239,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(ConsumptionMode.Exact, consume.Mode);
             Assert.AreEqual(new EffectResultScaling("pay", 2), def.Effects[1].Scaling);
             Assert.AreEqual(new EffectResultRequirement("pay", 1), def.Effects[2].Requirement);
-            Assert.IsNull(def.Effects[2].TargetSelector);
+            Assert.IsNull(def.Effects[2].TargetFaction, "대상을 고르지 않는 효과는 진영이 없다");
         }
 
         [Test]
