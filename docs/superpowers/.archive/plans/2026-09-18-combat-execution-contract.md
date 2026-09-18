@@ -21,7 +21,8 @@
 
 사람 검수용 [HTML 개요](2026-09-18-combat-execution-contract.html).
 설계: [승인된 전투 실행·반응·콘텐츠 계약](../specs/2026-09-18-combat-execution-contract-design.md).
-상태: active. **사용자는 이 세션에서 계획만 작성하도록 지시했다. 이 문서는 코드 구현 완료나 착수 승인이 아니다.**
+상태: archived — 2026-09-18 전체 구현 완료(브랜치 `combat-execution-contract`, master 머지 전). 작성 당시 문구: "사용자는 이 세션에서
+계획만 작성하도록 지시했다."
 실행 담당자는 별도 구현 요청을 받은 뒤 `superpowers:executing-plans`로 아래 작업을 순차 수행한다.
 개정: 2026-09-18 — 계획 검토에서 사용자가 내린 결정(아래 「검토 반영 결정」 D1~D8)을 반영했다.
 T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형식 필드 이름 변경, Unity 배치 검증 추가.
@@ -30,7 +31,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T7이다.** T0·T1·T2a·T2b·T3·T3b·T4·T5·T6는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**계획의 모든 작업(T0~T7, T3b 포함)이 끝났다.** master 머지는 사용자 승인 뒤에 한다(규칙 19). 이 계획은 완료되어 `.archive/plans/`로 옮겼다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
@@ -38,8 +39,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
   `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · `c06b2e4`(T3) ·
-  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · `4a7bda6`·`406b746`·`9842341`(T4와 검토 반영) · `c5bbf83`(T5) · T6 커밋(아래 T6 절).
-- 기준 수치(T6 끝): 헤드리스 736 · 편집 도구 161 · Unity EditMode 929(통과 922, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · `4a7bda6`·`406b746`·`9842341`(T4와 검토 반영) · `c5bbf83`(T5) · `b083c1b`(T6) · T7 커밋(아래 T7 절, 이 계획의 보관 포함).
+- 기준 수치(T7 끝): 헤드리스 740 · 편집 도구 161 · Unity EditMode 933(통과 926, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -868,6 +869,27 @@ public void Refresh_keeps_the_original_application_order()
 
 ### T7. 전환 회귀·표시 계약·최종 인계
 
+완료(2026-09-18). 구현 중 결정:
+- **조건 문구(사용자 결정):** 이력 조건은 "실행된", 위치 조건은 "배치된"으로 구분한다("실행선에서"는 붙이지 않는다).
+  바뀐 카드는 둘이다 — riposte "직전에 실행한 → 직전에 **실행된** 카드가", sly_jab "이전에 실행한 플레이어 카드가 없으면 →
+  **앞에 배치된** 플레이어 카드가 없으면". sly_jab의 조건(`NoPrecedingCardOfSide`)은 이력이 아니라 실행선을 본다
+  (`ConditionEvaluator.cs:67-70`)는 사실을 문구가 가리던 것을 바로잡았다. Exact·UpTo는 이미 "N"·"최대 N"으로 구분된다.
+- **`CardCancellationReason.NoValidTarget`을 지웠다.** T3 뒤로 기록하는 코드가 없고, 이름이 없어진 동작(대상 없음 취소)을 가리킨다.
+  검색 결과를 줄이려는 삭제가 아니라 생산자가 없는 값의 정리다. 남은 `TargetId`는 이벤트·사건의 결과 필드(`CardResolved.TargetId`,
+  `CombatSignal.TargetId`)이고, `SurviveCharges`는 제거된 키를 거부하는 로더 테스트뿐이다.
+- 새 회귀 테스트: 저장소 카드 전부의 정규 직렬화 왕복(`Every_card_preserves_its_canonical_serialized_definition`), HpChanged만
+  재생해도 최종 HP가 맞음(`Replaying_only_hp_changes_reproduces_the_final_hp` — 요약 `CardResolved.DamageDealt`는 재적용 대상이
+  아니다), 승리 턴의 TurnEnded가 턴 종료 상태를 수행하지 않음(`A_winning_turn_ends_without_running_turn_end_statuses`),
+  같은 시드·같은 조작의 이벤트 열 동일(`Same_seed_and_same_actions_produce_identical_event_sequences`, 턴 시작 타임라인 포함).
+- **계획 전체의 Compare 기록(master `ad78246` 대비):** 남은 샘플 시나리오 6개(quick-cut-swap, reward-nullified,
+  chapter-8-auto-combo-guard, chapter-8-three-turn-opening, mark-combo, chain-slash)의 무조작/조작 결과가 master와 같다.
+  master의 일곱 번째 샘플 counter-stance는 T2a 사용자 결정으로 지웠다. 카드 설명은 셋이 바뀌었다: condensed_burst(T2a, 소비량
+  비례 가산이 피해 문장에 붙음), riposte·sly_jab(T7 문구). 고블린 고정 서명은 T3·T5·T6에서 사유를 적고 갱신했다.
+- 표시 계약: Unity는 상태를 직접 읽어 표시하므로(`BattleUnitsView.cs:96`·`:109`) 턴 시작 타임라인(`LastTurnStartTimeline`)은
+  아직 재생하지 않는다. UI 연출은 이 계획 범위 밖이다(방어 아이콘이 다음 턴 시작에 사라지는 표시 차이는 T6 절 참고).
+- 최종 검증: `Tools/verify.sh` 통과(헤드리스 740 · 편집 도구 161, 스키마 파일 변경 없음) · `git diff --check` 통과 ·
+  Unity EditMode 933(통과 926, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+
 수정 범위 (필요한 최소 호환 수정만):
 - `Assets/Core/Simulation/Descriptions/TimelineTextFormatter.cs`, `KoreanDescriptionGrammar.cs`
 - `Assets/Core/Simulation/Playback/TimelineBeatPlanner.cs`
@@ -880,9 +902,9 @@ public void Refresh_keeps_the_original_application_order()
 UI 연출·개편은 하지 않는다. 이벤트 변경으로 기존 소비자가 깨지면 실제 소비자를 읽고 최소 호환 수정한다.
 기존 컨트롤러에 규칙 판단을 넣지 않는다.
 
-- [ ] 문구는 ‘직전에 실행된 카드’로 통일한다. 위치 조건에는 ‘실행선에서’를 유지한다.
+- [x] 문구는 ‘직전에 실행된 카드’로 통일한다. 위치 조건에는 ‘실행선에서’를 유지한다.
   Exact와 UpTo 설명을 구분하며 카드 JSON에 설명 문자열을 하드코딩하지 않는다.
-- [ ] 신규 테스트에서 저장소 전체 카드의 새 형식 왕복을 검증한다.
+- [x] 신규 테스트에서 저장소 전체 카드의 새 형식 왕복을 검증한다.
   아래에는 System.IO, Newtonsoft.Json.Linq, FateWeaver.Core.Authoring/Json과 NUnit이 필요하다.
 
 ```csharp
@@ -901,13 +923,13 @@ public void Every_card_preserves_its_canonical_serialized_definition()
 }
 ```
 
-- [ ] 이 왕복 테스트에 더해 T2a의 유효성 검사, 구형 입력 변환 테스트를 유지한다.
+- [x] 이 왕복 테스트에 더해 T2a의 유효성 검사, 구형 입력 변환 테스트를 유지한다.
   왕복 일치만으로 효과 의미 보존을 대신하지 않는다.
-- [ ] CardResolved 요약과 개별 HpChanged를 중복 적용하지 않는지 CombatLogTests로 검증한다.
+- [x] CardResolved 요약과 개별 HpChanged를 중복 적용하지 않는지 CombatLogTests로 검증한다.
   승리 시 TurnEnded가 턴 종료 상태를 실제 수행했다는 뜻이 아님을 테스트한다.
-- [ ] 같은 시드·같은 조작으로 이벤트 열을 두 번 비교한다. 기존 ScenarioRunner/MultiTurnRunner의
+- [x] 같은 시드·같은 조작으로 이벤트 열을 두 번 비교한다. 기존 ScenarioRunner/MultiTurnRunner의
   Compare도 실행해 무조작/조작 차이가 의도한 순서·조건 변경인지 기록한다.
-- [ ] 최종 명령을 실행한다. 테스트가 생성한 스키마 파일까지 변경 목록에 포함해 확인한다.
+- [x] 최종 명령을 실행한다. 테스트가 생성한 스키마 파일까지 변경 목록에 포함해 확인한다.
   D3의 Unity EditMode 배치도 마지막으로 한 번 더 돌려 결과 XML의 `failed=0`을 확인한다.
 
 ```sh
@@ -920,8 +942,8 @@ git status --short
 검색 결과를 0으로 만들기 위한 기계적 삭제는 금지한다. TargetId가 이벤트의 실제 결과에 필요하면 남는다.
 검사의 목적은 일반 카드 고정 대상·카드 누적 소비·사망 능력 직접 호출의 구형 이중 경로를 제거하는 것이다.
 
-- [ ] 아래 검증 행렬에 실제 테스트 이름과 실행 결과를 기록한다. 미실행/실패를 통과로 표시하지 않는다.
-- [ ] 문서·색인을 같은 커밋에 포함한다. 전체 계획 완료 시에만 계획 페어를 archive로 이동하고
+- [x] 아래 검증 행렬에 실제 테스트 이름과 실행 결과를 기록한다. 미실행/실패를 통과로 표시하지 않는다.
+- [x] 문서·색인을 같은 커밋에 포함한다. 전체 계획 완료 시에만 계획 페어를 archive로 이동하고
   현행 색인 행을 삭제한다. master 머지는 별도 사용자 승인을 받는다.
   커밋: `test(core): 새 전투 실행 계약의 회귀를 검증한다`.
 
@@ -938,6 +960,33 @@ git status --short
 | V14~V17 | T2a | 정량/최대치 소비·효과별 결과·조건 고정 |
 | V18~V20 | T6 | 재부여 순서·공통 만료·시점 종료 승패 |
 | V21~V22 | T2a,T2b,T7 | 로딩 거부·게임과 도구의 왕복 |
+
+실행 결과(2026-09-18, T7 끝 — 헤드리스 740 통과·실패 0, 편집 도구 161 통과·실패 0, Unity EditMode 926 통과·실패 0):
+
+| ID | 테스트(파일) | 결과 |
+|---|---|---|
+| V01 | `Moving_to_an_occupied_number_joins_after_existing_peers` (FutureZoneTests) | 통과 |
+| V02 | `Exact_swap_preserves_enemy_before_player_on_equal_numbers` (FutureZoneTests) | 통과 |
+| V03 | `Owner_death_keeps_already_executed_cards_and_removes_only_pending_ones` (CardCancellationTests) | 통과 |
+| V04 | `Previous_executed_condition_counts_cards_whose_turn_came_even_without_effect` (PreviousExecutedCardConditionTests) | 통과 |
+| V05 | `Second_hit_selects_the_new_front_after_the_first_hit_kills` (EffectTargetResolverTests) | 통과 |
+| V06 | `Block_after_a_move_goes_to_the_member_now_in_front` (EffectTargetResolverTests) — 한 카드의 아군 축이 하나라 이동·방어 두 장으로 검증 | 통과 |
+| V07 | `Counter_resolves_before_the_next_effect_of_the_card` (ReactionPipelineTests) | 통과 |
+| V08 | `All_damage_resolves_every_hit_and_death_before_reactions_in_target_order` (ReactionPipelineTests) | 통과 |
+| V09 | `A_death_caused_by_a_reaction_is_cleaned_up_and_runs_the_death_ability` (ReactionPipelineTests) — D11로 개정 | 통과 |
+| V10 | `A_fully_blocked_attack_signals_attacked_but_not_hp_damaged` (ReactionPipelineTests) | 통과 |
+| V11 | `A_card_keeps_going_after_its_owner_dies` (CardCompletionBoundaryTests) | 통과 |
+| V12 | `Killing_the_last_enemy_still_runs_the_rest_of_the_card_then_wins` (CardCompletionBoundaryTests) | 통과 |
+| V13 | `Both_sides_wiped_inside_one_card_is_a_defeat` (CardCompletionBoundaryTests) | 통과 |
+| V14 | `Exact_consumes_nothing_when_short_and_skips_the_reward` (ConsumeStatusTests) | 통과 |
+| V15 | `Up_to_consumes_what_is_available` (ConsumeStatusTests) | 통과 |
+| V16 | `A_reward_reads_only_the_effect_it_names` (ConsumeStatusTests) | 통과 |
+| V17 | `Start_condition_is_fixed_even_when_the_card_changes_what_it_checked` (ConsumeStatusTests) | 통과 |
+| V18 | `Refresh_keeps_the_original_application_order` (ExpiryPolicyTests) | 통과 |
+| V19 | `Block_gained_at_turn_start_survives_the_prepare_that_came_before_it` (ExpiryPolicyTests) | 통과 |
+| V20 | `Turn_end_poison_wiping_both_sides_is_a_defeat` (ExpiryPolicyTests) | 통과 |
+| V21 | `Rejects_*` 11개·`Legacy_card_upgrades_by_rule` (CardFormatContractTests) | 통과 |
+| V22 | `Every_card_preserves_its_canonical_serialized_definition` (CardContentJsonTests) · "저장소의 모든 카드가 바이트 그대로 왕복한다" (index.test.mjs) | 통과 |
 
 시작 전: 전용 워크트리, 현재 HEAD 차이, 별도 작업과 공유 파일 차이, 기존 검증 결과 확인.
 해당 작업의 중단 기준: 일의적으로 이전할 수 없는 카드 데이터, 승인 설계와 다른 반응 의미를 요구하는 능력,

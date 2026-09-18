@@ -16,7 +16,7 @@ namespace FateWeaver.Simulation.Descriptions
             switch (condition)
             {
                 case NoPrecedingCardOfSide n:
-                    return "이전에 실행한 " + SideName(n.Side) + " 카드가 없으면";
+                    return "앞에 배치된 " + SideName(n.Side) + " 카드가 없으면";
                 case NoFollowingCardOfSide n:
                     return "뒤에 배치된 " + SideName(n.Side) + " 카드가 없으면";
                 case AllOf all:
@@ -91,11 +91,11 @@ namespace FateWeaver.Simulation.Descriptions
         private static string PreviousExecutedStem(PreviousExecutedCardIs previous)
         {
             var subject = SideName(previous.Side) + " 카드";
-            return "직전에 실행한 카드가 " + subject;
+            return "직전에 실행된 카드가 " + subject;
         }
 
         private static string PreviousExecutedEffectStem(PreviousExecutedCardHasEffect previous)
-            => "직전에 실행한 카드가 " + SideName(previous.Side) + " "
+            => "직전에 실행된 카드가 " + SideName(previous.Side) + " "
                 + EffectCardName(previous.EffectKey);
 
         private static string JoinAll(IReadOnlyList<Condition> children)

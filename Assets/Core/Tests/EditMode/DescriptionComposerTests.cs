@@ -236,7 +236,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_counter_stance() =>
-            Assert.AreEqual("[◆] 피해 4. 직전에 실행한 카드가 적 피해 카드이면 피해 9.",
+            Assert.AreEqual("[◆] 피해 4. 직전에 실행된 카드가 적 피해 카드이면 피해 9.",
                 DescriptionComposer.Describe(
                     CardFixtures.DamageAfterEnemyDamage("counter_fx", baseDamage: 4, whenAfter: 9), Korean));
 
@@ -275,7 +275,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_sly_jab() =>
-            Assert.AreEqual("[◆] 피해 3. 이전에 실행한 플레이어 카드가 없으면 피해 6.",
+            Assert.AreEqual("[◆] 피해 3. 앞에 배치된 플레이어 카드가 없으면 피해 6.",
                 DescriptionComposer.Describe(TestContent.Cards().Get("sly_jab"), Korean));
 
         [Test]
@@ -327,7 +327,7 @@ namespace FateWeaver.Tests.EditMode
                     new WithinNth(3)
                 })
             };
-            Assert.AreEqual("[◆] 피해 1. 직전에 실행한 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
+            Assert.AreEqual("[◆] 피해 1. 직전에 실행된 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Korean));
         }
     }

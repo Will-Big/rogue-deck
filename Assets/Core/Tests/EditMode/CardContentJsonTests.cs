@@ -298,5 +298,24 @@ namespace FateWeaver.Tests
         /// 그것이 이 테스트가 잠그려는 것이기 때문이다.</summary>
         private static string Normalize(string json)
             => json.Replace("\r\n", "\n").TrimEnd();
+
+        // V22(게임 쪽): 저장소 카드 전부가 새 형식으로 읽고-쓰고-다시 읽어도 같은 정규 직렬화를 낸다. 의미 보존은 이것만으로
+        // 대신하지 않는다 — 로딩 검증·구형 변환 테스트가 따로 있다.
+        [Test]
+        public void Every_card_preserves_its_canonical_serialized_definition()
+        {
+            var paths = System.IO.Directory.GetFiles(System.IO.Path.Combine(TestContent.Root(), "Cards"), "*.json");
+            Assert.IsNotEmpty(paths);
+            foreach (var path in paths)
+            {
+                var first = ContentJson.Read<CardSpec>(System.IO.File.ReadAllText(path));
+                var canonical = ContentJson.Write(first);
+                var second = ContentJson.Read<CardSpec>(canonical);
+                Assert.IsTrue(Newtonsoft.Json.Linq.JToken.DeepEquals(
+                    Newtonsoft.Json.Linq.JToken.Parse(canonical),
+                    Newtonsoft.Json.Linq.JToken.Parse(ContentJson.Write(second))), path);
+                Assert.AreEqual(2, (int)Newtonsoft.Json.Linq.JObject.Parse(canonical)["cardFormat"], path);
+            }
+        }
     }
 }

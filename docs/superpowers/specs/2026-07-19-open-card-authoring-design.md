@@ -6,6 +6,9 @@
 - 상태: `current` — 구현된 열린 카드 효과 저작 구조
 - 원 백로그: [`../plans/2026-07-16-architecture-refactor-backlog.md`](../plans/2026-07-16-architecture-refactor-backlog.md) §4
 - 선행 완료: P0-A RNG 단일화 (2026-07-18)
+- **2026-09-18 후속:** [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 효과별 `TargetSelector`·`StatusApplyTarget`은 런타임과 저작에서
+  모두 사라졌다. 위치는 카드의 아군·적 축(`CardDefinition.AllyTarget`·`EnemyTarget`)과 효과의 진영(`EffectData.TargetFaction`)
+  하나로 표현한다. 아래 해당 서술은 작성 당시 기준이다.
 
 ## 1. 목적
 

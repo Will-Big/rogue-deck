@@ -133,6 +133,10 @@
 - [노트북 저장소 읽기 UI 구현 기록 (계획 B)](plans/2026-08-07-notebook-repo-read-ui.md)
 - [노트북 저작 편집 구현 기록 (계획 C)](plans/2026-08-07-notebook-authoring-edit.md)
 
+### 전투 실행 재설계
+
+- [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) — 개요는 [HTML](plans/2026-09-18-combat-execution-contract.html). 2026-09-18 T0~T7(T3b 포함) 구현 완료, master 머지 전. 설계는 현행 `specs/2026-09-18-combat-execution-contract-design.md`.
+
 ### 전투 노드
 
 - [전투 노드 한 사이클 1단계 구현 계획](plans/2026-09-15-combat-node-stage1.md) — 개요는 [HTML](plans/2026-09-15-combat-node-stage1.html). 2026-09-15 완료·머지. 설계는 현행 `specs/2026-09-15-combat-node-cycle-design.md`(2단계 남음).

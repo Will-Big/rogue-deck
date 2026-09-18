@@ -662,5 +662,71 @@ namespace FateWeaver.Tests
                     TimelineTextFormatter.FormatEvent(evt, Korean));
             }
         }
+
+        /// <summary>CardResolved의 피해는 요약일 뿐이다 — HP 변화는 HpChanged 하나로만 전해진다. 타임라인을 재생하는 쪽이
+        /// HpChanged만 적용하면 최종 HP가 맞고, 요약까지 적용하면 두 번 깎인다(계획 T7).</summary>
+        [Test]
+        public void Replaying_only_hp_changes_reproduces_the_final_hp()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            var goblin = new Enemy("goblin", 20);
+            goblin.Statuses.Stack(StatusKeys.Block, StatusLifetime.Permanent, 2);
+            goblin.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 2);
+            state.Enemies.Add(goblin);
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("jab", "jab", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Ally } })
+            {
+                AllyTarget = CardTargetRange.FrontOne
+            }));
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("slash", "slash", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne
+            })
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            var replayed = new System.Collections.Generic.Dictionary<string, int> { ["player"] = 30, ["goblin"] = 20 };
+            foreach (var hp in events.OfType<HpChanged>())
+            {
+                Assert.AreEqual(replayed[hp.HolderId], hp.Before, "HpChanged는 이전 값에서 이어진다");
+                replayed[hp.HolderId] = hp.After;
+            }
+
+            Assert.AreEqual(player.Hp, replayed["player"]);
+            Assert.AreEqual(goblin.Hp, replayed["goblin"]);
+            Assert.AreEqual(20 - 3 - 2, goblin.Hp, "방어 2가 흡수한 3, 독 틱 2");
+        }
+
+        /// <summary>승리로 끝난 턴의 TurnEnded는 전투 종료 알림이지 턴 종료 상태를 수행했다는 뜻이 아니다(계획 T5·T7).</summary>
+        [Test]
+        public void A_winning_turn_ends_without_running_turn_end_statuses()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 3);
+            player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(1));
+            state.Enemies.Add(new Enemy("goblin", 3));
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("finish", "finish", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 9) { TargetFaction = CardTargetFaction.Enemy } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne
+            })
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(Outcome.Win, events.OfType<TurnEnded>().Single().Outcome);
+            Assert.IsEmpty(events.OfType<StatusTicked>(), "턴 종료 틱이 없다");
+            Assert.IsEmpty(events.OfType<StatusExpired>(), "턴 정리 만료가 없다");
+            Assert.AreEqual(30, player.Hp);
+            Assert.AreEqual(1, player.Statuses.Get(StatusKeys.Weak).Count, "턴 정리를 방문하지 않았다");
+        }
     }
 }

@@ -49,7 +49,7 @@ namespace FateWeaver.Tests
                 with { StartCondition = new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage) };
 
             Assert.AreEqual(
-                "[◆] 피해 1. 직전에 실행한 카드가 적 피해 카드이면 피해 2.",
+                "[◆] 피해 1. 직전에 실행된 카드가 적 피해 카드이면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 
@@ -65,13 +65,13 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void No_preceding_condition_names_execution_history()
+        public void No_preceding_condition_names_placement_on_the_line()
         {
             var card = Execution(Hit(1) with { SuccessEffectValue = 2 })
                 with { StartCondition = new NoPrecedingCardOfSide(Side.Player) };
 
             Assert.AreEqual(
-                "[◆] 피해 1. 이전에 실행한 플레이어 카드가 없으면 피해 2.",
+                "[◆] 피해 1. 앞에 배치된 플레이어 카드가 없으면 피해 2.",
                 DescriptionComposer.Describe(card, Korean));
         }
 

@@ -197,7 +197,7 @@ namespace FateWeaver.Tests
             var q = ConditionalCard("q_card", Side.Player, executionOrder: 1,
                 new NoFollowingCardOfSide(Side.Enemy), baseDamage: 0, successDamage: 3);
             var y = PlainCard("y_card", Side.Enemy, executionOrder: 2, damage: 2);
-            y.CancellationReason = CardCancellationReason.NoValidTarget; // 차례가 와도 효과가 없다
+            y.CancellationReason = CardCancellationReason.StatusIntercepted; // 차례 전에 취소됨 — 차례가 와도 효과가 없다
             var p = ConditionalCard("p_card", Side.Player, executionOrder: 3,
                 new NoPrecedingCardOfSide(Side.Enemy), baseDamage: 0, successDamage: 7);
 
@@ -210,7 +210,7 @@ namespace FateWeaver.Tests
             var resolvedQ = Resolved(events, "q_card");
             Assert.AreEqual(ConditionTier.Basic, resolvedQ.ConditionTier);
             Assert.AreEqual(
-                CardCancellationReason.NoValidTarget,
+                CardCancellationReason.StatusIntercepted,
                 events.OfType<CardCancelled>().Single(e => e.CardId == "y_card").Reason);
             // y는 실행선에서 p 앞에 있다. 효과가 없었다는 이유로 배치 질의에서 빠지지 않는다.
             var resolvedP = Resolved(events, "p_card");

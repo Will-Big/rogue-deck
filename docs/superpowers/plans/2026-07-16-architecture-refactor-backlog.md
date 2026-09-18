@@ -398,7 +398,8 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 모든 switch를 레지스트리로 바꾸지는 않는다.
 
 - `ConditionEvaluator`: 조건은 작고 닫힌 조합형이라는 기존 설계에 따라 중앙 평가 유지
-- `TargetSelector`, `StatusLifetimeKind`, `StatusApplyTarget`: 닫힌 값 집합의 문법/변환 분기 유지
+- `StatusLifetimeKind`: 닫힌 값 집합의 문법/변환 분기 유지. (`TargetSelector`·`StatusApplyTarget`은 2026-09-18
+  [전투 실행 계약](../specs/2026-09-18-combat-execution-contract-design.md) 구현으로 제거됐다 — 위치는 카드 축 + 효과 진영.)
 - `Outcome`, `ConditionTier`: 표현용 닫힌 enum 분기 유지
 
 `CardType`은 복합 효과 카드에서 열린 조합 축임이 확인되어 P0-B2에서 제거한다. 나머지 항목이 실제로 열린 콘텐츠

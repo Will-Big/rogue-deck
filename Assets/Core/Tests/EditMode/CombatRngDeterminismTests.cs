@@ -55,5 +55,48 @@ namespace FateWeaver.Tests
                 Enumerable.Range(0, 6).Select(seed => RunSignature(seed)));
             Assert.Greater(signatures.Count, 1);
         }
+
+        /// <summary>같은 시드·같은 조작(매 턴 낼 수 있는 첫 카드를 계속 낸다)이면 턴 시작·해석 이벤트 열이 같다.</summary>
+        private static string PlayedRunSignature(int seed)
+        {
+            var goblin = TestContent.Goblin();
+            var session = new DeckCombatSession(TestContent.Statuses(),
+                TestContent.StarterDeckCards(),
+                PlayerHp,
+                new[] { new Enemy(goblin.Enemy.SpecId, goblin.Enemy.Hp) },
+                goblin.Policy,
+                seed: seed);
+
+            var signature = new StringBuilder();
+            for (int turn = 0; turn < Turns && !session.IsComplete; turn++)
+            {
+                foreach (var started in session.LastTurnStartTimeline)
+                {
+                    signature.AppendLine("start:" + started);
+                }
+
+                while (session.Hand.Count > 0 && session.PlayExecutionCard(0))
+                {
+                    signature.AppendLine("play");
+                }
+
+                foreach (var resolutionEvent in session.ResolveTurn())
+                {
+                    signature.AppendLine(resolutionEvent.ToString());
+                }
+
+                session.BeginNextTurn();
+            }
+
+            return signature.ToString();
+        }
+
+        [Test]
+        public void Same_seed_and_same_actions_produce_identical_event_sequences()
+        {
+            var first = PlayedRunSignature(seed: 11);
+            StringAssert.Contains("play", first, "전제: 카드를 실제로 낸다");
+            Assert.AreEqual(first, PlayedRunSignature(seed: 11));
+        }
     }
 }
