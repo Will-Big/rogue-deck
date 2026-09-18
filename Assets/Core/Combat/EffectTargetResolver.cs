@@ -19,6 +19,20 @@ namespace FateWeaver.Core.Combat
                 : new EffectTargetSnapshot(key, null, SelectEnemies(state, card, key.Range));
         }
 
+        /// <summary>카드 없이 대형 위치만으로 고른다(반응 효과의 위치 대상). Self는 카드 주인이 필요하므로 받지 않는다.</summary>
+        public EffectTargetSnapshot ResolvePosition(CombatState state, CardTargetKey key)
+        {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            if (key.Range == CardTargetRange.Self)
+            {
+                throw new ArgumentException("Self needs a card owner; use Resolve.", nameof(key));
+            }
+
+            return key.Faction == CardTargetFaction.Ally
+                ? new EffectTargetSnapshot(key, PartyTargeting.SelectRange(state, key.Range).AsReadOnly(), null)
+                : new EffectTargetSnapshot(key, null, EnemyTargeting.SelectRange(state, key.Range).AsReadOnly());
+        }
+
         private static IReadOnlyList<PartyMember> SelectParty(
             CombatState state, ExecutionCardInstance card, CardTargetRange range)
         {

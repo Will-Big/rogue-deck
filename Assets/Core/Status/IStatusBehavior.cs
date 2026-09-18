@@ -17,9 +17,9 @@ namespace FateWeaver.Core.Status
         public Authoring.Statuses.StatusContentCatalog Content;
     }
 
-    /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 직접 피해를 주는 배선(파티원은
-    /// TakeDamage, 적은 Hp 차감)이며 ModifyIncomingDamage를 경유하지 않는다. Events에 추가한
-    /// 이벤트는 타임라인의 현재 위치에 이어 붙는다.</summary>
+    /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 상태 피해를 주는 배선이다 — 호출자가 공통 피해
+    /// 경로(DamageService)에 원인=상태·관통·배율 미적용으로 연결하고, 그 경로가 HpChanged를 남긴다.
+    /// Events에 추가한 이벤트는 타임라인의 현재 위치에 이어 붙는다.</summary>
     public sealed class StatusTickContext
     {
         public StatusInstance Instance;
@@ -30,16 +30,6 @@ namespace FateWeaver.Core.Status
 
         /// <summary>이 전투의 상태 저작 콘텐츠. 독의 턴당 성장치처럼 규칙 수치를 읽는 훅이 쓴다.</summary>
         public Authoring.Statuses.StatusContentCatalog Content;
-    }
-
-    /// <summary>보유자 사망 훅 입력. State는 이전 대상 탐색 등 규칙 판단에 쓴다.</summary>
-    public sealed class StatusDeathContext
-    {
-        public StatusInstance Instance;
-        public StatusBag HolderBag;
-        public string HolderId;
-        public Combat.CombatState State;
-        public List<ResolutionEvent> Events;
     }
 
     /// <summary>Behavior for a status key. Implement only the relevant hooks (defaults are no-ops).
@@ -75,9 +65,6 @@ namespace FateWeaver.Core.Status
         /// <summary>행동 턴 종료(수명 만료 전)에 보유자 단위로 발동하는 틱 (예: 독 피해+성장).</summary>
         void OnTurnEnd(StatusTickContext ctx);
 
-        /// <summary>보유자가 사망한 직후 발동 (예: 남은 독 이전).</summary>
-        void OnHolderDied(StatusDeathContext ctx);
-
         /// <summary>이번 턴 이 상태의 발동을 막는다. trigger_status가 즉시 발동시킨 뒤 호출하며,
         /// 어떤 마커를 쓰는지는 상태 자신만 안다 — 카드가 알 필요가 없다.</summary>
         void SuppressThisTurn(StatusBag holderBag);
@@ -105,7 +92,6 @@ namespace FateWeaver.Core.Status
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }
-        public virtual void OnHolderDied(StatusDeathContext ctx) { }
         public virtual void SuppressThisTurn(StatusBag holderBag) { }
 
         public virtual Authoring.Statuses.StatusSpec NewSpec()

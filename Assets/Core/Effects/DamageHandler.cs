@@ -1,5 +1,4 @@
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Combat;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
@@ -15,8 +14,8 @@ namespace FateWeaver.Core.Effects
             // Deliberate rule: a pending damage bonus (GrantNextPlayerDamageCardBonus) raises the
             // CARD's damage value, not a fixed pool split across targets — so with an All-target card
             // it applies to EVERY target independently ("다음 플레이어 피해 카드가 주는 피해 +X" reads
-            // per hit dealt, not a one-time budget).
-            var bonus = ctx.Card.ConsumePendingDamageBonus();
+            // per hit dealt, not a one-time budget). 반응 효과에는 카드가 없어 버프도 없다.
+            var bonus = ctx.Card?.ConsumePendingDamageBonus() ?? 0;
             if (bonus != 0)
             {
                 ctx.ExtraEvents.Add(new Events.CardBuffConsumed(
@@ -24,51 +23,22 @@ namespace FateWeaver.Core.Effects
             }
 
             var amount = FoldOutgoing(ctx, ctx.EffectValue + bonus);
-            foreach (var target in ctx.RequireTargets().Enemies)
+            var request = DamageRequest.Attack(
+                amount,
+                ctx.ActorId,
+                ctx.Card != null ? Events.HpChangeSource.CardDamage : Events.HpChangeSource.Reaction,
+                ctx.SourceId);
+            var targets = ctx.RequireTargets();
+            foreach (var target in targets.Enemies)
             {
-                var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                HitEnemy(ctx, target, dealt);
-                ctx.DamageDealt += dealt;
+                ctx.DamageDealt += ctx.Damage.Deal(ctx.State, target, request, ctx.Sink);
             }
 
-            foreach (var target in ctx.RequireTargets().Party)
+            foreach (var target in targets.Party)
             {
-                var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                HitParty(ctx, target, dealt);
-                ctx.DamageDealt += dealt;
-            }
-        }
-
-        /// <summary>적에게 피해를 적용하고, HP가 실제로 바뀌었으면 HpChanged를 남긴다.</summary>
-        private static void HitEnemy(EffectContext ctx, Enemy target, int dealt)
-        {
-            var before = target.Hp;
-            target.Hp -= dealt;
-            if (target.Hp != before)
-            {
-                ctx.ExtraEvents.Add(new Events.HpChanged(
-                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
+                ctx.DamageDealt += ctx.Damage.Deal(ctx.State, target, request, ctx.Sink);
             }
         }
-
-        /// <summary>파티원에게 피해를 적용하고, HP가 실제로 바뀌었으면 HpChanged를 남긴다.</summary>
-        private static void HitParty(EffectContext ctx, PartyMember target, int dealt)
-        {
-            var before = target.Hp;
-            target.TakeDamage(dealt);
-            if (target.Hp != before)
-            {
-                ctx.ExtraEvents.Add(new Events.HpChanged(
-                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
-            }
-        }
-
-        /// <summary>Folds the target's entity-scoped statuses into incoming damage: the multiplier
-        /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
-        /// actually changed the damage spends a charge (auto-consume).</summary>
-        private static int FoldIncoming(EffectContext ctx, StatusBag bag, string holderId, int damage)
-            => StatusDamageFold.Incoming(
-                bag, ctx.StatusRegistry, ctx.State.StatusRules, damage, holderId, ctx.DamageSteps);
 
         /// <summary>Folds the acting side's entity-scoped statuses into the damage it deals (e.g.
         /// Weak). Applied once per effect, before any target's incoming statuses — so an All-target
@@ -76,6 +46,6 @@ namespace FateWeaver.Core.Effects
         private static int FoldOutgoing(EffectContext ctx, int damage)
             => StatusDamageFold.Outgoing(
                 ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage,
-                ctx.Card.OwnerId, ctx.DamageSteps);
+                ctx.Card != null ? ctx.Card.OwnerId : ctx.ActorId, ctx.DamageSteps);
     }
 }

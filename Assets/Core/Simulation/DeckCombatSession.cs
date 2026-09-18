@@ -148,7 +148,7 @@ namespace FateWeaver.Simulation
             _handSize = handSize;
             _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
-            _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
+            _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses, CombatRegistries.Reactions());
             _interventionActions = CombatRegistries.InterventionActions();
             _interventionResolver = new InterventionPlayResolver(_interventionActions);
 

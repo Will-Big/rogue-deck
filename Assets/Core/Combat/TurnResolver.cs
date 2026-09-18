@@ -11,17 +11,19 @@ namespace FateWeaver.Core.Combat
     /// <summary>실행선의 카드를 차례대로 실행하고 이벤트 타임라인을 낸다. 실행선은 고정 사본이 아니다 —
     /// 매번 아직 차례가 오지 않은 다음 카드를 묻는다(전투 실행 계약 스펙 §6).
     /// Per card: intercept/pre-cancellation check (CardCancelled), else every effect in authored order
-    /// (each through EffectExecutor, with a per-effect death-sweep snapshot), then CardResolved followed by
-    /// the effects' events and deaths, then CardRemoved for every pending card whose owner just died.</summary>
+    /// through EffectExecutor — which also runs that effect's death cleanup (deaths, CardRemoved) and direct
+    /// reactions — then CardResolved followed by those events in occurrence order. 턴 끝에는 상태 틱 → 사망 정리 →
+    /// 직접 반응 → 수명 만료를 한 묶음으로 처리한다.</summary>
     public sealed class TurnResolver
     {
         private readonly StatusRegistry _statuses;
         private readonly EffectExecutor _executor;
 
-        public TurnResolver(EffectRegistry effects, StatusRegistry statuses = null)
+        public TurnResolver(
+            EffectRegistry effects, StatusRegistry statuses = null, ReactionRegistry reactions = null)
         {
             _statuses = statuses;
-            _executor = new EffectExecutor(effects, statuses);
+            _executor = new EffectExecutor(effects, statuses, reactions);
         }
 
         public List<ResolutionEvent> Resolve(CombatState state, int turnIndex)
@@ -40,7 +42,7 @@ namespace FateWeaver.Core.Combat
                 card.ExecutionState = CardExecutionState.Executed;
             }
 
-            EndOfTurnMaintenance(state, events);
+            EndOfTurnMaintenance(state, resolutionContext, events);
             events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
             return events;
         }
@@ -74,11 +76,9 @@ namespace FateWeaver.Core.Combat
 
             // 효과마다 그 시작 시점의 위치로 대상을 고른다. 대상이 없는 효과는 미적용으로 기록되고
             // 카드는 다음 효과로 계속한다(스펙 §2).
+            // 효과마다 사망 정리와 직접 반응까지 효과 실행기가 끝낸다(스펙 §7).
             foreach (var effect in card.Def.Effects)
             {
-                var beforeSnapshot = SnapshotParty(state);
-                var enemiesBefore = SnapshotEnemies(state);
-
                 var result = _executor.Apply(execution, effect);
                 execution.Record(effect.Id, result);
                 totalDamage += result.DamageDealt;
@@ -88,138 +88,16 @@ namespace FateWeaver.Core.Combat
                     // CardResolved.TargetId = 처음 적용된 효과의 첫 대상.
                     targetId = result.TargetIds[0];
                 }
-                pendingDeathEvents.AddRange(result.Events);   // 틱 이벤트가 사망 이벤트보다 앞서도록
-
-                CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
-                CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
+                pendingDeathEvents.AddRange(result.Events);
             }
 
-            // CardResolved 뒤에 이 카드의 효과가 만든 사건과 사망이 발생 순서대로 이어진다.
+            // CardResolved 뒤에 이 카드의 효과가 만든 변화·사망·카드 제거·직접 반응이 발생 순서대로 이어진다.
             events.Add(new CardResolved(
                 card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, execution.StartTier)
             {
                 DamageSteps = damageSteps
             });
             events.AddRange(pendingDeathEvents);
-
-            // 방금 죽은 주인의 아직 차례가 오지 않은 카드를 실행선에서 뺀다. 이미 실행된 카드와 지금
-            // 실행 중인 카드는 남는다(스펙 §6).
-            foreach (var ownerId in CollectNewlyDeadOwnerIds(pendingDeathEvents))
-            {
-                foreach (var removed in state.Zone.RemovePendingOwnedBy(ownerId))
-                {
-                    events.Add(new CardRemoved(removed.InstanceId, removed.Def.Id, removed.OwnerId));
-                }
-            }
-        }
-
-        /// <summary>Snapshots IsAlive for every party member immediately before an effect applies, so
-        /// the caller can diff after the effect and detect a death.</summary>
-        private static Dictionary<string, bool> SnapshotParty(CombatState state)
-        {
-            var snapshot = new Dictionary<string, bool>();
-            foreach (var member in state.Party)
-            {
-                snapshot[member.Id] = member.IsAlive;
-            }
-
-            return snapshot;
-        }
-
-        /// <summary>Diffs the party against a pre-effect snapshot and appends PartyMemberDied to the
-        /// pending list for any member who died this effect. A newly-dead member also gets OnHolderDied
-        /// dispatched on every status it carried.</summary>
-        private void CollectDeathSweepEvents(
-            CombatState state,
-            Dictionary<string, bool> before,
-            List<ResolutionEvent> pending)
-        {
-            foreach (var member in state.Party)
-            {
-                if (before[member.Id] && !member.IsAlive)
-                {
-                    pending.Add(new PartyMemberDied(member.Id));
-                    DispatchHolderDied(state, member.Statuses, member.Id, pending);
-                }
-            }
-        }
-
-        private static Dictionary<string, bool> SnapshotEnemies(CombatState state)
-        {
-            var snapshot = new Dictionary<string, bool>();
-            foreach (var enemy in state.Enemies)
-            {
-                snapshot[enemy.Id] = enemy.Hp > 0;
-            }
-
-            return snapshot;
-        }
-
-        /// <summary>Diffs enemies against a pre-effect snapshot; a newly-dead enemy emits EnemyDied and
-        /// dispatches OnHolderDied on every status it carried.</summary>
-        private void CollectEnemyDeathEvents(
-            CombatState state, Dictionary<string, bool> before, List<ResolutionEvent> pending)
-        {
-            foreach (var enemy in state.Enemies)
-            {
-                if (before.TryGetValue(enemy.Id, out var wasAlive) && wasAlive && enemy.Hp <= 0)
-                {
-                    pending.Add(new EnemyDied(enemy.Id));
-                    DispatchHolderDied(state, enemy.Statuses, enemy.Id, pending);
-                }
-            }
-        }
-
-        private void DispatchHolderDied(
-            CombatState state, StatusBag bag, string holderId, List<ResolutionEvent> events)
-        {
-            if (_statuses == null)
-            {
-                return;
-            }
-
-            var snapshot = new List<StatusInstance>(bag.All);
-            foreach (var status in snapshot)
-            {
-                if (_statuses.TryResolve(status.Key, out var behavior))
-                {
-                    behavior.OnHolderDied(new StatusDeathContext
-                    {
-                        Instance = status,
-                        HolderBag = bag,
-                        HolderId = holderId,
-                        State = state,
-                        Events = events
-                    });
-                }
-            }
-        }
-
-        /// <summary>사망 이벤트에서 소유자 id를 뽑는다. 파티원과 적을 대칭으로 다뤄, 한 턴 안에서 먼저
-        /// 죽은 적의 남은 카드도 파티원과 똑같이 실행선에서 빠지게 한다. 소유자를 모르는 카드
-        /// (OwnerId가 비어 있는 단일 적 호환 경로)를 잘못 지목하지 않도록 빈 id는 제외한다.</summary>
-        private static List<string> CollectNewlyDeadOwnerIds(List<ResolutionEvent> pendingDeathEvents)
-        {
-            var ownerIds = new List<string>();
-            foreach (var pending in pendingDeathEvents)
-            {
-                string ownerId = null;
-                if (pending is PartyMemberDied partyDeath)
-                {
-                    ownerId = partyDeath.MemberId;
-                }
-                else if (pending is EnemyDied enemyDeath)
-                {
-                    ownerId = enemyDeath.EnemyId;
-                }
-
-                if (!string.IsNullOrEmpty(ownerId))
-                {
-                    ownerIds.Add(ownerId);
-                }
-            }
-
-            return ownerIds;
         }
 
         private bool IsInterceptedByStatus(
@@ -256,15 +134,21 @@ namespace FateWeaver.Core.Combat
             return false;
         }
 
-        private void EndOfTurnMaintenance(CombatState state, List<ResolutionEvent> events)
+        /// <summary>턴 종료 시점: 상태 틱 → 사망 정리 → 직접 반응(턴 시점 처리는 Primary 기원, 계획 D7) → 수명 만료.</summary>
+        private void EndOfTurnMaintenance(
+            CombatState state, ResolutionContext resolutionContext, List<ResolutionEvent> events)
         {
-            var partyBefore = SnapshotParty(state);
-            var enemiesBefore = SnapshotEnemies(state);
+            var before = DeathProcessor.Capture(state);
+            var signals = new List<CombatSignal>();
 
-            RunTurnEndTicks(state, events);
+            RunTurnEndTicks(state, events, signals);
 
-            CollectDeathSweepEvents(state, partyBefore, events);
-            CollectEnemyDeathEvents(state, enemiesBefore, events);
+            foreach (var died in _executor.Deaths.Process(state, before, events))
+            {
+                signals.Add(died);
+            }
+
+            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events);
 
             foreach (var member in state.Party)
             {
@@ -283,35 +167,50 @@ namespace FateWeaver.Core.Combat
             }
         }
 
+        /// <summary>턴 시점 사건에는 효과 대상 목록이 없으므로 발생 순서만 붙인다(틱은 대형 순으로 일어난다).</summary>
+        private static List<CombatSignal> Numbered(List<CombatSignal> signals)
+        {
+            var numbered = new List<CombatSignal>(signals.Count);
+            for (var i = 0; i < signals.Count; i++)
+            {
+                numbered.Add(signals[i] with { TargetOrdinal = 0, Sequence = i });
+            }
+
+            return numbered;
+        }
+
         /// <summary>행동 턴 종료 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
-        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2).</summary>
-        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events)
+        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2). 틱 피해는 공통 피해 경로를 지난다.</summary>
+        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events, List<CombatSignal> signals)
         {
             if (_statuses == null)
             {
                 return;
             }
 
+            var sink = new DamageSink(events, signals);
             foreach (var member in state.Party)
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, () => target.Hp,
-                    damage => target.TakeDamage(damage), events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent,
+                    statusId => damage => _executor.Damage.Deal(
+                        state, target, DamageRequest.StatusTick(damage, statusId), sink));
             }
 
             foreach (var enemy in state.Enemies)
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, () => target.Hp,
-                    damage => target.Hp -= damage, events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent,
+                    statusId => damage => _executor.Damage.Deal(
+                        state, target, DamageRequest.StatusTick(damage, statusId), sink));
             }
         }
 
         private void TickHolder(
-            StatusBag bag, string holderId, Func<int> getHp, Action<int> dealDamage,
-            List<ResolutionEvent> events, Authoring.Statuses.StatusContentCatalog content)
+            StatusBag bag, string holderId, List<ResolutionEvent> events,
+            Authoring.Statuses.StatusContentCatalog content, Func<string, Action<int>> dealDamageFor)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -319,22 +218,15 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior))
                 {
-                    var hpBefore = getHp();
                     behavior.OnTurnEnd(new StatusTickContext
                     {
                         Instance = status,
                         HolderBag = bag,
                         HolderId = holderId,
-                        DealDamage = dealDamage,
+                        DealDamage = dealDamageFor(status.Key.Id),
                         Events = events,
                         Content = content
                     });
-                    var hpAfter = getHp();
-                    if (hpAfter != hpBefore)
-                    {
-                        events.Add(new HpChanged(
-                            holderId, hpBefore, hpAfter, HpChangeSource.StatusTick, status.Key.Id));
-                    }
                 }
             }
         }

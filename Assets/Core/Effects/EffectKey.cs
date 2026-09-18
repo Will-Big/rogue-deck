@@ -31,5 +31,8 @@ namespace FateWeaver.Core.Effects
         public static readonly EffectKey ConsumeStatus = new EffectKey("consume_status");
         public static readonly EffectKey TriggerStatus = new EffectKey("trigger_status");       // Task 8
         public static readonly EffectKey GrantNextTurnFate = new EffectKey("grant_next_turn_fate"); // Task 9
+
+        /// <summary>반응 전용: 행위자(반응 보유자)의 상태를 대상에게 옮긴다(전염). 카드로 저작하지 않는다.</summary>
+        public static readonly EffectKey TransferStatus = new EffectKey("transfer_status");
     }
 }

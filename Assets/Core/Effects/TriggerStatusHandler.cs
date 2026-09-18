@@ -26,24 +26,19 @@ namespace FateWeaver.Core.Effects
                 var status = enemy.Statuses.Get(payload.Key);
                 if (status != null)
                 {
+                    // 즉시 발동도 턴 종료 틱과 같은 공통 피해 경로(상태 원인·관통·배율 미적용)를 쓴다.
                     var target = enemy;
-                    var hpBefore = target.Hp;
+                    var statusId = payload.Key.Id;
                     behavior.OnTurnEnd(new StatusTickContext
                     {
                         Instance = status,
                         HolderBag = target.Statuses,
                         HolderId = target.Id,
-                        DealDamage = damage => target.Hp -= damage,
+                        DealDamage = damage => ctx.DamageDealt += ctx.Damage.Deal(
+                            ctx.State, target, DamageRequest.StatusTick(damage, statusId), ctx.Sink),
                         Events = ctx.ExtraEvents,
                         Content = ctx.State.StatusContent
                     });
-                    ctx.DamageDealt += hpBefore - target.Hp;
-                    if (target.Hp != hpBefore)
-                    {
-                        ctx.ExtraEvents.Add(new Events.HpChanged(
-                            target.Id, hpBefore, target.Hp,
-                            Events.HpChangeSource.StatusTick, payload.Key.Id));
-                    }
                 }
 
                 // 마커는 상태 보유 여부와 무관하게 심는다 (선점 잠복): 이 카드보다 뒤에 실행되는

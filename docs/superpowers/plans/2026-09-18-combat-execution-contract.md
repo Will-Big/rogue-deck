@@ -30,7 +30,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T4이다.** T0·T1·T2a·T2b·T3·T3b는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**다음 작업은 T5이다.** T0·T1·T2a·T2b·T3·T3b·T4는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
@@ -38,8 +38,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
   `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · `c06b2e4`(T3) ·
-  `fdccf6f`(T3b 계획) · T3b 커밋(아래 T3b 절).
-- 기준 수치(T3b 끝): 헤드리스 689 · 편집 도구 157 · Unity EditMode 882(통과 875, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · T4 커밋(아래 T4 절).
+- 기준 수치(T4 끝): 헤드리스 704 · 편집 도구 157 · Unity EditMode 897(통과 890, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -60,6 +60,9 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 - **인앱 브라우저는 폴더 연결(File System Access API)과 `data:` 주소의 localStorage를 지원하지 않는다.** 편집 도구를 확인하려면
   `index.html` 앞에 메모리 폴더·메모리 localStorage를 주입한 임시 페이지를 워크트리 안에 만들어 열고, 확인 뒤 지운다.
 - 워크트리 격리 세션은 복잡한 셸 한 줄(루프·치환이 섞인 명령)을 거부한다. 긴 편집은 scratchpad의 파이썬 스크립트로 나눠 돌렸다.
+- T4부터 효과 하나의 사망 정리와 직접 반응은 `EffectExecutor` 안에서 끝난다. 반응이 필요한 전투(전염 포함)는
+  `TurnResolver`에 `CombatRegistries.Reactions()`를 넘겨야 한다 — 빠뜨리면 전염이 조용히 발동하지 않는다.
+  전염이 쓰는 `transfer_status`도 효과 레지스트리에 있어야 한다(`CombatRegistries.Effects()`에는 있다).
 - 위치는 T3b부터 **카드의 두 축 + 효과의 진영**뿐이다(`CardDefinition.TargetOf`). C# 픽스처도 진영과 축을 적어야 한다.
   빠뜨리면 "needs a TargetFaction" 또는 "has no … target range" 예외가 난다.
 - 대상은 T3부터 **효과마다** 고른다. 처리기를 직접 부르던 테스트는 `EffectHarness.Apply`(테스트 전용, EffectExecutor 경유)로
@@ -587,6 +590,32 @@ public void A_new_effect_selects_the_new_front_enemy()
 
 ### T4. 공통 사건·직접 반응·공통 피해 경로
 
+완료(2026-09-18). 계약에서 벗어났거나 계약이 정하지 않은 부분을 정한 것:
+- **반응 효과의 대상**: `EffectsFor`는 `EffectData` 대신 `ReactionEffect(효과, ReactionTarget)`를 돌려준다. 반응에는 카드 축이
+  없으므로 대상 규칙을 따로 둔다: 사건 원인(`SignalSource`), 사건 당사자(`SignalTarget`), 대형 위치(`Position`, Self 불가).
+  모두 살아 있는 개체만 고른다. 반응 효과의 행위자는 반응 보유자다(약화 등 주는 피해 접기와 사건 SourceId가 보유자 기준).
+- **`Dispatch` 서명**: 턴 종료 틱은 카드 없이 일어나므로 `CardExecutionContext` 대신 `(CombatState, ResolutionContext, 사건, 이벤트)`를 받는다.
+  `EffectExecutor.Apply`의 기원 인자는 기본값 Primary다. 반응 효과는 `EffectExecutor.ApplyReaction`(항상 Reaction)으로만 실행된다.
+- **`IReactionHandler.Key`는 능력을 주는 상태 키**다(보유자 가방에서 후보를 찾는 키). 한 상태에 반응 능력 하나, 중복 등록 거부.
+- **방어 획득 사건**은 방어 전용 키가 아니라 `status_gained` + `Detail = 상태 id`다(스펙 §8 "방어 이름을 검사하지 않는다").
+  기본 사건 키는 attacked·hp_damaged·status_gained·formation_moved·holder_died다(`CombatSignalKeys`).
+- **전염**: `IStatusBehavior.OnHolderDied`·`StatusDeathContext`를 지웠다. 사망 능력은 `ContagionReaction`(holder_died 반응)이고,
+  독 이전은 반응 전용 효과 `transfer_status`(`TransferStatusHandler`, 저작 불가, 설명 불필요)가 한다.
+  `ContagionBehavior`는 상태 등록만 맡는다. 기본 반응 등록은 `CombatRegistries.Reactions()`이고,
+  `TurnResolver`의 세 번째 인자로 넘긴다(생략하면 반응 없음 — 세션·러너 3곳은 기본 등록을 넘긴다).
+- **공통 피해 경로**: `DamageService`(원인 공격/상태, 관통, 배율 여부). 카드 피해·반응 피해는 공격, 독 틱·즉시 발동은
+  `DamageRequest.StatusTick`(상태·관통·배율 미적용, D1)이다. 독의 `StatusTicked`는 이제 피해 **전에** 기록한다. 공통 경로가
+  HpChanged를 바로 남기기 때문이며, 결과 표시 순서(틱 → HP 변화)는 이전과 같다. 반응 피해의 HpChanged 원인은 새 값
+  `HpChangeSource.Reaction`(원인 id = 능력을 준 상태 키)이다.
+- **사망 정리**: `DeathProcessor`가 효과마다(그리고 턴 종료 묶음마다) 사망 이벤트와 대기 카드 제거(`CardRemoved`)를 한다.
+  `CardRemoved`는 카드 끝이 아니라 **그 효과 직후**에 기록된다. 여러 명이 함께 죽으면 사망 이벤트가 모두 나온 뒤
+  대상 목록 순서로 반응(전염 이전)이 이어진다. 전에는 사망마다 바로 뒤에 붙었다(스펙 §7의 순서).
+- 반응 대상 조회용 `CombatUnits`(id → 상태 가방·생존 대상)와 `CardActor.IdFor`(사건 SourceId), 카드 없는 위치 선택
+  `EffectTargetResolver.ResolvePosition`을 더했다.
+- 동작 불변 확인: `GoblinParityTests` 고정 서명이 바뀌지 않았다. 콘텐츠 카드 47장의 설명과 샘플 Compare 6개도 T3b 뒤와 바이트 단위로 같다.
+- 검증: 헤드리스 704 · 편집 도구 157 · Unity EditMode 897(통과 890, 실패 0, 건너뜀 7).
+  D3는 T4에 배치를 요구하지 않지만, 공개 열거형(`HpChangeSource`)을 바꾸고 훅을 지웠으므로 돌렸다.
+
 수정: `Assets/Core/Effects/DamageHandler.cs`, `ApplyStatusHandler.cs`, `MoveFormationHandler.cs`,
 `TriggerStatusHandler.cs`, `EffectExecutor.cs`, `Assets/Core/Status/IStatusBehavior.cs`, `StatusDamageFold.cs`,
 `PoisonBehavior.cs`, `ContagionBehavior.cs`, `Assets/Core/Events/ResolutionEvent.cs`,
@@ -615,7 +644,7 @@ public void A_new_effect_selects_the_new_front_enemy()
 - DeathProcessor는 효과 전후 생존 차분으로 사망 사건·실행선 제거를 한 번 수행한다.
   사망 능력을 직접 호출하지 않고 CombatSignal을 반환한다. 덱 제거 연결은 T5에서 수행한다.
 
-- [ ] 아래 경계 테스트와 표의 통합 사례를 먼저 추가한다. 단순 허용 테스트만으로 완료하지 않는다.
+- [x] 아래 경계 테스트와 표의 통합 사례를 먼저 추가한다. 단순 허용 테스트만으로 완료하지 않는다.
 
 ```csharp
 [TestCase(EffectOrigin.Primary, true)]
@@ -626,7 +655,7 @@ public void Only_primary_effects_open_a_reaction_boundary(EffectOrigin origin, b
 }
 ```
 
-- [ ] `Tools/verify.sh --quick` 실패 확인 후 다음 경계를 구현한다.
+- [x] `Tools/verify.sh --quick` 실패 확인 후 다음 경계를 구현한다.
 
 ```text
 EffectExecutor:
@@ -641,15 +670,15 @@ ReactionDispatcher:
   반응이 생성한 사건은 기록하되 Dispatch를 재호출하지 않음
 ```
 
-- [ ] 사건 당사자의 후보는 효과 시작 대상 목록 순서, 보유자 내에서는 상태 부여 순서로 안정화한다.
+- [x] 사건 당사자의 후보는 효과 시작 대상 목록 순서, 보유자 내에서는 상태 부여 순서로 안정화한다.
   이번 경계에서 후보를 확보하고, 도중에 제거된 상태는 호출 전에 확인한다. 새로 부여한 능력이
   이미 발생한 같은 사건을 다시 받게 하지 않는다.
-- [ ] 공격을 방어로 모두 막아도 Attacked를 발생시킨다. HpDamaged는 실제 HP 감소시에만 발생시킨다.
+- [x] 공격을 방어로 모두 막아도 Attacked를 발생시킨다. HpDamaged는 실제 HP 감소시에만 발생시킨다.
   BlockGained/StatusApplied/FormationMoved/HolderDied도 해당 상태 변경 경계에서 생성한다.
   사건 종류 추가가 중앙 분기 변경을 요구하지 않는지 테스트용 새 능력으로 검증한다.
-- [ ] 반응은 사건 SourceId를 대상으로 참조할 수 있다. 일반 카드의 위치 선택과 분리한다.
+- [x] 반응은 사건 SourceId를 대상으로 참조할 수 있다. 일반 카드의 위치 선택과 분리한다.
   반격은 생존 요건, 사망 능력은 사망 보유자 허용 요건을 사용한다. 사망을 일괄 반응 금지로 처리하지 않는다.
-- [ ] 아래 사례를 테스트 전용 처리기로 검증한다. 검증용 반격 수치는 테스트에만 두고 신규 게임 카드는 추가하지 않는다.
+- [x] 아래 사례를 테스트 전용 처리기로 검증한다. 검증용 반격 수치는 테스트에만 두고 신규 게임 카드는 추가하지 않는다.
 
 | 상황 | 필수 결과 |
 |---|---|
@@ -664,9 +693,9 @@ ReactionDispatcher:
 | 방어 5·취약을 가진 적에게 독 3 틱 (D1) | HP 3 감소, 방어 5 유지, 배율 미적용 |
 | 턴 종료 독 틱으로 사망한 전염 보유자 (D7) | 사망 능력(전염) 실행 — 턴 시점 처리는 Primary 기원 |
 
-- [ ] 표시 이벤트는 실제 발생 순서대로 기록한다. CardResolved 요약을 HP 변경의 재적용 명령으로 만들지 않는다.
+- [x] 표시 이벤트는 실제 발생 순서대로 기록한다. CardResolved 요약을 HP 변경의 재적용 명령으로 만들지 않는다.
   T7에서 기존 소비자의 요약/개별 이벤트 계약을 확인한다.
-- [ ] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 전투 사건에서 직접 반응을 해결한다`.
+- [x] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 전투 사건에서 직접 반응을 해결한다`.
 
 ### T5. 카드를 종료 단위로 만든다
 

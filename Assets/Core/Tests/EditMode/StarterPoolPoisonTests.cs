@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
         }
 
         private static System.Collections.Generic.List<ResolutionEvent> Resolve(CombatState state)
-            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses())
+            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses(), CombatRegistriesAccessor.Reactions())
                 .Resolve(state, 0);
 
         [Test]
@@ -205,7 +205,7 @@ namespace FateWeaver.Tests
         {
             // Distinguishes the tick-death path (EndOfTurnMaintenance) from the mid-turn card-kill path
             // already covered by ContagionStatusTests: here RunTurnEndTicks ticks every living enemy
-            // BEFORE the post-tick death sweep dispatches OnHolderDied/StatusTransferred, so the
+            // BEFORE the post-tick death cleanup's HolderDied reaction (contagion → StatusTransferred), so the
             // recipient's newly-received poison must NOT tick again in the same EndOfTurnMaintenance.
             var state = NewState(new Enemy("victim", 1), new Enemy("next", 20));
             state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);

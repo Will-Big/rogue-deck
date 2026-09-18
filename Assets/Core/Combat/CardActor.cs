@@ -27,6 +27,28 @@ namespace FateWeaver.Core.Combat
             return enemy?.Statuses;
         }
 
+        /// <summary>카드를 쓰는 쪽의 id(사건의 SourceId). StatusesFor와 같은 규칙으로 확정하고, 못 하면 null.</summary>
+        public static string IdFor(CombatState state, ExecutionCardInstance card)
+        {
+            if (state == null || card == null)
+            {
+                return null;
+            }
+
+            if (card.Def.Side == Cards.Side.Player)
+            {
+                var member = string.IsNullOrEmpty(card.OwnerId)
+                    ? (state.Party.Count == 1 ? state.Party[0] : null)
+                    : PartyTargeting.LivingById(state, card.OwnerId);
+                return member?.Id;
+            }
+
+            var enemy = string.IsNullOrEmpty(card.OwnerId)
+                ? (state.Enemies.Count == 1 ? state.Enemies[0] : null)
+                : FindLivingEnemy(state, card.OwnerId);
+            return enemy?.Id;
+        }
+
         private static Enemy FindLivingEnemy(CombatState state, string enemyId)
         {
             foreach (var enemy in state.Enemies)

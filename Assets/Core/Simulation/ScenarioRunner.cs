@@ -31,7 +31,7 @@ namespace FateWeaver.Simulation
             var initialOrder = SummarizeOrder(state.Zone.ResolutionOrder());
             var interventionResult = ApplyInterventionPlays(state, scenario.InterventionPlays, cardsById);
             var manipulatedOrder = SummarizeOrder(state.Zone.ResolutionOrder());
-            var timeline = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses())
+            var timeline = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses(), CombatRegistries.Reactions())
                 .Resolve(state, turnIndex: 0);
 
             return new ScenarioResult(

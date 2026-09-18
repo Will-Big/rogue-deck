@@ -40,7 +40,7 @@ namespace FateWeaver.Simulation
                 state.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));
             }
 
-            var resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
+            var resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses(), CombatRegistries.Reactions());
             var interventionActions = CombatRegistries.InterventionActions();
 
             var turns = new List<TurnOutcome>();

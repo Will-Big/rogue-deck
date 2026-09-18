@@ -84,6 +84,10 @@ namespace FateWeaver.Core.Effects
 
             ctx.ExtraEvents.Add(new StatusApplied(
                 holderId, payload.Key.Id, instance.Count, instance.Magnitude, stacked));
+            ctx.Signals.Add(new CombatSignal(CombatSignalKeys.StatusGained, ctx.ActorId, holderId, magnitude)
+            {
+                Detail = payload.Key.Id
+            });
         }
     }
 }

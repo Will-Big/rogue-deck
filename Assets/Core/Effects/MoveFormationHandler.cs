@@ -34,6 +34,8 @@ namespace FateWeaver.Core.Effects
             if (destinationIndex != currentIndex)
             {
                 ctx.ExtraEvents.Add(new Events.FormationMoved(ownerId, side, currentIndex, destinationIndex));
+                ctx.Signals.Add(new Events.CombatSignal(
+                    Events.CombatSignalKeys.FormationMoved, ownerId, ownerId, destinationIndex - currentIndex));
             }
         }
 
