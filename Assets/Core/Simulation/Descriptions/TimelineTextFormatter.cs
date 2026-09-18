@@ -90,6 +90,9 @@ namespace FateWeaver.Simulation.Descriptions
                       .Append(e.FromIndex + 1).Append("열 → ")
                       .Append(e.ToIndex + 1).AppendLine("열");
                     break;
+                case CardRemoved e:
+                    sb.Append("  ").Append(e.CardId).AppendLine(" 제거 (주인 사망)");
+                    break;
                 case CardCancelled e:
                     sb.Append("  ").Append(e.CardId).Append(" 취소 (").Append(e.Reason).Append(')');
                     if (e.DamageDealt > 0)

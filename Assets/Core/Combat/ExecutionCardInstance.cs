@@ -3,7 +3,18 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>A card placed in the future zone for one combat. ExecutionOrder is mutable.</summary>
+    /// <summary>실행선 위 카드의 진행 단계(전투 실행 계약 스펙 §6). 차례가 온 카드는 효과가 없거나
+    /// 취소돼도 Executed가 되어 실행 이력에 남는다. Removed는 차례가 오기 전에 실행선에서 빠진 카드다.</summary>
+    public enum CardExecutionState
+    {
+        Pending,
+        Executing,
+        Executed,
+        Removed
+    }
+
+    /// <summary>A card placed in the future zone for one combat. Once the card is on the line, change its
+    /// ExecutionOrder through FutureZone.MoveTo / SwapPositions so the line stays ordered.</summary>
     public sealed class ExecutionCardInstance : IStatusHolder
     {
         private int _pendingDamageBonus;
@@ -27,6 +38,9 @@ namespace FateWeaver.Core.Combat
         /// resolved. First cancellation reason wins; a cancelled card's remaining effects must not
         /// mutate state (see IEffectHandler.cs).</summary>
         public CardCancellationReason? CancellationReason { get; set; }
+
+        /// <summary>실행선에서의 진행 단계. TurnResolver와 FutureZone이 옮긴다.</summary>
+        public CardExecutionState ExecutionState { get; set; } = CardExecutionState.Pending;
 
         public ExecutionCardInstance(CardDefinition def)
         {

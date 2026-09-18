@@ -247,11 +247,11 @@ namespace FateWeaver.Tests
 
             var timeline = session.ResolveTurn();
 
-            var relevant = timeline.Where(e => e is CardCancelled || e is PartyMemberDied).ToArray();
+            var relevant = timeline.Where(e => e is CardCancelled || e is PartyMemberDied || e is CardRemoved).ToArray();
             Assert.AreEqual(3, relevant.Length);
             Assert.AreEqual("kill_then_cancel", ((CardCancelled)relevant[0]).CardId);
             Assert.AreEqual("a", ((PartyMemberDied)relevant[1]).MemberId);
-            Assert.AreEqual(CardCancellationReason.OwnerDied, ((CardCancelled)relevant[2]).Reason);
+            Assert.AreEqual("a", ((CardRemoved)relevant[2]).OwnerId);
             Assert.IsFalse(session.DrawPile.Any(card => card.OwnerId == "a"));
             Assert.IsFalse(session.Hand.Any(card => card.OwnerId == "a"));
             Assert.IsFalse(session.DiscardPile.Any(card => card.OwnerId == "a"));

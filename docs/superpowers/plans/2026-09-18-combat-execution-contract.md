@@ -94,6 +94,8 @@ T0 → T1 → T2a → T2b → T3 → T4 → T5 → T6 → T7 순서로 실행한
 
 ### T0. 치명타 버티기 제거 (D8)
 
+완료(2026-09-18, `f013518`).
+
 기준에서 확인한 사용처(구현 착수 시 다시 grep한다):
 - 규칙: `Assets/Core/Combat/PartyMember.cs:22`(`SurviveCharges`), `:45`(치명타를 충전으로 버티고 `DamageOutcome.DeathsDoor` 반환),
   `Assets/Core/Combat/TurnResolver.cs:181–209`(스냅샷 비교로 `DeathsDoorSurvived` 발생)
@@ -106,15 +108,21 @@ T0 → T1 → T2a → T2b → T3 → T4 → T5 → T6 → T7 순서로 실행한
   `DeckPoolCharacterContentTests`, `CombatLogTests`, `CardCancellationTests`
 - Unity 레이어와 편집 도구에는 참조가 없다(기준 시점 grep).
 
-- [ ] 치명타가 곧바로 사망시키는 실패 테스트를 먼저 쓴다(파티원 HP 3, 피해 5 → 사망, `DeathsDoorSurvived` 없음).
-- [ ] 필드·이벤트·로그 문구·로더 검증·캐릭터 JSON 키를 함께 제거한다. `DamageOutcome`에서 `DeathsDoor`를 뺀다.
+- [x] 치명타가 곧바로 사망시키는 실패 테스트를 먼저 쓴다(파티원 HP 3, 피해 5 → 사망, `DeathsDoorSurvived` 없음).
+- [x] 필드·이벤트·로그 문구·로더 검증·캐릭터 JSON 키를 함께 제거한다. `DamageOutcome`에서 `DeathsDoor`를 뺀다.
   JSON 키만 남기면 로더가 모르는 키로 거부할 수 있으므로 데이터와 코드를 같은 커밋에서 지운다.
-- [ ] 치명타 버티기만 검증하던 테스트는 지운다. 다른 규칙을 검증하면서 충전을 곁들인 테스트는 충전을 빼고 기대값을 다시 확인한다.
-- [ ] [전투 노드 한 사이클](../specs/2026-09-15-combat-node-cycle-design.md)과
+- [x] 치명타 버티기만 검증하던 테스트는 지운다. 다른 규칙을 검증하면서 충전을 곁들인 테스트는 충전을 빼고 기대값을 다시 확인한다.
+- [x] [전투 노드 한 사이클](../specs/2026-09-15-combat-node-cycle-design.md)과
   [백로그](2026-07-16-architecture-refactor-backlog.md)의 `SurviveCharges` 언급에 "2026-09-18 제거" 표시를 단다.
-- [ ] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 치명타 버티기 충전을 제거한다`.
+- [x] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 치명타 버티기 충전을 제거한다`.
 
 ### T1. 현재 자리를 보존하는 실행선과 실행 이력
+
+완료(2026-09-18). 구현 중 결정: 주인 사망으로 빠진 카드는 `CardCancelled(OwnerDied)` 대신 새 이벤트
+`CardRemoved`로 기록한다(사용자 결정). `CardCancelled`는 레일 강조와 재생 비트 시작으로 해석되므로
+(`RailCardHighlightPresenter.cs:43`, `TimelineBeatPlanner.cs:73`) 제거 시점에 쓰면 차례가 오지 않은 카드가
+강조된다. `CardCancellationReason.OwnerDied`는 삭제했다. 개입 핸들러는 실행선에 없는 카드를 `CanApply`에서 거부한다.
+`GoblinParityTests`의 고정 서명은 이 이벤트 교체만큼 갱신했다.
 
 수정:
 - `Assets/Core/Combat/FutureZone.cs`
@@ -135,7 +143,7 @@ ExecutionCardInstance에 실행 상태 `Pending / Executing / Executed / Removed
 ResolutionContext는 활성 실행선과 실행 이력을 질의하며 고정된 Order 사본을 갖지 않는다.
 직전 이력은 현재 카드의 조건을 읽은 후 현재 카드 실행 사실을 추가한다.
 
-- [ ] 기존 `FutureZoneTests.Card` 헬퍼를 사용해 아래 실패 테스트를 추가한다.
+- [x] 기존 `FutureZoneTests.Card` 헬퍼를 사용해 아래 실패 테스트를 추가한다.
 
 ```csharp
 [Test]
@@ -165,8 +173,8 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
 }
 ```
 
-- [ ] `Tools/verify.sh --quick` 실행. 새 API 부재 또는 순서 단언 실패를 확인한다.
-- [ ] `Add`와 Preview가 같은 삽입 위치 계산을 사용하게 한다. `ResolutionOrder()`는 현재 순서를 읽기 전용으로 반환한다.
+- [x] `Tools/verify.sh --quick` 실행. 새 API 부재 또는 순서 단언 실패를 확인한다.
+- [x] `Add`와 Preview가 같은 삽입 위치 계산을 사용하게 한다. `ResolutionOrder()`는 현재 순서를 읽기 전용으로 반환한다.
   `MoveTo`는 제거 후 번호를 바꾸고 재삽입한다. 같은 번호로의 무변화 이동은 자리를 유지한다.
   `SwapPositions`는 리스트 위치와 번호를 함께 교환하고 전역 재정렬하지 않는다.
 
@@ -176,17 +184,17 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
 (first.ExecutionOrder, second.ExecutionOrder) = (second.ExecutionOrder, first.ExecutionOrder);
 ```
 
-- [ ] 번호 구간에 새 플레이어를 넣으면 마지막 플레이어 뒤(없으면 구간 앞), 새 적은 구간 뒤에 삽입한다.
+- [x] 번호 구간에 새 플레이어를 넣으면 마지막 플레이어 뒤(없으면 구간 앞), 새 적은 구간 뒤에 삽입한다.
   기존 교환 순서를 유지한다. 세션의 배치 미리보기와 실제 삽입이 일치하는 테스트를 추가한다.
-- [ ] 사망 제거는 Pending만 제거한다. Executing/Executed는 남긴다. 반복 중 컬렉션을 변경할 수 있으므로
+- [x] 사망 제거는 Pending만 제거한다. Executing/Executed는 남긴다. 반복 중 컬렉션을 변경할 수 있으므로
   TurnResolver는 아직 실행하지 않은 다음 항목을 조회하는 반복으로 전환한다.
-- [ ] 조건 평가에서 취소 여부를 직접 검사하는 분기를 제거한다. 배치 질의는 공통 실행선,
+- [x] 조건 평가에서 취소 여부를 직접 검사하는 분기를 제거한다. 배치 질의는 공통 실행선,
   이전 실행 조건은 실행 이력만 사용한다. 기존 인접 조건을 전부 이력 조건으로 치환하지 않는다.
-- [ ] 사망으로 제거한 카드에도 기존처럼 `CardCancelled`(사유 `OwnerDied`)를 기록한다. 지금은 그 카드
+- [x] 사망으로 제거한 카드에도 기존처럼 `CardCancelled`(사유 `OwnerDied`)를 기록한다. 지금은 그 카드
   차례에 기록되지만, 제거 후에는 차례가 오지 않으므로 **제거 시점**에 기록한다. Unity 소비자
   `Assets/Unity/Scripts/Battle/Playback/RailCardHighlightPresenter.cs:43`이 이 이벤트로 레일 카드를 처리하므로,
   구현 전에 그 파일을 읽고 기록 시점이 앞당겨져도 표시가 성립하는지 확인한다. 성립하지 않으면 멈추고 보고한다.
-- [ ] V03~04: 실행 완료 카드 소유자 사망 시 완료 카드는 남고 미실행만 제거됨, 무효과 카드도 직전 실행에
+- [x] V03~04: 실행 완료 카드 소유자 사망 시 완료 카드는 남고 미실행만 제거됨, 무효과 카드도 직전 실행에
   포함됨을 추가한다. `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
   `refactor(core): 실행선 자리와 실행 이력을 일관되게 관리한다`.
 

@@ -4,33 +4,35 @@ using FateWeaver.Core.Combat;
 
 namespace FateWeaver.Core.Conditions
 {
-    /// <summary>Frozen, ordered view of the cards resolving this turn (ascending executionOrder).
-    /// Conditions and effect handlers query position/adjacency against this snapshot.
-    /// Also tracks which cards actually finished resolution (CardResolved, not cancelled) as the
-    /// turn progresses, so "previous executed card" conditions can skip cancelled cards. Cards are
-    /// only ever appended, in resolution order, via <see cref="MarkExecuted"/>.</summary>
+    /// <summary>한 턴 동안 조건과 효과가 묻는 두 가지 질의(전투 실행 계약 스펙 §6).
+    /// <list type="bullet">
+    /// <item>실행선 — 앞/뒤/인접/몇 번째 같은 배치 질의. 고정 사본이 아니라 현재 실행선을 본다. 주인이 죽어
+    /// 빠진 카드는 여기에 없고, 차례가 왔지만 효과가 없었던 카드는 남아 있다.</item>
+    /// <item>실행 이력 — "직전에 실행된 카드" 질의. 차례가 온 카드를 실행 순서대로 담는다. 효과가 없거나
+    /// 취소된 카드도 포함한다.</item>
+    /// </list></summary>
     public sealed class ResolutionContext
     {
-        private readonly IReadOnlyList<ExecutionCardInstance> _order;
+        private readonly FutureZone _zone;
         private readonly List<ExecutionCardInstance> _executedCards = new();
 
-        private ResolutionContext(IReadOnlyList<ExecutionCardInstance> order)
+        private ResolutionContext(FutureZone zone)
         {
-            _order = order;
+            _zone = zone;
         }
 
-        public IReadOnlyList<ExecutionCardInstance> Order => _order;
+        /// <summary>현재 실행선(실행 순서 그대로, 살아 있는 뷰).</summary>
+        public IReadOnlyList<ExecutionCardInstance> Order => _zone.Cards;
 
-        /// <summary>Cards that emitted CardResolved so far this turn, in resolution order. Excludes
-        /// cancelled cards (OwnerDied / NoValidTarget / StatusIntercepted).</summary>
+        /// <summary>이번 턴에 차례가 온 카드들, 실행 순서대로.</summary>
         public IReadOnlyList<ExecutionCardInstance> ExecutedCards => _executedCards;
 
-        /// <summary>The most recently resolved card of either side, or null before any card has
-        /// resolved this turn.</summary>
+        /// <summary>The most recently executed card of either side, or null before any card has
+        /// executed this turn.</summary>
         public ExecutionCardInstance LastExecutedCard
             => _executedCards.Count > 0 ? _executedCards[^1] : null;
 
-        /// <summary>The most recently resolved player-side card, or null if none has resolved yet.</summary>
+        /// <summary>The most recently executed player-side card, or null if none has executed yet.</summary>
         public ExecutionCardInstance LastExecutedPlayerCard
         {
             get
@@ -48,13 +50,14 @@ namespace FateWeaver.Core.Conditions
         }
 
         public static ResolutionContext From(CombatState state)
-            => new ResolutionContext(state.Zone.ResolutionOrder());
+            => new ResolutionContext(state.Zone);
 
         public int IndexOf(ExecutionCardInstance card)
         {
-            for (int i = 0; i < _order.Count; i++)
+            var order = Order;
+            for (int i = 0; i < order.Count; i++)
             {
-                if (ReferenceEquals(_order[i], card))
+                if (ReferenceEquals(order[i], card))
                 {
                     return i;
                 }
@@ -64,10 +67,13 @@ namespace FateWeaver.Core.Conditions
         }
 
         public ExecutionCardInstance CardAt(int index)
-            => index >= 0 && index < _order.Count ? _order[index] : null;
+        {
+            var order = Order;
+            return index >= 0 && index < order.Count ? order[index] : null;
+        }
 
-        /// <summary>Records that a card finished resolution (emitted CardResolved). Called by
-        /// TurnResolver only for non-cancelled cards, in resolution order.</summary>
+        /// <summary>카드의 차례가 끝났음을 이력에 남긴다. TurnResolver가 그 카드의 조건을 모두 읽은 뒤,
+        /// 효과·취소 여부와 무관하게 실행 순서대로 부른다.</summary>
         public void MarkExecuted(ExecutionCardInstance card) => _executedCards.Add(card);
     }
 }

@@ -8,10 +8,11 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.
+    /// <summary>실행선의 카드를 차례대로 실행하고 이벤트 타임라인을 낸다. 실행선은 고정 사본이 아니다 —
+    /// 매번 아직 차례가 오지 않은 다음 카드를 묻는다(전투 실행 계약 스펙 §6).
     /// Per card: intercept/pre-cancellation check, then effects (with a per-effect death-sweep snapshot),
-    /// then either CardResolved or CardCancelled, followed by pending survive/death events from effects
-    /// that already applied. See the class-level design note in the Task 3 brief for the exact ordering.</summary>
+    /// then either CardResolved or CardCancelled, followed by pending death events from effects that
+    /// already applied, then CardRemoved for every pending card whose owner just died.</summary>
     public sealed class TurnResolver
     {
         private readonly EffectRegistry _effects;
@@ -28,9 +29,15 @@ namespace FateWeaver.Core.Combat
             var events = new List<ResolutionEvent> { new TurnStarted(turnIndex) };
             var resolutionContext = ResolutionContext.From(state);
 
-            foreach (var card in resolutionContext.Order)
+            for (var card = state.Zone.NextPending(); card != null; card = state.Zone.NextPending())
             {
+                card.ExecutionState = CardExecutionState.Executing;
                 ResolveCard(state, resolutionContext, card, events);
+
+                // 차례가 온 카드는 효과가 없거나 취소돼도 실행 사실이 남는다(스펙 §2·§6). 조건은
+                // ResolveCard 안에서 이미 읽었으므로 여기서 기록해도 자기 자신을 직전 카드로 보지 않는다.
+                resolutionContext.MarkExecuted(card);
+                card.ExecutionState = CardExecutionState.Executed;
             }
 
             EndOfTurnMaintenance(state, events);
@@ -44,8 +51,7 @@ namespace FateWeaver.Core.Combat
             ExecutionCardInstance card,
             List<ResolutionEvent> events)
         {
-            // Step 6 (part 1): a cancellation reason recorded before this card's turn to resolve
-            // (OwnerDied from an earlier card's death sweep this same turn) skips effects entirely.
+            // Step 6 (part 1): a cancellation reason recorded before this card's turn skips effects entirely.
             if (card.CancellationReason == null && IsInterceptedByStatus(state, card, events))
             {
                 card.CancellationReason = CardCancellationReason.StatusIntercepted;
@@ -145,7 +151,7 @@ namespace FateWeaver.Core.Combat
 
             if (card.CancellationReason == null)
             {
-                // Step 4: CardResolved first, LastExecutedCard updates, then the pending survive/death
+                // Step 4: CardResolved first, then the pending death
                 // events in the order they occurred (so a death caused by this card's own effects
                 // follows its CardResolved immediately).
                 events.Add(new CardResolved(
@@ -153,14 +159,13 @@ namespace FateWeaver.Core.Combat
                 {
                     DamageSteps = damageSteps
                 });
-                resolutionContext.MarkExecuted(card);
                 events.AddRange(pendingDeathEvents);
             }
             else
             {
                 // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
                 // CardCancelled. State-change events from earlier, already-applied effects follow in
-                // occurrence order, then the OwnerDied sweep below uses the same newly-dead set.
+                // occurrence order, then the owner-death removal below uses the same newly-dead set.
                 events.Add(new CardCancelled(
                     card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value)
                 {
@@ -170,11 +175,14 @@ namespace FateWeaver.Core.Combat
                 events.AddRange(pendingDeathEvents);
             }
 
-            // Step 5: mark OwnerDied on every not-yet-resolved card owned by an actor who just died,
-            // regardless of whether the current card itself ended up resolved or cancelled.
+            // Step 5: 방금 죽은 주인의 아직 차례가 오지 않은 카드를 실행선에서 뺀다. 현재 카드가 해결됐든
+            // 취소됐든 같다. 이미 실행된 카드와 지금 실행 중인 카드는 남는다(스펙 §6).
             foreach (var ownerId in newlyDeadOwnerIds)
             {
-                MarkOwnerDiedForFutureCards(resolutionContext, card, ownerId);
+                foreach (var removed in state.Zone.RemovePendingOwnedBy(ownerId))
+                {
+                    events.Add(new CardRemoved(removed.InstanceId, removed.Def.Id, removed.OwnerId));
+                }
             }
         }
 
@@ -261,7 +269,7 @@ namespace FateWeaver.Core.Combat
         }
 
         /// <summary>사망 이벤트에서 소유자 id를 뽑는다. 파티원과 적을 대칭으로 다뤄, 한 턴 안에서 먼저
-        /// 죽은 적의 남은 카드도 파티원과 똑같이 OwnerDied로 취소되게 한다. 소유자를 모르는 카드
+        /// 죽은 적의 남은 카드도 파티원과 똑같이 실행선에서 빠지게 한다. 소유자를 모르는 카드
         /// (OwnerId가 비어 있는 단일 적 호환 경로)를 잘못 지목하지 않도록 빈 id는 제외한다.</summary>
         private static List<string> CollectNewlyDeadOwnerIds(List<ResolutionEvent> pendingDeathEvents)
         {
@@ -285,24 +293,6 @@ namespace FateWeaver.Core.Combat
             }
 
             return ownerIds;
-        }
-
-        /// <summary>Records OwnerDied on every card later in the frozen resolution order that belongs
-        /// to the given (now-dead) party member or enemy and has not already concluded.</summary>
-        private static void MarkOwnerDiedForFutureCards(
-            ResolutionContext resolutionContext,
-            ExecutionCardInstance current,
-            string deadOwnerId)
-        {
-            var currentIndex = resolutionContext.IndexOf(current);
-            for (int i = currentIndex + 1; i < resolutionContext.Order.Count; i++)
-            {
-                var future = resolutionContext.Order[i];
-                if (future.CancellationReason == null && future.OwnerId == deadOwnerId)
-                {
-                    future.CancellationReason = CardCancellationReason.OwnerDied;
-                }
-            }
         }
 
         private bool IsInterceptedByStatus(

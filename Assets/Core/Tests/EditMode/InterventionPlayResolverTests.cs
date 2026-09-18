@@ -28,6 +28,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var card = Card("quick_cut", 5);
+            state.Zone.Add(card);
             var plays = new[]
             {
                 new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), card),
@@ -48,6 +49,7 @@ namespace FateWeaver.Tests
         {
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 1 };
             var card = Card("quick_cut", 5);
+            state.Zone.Add(card);
             var plays = new[]
             {
                 new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), card),
@@ -69,6 +71,8 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 2 };
             var first = Card("first", 1);
             var second = Card("second", 5);
+            state.Zone.Add(first);
+            state.Zone.Add(second);
             var registry = Registry();
             registry.Register(new SwapExecutionOrderHandler());
             var plays = new[]
@@ -91,6 +95,8 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses()) { FateEnergy = 3 };
             var first = Card("first", 5);
             var second = Card("second", 3);
+            state.Zone.Add(first);
+            state.Zone.Add(second);
             var plays = new[]
             {
                 new InterventionPlay(new InterventionActionData(InterventionActionKeys.ChangeExecutionOrder, interventionCost: 1, new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null)), first),

@@ -68,6 +68,27 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, beats[0].Events.Count);
         }
 
+        /// <summary>주인이 죽어 빠진 카드는 자기 차례를 맞은 것이 아니므로 비트를 열지 않고, 주인을 죽인
+        /// 카드의 비트에 붙는다(전투 실행 계약 T1). 레일 강조가 그 카드로 튀지 않는 근거다.</summary>
+        [Test]
+        public void 주인_사망으로_빠진_카드는_죽인_카드의_비트에_붙는다()
+        {
+            var events = new ResolutionEvent[]
+            {
+                new CardResolved(1, "member_a", "slash", Side.Player, 9, "goblin", FateWeaver.Core.Conditions.ConditionTier.Basic),
+                new HpChanged("goblin", 5, -4, HpChangeSource.CardDamage, "slash"),
+                new EnemyDied("goblin"),
+                new CardRemoved(2, "goblin_jab", "goblin"),
+                new CardResolved(3, "member_a", "guard", Side.Player, 0, null, FateWeaver.Core.Conditions.ConditionTier.Basic),
+            };
+
+            var beats = TimelineBeatPlanner.Plan(events);
+
+            Assert.AreEqual(2, beats.Count);
+            Assert.AreEqual(4, beats[0].Events.Count);
+            Assert.IsInstanceOf<CardRemoved>(beats[0].Events[3]);
+        }
+
         [Test]
         public void 카드가_연_비트의_피해는_그_카드가_낸_것이다()
         {

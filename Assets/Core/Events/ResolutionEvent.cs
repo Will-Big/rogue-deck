@@ -56,6 +56,10 @@ namespace FateWeaver.Core.Events
             = System.Array.Empty<DamageStep>();
     }
 
+    /// <summary>주인이 죽어 차례가 오기 전에 실행선에서 빠진 카드(전투 실행 계약 스펙 §6). 그 카드의
+    /// 차례가 온 것이 아니므로 CardCancelled와 구분한다 — 주인을 죽인 카드의 이벤트 뒤에 이어 붙는다.</summary>
+    public sealed record CardRemoved(int InstanceId, string CardId, string OwnerId) : ResolutionEvent;
+
     /// <summary>A party member's HP reached zero or below.</summary>
     public sealed record PartyMemberDied(string MemberId) : ResolutionEvent;
 

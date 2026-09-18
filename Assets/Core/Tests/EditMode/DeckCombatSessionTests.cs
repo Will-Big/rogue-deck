@@ -217,7 +217,7 @@ namespace FateWeaver.Tests
         }
 
         /// <summary>적이 하나뿐인 지금의 모든 전투에서는 소유자가 확정된다 — 이것이 죽은 적의 남은
-        /// 카드를 OwnerDied로 취소하는 근거다.</summary>
+        /// 카드를 실행선에서 빼는 근거다.</summary>
         [Test]
         public void Enemy_cards_are_owned_by_the_only_enemy_in_the_fight()
         {
@@ -230,7 +230,7 @@ namespace FateWeaver.Tests
 
         /// <summary>IEnemyTurnPolicy는 어느 적의 카드인지 말하지 않는다. 그래서 적이 둘 이상이면
         /// 소유자를 비워 둔다 — 임의로 Enemies[0]을 찍으면 그 적이 먼저 죽었을 때 남의 카드가
-        /// OwnerDied로 취소된다.</summary>
+        /// 실행선에서 빠진다.</summary>
         [Test]
         public void Enemy_cards_have_no_owner_when_the_owning_enemy_is_ambiguous()
         {

@@ -9,9 +9,9 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Tests
 {
-    /// <summary>Task 3: PreviousExecutedCardIs / SameTarget skip cancelled cards and look at the
-    /// nearest card that actually finished resolution, while AdjacentDirection.Next / NoFollowingCardOfSide
-    /// keep looking at the frozen future slot regardless of that slot's eventual cancellation.</summary>
+    /// <summary>실행 이력과 실행선의 조건 계약(전투 실행 계약 스펙 §2·§6). 차례가 온 카드는 효과가
+    /// 없거나 취소돼도 이력에 남는다. 주인이 죽어 실행선에서 제거된 카드는 차례가 오지 않으므로 이력에도,
+    /// 앞·뒤 배치 질의에도 없다. 배치 질의(앞/뒤/인접)는 현재 실행선을 본다.</summary>
     public class PreviousExecutedCardConditionTests
     {
         private static EffectRegistry Registry()
@@ -65,7 +65,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Previous_executed_condition_skips_owner_died_card()
+        public void Previous_executed_condition_skips_a_card_removed_by_owner_death()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
 
             // A: enemy attack, resolves, kills "ally" outright.
             var a = PlainCard("a_strike", Side.Enemy, executionOrder: 1, damage: 10);
-            // B: owned by ally -> cancelled (OwnerDied) once A kills ally; never actually executes.
+            // B: ally가 죽으면 실행선에서 빠져 차례가 오지 않는다.
             var b = new ExecutionCardInstance(new CardDefinition(
                 "b_card", "b_card", Side.Player, 2,
                 new[] { new EffectData(EffectKeys.Damage, 1) }))
@@ -89,14 +89,15 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.AreEqual(CardCancellationReason.OwnerDied, events.OfType<CardCancelled>().Single().Reason);
+            Assert.AreEqual("b_card", events.OfType<CardRemoved>().Single().CardId);
             var resolvedC = Resolved(events, "c_card");
             Assert.AreEqual(ConditionTier.Success, resolvedC.ConditionTier);
             Assert.AreEqual(5, resolvedC.DamageDealt);
         }
 
+        // V04: 차례가 온 카드는 효과가 없어도 이력에 남는다.
         [Test]
-        public void Previous_executed_condition_skips_no_target_and_status_intercepted_cards()
+        public void Previous_executed_condition_counts_cards_whose_turn_came_even_without_effect()
         {
             // --- NoValidTarget case ---
             {
@@ -104,10 +105,10 @@ namespace FateWeaver.Tests
                 state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
-                var a = PlainCard("a_hit", Side.Player, executionOrder: 1, damage: 2);
+                var a = PlainCard("a_hit", Side.Enemy, executionOrder: 1, damage: 2);
                 var b = PlainCard("b_hit", Side.Player, executionOrder: 2, damage: 1, targetId: "no-such-enemy");
                 var c = ConditionalCard("c_hit", Side.Player, executionOrder: 3,
-                    new PreviousExecutedCardIs(Side.Player), baseDamage: 0, successDamage: 6);
+                    new PreviousExecutedCardIs(Side.Enemy), baseDamage: 0, successDamage: 6);
 
                 state.Zone.Add(a);
                 state.Zone.Add(b);
@@ -119,8 +120,8 @@ namespace FateWeaver.Tests
                     CardCancellationReason.NoValidTarget,
                     events.OfType<CardCancelled>().Single(e => e.CardId == "b_hit").Reason);
                 var resolvedC = Resolved(events, "c_hit");
-                Assert.AreEqual(ConditionTier.Success, resolvedC.ConditionTier);
-                Assert.AreEqual(6, resolvedC.DamageDealt);
+                Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
+                Assert.AreEqual(0, resolvedC.DamageDealt);
             }
 
             // --- StatusIntercepted case ---
@@ -129,11 +130,11 @@ namespace FateWeaver.Tests
                 state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
-                var a = PlainCard("a_hit2", Side.Player, executionOrder: 1, damage: 2);
+                var a = PlainCard("a_hit2", Side.Enemy, executionOrder: 1, damage: 2);
                 var b = PlainCard("b_hit2", Side.Player, executionOrder: 2, damage: 1);
                 b.Statuses.Add(NullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
                 var c = ConditionalCard("c_hit2", Side.Player, executionOrder: 3,
-                    new PreviousExecutedCardIs(Side.Player), baseDamage: 0, successDamage: 6);
+                    new PreviousExecutedCardIs(Side.Enemy), baseDamage: 0, successDamage: 6);
 
                 state.Zone.Add(a);
                 state.Zone.Add(b);
@@ -145,8 +146,8 @@ namespace FateWeaver.Tests
                     CardCancellationReason.StatusIntercepted,
                     events.OfType<CardCancelled>().Single(e => e.CardId == "b_hit2").Reason);
                 var resolvedC = Resolved(events, "c_hit2");
-                Assert.AreEqual(ConditionTier.Success, resolvedC.ConditionTier);
-                Assert.AreEqual(6, resolvedC.DamageDealt);
+                Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
+                Assert.AreEqual(0, resolvedC.DamageDealt);
             }
         }
 
@@ -179,14 +180,14 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Same_target_uses_last_executed_player_card()
+        public void Same_target_reads_the_player_card_that_executed_last()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblinA", 100));
 
             var a = PlainCard("a_mark", Side.Player, executionOrder: 1, damage: 1, targetId: "goblinA");
-            // b targets a nonexistent enemy -> cancelled (NoValidTarget), never actually resolves.
+            // b의 차례가 와서 이력에 남는다. 대상은 없는 적이므로 c와 같은 대상이 아니다.
             var b = PlainCard("b_mark", Side.Player, executionOrder: 2, damage: 1, targetId: "phantom");
             var c = ConditionalCard("c_strike", Side.Player, executionOrder: 3,
                 new SameTarget(), baseDamage: 0, successDamage: 8, targetId: "goblinA");
@@ -201,12 +202,12 @@ namespace FateWeaver.Tests
                 CardCancellationReason.NoValidTarget,
                 events.OfType<CardCancelled>().Single().Reason);
             var resolvedC = Resolved(events, "c_strike");
-            Assert.AreEqual(ConditionTier.Success, resolvedC.ConditionTier);
-            Assert.AreEqual(8, resolvedC.DamageDealt);
+            Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
+            Assert.AreEqual(0, resolvedC.DamageDealt);
         }
 
         [Test]
-        public void No_preceding_ignores_cancelled_cards_but_no_following_keeps_frozen_future_slots()
+        public void Placement_conditions_count_every_card_on_the_line_including_cancelled_ones()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
@@ -215,7 +216,7 @@ namespace FateWeaver.Tests
             var q = ConditionalCard("q_card", Side.Player, executionOrder: 1,
                 new NoFollowingCardOfSide(Side.Enemy), baseDamage: 0, successDamage: 3);
             var y = PlainCard("y_card", Side.Enemy, executionOrder: 2, damage: 2);
-            y.CancellationReason = CardCancellationReason.NoValidTarget; // pre-cancelled before the turn even starts
+            y.CancellationReason = CardCancellationReason.NoValidTarget; // 차례가 와도 효과가 없다
             var p = ConditionalCard("p_card", Side.Player, executionOrder: 3,
                 new NoPrecedingCardOfSide(Side.Enemy), baseDamage: 0, successDamage: 7);
 
@@ -225,21 +226,42 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            // Y still occupies a future enemy slot positionally, even though it's already cancelled ->
-            // NoFollowingCardOfSide(Enemy) on Q must still see it and stay at Basic.
             var resolvedQ = Resolved(events, "q_card");
             Assert.AreEqual(ConditionTier.Basic, resolvedQ.ConditionTier);
-            Assert.AreEqual(0, resolvedQ.DamageDealt);
-
             Assert.AreEqual(
                 CardCancellationReason.NoValidTarget,
                 events.OfType<CardCancelled>().Single(e => e.CardId == "y_card").Reason);
-
-            // Y never actually preceded anything (it was cancelled) -> NoPrecedingCardOfSide(Enemy)
-            // on P succeeds.
+            // y는 실행선에서 p 앞에 있다. 효과가 없었다는 이유로 배치 질의에서 빠지지 않는다.
             var resolvedP = Resolved(events, "p_card");
-            Assert.AreEqual(ConditionTier.Success, resolvedP.ConditionTier);
-            Assert.AreEqual(7, resolvedP.DamageDealt);
+            Assert.AreEqual(ConditionTier.Basic, resolvedP.ConditionTier);
+            Assert.AreEqual(0, resolvedP.DamageDealt);
+        }
+
+        [Test]
+        public void Placement_conditions_skip_a_card_removed_by_owner_death()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.Party.Clear();
+            state.Party.Add(new PartyMember("ally", "Ally", maxHp: 3));
+            state.Party.Add(new PartyMember("hero", "Hero", maxHp: 30));
+            state.Enemies.Add(new Enemy("goblin", 100));
+
+            var strike = PlainCard("strike", Side.Enemy, executionOrder: 1, damage: 10);
+            var allyCard = new ExecutionCardInstance(new CardDefinition(
+                "ally_card", "ally_card", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 1) }))
+            { OwnerId = "ally" };
+            var last = ConditionalCard("last", Side.Player, executionOrder: 3,
+                new AdjacentCardIs(AdjacentDirection.Previous, Side.Enemy), baseDamage: 0, successDamage: 4);
+
+            state.Zone.Add(strike);
+            state.Zone.Add(allyCard);
+            state.Zone.Add(last);
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            // ally_card가 제거되어 last의 바로 앞 칸은 strike(적)가 된다.
+            Assert.AreEqual(ConditionTier.Success, Resolved(events, "last").ConditionTier);
         }
     }
 }

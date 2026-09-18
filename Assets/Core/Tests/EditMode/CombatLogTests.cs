@@ -624,6 +624,15 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Format_event_says_a_removed_card_left_because_its_owner_died()
+        {
+            var text = TimelineTextFormatter.FormatEvent(new CardRemoved(2, "goblin_jab", "goblin"), Korean);
+
+            StringAssert.Contains("goblin_jab", text);
+            StringAssert.Contains("주인 사망", text);
+        }
+
+        [Test]
         public void Format_event_spells_out_hp_change_with_its_source()
         {
             var cardHit = TimelineTextFormatter.FormatEvent(

@@ -386,7 +386,7 @@ namespace FateWeaver.Simulation
                     // IEnemyTurnPolicy는 카드 정의만 돌려줄 뿐 소유자를 말하지 않는다. 그래서 적이
                     // 정확히 하나일 때만 소유자를 확정하고, 둘 이상이면 비워 둔다 — CardActor의
                     // 규약과 같다. 임의로 Enemies[0]을 찍으면 그 적이 죽었을 때 남의 카드가
-                    // OwnerDied로 취소된다.
+                    // 실행선에서 빠진다.
                     InstanceId = _nextInstanceId++,
                     OwnerId = _state.Enemies.Count == 1 ? _state.Enemies[0].Id : null
                 };

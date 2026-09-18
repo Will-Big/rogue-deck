@@ -22,8 +22,11 @@ namespace FateWeaver.Tests
         private const int RunSeed = 20260917;
         private const int MaxTurns = 40;
 
-        /// <summary>C# 원본 경로에서 실측한 서명의 SHA-256(소문자 hex). 바꾸지 않는다 — 바뀌면 이관이 동작을 바꾼 것이다.</summary>
-        private const string ExpectedSignatureSha256 = "d2838fe33041eeecf71d2ff977f55512d52994cee6c081a49badc004b065ff64";
+        /// <summary>C# 원본 경로에서 실측한 서명의 SHA-256(소문자 hex). 이관 때문에 바꾸지 않는다 — 바뀌면 이관이
+        /// 동작을 바꾼 것이다. 규칙을 의도적으로 바꿀 때만 차이를 확인하고 갱신한다.
+        /// 2026-09-18 갱신(전투 실행 계약 T1): 죽은 고블린의 남은 goblin_jab이 그 카드 차례의
+        /// CardCancelled(OwnerDied) 대신 죽인 카드 직후의 CardRemoved로 기록된다. 그 밖의 서명은 같다.</summary>
+        private const string ExpectedSignatureSha256 = "9c3d9be5d288010132cf9c9f5ff3c594658c04150f0662be9d2665e4ff35984d";
 
         private static CombatNode BeginNode()
         {

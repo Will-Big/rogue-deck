@@ -27,11 +27,9 @@ namespace FateWeaver.Core.Conditions
         Side Side,
         EffectKey EffectKey) : Condition;
 
-    /// <summary>Success when the immediately-previous card to actually finish resolution (i.e. the
-    /// current ResolutionContext.LastExecutedCard, which skips cancelled cards) matches the given
-    /// side. Replaces AdjacentCardIs(Previous, ...) for authored content: it looks at the
-    /// nearest EXECUTED card rather than the raw adjacent zone slot, so a card cancelled between two
-    /// others (OwnerDied / NoValidTarget / StatusIntercepted) is skipped over.</summary>
+    /// <summary>직전에 실행된 카드(ResolutionContext.LastExecutedCard)가 주어진 진영이면 Success.
+    /// 실행 이력을 보므로, 차례가 왔지만 효과가 없었던 카드는 직전 카드로 세고, 주인이 죽어 실행선에서
+    /// 빠진 카드는 건너뛴다(전투 실행 계약 스펙 §6). 배치(인접 칸)를 보는 AdjacentCardIs와 다르다.</summary>
     public sealed record PreviousExecutedCardIs(
         Side Side) : Condition;
 
