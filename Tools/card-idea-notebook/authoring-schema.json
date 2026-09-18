@@ -9,12 +9,21 @@
         {
           "name": "value",
           "type": "int"
+        },
+        {
+          "name": "traits",
+          "type": "enumSet",
+          "options": [
+            "Piercing",
+            "IgnoresMultipliers"
+          ]
         }
       ],
       "order": [
         "id",
         "targetFaction",
         "value",
+        "traits",
         "successEffectValue",
         "skipOnBasic",
         "requires",

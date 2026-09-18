@@ -87,13 +87,13 @@ namespace FateWeaver.Core.Effects
             DamageRequest request, DamageSink sink)
         {
             var amount = request.Amount;
-            if (!request.Traits.IgnoresMultipliers)
+            if (!request.Traits.Has(DamageTrait.IgnoresMultipliers))
             {
                 amount = StatusDamageFold.Incoming(
                     bag, _statuses, state.StatusRules, amount, StatusDamageLayer.Multiplier, holderId, sink.Steps);
             }
 
-            if (!request.Traits.Piercing)
+            if (!request.Traits.Has(DamageTrait.Piercing))
             {
                 amount = StatusDamageFold.Incoming(
                     bag, _statuses, state.StatusRules, amount, StatusDamageLayer.Absorb, holderId, sink.Steps);

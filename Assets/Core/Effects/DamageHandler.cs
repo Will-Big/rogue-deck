@@ -27,7 +27,8 @@ namespace FateWeaver.Core.Effects
                 amount,
                 ctx.ActorId,
                 ctx.Card != null ? Events.HpChangeSource.CardDamage : Events.HpChangeSource.Reaction,
-                ctx.SourceId);
+                ctx.SourceId,
+                (ctx.Effect.Payload as DamagePayload)?.Traits);
             var targets = ctx.RequireTargets();
             foreach (var target in targets.Enemies)
             {

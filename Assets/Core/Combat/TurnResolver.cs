@@ -148,7 +148,7 @@ namespace FateWeaver.Core.Combat
                 signals.Add(died);
             }
 
-            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events, EffectOrigin.Primary);
+            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events);
 
             foreach (var member in state.Party)
             {
@@ -173,7 +173,7 @@ namespace FateWeaver.Core.Combat
             var numbered = new List<CombatSignal>(signals.Count);
             for (var i = 0; i < signals.Count; i++)
             {
-                numbered.Add(signals[i] with { TargetOrdinal = 0, Sequence = i });
+                numbered.Add(signals[i] with { Origin = EffectOrigin.Primary, TargetOrdinal = 0, Sequence = i });
             }
 
             return numbered;

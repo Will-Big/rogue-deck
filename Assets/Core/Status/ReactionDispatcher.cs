@@ -11,8 +11,9 @@ namespace FateWeaver.Core.Status
     /// <summary>한 경계(Primary 효과 하나, 또는 턴 시점 처리 한 묶음)의 사건에 직접 반응한다(전투 실행 계약 스펙 §7).
     /// 사건은 (효과 시작 대상 목록 순번, 발생 순서)로, 한 보유자 안에서는 상태 부여 순서로 처리한다. 후보는 반응을
     /// 실행하기 전에 한 번에 확보한다 — 도중에 새로 얻은 능력은 이미 난 사건을 받지 않고, 도중에 사라진 상태는
-    /// 호출 전에 거른다. 반응 효과는 Reaction 기원으로 실행되고, 그 사건에는 RespondsToReactionEvents인 능력
-    /// (사망 시 반응)만 반응한다 — 반응 공격이 반응 공격을 부르지 않는다(계획 D11).</summary>
+    /// 호출 전에 거른다. 반응 효과는 Reaction 기원으로 실행되며 그 사건도 여기로 온다. 사건을 기원으로 일괄
+    /// 막는 규칙은 없다 — 어느 사건에 발동할지는 각 능력의 CanReact가 사건 종류별로 정한다(계획 D11).
+    /// 같은 사건을 스스로 되풀이해 만드는 능력(방어를 얻으면 방어를 얻는 등)을 만들지 않는 것은 능력 설계의 책임이다.</summary>
     public sealed class ReactionDispatcher
     {
         private readonly ReactionRegistry _reactions;
@@ -25,19 +26,12 @@ namespace FateWeaver.Core.Status
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         }
 
-        /// <summary>이 기원의 사건에 이 능력이 반응할 수 있는가. Primary 사건에는 모든 능력이, Reaction 사건에는
-        /// RespondsToReactionEvents인 능력만 반응한다.</summary>
-        public static bool Allows(EffectOrigin origin, IReactionHandler handler)
-            => origin == EffectOrigin.Primary || handler.RespondsToReactionEvents;
-
-        /// <summary>origin 기원 효과(또는 턴 시점 처리)가 낸 사건들에 반응한다. 반응 효과가 낸 표시 이벤트는
-        /// events 뒤에 발생 순서대로 붙는다.</summary>
+        /// <summary>사건들에 반응한다. 반응 효과가 낸 표시 이벤트는 events 뒤에 발생 순서대로 붙는다.</summary>
         public void Dispatch(
             CombatState state,
             ResolutionContext resolution,
             IReadOnlyList<CombatSignal> signals,
-            List<ResolutionEvent> events,
-            EffectOrigin origin)
+            List<ResolutionEvent> events)
         {
             if (signals == null || signals.Count == 0)
             {
@@ -55,9 +49,7 @@ namespace FateWeaver.Core.Status
 
                 foreach (var instance in bag.All)
                 {
-                    if (_reactions.TryResolve(instance.Key, out var handler)
-                        && handler.SignalKey == signal.Key
-                        && Allows(origin, handler))
+                    if (_reactions.TryResolve(instance.Key, out var handler) && handler.SignalKey == signal.Key)
                     {
                         candidates.Add(new Candidate(signal, bag, instance, handler));
                     }

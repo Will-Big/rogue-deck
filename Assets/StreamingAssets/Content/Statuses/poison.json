@@ -3,8 +3,8 @@
   "key": "poison",
   "displayName": "독",
   "lifetime": "Permanent",
-  "damage": {
-    "piercing": true,
-    "ignoresMultipliers": true
-  }
+  "damageTraits": [
+    "Piercing",
+    "IgnoresMultipliers"
+  ]
 }

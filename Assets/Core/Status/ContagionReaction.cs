@@ -20,9 +20,6 @@ namespace FateWeaver.Core.Status
         public StatusKey Key => StatusKeys.Contagion;
         public CombatSignalKey SignalKey => CombatSignalKeys.HolderDied;
 
-        /// <summary>사망 시 반응은 사망 원인이 반응 공격이어도 발동한다(계획 D11).</summary>
-        public bool RespondsToReactionEvents => true;
-
         public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
         {
             var poison = CombatUnits.StatusesOf(state, signal.TargetId)?.Get(StatusKeys.Poison);

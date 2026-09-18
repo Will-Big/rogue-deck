@@ -7,6 +7,10 @@ namespace FateWeaver.Core.Events
     /// 경계 안 발생 순서. 반응은 이 두 값의 순서로 처리한다.</summary>
     public sealed record CombatSignal(CombatSignalKey Key, string SourceId, string TargetId, int Amount)
     {
+        /// <summary>이 사건을 낸 효과의 기원. 반응 능력이 발동 조건으로 읽는다 — 예: 공격에 대한 반응은 반응 공격이
+        /// 낸 공격(Origin = Reaction)에는 발동하지 않는다. 기원으로 사건 전체를 막는 공통 규칙은 없다(계획 D11).</summary>
+        public Effects.EffectOrigin Origin { get; init; }
+
         public int TargetOrdinal { get; init; }
         public int Sequence { get; init; }
 

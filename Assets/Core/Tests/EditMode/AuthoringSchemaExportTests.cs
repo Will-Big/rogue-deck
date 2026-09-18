@@ -40,17 +40,29 @@ namespace FateWeaver.Tests
 
         /// <summary>키 순서를 추측하지 않고 Newtonsoft에게 물어본다. 노트북이 재현해야 하는 순서가
         /// 바로 이 직렬화기의 순서이므로, 같은 계약(camelCase + 키 참조 컨버터)으로 빈 인스턴스를
-        /// 직렬화해 속성 순서를 읽는다. 기본값도 봐야 하므로 Include를 쓴다.</summary>
+        /// 직렬화해 속성 순서를 읽는다. 기본값도 봐야 하므로 Include를 쓰고, 조건부로 생략되는 필드
+        /// (ShouldSerializeX — 빈 목록 생략)도 보이도록 그 조건을 끈다 — 끄지 않으면 필드가 스키마에서
+        /// 조용히 빠진다.</summary>
         private static JsonSerializer OrderProbe()
         {
             var settings = new JsonSerializerSettings
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ContractResolver = new EveryFieldResolver(),
                 DefaultValueHandling = DefaultValueHandling.Include
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StatusKeyRefJsonConverter());
             return JsonSerializer.Create(settings);
+        }
+
+        private sealed class EveryFieldResolver : CamelCasePropertyNamesContractResolver
+        {
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var property = base.CreateProperty(member, memberSerialization);
+                property.ShouldSerialize = null;
+                return property;
+            }
         }
 
         private static List<string> PropertyOrder(object instance)
@@ -209,6 +221,12 @@ namespace FateWeaver.Tests
             {
                 entry["type"] = "enum";
                 entry["options"] = Names(type);
+            }
+            else if (type.IsArray && type.GetElementType().IsEnum)
+            {
+                // 여러 개를 고르는 열거형(예: 피해 속성). 빈 목록은 파일에서 생략한다.
+                entry["type"] = "enumSet";
+                entry["options"] = Names(type.GetElementType());
             }
             else
             {

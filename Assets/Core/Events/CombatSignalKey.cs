@@ -26,7 +26,9 @@ namespace FateWeaver.Core.Events
     /// <summary>코어가 내는 기본 사건 키. 목록이 아니라 이름 모음이다 — 여기 없는 키도 쓸 수 있다.</summary>
     public static class CombatSignalKeys
     {
-        /// <summary>공격 피해를 받았다. 방어로 전부 막혀도 발생한다.</summary>
+        /// <summary>공격 피해를 받았다. 방어로 전부 막혀도 발생한다. 공격에 대한 반응은 반응 공격이 낸 공격
+        /// (Origin = Reaction)에는 발동하지 않는다 — 반응 공격이 반응 공격을 부르지 않는다(계획 D11). 각 능력의
+        /// CanReact가 이 조건을 확인한다.</summary>
         public static readonly CombatSignalKey Attacked = new CombatSignalKey("attacked");
 
         /// <summary>HP가 실제로 줄었다. 원인이 공격이든 상태든 발생한다.</summary>
@@ -38,7 +40,7 @@ namespace FateWeaver.Core.Events
         /// <summary>대형 안 위치가 바뀌었다.</summary>
         public static readonly CombatSignalKey FormationMoved = new CombatSignalKey("formation_moved");
 
-        /// <summary>보유자가 죽었다. 사망 능력(전염)이 이것에 반응한다.</summary>
+        /// <summary>보유자가 죽었다. 사망 시 반응(전염)이 이것에 반응한다 — 사망 원인(반응 공격 포함)과 무관하다.</summary>
         public static readonly CombatSignalKey HolderDied = new CombatSignalKey("holder_died");
     }
 }

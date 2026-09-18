@@ -19,7 +19,6 @@ namespace FateWeaver.Tests
             public readonly List<string> DiedHolders = new List<string>();
             public StatusKey Key => RecorderKey;
             public CombatSignalKey SignalKey => CombatSignalKeys.HolderDied;
-            public bool RespondsToReactionEvents => true;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
             {

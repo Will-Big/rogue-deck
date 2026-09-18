@@ -49,18 +49,15 @@ namespace FateWeaver.Core.Status
     /// <summary>한 상태가 가진 반응 능력(전투 실행 계약 스펙 §7). 사건 종류(SignalKey)에 반응하고, 추가 조건과
     /// 생존 요건은 CanReact가 스스로 정한다 — 반격은 생존을 요구하고 사망 능력은 사망한 보유자를 허용한다.
     /// 모든 능력에 일괄 생존 검사를 하지 않는다.
-    /// 연쇄 금지(스펙 §11, 계획 D11): 반응이 만든 사건에는 RespondsToReactionEvents인 능력만 반응한다. 반격 같은
-    /// 반응 공격은 false라 반응 공격이 반응 공격을 부르지 않는다. 사망 시 반응(전염)은 true — 사망 원인이 반응이어도
-    /// 발동한다. true는 같은 사건이 되풀이될 수 없는 능력(보유자는 한 번만 죽는다)에만 쓴다.</summary>
+    /// 반응을 한 묶음으로 막는 규칙은 없다(스펙 §11, 계획 D11). 사건 종류마다 조건이 따로다: 공격에 대한 반응은
+    /// 반응 공격이 낸 공격(signal.Origin = Reaction)에 발동하지 않고, 사망 시 반응은 사망 원인과 무관하게 발동한다.
+    /// 스스로 같은 사건을 되풀이해 만드는 능력을 만들지 않는 것은 능력 설계의 책임이다.</summary>
     public interface IReactionHandler
     {
         /// <summary>이 능력을 주는 상태. 보유자의 상태 가방에서 후보를 찾는 키다.</summary>
         StatusKey Key { get; }
 
         CombatSignalKey SignalKey { get; }
-
-        /// <summary>반응 기원 효과가 만든 사건에도 반응하는가.</summary>
-        bool RespondsToReactionEvents { get; }
 
         bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal);
 

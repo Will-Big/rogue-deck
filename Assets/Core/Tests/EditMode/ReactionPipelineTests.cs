@@ -23,15 +23,15 @@ namespace FateWeaver.Tests
         private static readonly CombatSignalKey Ping = new CombatSignalKey("test_ping");
         private static readonly EffectKey PingEffect = new EffectKey("test_emit_ping");
 
-        /// <summary>공격받으면(생존해 있을 때) 공격한 쪽에게 상태 수치만큼 피해를 준다.</summary>
+        /// <summary>공격받으면(생존해 있을 때) 공격한 쪽에게 상태 수치만큼 피해를 준다. 공격에 대한 반응이므로
+        /// 반응 공격이 낸 공격에는 발동하지 않는다(D11).</summary>
         private sealed class CounterReaction : IReactionHandler
         {
             public StatusKey Key => Counter;
             public CombatSignalKey SignalKey => CombatSignalKeys.Attacked;
-            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
-                => Units.IsAlive(state, signal.TargetId);
+                => signal.Origin == EffectOrigin.Primary && Units.IsAlive(state, signal.TargetId);
 
             public IReadOnlyList<ReactionEffect> EffectsFor(StatusInstance instance, CombatSignal signal)
                 => new[]
@@ -40,15 +40,14 @@ namespace FateWeaver.Tests
                 };
         }
 
-        /// <summary>공격받으면 자신에게 방어를 얻는다.</summary>
+        /// <summary>공격받으면 자신에게 방어를 얻는다. 공격에 대한 반응 — 반응 공격에는 발동하지 않는다.</summary>
         private sealed class GuardOnHitReaction : IReactionHandler
         {
             public StatusKey Key => GuardOnHit;
             public CombatSignalKey SignalKey => CombatSignalKeys.Attacked;
-            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
-                => Units.IsAlive(state, signal.TargetId);
+                => signal.Origin == EffectOrigin.Primary && Units.IsAlive(state, signal.TargetId);
 
             public IReadOnlyList<ReactionEffect> EffectsFor(StatusInstance instance, CombatSignal signal)
                 => new[]
@@ -65,7 +64,6 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => BlockWatch;
             public CombatSignalKey SignalKey => CombatSignalKeys.StatusGained;
-            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
                 => signal.Detail == StatusKeys.Block.Id && Units.IsAlive(state, signal.TargetId);
@@ -84,7 +82,6 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => PingWatch;
             public CombatSignalKey SignalKey => Ping;
-            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal) => true;
 
@@ -162,18 +159,20 @@ namespace FateWeaver.Tests
         private static bool PlayerHp(ResolutionEvent e, int before, int after)
             => e is HpChanged hp && hp.HolderId == CombatState.SoloPlayerId && hp.Before == before && hp.After == after;
 
-        [TestCase(EffectOrigin.Primary, true)]
-        [TestCase(EffectOrigin.Reaction, false)]
-        public void A_reaction_attack_answers_only_primary_events(EffectOrigin origin, bool expected)
+        [Test]
+        public void Signals_carry_the_origin_of_the_effect_that_made_them()
         {
-            Assert.AreEqual(expected, ReactionDispatcher.Allows(origin, new CounterReaction()));
-        }
+            var state = new CombatState(TestContent.Statuses());
+            state.AddSoloPlayer(10);
+            var a = new Enemy("a", 20);
+            a.Statuses.Add(Counter, StatusLifetime.Permanent, magnitude: 2);
+            state.Enemies.Add(a);
+            var card = PlayerCard(CardTargetRange.FrontOne, Hit(3));
+            var context = new CardExecutionContext(card, ConditionTier.Basic, state, ResolutionContext.From(state));
 
-        [TestCase(EffectOrigin.Primary)]
-        [TestCase(EffectOrigin.Reaction)]
-        public void A_death_ability_answers_events_of_either_origin(EffectOrigin origin)
-        {
-            Assert.IsTrue(ReactionDispatcher.Allows(origin, new ContagionReaction()));
+            var result = new EffectExecutor(Effects(), CombatRegistries.Statuses(), Reactions()).Apply(context, card.Def.Effects[0]);
+
+            Assert.IsTrue(result.Signals.All(s => s.Origin == EffectOrigin.Primary));
         }
 
         // D11: 반응 공격은 반응 공격을 부르지 않는다.
@@ -373,8 +372,10 @@ namespace FateWeaver.Tests
             Assert.Less(IndexOf(events, e => e is PartyMemberDied), IndexOf(events, e => e is StatusTransferred));
         }
 
+        // D11(a): 반응을 한 묶음으로 막지 않는다 — 반응이 준 방어에도 방어 획득 반응이 발동한다. 그 반응의 피해는
+        // 반응 공격이므로 공격에 대한 반응(GuardOnHit)은 다시 발동하지 않는다.
         [Test]
-        public void Block_gained_by_a_reaction_does_not_chain_into_another_reaction()
+        public void Block_gained_by_a_reaction_triggers_block_gain_abilities()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(10);
@@ -387,8 +388,9 @@ namespace FateWeaver.Tests
 
             new EffectExecutor(Effects(), CombatRegistries.Statuses(), Reactions()).Apply(context, card.Def.Effects[0]);
 
-            Assert.AreEqual(2, a.Statuses.Get(StatusKeys.Block).Magnitude, "반응 효과의 방어는 증가한다");
-            Assert.AreEqual(17, a.Hp, "방어 획득 감시 능력은 반응 기원 사건에 연쇄하지 않는다");
+            // 피해 3 → a 17. GuardOnHit: 방어 2. BlockWatch: 적 전열(a)에 피해 5 → 방어 2 흡수, a 14.
+            Assert.AreEqual(14, a.Hp);
+            Assert.AreEqual(0, a.Statuses.Get(StatusKeys.Block).Magnitude, "반응 공격에 GuardOnHit가 또 발동하지 않았다");
         }
 
         // V10: 방어로 공격을 전부 막아도 공격받음은 있고, 체력 피해는 없다.
@@ -452,7 +454,9 @@ namespace FateWeaver.Tests
         [Test]
         public void Poison_damage_traits_come_from_its_status_data()
         {
-            Assert.AreEqual(new DamageTraits(true, true), TestContent.Statuses().DamageTraitsOf(StatusKeys.Poison));
+            Assert.AreEqual(
+                DamageTraits.Of(DamageTrait.Piercing, DamageTrait.IgnoresMultipliers),
+                TestContent.Statuses().DamageTraitsOf(StatusKeys.Poison));
             Assert.AreEqual(DamageTraits.Normal, TestContent.Statuses().DamageTraitsOf(StatusKeys.Block),
                 "피해 속성을 저작하지 않은 상태는 보통 피해다");
         }

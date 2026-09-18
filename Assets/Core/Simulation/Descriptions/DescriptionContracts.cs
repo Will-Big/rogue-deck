@@ -34,6 +34,9 @@ namespace FateWeaver.Simulation.Descriptions
         /// <summary>수명 종류(count가 지속일 때만 의미가 있다)와 그 count로 "(N턴)"/"(N회)" 접미사를
         /// 만든다. 카드는 더 이상 StatusLifetime을 갖지 않으므로 종류와 개수를 따로 받는다.</summary>
         string LifetimeSuffix(StatusLifetimeKind kind, int count);
+
+        /// <summary>피해 속성을 피해 문장 뒤에 붙이는 꼬리(" (관통)"). 보통 피해면 빈 문자열.</summary>
+        string DamageTraitsSuffix(DamageTraits traits);
     }
 
     public sealed class DescriptionContext
@@ -81,5 +84,7 @@ namespace FateWeaver.Simulation.Descriptions
             => _grammar.LifetimeSuffix(kind, count);
 
         public string Symbol(CardTargetKey target) => _grammar.Symbol(target);
+
+        public string DamageTraitsSuffix(DamageTraits traits) => _grammar.DamageTraitsSuffix(traits);
     }
 }

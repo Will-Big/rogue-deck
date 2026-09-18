@@ -106,6 +106,32 @@ namespace FateWeaver.Simulation.Descriptions
             return string.Join("이고 ", stems);
         }
 
+        public string DamageTraitsSuffix(DamageTraits traits)
+        {
+            if (traits == null || traits.All.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var names = new string[traits.All.Count];
+            for (var i = 0; i < names.Length; i++)
+            {
+                names[i] = DamageTraitName(traits.All[i]);
+            }
+
+            return " (" + string.Join(", ", names) + ")";
+        }
+
+        private static string DamageTraitName(DamageTrait trait)
+        {
+            switch (trait)
+            {
+                case DamageTrait.Piercing: return "관통";
+                case DamageTrait.IgnoresMultipliers: return "배율 무시";
+                default: throw new System.ArgumentOutOfRangeException(nameof(trait), trait, "No Korean name for damage trait.");
+            }
+        }
+
         private static string SideName(Side side) => side == Side.Player ? "플레이어" : "적";
 
         private static string EffectCardName(EffectKey key)

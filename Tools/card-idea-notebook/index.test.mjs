@@ -2147,3 +2147,53 @@ test("적 타입 A 메모는 남는다", () => {
 
   assert.equal(existsSync(memo), true);
 });
+
+// --- 여러 개를 고르는 열거형(enumSet): 피해 속성 -------------------------------------------------
+
+const PIERCING_CARD = {
+  cardFormat: 2, id: "pierce", name: "관통", side: "Player", category: "Execution",
+  energyCost: 1, baseExecutionOrder: 5, targets: { enemy: "FrontOne" },
+  effects: [{ kind: "damage", id: "e0", targetFaction: "Enemy", value: 4, traits: ["Piercing", "IgnoresMultipliers"] }],
+};
+
+test("피해 효과의 속성 목록을 enumSet 필드로 읽는다", () => {
+  const traits = loadSchema().effects.damage.fields.find((f) => f.name === "traits");
+  assert.equal(traits.type, "enumSet");
+  assert.deepEqual(traits.options, ["Piercing", "IgnoresMultipliers"]);
+});
+
+test("속성 목록이 있는 카드를 바이트 그대로 왕복한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const text = JSON.stringify(PIERCING_CARD, null, 2) + "\n";
+  const { card, errors } = core.readCardJson(text, schema);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(card.effects[0].params.traits, ["Piercing", "IgnoresMultipliers"]);
+  assert.equal(core.writeCardJson(card, schema), text);
+});
+
+test("속성을 모두 끄면 traits를 파일에서 생략한다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const { card } = core.readCardJson(JSON.stringify(PIERCING_CARD, null, 2), schema);
+  const edited = core.setEffectParam(card, 0, "traits", [], schema);
+  assert.equal(JSON.parse(core.writeCardJson(edited, schema)).effects[0].traits, undefined);
+  const one = core.setEffectParam(card, 0, "traits", ["IgnoresMultipliers", "Piercing", "Piercing"], schema);
+  assert.deepEqual(JSON.parse(core.writeCardJson(one, schema)).effects[0].traits, ["Piercing", "IgnoresMultipliers"],
+    "선택지 순서로 정리하고 중복을 없앤다");
+});
+
+test("없는 속성·중복 속성을 저장 전에 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const unknown = errorsOf(core, schema, {
+    targets: { enemy: "FrontOne" },
+    effects: [{ kind: "damage", id: "e0", targetFaction: "Enemy", value: 1, traits: ["Burning"] }],
+  });
+  assert.ok(unknown.some((m) => m.includes("Burning")));
+  const twice = errorsOf(core, schema, {
+    targets: { enemy: "FrontOne" },
+    effects: [{ kind: "damage", id: "e0", targetFaction: "Enemy", value: 1, traits: ["Piercing", "Piercing"] }],
+  });
+  assert.ok(twice.some((m) => m.includes("두 번")));
+});

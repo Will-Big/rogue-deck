@@ -25,9 +25,12 @@ namespace FateWeaver.Core.Authoring.Statuses
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
         public StatusLifetimeKind Lifetime;
 
-        /// <summary>이 상태가 주는 피해(독 틱 등)의 속성. 피해를 주지 않는 상태는 생략한다 — 생략하면 보통
-        /// 피해(방어·배율 적용)다. 관통·배율 미적용은 상태가 아니라 이 데이터가 정한다.</summary>
-        public DamageTraitsSpec Damage;
+        /// <summary>이 상태가 주는 피해(독 틱 등)의 속성들. 피해를 주지 않는 상태는 생략한다 — 생략하면 보통
+        /// 피해(방어·배율 적용)다. 관통·배율 무시는 상태가 아니라 이 데이터가 정한다(계획 D10).</summary>
+        public Effects.DamageTrait[] DamageTraits;
+
+        /// <summary>빈 목록도 생략한다 — 편집 도구와 같은 규칙.</summary>
+        public bool ShouldSerializeDamageTraits() => DamageTraits != null && DamageTraits.Length > 0;
 
         [JsonIgnore]
         public bool CountIsDuration
@@ -54,6 +57,11 @@ namespace FateWeaver.Core.Authoring.Statuses
             if (string.IsNullOrWhiteSpace(DisplayName))
             {
                 yield return "status spec requires a displayName.";
+            }
+
+            foreach (var error in DamageTraitRules.Validate(DamageTraits, "damageTraits"))
+            {
+                yield return error;
             }
         }
     }

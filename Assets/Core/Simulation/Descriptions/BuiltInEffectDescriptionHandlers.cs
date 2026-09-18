@@ -9,7 +9,9 @@ namespace FateWeaver.Simulation.Descriptions
         public EffectKey Key => EffectKeys.Damage;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
-            => new EffectDescriptionFragment(context.TargetOf(effect), "피해 " + effectValue);
+            => new EffectDescriptionFragment(
+                context.TargetOf(effect),
+                "피해 " + effectValue + context.DamageTraitsSuffix((effect.Payload as DamagePayload)?.Traits));
     }
 
     public sealed class ApplyStatusDescriptionHandler : IEffectDescriptionHandler

@@ -9,8 +9,9 @@ using FateWeaver.Core.Status;
 namespace FateWeaver.Core.Effects
 {
     /// <summary>효과 하나의 적용 경계(전투 실행 계약 스펙 §3·§7). 수행 여부와 수치를 정하고 지금의 위치로 대상을
-    /// 고른 뒤, 처리기 적용 → 사망 정리(DeathProcessor) → 직접 반응(ReactionDispatcher, 기원에 따라 반응할 수 있는
-    /// 능력이 다르다)을 한 번에 수행하고 EffectResult를 돌려준다. 결과를 결과표에 기록하는 일과 다음 효과로 넘어가는 일은 호출자(카드 실행)가 한다.</summary>
+    /// 고른 뒤, 처리기 적용 → 사망 정리(DeathProcessor) → 직접 반응(ReactionDispatcher)을 한 번에 수행하고
+    /// EffectResult를 돌려준다. 반응 효과도 같은 경계를 지나므로 그 사건에 다시 반응이 붙을 수 있다 — 어떤 사건에
+    /// 발동할지는 각 반응 능력의 조건이 정한다(계획 D11). 결과를 결과표에 기록하는 일과 다음 효과로 넘어가는 일은 호출자(카드 실행)가 한다.</summary>
     public sealed class EffectExecutor
     {
         private readonly EffectRegistry _effects;
@@ -112,10 +113,10 @@ namespace FateWeaver.Core.Effects
             var events = ctx.ExtraEvents;
             var targetIds = ctx.Targets?.Ids ?? Array.Empty<string>();
             var signals = new List<CombatSignal>();
-            Number(ctx.Signals, targetIds, signals);
-            Number(Deaths.Process(ctx.State, before, events), targetIds, signals);
+            Number(ctx.Signals, targetIds, ctx.Origin, signals);
+            Number(Deaths.Process(ctx.State, before, events), targetIds, ctx.Origin, signals);
 
-            Reactions.Dispatch(ctx.State, ctx.ResolutionContext, signals, events, ctx.Origin);
+            Reactions.Dispatch(ctx.State, ctx.ResolutionContext, signals, events);
 
             return new EffectResult(true, ctx.ConsumedAmount, ctx.DamageDealt)
             {
@@ -126,15 +127,17 @@ namespace FateWeaver.Core.Effects
             };
         }
 
-        /// <summary>사건에 효과 시작 대상 목록의 순번(목록 밖이면 그 뒤)과 경계 안 발생 순서를 붙인다.</summary>
+        /// <summary>사건에 이 효과의 기원, 효과 시작 대상 목록의 순번(목록 밖이면 그 뒤), 경계 안 발생 순서를 붙인다.</summary>
         private static void Number(
-            IReadOnlyList<CombatSignal> raw, IReadOnlyList<string> targetIds, List<CombatSignal> into)
+            IReadOnlyList<CombatSignal> raw, IReadOnlyList<string> targetIds, EffectOrigin origin,
+            List<CombatSignal> into)
         {
             foreach (var signal in raw)
             {
                 var ordinal = IndexOf(targetIds, signal.TargetId);
                 into.Add(signal with
                 {
+                    Origin = origin,
                     TargetOrdinal = ordinal < 0 ? targetIds.Count : ordinal,
                     Sequence = into.Count
                 });
