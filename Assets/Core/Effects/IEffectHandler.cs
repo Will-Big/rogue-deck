@@ -20,38 +20,34 @@ namespace FateWeaver.Core.Effects
         public StatusBag ActorStatuses;
         public EffectData Effect;
         public int EffectValue;
-        public CardTargetSnapshot Targets;
 
-        // outputs (read by TurnResolver)
+        /// <summary>이 효과가 시작할 때 고른 대상(대상을 고르지 않는 효과는 null). 비어 있지 않다 —
+        /// 대상이 없으면 EffectExecutor가 처리기를 부르지 않는다.</summary>
+        public EffectTargetSnapshot Targets;
+
+        // outputs (read by EffectExecutor)
         public int DamageDealt;
-        public string TargetId;
 
         /// <summary>이 효과가 실제로 소비한 양. 효과 결과(EffectResult.ConsumedAmount)가 된다.</summary>
         public int ConsumedAmount;
 
         /// <summary>이 효과가 만든 부가 타임라인 이벤트 (예: 즉시 상태 발동의 StatusTicked).
-        /// TurnResolver가 CardResolved/CardCancelled 뒤에 발생 순서대로 붙인다.</summary>
+        /// 발생 순서대로 EffectResult.Events가 된다.</summary>
         public List<ResolutionEvent> ExtraEvents = new List<ResolutionEvent>();
 
-        /// <summary>이 효과의 피해가 상태로 바뀐 단계들. TurnResolver가 카드 단위로 모아
-        /// CardResolved에 싣는다.</summary>
+        /// <summary>이 효과의 피해가 상태로 바뀐 단계들. 카드 단위로 모여 CardResolved에 실린다.</summary>
         public List<Events.DamageStep> DamageSteps = new List<Events.DamageStep>();
-
-        /// <summary>Records why this card's effects could not resolve. Only the first reason is kept;
-        /// handlers must not mutate state or HP after cancelling (see ExecutionCardInstance.CancellationReason).</summary>
-        public void Cancel(Combat.CardCancellationReason reason)
-        {
-            if (Card != null && Card.CancellationReason == null)
-            {
-                Card.CancellationReason = reason;
-            }
-        }
     }
 
+    /// <summary>효과 하나를 적용한다. 처리기는 받은 대상에만 적용하며 카드 전체를 취소하거나 다음 효과를
+    /// 부르지 않는다(전투 실행 계약 스펙 §3).</summary>
     public interface IEffectHandler
     {
         EffectKey Key { get; }
+
+        /// <summary>이 효과가 대상을 고르는 위치 규칙. 대상을 고르지 않는 효과는 null.</summary>
         CardTargetKey? TargetFor(CardDefinition card, EffectData effect);
+
         void Apply(EffectContext ctx);
     }
 }

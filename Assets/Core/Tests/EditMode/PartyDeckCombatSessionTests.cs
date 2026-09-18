@@ -219,7 +219,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Kill_then_cancel_path_removes_dead_owner_from_every_pile_and_keeps_party_cards()
+        public void Kill_then_no_target_path_removes_dead_owner_from_every_pile_and_keeps_party_cards()
         {
             var ownedByA = Enumerable.Range(0, 8).Select(i => Execution("a_" + i, order: 2)).ToArray();
             var killThenCancel = new CardDefinition(
@@ -247,9 +247,13 @@ namespace FateWeaver.Tests
 
             var timeline = session.ResolveTurn();
 
-            var relevant = timeline.Where(e => e is CardCancelled || e is PartyMemberDied || e is CardRemoved).ToArray();
+            // 둘째 피해는 대상이 없어 미적용될 뿐 카드는 해결된다(스펙 §2).
+            var relevant = timeline
+                .Where(e => (e is CardResolved r && r.CardId == "kill_then_cancel")
+                    || e is CardCancelled || e is PartyMemberDied || e is CardRemoved)
+                .ToArray();
             Assert.AreEqual(3, relevant.Length);
-            Assert.AreEqual("kill_then_cancel", ((CardCancelled)relevant[0]).CardId);
+            Assert.AreEqual("kill_then_cancel", ((CardResolved)relevant[0]).CardId);
             Assert.AreEqual("a", ((PartyMemberDied)relevant[1]).MemberId);
             Assert.AreEqual("a", ((CardRemoved)relevant[2]).OwnerId);
             Assert.IsFalse(session.DrawPile.Any(card => card.OwnerId == "a"));

@@ -27,8 +27,12 @@ namespace FateWeaver.Tests
         /// 2026-09-18 갱신(전투 실행 계약 T1): 죽은 고블린의 남은 goblin_jab이 그 카드 차례의
         /// CardCancelled(OwnerDied) 대신 죽인 카드 직후의 CardRemoved로 기록된다. 그 밖의 서명은 같다.
         /// 2026-09-18 갱신(전투 실행 계약 T2a): toxic_reclaim의 소비 보상이 조건이 아니라 requires가 되어
-        /// 카드 시작 조건이 없으므로 CardResolved.ConditionTier가 Success에서 Basic이 된다. 피해·상태·HP는 같다.</summary>
-        private const string ExpectedSignatureSha256 = "cd1c4cde8fb9ba992cc35b9d76badacb79285da91bec872d9c66f52c7ea69477";
+        /// 카드 시작 조건이 없으므로 CardResolved.ConditionTier가 Success에서 Basic이 된다. 피해·상태·HP는 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T3): 효과마다 대상을 고르고 대상 없음은 미적용이다. ① CardResolved.TargetId가
+        /// "마지막 대상"에서 "처음 적용된 효과의 첫 대상"이 되어 spore_veil·probing_strike·toxic_reclaim이 member_a 대신
+        /// goblin#0을 가리킨다. ② 고블린이 죽은 뒤의 spore_veil·delayed_strike가 NoValidTarget 취소 대신 해결되고,
+        /// spore_veil의 자신 방어 2가 적용된다(같은 턴 끝에 만료). 그 밖의 서명은 같다.</summary>
+        private const string ExpectedSignatureSha256 = "c60778856588d9e0bb9fccc3400b06ab018fe8180b0c72ce762476d9c65f8598";
 
         private static CombatNode BeginNode()
         {

@@ -18,6 +18,7 @@ namespace FateWeaver.Tests
         {
             var r = new EffectRegistry();
             r.Register(new DamageHandler());
+            r.Register(new ApplyStatusHandler());
             return r;
         }
 
@@ -102,14 +103,18 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_executed_condition_counts_cards_whose_turn_came_even_without_effect()
         {
-            // --- NoValidTarget case ---
+            // --- 대상 없음 case: 효과가 대상을 못 찾아 미적용돼도 카드는 실행된다 ---
             {
                 var state = new CombatState(TestContent.Statuses());
                 state.AddSoloPlayer(30);
                 state.Enemies.Add(new Enemy("goblin", 100));
 
                 var a = PlainCard("a_hit", Side.Enemy, executionOrder: 1, damage: 2);
-                var b = PlainCard("b_hit", Side.Player, executionOrder: 2, damage: 1, targetId: "no-such-enemy");
+                var b = new ExecutionCardInstance(new CardDefinition("b_hit", "b_hit", Side.Player, 2,
+                    new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) }))
+                {
+                    OwnerId = "no-such-member"
+                };
                 var c = ConditionalCard("c_hit", Side.Player, executionOrder: 3,
                     new PreviousExecutedCardIs(Side.Enemy), baseDamage: 0, successDamage: 6);
 
@@ -119,9 +124,8 @@ namespace FateWeaver.Tests
 
                 var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-                Assert.AreEqual(
-                    CardCancellationReason.NoValidTarget,
-                    events.OfType<CardCancelled>().Single(e => e.CardId == "b_hit").Reason);
+                Assert.IsEmpty(events.OfType<CardCancelled>());
+                Assert.IsNull(Resolved(events, "b_hit").TargetId);
                 var resolvedC = Resolved(events, "c_hit");
                 Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
                 Assert.AreEqual(0, resolvedC.DamageDealt);
@@ -190,7 +194,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblinA", 100));
 
             var a = PlainCard("a_mark", Side.Player, executionOrder: 1, damage: 1, targetId: "goblinA");
-            // b의 차례가 와서 이력에 남는다. 대상은 없는 적이므로 c와 같은 대상이 아니다.
+            // b의 차례가 와서 이력에 남는다. b의 TargetId는 다른 id이므로 c와 같은 대상이 아니다.
             var b = PlainCard("b_mark", Side.Player, executionOrder: 2, damage: 1, targetId: "phantom");
             var c = ConditionalCard("c_strike", Side.Player, executionOrder: 3,
                 new SameTarget(), baseDamage: 0, successDamage: 8, targetId: "goblinA");
@@ -201,9 +205,7 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.AreEqual(
-                CardCancellationReason.NoValidTarget,
-                events.OfType<CardCancelled>().Single().Reason);
+            Assert.IsNotNull(Resolved(events, "b_mark"));
             var resolvedC = Resolved(events, "c_strike");
             Assert.AreEqual(ConditionTier.Basic, resolvedC.ConditionTier);
             Assert.AreEqual(0, resolvedC.DamageDealt);

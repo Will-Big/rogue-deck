@@ -186,8 +186,7 @@ namespace FateWeaver.Tests
         {
             // Position spec §3: "앞 하나" is re-evaluated against the living formation — a card that
             // kills the front enemy must not leave a later card's FrontOne selector locked onto the
-            // now-dead corpse (the legacy ByIdOrFront fallback would return raw Enemies[0] regardless
-            // of HP).
+            // now-dead corpse.
             var state = NewState(new Enemy("front", 3), new Enemy("back", 20));
             Place(state, Pool.Get("vanguard_slash")); // 순서 3, 피해 5 → front(3) 처치
             Place(state, Pool.Get("venom_thrust"));   // 순서 4, 새 전열(back)을 타격해야 함

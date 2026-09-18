@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Status;
@@ -134,13 +135,14 @@ namespace FateWeaver.Tests.UnityEditMode
             var effect = new EffectData(EffectKeys.MoveFormation, distance);
             var definition = new CardDefinition(
                 "move", "move", side, 1, new[] { effect });
-            new MoveFormationHandler().Apply(new EffectContext
-            {
-                Card = new ExecutionCardInstance(definition) { OwnerId = ownerId },
-                State = _session.State,
-                Effect = effect,
-                EffectValue = distance
-            });
+            var effects = new EffectRegistry();
+            effects.Register(new MoveFormationHandler());
+            var context = new CardExecutionContext(
+                new ExecutionCardInstance(definition) { OwnerId = ownerId },
+                ConditionTier.Basic,
+                _session.State,
+                ResolutionContext.From(_session.State));
+            Assert.IsTrue(new EffectExecutor(effects).Apply(context, effect).Applied);
         }
 
         private PartyMember Party(string id) => _session.State.Party.Single(member => member.Id == id);

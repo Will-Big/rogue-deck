@@ -54,10 +54,7 @@ namespace FateWeaver.Tests
         {
             var events = new ResolutionEvent[]
             {
-                new CardCancelled(9, "venom_thrust", "member_a", CardCancellationReason.NoValidTarget)
-                {
-                    DamageDealt = 2,
-                },
+                new CardCancelled(9, "venom_thrust", "member_a", CardCancellationReason.StatusIntercepted),
                 new HpChanged("goblin", 2, 0, HpChangeSource.CardDamage, "venom_thrust"),
                 new EnemyDied("goblin"),
             };

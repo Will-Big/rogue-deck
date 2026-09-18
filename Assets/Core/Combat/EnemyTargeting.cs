@@ -5,9 +5,7 @@ using FateWeaver.Core.Cards;
 namespace FateWeaver.Core.Combat
 {
     /// <summary>Resolves enemy targets by living-formation position (Enemies index 0 = front, dead
-    /// skipped, never reindexed) — the enemy-side mirror of PartyTargeting. ByIdOrFront preserves the
-    /// legacy player-card selection (explicit id, else raw first enemy) so pre-selector content and
-    /// timelines stay identical.</summary>
+    /// skipped, never reindexed) — the enemy-side mirror of PartyTargeting.</summary>
     public static class EnemyTargeting
     {
         public static Enemy Select(CombatState state, TargetSelector selector)
@@ -45,26 +43,6 @@ namespace FateWeaver.Core.Combat
             }
 
             return living.GetRange(0, take);
-        }
-
-        /// <summary>Legacy selection: explicit id (missing id = no target), else the first enemy
-        /// regardless of HP — exactly the pre-selector behavior of DamageHandler.SelectEnemy.</summary>
-        public static Enemy ByIdOrFront(CombatState state, string targetId)
-        {
-            if (!string.IsNullOrEmpty(targetId))
-            {
-                foreach (var enemy in state.Enemies)
-                {
-                    if (enemy.Id == targetId)
-                    {
-                        return enemy;
-                    }
-                }
-
-                return null;
-            }
-
-            return state.Enemies.Count > 0 ? state.Enemies[0] : null;
         }
 
         private static int TakeCount(TargetSelector selector, int livingCount)

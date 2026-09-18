@@ -5,22 +5,33 @@ using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>카드 한 장을 실행하는 동안의 값: 시작 때 한 번 고정한 조건 결과와 효과 ID별 결과표
-    /// (전투 실행 계약 스펙 §2·§5). 카드마다 새로 만들며 카드가 끝나면 버린다.</summary>
+    /// <summary>카드 한 장을 실행하는 동안의 값: 실행 중인 전투, 시작 때 한 번 고정한 조건 결과와 효과 ID별
+    /// 결과표(전투 실행 계약 스펙 §2·§5). 카드마다 새로 만들며 카드가 끝나면 버린다.</summary>
     public sealed class CardExecutionContext
     {
         private readonly Dictionary<string, EffectResult> _results = new(StringComparer.Ordinal);
 
-        public CardExecutionContext(ExecutionCardInstance card, ConditionTier startTier)
+        public CardExecutionContext(
+            ExecutionCardInstance card,
+            ConditionTier startTier,
+            CombatState state,
+            ResolutionContext resolution)
         {
             Card = card ?? throw new ArgumentNullException(nameof(card));
             StartTier = startTier;
+            State = state ?? throw new ArgumentNullException(nameof(state));
+            Resolution = resolution ?? throw new ArgumentNullException(nameof(resolution));
         }
 
         public ExecutionCardInstance Card { get; }
 
         /// <summary>카드 시작 조건의 결과. 카드 도중 상태가 바뀌어도 다시 평가하지 않는다.</summary>
         public ConditionTier StartTier { get; }
+
+        public CombatState State { get; }
+
+        /// <summary>이번 턴의 실행선·실행 이력 질의.</summary>
+        public ResolutionContext Resolution { get; }
 
         /// <summary>효과 결과를 기록한다. ID 없는 효과는 참조될 수 없으므로 기록하지 않는다.
         /// 같은 ID를 두 번 기록하면 계약 위반이다(로딩 검증이 중복 ID를 먼저 거부한다).</summary>

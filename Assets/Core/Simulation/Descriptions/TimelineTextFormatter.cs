@@ -94,20 +94,7 @@ namespace FateWeaver.Simulation.Descriptions
                     sb.Append("  ").Append(e.CardId).AppendLine(" 제거 (주인 사망)");
                     break;
                 case CardCancelled e:
-                    sb.Append("  ").Append(e.CardId).Append(" 취소 (").Append(e.Reason).Append(')');
-                    if (e.DamageDealt > 0)
-                    {
-                        sb.Append(" — 취소 전 피해 ").Append(e.DamageDealt);
-                    }
-
-                    sb.AppendLine();
-                    foreach (var step in e.DamageSteps)
-                    {
-                        sb.Append("      ").Append(step.HolderId).Append('의')
-                          .Append(StatusName(catalog, step.StatusId))
-                          .Append(": ").Append(step.Before).Append(" → ").AppendLine(step.After.ToString());
-                    }
-
+                    sb.Append("  ").Append(e.CardId).Append(" 취소 (").Append(e.Reason).AppendLine(")");
                     break;
                 case StatusApplied e:
                     sb.Append("  ").Append(e.HolderId).Append("에게 ")

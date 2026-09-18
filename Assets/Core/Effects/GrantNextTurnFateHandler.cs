@@ -13,11 +13,6 @@ namespace FateWeaver.Core.Effects
 
         public void Apply(EffectContext ctx)
         {
-            if (ctx.Card.CancellationReason != null)
-            {
-                return;
-            }
-
             var before = ctx.State.PendingNextTurnFateEnergy;
             ctx.State.PendingNextTurnFateEnergy += ctx.EffectValue;
             var gained = ctx.State.PendingNextTurnFateEnergy - before;

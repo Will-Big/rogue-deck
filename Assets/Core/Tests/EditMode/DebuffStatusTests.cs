@@ -32,19 +32,14 @@ namespace FateWeaver.Tests
         /// <summary>Block은 카탈로그상 ThisTurn이라 TurnResolver.Resolve()를 다 돌리면 턴 종료 정리가
         /// 인스턴스를 지워 Magnitude를 조회할 수 없다(Task 4: 카드가 수명을 고르던 시절의 테스트
         /// 편의가 더는 통하지 않는다). GainedMagnitude 접힘만 보면 되므로 턴 전체를 돌리지 않고
-        /// ApplyStatusHandler를 직접 호출해 정리 전 상태를 확인한다.</summary>
+        /// ApplyStatusHandler만 효과 적용 경계로 돌려 정리 전 상태를 확인한다.</summary>
         private static PartyMember ApplyGuard(CombatState state, string ownerId, int block)
         {
             var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, block);
             var card = new ExecutionCardInstance(
                 new CardDefinition("guard", "guard", Side.Player, 1, new[] { effect }))
                 { OwnerId = ownerId };
-            var ctx = new EffectContext
-            {
-                Card = card, State = state, Effect = effect, EffectValue = block, StatusRegistry = Statuses()
-            };
-
-            new ApplyStatusHandler().Apply(ctx);
+            EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect, Statuses());
             return PartyTargeting.LivingById(state, ownerId);
         }
 

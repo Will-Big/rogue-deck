@@ -12,36 +12,21 @@ namespace FateWeaver.Core.Effects
         public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
             => new CardTargetKey(
                 CardTargetFaction.Enemy,
-                CardTargetSnapshot.RangeFor(effect.TargetSelector ?? TargetSelector.FrontOne));
+                EffectTargetResolver.RangeFor(effect.TargetSelector ?? TargetSelector.FrontOne));
 
         public void Apply(EffectContext ctx)
         {
-            if (ctx.Card.CancellationReason != null)
-            {
-                return;
-            }
-
             if (!(ctx.Effect?.Payload is TriggerStatusPayload payload))
             {
                 return;
             }
 
-            if (ctx.Targets != null)
+            if (ctx.StatusRegistry == null || !ctx.StatusRegistry.TryResolve(payload.Key, out var behavior))
             {
-                ApplySnapshotTargets(ctx, payload, TargetFor(ctx.Card.Def, ctx.Effect).Value);
                 return;
             }
 
-            var enemy = ctx.Effect?.TargetSelector is TargetSelector selector
-                ? EnemyTargeting.Select(ctx.State, selector)
-                : EnemyTargeting.ByIdOrFront(ctx.State, ctx.Card.TargetId);
-            if (enemy == null)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            if (ctx.StatusRegistry != null && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior))
+            foreach (var enemy in ctx.Targets.Enemies)
             {
                 var status = enemy.Statuses.Get(payload.Key);
                 if (status != null)
@@ -57,7 +42,7 @@ namespace FateWeaver.Core.Effects
                         Events = ctx.ExtraEvents,
                         Content = ctx.State.StatusContent
                     });
-                    ctx.DamageDealt = hpBefore - target.Hp;
+                    ctx.DamageDealt += hpBefore - target.Hp;
                     if (target.Hp != hpBefore)
                     {
                         ctx.ExtraEvents.Add(new Events.HpChanged(
@@ -72,60 +57,6 @@ namespace FateWeaver.Core.Effects
                 // 심을 마커의 정체도 알 수 없고, TurnResolver.TickHolder도 같은 TryResolve를 거쳐야
                 // 틱하므로, 여기서 못 심어도 억제할 대상 자체가 없다.
                 behavior.SuppressThisTurn(enemy.Statuses);
-            }
-
-            ctx.TargetId = enemy.Id;
-        }
-
-        private static void ApplySnapshotTargets(
-            EffectContext ctx,
-            TriggerStatusPayload payload,
-            CardTargetKey key)
-        {
-            var affected = 0;
-            string onlyTargetId = null;
-            foreach (var enemy in ctx.Targets.EnemyTargets(key))
-            {
-                if (enemy.Hp <= 0)
-                {
-                    continue;
-                }
-
-                if (ctx.StatusRegistry != null
-                    && ctx.StatusRegistry.TryResolve(payload.Key, out var behavior))
-                {
-                    var status = enemy.Statuses.Get(payload.Key);
-                    if (status != null)
-                    {
-                        var hpBefore = enemy.Hp;
-                        behavior.OnTurnEnd(new StatusTickContext
-                        {
-                            Instance = status,
-                            HolderBag = enemy.Statuses,
-                            HolderId = enemy.Id,
-                            DealDamage = damage => enemy.Hp -= damage,
-                            Events = ctx.ExtraEvents,
-                            Content = ctx.State.StatusContent
-                        });
-                        ctx.DamageDealt += hpBefore - enemy.Hp;
-                        if (enemy.Hp != hpBefore)
-                        {
-                            ctx.ExtraEvents.Add(new Events.HpChanged(
-                                enemy.Id, hpBefore, enemy.Hp,
-                                Events.HpChangeSource.StatusTick, payload.Key.Id));
-                        }
-                    }
-
-                    behavior.SuppressThisTurn(enemy.Statuses);
-                }
-                onlyTargetId = enemy.Id;
-                affected++;
-            }
-
-            ctx.TargetId = affected == 1 ? onlyTargetId : null;
-            if (affected == 0)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
             }
         }
 

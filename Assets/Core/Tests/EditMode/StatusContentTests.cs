@@ -241,17 +241,12 @@ namespace FateWeaver.Tests
                 var effects = CombatRegistries.Effects();
                 var statuses = CombatRegistries.Statuses();
 
+                var executor = new EffectExecutor(effects, statuses);
+                var context = new CardExecutionContext(
+                    card, Core.Conditions.ConditionTier.Basic, state, Core.Conditions.ResolutionContext.From(state));
                 foreach (var effect in cardDef.Effects)
                 {
-                    var ctx = new EffectContext
-                    {
-                        Card = card,
-                        State = state,
-                        Effect = effect,
-                        EffectValue = effect.EffectValue,
-                        StatusRegistry = statuses
-                    };
-                    effects.Resolve(effect.Key).Apply(ctx);
+                    context.Record(effect.Id, executor.Apply(context, effect));
                 }
             }
         }

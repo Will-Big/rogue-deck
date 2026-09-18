@@ -123,19 +123,21 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Cancelled_card_emits_no_card_resolved_event()
+        public void A_card_whose_effect_finds_no_target_still_resolves_without_cancelling()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
-            // No enemies -> the player card's target can never resolve.
+            // 적이 없다 -> 피해 효과는 대상이 없어 미적용될 뿐, 카드는 실행된다(스펙 §2).
             var strike = Card("strike", Side.Player, executionOrder: 1, damage: 4);
             state.Zone.Add(strike);
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.IsFalse(events.OfType<CardResolved>().Any());
-            var cancelled = events.OfType<CardCancelled>().Single();
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, cancelled.Reason);
+            Assert.IsFalse(events.OfType<CardCancelled>().Any());
+            var resolved = events.OfType<CardResolved>().Single();
+            Assert.AreEqual(0, resolved.DamageDealt);
+            Assert.IsNull(resolved.TargetId);
+            Assert.IsNull(strike.CancellationReason);
         }
 
         [Test]
@@ -158,7 +160,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Kill_then_no_target_emits_cancellation_then_death_then_owner_removal()
+        public void Kill_then_no_target_resolves_then_death_then_owner_removal()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
@@ -187,14 +189,15 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
+            // 둘째 피해는 대상이 없어 미적용될 뿐 카드를 취소하지 않는다(스펙 §2).
             var relevant = events
-                .Where(e => e is CardCancelled || e is PartyMemberDied || e is CardRemoved)
+                .Where(e => e is CardResolved || e is CardCancelled || e is PartyMemberDied || e is CardRemoved)
                 .ToArray();
             Assert.AreEqual(3, relevant.Length);
-            Assert.AreEqual(typeof(CardCancelled), relevant[0].GetType());
-            var current = (CardCancelled)relevant[0];
+            Assert.AreEqual(typeof(CardResolved), relevant[0].GetType());
+            var current = (CardResolved)relevant[0];
             Assert.AreEqual("kill_then_cancel", current.CardId);
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, current.Reason);
+            Assert.AreEqual(5, current.DamageDealt);
 
             Assert.AreEqual(typeof(PartyMemberDied), relevant[1].GetType());
             var died = (PartyMemberDied)relevant[1];
@@ -202,8 +205,7 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(typeof(CardRemoved), relevant[2].GetType());
             Assert.AreEqual("a_pending", ((CardRemoved)relevant[2]).CardId);
-            Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "kill_then_cancel"));
-            Assert.AreEqual(1, events.OfType<CardCancelled>().Count(e => e.CardId == "kill_then_cancel"));
+            Assert.IsFalse(events.OfType<CardCancelled>().Any());
         }
 
         [Test]

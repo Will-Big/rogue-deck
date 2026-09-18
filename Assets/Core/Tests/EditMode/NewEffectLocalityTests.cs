@@ -28,7 +28,6 @@ namespace FateWeaver.Tests
                 var member = PartyTargeting.LivingById(ctx.State, ctx.Card.OwnerId);
                 if (member == null)
                 {
-                    ctx.Cancel(CardCancellationReason.NoValidTarget);
                     return;
                 }
 

@@ -10,18 +10,18 @@ namespace FateWeaver.Core.Combat
 {
     /// <summary>실행선의 카드를 차례대로 실행하고 이벤트 타임라인을 낸다. 실행선은 고정 사본이 아니다 —
     /// 매번 아직 차례가 오지 않은 다음 카드를 묻는다(전투 실행 계약 스펙 §6).
-    /// Per card: intercept/pre-cancellation check, then effects (with a per-effect death-sweep snapshot),
-    /// then either CardResolved or CardCancelled, followed by pending death events from effects that
-    /// already applied, then CardRemoved for every pending card whose owner just died.</summary>
+    /// Per card: intercept/pre-cancellation check (CardCancelled), else every effect in authored order
+    /// (each through EffectExecutor, with a per-effect death-sweep snapshot), then CardResolved followed by
+    /// the effects' events and deaths, then CardRemoved for every pending card whose owner just died.</summary>
     public sealed class TurnResolver
     {
-        private readonly EffectRegistry _effects;
         private readonly StatusRegistry _statuses;
+        private readonly EffectExecutor _executor;
 
         public TurnResolver(EffectRegistry effects, StatusRegistry statuses = null)
         {
-            _effects = effects;
             _statuses = statuses;
+            _executor = new EffectExecutor(effects, statuses);
         }
 
         public List<ResolutionEvent> Resolve(CombatState state, int turnIndex)
@@ -51,7 +51,7 @@ namespace FateWeaver.Core.Combat
             ExecutionCardInstance card,
             List<ResolutionEvent> events)
         {
-            // Step 6 (part 1): a cancellation reason recorded before this card's turn skips effects entirely.
+            // 차례 전에 기록된 취소 사유(가로채기 등)가 있으면 효과를 하나도 수행하지 않는다.
             if (card.CancellationReason == null && IsInterceptedByStatus(state, card, events))
             {
                 card.CancellationReason = CardCancellationReason.StatusIntercepted;
@@ -70,115 +70,41 @@ namespace FateWeaver.Core.Combat
 
             // 카드 시작 조건은 차례를 맞은 지금 한 번 평가하고 카드가 끝날 때까지 고정한다(스펙 §2).
             var execution = new CardExecutionContext(
-                card, ResolveStartTier(card, resolutionContext, pendingDeathEvents));
+                card, ResolveStartTier(card, resolutionContext, pendingDeathEvents), state, resolutionContext);
 
-            var handlers = card.Def.Effects
-                .Select(effect => _effects.Resolve(effect.Key))
-                .ToArray();
-            var targetBindings = card.Def.Effects
-                .Select((effect, index) => (Effect: effect, Key: handlers[index].TargetFor(card.Def, effect)))
-                .ToArray();
-            var targetKeys = targetBindings
-                .Where(binding => binding.Key.HasValue)
-                .Select(binding => binding.Key.Value)
-                .ToArray();
-            var legacyExplicitTargetKeys = targetBindings
-                .Where(binding => binding.Key.HasValue
-                    && card.Def.Side == Cards.Side.Player
-                    && !string.IsNullOrEmpty(card.TargetId)
-                    && binding.Effect.TargetSelector == null
-                    && binding.Key.Value.Faction == Cards.CardTargetFaction.Enemy)
-                .Select(binding => binding.Key.Value)
-                .ToArray();
-            var targets = CardTargetSnapshot.Capture(
-                state, card, targetKeys, legacyExplicitTargetKeys);
-
-            for (var effectIndex = 0; effectIndex < card.Def.Effects.Count; effectIndex++)
+            // 효과마다 그 시작 시점의 위치로 대상을 고른다. 대상이 없는 효과는 미적용으로 기록되고
+            // 카드는 다음 효과로 계속한다(스펙 §2).
+            foreach (var effect in card.Def.Effects)
             {
-                if (card.CancellationReason != null)
-                {
-                    break;
-                }
-
-                var effect = card.Def.Effects[effectIndex];
-                if (!ShouldApply(effect, card, execution))
-                {
-                    execution.Record(effect.Id, EffectResult.Skipped);
-                    continue;
-                }
-
                 var beforeSnapshot = SnapshotParty(state);
                 var enemiesBefore = SnapshotEnemies(state);
 
-                var ctx = new EffectContext
+                var result = _executor.Apply(execution, effect);
+                execution.Record(effect.Id, result);
+                totalDamage += result.DamageDealt;
+                damageSteps.AddRange(result.DamageSteps);
+                if (targetId == null && result.TargetIds.Count > 0)
                 {
-                    Card = card,
-                    State = state,
-                    ResolutionContext = resolutionContext,
-                    StatusRegistry = _statuses,
-                    ActorStatuses = CardActor.StatusesFor(state, card),
-                    Effect = effect,
-                    EffectValue = ResolveEffectValue(effect, execution),
-                    Targets = targets
-                };
-                handlers[effectIndex].Apply(ctx);
-                execution.Record(
-                    effect.Id,
-                    new EffectResult(card.CancellationReason == null, ctx.ConsumedAmount, ctx.DamageDealt));
-                totalDamage += ctx.DamageDealt;
-                damageSteps.AddRange(ctx.DamageSteps);
-                if (ctx.TargetId != null)
-                {
-                    targetId = ctx.TargetId;
+                    // CardResolved.TargetId = 처음 적용된 효과의 첫 대상.
+                    targetId = result.TargetIds[0];
                 }
-                else if (targetBindings[effectIndex].Key.HasValue)
-                {
-                    targetId = null;
-                }
-                pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록
+                pendingDeathEvents.AddRange(result.Events);   // 틱 이벤트가 사망 이벤트보다 앞서도록
 
                 CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
                 CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
-
-                // Step 6 (part 2): once an effect records NoValidTarget, the card is cancelled and
-                // its remaining effects must not run (enforced centrally here, not per-handler).
-                if (card.CancellationReason != null)
-                {
-                    break;
-                }
             }
 
-            var newlyDeadOwnerIds = CollectNewlyDeadOwnerIds(pendingDeathEvents);
-
-            if (card.CancellationReason == null)
+            // CardResolved 뒤에 이 카드의 효과가 만든 사건과 사망이 발생 순서대로 이어진다.
+            events.Add(new CardResolved(
+                card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, execution.StartTier)
             {
-                // Step 4: CardResolved first, then the pending death
-                // events in the order they occurred (so a death caused by this card's own effects
-                // follows its CardResolved immediately).
-                events.Add(new CardResolved(
-                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, execution.StartTier)
-                {
-                    DamageSteps = damageSteps
-                });
-                events.AddRange(pendingDeathEvents);
-            }
-            else
-            {
-                // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
-                // CardCancelled. State-change events from earlier, already-applied effects follow in
-                // occurrence order, then the owner-death removal below uses the same newly-dead set.
-                events.Add(new CardCancelled(
-                    card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value)
-                {
-                    DamageDealt = totalDamage,
-                    DamageSteps = damageSteps
-                });
-                events.AddRange(pendingDeathEvents);
-            }
+                DamageSteps = damageSteps
+            });
+            events.AddRange(pendingDeathEvents);
 
-            // Step 5: 방금 죽은 주인의 아직 차례가 오지 않은 카드를 실행선에서 뺀다. 현재 카드가 해결됐든
-            // 취소됐든 같다. 이미 실행된 카드와 지금 실행 중인 카드는 남는다(스펙 §6).
-            foreach (var ownerId in newlyDeadOwnerIds)
+            // 방금 죽은 주인의 아직 차례가 오지 않은 카드를 실행선에서 뺀다. 이미 실행된 카드와 지금
+            // 실행 중인 카드는 남는다(스펙 §6).
+            foreach (var ownerId in CollectNewlyDeadOwnerIds(pendingDeathEvents))
             {
                 foreach (var removed in state.Zone.RemovePendingOwnedBy(ownerId))
                 {
@@ -447,35 +373,6 @@ namespace FateWeaver.Core.Combat
             }
 
             return tier;
-        }
-
-        /// <summary>이 효과를 수행하는가: 카드 조건이 Basic이면 SkipOnBasic 효과를 건너뛰고, 앞 효과의
-        /// 실제 소비량이 요건에 못 미치면 건너뛴다.</summary>
-        private static bool ShouldApply(
-            Cards.EffectData effect, ExecutionCardInstance card, CardExecutionContext execution)
-        {
-            if (effect.SkipOnBasic
-                && card.Def.StartCondition != null
-                && execution.StartTier == ConditionTier.Basic)
-            {
-                return false;
-            }
-
-            var requirement = effect.Requirement;
-            return requirement == null
-                || execution.Get(requirement.SourceEffectId).ConsumedAmount >= requirement.MinimumConsumed;
-        }
-
-        /// <summary>카드 조건 결과로 기본/성공 수치를 고르고, 소비량 비례 가산을 더한다.</summary>
-        private static int ResolveEffectValue(Cards.EffectData effect, CardExecutionContext execution)
-        {
-            var value = execution.StartTier == ConditionTier.Success && effect.SuccessEffectValue.HasValue
-                ? effect.SuccessEffectValue.Value
-                : effect.EffectValue;
-            var scaling = effect.Scaling;
-            return scaling == null
-                ? value
-                : value + execution.Get(scaling.SourceEffectId).ConsumedAmount * scaling.PerConsumed;
         }
 
         private static Outcome ComputeOutcome(CombatState state)

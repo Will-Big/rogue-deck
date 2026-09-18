@@ -39,22 +39,14 @@ namespace FateWeaver.Core.Events
         }
     }
 
-    /// <summary>A placed execution card that did not complete. Effects applied before cancellation
-    /// persist, and their independent state-change events may follow this single cancellation event.
+    /// <summary>차례가 온 실행 카드가 효과를 하나도 수행하지 않고 끝났다(예: 상태의 가로채기). 효과가 대상을
+    /// 찾지 못하는 것은 취소가 아니다 — 그 효과만 미적용되고 카드는 CardResolved로 끝난다(전투 실행 계약 스펙 §2).
     /// Reason distinguishes why (see CardCancellationReason).</summary>
     public sealed record CardCancelled(
         int InstanceId,
         string CardId,
         string OwnerId,
-        CardCancellationReason Reason) : ResolutionEvent
-    {
-        /// <summary>취소 전에 이미 적용된 효과가 준 실제 피해와 그 단계 내역. 취소가 피해를
-        /// 되돌리지 않으므로 로그에서도 사라지면 안 된다. 효과 실행 전에 취소된 카드는 기본값
-        /// (0, 빈 목록)이다.</summary>
-        public int DamageDealt { get; init; }
-        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
-            = System.Array.Empty<DamageStep>();
-    }
+        CardCancellationReason Reason) : ResolutionEvent;
 
     /// <summary>주인이 죽어 차례가 오기 전에 실행선에서 빠진 카드(전투 실행 계약 스펙 §6). 그 카드의
     /// 차례가 온 것이 아니므로 CardCancelled와 구분한다 — 주인을 죽인 카드의 이벤트 뒤에 이어 붙는다.</summary>

@@ -29,7 +29,6 @@ namespace FateWeaver.Core.Effects
                         ctx.ExtraEvents.Add(new Events.CardBuffGranted(
                             card.InstanceId, card.Def.Id, StatusKeys.RewardNullified.Id, 1));
                     }
-                    ctx.TargetId = card.Def.Id;
                     return;
                 }
             }

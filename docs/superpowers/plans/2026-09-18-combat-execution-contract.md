@@ -30,15 +30,15 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T3이다.** T0·T1·T2a·T2b는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**다음 작업은 T3b이다.** T0·T1·T2a·T2b·T3는 끝났다. T3b는 착수 전에 사용자에게 절을 보여 주고 확인을 받는다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
   `combat-execution-contract`. **master에 아직 머지하지 않았다**(머지는 사용자 승인 후, 규칙 19). 새 세션은 이 워크트리로
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
-  `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적).
-- 기준 수치(T2b 끝): 헤드리스 693 · 편집 도구 157 · Unity EditMode 873 통과(실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · T3 커밋(아래 T3 절).
+- 기준 수치(T3 끝): 헤드리스 698 · 편집 도구 157 · Unity EditMode 891(통과 884, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -59,8 +59,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 - **인앱 브라우저는 폴더 연결(File System Access API)과 `data:` 주소의 localStorage를 지원하지 않는다.** 편집 도구를 확인하려면
   `index.html` 앞에 메모리 폴더·메모리 localStorage를 주입한 임시 페이지를 워크트리 안에 만들어 열고, 확인 뒤 지운다.
 - 워크트리 격리 세션은 복잡한 셸 한 줄(루프·치환이 섞인 명령)을 거부한다. 긴 편집은 scratchpad의 파이썬 스크립트로 나눠 돌렸다.
-- 대상은 아직 **카드 시작 때 한 번** 고정된다(T3에서 효과 단위로 바뀐다). 그래서 "첫 효과가 적을 죽이고 둘째 효과가 다음
-  적을 친다" 같은 테스트는 T3 전에는 성립하지 않는다(T2a의 V17 테스트는 두 효과 모두 적 전체를 치게 만들었다).
+- 대상은 T3부터 **효과마다** 고른다. 처리기를 직접 부르던 테스트는 `EffectHarness.Apply`(테스트 전용, EffectExecutor 경유)로
+  돌린다. 대상 선택·미적용 판정이 실제 실행 경로와 같아진다.
 
 ### 검토 반영 결정 (2026-09-18 사용자 결정)
 
@@ -418,6 +418,30 @@ T2a 이후 모든 카드가 새 키를 가지므로 이 작업 없이는 도구�
 
 ### T3. 효과 단위 위치 선택과 미적용 분리
 
+완료(2026-09-18). 범위는 사용자 결정으로 "효과 단위 선택만"이다 — 런타임 위치 축 전환은 T3b로 분리했다.
+구현 중 결정과 계획과 달라진 점:
+- `EffectExecutor.Apply(CardExecutionContext, EffectData)` 서명은 유지했다. 그래서 `CardExecutionContext`가
+  실행 중인 `State`와 `Resolution`(실행선·이력 질의)을 함께 갖는다. 수행 여부(`SkipOnBasic`·`requires`)와 수치
+  (`SuccessEffectValue`·`scaleBy`) 결정도 TurnResolver에서 EffectExecutor로 옮겼다.
+- `CardTargetSnapshot`은 `EffectTargetSnapshot`(키 하나의 목록)이 됐고, 선택 로직은 `EffectTargetResolver`로 옮겼다.
+  `CardTargetSnapshotTests`는 지우고 그 사례를 `EffectTargetResolverTests`에 옮겼다(카드 고정 계약을 뒤집은 사례 포함).
+- `EffectResult`에 `TargetIds`·`Events`·`DamageSteps`를 더했다. 처리기는 `ctx.TargetId`를 쓰지 않는다. 대상은
+  실행기가 목록에서 읽는다. 대상이 비면 처리기를 부르지 않는다. `EffectContext.Cancel`·`TargetId`를 지웠다.
+- 효과 도중 취소가 없어져 `CardCancelled.DamageDealt/DamageSteps`는 항상 0이 되므로 필드와 로그 표기를 지웠다.
+  `CardCancellationReason.NoValidTarget` 값은 "변경하지 않는다"에 따라 남겼다(이제 기록되지 않는다 — T7 검색 대상).
+- `StatusApplyTarget.PartyMember`(카드 TargetId로 고르는 명시 아군)는 실행 경로가 없어졌다. `TargetFor`는
+  `NotSupportedException`을 던지고 `ValidateData`가 거부한다. 저작 경로가 없고 세션도 이미 거부하던 값이다
+  (`PartyTargetRules.IsValidBaseExecutionDefinition`). 값 자체는 T3b에서 지운다.
+- `EnemyTargeting.ByIdOrFront`를 지웠다(호출처 0). `ExecutionCardInstance.TargetId`는 `SameTarget` 조건만 읽는다.
+  이 조건은 저작할 수 없다. 정리는 T3b·T7로 넘긴다.
+- `grant_next_player_damage_card_bonus`·`nullify_next_player_condition_reward`는 더 이상 `CardResolved.TargetId`에
+  카드 정의 id를 넣지 않는다(대상을 고르지 않는 효과다).
+- `CardResolvedPresenter`(`:46`·`:52`)를 확인했다. 새 의미에서 광역 대상은 상대 진영이라 방향이 정면과 같다.
+  자신 대상은 좌표 차가 0이라 정면이 된다. null은 이전처럼 정면이다. 표시가 성립하므로 주석만 고쳤다.
+- `GoblinParityTests` 고정 서명 갱신: TargetId 의미 변경(3줄)과 고블린 사망 뒤 `spore_veil`·`delayed_strike`의
+  취소→해결(방어 2 적용). 사유는 테스트 주석에 적었다.
+- 검증: 헤드리스 698 · 편집 도구 157 · Unity EditMode 891(통과 884, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+
 수정: `Assets/Core/Combat/CardTargetSnapshot.cs`, `TurnResolver.cs`,
 `Assets/Core/Effects/IEffectHandler.cs`, `DamageHandler.cs`, `ApplyStatusHandler.cs`, `MoveFormationHandler.cs`,
 `ConsumeStatusHandler.cs`, `TriggerStatusHandler.cs`.
@@ -431,7 +455,7 @@ CardTargetSnapshot.cs를 효과 단위 값 객체로 이전한다.
 `EffectExecutor.Apply(CardExecutionContext context, EffectData effect)`는 EffectResult를 반환한다.
 이 단계의 호출자는 기존 TurnResolver이며 T5에서 CardExecutor로 옮긴다.
 
-- [ ] 신규 EffectTargetResolverTests에 아래 테스트를 추가한다. NUnit, System, System.Linq,
+- [x] 신규 EffectTargetResolverTests에 아래 테스트를 추가한다. NUnit, System, System.Linq,
   FateWeaver.Core.Cards/Combat 네임스페이스와 기존 TestContent를 사용한다.
 
 ```csharp
@@ -454,17 +478,17 @@ public void A_new_effect_selects_the_new_front_enemy()
 }
 ```
 
-- [ ] `Tools/verify.sh --quick` 실패 확인 후 EffectExecutor에서 매번 대상을 확보한다.
+- [x] `Tools/verify.sh --quick` 실패 확인 후 EffectExecutor에서 매번 대상을 확보한다.
   처리기는 이번 대상 목록만 받으며 구형 TargetId 선택 분기를 제거한다.
-- [ ] 대상 0명은 EffectResult.Applied=false로 반환한다. CardCancellationReason을 변경하지 않는다.
+- [x] 대상 0명은 EffectResult.Applied=false로 반환한다. CardCancellationReason을 변경하지 않는다.
   처리기가 대상 부재로 카드 전체를 중단하는 분기를 제거한다.
-- [ ] V05 통합 테스트: a HP3/b HP10, damage3 두 번 → a 사망/b HP7.
+- [x] V05 통합 테스트: a HP3/b HP10, damage3 두 번 → a 사망/b HP7.
   V06: b를 앞으로 이동 → FrontOne 방어는 b에게 적용. 마지막 적 처치 이후 아군 효과는 T5와 통합한다.
-- [ ] All은 효과 시작 목록을 한 번 확보해 전체에 적용한다. 적용 도중 목록 구성을 다시 선택하지 않는다.
-- [ ] `CardResolved.TargetId`는 이벤트 필드로 유지하고 의미를 "처음 적용된 효과의 첫 대상(없으면 null)"으로
+- [x] All은 효과 시작 목록을 한 번 확보해 전체에 적용한다. 적용 도중 목록 구성을 다시 선택하지 않는다.
+- [x] `CardResolved.TargetId`는 이벤트 필드로 유지하고 의미를 "처음 적용된 효과의 첫 대상(없으면 null)"으로
   정의한다. Unity 소비자 `Assets/Unity/Scripts/Battle/Playback/CardResolvedPresenter.cs:46`·`:52`가 이 필드를 읽으므로,
   구현 전에 그 파일을 읽고 새 의미로 표시가 성립하는지 확인한다. 성립하지 않으면 멈추고 보고한다.
-- [ ] `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
+- [x] `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
   `refactor(core): 효과마다 위치를 해석하고 미적용을 분리한다`.
 
 ### T4. 공통 사건·직접 반응·공통 피해 경로

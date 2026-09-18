@@ -340,10 +340,10 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void A_card_cancelled_mid_effects_keeps_its_dealt_damage_on_the_event()
+        public void A_card_whose_later_effect_finds_no_target_resolves_with_the_damage_dealt()
         {
-            // 효과 1(피해 5)이 마지막 적을 죽이고, 효과 2(피해)가 대상을 못 찾아 카드가 취소된다.
-            // 취소는 이미 준 피해를 되돌리지 않으므로 로그에서도 사라지면 안 된다.
+            // 효과 1(피해 5)이 마지막 적을 죽이고, 효과 2(피해)는 대상이 없어 미적용된다 — 카드는 취소되지
+            // 않고 해결되며, 준 피해가 CardResolved에 남는다(스펙 §2).
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 3));
@@ -356,10 +356,10 @@ namespace FateWeaver.Tests
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
-            var cancelled = events.OfType<CardCancelled>().Single();
+            var resolved = events.OfType<CardResolved>().Single();
 
-            Assert.IsEmpty(events.OfType<CardResolved>());
-            Assert.AreEqual(5, cancelled.DamageDealt);
+            Assert.IsEmpty(events.OfType<CardCancelled>());
+            Assert.AreEqual(5, resolved.DamageDealt);
             Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "goblin"));
         }
 
@@ -661,17 +661,6 @@ namespace FateWeaver.Tests
                 StringAssert.DoesNotContain("[미처리 이벤트]",
                     TimelineTextFormatter.FormatEvent(evt, Korean));
             }
-        }
-
-        [Test]
-        public void Cancelled_card_entry_includes_pre_cancel_damage()
-        {
-            var text = TimelineTextFormatter.FormatEvent(
-                new CardCancelled(1, "double_strike", "member_a", CardCancellationReason.NoValidTarget)
-                {
-                    DamageDealt = 5
-                }, Korean);
-            StringAssert.Contains("5", text);
         }
     }
 }

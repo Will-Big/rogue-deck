@@ -24,7 +24,6 @@ namespace FateWeaver.Core.Effects
                             card.InstanceId, card.Def.Id,
                             Events.CardBuffIds.DamageBonus, ctx.EffectValue));
                     }
-                    ctx.TargetId = card.Def.Id;
                     return;
                 }
             }

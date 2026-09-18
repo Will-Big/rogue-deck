@@ -41,19 +41,11 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = distance
-            };
-
-            new MoveFormationHandler().Apply(context);
+            Assert.IsTrue(EffectHarness.Apply(new MoveFormationHandler(), state, card, effect).Applied);
         }
 
         [Test]
-        public void Later_effect_does_not_promote_a_new_enemy_after_captured_front_two_die()
+        public void Later_effect_reselects_front_two_after_the_first_effect_kills_them()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(MemberHp);
@@ -82,8 +74,9 @@ namespace FateWeaver.Tests
 
             new TurnResolver(effects).Resolve(state, 0);
 
+            // 효과마다 그 시작의 위치로 다시 고른다(스펙 §2): a·b가 죽은 뒤 FrontTwo는 c 하나다.
             Assert.AreEqual(2, state.Enemies[2].Hp);
-            Assert.IsFalse(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
+            Assert.IsTrue(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
         }
 
         [Test]
@@ -218,17 +211,10 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = effect.EffectValue
-            };
+            var result = EffectHarness.Apply(new MoveFormationHandler(), state, card, effect);
 
-            new MoveFormationHandler().Apply(context);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason);
             Assert.AreSame(front, state.Party[0]);
         }
 
@@ -254,17 +240,10 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = effect.EffectValue
-            };
+            var result = EffectHarness.Apply(new MoveFormationHandler(), state, card, effect);
 
-            new MoveFormationHandler().Apply(context);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason);
             Assert.AreSame(front, state.Enemies[0]);
         }
     }

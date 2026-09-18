@@ -115,7 +115,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Multi_target_effect_clears_a_previous_single_target_from_card_resolved()
+        public void Card_resolved_target_is_the_first_target_of_the_first_applied_effect()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
@@ -139,7 +139,8 @@ namespace FateWeaver.Tests
                 .OfType<CardResolved>()
                 .Single();
 
-            Assert.IsNull(resolved.TargetId);
+            // 처음 적용된 효과(자신에게 방어)의 첫 대상. 뒤의 광역 효과가 이를 지우지 않는다.
+            Assert.AreEqual(CombatState.SoloPlayerId, resolved.TargetId);
             Assert.AreEqual(10, state.Enemies[0].Hp);
             Assert.AreEqual(10, state.Enemies[1].Hp);
         }

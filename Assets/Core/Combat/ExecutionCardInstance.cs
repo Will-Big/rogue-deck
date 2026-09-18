@@ -34,9 +34,8 @@ namespace FateWeaver.Core.Combat
         public bool IsLocked { get; set; }
         public StatusBag Statuses { get; } = new();
 
-        /// <summary>Set by an effect handler via EffectContext.Cancel when the card's target cannot be
-        /// resolved. First cancellation reason wins; a cancelled card's remaining effects must not
-        /// mutate state (see IEffectHandler.cs).</summary>
+        /// <summary>차례가 오기 전에 정해진 취소 사유(예: 상태의 가로채기). 있으면 효과를 하나도 수행하지 않는다.
+        /// 효과가 대상을 찾지 못하는 것은 취소가 아니다 — 그 효과만 미적용된다(전투 실행 계약 스펙 §2).</summary>
         public CardCancellationReason? CancellationReason { get; set; }
 
         /// <summary>실행선에서의 진행 단계. TurnResolver와 FutureZone이 옮긴다.</summary>
