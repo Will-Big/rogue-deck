@@ -20,7 +20,7 @@
 | §5 | P0-C 대상 선택 메타데이터 | **완료** — [대상 선택 메타데이터 설계](../specs/2026-07-28-p0c-targeting-metadata-design.md) |
 | §6 | P1-A SO 단일 원본화 | **대체·완료** — 원본은 SO가 아니라 **JSON**이 됐고, 계획 3d(2026-08-05)가 남은 C# 골든 목록까지 지워 잔여가 없다. 아래 §6 머리말 참고 |
 | §7 | P1-B Unity 프리팹화 | `active` — 단 `CardAsset`·`DeckAsset` 캡슐화 항목은 대상이 사라져 무효 |
-| §8 | P1-C 전투 튜닝 데이터화 | `active` — 운명력(`fateEnergyPerTurn`)·생존자 수별 드로우(`drawByLivingCount`)는 `Content/combat_rules.json`으로, 파티원 최대 HP(`maxHp`)·생존 충전(`surviveCharges`)은 `Content/Characters/*.json`으로 전투 노드 2단계(2026-09-17)가 옮겼다. 다만 `DeckCombatSession`(`Assets/Core/Simulation/DeckCombatSession.cs:51,66,90`) 생성자의 `fateEnergyPerTurn = 3` 기본값 등 제품 경로 매직 넘버가 남아 있고 `CombatTuning` 순수 모델도 없어, 절의 나머지 완료 조건이 끝나지 않았으므로 현황은 바꾸지 않는다 |
+| §8 | P1-C 전투 튜닝 데이터화 | `active` — 운명력(`fateEnergyPerTurn`)·생존자 수별 드로우(`drawByLivingCount`)는 `Content/combat_rules.json`으로, 파티원 최대 HP(`maxHp`)는 `Content/Characters/*.json`으로(생존 충전 `surviveCharges`도 옮겨졌으나 2026-09-18 전투 실행 계약 계획 T0에서 제거) 전투 노드 2단계(2026-09-17)가 옮겼다. 다만 `DeckCombatSession`(`Assets/Core/Simulation/DeckCombatSession.cs:51,66,90`) 생성자의 `fateEnergyPerTurn = 3` 기본값 등 제품 경로 매직 넘버가 남아 있고 `CombatTuning` 순수 모델도 없어, 절의 나머지 완료 조건이 끝나지 않았으므로 현황은 바꾸지 않는다 |
 | §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
 | §12·§13 | 2026-07-25 점검, 2026-07-30 상태 이상 논의 | `active` |
 

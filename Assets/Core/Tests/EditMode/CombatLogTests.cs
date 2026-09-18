@@ -401,7 +401,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Formatter_spells_out_each_damage_step_and_the_deaths_door_save()
+        public void Formatter_spells_out_each_damage_step()
         {
             var timeline = new ResolutionEvent[]
             {
@@ -414,7 +414,6 @@ namespace FateWeaver.Tests
                         new DamageStep("member_a", "block", 6, 4)
                     }
                 },
-                new DeathsDoorSurvived("member_a"),
                 new TurnEnded(0, Outcome.Ongoing)
             };
 
@@ -424,7 +423,6 @@ namespace FateWeaver.Tests
             StringAssert.Contains("4", text);
             StringAssert.Contains("6", text);
             StringAssert.Contains("방어", text);
-            StringAssert.Contains("치명", text);   // 왜 살아남았는지가 반드시 보여야 한다
             StringAssert.Contains("member_a", text);
         }
 
@@ -446,25 +444,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(("goblin_a", 10, 6, HpChangeSource.CardDamage, "sweep"),
                 (changes[0].HolderId, changes[0].Before, changes[0].After, changes[0].Source, changes[0].SourceId));
             Assert.AreEqual(("goblin_b", 10, 6), (changes[1].HolderId, changes[1].Before, changes[1].After));
-        }
-
-        [Test]
-        public void Deaths_door_hp_change_shows_the_clamp_to_one()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            var player = state.AddSoloPlayer(30);
-            player.Hp = 4;
-            player.SurviveCharges = 1;
-            state.Enemies.Add(new Enemy("goblin", 10));
-            var def = new CardDefinition("jab", "jab", Side.Enemy, 1,
-                new[] { new EffectData(EffectKeys.Damage, 6) });
-            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "goblin" });
-
-            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
-            var change = events.OfType<HpChanged>().Single();
-
-            Assert.AreEqual((CombatState.SoloPlayerId, 4, 1), (change.HolderId, change.Before, change.After));
-            Assert.IsTrue(events.OfType<DeathsDoorSurvived>().Any());
         }
 
         [Test]

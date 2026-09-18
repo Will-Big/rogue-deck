@@ -128,9 +128,6 @@ namespace FateWeaver.Simulation.Descriptions
                       .Append(' ').Append(e.Magnitude).Append(" 이전: ")
                       .Append(e.FromHolderId).Append(" → ").AppendLine(e.ToHolderId);
                     break;
-                case DeathsDoorSurvived e:
-                    sb.Append("  ").Append(e.MemberId).AppendLine(" 치명 버팀 발동 (HP 1로 유지)");
-                    break;
                 case PartyMemberDied e:
                     sb.Append("  ").Append(e.MemberId).AppendLine(" 사망");
                     break;

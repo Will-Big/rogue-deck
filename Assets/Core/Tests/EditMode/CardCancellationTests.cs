@@ -9,7 +9,7 @@ using FateWeaver.Core.Events;
 namespace FateWeaver.Tests
 {
     /// <summary>Task 3: execution-card cancellation events (CardCancelled) and the per-effect death
-    /// sweep (PartyMemberDied / DeathsDoorSurvived), including the owner-death cascade that cancels a
+    /// sweep (PartyMemberDied), including the owner-death cascade that cancels a
     /// dead owner's still-pending cards — symmetrically for party members and enemies.</summary>
     public class CardCancellationTests
     {
@@ -107,57 +107,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Hp_reaching_exactly_one_without_spending_a_charge_emits_no_deaths_door_event()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
-            state.Party.Add(hero);
-
-            var strike = Card("goblin_jab", Side.Enemy, executionOrder: 1, damage: 4); // 5 -> 1, no charge spent
-            state.Zone.Add(strike);
-
-            var events = new TurnResolver(Registry()).Resolve(state, 0);
-
-            Assert.AreEqual(1, hero.Hp);
-            Assert.AreEqual(1, hero.SurviveCharges);
-            Assert.IsFalse(events.OfType<DeathsDoorSurvived>().Any());
-            Assert.IsFalse(events.OfType<PartyMemberDied>().Any());
-        }
-
-        [Test]
-        public void Charge_decrease_emits_deaths_door_even_when_hp_was_already_one_before_a_later_effect()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
-            state.Party.Add(hero);
-
-            // Two effects on one card: first lands hero exactly on 1 HP (no charge spent), second
-            // would be lethal and must spend the charge even though HP was already 1 going in.
-            var def = new CardDefinition("double_strike", "double_strike", Side.Enemy, 1,
-                new[]
-                {
-                    new EffectData(EffectKeys.Damage, 4),
-                    new EffectData(EffectKeys.Damage, 1)
-                });
-            state.Zone.Add(new ExecutionCardInstance(def));
-
-            var events = new TurnResolver(Registry()).Resolve(state, 0);
-
-            Assert.AreEqual(1, hero.Hp);
-            Assert.AreEqual(0, hero.SurviveCharges);
-            var survived = events.OfType<DeathsDoorSurvived>().Single();
-            Assert.AreEqual("hero", survived.MemberId);
-            Assert.IsFalse(events.OfType<PartyMemberDied>().Any());
-        }
-
-        [Test]
         public void Kill_then_no_target_emits_cancellation_before_death_and_owner_cancellation()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
-            var memberA = new PartyMember("a", "A", maxHp: 5, surviveCharges: 0);
+            var memberA = new PartyMember("a", "A", maxHp: 5);
             state.Party.Add(memberA);
             state.Enemies.Add(new Enemy("goblin", 100));
 

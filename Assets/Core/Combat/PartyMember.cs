@@ -2,12 +2,10 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Result of a single TakeDamage call: whether the hit was absorbed normally, survived
-    /// on a "death's door" charge (HP steadied to 1), or was actually lethal.</summary>
+    /// <summary>Result of a single TakeDamage call: whether the member is still alive or the hit was lethal.</summary>
     public enum DamageOutcome
     {
         Damaged,
-        DeathsDoor,
         Died
     }
 
@@ -19,37 +17,22 @@ namespace FateWeaver.Core.Combat
         public string Name { get; }
         public int MaxHp { get; set; }
         public int Hp { get; set; }
-        public int SurviveCharges { get; set; }
         public bool IsAlive => Hp > 0;
         public StatusBag Statuses { get; } = new();
 
-        public PartyMember(string id, string name, int maxHp, int surviveCharges = 0)
+        public PartyMember(string id, string name, int maxHp)
         {
             Id = id;
             Name = name;
             MaxHp = maxHp;
             Hp = maxHp;
-            SurviveCharges = surviveCharges;
         }
 
-        /// <summary>Applies damage. A lethal hit is absorbed by one SurviveCharges charge (HP steadies
-        /// at 1, DeathsDoor); with no charges left a lethal hit kills.</summary>
+        /// <summary>Applies damage. A hit that brings HP to zero or below kills.</summary>
         public DamageOutcome TakeDamage(int amount)
         {
             Hp -= amount;
-            if (Hp > 0)
-            {
-                return DamageOutcome.Damaged;
-            }
-
-            if (SurviveCharges > 0)
-            {
-                SurviveCharges--;
-                Hp = 1;
-                return DamageOutcome.DeathsDoor;
-            }
-
-            return DamageOutcome.Died;
+            return Hp > 0 ? DamageOutcome.Damaged : DamageOutcome.Died;
         }
     }
 }

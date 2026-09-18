@@ -56,12 +56,8 @@ namespace FateWeaver.Core.Events
             = System.Array.Empty<DamageStep>();
     }
 
-    /// <summary>A party member's HP reached zero or below and they had no SurviveCharges left to
-    /// absorb the hit.</summary>
+    /// <summary>A party member's HP reached zero or below.</summary>
     public sealed record PartyMemberDied(string MemberId) : ResolutionEvent;
-
-    /// <summary>A party member spent one SurviveCharges charge to steady at 1 HP instead of dying.</summary>
-    public sealed record DeathsDoorSurvived(string MemberId) : ResolutionEvent;
 
     /// <summary>An enemy's HP reached zero or below (from card effects or a status tick).</summary>
     public sealed record EnemyDied(string EnemyId) : ResolutionEvent;

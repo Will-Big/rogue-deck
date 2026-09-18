@@ -33,7 +33,7 @@ namespace FateWeaver.Core.Authoring.Characters
     public static class CharacterContentLoader
     {
         private static readonly string[] RequiredKeys =
-            { "id", "displayName", "deck", "pool", "maxHp", "surviveCharges" };
+            { "id", "displayName", "deck", "pool", "maxHp" };
 
         public static CharacterContentLoadResult Load(
             IEnumerable<CardContentSource> sources,
@@ -105,18 +105,12 @@ namespace FateWeaver.Core.Authoring.Characters
                     rejected = true;
                 }
 
-                if (spec.SurviveCharges < 0)
-                {
-                    errors.Add(source.Name + ": surviveCharges must not be negative.");
-                    rejected = true;
-                }
-
                 if (!rejected)
                 {
                     characters.Add(
                         spec.Id,
                         new CharacterContent(
-                            spec.Id, spec.DisplayName, spec.Deck, spec.Pool, spec.MaxHp, spec.SurviveCharges));
+                            spec.Id, spec.DisplayName, spec.Deck, spec.Pool, spec.MaxHp));
                 }
             }
 

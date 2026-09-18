@@ -178,37 +178,30 @@ namespace FateWeaver.Core.Combat
             }
         }
 
-        /// <summary>Snapshots (IsAlive, SurviveCharges) for every party member immediately before an
-        /// effect applies, so the caller can diff after the effect and detect a death or a
-        /// SurviveCharges-consuming save. HP alone (e.g. "HP == 1") is never the trigger.</summary>
-        private static Dictionary<string, (bool IsAlive, int SurviveCharges)> SnapshotParty(CombatState state)
+        /// <summary>Snapshots IsAlive for every party member immediately before an effect applies, so
+        /// the caller can diff after the effect and detect a death.</summary>
+        private static Dictionary<string, bool> SnapshotParty(CombatState state)
         {
-            var snapshot = new Dictionary<string, (bool, int)>();
+            var snapshot = new Dictionary<string, bool>();
             foreach (var member in state.Party)
             {
-                snapshot[member.Id] = (member.IsAlive, member.SurviveCharges);
+                snapshot[member.Id] = member.IsAlive;
             }
 
             return snapshot;
         }
 
-        /// <summary>Diffs the party against a pre-effect snapshot and appends DeathsDoorSurvived /
-        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.
-        /// A newly-dead member also gets OnHolderDied dispatched on every status it carried.</summary>
+        /// <summary>Diffs the party against a pre-effect snapshot and appends PartyMemberDied to the
+        /// pending list for any member who died this effect. A newly-dead member also gets OnHolderDied
+        /// dispatched on every status it carried.</summary>
         private void CollectDeathSweepEvents(
             CombatState state,
-            Dictionary<string, (bool IsAlive, int SurviveCharges)> before,
+            Dictionary<string, bool> before,
             List<ResolutionEvent> pending)
         {
             foreach (var member in state.Party)
             {
-                var prior = before[member.Id];
-
-                if (member.SurviveCharges < prior.SurviveCharges && member.IsAlive)
-                {
-                    pending.Add(new DeathsDoorSurvived(member.Id));
-                }
-                else if (prior.IsAlive && !member.IsAlive)
+                if (before[member.Id] && !member.IsAlive)
                 {
                     pending.Add(new PartyMemberDied(member.Id));
                     DispatchHolderDied(state, member.Statuses, member.Id, pending);

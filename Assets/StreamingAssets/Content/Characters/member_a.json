@@ -3,6 +3,5 @@
   "displayName": "파티원 A",
   "deck": "starter",
   "pool": "starter",
-  "maxHp": 25,
-  "surviveCharges": 1
+  "maxHp": 25
 }

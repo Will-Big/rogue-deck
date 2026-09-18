@@ -6,6 +6,9 @@
 
 **상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 구현 완료(2026-09-17). 구현 계획 [`plans/2026-09-17-combat-node-stage2.md`](../.archive/plans/2026-09-17-combat-node-stage2.md)는 보관됐다. 1단계 구현 계획도 보관됐다.
 
+**2026-09-18 제거:** 이 문서의 `surviveCharges`·`SurviveCharges`(치명타 버티기 충전)는 [전투 실행 계약 구현 계획](../plans/2026-09-18-combat-execution-contract.md)
+T0에서 코드·캐릭터 JSON 모두 제거됐다(사용자 결정 D8). 아래 해당 서술은 작성 당시 기준이며, 재도입은 별도 설계로 한다.
+
 ## 상세
 
 ### 목표와 범위

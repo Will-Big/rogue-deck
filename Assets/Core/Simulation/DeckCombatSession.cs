@@ -128,8 +128,7 @@ namespace FateWeaver.Simulation
                     _state.Party.Add(new PartyMember(
                         loadout.Id,
                         loadout.Name,
-                        loadout.MaxHp,
-                        loadout.SurviveCharges));
+                        loadout.MaxHp));
                 }
             }
             else
@@ -475,7 +474,6 @@ namespace FateWeaver.Simulation
                     || string.IsNullOrEmpty(loadout.Id)
                     || !ids.Add(loadout.Id)
                     || loadout.MaxHp <= 0
-                    || loadout.SurviveCharges < 0
                     || loadout.Cards == null)
                 {
                     throw new System.ArgumentException("Party loadout is invalid.");

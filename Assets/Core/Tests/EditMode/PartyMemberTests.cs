@@ -17,28 +17,26 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Lethal_damage_is_survived_once_at_one_hp()
+        public void Lethal_damage_kills_immediately()
         {
-            var member = new PartyMember("hero", "Hero", maxHp: 10, surviveCharges: 1);
+            var member = new PartyMember("hero", "Hero", maxHp: 10);
 
             var outcome = member.TakeDamage(15);
 
-            Assert.AreEqual(DamageOutcome.DeathsDoor, outcome);
-            Assert.AreEqual(1, member.Hp);
-            Assert.AreEqual(0, member.SurviveCharges);
-            Assert.IsTrue(member.IsAlive);
+            Assert.AreEqual(DamageOutcome.Died, outcome);
+            Assert.IsFalse(member.IsAlive);
         }
 
         [Test]
-        public void Second_lethal_damage_kills()
+        public void Non_lethal_damage_leaves_the_member_alive()
         {
-            var member = new PartyMember("hero", "Hero", maxHp: 10, surviveCharges: 1);
-            member.TakeDamage(15); // spends the only survive charge, HP -> 1
+            var member = new PartyMember("hero", "Hero", maxHp: 10);
 
-            var outcome = member.TakeDamage(5);
+            var outcome = member.TakeDamage(9);
 
-            Assert.AreEqual(DamageOutcome.Died, outcome);
-            Assert.IsFalse(member.IsAlive);
+            Assert.AreEqual(DamageOutcome.Damaged, outcome);
+            Assert.AreEqual(1, member.Hp);
+            Assert.IsTrue(member.IsAlive);
         }
 
         [Test]

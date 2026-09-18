@@ -97,7 +97,7 @@ namespace FateWeaver.Simulation.Run
             var nodeIndex = run.EnterNode();
             var nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex);
             var loadouts = run.LivingMembers
-                .Select(member => new PartyMemberLoadout(member.Id, member.Name, member.MaxHp, member.SurviveCharges, member.Cards.ToList()))
+                .Select(member => new PartyMemberLoadout(member.Id, member.Name, member.MaxHp, member.Cards.ToList()))
                 .ToList();
             var session = new DeckCombatSession(
                 context.Statuses,

@@ -133,7 +133,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
-            => new PartyMemberLoadout(id, name, maxHp, 0, Array.Empty<CardDefinition>());
+            => new PartyMemberLoadout(id, name, maxHp, Array.Empty<CardDefinition>());
 
         private RectTransform ChildRect(string name)
         {
