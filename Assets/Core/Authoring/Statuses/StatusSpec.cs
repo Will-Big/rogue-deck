@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Status;
 using Newtonsoft.Json;
@@ -8,7 +7,6 @@ namespace FateWeaver.Core.Authoring.Statuses
     /// <summary>저작된 상태 하나. 파라미터가 없는 상태(방어·전염·독 잠복·독 안정·보상 무효)는 이
     /// 클래스를 그대로 쓴다 — 쓰이지 않는 칸을 만들지 않기 위해 파라미터가 있는 상태만 서브클래스를
     /// 갖는다. behavior 클래스는 코드에 남고 키로 등록된다(규칙 9).</summary>
-    [Serializable]
     public class StatusSpec
     {
         public StatusKeyRef Key;

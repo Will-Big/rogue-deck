@@ -1,11 +1,9 @@
-using System;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Authoring
 {
-    /// <summary>Serializable reference to an open-set status key. Validated (registry membership)
-    /// at editor/boot time instead of being a closed enum.</summary>
-    [Serializable]
+    /// <summary>JSON-authored reference to an open-set status key. Validated (registry membership)
+    /// at boot time instead of being a closed enum.</summary>
     public struct StatusKeyRef
     {
         public string Id;

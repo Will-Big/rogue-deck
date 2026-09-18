@@ -1,11 +1,9 @@
-using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Core.Authoring
 {
     /// <summary>Grants a damage bonus to the next player damage card.</summary>
-    [Serializable]
     public sealed class GrantNextDamageCardBonusSpec : EffectSpec
     {
         public int Value;

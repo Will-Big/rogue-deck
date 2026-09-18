@@ -1,11 +1,9 @@
-using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Core.Authoring
 {
     /// <summary>Nullifies the next player condition reward. No parameters.</summary>
-    [Serializable]
     public sealed class NullifyNextRewardSpec : EffectSpec
     {
         public override EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;

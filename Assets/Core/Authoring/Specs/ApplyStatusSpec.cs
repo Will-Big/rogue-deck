@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
@@ -9,7 +8,6 @@ namespace FateWeaver.Core.Authoring
     /// <summary>카드 위치 규칙이 고른 대상에게 상태를 건다. 어느 진영인지는 TargetFaction이, 어느 위치인지는
     /// 카드의 그 진영 축이 정한다(스펙 §4). 적 카드가 파티에 거는 상태처럼 아직 쓰는 콘텐츠가 없는 조합은
     /// 로딩에서 거부한다(ValidateTarget).</summary>
-    [Serializable]
     public sealed class ApplyStatusSpec : EffectSpec
     {
         public StatusKeyRef Status;

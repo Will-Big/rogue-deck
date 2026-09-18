@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
@@ -7,7 +6,6 @@ namespace FateWeaver.Core.Authoring
 {
     /// <summary>상대 진영의 카드 위치 규칙이 고른 대상에게 고정 피해를 준다. Traits는 이 피해의 속성들이다
     /// (관통·배율 무시, 여러 개 가능 — 계획 D10). 생략하면 보통 피해다.</summary>
-    [Serializable]
     public sealed class DamageSpec : EffectSpec
     {
         public int Value;
