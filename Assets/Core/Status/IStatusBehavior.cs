@@ -65,6 +65,9 @@ namespace FateWeaver.Core.Status
         /// <summary>행동 턴 종료(수명 만료 전)에 보유자 단위로 발동하는 틱 (예: 독 피해+성장).</summary>
         void OnTurnEnd(StatusTickContext ctx);
 
+        /// <summary>턴 시작(준비 만료 뒤, 적 배치·드로우 전)에 보유자 단위로 발동한다. 지금 이 시점을 쓰는 게임 상태는 없다.</summary>
+        void OnTurnStart(StatusTickContext ctx);
+
         /// <summary>이번 턴 이 상태의 발동을 막는다. trigger_status가 즉시 발동시킨 뒤 호출하며,
         /// 어떤 마커를 쓰는지는 상태 자신만 안다 — 카드가 알 필요가 없다.</summary>
         void SuppressThisTurn(StatusBag holderBag);
@@ -92,6 +95,7 @@ namespace FateWeaver.Core.Status
         public virtual bool InterceptCardResolve(StatusContext ctx) => false;
         public virtual int ModifyExecutionOrder(int executionOrder, StatusContext ctx) => executionOrder;
         public virtual void OnTurnEnd(StatusTickContext ctx) { }
+        public virtual void OnTurnStart(StatusTickContext ctx) { }
         public virtual void SuppressThisTurn(StatusBag holderBag) { }
 
         public virtual Authoring.Statuses.StatusSpec NewSpec()

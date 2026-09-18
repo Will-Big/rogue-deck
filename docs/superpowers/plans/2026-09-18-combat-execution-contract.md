@@ -30,7 +30,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T6이다.** T0·T1·T2a·T2b·T3·T3b·T4·T5는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**다음 작업은 T7이다.** T0·T1·T2a·T2b·T3·T3b·T4·T5·T6는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
@@ -38,8 +38,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
   `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · `c06b2e4`(T3) ·
-  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · `4a7bda6`·`406b746`·`9842341`(T4와 검토 반영) · T5 커밋(아래 T5 절).
-- 기준 수치(T5 끝): 헤드리스 725 · 편집 도구 161 · Unity EditMode 918(통과 911, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · `4a7bda6`·`406b746`·`9842341`(T4와 검토 반영) · `c5bbf83`(T5) · T6 커밋(아래 T6 절).
+- 기준 수치(T6 끝): 헤드리스 736 · 편집 도구 161 · Unity EditMode 929(통과 922, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -787,6 +787,27 @@ Executed로 전환 (무효과·수행자 사망도 동일)
 
 ### T6. 공통 만료 시점과 턴 경계
 
+완료(2026-09-18). 구현 중 결정과 계획과 달라진 점:
+- **런타임 표현**: `StatusInstance`의 `Count`·`Kind` 뜻은 그대로 두었다(Unity `UnitView.cs:90`이 세기가 0이면 Count를 표시).
+  대신 인스턴스가 `Expiry`(`ExpiryPolicy`: Permanent/PhaseVisits/UntilConsumed, 기준 시점, 방문 수)를 갖고, 방문 수는
+  내부 값으로 센다(Turns는 Count도 함께 준다). 구형 수명은 `StatusLifetime.Expiry`가 옮긴다: ThisTurn = Cleanup 1회,
+  Turns(n) = Cleanup n회. 새 수명 종류 `StatusLifetimeKind.PhaseVisits`(시점 포함)를 더했다.
+- **저작**: 상태 JSON은 `lifetime` 또는 `expiry` 중 하나를 쓴다(`StatusSpec.Lifetime`은 nullable, 둘 다/둘 다 없음은 로딩 오류).
+  `expiry`는 지금 PhaseVisits만 받는다. `block.json`만 `{ "mode": "PhaseVisits", "phase": "Prepare", "remainingVisits": 1 }`로 바꿨다.
+  expiry로 저작한 상태의 카드 count는 세기다(방문 수를 데이터가 정한다). 카탈로그 `LifetimeFor(key, count)`가 수명을 만든다.
+- **시점 실행**: `TurnResolver.Prepare`(준비 만료)·`StartTurn`(턴 시작 상태 능력 → 사망 정리 → 직접 반응, Primary)을 더했고,
+  턴 끝은 TurnEnd 능력 → 사망 → 반응 → Cleanup 만료다. 새 훅 `IStatusBehavior.OnTurnStart`(기본 무동작 — 쓰는 게임 상태는 없다).
+  만료는 `StatusLifetimePolicy.VisitAll`이 **시점 진입 때 있던 상태만** 방문한다.
+- **세션·러너**: `DeckCombatSession.BeginTurn`은 준비 → 운명력 초기화 → 턴 시작 → 승패(결판 시 적 배치·드로우 안 함) →
+  기존 적 배치·드로우. 이 단계의 이벤트는 새 `LastTurnStartTimeline`에 둔다(해석 타임라인과 따로 — Unity는 아직 안 읽는다,
+  T7 표시 계약에서 다룬다). `MultiTurnRunner`도 매 턴 준비·턴 시작을 밟고 그 이벤트를 그 턴 타임라인 앞에 붙인다.
+- **재부여**: `StatusBag.Add`는 같은 자리의 인스턴스를 갱신(`StatusInstance.Refresh`, 내부)하고 새 부여만 끝에 붙인다. `EndOfTurn`은 지웠다.
+- 동작 불변 확인: 같은 시드 샘플 Compare 6개와 카드 설명이 같다. 고정 서명은 해석 타임라인의 `StatusExpired(block)` 7줄이
+  빠지는 만큼만 바뀌었다(HP·피해·턴 흐름 동일, 사유는 테스트 주석).
+- **눈으로 확인할 것(사용자 몫)**: Unity 전투 화면에서 방어 아이콘이 해석 재생이 끝난 뒤에도 남아 있다가 "다음 턴"을 누를 때
+  사라진다(전에는 재생 끝에 사라졌다). 규칙상 결과는 같다.
+- 검증: 헤드리스 736 · 편집 도구 161 · Unity EditMode 929(통과 922, 실패 0, 건너뜀 7).
+
 수정: `Assets/Core/Status/StatusLifetime.cs`, `StatusInstance.cs`, `StatusBag.cs`, `IStatusBehavior.cs`,
 `Assets/Core/Authoring/Statuses/StatusSpec.cs`, `StatusContentLoader.cs`,
 `Assets/Core/Simulation/DeckCombatSession.cs`, `Assets/Core/Combat/TurnResolver.cs`,
@@ -803,7 +824,7 @@ Executed로 전환 (무효과·수행자 사망도 동일)
   상태 이름을 검사하지 않고 정책을 평가한다. 시점 진입 시 존재했던 상태만 방문한다.
 - StatusBag 재부여는 같은 위치를 갱신한다. 기존 중첩·수명 갱신 의미는 유지한다.
 
-- [ ] 기존 StatusBag 계약으로 재부여 순서 실패 테스트를 추가한다.
+- [x] 기존 StatusBag 계약으로 재부여 순서 실패 테스트를 추가한다.
 
 ```csharp
 [Test]
@@ -818,32 +839,32 @@ public void Refresh_keeps_the_original_application_order()
 }
 ```
 
-- [ ] `Tools/verify.sh --quick` 실패 확인 후 기존 상태의 값/수명을 갱신하고 위치를 유지한다.
+- [x] `Tools/verify.sh --quick` 실패 확인 후 기존 상태의 값/수명을 갱신하고 위치를 유지한다.
   신규 부여만 끝에 삽입한다. 수명 갱신은 StatusInstance의 내부 메서드로 한정한다.
-- [ ] block의 JSON을 아래 공통 정책으로 변환한다. 다른 ThisTurn 상태를 전부 함께 바꾸지 않는다.
+- [x] block의 JSON을 아래 공통 정책으로 변환한다. 다른 ThisTurn 상태를 전부 함께 바꾸지 않는다.
 
 ```json
 { "mode": "PhaseVisits", "phase": "Prepare", "remainingVisits": 1 }
 ```
 
-- [ ] 구형 ThisTurn은 Cleanup 만료, Turns는 Cleanup 방문 횟수로 변환한다. 발동 시점과는 별개다.
+- [x] 구형 ThisTurn은 Cleanup 만료, Turns는 Cleanup 방문 횟수로 변환한다. 발동 시점과는 별개다.
   상태 세기와 남은 횟수를 혼동하지 않는다. count/magnitude 전역 개명 및 런 지속값 변경은 범위 밖이다.
-- [ ] BeginTurn은 준비 만료·비용 초기화 → TurnStart 능력 → 승패 판정 → 기존 적 배치/드로우 순으로 연결한다.
+- [x] BeginTurn은 준비 만료·비용 초기화 → TurnStart 능력 → 승패 판정 → 기존 적 배치/드로우 순으로 연결한다.
   적 배치 본문은 별도 작업의 최신 구현을 보존하며 단일 적 가정을 되살리지 않는다.
-- [ ] TurnEnd는 해당 시점 능력을 순차 처리하고 사망은 즉시 반영, 승패는 시점 마지막에 판정한다.
+- [x] TurnEnd는 해당 시점 능력을 순차 처리하고 사망은 즉시 반영, 승패는 시점 마지막에 판정한다.
   죽은 보유자의 일반 능력은 요건으로 제외하고, 사망 능력은 사망 사건에서 발동한다.
   독의 성장은 독 수행 내부에 유지하며 별도 연쇄 반응으로 만들지 않는다.
-- [ ] 턴 시작·턴 종료 시점의 상태 처리가 만든 효과·사건은 Primary 기원으로 실행한다(D7). 독 틱 사망 → 전염 발동을
+- [x] 턴 시작·턴 종료 시점의 상태 처리가 만든 효과·사건은 Primary 기원으로 실행한다(D7). 독 틱 사망 → 전염 발동을
   회귀 테스트로 잠근다(`ContagionStatusTests`).
-- [ ] 방어 만료를 Prepare로 옮기는 변경은 결과가 지금과 같아야 한다 — 목적은 시점 구분이다(「검토 반영 결정」 끝 문단).
+- [x] 방어 만료를 Prepare로 옮기는 변경은 결과가 지금과 같아야 한다 — 목적은 시점 구분이다(「검토 반영 결정」 끝 문단).
   같은 시드 Compare로 차이가 없음을 확인한다.
-- [ ] `Assets/Core/Status/StatusLifetime.cs:11`의 "Chosen PER APPLICATION" 주석은 낡았다(수명은 상태 JSON이 정한다,
+- [x] `Assets/Core/Status/StatusLifetime.cs:11`의 "Chosen PER APPLICATION" 주석은 낡았다(수명은 상태 JSON이 정한다,
   `StatusContentCatalog.LifetimeOf`). 새 정책 타입으로 옮기면서 주석을 사실에 맞게 쓴다.
-- [ ] Unity 테스트 `Assets/Tests/UnityEditMode/BattleUnitsViewIdentityTests.cs:79–81`·`:105–107`이
+- [x] Unity 테스트 `Assets/Tests/UnityEditMode/BattleUnitsViewIdentityTests.cs:79–81`·`:105–107`이
   `StatusLifetime.Turns(2)`와 `Statuses.Add`를 쓴다. API를 바꾸면 이 파일도 같은 커밋에서 고친다.
-- [ ] V19: 기존 방어 만료 → 시작 방어 획득 → 새 방어 유지.
+- [x] V19: 기존 방어 만료 → 시작 방어 획득 → 새 방어 유지.
   V20: 양측 HP1/독1 → 해당 시점 종료 후 Lose. 만료 중 새 부여가 즉시 사라지지 않는 사례도 추가한다.
-- [ ] `Tools/verify.sh`와 D3의 Unity EditMode 배치가 통과한 뒤 커밋: `refactor(core): 상태 만료를 공통 턴 시점으로 처리한다`.
+- [x] `Tools/verify.sh`와 D3의 Unity EditMode 배치가 통과한 뒤 커밋: `refactor(core): 상태 만료를 공통 턴 시점으로 처리한다`.
 
 ### T7. 전환 회귀·표시 계약·최종 인계
 

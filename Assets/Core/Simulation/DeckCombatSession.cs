@@ -40,6 +40,7 @@ namespace FateWeaver.Simulation
         private readonly bool _isPartyMode;
         private readonly ReadOnlyCollection<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
+        private IReadOnlyList<ResolutionEvent> _lastTurnStartTimeline = System.Array.Empty<ResolutionEvent>();
         private int _nextInstanceId;
 
         public DeckCombatSession(
@@ -162,6 +163,9 @@ namespace FateWeaver.Simulation
         public CombatState State => _state;
         public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
         public IReadOnlyList<ResolutionEvent> LastTimeline => _lastTimeline;
+
+        /// <summary>이번 턴의 준비·턴 시작 단계가 낸 이벤트(준비 만료된 방어의 StatusExpired 등). 해석 타임라인과 따로다.</summary>
+        public IReadOnlyList<ResolutionEvent> LastTurnStartTimeline => _lastTurnStartTimeline;
         public Outcome Outcome { get; private set; } = Outcome.Ongoing;
         public bool CurrentTurnResolved { get; private set; }
         public bool IsComplete => Outcome != Outcome.Ongoing;
@@ -336,6 +340,12 @@ namespace FateWeaver.Simulation
                 return _lastTimeline;
             }
 
+            if (IsComplete)
+            {
+                // 턴 시작 단계에서 결판이 났다 — 해석할 턴이 없다.
+                return System.Array.Empty<ResolutionEvent>();
+            }
+
             _lastTimeline = _resolver.Resolve(_state, TurnIndex);
             CurrentTurnResolved = true;
             Outcome = OutcomeOf(_lastTimeline);
@@ -364,8 +374,21 @@ namespace FateWeaver.Simulation
             TurnIndex = index;
             CurrentTurnResolved = false;
             _lastTimeline = null;
-
             _state.Zone.Clear();
+
+            // 턴 준비(공통 만료·비용 초기화) → 턴 시작 상태 → 승패 → 적 배치·드로우(스펙 §8).
+            var start = _resolver.Prepare(_state);
+            _state.FateEnergy = _state.FateEnergyPerTurn + _state.PendingNextTurnFateEnergy;
+            _state.PendingNextTurnFateEnergy = 0;
+            start.AddRange(_resolver.StartTurn(_state));
+            _lastTurnStartTimeline = start;
+
+            Outcome = CombatOutcomeEvaluator.Evaluate(_state);
+            if (IsComplete)
+            {
+                return;
+            }
+
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index, _state.Rng))
             {
@@ -389,8 +412,6 @@ namespace FateWeaver.Simulation
                 _state.Zone.Add(inst);
             }
 
-            _state.FateEnergy = _state.FateEnergyPerTurn + _state.PendingNextTurnFateEnergy;
-            _state.PendingNextTurnFateEnergy = 0;
             var drawCount = _partyTuning == null
                 ? _handSize
                 : _partyTuning.DrawFor(LivingPartyCount());

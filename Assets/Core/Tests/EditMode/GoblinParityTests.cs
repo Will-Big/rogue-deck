@@ -34,8 +34,10 @@ namespace FateWeaver.Tests
         /// spore_veil의 자신 방어 2가 적용된다(같은 턴 끝에 만료). 그 밖의 서명은 같다.
         /// 2026-09-18 갱신(전투 실행 계약 T5): 승패는 카드가 끝날 때마다 판정한다. 고블린을 죽인 카드가 끝나는 순간
         /// 승리가 확정되어 그 뒤의 spore_veil·delayed_strike와 턴 끝 방어 만료(StatusExpired)가 실행되지 않는다.
-        /// 그 밖의 서명은 같다.</summary>
-        private const string ExpectedSignatureSha256 = "50391923d3c1bc1b28a949cb001ecf9ce45de7926dea06d1a1c6576dc3ba9d4a";
+        /// 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T6): 방어 만료가 턴 정리(Cleanup)에서 다음 턴 준비(Prepare)로 옮겨져, 해석
+        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.</summary>
+        private const string ExpectedSignatureSha256 = "64ac73c90706d0f173eaf9b0a79e3f252895c9a02314623b5cd3f9af04b550ed";
 
         private static CombatNode BeginNode()
         {

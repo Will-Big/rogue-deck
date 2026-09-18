@@ -6,6 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
+using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
@@ -282,6 +283,26 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AreEqual(
                 new string[] { null }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
+        }
+
+        // 방어는 턴 해석 동안 남아 있다가 다음 턴 준비(Prepare)에 만료된다(스펙 §8, 계획 T6). 그 만료 이벤트는 해석
+        // 타임라인이 아니라 턴 시작 타임라인에 나온다.
+        [Test]
+        public void Block_expires_at_the_next_turn_preparation()
+        {
+            var session = NewSession(
+                new[] { CardFixtures.Block("guard_fx", magnitude: 4, executionOrder: 1) },
+                Goblin(executionOrder: 9, damage: 0));
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "guard_fx")));
+
+            var turn = session.ResolveTurn();
+            var player = session.State.Party[0];
+            Assert.IsTrue(player.Statuses.Has(StatusKeys.Block), "해석이 끝나도 방어는 남는다");
+            Assert.IsFalse(turn.OfType<StatusExpired>().Any(e => e.StatusId == StatusKeys.Block.Id));
+
+            Assert.IsTrue(session.BeginNextTurn());
+            Assert.IsFalse(player.Statuses.Has(StatusKeys.Block));
+            Assert.AreEqual(StatusKeys.Block.Id, session.LastTurnStartTimeline.OfType<StatusExpired>().Single().StatusId);
         }
 
         private static DeckCombatSession NewSession(

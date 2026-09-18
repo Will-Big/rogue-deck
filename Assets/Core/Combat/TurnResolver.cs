@@ -10,8 +10,9 @@ namespace FateWeaver.Core.Combat
 {
     /// <summary>실행선의 카드를 차례대로 실행하고 이벤트 타임라인을 낸다. 실행선은 고정 사본이 아니다 —
     /// 매번 아직 차례가 오지 않은 다음 카드를 묻는다(전투 실행 계약 스펙 §6).
-    /// 카드 하나의 진행은 CardExecutor가 맡고, 이 클래스는 턴 단계의 호출 순서만 정한다: 카드마다 실행 → 승패 판정
-    /// (결판이 나면 그 자리에서 종료) → 턴 끝에는 상태 틱 → 사망 정리 → 직접 반응 → 수명 만료 → 승패.</summary>
+    /// 카드 하나의 진행은 CardExecutor가 맡고, 이 클래스는 턴 단계(CombatPhase)의 호출 순서만 정한다:
+    /// Prepare(준비 만료) · StartTurn(턴 시작 상태) — 세션이 적 배치·드로우 전에 부른다 —, Resolve(카드마다 실행 → 승패 판정,
+    /// 결판이 나면 그 자리에서 종료) → TurnEnd(상태 틱 → 사망 정리 → 직접 반응) → Cleanup(정리 만료) → 승패.</summary>
     public sealed class TurnResolver
     {
         private readonly StatusRegistry _statuses;
@@ -55,14 +56,42 @@ namespace FateWeaver.Core.Combat
             return events;
         }
 
-        /// <summary>턴 종료 시점: 상태 틱 → 사망 정리 → 직접 반응(턴 시점 처리는 Primary 기원, 계획 D7) → 수명 만료.</summary>
+        /// <summary>턴 준비(스펙 §8): 준비 시점 방문으로 상태를 만료시킨다(방어 = 다음 턴 준비). 비용 초기화는 운명력을
+        /// 가진 호출자(세션)가 이어서 한다.</summary>
+        public List<ResolutionEvent> Prepare(CombatState state)
+        {
+            var events = new List<ResolutionEvent>();
+            ExpireAt(state, CombatPhase.Prepare, events);
+            return events;
+        }
+
+        /// <summary>턴 시작 상태 처리(스펙 §8): 보유자 부여 순서로 턴 시작 능력 → 사망 정리 → 직접 반응(Primary 기원, D7).
+        /// 승패는 호출자가 이 묶음이 끝난 뒤 판정한다.</summary>
+        public List<ResolutionEvent> StartTurn(CombatState state)
+        {
+            var events = new List<ResolutionEvent>();
+            RunStatusPhase(state, ResolutionContext.From(state), events, (behavior, ctx) => behavior.OnTurnStart(ctx));
+            return events;
+        }
+
+        /// <summary>턴 종료 상태 처리 → 턴 정리(Cleanup) 만료.</summary>
         private void EndOfTurnMaintenance(
             CombatState state, ResolutionContext resolutionContext, List<ResolutionEvent> events)
+        {
+            RunStatusPhase(state, resolutionContext, events, (behavior, ctx) => behavior.OnTurnEnd(ctx));
+            ExpireAt(state, CombatPhase.Cleanup, events);
+        }
+
+        /// <summary>턴 시점의 상태 능력 묶음: 파티 대형 순 → 적 대형 순, 보유자 안에서는 부여 순서. 사망은 즉시 정리하고,
+        /// 묶음이 끝나면 그 사건에 직접 반응한다(턴 시점 처리는 Primary 기원, 계획 D7).</summary>
+        private void RunStatusPhase(
+            CombatState state, ResolutionContext resolutionContext, List<ResolutionEvent> events,
+            Action<IStatusBehavior, StatusTickContext> hook)
         {
             var before = DeathProcessor.Capture(state);
             var signals = new List<CombatSignal>();
 
-            RunTurnEndTicks(state, events, signals);
+            RunTicks(state, events, signals, hook);
 
             foreach (var died in _executor.Deaths.Process(state, before, events))
             {
@@ -70,10 +99,14 @@ namespace FateWeaver.Core.Combat
             }
 
             _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events);
+        }
 
+        /// <summary>시점 하나를 모든 보유자의 상태가 방문한다(StatusLifetimePolicy). 만료마다 StatusExpired를 남긴다.</summary>
+        private static void ExpireAt(CombatState state, CombatPhase phase, List<ResolutionEvent> events)
+        {
             foreach (var member in state.Party)
             {
-                foreach (var key in member.Statuses.EndOfTurn())
+                foreach (var key in StatusLifetimePolicy.VisitAll(member.Statuses, phase, null))
                 {
                     events.Add(new StatusExpired(member.Id, key.Id));
                 }
@@ -81,7 +114,7 @@ namespace FateWeaver.Core.Combat
 
             foreach (var enemy in state.Enemies)
             {
-                foreach (var key in enemy.Statuses.EndOfTurn())
+                foreach (var key in StatusLifetimePolicy.VisitAll(enemy.Statuses, phase, null))
                 {
                     events.Add(new StatusExpired(enemy.Id, key.Id));
                 }
@@ -100,9 +133,11 @@ namespace FateWeaver.Core.Combat
             return numbered;
         }
 
-        /// <summary>행동 턴 종료 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
+        /// <summary>턴 시점 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
         /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2). 틱 피해는 공통 피해 경로를 지난다.</summary>
-        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events, List<CombatSignal> signals)
+        private void RunTicks(
+            CombatState state, List<ResolutionEvent> events, List<CombatSignal> signals,
+            Action<IStatusBehavior, StatusTickContext> hook)
         {
             if (_statuses == null)
             {
@@ -114,7 +149,7 @@ namespace FateWeaver.Core.Combat
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, events, state.StatusContent,
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent, hook,
                     key => damage => _executor.Damage.Deal(
                         state, target, StatusDamage(state, key, damage), sink));
             }
@@ -123,7 +158,7 @@ namespace FateWeaver.Core.Combat
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, events, state.StatusContent,
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent, hook,
                     key => damage => _executor.Damage.Deal(
                         state, target, StatusDamage(state, key, damage), sink));
             }
@@ -135,7 +170,8 @@ namespace FateWeaver.Core.Combat
 
         private void TickHolder(
             StatusBag bag, string holderId, List<ResolutionEvent> events,
-            Authoring.Statuses.StatusContentCatalog content, Func<StatusKey, Action<int>> dealDamageFor)
+            Authoring.Statuses.StatusContentCatalog content, Action<IStatusBehavior, StatusTickContext> hook,
+            Func<StatusKey, Action<int>> dealDamageFor)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -143,7 +179,7 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior))
                 {
-                    behavior.OnTurnEnd(new StatusTickContext
+                    hook(behavior, new StatusTickContext
                     {
                         Instance = status,
                         HolderBag = bag,

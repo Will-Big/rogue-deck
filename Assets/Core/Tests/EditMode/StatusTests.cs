@@ -66,19 +66,19 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void EndOfTurn_drops_thisturn_ticks_turns_keeps_permanent()
+        public void Cleanup_visit_drops_thisturn_ticks_turns_keeps_permanent()
         {
             var bag = new StatusBag();
             bag.Add(NullifyingBehavior.TestKey, StatusLifetime.ThisTurn);
             bag.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
             bag.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
 
-            bag.EndOfTurn();
+            StatusLifetimePolicy.VisitAll(bag, FateWeaver.Core.Combat.CombatPhase.Cleanup, null);
             Assert.IsFalse(bag.Has(NullifyingBehavior.TestKey));          // ThisTurn dropped
             Assert.AreEqual(1, bag.Get(StatusKeys.Vulnerable).Count);  // 2 -> 1
             Assert.IsTrue(bag.Has(StatusKeys.RewardNullified));        // permanent kept
 
-            bag.EndOfTurn();
+            StatusLifetimePolicy.VisitAll(bag, FateWeaver.Core.Combat.CombatPhase.Cleanup, null);
             Assert.IsFalse(bag.Has(StatusKeys.Vulnerable));            // 1 -> 0, removed
         }
 

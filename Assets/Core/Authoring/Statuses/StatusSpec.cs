@@ -18,12 +18,14 @@ namespace FateWeaver.Core.Authoring.Statuses
         public string DisplayName;
 
         /// <summary>이 상태의 수명 종류. 카드가 적는 count의 뜻을 여기서 정한다 —
-        /// Permanent·ThisTurn이면 세기, Turns·UntilConsumed면 지속.
-        /// Permanent은 StatusLifetimeKind의 0번째(기본) 값이라 DefaultValueHandling.Ignore가
-        /// 지운다. ApplyStatusSpec.Lifetime과 같은 이유로, 생략된 lifetime이 조용히
-        /// "영원히 지속"으로 복원되는 사고를 막기 위해 항상 써야 한다.</summary>
-        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
-        public StatusLifetimeKind Lifetime;
+        /// Permanent·ThisTurn이면 세기, Turns·UntilConsumed면 지속. Expiry와 둘 중 하나만 쓴다.
+        /// Permanent은 0번째(기본) 값이라 Ignore면 지워지므로 Include로 쓰고, 없을 때(null)만 생략한다.</summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include, NullValueHandling = NullValueHandling.Ignore)]
+        public StatusLifetimeKind? Lifetime;
+
+        /// <summary>시점 방문으로 만료되는 정책(예: 방어 = 다음 턴 준비 1회, 스펙 §8). Lifetime 대신 쓴다. 방문 횟수를
+        /// 데이터가 정하므로 카드가 적는 count는 세기다.</summary>
+        public ExpirySpec Expiry;
 
         /// <summary>이 상태가 주는 피해(독 틱 등)의 속성들. 피해를 주지 않는 상태는 생략한다 — 생략하면 보통
         /// 피해(방어·배율 적용)다. 관통·배율 무시는 상태가 아니라 이 데이터가 정한다(계획 D10).</summary>
@@ -34,8 +36,20 @@ namespace FateWeaver.Core.Authoring.Statuses
 
         [JsonIgnore]
         public bool CountIsDuration
-            => Lifetime == StatusLifetimeKind.Turns
-                || Lifetime == StatusLifetimeKind.UntilConsumed;
+            => Expiry == null
+                && (Lifetime == StatusLifetimeKind.Turns || Lifetime == StatusLifetimeKind.UntilConsumed);
+
+        /// <summary>카드가 count를 주었을 때 이 상태가 받는 수명.</summary>
+        public StatusLifetime LifetimeFor(int count)
+        {
+            if (Expiry != null)
+            {
+                return StatusLifetime.Of(Expiry.ToPolicy());
+            }
+
+            var kind = Lifetime ?? StatusLifetimeKind.Permanent;
+            return StatusLifetime.Of(kind, CountIsDuration ? count : 0);
+        }
 
         /// <summary>자기 타입의 빈 인스턴스. JSON 컨버터가 Populate 대상으로 쓴다.
         /// 리플렉션 대신 각 타입이 스스로 답한다 (규칙 9).</summary>
@@ -57,6 +71,16 @@ namespace FateWeaver.Core.Authoring.Statuses
             if (string.IsNullOrWhiteSpace(DisplayName))
             {
                 yield return "status spec requires a displayName.";
+            }
+
+            if (Lifetime.HasValue == (Expiry != null))
+            {
+                yield return "status spec needs exactly one of lifetime or expiry.";
+            }
+
+            if (Expiry != null)
+            {
+                foreach (var error in Expiry.Validate()) yield return error;
             }
 
             foreach (var error in DamageTraitRules.Validate(DamageTraits, "damageTraits"))

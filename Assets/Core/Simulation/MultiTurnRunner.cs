@@ -48,6 +48,15 @@ namespace FateWeaver.Simulation
 
             for (int i = 0; i < scenario.Turns.Count; i++)
             {
+                // 턴 준비(공통 만료) → 턴 시작 상태 → 승패(스펙 §8). 운명력은 턴 대본이 정한다.
+                var start = resolver.Prepare(state);
+                start.AddRange(resolver.StartTurn(state));
+                outcome = CombatOutcomeEvaluator.Evaluate(state);
+                if (outcome != Outcome.Ongoing)
+                {
+                    break;
+                }
+
                 var script = scenario.Turns[i];
                 var cardsById = LoadZone(state, script.ZoneCards);
                 state.FateEnergy = script.FateEnergy;
@@ -57,7 +66,8 @@ namespace FateWeaver.Simulation
                     .Resolve(state, BuildPlays(script.InterventionPlays, cardsById));
                 var manipulatedOrder = Summarize(state.Zone.ResolutionOrder());
 
-                var timeline = resolver.Resolve(state, i);
+                var timeline = start;
+                timeline.AddRange(resolver.Resolve(state, i));
                 turns.Add(new TurnOutcome(i, initialOrder, manipulatedOrder, interventionResult, timeline));
 
                 outcome = OutcomeOf(timeline);

@@ -25,7 +25,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var lifetime = StatusLifetime.Of(from.Kind, from.Count);
+            var lifetime = from.Lifetime;
             var targets = ctx.RequireTargets();
             foreach (var member in targets.Party)
             {

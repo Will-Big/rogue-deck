@@ -51,16 +51,13 @@ namespace FateWeaver.Core.Effects
         /// folded through the RECEIVING holder's statuses (e.g. Damaged reducing block gain).
         ///
         /// The card gives exactly one number (ctx.EffectValue, already resolved for any conditional
-        /// SuccessEffectValue override). Its meaning is derived from the status's catalog lifetime kind:
-        /// Permanent/ThisTurn treat it as magnitude; Turns/UntilConsumed treat it as duration.</summary>
+        /// SuccessEffectValue override). Its meaning is derived from the status's catalog lifetime:
+        /// Permanent/ThisTurn/authored expiry treat it as magnitude; Turns/UntilConsumed treat it as duration.</summary>
         private static void ApplyTo(
             EffectContext ctx, ApplyStatusPayload payload, StatusBag bag, string holderId)
         {
-            var lifetimeKind = ctx.State.StatusContent.LifetimeOf(payload.Key);
             var countIsDuration = ctx.State.StatusContent.CountIsDuration(payload.Key);
-            var lifetime = countIsDuration
-                ? StatusLifetime.Of(lifetimeKind, ctx.EffectValue)
-                : StatusLifetime.Of(lifetimeKind, 0);
+            var lifetime = ctx.State.StatusContent.LifetimeFor(payload.Key, ctx.EffectValue);
             var baseMagnitude = countIsDuration ? 0 : ctx.EffectValue;
 
             var magnitude = StatusDamageFold.GainedMagnitude(
