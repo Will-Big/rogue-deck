@@ -3,6 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Simulation;

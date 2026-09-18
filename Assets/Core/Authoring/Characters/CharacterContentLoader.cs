@@ -32,7 +32,8 @@ namespace FateWeaver.Core.Authoring.Characters
     /// 받으므로 부팅 순서의 마지막이다 — 카드 → 덱·풀 → 캐릭터.</summary>
     public static class CharacterContentLoader
     {
-        private static readonly string[] RequiredKeys = { "id", "displayName", "deck", "pool" };
+        private static readonly string[] RequiredKeys =
+            { "id", "displayName", "deck", "pool", "maxHp", "surviveCharges" };
 
         public static CharacterContentLoadResult Load(
             IEnumerable<CardContentSource> sources,
@@ -98,11 +99,24 @@ namespace FateWeaver.Core.Authoring.Characters
                     rejected = true;
                 }
 
+                if (spec.MaxHp <= 0)
+                {
+                    errors.Add(source.Name + ": maxHp must be positive.");
+                    rejected = true;
+                }
+
+                if (spec.SurviveCharges < 0)
+                {
+                    errors.Add(source.Name + ": surviveCharges must not be negative.");
+                    rejected = true;
+                }
+
                 if (!rejected)
                 {
                     characters.Add(
                         spec.Id,
-                        new CharacterContent(spec.Id, spec.DisplayName, spec.Deck, spec.Pool));
+                        new CharacterContent(
+                            spec.Id, spec.DisplayName, spec.Deck, spec.Pool, spec.MaxHp, spec.SurviveCharges));
                 }
             }
 

@@ -2,7 +2,6 @@ using System.IO;
 using FateWeaver.Core.Authoring;
 using FateWeaver.Core.Authoring.Characters;
 using FateWeaver.Core.Authoring.Decks;
-using FateWeaver.Simulation;
 using NUnit.Framework;
 
 namespace FateWeaver.Tests
@@ -121,14 +120,14 @@ namespace FateWeaver.Tests
             var characters = Characters();
 
             CollectionAssert.AreEqual(
-                new[] { PartyPrototypeRoster.MemberAId, PartyPrototypeRoster.MemberBId },
+                new[] { "member_a", "member_b" },
                 characters.Ids);
             Assert.AreEqual(
-                PartyPrototypeRoster.MemberAName,
-                characters.Get(PartyPrototypeRoster.MemberAId).DisplayName);
+                "파티원 A",
+                characters.Get("member_a").DisplayName);
             Assert.AreEqual(
-                PartyPrototypeRoster.MemberBName,
-                characters.Get(PartyPrototypeRoster.MemberBId).DisplayName);
+                "파티원 B",
+                characters.Get("member_b").DisplayName);
         }
 
         [Test]
@@ -138,10 +137,10 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual(
                 StarterDeckId,
-                characters.Get(PartyPrototypeRoster.MemberAId).Deck);
+                characters.Get("member_a").Deck);
             Assert.AreEqual(
                 PartyPrototypeDeckId,
-                characters.Get(PartyPrototypeRoster.MemberBId).Deck);
+                characters.Get("member_b").Deck);
         }
 
         /// <summary>임시 데이터(전투 노드 설계 결정 3a): 캐릭터가 아직 설계되지 않아 둘 다 starter
@@ -151,8 +150,20 @@ namespace FateWeaver.Tests
         {
             var characters = Characters();
 
-            Assert.AreEqual(StarterPoolId, characters.Get(PartyPrototypeRoster.MemberAId).Pool);
-            Assert.AreEqual(StarterPoolId, characters.Get(PartyPrototypeRoster.MemberBId).Pool);
+            Assert.AreEqual(StarterPoolId, characters.Get("member_a").Pool);
+            Assert.AreEqual(StarterPoolId, characters.Get("member_b").Pool);
+        }
+
+        [Test]
+        public void CharacterJsonCarriesPrototypeStats()
+        {
+            var characters = Characters();
+
+            foreach (var id in characters.Ids)
+            {
+                Assert.AreEqual(25, characters.Get(id).MaxHp, id);
+                Assert.AreEqual(1, characters.Get(id).SurviveCharges, id);
+            }
         }
 
         [Test]

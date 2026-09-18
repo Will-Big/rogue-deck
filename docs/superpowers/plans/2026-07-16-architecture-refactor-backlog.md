@@ -20,7 +20,7 @@
 | §5 | P0-C 대상 선택 메타데이터 | **완료** — [대상 선택 메타데이터 설계](../specs/2026-07-28-p0c-targeting-metadata-design.md) |
 | §6 | P1-A SO 단일 원본화 | **대체·완료** — 원본은 SO가 아니라 **JSON**이 됐고, 계획 3d(2026-08-05)가 남은 C# 골든 목록까지 지워 잔여가 없다. 아래 §6 머리말 참고 |
 | §7 | P1-B Unity 프리팹화 | `active` — 단 `CardAsset`·`DeckAsset` 캡슐화 항목은 대상이 사라져 무효 |
-| §8 | P1-C 전투 튜닝 데이터화 | `active` |
+| §8 | P1-C 전투 튜닝 데이터화 | `active` — 운명력(`fateEnergyPerTurn`)·생존자 수별 드로우(`drawByLivingCount`)는 `Content/combat_rules.json`으로, 파티원 최대 HP(`maxHp`)·생존 충전(`surviveCharges`)은 `Content/Characters/*.json`으로 전투 노드 2단계(2026-09-17)가 옮겼다. 다만 `DeckCombatSession`(`Assets/Core/Simulation/DeckCombatSession.cs:51,66,90`) 생성자의 `fateEnergyPerTurn = 3` 기본값 등 제품 경로 매직 넘버가 남아 있고 `CombatTuning` 순수 모델도 없어, 절의 나머지 완료 조건이 끝나지 않았으므로 현황은 바꾸지 않는다 |
 | §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
 | §12·§13 | 2026-07-25 점검, 2026-07-30 상태 이상 논의 | `active` |
 
@@ -214,9 +214,11 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 > `PartyPrototypeCharacterSpecs`·`ContentExportWriter`·`CardContentExporter`)은 계획 3d
 > ([구현 기록](../.archive/plans/2026-08-05-card-spec-removal.md))가 지웠다.
 >
-> **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 남은 잔여는
-> **적 카드(`GoblinDeck`·`WardenDeck`)의 JSON 전환** 하나뿐이다 — 적 정책·행동 패턴 설계가 딸려
-> 오므로 아직 계획이 없다.
+> **아래 목표·완료 조건 중 `CardAsset`·SO·export를 가리키는 항목은 그대로 읽지 말 것.** 적 카드
+> (`GoblinDeck`)의 JSON 전환은 전투 노드 2단계(2026-09-17)가 끝냈다 — 고블린의 적 정의는
+> `Content/Enemies/goblin.json`, 고블린 전용 카드는 `Content/Cards/goblin_jab.json`·
+> `sly_jab.json`·`crude_guard.json`으로 옮겼다. `WardenDeck`은 이 전환의 대상이 아니다 —
+> 2026-08-31에 간수(Warden) 적 자체가 삭제되며 함께 없어졌다(커밋 `68acdda`). 남은 잔여가 없다.
 
 ### 문제
 
@@ -502,9 +504,11 @@ fallback 정책을 복사해 재구현하게 된다.
 5층 우선순위와 같은 구조다.
 
 영향 범위가 넓다 — `StatusBag`, `ApplyStatusPayload`, `ApplyStatusSpec`, 저작 콘텐츠
-(`Content/Cards/*.json`, 그리고 아직 C#으로 남은 적 덱 `GoblinDeck`·`WardenDeck`), 설명 문법의
+(`Content/Cards/*.json`, `Content/Enemies/goblin.json`), 설명 문법의
 `LifetimeSuffix`. 별도 계획으로 분리한다. (2026-08-05 갱신: 원문의 `StarterPoolSpecs`·
-`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`GeneratedCards.cs`는 계획 3b·3d가 제거했다.)
+`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`·`GeneratedCards.cs`는 계획 3b·3d가 제거했다. 2026-09-17
+갱신: 원문이 "아직 C#으로 남은 적 덱"이라 부르던 `GoblinDeck`은 전투 노드 2단계가 JSON으로
+옮겼고, `WardenDeck`은 2026-08-31 간수 적 삭제로 함께 없어졌다 — 남은 C# 적 덱이 없다.)
 
 ### 13.2 P1급 — 플레이어 카드와 콘텐츠 로딩
 
@@ -596,7 +600,8 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
   테스트(103줄) 말고 부르는 곳이 없었다. 전투 화면은 `DeckCombatSession`, CLI 비교 하니스는
   `ScenarioRunner`·`MultiTurnRunner`를 쓴다. **죽은 코드를 가려 준 것이 잘못된 이름이었다** —
   이름이 "playtest"라 아무도 이상하게 여기지 않았다.
-- `PlaytestKoreanText`가 남았다.
+- `PlaytestKoreanText`가 남았다. `EnemyName`과 고블린 카드 이름 3건은 전투 노드 2단계에서
+  제거했다(적 JSON `displayName`·카드 JSON `name`이 원본이다).
 
 `PlaytestKoreanText`는 이름 문제만이 아니다. 카드·적·시나리오의 한글 이름을 `switch`로 코드에 박고
 있는데(`BattleScreenController`·`CardPresentation` 등 7곳에서 호출), 카드 원본은 이미

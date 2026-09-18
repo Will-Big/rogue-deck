@@ -4,7 +4,7 @@
 구조 승인은 그쪽으로 받는다. 이 문서는 세션 인계용이며 `## 상세`만 담는다. 개요와 상세가 어긋나면
 상세를 따르지 않고 멈추고 묻는다(규칙 29).
 
-**상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 설계를 1단계 코드와 대조해 확정(2026-09-17). 구현 계획은 [`plans/2026-09-17-combat-node-stage2.md`](../plans/2026-09-17-combat-node-stage2.md), 실행 전. 1단계 구현 계획은 보관됐다.
+**상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 구현 완료(2026-09-17). 구현 계획 [`plans/2026-09-17-combat-node-stage2.md`](../.archive/plans/2026-09-17-combat-node-stage2.md)는 보관됐다. 1단계 구현 계획도 보관됐다.
 
 ## 상세
 
@@ -58,7 +58,7 @@
 15. **`PartyTuning`도 Core로 옮기고 `CombatRules`가 품는다(2026-09-17).** `CombatRules { Party; FateEnergyPerTurn; RewardChoices }`.
     세션은 지금처럼 `PartyTuning`을 받는다. 기각: Core에 수치만 담은 별도 타입 + Simulation 변환(같은 필드가 두 타입에 중복),
     세션이 `CombatRules`를 직접 받음(전투와 무관한 `RewardChoices`를 세션이 알고, 세션 생성 테스트 약 20곳 변경).
-16. **동등성 먼저(2026-09-17).** C# 고블린 경로의 전투 서명을 픽스처로 잡은 뒤 JSON 경로가 같은 서명을 내게 하고, 원본은 마지막에 지운다.
+16. **동등성 먼저(2026-09-17).** C# 고블린 경로의 전투 서명을 SHA-256 상수로 박고(실패 시 서명 전문을 출력) JSON 경로가 같은 서명을 내게 하고, 원본은 마지막에 지운다.
 
 ---
 
@@ -600,17 +600,17 @@ IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다
 
 | # | 작업 | 확인 |
 |---|---|---|
-| 1 | **골든 캡처** `GoblinParityTests`: `GoblinEncounterSource`·`PartyTuning.Prototype`·저장소 캐릭터 둘로 런 시드 고정, 노드 0에서 `CombatNode.Begin`, 고정 입력 시퀀스로 전투가 끝날 때까지 진행(입력 규칙은 계획에서 정하되, 승패가 나고 운명력을 쓰는 카드가 한 장 이상 배치되게 한다). 서명은 `CombatRngDeterminismTests.RunSignature`(`:18-41`)와 같은 형식(턴별 손패 id + 해석 이벤트 `ToString`). 서명 문자열을 **테스트 픽스처 파일**로 저장하고 비교한다 | 새 테스트 통과 |
+| 1 | **골든 캡처** `GoblinParityTests`: `GoblinEncounterSource`·`PartyTuning.Prototype`·저장소 캐릭터 둘로 런 시드 고정, 노드 0에서 `CombatNode.Begin`, 고정 입력 시퀀스로 전투가 끝날 때까지 진행(입력 규칙은 계획에서 정하되, 승패가 나고 운명력을 쓰는 카드가 한 장 이상 배치되게 한다). 서명은 `CombatRngDeterminismTests.RunSignature`(`:18-41`)와 같은 형식(턴별 손패 id + 해석 이벤트 `ToString`). 서명 문자열의 SHA-256을 **상수**로 박고 실패 시 서명 전문을 출력해 비교한다 | 새 테스트 통과 |
 | 2 | 어셈블리 이동(2.1). 동작 변경 없음 | 전체 통과 |
 | 3 | 적 카드 JSON 3장(2.3①). `ContentBootstrapTests.cs:20`의 26 → 29, `StructuredCardDescriptionTests.cs:106-110`의 `GoblinDeck.AllCards()` 이어 붙이기 제거 | 카드 왕복·노트북 테스트 |
 | 4 | 정책 레지스트리·적 로더·`Enemies/goblin.json`(2.2, 2.3②) | 로더 테스트 |
-| 5 | 편성 로더·`Battles/goblin_single.json`·부팅 연결·`ContentEncounterSource`(2.3③, 2.4, 2.5). **동등성 테스트의 공급자를 `ContentEncounterSource`로 바꾼다** | 픽스처와 동일 |
-| 6 | 캐릭터 스탯·멤버별 생존 충전·`RunSetup` 인자 정리(2.3④, 2.5). `DeckPoolCharacterLoaderTests`의 인라인 캐릭터 JSON에 새 키 추가 | 픽스처와 동일 |
-| 7 | `combat_rules.json`·`CombatRules`·`CombatNodeContext` 생성자(2.3⑤, 2.5). 동등성 테스트가 `content.CombatRules`를 쓰게 한다 | 픽스처와 동일 |
+| 5 | 편성 로더·`Battles/goblin_single.json`·부팅 연결·`ContentEncounterSource`(2.3③, 2.4, 2.5). **동등성 테스트의 공급자를 `ContentEncounterSource`로 바꾼다** | 골든과 동일 |
+| 6 | 캐릭터 스탯·멤버별 생존 충전·`RunSetup` 인자 정리(2.3④, 2.5). `DeckPoolCharacterLoaderTests`의 인라인 캐릭터 JSON에 새 키 추가 | 골든과 동일 |
+| 7 | `combat_rules.json`·`CombatRules`·`CombatNodeContext` 생성자(2.3⑤, 2.5). 동등성 테스트가 `content.CombatRules`를 쓰게 한다 | 골든과 동일 |
 | 8 | Unity 변경·씬 재생성·Unity EditMode 테스트(2.6) | 배치 EditMode 통과 |
 | 9 | 삭제와 테스트 이전(2.8)·문서 갱신(2.10) | `Tools/verify.sh` 전체 |
 
-픽스처는 9단계 뒤에도 남는다 — C# 원본이 사라진 뒤에도 JSON 경로가 그 서명과 계속 비교된다.
+골든은 9단계 뒤에도 남는다 — C# 원본이 사라진 뒤에도 JSON 경로가 그 서명과 계속 비교된다.
 
 #### 2.8 삭제와 테스트 이전
 

@@ -42,7 +42,7 @@
 |---|---|---|---|
 | [덱 기반 코어 루프](specs/2026-06-22-deck-loop-design.md) | `current` | 덱·손패·행동 턴과 상태 타이밍 | 전투 흐름 또는 드로우 경제 변경 |
 | [파티 기반 전투](specs/2026-07-15-party-foundation-design.md) | `current` | 파티, 개별 HP, 대형, 전투 중 사망 | 캐릭터 영입·사망·대형 변경 |
-| [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) — 개요는 [HTML](specs/2026-09-15-combat-node-cycle-design.html) | `active` | 전투 한 판의 시작~끝(승패·보상 선택·덱 반영·다음 전투), 노드 시드와 목적별 스트림 파생, 적·편성·캐릭터 스탯·전투 규칙 JSON. 1단계 흐름 → 2단계 구성 저작. 1단계 구현 완료(2026-09-15). 2단계 설계 확정(2026-09-17: 적 정책·`PartyTuning`을 Core로, 동등성 먼저), [구현 계획](plans/2026-09-17-combat-node-stage2.md) 실행 전 | 전투 결과·보상 구현, 시드 동작 추가, 적·편성 저작 |
+| [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) — 개요는 [HTML](specs/2026-09-15-combat-node-cycle-design.html) | `active` | 전투 한 판의 시작~끝(승패·보상 선택·덱 반영·다음 전투), 노드 시드와 목적별 스트림 파생, 적·편성·캐릭터 스탯·전투 규칙 JSON. 1단계 흐름 → 2단계 구성 저작. 1단계 구현 완료(2026-09-15). 2단계 구현 완료(2026-09-17) | 전투 결과·보상 구현, 시드 동작 추가, 적·편성 저작 |
 
 ### 카드풀과 콘텐츠
 
@@ -96,7 +96,6 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
-| [전투 노드 2단계 구현](plans/2026-09-17-combat-node-stage2.md) — 개요는 [HTML](plans/2026-09-17-combat-node-stage2.html) | `active` | 9태스크: 노드 0 전투 서명 골든 → 정책·`PartyTuning` Core 이동 → 적 카드·적·편성·캐릭터 스탯·`combat_rules.json` → Unity 배선·씬 → C# 원본 삭제. 실행 전 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
 | [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
@@ -166,9 +165,9 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
    **남은 이중성 하나:** (a) ~~`StarterPoolSpecs`·`StarterDeckSpecs`·`PartyPrototypeDeckSpecs`가
    골든 테스트 축으로 살아 있다~~ **계획 3d가 지웠다** — 테스트는 이제 `CardFixtures`·
    `UnityCardFixtures` 합성 픽스처와 `TestContent`·`UnityTestContent` JSON 카탈로그, 둘로만 카드를
-   얻는다. (b) **적 카드는 아직 JSON이 아니다** — `GoblinDeck`의 순수 C#에서 나오며,
-   옮기려면 적 정책·행동 패턴 설계가 딸려 온다(아직 계획 없음). `WardenDeck`은 2026-08-31에
-   삭제했다 — 몬스터를 묶음 기반으로 재작업할 예정이다.
+   얻는다. (b) 적 카드도 `Content/Cards/`의 JSON이며(`side: Enemy`), 적·편성은
+   `Content/Enemies/`·`Content/Battles/`에서 읽는다(전투 노드 2단계). `WardenDeck`은 2026-08-31에
+   삭제했다 — 몬스터를 묶음 기반으로 재작업했다.
    그리고 ~~`ContentExportWriter`는 카드도 상태도 쓰지 않는다 — 저작이 JSON에만 있어 다시 쓰면
    지워지기 때문이다(`WriteAllDoesNotTouchCards`·`WriteAllDoesNotTouchStatuses`가 막는다)~~
    **계획 3d가 지웠다** — 코드에서 JSON으로 내보내는 경로 자체가 없다. 저작은 JSON에서 시작해
@@ -243,9 +242,9 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
 
   선행 확인이던 소유자 귀속은 **정책 API를 바꾸지 않고 귀속을 정직하게** 만드는 쪽으로 정했다.
   `IEnemyTurnPolicy.CardsForTurn`은 `IReadOnlyList<CardDefinition>`만 돌려주어 어느 적의 카드인지
-  말할 수단이 아예 없으므로(`Assets/Core/Simulation/Enemies/IEnemyTurnPolicy.cs:16`), 올바른 귀속은
+  말할 수단이 아예 없으므로(`Assets/Core/Enemies/IEnemyTurnPolicy.cs:18`), 올바른 귀속은
   인터페이스 재설계다. 대신 `DeckCombatSession`이 **적이 정확히 하나일 때만** 소유자를 확정하고
-  둘 이상이면 비워 둔다(`Assets/Core/Simulation/DeckCombatSession.cs:387`) — `CardActor`가 이미
+  둘 이상이면 비워 둔다(`Assets/Core/Simulation/DeckCombatSession.cs:392`) — `CardActor`가 이미
   문서화한 규약과 같다(`Assets/Core/Combat/CardActor.cs:3`). 이러면 다중 적에서 남의 카드가
   잘못 취소되는 일은 생기지 않고, 그 경우 죽은 적의 카드는 여전히 실행된다. 다중 적을 실제로
   도입할 때 정책 API를 소유자 인지형으로 재설계하면서 함께 닫는다.

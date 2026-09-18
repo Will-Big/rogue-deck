@@ -11,7 +11,6 @@ namespace FateWeaver.Simulation.Run
         public static RunState NewRun(
             GameContent content,
             IReadOnlyList<string> characterIds,
-            PartyTuning tuning,
             int runSeed)
         {
             var party = new List<RunMember>();
@@ -21,7 +20,8 @@ namespace FateWeaver.Simulation.Run
                 party.Add(new RunMember(
                     character.Id,
                     character.DisplayName,
-                    tuning.DefaultMemberMaxHp,
+                    character.MaxHp,
+                    character.SurviveCharges,
                     DeckCards(content, character.Deck)));
             }
 

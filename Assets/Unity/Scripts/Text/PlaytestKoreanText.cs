@@ -2,7 +2,6 @@ using System;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Events;
-using FateWeaver.Simulation;
 
 namespace FateWeaver.Unity
 {
@@ -30,24 +29,12 @@ namespace FateWeaver.Unity
 
             switch (id)
             {
-                case "goblin_jab": return "찌르기";
-                case "crude_guard": return "조잡한 방어";
-                case "sly_jab": return "약삭빠른 찌르기";
                 case "mark": return "표식 새기기";
                 case "slash": return "베기";
                 case "counter_stance": return "반격";
                 case "counter": return "반격 자세";
                 case "prep": return "준비";
                 case "chain": return "연쇄 베기";
-                default: return fallback;
-            }
-        }
-
-        public static string EnemyName(string id, string fallback)
-        {
-            switch (id)
-            {
-                case GoblinDeck.EnemyId: return "고블린";
                 default: return fallback;
             }
         }

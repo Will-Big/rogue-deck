@@ -5,8 +5,8 @@ using NUnit.Framework;
 
 namespace FateWeaver.Tests
 {
-    /// <summary>부팅이 카드 → 덱·풀 → 캐릭터 순서를 지키고, 실패하면 카탈로그를 내주지 않는지
-    /// 잠근다. 리포지토리의 실제 콘텐츠를 읽는다.</summary>
+    /// <summary>부팅이 카드 → 덱·풀 → 캐릭터 → 적 → 편성 순서를 지키고, 실패하면 카탈로그를 내주지
+    /// 않는지 잠근다. 리포지토리의 실제 콘텐츠를 읽는다.</summary>
     public class ContentBootstrapTests
     {
         private static string ContentRoot() => TestContent.Root();
@@ -17,10 +17,56 @@ namespace FateWeaver.Tests
             var result = ContentBootstrap.Load(ContentRoot());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-            Assert.AreEqual(26, result.Content.Cards.Ids.Count);
+            Assert.AreEqual(29, result.Content.Cards.Ids.Count);
             Assert.AreEqual(2, result.Content.Decks.Ids.Count);
             Assert.AreEqual(1, result.Content.Pools.Ids.Count);
             Assert.AreEqual(2, result.Content.Characters.Ids.Count);
+            CollectionAssert.AreEqual(new[] { "goblin" }, result.Content.Enemies.Ids);
+            CollectionAssert.AreEqual(new[] { "goblin_single" }, result.Content.Battles.Ids);
+            Assert.AreEqual(3, result.Content.CombatRules.RewardChoices);
+        }
+
+        [Test]
+        public void BootstrapReportsAnUnknownEnemyPolicy()
+        {
+            var root = Path.Combine(Path.GetTempPath(), "fate-weaver-bad-policy");
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, true);
+            }
+
+            try
+            {
+                CopyDirectory(ContentRoot(), root);
+                var goblin = Path.Combine(root, "Enemies", "goblin.json");
+                File.WriteAllText(goblin, File.ReadAllText(goblin).Replace("\"random_pick\"", "\"random_pik\""));
+
+                var result = ContentBootstrap.Load(root);
+
+                Assert.IsFalse(result.Succeeded);
+                CollectionAssert.Contains(result.Errors, "goblin.json: unknown enemy policy 'random_pik'.");
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        private static void CopyDirectory(string from, string to)
+        {
+            foreach (var directory in Directory.GetDirectories(from, "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(directory.Replace(from, to));
+            }
+
+            Directory.CreateDirectory(to);
+            foreach (var file in Directory.GetFiles(from, "*.json", SearchOption.AllDirectories))
+            {
+                File.Copy(file, file.Replace(from, to));
+            }
         }
 
         [Test]

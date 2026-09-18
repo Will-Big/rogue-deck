@@ -2,5 +2,7 @@
   "id": "member_b",
   "displayName": "파티원 B",
   "deck": "party_prototype",
-  "pool": "starter"
+  "pool": "starter",
+  "maxHp": 25,
+  "surviveCharges": 1
 }

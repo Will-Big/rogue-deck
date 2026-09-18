@@ -5,6 +5,7 @@ using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 using FateWeaver.Unity;
@@ -49,8 +50,6 @@ namespace FateWeaver.Tests.UnityEditMode
                 new SequencePolicy(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
                 new PartyTuning
                 {
-                    DefaultMemberMaxHp = 10,
-                    SurviveChargesPerCombat = 0,
                     DrawByLivingCount = new Dictionary<int, int> { { 1, 1 }, { 2, 1 }, { 3, 1 } }
                 });
 
@@ -121,7 +120,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
-            => new PartyMemberLoadout(id, name, maxHp, Array.Empty<CardDefinition>());
+            => new PartyMemberLoadout(id, name, maxHp, 0, Array.Empty<CardDefinition>());
 
         private RectTransform ChildRect(string name)
         {

@@ -1,0 +1,14 @@
+{
+  "id": "crude_guard",
+  "name": "조잡한 방어",
+  "side": "Enemy",
+  "category": "Execution",
+  "baseExecutionOrder": 4,
+  "effects": [
+    {
+      "kind": "apply_status",
+      "status": "block",
+      "count": 3
+    }
+  ]
+}

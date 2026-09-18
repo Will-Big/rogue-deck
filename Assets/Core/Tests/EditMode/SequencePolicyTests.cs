@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using FateWeaver.Core.Cards;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests

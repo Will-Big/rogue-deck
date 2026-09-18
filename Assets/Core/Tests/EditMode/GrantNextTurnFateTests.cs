@@ -3,6 +3,7 @@ using NUnit.Framework;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests

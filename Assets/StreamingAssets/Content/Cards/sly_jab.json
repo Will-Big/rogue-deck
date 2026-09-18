@@ -1,0 +1,17 @@
+{
+  "id": "sly_jab",
+  "name": "약삭빠른 찌르기",
+  "side": "Enemy",
+  "category": "Execution",
+  "baseExecutionOrder": 3,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 3,
+      "condition": {
+        "kind": "NoPrecedingPlayerCard",
+        "successEffectValue": 6
+      }
+    }
+  ]
+}

@@ -17,11 +17,12 @@ namespace FateWeaver.Tests
 
         private static string RunSignature(int seed)
         {
+            var goblin = TestContent.Goblin();
             var session = new DeckCombatSession(TestContent.Statuses(),
                 TestContent.StarterDeckCards(),
                 PlayerHp,
-                new[] { new Enemy(GoblinDeck.EnemyId, GoblinDeck.StartingHp) },
-                GoblinDeck.Policy(),
+                new[] { new Enemy(goblin.Enemy.SpecId, goblin.Enemy.Hp) },
+                goblin.Policy,
                 seed: seed);
 
             var signature = new StringBuilder();

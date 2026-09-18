@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 
 namespace FateWeaver.Simulation.Run
 {

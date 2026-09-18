@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
@@ -128,7 +129,7 @@ namespace FateWeaver.Simulation
                         loadout.Id,
                         loadout.Name,
                         loadout.MaxHp,
-                        partyTuning.SurviveChargesPerCombat));
+                        loadout.SurviveCharges));
                 }
             }
             else
@@ -455,9 +456,7 @@ namespace FateWeaver.Simulation
             IReadOnlyList<CardDefinition> partyCards,
             PartyTuning tuning)
         {
-            if (tuning == null
-                || tuning.DefaultMemberMaxHp <= 0
-                || tuning.SurviveChargesPerCombat < 0)
+            if (tuning == null)
             {
                 throw new System.ArgumentException("Party tuning is invalid.");
             }
@@ -476,6 +475,7 @@ namespace FateWeaver.Simulation
                     || string.IsNullOrEmpty(loadout.Id)
                     || !ids.Add(loadout.Id)
                     || loadout.MaxHp <= 0
+                    || loadout.SurviveCharges < 0
                     || loadout.Cards == null)
                 {
                     throw new System.ArgumentException("Party loadout is invalid.");

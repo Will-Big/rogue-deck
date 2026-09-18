@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Authoring.Rules;
 using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Events;
@@ -15,30 +16,23 @@ namespace FateWeaver.Simulation.Run
         Done
     }
 
-    /// <summary>전투 노드가 쓰는 규칙 값과 공급자. 1단계의 값 셋(PartyTuning·운명력·보상 장수)은
-    /// 2단계에서 combat_rules.json 하나로 바뀐다.</summary>
+    /// <summary>전투 노드가 쓰는 규칙과 공급자. 규칙은 combat_rules.json 하나에서 온다.</summary>
     public sealed class CombatNodeContext
     {
         public CombatNodeContext(
             StatusContentCatalog statuses,
-            PartyTuning partyTuning,
-            int fateEnergyPerTurn,
-            int rewardChoices,
+            CombatRules rules,
             IEncounterSource encounters,
             IRewardCandidateSource rewardCandidates)
         {
             Statuses = statuses ?? throw new ArgumentNullException(nameof(statuses));
-            PartyTuning = partyTuning ?? throw new ArgumentNullException(nameof(partyTuning));
-            FateEnergyPerTurn = fateEnergyPerTurn;
-            RewardChoices = rewardChoices;
+            Rules = rules ?? throw new ArgumentNullException(nameof(rules));
             Encounters = encounters ?? throw new ArgumentNullException(nameof(encounters));
             RewardCandidates = rewardCandidates ?? throw new ArgumentNullException(nameof(rewardCandidates));
         }
 
         public StatusContentCatalog Statuses { get; }
-        public PartyTuning PartyTuning { get; }
-        public int FateEnergyPerTurn { get; }
-        public int RewardChoices { get; }
+        public CombatRules Rules { get; }
         public IEncounterSource Encounters { get; }
         public IRewardCandidateSource RewardCandidates { get; }
     }
@@ -103,16 +97,16 @@ namespace FateWeaver.Simulation.Run
             var nodeIndex = run.EnterNode();
             var nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex);
             var loadouts = run.LivingMembers
-                .Select(member => new PartyMemberLoadout(member.Id, member.Name, member.MaxHp, member.Cards.ToList()))
+                .Select(member => new PartyMemberLoadout(member.Id, member.Name, member.MaxHp, member.SurviveCharges, member.Cards.ToList()))
                 .ToList();
             var session = new DeckCombatSession(
                 context.Statuses,
                 loadouts,
                 new[] { setup.Enemies[0].Enemy },
                 setup.Enemies[0].Policy,
-                context.PartyTuning,
+                context.Rules.Party,
                 partyCards: null,
-                fateEnergyPerTurn: context.FateEnergyPerTurn,
+                fateEnergyPerTurn: context.Rules.FateEnergyPerTurn,
                 seed: SeedDerivation.Stream(nodeSeed, SeedStream.Combat));
 
             return new CombatNode(run, context, nodeIndex, nodeSeed, session);
@@ -172,7 +166,7 @@ namespace FateWeaver.Simulation.Run
             var living = Session.State.Party.Where(member => member.IsAlive).Select(member => member.Id).ToList();
             var pairs = new List<RewardCandidate>(_context.RewardCandidates.Eligible(living));
             var distinct = pairs.Select(pair => pair.Card.Id).Distinct().Count();
-            var count = Math.Min(_context.RewardChoices, distinct);
+            var count = Math.Min(_context.Rules.RewardChoices, distinct);
 
             var picked = new List<RewardCandidate>();
             for (int i = 0; i < count; i++)

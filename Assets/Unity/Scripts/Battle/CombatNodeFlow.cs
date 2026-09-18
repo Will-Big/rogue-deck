@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using FateWeaver.Core;
 using FateWeaver.Core.Authoring;
-using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
 using UnityEngine;
 
@@ -20,10 +20,6 @@ namespace FateWeaver.Unity
 
         [Tooltip("런 시드. 같은 시드 + 같은 행동 = 같은 결과.")]
         [SerializeField] private int _runSeed = 1;
-
-        [Tooltip("1단계 임시 튜닝. 2단계에서 combat_rules.json으로 옮긴다.")]
-        [SerializeField] private int _fateEnergyPerTurn = 3;
-        [SerializeField] private int _rewardChoices = 3;
 
         private GameContent _content;
         private CombatNodeContext _context;
@@ -55,10 +51,8 @@ namespace FateWeaver.Unity
             _content = loaded.Content;
             _context = new CombatNodeContext(
                 _content.Statuses,
-                PartyPrototypeRoster.Tuning,
-                _fateEnergyPerTurn,
-                _rewardChoices,
-                new GoblinEncounterSource(),
+                _content.CombatRules,
+                new ContentEncounterSource(_content, CombatRegistries.EnemyPolicies()),
                 new CharacterPoolRewardSource(_content));
             NewRun();
         }
@@ -77,7 +71,7 @@ namespace FateWeaver.Unity
             }
 
             _run = RunSetup.NewRun(
-                _content, _party.Select(member => member.Id).ToList(), PartyPrototypeRoster.Tuning, _runSeed);
+                _content, _party.Select(member => member.Id).ToList(), _runSeed);
             BeginNode();
         }
 

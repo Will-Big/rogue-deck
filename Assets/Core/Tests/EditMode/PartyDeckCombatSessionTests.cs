@@ -4,6 +4,7 @@ using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
@@ -57,8 +58,9 @@ namespace FateWeaver.Tests
             string id,
             IReadOnlyList<CardDefinition> cards = null,
             int maxHp = 25,
-            string name = null)
-            => new PartyMemberLoadout(id, name ?? id, maxHp, cards ?? Array.Empty<CardDefinition>());
+            string name = null,
+            int surviveCharges = 1)
+            => new PartyMemberLoadout(id, name ?? id, maxHp, surviveCharges, cards ?? Array.Empty<CardDefinition>());
 
         private static PartyTuning Tuning(int partySize)
         {
@@ -70,8 +72,6 @@ namespace FateWeaver.Tests
 
             return new PartyTuning
             {
-                DefaultMemberMaxHp = 25,
-                SurviveChargesPerCombat = 1,
                 DrawByLivingCount = draw
             };
         }
@@ -110,7 +110,7 @@ namespace FateWeaver.Tests
             Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", maxHp: 0) }, tuning: Tuning(1)));
             Assert.Throws<ArgumentException>(() => Session(new[]
             {
-                new PartyMemberLoadout("a", "A", 25, null)
+                new PartyMemberLoadout("a", "A", 25, 1, null)
             }, tuning: Tuning(1)));
             Assert.Throws<ArgumentException>(() => Session(new[]
             {
@@ -121,18 +121,7 @@ namespace FateWeaver.Tests
                 new[] { new Enemy("goblin", 100) },
                 new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()),
                 tuning: null));
-            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a") }, tuning: new PartyTuning
-            {
-                DefaultMemberMaxHp = 0,
-                SurviveChargesPerCombat = 1,
-                DrawByLivingCount = new Dictionary<int, int> { { 1, 3 } }
-            }));
-            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a") }, tuning: new PartyTuning
-            {
-                DefaultMemberMaxHp = 25,
-                SurviveChargesPerCombat = -1,
-                DrawByLivingCount = new Dictionary<int, int> { { 1, 3 } }
-            }));
+            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", surviveCharges: -1) }, tuning: Tuning(1)));
         }
 
         [Test]
@@ -142,36 +131,48 @@ namespace FateWeaver.Tests
 
             Assert.Throws<ArgumentException>(() => Session(party, tuning: new PartyTuning
             {
-                DefaultMemberMaxHp = 25,
-                SurviveChargesPerCombat = 1,
                 DrawByLivingCount = null
             }));
             Assert.Throws<ArgumentException>(() => Session(party, tuning: new PartyTuning
             {
-                DefaultMemberMaxHp = 25,
-                SurviveChargesPerCombat = 1,
                 DrawByLivingCount = new Dictionary<int, int> { { 1, 3 } }
             }));
             Assert.Throws<ArgumentException>(() => Session(party, tuning: new PartyTuning
             {
-                DefaultMemberMaxHp = 25,
-                SurviveChargesPerCombat = 1,
                 DrawByLivingCount = new Dictionary<int, int> { { 1, 3 }, { 2, 0 } }
             }));
         }
 
         [Test]
-        public void Prototype_tuning_is_hp_25_survive_1_and_draw_3_4_5()
+        public void Each_member_starts_with_its_own_survive_charges()
         {
-            var tuning = PartyTuning.Prototype;
+            var session = Session(new[] { Loadout("a", surviveCharges: 0), Loadout("b", surviveCharges: 2) });
 
-            Assert.AreEqual(1, tuning.MinPartySize);
-            Assert.AreEqual(3, tuning.MaxPartySize);
-            Assert.AreEqual(25, tuning.DefaultMemberMaxHp);
-            Assert.AreEqual(1, tuning.SurviveChargesPerCombat);
-            Assert.AreEqual(3, tuning.DrawFor(1));
-            Assert.AreEqual(4, tuning.DrawFor(2));
-            Assert.AreEqual(5, tuning.DrawFor(3));
+            Assert.AreEqual(0, session.State.Party[0].SurviveCharges);
+            Assert.AreEqual(2, session.State.Party[1].SurviveCharges);
+        }
+
+        [Test]
+        public void Zero_and_nonzero_survive_charges_resolve_independently_on_a_shared_lethal_hit()
+        {
+            var session = Session(
+                new[]
+                {
+                    Loadout("a", maxHp: 10, surviveCharges: 0),
+                    Loadout("b", maxHp: 10, surviveCharges: 1)
+                },
+                new[] { EnemyStrike(damage: 50, selector: TargetSelector.All) });
+
+            var timeline = session.ResolveTurn();
+
+            var a = session.State.Party.Single(member => member.Id == "a");
+            var b = session.State.Party.Single(member => member.Id == "b");
+            Assert.IsFalse(a.IsAlive);
+            Assert.IsTrue(b.IsAlive);
+            Assert.AreEqual(1, b.Hp);
+            Assert.AreEqual(0, b.SurviveCharges);
+            Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "a"));
+            Assert.IsTrue(timeline.OfType<DeathsDoorSurvived>().Any(e => e.MemberId == "b"));
         }
 
         [Test]

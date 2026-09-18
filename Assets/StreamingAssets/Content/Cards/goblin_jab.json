@@ -1,0 +1,13 @@
+{
+  "id": "goblin_jab",
+  "name": "찌르기",
+  "side": "Enemy",
+  "category": "Execution",
+  "baseExecutionOrder": 6,
+  "effects": [
+    {
+      "kind": "damage",
+      "value": 4
+    }
+  ]
+}

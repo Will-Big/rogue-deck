@@ -135,7 +135,8 @@ namespace FateWeaver.Tests
             var statuses = new StatusRegistry();
             statuses.Register(behavior);
             return new AuthoringContext(
-                CombatRegistries.Effects(), statuses, CombatRegistries.InterventionActions());
+                CombatRegistries.Effects(), statuses, CombatRegistries.InterventionActions(),
+                CombatRegistries.EnemyPolicies());
         }
 
         [Test]

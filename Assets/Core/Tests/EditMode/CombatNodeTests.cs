@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FateWeaver.Core.Authoring.Rules;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Simulation;
 using FateWeaver.Simulation.Run;
@@ -17,14 +19,12 @@ namespace FateWeaver.Tests
         private static CardDefinition Hit() => CardFixtures.Damage("hit", 5, cost: 0);
 
         private static RunMember Member(string id, int hitCount)
-            => new RunMember(id, id, 20, Enumerable.Range(0, hitCount).Select(_ => Hit()));
+            => new RunMember(id, id, 20, 0, Enumerable.Range(0, hitCount).Select(_ => Hit()));
 
         private static PartyTuning Tuning() => new PartyTuning
         {
             MinPartySize = 1,
             MaxPartySize = 3,
-            DefaultMemberMaxHp = 20,
-            SurviveChargesPerCombat = 0,
             DrawByLivingCount = new Dictionary<int, int> { { 1, 3 }, { 2, 4 }, { 3, 5 } }
         };
 
@@ -108,8 +108,10 @@ namespace FateWeaver.Tests
         private static CombatNodeContext Context(
             IEncounterSource encounters, IRewardCandidateSource rewards, int rewardChoices = 3)
             => new CombatNodeContext(
-                TestContent.Statuses(), Tuning(), fateEnergyPerTurn: 3, rewardChoices: rewardChoices,
-                encounters: encounters, rewardCandidates: rewards);
+                TestContent.Statuses(),
+                new CombatRules(Tuning(), fateEnergyPerTurn: 3, rewardChoices: rewardChoices),
+                encounters,
+                rewards);
 
         /// <summary>turn번째 턴(0부터)에 hit 한 장을 내고 해석해 이긴다. 그 전 턴은 아무것도 내지 않는다.</summary>
         private static void WinOnTurn(CombatNode node, int turn)

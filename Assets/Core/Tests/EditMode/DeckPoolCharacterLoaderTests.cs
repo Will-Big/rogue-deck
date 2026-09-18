@@ -254,7 +254,7 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"파티원 A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"파티원 A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
                 StarterPool());
@@ -265,6 +265,8 @@ namespace FateWeaver.Tests
             Assert.AreEqual("파티원 A", member.DisplayName);
             Assert.AreEqual("starter", member.Deck);
             Assert.AreEqual("starter", member.Pool);
+            Assert.AreEqual(25, result.Catalog.Get("member_a").MaxHp);
+            Assert.AreEqual(1, result.Catalog.Get("member_a").SurviveCharges);
         }
 
         [Test]
@@ -274,8 +276,8 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("b.json", "{ \"id\": \"member_b\", \"displayName\": \"B\", \"deck\": \"starter\", \"pool\": \"starter\" }"),
-                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
+                    Source("b.json", "{ \"id\": \"member_b\", \"displayName\": \"B\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }"),
+                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 decks,
                 StarterPool());
@@ -292,7 +294,7 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"ghost_deck\", \"pool\": \"starter\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"ghost_deck\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
                 StarterPool());
@@ -309,7 +311,7 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"\", \"deck\": \"starter\", \"pool\": \"starter\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
                 StarterPool());
@@ -324,7 +326,7 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("member_a.json", "{ \"id\": \"\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }")
+                    Source("member_a.json", "{ \"id\": \"\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
                 StarterPool());
@@ -341,8 +343,8 @@ namespace FateWeaver.Tests
             var result = CharacterContentLoader.Load(
                 new[]
                 {
-                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\" }"),
-                    Source("b.json", "{ \"id\": \"member_a\", \"displayName\": \"A2\", \"deck\": \"starter\", \"pool\": \"starter\" }")
+                    Source("a.json", "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }"),
+                    Source("b.json", "{ \"id\": \"member_a\", \"displayName\": \"A2\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 decks,
                 StarterPool());
@@ -361,7 +363,7 @@ namespace FateWeaver.Tests
                 {
                     Source(
                         "member_a.json",
-                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"ghost_pool\" }")
+                        "{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"ghost_pool\", \"maxHp\": 25, \"surviveCharges\": 1 }")
                 },
                 Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
                 StarterPool());
@@ -385,6 +387,25 @@ namespace FateWeaver.Tests
 
             Assert.IsFalse(result.Succeeded);
             CollectionAssert.Contains(result.Errors, "member_a.json: required key 'pool' is missing.");
+        }
+
+        [TestCase("{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"surviveCharges\": 1 }",
+            "member_a.json: required key 'maxHp' is missing.")]
+        [TestCase("{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25 }",
+            "member_a.json: required key 'surviveCharges' is missing.")]
+        [TestCase("{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 0, \"surviveCharges\": 1 }",
+            "member_a.json: maxHp must be positive.")]
+        [TestCase("{ \"id\": \"member_a\", \"displayName\": \"A\", \"deck\": \"starter\", \"pool\": \"starter\", \"maxHp\": 25, \"surviveCharges\": -1 }",
+            "member_a.json: surviveCharges must not be negative.")]
+        public void CharacterLoaderRejectsInvalidStats(string json, string error)
+        {
+            var result = CharacterContentLoader.Load(
+                new[] { Source("member_a.json", json) },
+                Decks(Source("starter.json", "{ \"id\": \"starter\", \"cards\": [\"hasten\"] }")),
+                StarterPool());
+
+            Assert.IsFalse(result.Succeeded);
+            CollectionAssert.Contains(result.Errors, error);
         }
 
         // --- 공통 -----------------------------------------------------------
