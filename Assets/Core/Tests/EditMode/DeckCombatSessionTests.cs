@@ -85,6 +85,46 @@ namespace FateWeaver.Tests
             Assert.AreEqual(8, DamageOf(timeline, "quick_fx")); // first-strike success
         }
 
+        /// <summary>교환 뒤 새 카드 배치까지 실제 세션 경로로 실행 순서를 확인한다(스펙 §6, 2026-09-18 결정).
+        /// 5번 [P, 적]을 교환하면 적이 플레이어 자리에 서고, 5번 P2는 교환을 모르는 것처럼 플레이어 자리들의
+        /// 끝 — 적 뒤, 교환된 P 앞 — 에 선다. 세 카드 모두 그 순서로 실행되어 효과를 낸다.</summary>
+        [Test]
+        public void Cards_placed_after_a_swap_execute_in_the_swapped_slot_order()
+        {
+            var session = NewSession(
+                new[]
+                {
+                    CardFixtures.Damage("p_fx", damage: 4, executionOrder: 5),
+                    CardFixtures.SwapExecutionOrder("swap_fx"),
+                    CardFixtures.Damage("p2_fx", damage: 2, executionOrder: 5)
+                },
+                Goblin(5, 3));
+
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "p_fx")));
+            CollectionAssert.AreEqual(
+                new[] { "p_fx", "goblin_jab" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            Assert.IsTrue(session.PlayInterventionCard(
+                HandIndex(session, "swap_fx"), ZoneIndex(session, "p_fx"), ZoneIndex(session, "goblin_jab")));
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p_fx" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "p2_fx")));
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p2_fx", "p_fx" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            var timeline = session.ResolveTurn();
+
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p2_fx", "p_fx" },
+                timeline.OfType<CardResolved>().Select(e => e.CardId).ToArray());
+            Assert.IsFalse(timeline.OfType<CardCancelled>().Any());
+            Assert.AreEqual(4, DamageOf(timeline, "p_fx"));
+            Assert.AreEqual(2, DamageOf(timeline, "p2_fx"));
+            Assert.AreEqual(27, session.State.Party.Single().Hp);   // goblin_jab 3
+            Assert.AreEqual(94, session.State.Enemies.Single().Hp); // p_fx 4 + p2_fx 2
+        }
+
         [Test]
         public void Counter_immediately_after_an_enemy_attack_gets_the_bonus()
         {
