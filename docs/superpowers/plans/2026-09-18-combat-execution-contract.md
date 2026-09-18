@@ -123,6 +123,8 @@ T0 → T1 → T2a → T2b → T3 → T4 → T5 → T6 → T7 순서로 실행한
 (`RailCardHighlightPresenter.cs:43`, `TimelineBeatPlanner.cs:73`) 제거 시점에 쓰면 차례가 오지 않은 카드가
 강조된다. `CardCancellationReason.OwnerDied`는 삭제했다. 개입 핸들러는 실행선에 없는 카드를 `CanApply`에서 거부한다.
 `GoblinParityTests`의 고정 서명은 이 이벤트 교체만큼 갱신했다.
+교환 후 삽입은 구현 뒤 사용자 결정으로 바꿨다(2026-09-18): 교환된 카드는 서로의 자리 진영까지 물려받고,
+새 카드는 교환을 모르는 것처럼 자리를 찾는다(스펙 §6). 아래 체크리스트의 "마지막 플레이어 뒤" 항목은 이 결정으로 대체됐다.
 
 수정:
 - `Assets/Core/Combat/FutureZone.cs`

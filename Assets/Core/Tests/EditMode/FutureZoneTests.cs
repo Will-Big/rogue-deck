@@ -149,8 +149,11 @@ namespace FateWeaver.Tests
             CollectionAssert.AreEqual(new[] { "a" }, Ids(zone));
         }
 
+        /// <summary>교환된 두 카드는 서로의 자리를 물려받는다 — 적은 플레이어 자리에, 플레이어는 적 자리에
+        /// 선다. 뒤에 오는 카드는 교환이 있었다는 것을 모르는 것처럼 원래 규칙대로 자리를 찾는다(2026-09-18
+        /// 사용자 결정).</summary>
         [Test]
-        public void New_cards_after_a_swap_keep_the_swapped_peers_in_place()
+        public void Swapped_cards_take_each_others_slot_for_later_arrivals()
         {
             var zone = new FutureZone();
             var p = Card("p", 5, Side.Player);
@@ -162,7 +165,42 @@ namespace FateWeaver.Tests
             zone.Add(Card("p2", 5, Side.Player));
             zone.Add(Card("e2", 5, Side.Enemy));
 
-            CollectionAssert.AreEqual(new[] { "e", "p", "p2", "e2" }, Ids(zone));
+            CollectionAssert.AreEqual(new[] { "e", "p2", "p", "e2" }, Ids(zone));
+        }
+
+        [Test]
+        public void A_card_swapped_across_numbers_holds_the_other_cards_slot()
+        {
+            var zone = new FutureZone();
+            var p = Card("p", 2, Side.Player);
+            var e = Card("e", 7, Side.Enemy);
+            zone.Add(p);
+            zone.Add(e);
+            zone.SwapPositions(p, e);
+
+            // p는 7번의 적 자리에 서 있으므로 7번의 새 플레이어 카드가 그 앞에 온다.
+            zone.Add(Card("p7", 7, Side.Player));
+            // e는 2번의 플레이어 자리에 서 있으므로 2번의 새 적 카드는 그 뒤에 온다.
+            zone.Add(Card("e2", 2, Side.Enemy));
+
+            CollectionAssert.AreEqual(new[] { "e", "e2", "p7", "p" }, Ids(zone));
+        }
+
+        [Test]
+        public void Moving_a_swapped_card_returns_it_to_its_own_sides_slot()
+        {
+            var zone = new FutureZone();
+            var p = Card("p", 5, Side.Player);
+            var e = Card("e", 5, Side.Enemy);
+            zone.Add(p);
+            zone.Add(e);
+            zone.SwapPositions(p, e);
+
+            zone.MoveTo(p, 3);
+            zone.Add(Card("e3", 3, Side.Enemy));
+            zone.Add(Card("p3", 3, Side.Player));
+
+            CollectionAssert.AreEqual(new[] { "p", "p3", "e3", "e" }, Ids(zone));
         }
 
         [Test]
