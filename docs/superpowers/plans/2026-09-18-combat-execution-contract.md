@@ -76,6 +76,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 | D6 | **편집 도구는 새 형식의 편집까지 지원한다(범위 B).** 편집 도구에는 카드 설명 생성 기능이 없으므로 그 부분은 제외한다. 게임 쪽 설명(`DescriptionComposer`)은 T2a가 맡는다 | T2b |
 | D7 | **턴 시점의 상태 처리(턴 시작·턴 종료)는 Primary 기원이다.** 독 틱 사망 → 전염 발동이라는 현재 동작(`TurnResolver.cs` 349–374)을 유지한다 | T4·T6 |
 | D8 | **치명타 버티기(`SurviveCharges`/`DeathsDoor`)를 지금 전부 제거한다.** 나중에 다른 방식으로 다시 도입할 예정이며, 이번 계획에서 보존하지 않는다 | T0 |
+| D9 | **T3는 효과 단위 선택만 하고, 런타임 위치 축 전환은 T3b로 나눠 T3 바로 다음·T4 전에 한다.** T4가 처리기와 피해 경로를 다시 쓰므로 그 전에 위치 표현을 하나로 만든다(2026-09-18) | T3·T3b |
 
 방어 만료 시점을 "다음 턴 준비"로 옮기는 T6 변경은 **동작을 바꾸지 않는다** — 지금도 만료가 턴 종료
 틱 뒤에 일어난다. 목적은 상태 처리 시점을 명시적으로 구분하는 것이며, 결과가 같은 것은 의도다.
@@ -120,7 +121,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 작업 의존 관계와 완료 기준
 
-T0 → T1 → T2a → T2b → T3 → T4 → T5 → T6 → T7 순서로 실행한다. T2a·T2b에서 정의·소비·콘텐츠·도구를
+T0 → T1 → T2a → T2b → T3 → T3b → T4 → T5 → T6 → T7 순서로 실행한다(T3b는 D9). T2a·T2b에서 정의·소비·콘텐츠·도구를
 전환해 다음 작업들이 한 가지 계약만 소비하도록 한다. T2a 커밋과 T2b 커밋 사이에는 편집 도구가 새 형식
 카드를 읽기 전용으로 띄운다. 이 상태로 머지하지 않는다. 각 작업은 아래 실패 테스트와 수용 행렬을
 통과한 상태로 커밋한다. 중간 커밋은 완성된 전체 게임 규칙을 뜻하지 않는다.
@@ -240,7 +241,7 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
 - **런타임 위치 축은 T3로 미뤘다.** `CardDefinition.AllyTarget/EnemyTarget`·`EffectData.TargetFaction`은 만들지 않았다.
   저작 스펙이 카드 축(`targets`)과 효과 진영(`targetFaction`)을 갖고, `EffectSpec.ToEffectData(cardSide, target)`가
   처리기가 지금 읽는 필드(`TargetSelector`, `ApplyStatusPayload.Target`)로 옮긴다. 처리기는 바뀌지 않았다.
-  T3가 효과 단위 선택을 넣을 때 런타임 축을 추가하고 이 변환(`ApplyStatusSpec.Build` 등)을 지운다.
+  T3b가 런타임 축을 추가하고 이 변환(`ApplyStatusSpec.Build` 등)을 지운다(T3는 효과 단위 선택만 했다 — D9).
 - 조건 레지스트리는 만들지 않았다(D4). `ConditionSpec`은 카드 단위 `StartConditionSpec`(kind·n)이 됐다.
 - **보상 무효(`RewardNullified`)는 카드 시작 조건의 성공에만 걸린다.** `requires`로 옮긴 소비 보상은 조건이 아니므로
   무효화되지 않는다. 이 효과를 쓰는 게임 카드는 없다(테스트 전용).
@@ -490,6 +491,79 @@ public void A_new_effect_selects_the_new_front_enemy()
   구현 전에 그 파일을 읽고 새 의미로 표시가 성립하는지 확인한다. 성립하지 않으면 멈추고 보고한다.
 - [x] `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
   `refactor(core): 효과마다 위치를 해석하고 미적용을 분리한다`.
+
+### T3b. 런타임 위치 축 전환 (D9)
+
+상태: **미착수 — 착수 전에 사용자에게 이 절을 보여 주고 아래 「착수 전 결정」을 받는다.**
+
+왜: T3 뒤에도 위치 표현이 둘이다. 저작 쪽은 카드의 두 축(`targets.ally`·`targets.enemy`)과 효과의 진영(`targetFaction`)을
+갖는다. 런타임 쪽은 효과마다 `EffectData.TargetSelector`와 `ApplyStatusPayload.Target`(`StatusApplyTarget`)을 갖는다.
+`EffectSpec.ToEffectData(cardSide, target)`가 그 사이를 옮긴다(`CardSpecMapper.cs:30`, `ApplyStatusSpec.Build`).
+처리기마다 `TargetFor`가 이 필드에서 위치 키를 다시 만든다(T3의 `EffectExecutor.cs:36`). T4가 처리기와 피해 경로를 다시 쓰기
+전에 런타임도 저작과 같은 한 가지 표현으로 만든다. 스펙 §4("실행 처리기에 구형 대상 선택 분기를 남기지 않는다")의 마무리다.
+
+입력: T2a 저작 계약(`CardTargetsSpec`, `EffectSpec.TargetFaction`·`IsTargeted`·`ValidateTarget`), T3의 `EffectTargetResolver`·`EffectExecutor`.
+출력(계약):
+- `CardDefinition`: `CardTargetRange? AllyTarget`, `CardTargetRange? EnemyTarget`(init). 진영은 속성 이름이 정하므로 범위만 둔다
+  — T2a 계약 초안의 `CardTargetKey?`와 다르다(「착수 전 결정」 2). `RangeOf(CardTargetFaction)` 조회를 둔다.
+- `EffectData`: `CardTargetFaction? TargetFaction`을 더하고 `TargetSelector`를 지운다. null이면 대상을 고르지 않는 효과다.
+- 위치 키 = (`effect.TargetFaction`, `card.RangeOf(그 진영)`). `EffectExecutor`가 데이터에서 직접 만든다. 따라서
+  `IEffectHandler.TargetFor`를 지운다. 효과 종류별 (진영, 위치) 허용 조합은 이미 로딩(`EffectSpec.ValidateTarget`)이 검사한다.
+  진영은 있는데 카드에 그 축이 없으면 **계약 위반 예외**다. 로더가 막으므로 여기 오면 C# 픽스처 오류다.
+- `ApplyStatusPayload`는 `StatusKey`만 갖는다. `StatusApplyTarget` 열거형을 지운다. `EffectData.ApplyStatus(key, target, count)`는
+  `ApplyStatus(key, faction, count)`가 된다.
+- `TargetSelector` 열거형을 지운다. `EnemyTargeting`·`PartyTargeting`의 `Select`·`SelectRange`는 `CardTargetRange`를 받는다
+  (`Self`는 위치 범위가 아니므로 예외). `ContagionBehavior.cs:22`도 옮긴다. `EffectTargetResolver.RangeFor`·`ToSelector`가 사라진다.
+- 저작 변환: `EffectSpec.ToEffectData(cardSide, target)` → `ToEffectData()`(공통 필드 + `TargetFaction`만 붙인다),
+  `Build(cardSide, target)` → `Build()`, `SelectorFor` 삭제. `CardSpecMapper`가 카드의 두 축을 `CardDefinition`에 옮기고
+  `TargetOf`를 지운다. `ApplyStatusSpec`의 (진영, 위치) → `StatusApplyTarget` 분기가 사라진다.
+- 명시 아군 대상 제거: `PartyTargetRules`(`RequiresExplicitAllyTarget`·`IsValidExplicitAllyTarget`·`IsValidBaseExecutionDefinition`)와
+  `DeckCombatSession.cs:248`의 검사를 지운다. `DeckCombatSession.cs:272` 주석도 고친다. 셋 다 `StatusApplyTarget.PartyMember`만을 위한 것이다.
+- 설명: `DescriptionContracts`의 `Range/EnemyRange/AllyRange/OpposingRange(TargetSelector?)`와
+  `BuiltInEffectDescriptionHandlers`(피해·상태 부여·소비·발동)가 카드 축과 효과 진영을 읽는다. **저장소 카드 29장의 설명 문구는 한
+  글자도 바뀌지 않아야 한다.**
+
+수정(코어): `Cards/CardDefinition.cs`, `Cards/TargetSelector.cs`(삭제), `Combat/EffectTargetResolver.cs`, `Combat/EnemyTargeting.cs`,
+`Combat/PartyTargeting.cs`, `Combat/PartyTargetRules.cs`(삭제 후보), `Effects/IEffectHandler.cs`, `Effects/EffectExecutor.cs`,
+`Effects/ApplyStatusPayload.cs`, `Effects/ApplyStatusHandler.cs`, `DamageHandler.cs`, `ConsumeStatusHandler.cs`, `TriggerStatusHandler.cs`,
+`MoveFormationHandler.cs`, `GrantNextPlayerDamageCardBonusHandler.cs`, `GrantNextTurnFateHandler.cs`, `NullifyNextPlayerConditionRewardHandler.cs`,
+`Status/ContagionBehavior.cs`, `Authoring/EffectSpec.cs`, `Authoring/CardSpecMapper.cs`, `Authoring/Specs/{ApplyStatus,ConsumeStatus,Damage,TriggerStatus,MoveFormation}Spec.cs`,
+`Simulation/DeckCombatSession.cs`, `Simulation/SampleScenarios.cs`, `Simulation/SampleMultiTurnScenarios.cs`,
+`Simulation/Descriptions/DescriptionContracts.cs`, `Simulation/Descriptions/BuiltInEffectDescriptionHandlers.cs`.
+카드 JSON·편집 도구·스키마는 바뀌지 않는다(저작 형식은 T2a 그대로다) — `AuthoringSchemaExportTests`가 스키마 불변을 확인한다.
+
+영향받는 테스트(2026-09-18 T3 커밋 기준 `grep -w TargetSelector|StatusApplyTarget`, 25개 파일):
+`CardDefinitionDataTests` · `CardFixtures` · `CardSpecMapperTests` · `CombatLogTests` · `ConditionEvaluatorTests` ·
+`ConditionalEffectResolutionTests` · `ConsumeStatusTests` · `DebuffStatusTests` · `DescriptionCatalogValidatorTests` ·
+`DescriptionComposerTests` · `EffectTargetResolverTests` · `EnemyContentTests` · `EnemyTargetingTests` ·
+`FormationTargetingIntegrationTests` · `NewEffectSpecTests` · `PartyDeckCombatSessionTests` · `PartyDescriptionTests` ·
+`PartyPrototypeDataTests` · `PartyTargetingTests` · `PreviousExecutedCardConditionTests` · `StatusContentTests` ·
+`StatusLifetimeScenarioTests` · `StructuredCardDescriptionTests` · `TriggerStatusTests` · `TurnResolverTests` (+ `NewEffectLocalityTests`의 `TargetFor`).
+여기에 더해 **위치를 저작하지 않은 피해 픽스처**가 있다: `new EffectData(EffectKeys.Damage, n)`이 40개 파일에 146곳이다. 지금은
+처리기 기본값(상대 진영 FrontOne)이 대상을 준다. 이동(9곳·5파일)·소비(3곳)·발동(1곳)도 같다(「착수 전 결정」 1).
+
+착수 전 결정(사용자):
+1. **기본 위치 없는 픽스처를 어떻게 옮기나.** 권장: 런타임은 기본값 없이 명시만 받는다. 테스트는 `CardFixtures`에 "상대 FrontOne
+   피해 카드" 같은 빌더를 두어 146곳을 기계적으로 바꾼다. 대안 — 효과 종류별 기본 진영·카드 축 기본 FrontOne을 런타임에 두면
+   변경 폭은 작다. 대신 처리기별 기본값 표(지금의 `TargetFor`)가 다른 이름으로 남는다.
+2. `CardDefinition`의 축 타입: 권장 `CardTargetRange?`(진영 중복 없음). T2a 계약 초안은 `CardTargetKey?`였다.
+3. `SameTarget` 조건과 `ExecutionCardInstance.TargetId`: 프로덕션에서 `TargetId`를 설정하는 곳이 없다. `SameTarget`은
+   `ConditionKind`에 없어 저작할 수 없다(`EffectSpec.cs:10`). 읽는 곳은 `ConditionEvaluator.cs:120`뿐이다. 권장: 이 작업에서 함께 지운다
+   (`Condition.cs`, `KoreanDescriptionGrammar`, 관련 테스트). 남기면 T7 검색에 걸린다.
+
+- [ ] 실패 테스트: 카드 축 + 효과 진영만으로 대상을 고르는 `EffectExecutor` 테스트(아군 FrontTwo 방어, 적 BackOne 피해, 진영 없는
+  효과는 대상 없이 적용). 진영은 있는데 축이 없는 C# 정의는 예외. `Tools/verify.sh --quick`에서 새 API 부재 실패를 확인한다.
+- [ ] `CardDefinition`·`EffectData`·`ApplyStatusPayload` 계약을 바꾸고 `EffectExecutor`가 키를 만든다. `IEffectHandler.TargetFor`를 지운다.
+- [ ] `TargetSelector`·`StatusApplyTarget`을 지우고 대상 유틸리티·전염을 `CardTargetRange`로 옮긴다.
+- [ ] 저작 변환(`EffectSpec`·스펙 5종·`CardSpecMapper`)을 새 계약으로 바꾼다. 29장 로딩 결과가 이전과 같은 대상을 고르는지
+  `CardSpecMapperTests`로 잠근다(카드별 축·효과별 진영).
+- [ ] 설명 생성기를 옮기고 29장 설명 문구가 변환 전과 같은지 비교한다(전후 출력을 파일로 떠서 diff).
+- [ ] `PartyTargetRules`와 세션 검사를 지운다. 「착수 전 결정」 3에 따라 `SameTarget`·`TargetId`를 처리한다.
+- [ ] 테스트 픽스처를 「착수 전 결정」 1에 따라 옮긴다.
+- [ ] 동작 불변 확인: `GoblinParityTests` 고정 서명이 **바뀌지 않아야 한다**(표현만 바꾸는 작업이다). 바뀌면 멈추고 원인을 찾는다.
+  같은 시드 `ScenarioRunner`·`MultiTurnRunner` **Compare**도 전후가 같아야 한다.
+- [ ] `Tools/verify.sh` 전체와 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
+  `refactor(core): 런타임 위치를 카드 축과 효과 진영 하나로 표현한다`.
 
 ### T4. 공통 사건·직접 반응·공통 피해 경로
 
