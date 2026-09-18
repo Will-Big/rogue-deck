@@ -36,11 +36,12 @@
 | [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | ScriptableObject 효과 저작과 코어 변환 | 새 효과·상태·개입 저작 타입 추가 |
 | [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 대상 요구의 선언·질의·검증 경로 | 새 대상형 개입 액션·대상 종류 추가 |
 
-### 전투 실행 재설계 (검토 중)
+### 전투 실행 재설계
 
 | 문서 | 상태 | 권위 범위 | 다음 사용 시점 |
 |---|---|---|---|
-| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `active` | 대화 합의의 설계안. HTML 승인 후 실행 카드·효과별 위치·반응·소비 보상·만료·승패 경계의 상충 규칙을 대체. 다중 적 정책 제외. 현재 구현 설명은 아님 | HTML 검토 후 상세 실행 계획 작성 |
+| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `active` | 2026-09-18 승인된 설계. 실행 카드·효과별 위치·반응·소비 보상·만료·승패 경계의 상충 규칙을 대체. 다중 적 정책 제외. 현재 구현 설명은 아님 | 별도 구현 요청 후 적용 |
+| [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) — [HTML 개요](plans/2026-09-18-combat-execution-contract.html) | `active` | 승인 설계를 T1~T7로 분해한 계획. API·데이터 전환·테스트·V01~V22 추적. 이 세션에서 구현하지 않음 | 별도 구현 요청 후 워크트리에서 순차 실행 |
 
 ### 전투와 파티 규칙
 
