@@ -23,8 +23,28 @@
 설계: [승인된 전투 실행·반응·콘텐츠 계약](../specs/2026-09-18-combat-execution-contract-design.md).
 상태: active. **사용자는 이 세션에서 계획만 작성하도록 지시했다. 이 문서는 코드 구현 완료나 착수 승인이 아니다.**
 실행 담당자는 별도 구현 요청을 받은 뒤 `superpowers:executing-plans`로 아래 작업을 순차 수행한다.
+개정: 2026-09-18 — 계획 검토에서 사용자가 내린 결정(아래 「검토 반영 결정」 D1~D8)을 반영했다.
+T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형식 필드 이름 변경, Unity 배치 검증 추가.
 
 ## 상세
+
+### 검토 반영 결정 (2026-09-18 사용자 결정)
+
+아래 결정은 이 계획의 다른 절보다 우선한다. 각 작업 절은 이 결정에 맞춰 고쳐 두었다.
+
+| ID | 결정 | 반영 작업 |
+|---|---|---|
+| D1 | **독은 관통을 유지하고 취약(피해 배율)을 적용하지 않는다.** 공통 피해 경로로 옮겨도 현재 동작(`PoisonBehavior.cs:32`가 방어·배율 없이 HP를 깎음)과 결과가 같아야 한다 | T4 |
+| D2 | **`condensed_burst`는 결과 참조를 확장해 옮긴다.** 소비량에 비례하는 수치를 앞 소비 효과의 결과로 표현한다. `damageBonusPerConsumed`와 소비 경로의 `AddPendingDamageBonus` 호출은 제거한다. `_pendingDamageBonus` 자체는 `GrantNextPlayerDamageCardBonusHandler.cs:20`이 쓰므로 남긴다 | T2a |
+| D3 | **Unity 레이어를 배치로 검증한다.** `Tools/verify.sh`는 `Assets/Core`만 컴파일한다(`Tools/verify.sh:36`). T1·T3·T6·T7 끝에 [EditMode 배치 실행](../../agents/unity-batch-runs.md)을 워크트리 대상으로 돌려 결과 XML의 `failed=0`을 확인한다 | T1·T3·T6·T7 |
+| D4 | **조건 레지스트리는 이번 범위에서 뺀다.** 스펙 §3에 없고, 저작 쪽 `ConditionSpec.ToCondition` switch는 주석으로 의도가 명시된 결정이다(`EffectSpec.cs:20`). 필요하면 대기열의 별도 작업으로 다룬다 | T2a |
+| D5 | **카드 JSON의 형식 버전 필드는 `cardFormat`으로 부른다.** `schemaVersion`은 편집 도구가 자기 저장 형식(`index.html:513`의 `SCHEMA_VERSION = 7`)에 이미 쓴다 | T2a·T2b·T7 |
+| D6 | **편집 도구는 새 형식의 편집까지 지원한다(범위 B).** 편집 도구에는 카드 설명 생성 기능이 없으므로 그 부분은 제외한다. 게임 쪽 설명(`DescriptionComposer`)은 T2a가 맡는다 | T2b |
+| D7 | **턴 시점의 상태 처리(턴 시작·턴 종료)는 Primary 기원이다.** 독 틱 사망 → 전염 발동이라는 현재 동작(`TurnResolver.cs` 349–374)을 유지한다 | T4·T6 |
+| D8 | **치명타 버티기(`SurviveCharges`/`DeathsDoor`)를 지금 전부 제거한다.** 나중에 다른 방식으로 다시 도입할 예정이며, 이번 계획에서 보존하지 않는다 | T0 |
+
+방어 만료 시점을 "다음 턴 준비"로 옮기는 T6 변경은 **동작을 바꾸지 않는다** — 지금도 만료가 턴 종료
+틱 뒤에 일어난다. 목적은 상태 처리 시점을 명시적으로 구분하는 것이며, 결과가 같은 것은 의도다.
 
 ### 목표·아키텍처·기술
 
@@ -45,6 +65,7 @@
 - 조작 카드의 사용 조건/비용·드로우 경제·시드 순서를 불필요하게 변경하지 않는다.
 - 소멸 및 아직 없는 전역 관찰자 능력의 콘텐츠 추가는 하지 않는다. 확장 인터페이스는 닫지 않는다.
 - 각 단계 Tools/verify.sh --quick, 최종 Tools/verify.sh 전체 통과. JSON/편집 도구 변경은 노트북 왕복도 필수.
+- `Tools/verify.sh`는 Unity 레이어(`Assets/Unity`, `Assets/Tests`)를 컴파일하지 않는다. D3의 배치 검증을 생략하지 않는다.
 - HTML/상세 불일치 또는 이 계획과 별도 다중 적 변경 충돌은 임의로 해석하지 않고 해당 경계를 보고한다.
 - 커밋 제목·본문은 한국어. master 머지는 별도 사용자 승인 필요. 이 계획은 머지 승인이 아니다.
 
@@ -65,10 +86,33 @@
 
 ### 작업 의존 관계와 완료 기준
 
-T1 → T2 → T3 → T4 → T5 → T6 → T7 순차 실행한다. T2에서 정의·소비·콘텐츠·도구를 함께
-전환해 다음 작업들이 한 가지 계약만 소비하도록 한다. 각 작업은 아래 실패 테스트와 수용 행렬을
+T0 → T1 → T2a → T2b → T3 → T4 → T5 → T6 → T7 순서로 실행한다. T2a·T2b에서 정의·소비·콘텐츠·도구를
+전환해 다음 작업들이 한 가지 계약만 소비하도록 한다. T2a 커밋과 T2b 커밋 사이에는 편집 도구가 새 형식
+카드를 읽기 전용으로 띄운다. 이 상태로 머지하지 않는다. 각 작업은 아래 실패 테스트와 수용 행렬을
 통과한 상태로 커밋한다. 중간 커밋은 완성된 전체 게임 규칙을 뜻하지 않는다.
 신규 C# 파일의 Unity `.meta`는 저장소 패턴대로 포함한다. 코드 변경 시 새 파일의 원본과 meta를 함께 검토한다.
+
+### T0. 치명타 버티기 제거 (D8)
+
+기준에서 확인한 사용처(구현 착수 시 다시 grep한다):
+- 규칙: `Assets/Core/Combat/PartyMember.cs:22`(`SurviveCharges`), `:45`(치명타를 충전으로 버티고 `DamageOutcome.DeathsDoor` 반환),
+  `Assets/Core/Combat/TurnResolver.cs:181–209`(스냅샷 비교로 `DeathsDoorSurvived` 발생)
+- 이벤트·로그: `Assets/Core/Events/ResolutionEvent.cs`의 `DeathsDoorSurvived`, `Assets/Core/Simulation/Descriptions/TimelineTextFormatter.cs:131`
+- 데이터 경로: `Assets/StreamingAssets/Content/Characters/member_a.json:7`·`member_b.json:7`의 `surviveCharges`,
+  `Authoring/Characters/CharacterSpec.cs:18`·`CharacterContentLoader.cs:108·119`·`CharacterContentCatalog.cs:18·34`,
+  `Simulation/Run/RunMember.cs:15`·`RunSetup.cs:24`·`CombatNode.cs:100`, `Simulation/PartyMemberLoadout.cs:14`,
+  `Simulation/DeckCombatSession.cs:132·478`
+- 테스트: `PartyMemberTests`, `DeckPoolCharacterLoaderTests`, `RunSetupTests`, `PartyDeckCombatSessionTests`,
+  `DeckPoolCharacterContentTests`, `CombatLogTests`, `CardCancellationTests`
+- Unity 레이어와 편집 도구에는 참조가 없다(기준 시점 grep).
+
+- [ ] 치명타가 곧바로 사망시키는 실패 테스트를 먼저 쓴다(파티원 HP 3, 피해 5 → 사망, `DeathsDoorSurvived` 없음).
+- [ ] 필드·이벤트·로그 문구·로더 검증·캐릭터 JSON 키를 함께 제거한다. `DamageOutcome`에서 `DeathsDoor`를 뺀다.
+  JSON 키만 남기면 로더가 모르는 키로 거부할 수 있으므로 데이터와 코드를 같은 커밋에서 지운다.
+- [ ] 치명타 버티기만 검증하던 테스트는 지운다. 다른 규칙을 검증하면서 충전을 곁들인 테스트는 충전을 빼고 기대값을 다시 확인한다.
+- [ ] [전투 노드 한 사이클](../specs/2026-09-15-combat-node-cycle-design.md)과
+  [백로그](2026-07-16-architecture-refactor-backlog.md)의 `SurviveCharges` 언급에 "2026-09-18 제거" 표시를 단다.
+- [ ] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 치명타 버티기 충전을 제거한다`.
 
 ### T1. 현재 자리를 보존하는 실행선과 실행 이력
 
@@ -138,39 +182,63 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
   TurnResolver는 아직 실행하지 않은 다음 항목을 조회하는 반복으로 전환한다.
 - [ ] 조건 평가에서 취소 여부를 직접 검사하는 분기를 제거한다. 배치 질의는 공통 실행선,
   이전 실행 조건은 실행 이력만 사용한다. 기존 인접 조건을 전부 이력 조건으로 치환하지 않는다.
+- [ ] 사망으로 제거한 카드에도 기존처럼 `CardCancelled`(사유 `OwnerDied`)를 기록한다. 지금은 그 카드
+  차례에 기록되지만, 제거 후에는 차례가 오지 않으므로 **제거 시점**에 기록한다. Unity 소비자
+  `Assets/Unity/Scripts/Battle/Playback/RailCardHighlightPresenter.cs:43`이 이 이벤트로 레일 카드를 처리하므로,
+  구현 전에 그 파일을 읽고 기록 시점이 앞당겨져도 표시가 성립하는지 확인한다. 성립하지 않으면 멈추고 보고한다.
 - [ ] V03~04: 실행 완료 카드 소유자 사망 시 완료 카드는 남고 미실행만 제거됨, 무효과 카드도 직전 실행에
-  포함됨을 추가한다. `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 실행선 자리와 실행 이력을 일관되게 관리한다`.
+  포함됨을 추가한다. `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
+  `refactor(core): 실행선 자리와 실행 이력을 일관되게 관리한다`.
 
-### T2. 카드 정의·효과 결과·콘텐츠 계약을 함께 전환
+### T2a. 카드 정의·효과 결과·콘텐츠 계약 전환
 
 수정:
 - `Assets/Core/Cards/CardDefinition.cs`, `Assets/Core/Combat/ExecutionCardInstance.cs`
-- `Assets/Core/Effects/ConsumeStatusHandler.cs`, `ConsumeStatusPayload.cs`, `IEffectHandler.cs`
+- `Assets/Core/Effects/ConsumeStatusHandler.cs`, `ConsumeStatusPayload.cs`, `DamageHandler.cs`, `IEffectHandler.cs`
 - `Assets/Core/Authoring/CardSpec.cs`, `EffectSpec.cs`, `CardSpecMapper.cs`, `AuthoringValidator.cs`, `CardContentLoader.cs`
 - `Assets/Core/Authoring/Json/CardSpecJsonConverter.cs`, `EffectSpecJsonConverter.cs`
 - `Assets/Core/Authoring/Specs/ConsumeStatusSpec.cs`, `DamageSpec.cs`, `ApplyStatusSpec.cs`
 - `Assets/Core/Simulation/Descriptions/DescriptionComposer.cs`, `BuiltInEffectDescriptionHandlers.cs`, `KoreanDescriptionGrammar.cs`
-- `Assets/StreamingAssets/Content/Cards/*.json` (의미가 확인된 카드만 명시적으로 변환)
-- `Tools/card-idea-notebook/index.html`, `index.test.mjs`, `authoring-schema.json`
+- `Assets/StreamingAssets/Content/Cards/*.json` — **29장 전부** 새 형식으로 변환한다(아래 변환 규칙)
+- `Tools/card-idea-notebook/authoring-schema.json` — 손으로 고치지 않는다. `AuthoringSchemaExportTests`가 생성한다
 생성:
-- `Assets/Core/Effects/EffectResult.cs`, `ConsumptionRule.cs`, `EffectResultRequirement.cs`
-- `Assets/Core/Conditions/ConditionRegistry.cs`, `IConditionHandler.cs`
+- `Assets/Core/Effects/EffectResult.cs`, `ConsumptionRule.cs`, `EffectResultRequirement.cs`, `EffectResultScaling.cs`
 - `Assets/Core/Combat/CardExecutionContext.cs`
-- `Assets/Core/Authoring/Json/CardSchemaMigration.cs`
+- `Assets/Core/Authoring/Json/CardFormatMigration.cs`
 테스트: `ConsumeStatusTests.cs`, `ConditionalEffectResolutionTests.cs`, `CardContentJsonTests.cs`,
 `CardContentLoaderTests.cs`, `AuthoringSchemaExportTests.cs`; 신규 `ConsumptionRuleTests.cs`.
+조건 레지스트리(`ConditionRegistry`·`IConditionHandler`)는 만들지 않는다(D4). 조건 평가는 기존
+`ConditionEvaluator`를 쓰고, 이 작업에서는 평가 **시점**만 카드 시작으로 옮긴다.
 
 계약:
 - CardDefinition: `Condition StartCondition`, `CardTargetKey? AllyTarget`, `CardTargetKey? EnemyTarget`.
   기존 CardTargetKey/CardTargetFaction은 `Assets/Core/Cards/CardTarget.cs`에서 재사용한다.
-- EffectData: `string Id`, `CardTargetFaction? TargetFaction`, `EffectResultRequirement Requirement`.
-  요구 조건 없는 경우 Requirement=null. 카드 조건에 따른 값·생략 설정은 효과별 유지.
-- EffectResultRequirement: `string SourceEffectId`, `int MinimumConsumed`.
+- EffectData: `string Id`, `CardTargetFaction? TargetFaction`, `EffectResultRequirement Requirement`,
+  `EffectResultScaling Scaling`. 없으면 각각 null. 카드 조건에 따른 값·생략 설정(`SuccessEffectValue`·`SkipOnBasic`)은 효과별 유지.
+- EffectResultRequirement: `string SourceEffectId`, `int MinimumConsumed`. 앞 효과의 실제 소비량이 모자라면 이 효과를 수행하지 않는다.
+- EffectResultScaling(D2): `string SourceEffectId`, `int PerConsumed`. 이 효과의 수치에 `앞 효과의 실제 소비량 × PerConsumed`를 더한다.
+  Requirement와 같은 참조 검증(앞 효과·소비 생산 효과만)을 받는다.
 - EffectResult: `bool Applied`, `int ConsumedAmount`, `int DamageDealt`와 대상별 결과/사건 목록.
 - CardExecutionContext: 카드·상태·시작 조건 결과·효과 ID별 결과표. `Record(string id, EffectResult result)`,
   `Get(string id)`를 제공하며 중복 기록·없는 결과 조회는 내부 계약 위반으로 예외 처리한다.
 - ConsumptionRule.Take(int available, int requested, ConsumptionMode mode) → int. mode는 Exact/UpTo.
   음수와 requested<=0는 로딩 및 실행 경계에서 거부한다.
+- 카드 JSON 최상위의 형식 버전 필드는 `cardFormat`이다(D5). 새 형식은 `2`, 필드 없음은 구형이다.
+
+구형 → 새 형식 변환 규칙(판단 없이 규칙만으로 결정되어야 한다. 규칙으로 안 되는 카드가 나오면 멈추고 보고한다):
+
+| 구형 | 새 형식 |
+|---|---|
+| 효과마다 붙은 `selector`·`target` | 카드의 `targets.ally`·`targets.enemy` 두 축 + 효과의 `targetFaction` |
+| 효과 하나에만 붙은 조건 `kind`·`n` | 카드 `startCondition` |
+| 그 조건의 `successEffectValue`·`skipOnBasic` | 그 효과에 그대로 남김 |
+| `ConsumedStatusAtLeast n` | 카드 조건이 아니라 해당 효과의 `requires { sourceEffectId: <카드 안 유일한 소비 효과>, minimumConsumed: n }` |
+| `consume_status`의 `maxAmount` | `amount` + `mode: "UpTo"` (현재 규칙이 UpTo다, `ConsumeStatusHandler.cs:48`) |
+| `damageBonusPerConsumed: k` (`condensed_burst`) | 뒤따르는 첫 `damage` 효과의 `scaleBy { sourceEffectId: <그 소비 효과>, perConsumed: k }` |
+| 효과 ID 없음 | 배열 위치로 결정론적으로 생성(`e0`, `e1`, …), 이후 저장 때 보존 |
+
+기준 시점 확인(구현 착수 시 다시 확인): 조건 있는 카드는 distill·foresight·last_drop·riposte·sly_jab·toxic_reclaim이고
+모두 조건이 효과 하나에만 있다. 소비 효과는 카드마다 하나다. 따라서 위 규칙으로 29장 모두 결정된다.
 
 - [ ] 먼저 소비 규칙 실패 테스트를 추가한다.
 
@@ -198,16 +266,19 @@ public static int Take(int available, int requested, ConsumptionMode mode)
 }
 ```
 
-- [ ] 카드 조건 평가를 시작에 한 번으로 이동한다. 기존 효과별 동일 조건은 카드 조건으로 승격한다.
-  `ConsumedStatusAtLeast`는 일반 조건에서 빼고 해당 앞 소비 효과의 Requirement로 옮긴다.
+- [ ] 카드 조건 평가를 시작에 한 번으로 이동한다. 효과 하나에 붙은 조건은 카드 조건으로 승격한다.
+  `ConsumedStatusAtLeast`는 일반 조건에서 빼고 해당 소비 효과를 가리키는 Requirement로 옮긴다.
   두 소비 중 특정 결과만 읽는 V16, 소비 0의 정상 미적용, V17 조건 고정 테스트를 작성한다.
   서로 다른 일반 조건 또는 소비 출처가 여러 개인 구형 데이터는 자동 추정하지 않고 변환 오류로 보고한다.
-- [ ] 무버전 JSON은 구형으로 인식한다. 아래 신규 형식으로 로딩 경계에서 변환하며 `schemaVersion`은 항상 출력한다.
-  효과 ID는 구형 변환 시 배열 위치에서 결정론적으로 생성하고 이후 저장 때 보존한다.
+- [ ] `condensed_burst` 동작 보존 테스트(D2): 독 3 보유 적에게 사용 → 소비 3, 피해 `2 + 3×2 = 8`.
+  독 1 보유 → 소비 1, 피해 4. 독 0 → 소비 0, 피해 2. 변환 전 기준 코드에서 같은 입력의 결과를 먼저 기록해 비교한다.
+  `ConsumeStatusPayload.DamageBonusPerConsumed`와 소비 처리기의 `AddPendingDamageBonus` 호출을 제거한다.
+  `GrantNextPlayerDamageCardBonusHandler`의 적립 경로는 건드리지 않는다.
+- [ ] 무버전 JSON은 구형으로 인식한다. 위 변환 규칙으로 로딩 경계에서 변환하며 `cardFormat`은 항상 출력한다.
 
 ```json
 {
-  "schemaVersion": 2,
+  "cardFormat": 2,
   "id": "payment_fixture",
   "name": "소비 보상 검증",
   "side": "Player",
@@ -226,16 +297,42 @@ public static int Take(int available, int requested, ConsumptionMode mode)
 
 - [ ] 위 JSON은 테스트 fixture이며 신규 게임 카드로 배포하지 않는다. 다음 변형을 테스트한다:
   requires의 pay를 missing으로 변경, reward 자기 참조, 소비가 아닌 damage 결과 참조,
-  미래 효과 참조, 중복 ID, 대상 축 미정의. 모두 파일/카드/효과 경로가 있는 로딩 오류여야 한다.
+  미래 효과 참조, 중복 ID, 대상 축 미정의, `scaleBy`의 같은 오류들. 모두 파일/카드/효과 경로가 있는 로딩 오류여야 한다.
 - [ ] 효과별 위치를 모아 카드의 두 축으로 정규화한다. 같은 축의 상충 위치는 로딩에서 거부한다.
   런타임에서 NoValidTarget로 넘기지 않는다. 서로 다른 일반 조건을 성공값이 같다는 이유로 합치지 않는다.
-- [ ] Condition 평가기도 판정 타입→처리기 등록으로 확장한다. 신규 조건을 중앙 switch에 추가하지 않는다.
-  기존 조건은 해당 등록으로 이전하고 소비 결과 요건은 별도 계약을 유지한다.
-- [ ] 편집 도구 import/export와 설명 생성에 새 카드 조건·효과 ID·위치 축·Exact/UpTo·requires를 반영한다.
-  효과 목록 재배열 시 ID는 유지하며 잘못된 참조는 저장 전에 표시한다. UI 외형 개편은 하지 않는다.
-- [ ] 스키마 테스트가 갱신한 authoring-schema.json을 검토 후 재실행한다. 기존 카드 전체 왕복은 신규 정규 형식
-  기준으로 갱신한다. 구형 샘플의 import와 신규 export도 별도 유지한다.
-- [ ] `Tools/verify.sh` 전체 통과 후 커밋: `refactor(core): 카드 조건과 소비 보상의 데이터 계약을 분리한다`.
+- [ ] 저장소 카드 29장을 변환기로 한 번 새 형식으로 다시 쓰고 커밋에 포함한다. 변환 전후로 같은 시드
+  `ScenarioRunner`·`MultiTurnRunner`의 **Compare** 결과가 같은지 확인한다(이 작업은 데이터 형식만 바꾸며 규칙은
+  시작 조건 평가 시점만 바뀐다 — 차이가 나면 그 카드와 이유를 기록한다).
+- [ ] 스키마 테스트가 갱신한 authoring-schema.json을 검토 후 재실행한다. 구형 샘플의 import 테스트와
+  신규 형식 export 테스트를 따로 둔다.
+- [ ] 편집 도구 테스트(`index.test.mjs`)는 이 커밋에서 깨질 수 있다. `Tools/verify.sh --quick`(헤드리스) 통과 후
+  커밋하고, 전체 `Tools/verify.sh`는 T2b에서 통과시킨다. 커밋: `refactor(core): 카드 조건과 소비 보상의 데이터 계약을 분리한다`.
+
+### T2b. 편집 도구의 새 카드 형식 편집 지원 (D6)
+
+편집 도구는 저장소 카드 JSON을 직접 읽고 쓰며(`Tools/card-idea-notebook/index.html:1286`), 모르는 키가 있는
+카드는 부팅 거부 오류와 함께 읽기 전용으로 띄운다(`index.html:1015`, [노트북 설계](../specs/2026-08-05-card-authoring-json-notebook-design.md) §11.3).
+T2a 이후 모든 카드가 새 키를 가지므로 이 작업 없이는 도구로 카드를 편집할 수 없다.
+효과 파라미터 폼은 `authoring-schema.json`에서 자동으로 만들어지므로(`index.html:454`) 효과 안 파라미터 변경
+(`amount`·`mode`, 효과의 `selector` 제거)은 스키마 갱신으로 따라온다. 아래는 손으로 고쳐야 하는 부분이다.
+편집 도구에는 카드 설명 생성 기능이 없으므로 설명 관련 작업은 없다.
+
+수정: `Tools/card-idea-notebook/index.html`, `index.test.mjs`.
+
+- [ ] 카드 단위 새 키 읽기·쓰기: `cardFormat`, `targets`(두 축), `startCondition`. `readCardJson`(`:560`)과
+  `writeCardJson`(`:863`)은 지금 스칼라 필드만 처리하므로 객체 필드를 `effects`처럼 따로 다룬다.
+  키 순서는 스키마의 `cardFields`를 따른다. 편집 도구 자체의 저장 형식 `SCHEMA_VERSION`(`:513`)과 섞지 않는다.
+- [ ] 조건 편집을 효과에서 카드로 옮긴다. 지금은 `conditionBlock`(`:2543`)·`setEffectCondition`(`:763`)이 효과마다 조건을
+  단다. 조건 종류와 `n`은 카드 편집부로, `successEffectValue`·`skipOnBasic`은 효과 행에 남긴다.
+- [ ] 효과 ID: `readEffectEntry`(`:534`)·`writeEffectEntry`(`:837`)가 `id`를 보존한다. 효과 추가·복제(`:693`·`:712`)는
+  카드 안에서 겹치지 않는 ID를 만들고, 이동(`:725`)은 ID를 유지한다.
+- [ ] 결과 참조 편집: 효과 행에 `requires`와 `scaleBy` 편집부를 둔다. 참조 대상은 **앞쪽의 소비 효과** 드롭다운으로만 고른다.
+- [ ] 저장 전 검증(`validateContent`, `:989`): `maxAmount ≥ 1` 규칙을 `amount ≥ 1`로 바꾸고, 자기 참조·뒤쪽 참조·
+  소비가 아닌 효과 참조·없는 ID 참조·같은 축 위치 충돌을 오류로 잡는다. 게임 로더(T2a)와 같은 것을 거부해야 한다.
+- [ ] `index.test.mjs`의 구형 카드 fixture를 새 형식으로 바꾸고, 위 각 항목의 테스트를 더한다. 저장소 카드 29장
+  전부가 읽기 → 쓰기에서 바이트가 같은지(왕복) 확인한다. 외형 개편은 하지 않는다.
+- [ ] 브라우저에서 도구를 열어 카드 하나(`condensed_burst`)의 `scaleBy`를 편집·저장해 보고 결과 JSON을 확인한다.
+- [ ] `Tools/verify.sh` 전체 통과 후 커밋: `feat(tools): 편집 도구가 새 카드 형식의 조건과 결과 참조를 편집한다`.
 
 ### T3. 효과 단위 위치 선택과 미적용 분리
 
@@ -245,7 +342,7 @@ public static int Take(int available, int requested, ConsumptionMode mode)
 생성: `Assets/Core/Effects/EffectExecutor.cs`, `Assets/Core/Combat/EffectTargetResolver.cs`.
 테스트: `CardTargetSnapshotTests.cs`, `FormationTargetingIntegrationTests.cs`, 신규 `EffectTargetResolverTests.cs`.
 
-입력: T2의 카드 위치 규칙과 효과 대상 축.
+입력: T2a의 카드 위치 규칙과 효과 대상 축.
 출력: `EffectTargetResolver.Resolve(CombatState state, ExecutionCardInstance card, CardTargetKey key)`는
 `EffectTargetSnapshot`을 반환한다. 기존 PartyTargets/EnemyTargets 조회 계약을 유지하되
 CardTargetSnapshot.cs를 효과 단위 값 객체로 이전한다.
@@ -282,7 +379,11 @@ public void A_new_effect_selects_the_new_front_enemy()
 - [ ] V05 통합 테스트: a HP3/b HP10, damage3 두 번 → a 사망/b HP7.
   V06: b를 앞으로 이동 → FrontOne 방어는 b에게 적용. 마지막 적 처치 이후 아군 효과는 T5와 통합한다.
 - [ ] All은 효과 시작 목록을 한 번 확보해 전체에 적용한다. 적용 도중 목록 구성을 다시 선택하지 않는다.
-- [ ] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 효과마다 위치를 해석하고 미적용을 분리한다`.
+- [ ] `CardResolved.TargetId`는 이벤트 필드로 유지하고 의미를 "처음 적용된 효과의 첫 대상(없으면 null)"으로
+  정의한다. Unity 소비자 `Assets/Unity/Scripts/Battle/Playback/CardResolvedPresenter.cs:46`·`:52`가 이 필드를 읽으므로,
+  구현 전에 그 파일을 읽고 새 의미로 표시가 성립하는지 확인한다. 성립하지 않으면 멈추고 보고한다.
+- [ ] `Tools/verify.sh --quick`과 D3의 Unity EditMode 배치가 통과한 뒤 커밋:
+  `refactor(core): 효과마다 위치를 해석하고 미적용을 분리한다`.
 
 ### T4. 공통 사건·직접 반응·공통 피해 경로
 
@@ -307,8 +408,10 @@ public void A_new_effect_selects_the_new_front_enemy()
   `Dispatch(CardExecutionContext context, IReadOnlyList<CombatSignal> signals)`.
 - EffectExecutor.Apply에 EffectOrigin 인자를 추가한다. 기본 호출은 Primary,
   ReactionDispatcher는 반드시 Reaction을 전달한다.
-- DamageService는 피해 원인(공격/상태)과 Piercing 속성을 받는다. 방어 흡수만 우회하는 관통과
-  피해 배율을 분리한다. 기존 독의 배율 적용 변화가 생기면 Compare로 영향과 의도를 보고한다.
+- DamageService는 피해 원인(공격/상태), Piercing(방어 흡수 우회), 배율 적용 여부를 따로 받는다.
+  **독은 원인=상태, Piercing, 배율 미적용으로 호출한다(D1).** 지금 독은 방어·배율을 모두 거치지 않으며
+  (`PoisonBehavior.cs:32`, `TurnResolver.cs`의 `DealDamage`), 전환 후에도 결과가 같아야 한다.
+  공통 경로로 옮긴다고 독에 취약(150%)이 붙으면 안 된다.
 - DeathProcessor는 효과 전후 생존 차분으로 사망 사건·실행선 제거를 한 번 수행한다.
   사망 능력을 직접 호출하지 않고 CombatSignal을 반환한다. 덱 제거 연결은 T5에서 수행한다.
 
@@ -358,6 +461,8 @@ ReactionDispatcher:
 | 반격 사망과 전염 | 사망·카드 제거는 실행, 전염은 미발동 |
 | 반응 효과의 방어 획득 | 방어는 증가, 획득 반응은 연쇄하지 않음 |
 | 방어로 전부 막은 공격 | Attacked 있음, HpDamaged 없음 |
+| 방어 5·취약을 가진 적에게 독 3 틱 (D1) | HP 3 감소, 방어 5 유지, 배율 미적용 |
+| 턴 종료 독 틱으로 사망한 전염 보유자 (D7) | 사망 능력(전염) 실행 — 턴 시점 처리는 Primary 기원 |
 
 - [ ] 표시 이벤트는 실제 발생 순서대로 기록한다. CardResolved 요약을 HP 변경의 재적용 명령으로 만들지 않는다.
   T7에서 기존 소비자의 요약/개별 이벤트 계약을 확인한다.
@@ -376,7 +481,9 @@ ReactionDispatcher:
   List<ResolutionEvent> events)` → void. 내부 승패 판정 금지.
 - `CombatOutcomeEvaluator.Evaluate(CombatState state)` → Outcome.
 - DeathProcessor 구성 시 `Action<string> removeOwnedCards`를 주입해 세션의 Deck.RemoveOwnedBy와 연결한다.
-  Core에서 Simulation 타입을 참조하지 않는다. 덱 없는 코어 테스트는 빈 동작을 명시적으로 전달한다.
+  `Deck`은 Core에 있지만(`Assets/Core/Combat/Deck.cs:86`) 전투 상태가 덱을 소유하지 않고 세션이 소유한다
+  (지금은 `DeckCombatSession.cs` 339–360이 타임라인의 `PartyMemberDied`를 훑어 제거한다). 그래서 덱 참조 대신
+  동작을 주입한다. 덱 없는 코어 테스트는 빈 동작을 명시적으로 전달한다.
 - 기존 TurnEnded 이벤트는 소비자 호환을 위해 유지한다. 이 이벤트 출력 때문에 미실행 TurnEnd 능력을 실행하지 않는다.
 
 - [ ] 아래 패배 우선 테스트와 V11~13을 추가한다. Outcome은 기존 Events 네임스페이스를 사용한다.
@@ -462,9 +569,17 @@ public void Refresh_keeps_the_original_application_order()
 - [ ] TurnEnd는 해당 시점 능력을 순차 처리하고 사망은 즉시 반영, 승패는 시점 마지막에 판정한다.
   죽은 보유자의 일반 능력은 요건으로 제외하고, 사망 능력은 사망 사건에서 발동한다.
   독의 성장은 독 수행 내부에 유지하며 별도 연쇄 반응으로 만들지 않는다.
+- [ ] 턴 시작·턴 종료 시점의 상태 처리가 만든 효과·사건은 Primary 기원으로 실행한다(D7). 독 틱 사망 → 전염 발동을
+  회귀 테스트로 잠근다(`ContagionStatusTests`).
+- [ ] 방어 만료를 Prepare로 옮기는 변경은 결과가 지금과 같아야 한다 — 목적은 시점 구분이다(「검토 반영 결정」 끝 문단).
+  같은 시드 Compare로 차이가 없음을 확인한다.
+- [ ] `Assets/Core/Status/StatusLifetime.cs:11`의 "Chosen PER APPLICATION" 주석은 낡았다(수명은 상태 JSON이 정한다,
+  `StatusContentCatalog.LifetimeOf`). 새 정책 타입으로 옮기면서 주석을 사실에 맞게 쓴다.
+- [ ] Unity 테스트 `Assets/Tests/UnityEditMode/BattleUnitsViewIdentityTests.cs:79–81`·`:105–107`이
+  `StatusLifetime.Turns(2)`와 `Statuses.Add`를 쓴다. API를 바꾸면 이 파일도 같은 커밋에서 고친다.
 - [ ] V19: 기존 방어 만료 → 시작 방어 획득 → 새 방어 유지.
   V20: 양측 HP1/독1 → 해당 시점 종료 후 Lose. 만료 중 새 부여가 즉시 사라지지 않는 사례도 추가한다.
-- [ ] `Tools/verify.sh` 통과 후 커밋: `refactor(core): 상태 만료를 공통 턴 시점으로 처리한다`.
+- [ ] `Tools/verify.sh`와 D3의 Unity EditMode 배치가 통과한 뒤 커밋: `refactor(core): 상태 만료를 공통 턴 시점으로 처리한다`.
 
 ### T7. 전환 회귀·표시 계약·최종 인계
 
@@ -496,22 +611,23 @@ public void Every_card_preserves_its_canonical_serialized_definition()
         var second = ContentJson.Read<CardSpec>(canonical);
         Assert.IsTrue(JToken.DeepEquals(JToken.Parse(canonical),
             JToken.Parse(ContentJson.Write(second))), path);
-        Assert.AreEqual(2, (int)JObject.Parse(canonical)["schemaVersion"], path);
+        Assert.AreEqual(2, (int)JObject.Parse(canonical)["cardFormat"], path);
     }
 }
 ```
 
-- [ ] 이 왕복 테스트에 더해 T2의 유효성 검사, 구형 입력 변환 테스트를 유지한다.
+- [ ] 이 왕복 테스트에 더해 T2a의 유효성 검사, 구형 입력 변환 테스트를 유지한다.
   왕복 일치만으로 효과 의미 보존을 대신하지 않는다.
 - [ ] CardResolved 요약과 개별 HpChanged를 중복 적용하지 않는지 CombatLogTests로 검증한다.
   승리 시 TurnEnded가 턴 종료 상태를 실제 수행했다는 뜻이 아님을 테스트한다.
 - [ ] 같은 시드·같은 조작으로 이벤트 열을 두 번 비교한다. 기존 ScenarioRunner/MultiTurnRunner의
   Compare도 실행해 무조작/조작 차이가 의도한 순서·조건 변경인지 기록한다.
 - [ ] 최종 명령을 실행한다. 테스트가 생성한 스키마 파일까지 변경 목록에 포함해 확인한다.
+  D3의 Unity EditMode 배치도 마지막으로 한 번 더 돌려 결과 XML의 `failed=0`을 확인한다.
 
 ```sh
 Tools/verify.sh
-rg -n 'TargetId|ConsumedStatusAmount|NoValidTarget|OnHolderDied' Assets/Core/Combat Assets/Core/Effects Assets/Core/Status
+rg -n 'TargetId|ConsumedStatusAmount|NoValidTarget|OnHolderDied|DamageBonusPerConsumed|SurviveCharges|DeathsDoor' Assets/Core Assets/Unity Assets/Tests
 git diff --check
 git status --short
 ```
@@ -534,9 +650,9 @@ git status --short
 | V05~V06 | T3 | 다음 효과의 위치 해석 |
 | V07~V10 | T4 | 효과/반응 순서·연쇄 금지·방어한 공격 |
 | V11~V13 | T5 | 사망 후 계속 수행·카드 종료 승패 |
-| V14~V17 | T2 | 정량/최대치 소비·효과별 결과·조건 고정 |
+| V14~V17 | T2a | 정량/최대치 소비·효과별 결과·조건 고정 |
 | V18~V20 | T6 | 재부여 순서·공통 만료·시점 종료 승패 |
-| V21~V22 | T2,T7 | 로딩 거부·게임과 도구의 왕복 |
+| V21~V22 | T2a,T2b,T7 | 로딩 거부·게임과 도구의 왕복 |
 
 시작 전: 전용 워크트리, 현재 HEAD 차이, 별도 작업과 공유 파일 차이, 기존 검증 결과 확인.
 해당 작업의 중단 기준: 일의적으로 이전할 수 없는 카드 데이터, 승인 설계와 다른 반응 의미를 요구하는 능력,

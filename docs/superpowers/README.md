@@ -41,7 +41,7 @@
 | 문서 | 상태 | 권위 범위 | 다음 사용 시점 |
 |---|---|---|---|
 | [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `active` | 2026-09-18 승인된 설계. 실행 카드·효과별 위치·반응·소비 보상·만료·승패 경계의 상충 규칙을 대체. 다중 적 정책 제외. 현재 구현 설명은 아님 | 별도 구현 요청 후 적용 |
-| [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) — [HTML 개요](plans/2026-09-18-combat-execution-contract.html) | `active` | 승인 설계를 T1~T7로 분해한 계획. API·데이터 전환·테스트·V01~V22 추적. 이 세션에서 구현하지 않음 | 별도 구현 요청 후 워크트리에서 순차 실행 |
+| [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) — [HTML 개요](plans/2026-09-18-combat-execution-contract.html) | `active` | 승인 설계를 T0~T7(T2a·T2b 포함 아홉 작업)로 분해한 계획. 2026-09-18 검토 결정 D1~D8 반영(치명타 버티기 제거, 편집 도구 새 형식 편집 지원, 독 관통·배율 미적용, Unity 배치 검증). 아직 구현하지 않음 | 별도 구현 요청 후 워크트리에서 순차 실행 |
 
 ### 전투와 파티 규칙
 
@@ -263,6 +263,12 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   `CombatNode.Begin`의 로드아웃이 `RunMember.Cards`를 복사하는지 잠그는 테스트를 함께 더한다(현재는
   세션이 한 번 더 복사해 관찰되지 않는다).
 
+  **2026-09-18 추가 확인:** HP뿐 아니라 **사망도 런에 기록되지 않는다.** 이긴 전투에서 죽은 파티원은
+  `CombatNode.Conclude`(`Assets/Core/Simulation/Run/CombatNode.cs:115`)가 아무것도 쓰지 않아 런에서는 최대 HP로
+  살아 있고 카드도 남는다. [전투 실행 계약](specs/2026-09-18-combat-execution-contract-design.md) §6이 전투 중 사망 시
+  그 파티원 카드를 즉시 제거하도록 정했으므로 런 처리도 이에 맞출지가 위 선행 결정이다. 치명타 버티기는 그 계획의
+  T0에서 제거된다.
+
 - [ ] **[필수] 다중 적 — 적마다 정책과 카드 주인** — 사용자 지정 필수(2026-09-15). 위 항목이 미룬 "정책 API
   재설계"다. [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md)이 모양을 먼저 맞춘다 —
   적 JSON id와 전투 안 id(`goblin#0`) 분리, 편성 공급자가 적마다 (적, 정책) 쌍 반환. 남는 일:
@@ -372,7 +378,19 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
      **그대로 적용**할 것인가, 데이터 종류마다 다른 모양이 필요한가.
   2. 계획 4의 범위를 카드에 한정할 것인가, 층 전반으로 넓힐 것인가.
 
-- [ ] **`StatusLifetime` count 의미 단일화** — 상태마다 `count`가 "남은 턴"인지 "세기"인지 다르고,
+- [ ] **치명타 버티기 재도입** — 2026-09-18 사용자 결정으로
+  [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) T0에서 `SurviveCharges`·`DeathsDoor`를
+  전부 제거한다. 나중에 **다른 방식으로** 다시 도입할 예정이며, 옛 구조(캐릭터 JSON의 충전 수, 피해 처리 안의 분기)를
+  되살리지 않고 새 설계부터 시작한다.
+
+- [ ] **조건 평가의 등록형 전환** — 전투 실행 계약 계획 검토(2026-09-18)에서 범위 밖으로 뺐다. 런타임
+  `ConditionEvaluator`는 타입 검사 if 사슬이고(`Assets/Core/Conditions/ConditionEvaluator.cs:10`), 저작 쪽
+  `ConditionSpec.ToCondition` switch는 주석으로 유지 의도가 적혀 있다(`Assets/Core/Authoring/EffectSpec.cs:20`).
+  새 조건이 늘어 중앙이 자라는 것이 실제로 문제될 때 착수하며, 그때 저작 쪽 유지 결정도 다시 본다.
+
+- [ ] **`StatusLifetime` count 의미 단일화** — **2026-09-18: 전투 실행 계약 계획 T6이 수명(남은 방문 횟수)을
+  세기에서 분리하는 공통 만료 정책을 도입한다. 이 항목은 T6 이후 남는 부분(count/magnitude 이름 정리, 공유
+  magnitude 슬롯 일반화)으로 범위를 다시 잡는다.** 상태마다 `count`가 "남은 턴"인지 "세기"인지 다르고,
   지금은 상태 콘텐츠의 수명 종류가 그것을 정한다. 보관된 상태 규칙 계획이 "영향 범위가 넓어 별도
   계획으로 분리한다"고 명시하고 미뤄둔 항목이다. `StatusBag`·`ApplyStatusPayload`·`ApplyStatusSpec`·
   카드 JSON·설명 문법의 `LifetimeSuffix`에 걸친다. 착수하려면 먼저 스펙이 필요하다.
