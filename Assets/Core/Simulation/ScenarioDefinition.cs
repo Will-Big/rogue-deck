@@ -72,6 +72,9 @@ namespace FateWeaver.Simulation
         public int ExecutionOrder { get; }
         public IReadOnlyList<EffectData> Effects { get; }
 
+        /// <summary>카드 시작 조건(null이면 없음). 효과의 SuccessEffectValue·SkipOnBasic이 이 결과를 읽는다.</summary>
+        public FateWeaver.Core.Conditions.Condition StartCondition { get; init; }
+
         public ZoneCardSpec(
             string id,
             string name,

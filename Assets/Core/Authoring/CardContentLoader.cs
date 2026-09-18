@@ -80,9 +80,12 @@ namespace FateWeaver.Core.Authoring
                 specs.Add(spec);
             }
 
-            foreach (var error in AuthoringValidator.Validate(specs, context))
+            foreach (var spec in specs)
             {
-                errors.Add(error);
+                foreach (var error in AuthoringValidator.Validate(new[] { spec }, context))
+                {
+                    errors.Add(origin[spec.Id] + ": " + error);
+                }
             }
 
             if (errors.Count > 0)

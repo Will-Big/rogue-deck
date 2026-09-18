@@ -1,19 +1,24 @@
 {
+  "cardFormat": 2,
   "id": "riposte",
   "name": "응수",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "enemy": "FrontOne"
+  },
+  "startCondition": {
+    "kind": "PrevExecutedIsEnemyDamageCard"
+  },
   "effects": [
     {
       "kind": "damage",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "value": 3,
-      "selector": "FrontOne",
-      "condition": {
-        "kind": "PrevExecutedIsEnemyDamageCard",
-        "successEffectValue": 7
-      }
+      "successEffectValue": 7
     }
   ],
   "grade": "Common",

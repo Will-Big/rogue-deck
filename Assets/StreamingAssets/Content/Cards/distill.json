@@ -1,32 +1,37 @@
 {
+  "cardFormat": 2,
   "id": "distill",
   "name": "증류",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "consume_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "maxAmount": 1,
-      "selector": "FrontOne"
+      "amount": 1,
+      "mode": "UpTo"
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     },
     {
       "kind": "grant_next_turn_fate",
+      "id": "e2",
       "value": 1,
-      "condition": {
-        "kind": "ConsumedStatusAtLeast",
-        "n": 1,
-        "successEffectValue": 1,
-        "skipOnBasic": true
+      "requires": {
+        "sourceEffectId": "e0",
+        "minimumConsumed": 1
       }
     }
   ],

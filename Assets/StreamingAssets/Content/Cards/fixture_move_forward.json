@@ -1,13 +1,19 @@
 {
+  "cardFormat": 2,
   "id": "fixture_move_forward",
   "name": "[검증] 대형 이동",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self"
+  },
   "effects": [
     {
       "kind": "move_formation",
+      "id": "e0",
+      "targetFaction": "Ally",
       "value": -1
     }
   ],

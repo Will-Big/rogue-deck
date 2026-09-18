@@ -56,11 +56,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_executed_condition_names_execution_history()
         {
-            var card = Execution(EffectData.Conditional(
-                EffectKeys.Damage,
-                1,
-                new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
-                2));
+            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+                with { StartCondition = new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage) };
 
             Assert.AreEqual(
                 "[◆] 피해 1. 직전에 실행한 카드가 적 피해 카드이면 피해 2.",
@@ -70,11 +67,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Previous_adjacent_condition_names_frozen_placement_order()
         {
-            var card = Execution(EffectData.Conditional(
-                EffectKeys.Damage,
-                1,
-                new AdjacentCardHasEffect(AdjacentDirection.Previous, Side.Player, EffectKeys.Damage),
-                2));
+            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+                with { StartCondition = new AdjacentCardHasEffect(AdjacentDirection.Previous, Side.Player, EffectKeys.Damage) };
 
             Assert.AreEqual(
                 "[◆] 피해 1. 앞에 배치된 카드가 플레이어 피해 카드이면 피해 2.",
@@ -84,11 +78,8 @@ namespace FateWeaver.Tests
         [Test]
         public void No_preceding_condition_names_execution_history()
         {
-            var card = Execution(EffectData.Conditional(
-                EffectKeys.Damage,
-                1,
-                new NoPrecedingCardOfSide(Side.Player),
-                2));
+            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+                with { StartCondition = new NoPrecedingCardOfSide(Side.Player) };
 
             Assert.AreEqual(
                 "[◆] 피해 1. 이전에 실행한 플레이어 카드가 없으면 피해 2.",
@@ -98,11 +89,8 @@ namespace FateWeaver.Tests
         [Test]
         public void No_following_condition_names_frozen_placement_order()
         {
-            var card = Execution(EffectData.Conditional(
-                EffectKeys.Damage,
-                1,
-                new NoFollowingCardOfSide(Side.Enemy),
-                2));
+            var card = Execution(new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 2 })
+                with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) };
 
             Assert.AreEqual(
                 "[◆] 피해 1. 뒤에 배치된 적 카드가 없으면 피해 2.",

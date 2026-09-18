@@ -26,6 +26,9 @@ namespace FateWeaver.Core.Effects
         public int DamageDealt;
         public string TargetId;
 
+        /// <summary>이 효과가 실제로 소비한 양. 효과 결과(EffectResult.ConsumedAmount)가 된다.</summary>
+        public int ConsumedAmount;
+
         /// <summary>이 효과가 만든 부가 타임라인 이벤트 (예: 즉시 상태 발동의 StatusTicked).
         /// TurnResolver가 CardResolved/CardCancelled 뒤에 발생 순서대로 붙인다.</summary>
         public List<ResolutionEvent> ExtraEvents = new List<ResolutionEvent>();

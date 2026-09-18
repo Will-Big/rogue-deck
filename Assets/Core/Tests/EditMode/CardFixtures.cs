@@ -34,17 +34,16 @@ namespace FateWeaver.Tests
             int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.Conditional(
-                    EffectKeys.Damage, baseDamage, new FirstToTrigger(), whenFirst));
+                new EffectData(EffectKeys.Damage, baseDamage) { SuccessEffectValue = whenFirst })
+                with { StartCondition = new FirstToTrigger() };
 
         public static CardDefinition DamageAfterEnemyDamage(
             string id, int baseDamage, int whenAfter,
             int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.Conditional(
-                    EffectKeys.Damage, baseDamage,
-                    new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), whenAfter));
+                new EffectData(EffectKeys.Damage, baseDamage) { SuccessEffectValue = whenAfter })
+                with { StartCondition = new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage) };
 
         public static CardDefinition BlockBeforeEnemyDamage(
             string id, int baseMagnitude, int whenBefore,
@@ -52,12 +51,12 @@ namespace FateWeaver.Tests
             => Execution(
                 id, executionOrder, cost,
                 EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, baseMagnitude)
-                    with
-                    {
-                        Condition = new AdjacentCardHasEffect(
-                            AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
-                        SuccessEffectValue = whenBefore
-                    });
+                    with { SuccessEffectValue = whenBefore })
+                with
+                {
+                    StartCondition = new AdjacentCardHasEffect(
+                        AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage)
+                };
 
         public static CardDefinition ChangeExecutionOrder(string id, int delta, int cost = 1)
             => Intervention(

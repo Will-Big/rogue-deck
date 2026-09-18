@@ -154,11 +154,13 @@ namespace FateWeaver.Tests
             Category = CardCategory.Execution,
             EnergyCost = 1,
             BaseExecutionOrder = 3,
+            Targets = new CardTargetsSpec { Enemy = CardTargetRange.FrontOne },
             Effects = new EffectSpec[] { new ApplyStatusSpec
             {
+                Id = "slow",
+                TargetFaction = CardTargetFaction.Enemy,
                 Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Count = 2,
-                Target = StatusApplyTarget.TargetEnemy
+                Count = 2
             } }
         };
 

@@ -1,15 +1,20 @@
 {
+  "cardFormat": 2,
   "id": "vanguard_slash",
   "name": "선봉 베기",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 3,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "damage",
-      "value": 5,
-      "selector": "FrontOne"
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 5
     }
   ],
   "grade": "Common",

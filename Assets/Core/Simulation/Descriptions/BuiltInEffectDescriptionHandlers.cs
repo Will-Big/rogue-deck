@@ -114,12 +114,12 @@ namespace FateWeaver.Simulation.Descriptions
                 throw new ArgumentException(
                     "Consume-status description requires a ConsumeStatusPayload.", nameof(effect));
 
-            var text = context.Statuses.Resolve(payload.Key) + " 최대 " + payload.MaxAmount + " 소비";
+            var amount = payload.Mode == ConsumptionMode.UpTo
+                ? "최대 " + payload.Amount
+                : payload.Amount.ToString();
             return new EffectDescriptionFragment(
                 context.EnemyRange(effect.TargetSelector),
-                payload.DamageBonusPerConsumed > 0
-                    ? text + " (소비 1당 피해 +" + payload.DamageBonusPerConsumed + ")"
-                    : text);
+                context.Statuses.Resolve(payload.Key) + " " + amount + " 소비");
         }
     }
 

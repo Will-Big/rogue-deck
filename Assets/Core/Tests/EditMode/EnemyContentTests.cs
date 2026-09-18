@@ -44,7 +44,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, sly.BaseExecutionOrder);
             Assert.AreEqual(3, sly.Effects.Single().EffectValue);
             Assert.AreEqual(6, sly.Effects.Single().SuccessEffectValue);
-            Assert.AreEqual(Side.Player, ((NoPrecedingCardOfSide)sly.Effects.Single().Condition).Side);
+            Assert.AreEqual(Side.Player, ((NoPrecedingCardOfSide)sly.StartCondition).Side);
         }
 
         [Test]

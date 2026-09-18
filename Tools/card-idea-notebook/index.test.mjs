@@ -38,7 +38,13 @@ test("생성된 스키마에서 효과 여덟 종을 읽는다", () => {
 test("효과 필드의 이름과 순서를 저작 파일과 같게 읽는다", () => {
   const schema = loadSchema();
   const names = schema.effects.apply_status.fields.map((field) => field.name);
-  assert.deepEqual(names, ["status", "count", "target", "selector"]);
+  assert.deepEqual(names, ["status", "count"]);
+  assert.deepEqual(schema.effects.apply_status.order, [
+    "id", "targetFaction", "status", "count", "successEffectValue", "skipOnBasic", "requires", "scaleBy",
+  ]);
+  assert.equal(schema.effects.apply_status.targeted, true);
+  assert.equal(schema.effects.consume_status.producesConsumption, true);
+  assert.equal(schema.effects.grant_next_turn_fate.targeted, false);
 });
 
 test("필드 타입과 열거 항목을 읽는다", () => {
@@ -46,19 +52,22 @@ test("필드 타입과 열거 항목을 읽는다", () => {
   const fields = schema.effects.apply_status.fields;
   assert.equal(fields.find((f) => f.name === "count").type, "int");
   assert.equal(fields.find((f) => f.name === "status").type, "status");
-  const target = fields.find((f) => f.name === "target");
-  assert.equal(target.type, "enum");
-  assert.ok(target.options.includes("TargetEnemy"));
+  const mode = schema.effects.consume_status.fields.find((f) => f.name === "mode");
+  assert.equal(mode.type, "enum");
+  assert.deepEqual(mode.options, ["UpTo", "Exact"]);
+  assert.equal(mode.always, true, "UpTo도 파일에 항상 쓴다 - C#의 DefaultValueHandling.Include");
+  assert.deepEqual(schema.factions, ["Ally", "Enemy"]);
+  assert.ok(schema.ranges.includes("Self"));
 });
 
 test("분류별 카드 키 순서를 저작 파일과 같게 읽는다", () => {
   const schema = loadSchema();
   assert.deepEqual(schema.cardFields.Execution, [
-    "id", "name", "side", "category", "energyCost", "baseExecutionOrder",
-    "effects", "grade", "tags",
+    "cardFormat", "id", "name", "side", "category", "energyCost", "baseExecutionOrder",
+    "targets", "startCondition", "effects", "grade", "tags",
   ]);
   assert.deepEqual(schema.cardFields.Intervention, [
-    "id", "name", "side", "category", "energyCost", "intervention", "grade", "tags",
+    "cardFormat", "id", "name", "side", "category", "energyCost", "intervention", "grade", "tags",
   ]);
 });
 
@@ -104,16 +113,39 @@ test("실행 카드를 모델로 읽는다", () => {
   assert.equal(card.grade, "Common");
   assert.deepEqual(card.tags, ["시작", "공격"]);
   assert.equal(card.effects.length, 1);
-  assert.deepEqual(card.effects[0].params, { value: 5, selector: "FrontOne" });
-  assert.equal(card.effects[0].condition, null);
+  assert.deepEqual(card.targets, { ally: null, enemy: "FrontOne" });
+  assert.equal(card.startCondition, null);
+  assert.equal(card.effects[0].id, "e0");
+  assert.equal(card.effects[0].targetFaction, "Enemy");
+  assert.deepEqual(card.effects[0].params, { value: 5 });
+  assert.equal(card.effects[0].successEffectValue, null);
 });
 
-test("조건부 효과의 조건을 읽는다", () => {
+test("카드 시작 조건과 효과의 성공 수치를 읽는다", () => {
   const core = loadCore();
   const { card } = core.readCardJson(readCardFile("riposte.json"), loadSchema());
-  assert.deepEqual(card.effects[0].condition, {
-    kind: "PrevExecutedIsEnemyDamageCard", n: 0, successEffectValue: 7, skipOnBasic: false,
-  });
+  assert.deepEqual(card.startCondition, { kind: "PrevExecutedIsEnemyDamageCard", n: 0 });
+  assert.equal(card.effects[0].successEffectValue, 7);
+  assert.equal(card.effects[0].skipOnBasic, false);
+});
+
+test("결과 참조를 읽는다", () => {
+  const core = loadCore();
+  const burst = core.readCardJson(readCardFile("condensed_burst.json"), loadSchema()).card;
+  assert.deepEqual(burst.effects[1].scaleBy, { sourceEffectId: "e0", perConsumed: 2 });
+  assert.deepEqual(burst.effects[0].params, { status: "poison", amount: 3, mode: "UpTo" });
+
+  const reclaim = core.readCardJson(readCardFile("toxic_reclaim.json"), loadSchema()).card;
+  assert.deepEqual(reclaim.effects[2].requires, { sourceEffectId: "e0", minimumConsumed: 1 });
+});
+
+test("구형 카드는 읽지 않고 이유를 준다", () => {
+  const core = loadCore();
+  const { card, errors } = core.readCardJson(JSON.stringify({
+    id: "old", name: "옛 카드", side: "Player", category: "Execution",
+  }), loadSchema());
+  assert.equal(card, null);
+  assert.match(errors[0], /구형/);
 });
 
 test("개입 카드를 중첩 스펙으로 읽는다", () => {
@@ -129,7 +161,7 @@ test("파라미터가 없는 개입도 읽는다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const text = JSON.stringify({
-    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    cardFormat: 2, id: "seal", name: "봉인", side: "Player", category: "Intervention",
     energyCost: 1, intervention: { kind: "lock" },
   }, null, 2);
   const { card, errors } = core.readCardJson(text, schema);
@@ -156,7 +188,7 @@ test("빈 배열과 없는 배열을 구분한다", () => {
 test("모르는 효과 kind를 버리지 않고 보존한다", () => {
   const core = loadCore();
   const text = JSON.stringify({
-    id: "x", name: "실험", side: "Player", category: "Execution",
+    cardFormat: 2, id: "x", name: "실험", side: "Player", category: "Execution",
     effects: [{ kind: "teleport", distance: 3 }],
   }, null, 2);
   const { card, errors } = core.readCardJson(text, loadSchema());
@@ -168,7 +200,7 @@ test("모르는 효과 kind를 버리지 않고 보존한다", () => {
 test("모르는 최상위 키를 보존하고 이름을 알려준다", () => {
   const core = loadCore();
   const text = JSON.stringify({
-    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+    cardFormat: 2, id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
   }, null, 2);
   const { card } = core.readCardJson(text, loadSchema());
   assert.deepEqual(card.unknownKeys, ["flavour"]);
@@ -223,10 +255,10 @@ test("기본값 멤버를 생략하되 side와 category는 항상 쓴다", () =>
   const core = loadCore();
   const schema = loadSchema();
   const { card } = core.readCardJson(JSON.stringify({
-    id: "probe", name: "탐침", side: "Player", category: "Execution",
+    cardFormat: 2, id: "probe", name: "탐침", side: "Player", category: "Execution",
   }, null, 2), schema);
   const written = JSON.parse(core.writeCardJson(card, schema));
-  assert.deepEqual(Object.keys(written), ["id", "name", "side", "category"]);
+  assert.deepEqual(Object.keys(written), ["cardFormat", "id", "name", "side", "category"]);
 });
 
 test("분류에 없는 키는 모델에 있어도 나가지 않는다", () => {
@@ -246,7 +278,7 @@ test("파라미터 없는 개입은 kind만 쓴다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const original = `${JSON.stringify({
-    id: "seal", name: "봉인", side: "Player", category: "Intervention",
+    cardFormat: 2, id: "seal", name: "봉인", side: "Player", category: "Intervention",
     energyCost: 1, intervention: { kind: "lock" },
   }, null, 2)}\n`;
   const { card } = core.readCardJson(original, schema);
@@ -257,7 +289,7 @@ test("모르는 효과 kind를 원본 그대로 되돌린다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const original = `${JSON.stringify({
-    id: "x", name: "실험", side: "Player", category: "Execution",
+    cardFormat: 2, id: "x", name: "실험", side: "Player", category: "Execution",
     effects: [{ kind: "teleport", distance: 3 }],
   }, null, 2)}\n`;
   const { card } = core.readCardJson(original, schema);
@@ -268,7 +300,7 @@ test("모르는 최상위 키를 원본 그대로 되돌린다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const original = `${JSON.stringify({
-    id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
+    cardFormat: 2, id: "x", name: "실험", side: "Player", category: "Execution", flavour: "설명",
   }, null, 2)}\n`;
   const { card } = core.readCardJson(original, schema);
   assert.equal(core.writeCardJson(card, schema), original);
@@ -317,7 +349,7 @@ test("깨진 풀은 이유를 준다", () => {
 
 function cardOf(core, schema, overrides) {
   const { card } = core.readCardJson(JSON.stringify({
-    id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
+    cardFormat: 2, id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
   }, null, 2), schema);
   return card;
 }
@@ -374,16 +406,76 @@ test("등록되지 않은 상태 키를 잡는다", () => {
   assert.ok(result.errors.some((e) => e.message.includes("posion")));
 });
 
-test("consume_status의 maxAmount 하한을 잡는다", () => {
+test("consume_status의 amount 하한을 잡는다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const result = core.validateContent({
     cards: [cardOf(core, schema, {
-      effects: [{ kind: "consume_status", status: "poison", maxAmount: 0 }],
+      targets: { enemy: "FrontOne" },
+      effects: [{ kind: "consume_status", id: "pay", targetFaction: "Enemy", status: "poison", amount: 0, mode: "UpTo" }],
     })],
     pools: [], statusKeys: STATUS_KEYS, schema,
   });
-  assert.ok(result.errors.some((e) => e.message.includes("maxAmount")));
+  assert.ok(result.errors.some((e) => e.message.includes("amount")));
+});
+
+function errorsOf(core, schema, overrides) {
+  return core.validateContent({
+    cards: [cardOf(core, schema, overrides)], pools: [], statusKeys: STATUS_KEYS, schema,
+  }).errors.map((e) => e.message);
+}
+
+const PAY = { kind: "consume_status", id: "pay", targetFaction: "Enemy", status: "poison", amount: 1, mode: "Exact" };
+
+test("게임 로더가 거부하는 결과 참조를 저장 전에 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const reward = (requires) => ({ kind: "grant_next_turn_fate", id: "reward", value: 1, requires });
+  const base = { targets: { enemy: "FrontOne" } };
+
+  assert.deepEqual(errorsOf(core, schema, {
+    ...base, effects: [PAY, reward({ sourceEffectId: "pay", minimumConsumed: 1 })],
+  }), [], "정상 fixture는 통과한다");
+
+  assert.ok(errorsOf(core, schema, {
+    ...base, effects: [PAY, reward({ sourceEffectId: "missing", minimumConsumed: 1 })],
+  }).some((m) => m.includes("앞 효과가 아닙니다")));
+  assert.ok(errorsOf(core, schema, {
+    ...base, effects: [PAY, reward({ sourceEffectId: "reward", minimumConsumed: 1 })],
+  }).some((m) => m.includes("자기 자신")));
+  assert.ok(errorsOf(core, schema, {
+    ...base,
+    effects: [
+      { kind: "damage", id: "hit", targetFaction: "Enemy", value: 1 },
+      reward({ sourceEffectId: "hit", minimumConsumed: 1 }),
+    ],
+  }).some((m) => m.includes("소비량을 내지 않습니다")));
+  assert.ok(errorsOf(core, schema, {
+    ...base, effects: [reward({ sourceEffectId: "pay", minimumConsumed: 1 }), PAY],
+  }).some((m) => m.includes("앞 효과가 아닙니다")));
+});
+
+test("효과 ID와 대상 축 오류를 잡는다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+
+  assert.ok(errorsOf(core, schema, {
+    targets: { enemy: "FrontOne" }, effects: [PAY, { ...PAY }],
+  }).some((m) => m.includes("효과 id가 중복")));
+  assert.ok(errorsOf(core, schema, {
+    effects: [PAY],
+  }).some((m) => m.includes("targets.enemy")));
+  assert.ok(errorsOf(core, schema, {
+    targets: { enemy: "FrontOne" },
+    effects: [PAY, { kind: "grant_next_turn_fate", id: "r", targetFaction: "Ally", value: 1 }],
+  }).some((m) => m.includes("진영을 비워야")));
+  assert.ok(errorsOf(core, schema, {
+    targets: { enemy: "FrontOne", ally: "Self" }, effects: [PAY],
+  }).some((m) => m.includes("targets.ally가 있지만")));
+  assert.ok(errorsOf(core, schema, {
+    targets: { enemy: "FrontOne" },
+    effects: [{ ...PAY, successEffectValue: 3 }],
+  }).some((m) => m.includes("카드 시작 조건")));
 });
 
 test("풀 소속 카드에만 등급과 태그를 요구한다", () => {
@@ -430,7 +522,7 @@ test("모르는 최상위 키는 부팅 거부라고 알린다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const { card } = core.readCardJson(JSON.stringify({
-    id: "probe", name: "탐침", side: "Player", category: "Execution", flavour: "설명",
+    cardFormat: 2, id: "probe", name: "탐침", side: "Player", category: "Execution", flavour: "설명",
   }, null, 2), schema);
   const result = core.validateContent({
     cards: [card], pools: [], statusKeys: STATUS_KEYS, schema,
@@ -605,7 +697,7 @@ function cardsByIdOf(core, schema, specs) {
   const map = new Map();
   for (const spec of specs) {
     const { card } = core.readCardJson(JSON.stringify({
-      id: spec.id, name: spec.id, side: "Player", category: spec.category ?? "Execution",
+      cardFormat: 2, id: spec.id, name: spec.id, side: "Player", category: spec.category ?? "Execution",
       ...spec,
     }, null, 2), schema);
     map.set(card.id, card);
@@ -721,7 +813,7 @@ test("카드 소속 풀을 역방향 표로 만든다", () => {
 
 function viewCards(core, schema, specs) {
   return specs.map((spec) => core.readCardJson(JSON.stringify({
-    id: spec.id, name: spec.name ?? spec.id, side: spec.side ?? "Player",
+    cardFormat: 2, id: spec.id, name: spec.name ?? spec.id, side: spec.side ?? "Player",
     category: "Execution", ...spec,
   }, null, 2), schema).card);
 }
@@ -1013,10 +1105,11 @@ function fakeStorage(seed = {}) {
   };
 }
 
-test("스키마 버전이 7이다", () => {
+test("스키마 버전이 8이고 카드 형식과 별개다", () => {
   const core = loadCore();
 
-  assert.equal(core.SCHEMA_VERSION, 7);
+  assert.equal(core.SCHEMA_VERSION, 8);
+  assert.equal(core.CARD_FORMAT, 2);
 });
 
 test("옛 Markdown 데이터를 백업 키로 옮기고 지운다", () => {
@@ -1058,20 +1151,21 @@ test("백업이 이미 있으면 덮어쓰지 않는다", () => {
   assert.notEqual(storage.getItem(core.STORAGE_KEY), null);
 });
 
-test("계획 C 시절 미반영(버전 1)을 버리지 않는다", () => {
-  const core = loadCore();
-  const storage = fakeStorage({
-    [core.PENDING_STORAGE_KEY]: JSON.stringify({
-      version: 1, cards: { "repo:x": { id: "x" } }, pools: {},
-    }),
+for (const version of [1, 7]) {
+  test(`카드 형식 1 시절 미반영(버전 ${version})은 지우지 않고 백업한다`, () => {
+    const core = loadCore();
+    const saved = JSON.stringify({ version, cards: { "repo:x": { id: "x" } }, pools: {} });
+    const storage = fakeStorage({ [core.PENDING_STORAGE_KEY]: saved });
+
+    const result = core.readPending(storage);
+
+    assert.equal(result.pending.version, 8);
+    assert.deepEqual(result.pending.cards, {});
+    assert.match(result.errors[0], /백업/);
+    assert.equal(storage.getItem(core.PENDING_BACKUP_KEY), saved);
+    assert.equal(storage.getItem(core.PENDING_STORAGE_KEY), null);
   });
-
-  const result = core.readPending(storage);
-
-  assert.deepEqual(result.errors, []);
-  assert.equal(result.pending.version, 7);
-  assert.deepEqual(Object.keys(result.pending.cards), ["repo:x"]);
-});
+}
 
 test("저장소에서 읽은 카드에 파일 uid를 붙인다", () => {
   const core = loadCore();
@@ -1221,7 +1315,7 @@ test("새 카드는 스키마의 기본값으로 시작한다", () => {
 
 function probeCard(core, schema, overrides) {
   const { card } = core.readCardJson(JSON.stringify({
-    id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
+    cardFormat: 2, id: "probe", name: "탐침", side: "Player", category: "Execution", ...overrides,
   }, null, 2), schema);
   return card;
 }
@@ -1232,9 +1326,11 @@ test("새 효과 행은 스키마의 기본값으로 시작한다", () => {
   const added = core.addEffect(probeCard(core, schema, {}), "apply_status", schema);
 
   assert.equal(added.effects.length, 1);
-  assert.deepEqual(added.effects[0].params,
-    { status: "", count: 0, target: "Self", selector: "None" });
-  assert.equal(added.effects[0].condition, null);
+  assert.deepEqual(added.effects[0].params, { status: "", count: 0 });
+  assert.equal(added.effects[0].id, "e0");
+  assert.equal(added.effects[0].targetFaction, null);
+  assert.equal(added.effects[0].successEffectValue, null);
+  assert.equal(added.effects[0].requires, null);
   assert.equal(added.effects[0].raw, null);
 });
 
@@ -1244,15 +1340,15 @@ test("기본값뿐인 효과는 kind만 파일로 나간다", () => {
   const added = core.addEffect(probeCard(core, schema, {}), "apply_status", schema);
   const written = JSON.parse(core.writeCardJson(added, schema));
 
-  assert.deepEqual(written.effects, [{ kind: "apply_status" }],
-    "기본값은 생략된다 - 폼이 값을 다 채워도 왕복 규칙은 그대로다");
+  assert.deepEqual(written.effects, [{ kind: "apply_status", id: "e0" }],
+    "기본값은 생략된다 - 폼이 값을 다 채워도 왕복 규칙은 그대로다. id는 항상 쓴다");
 });
 
 test("효과를 삭제·복제·이동한다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const base = probeCard(core, schema, {
-    effects: [{ kind: "damage", value: 5 }, { kind: "grant_next_turn_fate", value: 1 }],
+    effects: [{ kind: "damage", id: "a", value: 5 }, { kind: "grant_next_turn_fate", id: "b", value: 1 }],
   });
 
   assert.deepEqual(core.removeEffect(base, 0).effects.map((e) => e.kind),
@@ -1263,9 +1359,12 @@ test("효과를 삭제·복제·이동한다", () => {
     ["damage", "damage", "grant_next_turn_fate"]);
   assert.notEqual(duplicated.effects[0], duplicated.effects[1],
     "복제본이 같은 객체를 가리키면 한쪽을 고칠 때 둘 다 바뀐다");
+  assert.deepEqual(duplicated.effects.map((e) => e.id), ["a", "e0", "b"],
+    "복제본은 겹치지 않는 새 id를 받는다");
 
-  assert.deepEqual(core.moveEffect(base, 0, 1).effects.map((e) => e.kind),
-    ["grant_next_turn_fate", "damage"]);
+  const moved = core.moveEffect(base, 0, 1);
+  assert.deepEqual(moved.effects.map((e) => e.kind), ["grant_next_turn_fate", "damage"]);
+  assert.deepEqual(moved.effects.map((e) => e.id), ["b", "a"], "이동은 id를 바꾸지 않는다");
   assert.deepEqual(core.moveEffect(base, 0, 9).effects.map((e) => e.kind),
     ["grant_next_turn_fate", "damage"], "범위를 넘으면 끝으로 보낸다");
   assert.equal(base.effects.length, 2, "원본을 제자리에서 고치지 않는다");
@@ -1275,25 +1374,31 @@ test("효과 종류를 바꾸면 파라미터가 통째로 갈린다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const base = probeCard(core, schema, {
-    effects: [{ kind: "damage", value: 5, selector: "FrontOne" }],
+    effects: [{ kind: "damage", id: "hit", targetFaction: "Enemy", value: 5 }],
   });
 
   const changed = core.setEffectKind(base, 0, "grant_next_turn_fate", schema);
   assert.equal(changed.effects[0].kind, "grant_next_turn_fate");
-  assert.deepEqual(changed.effects[0].params, { value: 0 },
-    "새 종류의 필드만 남는다 - selector는 이 효과에 없다");
+  assert.deepEqual(changed.effects[0].params, { value: 0 }, "새 종류의 필드만 남는다");
+  assert.equal(changed.effects[0].targetFaction, null, "대상이 없는 종류로 바뀌면 진영을 뗀다");
+  assert.equal(changed.effects[0].id, "hit", "id는 유지한다");
 });
 
-test("효과 종류를 바꿔도 조건은 남는다", () => {
+test("효과 종류를 바꿔도 성공 수치와 결과 참조는 남는다", () => {
   const core = loadCore();
   const schema = loadSchema();
   const base = probeCard(core, schema, {
-    effects: [{ kind: "damage", value: 5, condition: { kind: "FirstToTrigger" } }],
+    startCondition: { kind: "FirstToTrigger" },
+    effects: [{
+      kind: "damage", id: "hit", targetFaction: "Enemy", value: 5, successEffectValue: 9,
+      requires: { sourceEffectId: "pay", minimumConsumed: 1 },
+    }],
   });
 
   const changed = core.setEffectKind(base, 0, "move_formation", schema);
-  assert.equal(changed.effects[0].condition.kind, "FirstToTrigger",
-    "조건은 효과 종류와 독립이다");
+  assert.equal(changed.effects[0].successEffectValue, 9, "성공 수치는 효과 종류와 독립이다");
+  assert.deepEqual(changed.effects[0].requires, { sourceEffectId: "pay", minimumConsumed: 1 });
+  assert.equal(changed.effects[0].targetFaction, "Enemy", "대상 효과끼리는 진영을 유지한다");
 });
 
 test("파라미터를 타입에 맞게 넣는다", () => {
@@ -1301,12 +1406,12 @@ test("파라미터를 타입에 맞게 넣는다", () => {
   const schema = loadSchema();
   const base = core.addEffect(probeCard(core, schema, {}), "consume_status", schema);
 
-  assert.equal(core.setEffectParam(base, 0, "maxAmount", "3", schema)
-    .effects[0].params.maxAmount, 3);
+  assert.equal(core.setEffectParam(base, 0, "amount", "3", schema)
+    .effects[0].params.amount, 3);
   assert.equal(core.setEffectParam(base, 0, "status", "poison", schema)
     .effects[0].params.status, "poison");
-  assert.equal(core.setEffectParam(base, 0, "selector", "All", schema)
-    .effects[0].params.selector, "All");
+  assert.equal(core.setEffectParam(base, 0, "mode", "Exact", schema)
+    .effects[0].params.mode, "Exact");
 
   const swap = core.addEffect(probeCard(core, schema, {}), "damage", schema);
   assert.equal(core.setEffectParam(swap, 0, "value", "abc", schema).effects[0].params.value, 0);
@@ -1323,20 +1428,57 @@ test("불리언 파라미터를 넣는다", () => {
     .intervention.params.requireAdjacent, true);
 });
 
-test("조건을 붙이고 뗀다", () => {
+test("카드 시작 조건을 붙이고 뗀다", () => {
   const core = loadCore();
   const schema = loadSchema();
-  const base = core.addEffect(probeCard(core, schema, {}), "damage", schema);
+  const base = probeCard(core, schema, {});
 
-  const withCondition = core.setEffectCondition(base, 0, { kind: "WithinNth", n: "3" });
-  assert.deepEqual(withCondition.effects[0].condition,
-    { kind: "WithinNth", n: 3, successEffectValue: 0, skipOnBasic: false });
+  const withCondition = core.setStartCondition(base, { kind: "WithinNth", n: "3" });
+  assert.deepEqual(withCondition.startCondition, { kind: "WithinNth", n: 3 });
+  assert.deepEqual(core.setStartCondition(withCondition, { n: "2" }).startCondition,
+    { kind: "WithinNth", n: 2 }, "다른 칸은 유지된다");
+  assert.equal(core.setStartCondition(withCondition, null).startCondition, null);
 
-  const bumped = core.setEffectCondition(withCondition, 0, { successEffectValue: "7" });
-  assert.equal(bumped.effects[0].condition.kind, "WithinNth", "다른 칸은 유지된다");
-  assert.equal(bumped.effects[0].condition.successEffectValue, 7);
+  const written = JSON.parse(core.writeCardJson(
+    core.setStartCondition(base, { kind: "FirstToTrigger" }), schema));
+  assert.deepEqual(written.startCondition, { kind: "FirstToTrigger" }, "n이 0이면 생략한다");
+});
 
-  assert.equal(core.setEffectCondition(withCondition, 0, null).effects[0].condition, null);
+test("카드 위치 축을 정하고 뗀다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  const base = probeCard(core, schema, {});
+
+  const targeted = core.setCardTarget(core.setCardTarget(base, "enemy", "All"), "ally", "Self");
+  assert.deepEqual(targeted.targets, { ally: "Self", enemy: "All" });
+  assert.deepEqual(JSON.parse(core.writeCardJson(targeted, schema)).targets,
+    { ally: "Self", enemy: "All" }, "ally가 먼저 나간다 - C# 필드 순서다");
+  assert.deepEqual(core.setCardTarget(targeted, "ally", "").targets, { ally: null, enemy: "All" });
+  assert.equal(JSON.parse(core.writeCardJson(base, schema)).targets, undefined, "축이 없으면 키도 없다");
+});
+
+test("효과 공통 필드와 결과 참조를 고친다", () => {
+  const core = loadCore();
+  const schema = loadSchema();
+  let card = core.addEffect(core.addEffect(probeCard(core, schema, {}), "consume_status", schema), "damage", schema);
+
+  card = core.setEffectCommon(card, 0, "id", " pay ");
+  card = core.setEffectCommon(card, 1, "targetFaction", "Enemy");
+  card = core.setEffectCommon(card, 1, "successEffectValue", "");
+  assert.equal(card.effects[0].id, "pay");
+  assert.equal(card.effects[1].targetFaction, "Enemy");
+  assert.equal(card.effects[1].successEffectValue, null, "빈 칸은 없음이다");
+
+  assert.deepEqual(core.consumptionSources(card, 1, schema), ["pay"], "앞의 소비 효과만 고를 수 있다");
+  assert.deepEqual(core.consumptionSources(card, 0, schema), []);
+
+  card = core.setEffectReference(card, 1, "scaleBy", { sourceEffectId: "pay" });
+  card = core.setEffectReference(card, 1, "scaleBy", { perConsumed: "2" });
+  assert.deepEqual(card.effects[1].scaleBy, { sourceEffectId: "pay", perConsumed: 2 });
+  assert.equal(core.setEffectReference(card, 1, "scaleBy", null).effects[1].scaleBy, null);
+
+  const written = JSON.parse(core.writeCardJson(card, schema));
+  assert.deepEqual(Object.keys(written.effects[1]), ["kind", "id", "targetFaction", "scaleBy"]);
 });
 
 test("개입을 걸고 종류를 바꾸고 뗀다", () => {
@@ -1358,7 +1500,7 @@ test("모르는 효과 행은 파라미터도 종류도 바뀌지 않는다", ()
   const core = loadCore();
   const schema = loadSchema();
   const original = `${JSON.stringify({
-    id: "x", name: "실험", side: "Player", category: "Execution",
+    cardFormat: 2, id: "x", name: "실험", side: "Player", category: "Execution",
     effects: [{ kind: "teleport", distance: 3 }],
   }, null, 2)}\n`;
   const { card } = core.readCardJson(original, schema);
@@ -1451,7 +1593,7 @@ test("효과 편집기의 스타일이 마크업에 있다", () => {
   const html = readFileSync(fileURLToPath(htmlUrl), "utf8");
   assert.match(html, /\.effect-row\b/);
   assert.match(html, /\.effect-params\b/);
-  assert.match(html, /\.effect-condition\b/);
+  assert.match(html, /\.effect-reference\b/);
 });
 
 test("풀 담기와 소속 표시의 스타일이 마크업에 있다", () => {

@@ -23,11 +23,18 @@ namespace FateWeaver.Tests
             string id,
             Side side,
             int executionOrder,
-            EffectData effect)
+            EffectData effect,
+            Condition startCondition = null)
         {
-            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect })
+            {
+                StartCondition = startCondition
+            };
             return new ExecutionCardInstance(def);
         }
+
+        private static EffectData DamageTwoOrTen()
+            => new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 };
 
         [Test]
         public void Conditional_damage_uses_success_amount_when_condition_succeeds()
@@ -39,7 +46,7 @@ namespace FateWeaver.Tests
                 "quick_cut",
                 Side.Player,
                 1,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
+                DamageTwoOrTen(), new FirstToTrigger()));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = (CardResolved)events[1];
@@ -60,7 +67,7 @@ namespace FateWeaver.Tests
                 "late_cut",
                 Side.Player,
                 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
+                DamageTwoOrTen(), new FirstToTrigger()));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "late_cut");
@@ -79,7 +86,7 @@ namespace FateWeaver.Tests
             var enemy = Card("wrist_cut", Side.Enemy, 1,
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
             var player = Card("quick_cut", Side.Player, 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new WithinNth(2), successEffectValue: 10));
+                DamageTwoOrTen(), new WithinNth(2));
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
@@ -98,7 +105,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(Card("wrist_cut", Side.Enemy, 1,
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)));
             state.Zone.Add(Card("quick_cut", Side.Player, 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new WithinNth(2), successEffectValue: 10)));
+                DamageTwoOrTen(), new WithinNth(2)));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");

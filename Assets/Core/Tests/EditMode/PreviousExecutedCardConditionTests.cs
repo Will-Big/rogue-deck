@@ -52,7 +52,10 @@ namespace FateWeaver.Tests
             string targetId = null)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { EffectData.Conditional(EffectKeys.Damage, baseDamage, condition, successDamage) });
+                new[] { new EffectData(EffectKeys.Damage, baseDamage) { SuccessEffectValue = successDamage } })
+            {
+                StartCondition = condition
+            };
             return new ExecutionCardInstance(def) { TargetId = targetId };
         }
 

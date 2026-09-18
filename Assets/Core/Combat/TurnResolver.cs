@@ -65,9 +65,12 @@ namespace FateWeaver.Core.Combat
 
             int totalDamage = 0;
             string targetId = null;
-            var strongestTier = ConditionTier.Basic;
             var pendingDeathEvents = new List<ResolutionEvent>();
             var damageSteps = new List<DamageStep>();
+
+            // 카드 시작 조건은 차례를 맞은 지금 한 번 평가하고 카드가 끝날 때까지 고정한다(스펙 §2).
+            var execution = new CardExecutionContext(
+                card, ResolveStartTier(card, resolutionContext, pendingDeathEvents));
 
             var handlers = card.Def.Effects
                 .Select(effect => _effects.Resolve(effect.Key))
@@ -98,14 +101,9 @@ namespace FateWeaver.Core.Combat
                 }
 
                 var effect = card.Def.Effects[effectIndex];
-                var tier = ResolveTier(effect, card, resolutionContext, pendingDeathEvents);
-                if (tier > strongestTier)
+                if (!ShouldApply(effect, card, execution))
                 {
-                    strongestTier = tier;
-                }
-
-                if (effect.SkipOnBasic && effect.Condition != null && tier == ConditionTier.Basic)
-                {
+                    execution.Record(effect.Id, EffectResult.Skipped);
                     continue;
                 }
 
@@ -120,10 +118,13 @@ namespace FateWeaver.Core.Combat
                     StatusRegistry = _statuses,
                     ActorStatuses = CardActor.StatusesFor(state, card),
                     Effect = effect,
-                    EffectValue = ResolveEffectValue(effect, tier),
+                    EffectValue = ResolveEffectValue(effect, execution),
                     Targets = targets
                 };
                 handlers[effectIndex].Apply(ctx);
+                execution.Record(
+                    effect.Id,
+                    new EffectResult(card.CancellationReason == null, ctx.ConsumedAmount, ctx.DamageDealt));
                 totalDamage += ctx.DamageDealt;
                 damageSteps.AddRange(ctx.DamageSteps);
                 if (ctx.TargetId != null)
@@ -155,7 +156,7 @@ namespace FateWeaver.Core.Combat
                 // events in the order they occurred (so a death caused by this card's own effects
                 // follows its CardResolved immediately).
                 events.Add(new CardResolved(
-                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier)
+                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, execution.StartTier)
                 {
                     DamageSteps = damageSteps
                 });
@@ -412,18 +413,18 @@ namespace FateWeaver.Core.Combat
             }
         }
 
-        private static ConditionTier ResolveTier(
-            Cards.EffectData effect,
+        /// <summary>카드 시작 조건의 결과. 조건이 없으면 Basic이다.</summary>
+        private static ConditionTier ResolveStartTier(
             ExecutionCardInstance card,
             ResolutionContext resolutionContext,
             List<ResolutionEvent> pending)
         {
-            if (effect.Condition == null)
+            if (card.Def.StartCondition == null)
             {
                 return ConditionTier.Basic;
             }
 
-            var tier = ConditionEvaluator.Evaluate(effect.Condition, card, resolutionContext);
+            var tier = ConditionEvaluator.Evaluate(card.Def.StartCondition, card, resolutionContext);
             if (tier == ConditionTier.Success)
             {
                 // reward-nullified disruption forces a success down to basic, spending its charge.
@@ -448,10 +449,34 @@ namespace FateWeaver.Core.Combat
             return tier;
         }
 
-        private static int ResolveEffectValue(Cards.EffectData effect, ConditionTier tier)
-            => tier == ConditionTier.Success && effect.SuccessEffectValue.HasValue
+        /// <summary>이 효과를 수행하는가: 카드 조건이 Basic이면 SkipOnBasic 효과를 건너뛰고, 앞 효과의
+        /// 실제 소비량이 요건에 못 미치면 건너뛴다.</summary>
+        private static bool ShouldApply(
+            Cards.EffectData effect, ExecutionCardInstance card, CardExecutionContext execution)
+        {
+            if (effect.SkipOnBasic
+                && card.Def.StartCondition != null
+                && execution.StartTier == ConditionTier.Basic)
+            {
+                return false;
+            }
+
+            var requirement = effect.Requirement;
+            return requirement == null
+                || execution.Get(requirement.SourceEffectId).ConsumedAmount >= requirement.MinimumConsumed;
+        }
+
+        /// <summary>카드 조건 결과로 기본/성공 수치를 고르고, 소비량 비례 가산을 더한다.</summary>
+        private static int ResolveEffectValue(Cards.EffectData effect, CardExecutionContext execution)
+        {
+            var value = execution.StartTier == ConditionTier.Success && effect.SuccessEffectValue.HasValue
                 ? effect.SuccessEffectValue.Value
                 : effect.EffectValue;
+            var scaling = effect.Scaling;
+            return scaling == null
+                ? value
+                : value + execution.Get(scaling.SourceEffectId).ConsumedAmount * scaling.PerConsumed;
+        }
 
         private static Outcome ComputeOutcome(CombatState state)
         {

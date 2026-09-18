@@ -22,9 +22,13 @@ namespace FateWeaver.Tests
             string id,
             Side side,
             int executionOrder,
-            EffectData effect)
+            EffectData effect,
+            Condition startCondition = null)
         {
-            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect })
+            {
+                StartCondition = startCondition
+            };
             return new ExecutionCardInstance(def);
         }
 
@@ -141,11 +145,8 @@ namespace FateWeaver.Tests
                 "quick_cut",
                 Side.Player,
                 2,
-                EffectData.Conditional(
-                    EffectKeys.Damage,
-                    effectValue: 2,
-                    condition: new FirstToTrigger(),
-                    successEffectValue: 10));
+                new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 },
+                new FirstToTrigger());
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
@@ -205,11 +206,8 @@ namespace FateWeaver.Tests
                 "quick_cut",
                 Side.Player,
                 2,
-                EffectData.Conditional(
-                    EffectKeys.Damage,
-                    effectValue: 2,
-                    condition: new FirstToTrigger(),
-                    successEffectValue: 10));
+                new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 },
+                new FirstToTrigger());
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 

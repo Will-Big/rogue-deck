@@ -1,22 +1,27 @@
 {
+  "cardFormat": 2,
   "id": "early_onset",
   "name": "조기 발병",
   "side": "Player",
   "category": "Execution",
   "energyCost": 2,
   "baseExecutionOrder": 3,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "apply_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     },
     {
       "kind": "trigger_status",
-      "status": "poison",
-      "selector": "FrontOne"
+      "id": "e1",
+      "targetFaction": "Enemy",
+      "status": "poison"
     }
   ],
   "grade": "Common",

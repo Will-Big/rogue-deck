@@ -41,30 +41,35 @@ namespace FateWeaver.Simulation.Descriptions
                     Array.Empty<CardDescriptionLine>(),
                     string.Empty);
 
+            // 카드 시작 조건은 카드 단위지만, 문장은 그 조건으로 수치가 바뀌는 효과마다 붙인다(스펙 §4).
+            // 앞 효과 결과를 요구하는 효과는 요건 머리("소비했다면")를, 소비량 비례 가산은 꼬리를 단다.
+            var condition = def.StartCondition;
             var lineTargets = new List<CardTargetKey?>();
             var lineTexts = new List<StringBuilder>();
             foreach (var effect in def.Effects)
             {
                 var handler = catalog.Effects.Resolve(effect.Key);
-                var skipBasic = effect.SkipOnBasic
-                    && effect.Condition != null
-                    && effect.SuccessEffectValue.HasValue;
-                if (!skipBasic)
+                var requirement = effect.Requirement == null ? null : context.Requirement(effect.Requirement);
+                var scaling = effect.Scaling == null ? string.Empty : context.ScalingSuffix(effect.Scaling);
+                var conditional = condition != null && effect.SuccessEffectValue.HasValue;
+                if (!(conditional && effect.SkipOnBasic))
                 {
                     AppendSentence(
                         lineTargets,
                         lineTexts,
                         Fragment(handler, effect, effect.EffectValue, context),
-                        null);
+                        requirement,
+                        scaling);
                 }
 
-                if (effect.Condition != null && effect.SuccessEffectValue.HasValue)
+                if (conditional)
                 {
                     AppendSentence(
                         lineTargets,
                         lineTexts,
                         Fragment(handler, effect, effect.SuccessEffectValue.Value, context),
-                        context.Condition(effect.Condition));
+                        context.Condition(condition),
+                        scaling);
                 }
             }
 
@@ -97,11 +102,13 @@ namespace FateWeaver.Simulation.Descriptions
             List<CardTargetKey?> lineTargets,
             List<StringBuilder> lineTexts,
             EffectDescriptionFragment fragment,
-            string condition)
+            string condition,
+            string suffix)
         {
+            var body = fragment.Text + suffix + ".";
             var sentence = string.IsNullOrEmpty(condition)
-                ? fragment.Text + "."
-                : condition + " " + fragment.Text + ".";
+                ? body
+                : condition + " " + body;
             var lineIndex = lineTargets.FindIndex(
                 target => Nullable.Equals(target, fragment.Target));
             if (lineIndex >= 0)

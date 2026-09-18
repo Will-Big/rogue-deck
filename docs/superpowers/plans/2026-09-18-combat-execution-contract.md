@@ -202,6 +202,29 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
 
 ### T2a. 카드 정의·효과 결과·콘텐츠 계약 전환
 
+완료(2026-09-18). 구현 중 결정과 계획과 달라진 점 — T2b·T3 담당자는 먼저 읽는다:
+- **런타임 위치 축은 T3로 미뤘다.** `CardDefinition.AllyTarget/EnemyTarget`·`EffectData.TargetFaction`은 만들지 않았다.
+  저작 스펙이 카드 축(`targets`)과 효과 진영(`targetFaction`)을 갖고, `EffectSpec.ToEffectData(cardSide, target)`가
+  처리기가 지금 읽는 필드(`TargetSelector`, `ApplyStatusPayload.Target`)로 옮긴다. 처리기는 바뀌지 않았다.
+  T3가 효과 단위 선택을 넣을 때 런타임 축을 추가하고 이 변환(`ApplyStatusSpec.Build` 등)을 지운다.
+- 조건 레지스트리는 만들지 않았다(D4). `ConditionSpec`은 카드 단위 `StartConditionSpec`(kind·n)이 됐다.
+- **보상 무효(`RewardNullified`)는 카드 시작 조건의 성공에만 걸린다.** `requires`로 옮긴 소비 보상은 조건이 아니므로
+  무효화되지 않는다. 이 효과를 쓰는 게임 카드는 없다(테스트 전용).
+- **`CardResolved.ConditionTier`는 카드 시작 조건의 결과다.** `toxic_reclaim`은 이제 Basic으로 기록된다(피해·상태 동일).
+  `GoblinParityTests` 고정 서명을 이만큼 갱신했다.
+- `condensed_burst`는 `scaleBy`로 피해가 늘어나며 `CardBuffGranted/Consumed(DamageBonus)` 이벤트를 더 내지 않는다.
+  `_pendingDamageBonus`는 `GrantNextPlayerDamageCardBonusHandler`용으로 남겼다.
+- 여러 대상을 소비하는 경우의 결과 집계는 스펙 §5가 정하지 않았다 — 지금은 합산하며 게임 카드는 단일 대상뿐이다.
+- 검증 추가: 쓰이지 않는 카드 축, 시작 조건 없는 `successEffectValue`·`skipOnBasic`, 대상 없는 효과의 `targetFaction`은 오류다.
+  변환 효과 ID는 `e0`, `e1`, …이다.
+- **C# 샘플 `CounterStance`를 지웠다(사용자 결정).** 효과마다 조건이 달라 카드당 단일 시작 조건으로 옮길 수 없었고,
+  검증 내용은 다른 테스트가 모두 덮는다. `SampleMultiTurnScenarios`·`CounterStanceTests`·Unity `PlaytestKoreanText` 항목을 함께 지웠다.
+- 편집 도구 스키마(T2b 입력): `effects[]`에 `targeted`·`producesConsumption`·`order`(공통 필드 포함 키 순서)를 두고,
+  공통 필드는 `effectCommonFields`로 한 번만 낸다. `selectors`·`statusTargets`를 지우고 `factions`·`ranges`를 더했다.
+  `condition`은 `StartConditionSpec`(kind + n)이다. 편집 도구 테스트는 이 스키마 때문에 T2b 전까지 실패한다.
+- 설명 문구: `condensed_burst`는 "독 최대 3 소비. 피해 2 (소비 1당 +2). 독 1."이 된다(가산이 피해 문장에 붙음).
+  나머지 29장 문구는 그대로다.
+
 수정:
 - `Assets/Core/Cards/CardDefinition.cs`, `Assets/Core/Combat/ExecutionCardInstance.cs`
 - `Assets/Core/Effects/ConsumeStatusHandler.cs`, `ConsumeStatusPayload.cs`, `DamageHandler.cs`, `IEffectHandler.cs`
@@ -250,7 +273,7 @@ public void Exact_swap_preserves_enemy_before_player_on_equal_numbers()
 기준 시점 확인(구현 착수 시 다시 확인): 조건 있는 카드는 distill·foresight·last_drop·riposte·sly_jab·toxic_reclaim이고
 모두 조건이 효과 하나에만 있다. 소비 효과는 카드마다 하나다. 따라서 위 규칙으로 29장 모두 결정된다.
 
-- [ ] 먼저 소비 규칙 실패 테스트를 추가한다.
+- [x] 먼저 소비 규칙 실패 테스트를 추가한다.
 
 ```csharp
 [TestCase(2, 3, ConsumptionMode.Exact, 0)]
@@ -264,7 +287,7 @@ public void Consumption_preserves_the_authored_payment_rule(
 }
 ```
 
-- [ ] `Tools/verify.sh --quick`에서 새 타입 부재 확인 후 구현한다.
+- [x] `Tools/verify.sh --quick`에서 새 타입 부재 확인 후 구현한다.
 
 ```csharp
 public static int Take(int available, int requested, ConsumptionMode mode)
@@ -276,15 +299,15 @@ public static int Take(int available, int requested, ConsumptionMode mode)
 }
 ```
 
-- [ ] 카드 조건 평가를 시작에 한 번으로 이동한다. 효과 하나에 붙은 조건은 카드 조건으로 승격한다.
+- [x] 카드 조건 평가를 시작에 한 번으로 이동한다. 효과 하나에 붙은 조건은 카드 조건으로 승격한다.
   `ConsumedStatusAtLeast`는 일반 조건에서 빼고 해당 소비 효과를 가리키는 Requirement로 옮긴다.
   두 소비 중 특정 결과만 읽는 V16, 소비 0의 정상 미적용, V17 조건 고정 테스트를 작성한다.
   서로 다른 일반 조건 또는 소비 출처가 여러 개인 구형 데이터는 자동 추정하지 않고 변환 오류로 보고한다.
-- [ ] `condensed_burst` 동작 보존 테스트(D2): 독 3 보유 적에게 사용 → 소비 3, 피해 `2 + 3×2 = 8`.
+- [x] `condensed_burst` 동작 보존 테스트(D2): 독 3 보유 적에게 사용 → 소비 3, 피해 `2 + 3×2 = 8`.
   독 1 보유 → 소비 1, 피해 4. 독 0 → 소비 0, 피해 2. 변환 전 기준 코드에서 같은 입력의 결과를 먼저 기록해 비교한다.
   `ConsumeStatusPayload.DamageBonusPerConsumed`와 소비 처리기의 `AddPendingDamageBonus` 호출을 제거한다.
   `GrantNextPlayerDamageCardBonusHandler`의 적립 경로는 건드리지 않는다.
-- [ ] 무버전 JSON은 구형으로 인식한다. 위 변환 규칙으로 로딩 경계에서 변환하며 `cardFormat`은 항상 출력한다.
+- [x] 무버전 JSON은 구형으로 인식한다. 위 변환 규칙으로 로딩 경계에서 변환하며 `cardFormat`은 항상 출력한다.
 
 ```json
 {
@@ -305,20 +328,35 @@ public static int Take(int available, int requested, ConsumptionMode mode)
 }
 ```
 
-- [ ] 위 JSON은 테스트 fixture이며 신규 게임 카드로 배포하지 않는다. 다음 변형을 테스트한다:
+- [x] 위 JSON은 테스트 fixture이며 신규 게임 카드로 배포하지 않는다. 다음 변형을 테스트한다:
   requires의 pay를 missing으로 변경, reward 자기 참조, 소비가 아닌 damage 결과 참조,
   미래 효과 참조, 중복 ID, 대상 축 미정의, `scaleBy`의 같은 오류들. 모두 파일/카드/효과 경로가 있는 로딩 오류여야 한다.
-- [ ] 효과별 위치를 모아 카드의 두 축으로 정규화한다. 같은 축의 상충 위치는 로딩에서 거부한다.
+- [x] 효과별 위치를 모아 카드의 두 축으로 정규화한다. 같은 축의 상충 위치는 로딩에서 거부한다.
   런타임에서 NoValidTarget로 넘기지 않는다. 서로 다른 일반 조건을 성공값이 같다는 이유로 합치지 않는다.
-- [ ] 저장소 카드 29장을 변환기로 한 번 새 형식으로 다시 쓰고 커밋에 포함한다. 변환 전후로 같은 시드
+- [x] 저장소 카드 29장을 변환기로 한 번 새 형식으로 다시 쓰고 커밋에 포함한다. 변환 전후로 같은 시드
   `ScenarioRunner`·`MultiTurnRunner`의 **Compare** 결과가 같은지 확인한다(이 작업은 데이터 형식만 바꾸며 규칙은
   시작 조건 평가 시점만 바뀐다 — 차이가 나면 그 카드와 이유를 기록한다).
-- [ ] 스키마 테스트가 갱신한 authoring-schema.json을 검토 후 재실행한다. 구형 샘플의 import 테스트와
+- [x] 스키마 테스트가 갱신한 authoring-schema.json을 검토 후 재실행한다. 구형 샘플의 import 테스트와
   신규 형식 export 테스트를 따로 둔다.
-- [ ] 편집 도구 테스트(`index.test.mjs`)는 이 커밋에서 깨질 수 있다. `Tools/verify.sh --quick`(헤드리스) 통과 후
+- [x] 편집 도구 테스트(`index.test.mjs`)는 이 커밋에서 깨질 수 있다. `Tools/verify.sh --quick`(헤드리스) 통과 후
   커밋하고, 전체 `Tools/verify.sh`는 T2b에서 통과시킨다. 커밋: `refactor(core): 카드 조건과 소비 보상의 데이터 계약을 분리한다`.
 
 ### T2b. 편집 도구의 새 카드 형식 편집 지원 (D6)
+
+완료(2026-09-18, T2a와 한 커밋 — 사용자 결정). `pre-commit`이 `Tools/card-idea-notebook/`가 바뀌면 편집 도구 테스트를
+돌려([`.githooks/pre-commit`](../../../.githooks/pre-commit) 102줄), 스키마만 바뀐 T2a 단독 상태는 커밋할 수 없었다.
+구현 중 결정:
+- 편집 도구는 구형(cardFormat 없음) 카드를 읽지 않고 이유를 보여준다. 변환은 게임의 CardFormatMigration만 한다.
+- 노트북 저장 형식 버전(`SCHEMA_VERSION`)을 8로 올렸다. 버전 1·7의 미반영 편집분(카드 형식 1 모델)은 지우지 않고
+  `fate-weaver.card-idea-notebook.pending.card-format-1-backup`으로 옮긴 뒤 알린다. 자동 변환은 하지 않는다.
+- 저장 전 검증은 게임 로더와 같은 효과 ID·대상 축·결과 참조·조건 필드를 잡는다. **효과 종류별 (진영, 위치) 허용
+  조합**(예: 피해는 상대 진영만)은 스키마에 없어 게임 로더만 검사한다.
+- 스키마에 `always`(기본값이어도 항상 쓰는 필드, 예: consume_status의 mode)를 더했다.
+- 화면: 카드 편집부에 아군/적 위치 축과 시작 조건, 효과 행에 id·대상 진영·(시작 조건이 있을 때) 성공 수치·생략,
+  결과 참조 두 칸(소비했다면·소비량 비례 — 앞의 소비 효과만 고를 수 있다).
+- 브라우저 확인: 인앱 브라우저가 폴더 연결(File System Access API)을 지원하지 않아, 메모리 폴더와 메모리
+  localStorage를 주입한 임시 페이지로 확인했다 — 29장 읽기(검증 오류 0), condensed_burst의 scaleBy 가산 2→3 편집,
+  반영 시 그 파일 한 개만 한 줄 바뀌어 쓰임. **실제 Chrome에서 저장소 폴더를 연결해 보는 확인은 사용자 몫이다.**
 
 편집 도구는 저장소 카드 JSON을 직접 읽고 쓰며(`Tools/card-idea-notebook/index.html:1286`), 모르는 키가 있는
 카드는 부팅 거부 오류와 함께 읽기 전용으로 띄운다(`index.html:1015`, [노트북 설계](../specs/2026-08-05-card-authoring-json-notebook-design.md) §11.3).
@@ -329,20 +367,20 @@ T2a 이후 모든 카드가 새 키를 가지므로 이 작업 없이는 도구�
 
 수정: `Tools/card-idea-notebook/index.html`, `index.test.mjs`.
 
-- [ ] 카드 단위 새 키 읽기·쓰기: `cardFormat`, `targets`(두 축), `startCondition`. `readCardJson`(`:560`)과
+- [x] 카드 단위 새 키 읽기·쓰기: `cardFormat`, `targets`(두 축), `startCondition`. `readCardJson`(`:560`)과
   `writeCardJson`(`:863`)은 지금 스칼라 필드만 처리하므로 객체 필드를 `effects`처럼 따로 다룬다.
   키 순서는 스키마의 `cardFields`를 따른다. 편집 도구 자체의 저장 형식 `SCHEMA_VERSION`(`:513`)과 섞지 않는다.
-- [ ] 조건 편집을 효과에서 카드로 옮긴다. 지금은 `conditionBlock`(`:2543`)·`setEffectCondition`(`:763`)이 효과마다 조건을
+- [x] 조건 편집을 효과에서 카드로 옮긴다. 지금은 `conditionBlock`(`:2543`)·`setEffectCondition`(`:763`)이 효과마다 조건을
   단다. 조건 종류와 `n`은 카드 편집부로, `successEffectValue`·`skipOnBasic`은 효과 행에 남긴다.
-- [ ] 효과 ID: `readEffectEntry`(`:534`)·`writeEffectEntry`(`:837`)가 `id`를 보존한다. 효과 추가·복제(`:693`·`:712`)는
+- [x] 효과 ID: `readEffectEntry`(`:534`)·`writeEffectEntry`(`:837`)가 `id`를 보존한다. 효과 추가·복제(`:693`·`:712`)는
   카드 안에서 겹치지 않는 ID를 만들고, 이동(`:725`)은 ID를 유지한다.
-- [ ] 결과 참조 편집: 효과 행에 `requires`와 `scaleBy` 편집부를 둔다. 참조 대상은 **앞쪽의 소비 효과** 드롭다운으로만 고른다.
-- [ ] 저장 전 검증(`validateContent`, `:989`): `maxAmount ≥ 1` 규칙을 `amount ≥ 1`로 바꾸고, 자기 참조·뒤쪽 참조·
+- [x] 결과 참조 편집: 효과 행에 `requires`와 `scaleBy` 편집부를 둔다. 참조 대상은 **앞쪽의 소비 효과** 드롭다운으로만 고른다.
+- [x] 저장 전 검증(`validateContent`, `:989`): `maxAmount ≥ 1` 규칙을 `amount ≥ 1`로 바꾸고, 자기 참조·뒤쪽 참조·
   소비가 아닌 효과 참조·없는 ID 참조·같은 축 위치 충돌을 오류로 잡는다. 게임 로더(T2a)와 같은 것을 거부해야 한다.
-- [ ] `index.test.mjs`의 구형 카드 fixture를 새 형식으로 바꾸고, 위 각 항목의 테스트를 더한다. 저장소 카드 29장
+- [x] `index.test.mjs`의 구형 카드 fixture를 새 형식으로 바꾸고, 위 각 항목의 테스트를 더한다. 저장소 카드 29장
   전부가 읽기 → 쓰기에서 바이트가 같은지(왕복) 확인한다. 외형 개편은 하지 않는다.
-- [ ] 브라우저에서 도구를 열어 카드 하나(`condensed_burst`)의 `scaleBy`를 편집·저장해 보고 결과 JSON을 확인한다.
-- [ ] `Tools/verify.sh` 전체 통과 후 커밋: `feat(tools): 편집 도구가 새 카드 형식의 조건과 결과 참조를 편집한다`.
+- [x] 브라우저에서 도구를 열어 카드 하나(`condensed_burst`)의 `scaleBy`를 편집·저장해 보고 결과 JSON을 확인한다.
+- [x] `Tools/verify.sh` 전체 통과 후 커밋: `feat(tools): 편집 도구가 새 카드 형식의 조건과 결과 참조를 편집한다`.
 
 ### T3. 효과 단위 위치 선택과 미적용 분리
 

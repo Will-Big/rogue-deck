@@ -48,7 +48,8 @@ namespace FateWeaver.Tests.EditMode
         public void Conditional_effect_appends_condition_then_success_sentence()
         {
             var card = Execution("quick_cut",
-                EffectData.Conditional(EffectKeys.Damage, 2, new FirstToTrigger(), 8));
+                new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 8 })
+                with { StartCondition = new FirstToTrigger() };
             Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.", DescriptionComposer.Describe(card, Korean));
         }
 
@@ -75,11 +76,8 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("cover",
                 EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 2)
-                    with
-                    {
-                        Condition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
-                        SuccessEffectValue = 7
-                    });
+                    with { SuccessEffectValue = 7 })
+                with { StartCondition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage) };
             Assert.AreEqual(
                 "[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
                 DescriptionComposer.Describe(card, Korean));
@@ -278,11 +276,8 @@ namespace FateWeaver.Tests.EditMode
             Assert.AreEqual("[◆] 피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
                 DescriptionComposer.Describe(
                     Execution("warden_smash",
-                        EffectData.Conditional(
-                            EffectKeys.Damage,
-                            2,
-                            new NoFollowingCardOfSide(Side.Enemy),
-                            7)),
+                        new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 7 })
+                        with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) },
                     Korean));
 
         [Test]
@@ -314,15 +309,16 @@ namespace FateWeaver.Tests.EditMode
             var card = new CardDefinition("chain", "연쇄 베기", Side.Player, 5,
                 new[]
                 {
-                    EffectData.Conditional(
-                        EffectKeys.Damage, 1,
-                        new AllOf(new Condition[]
-                        {
-                            new PreviousExecutedCardIs(Side.Player),
-                            new WithinNth(3)
-                        }),
-                        6)
-                }) { Category = CardCategory.Execution };
+                    new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 6 }
+                })
+            {
+                Category = CardCategory.Execution,
+                StartCondition = new AllOf(new Condition[]
+                {
+                    new PreviousExecutedCardIs(Side.Player),
+                    new WithinNth(3)
+                })
+            };
             Assert.AreEqual("[◆] 피해 1. 직전에 실행한 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
                 DescriptionComposer.Describe(card, Korean));
         }

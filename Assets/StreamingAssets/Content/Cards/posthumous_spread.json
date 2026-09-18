@@ -1,29 +1,34 @@
 {
+  "cardFormat": 2,
   "id": "posthumous_spread",
   "name": "사후 전염",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 4,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "damage",
-      "value": 1,
-      "selector": "FrontOne"
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 1
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     },
     {
       "kind": "apply_status",
+      "id": "e2",
+      "targetFaction": "Enemy",
       "status": "contagion",
-      "count": 2,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 2
     }
   ],
   "grade": "Common",

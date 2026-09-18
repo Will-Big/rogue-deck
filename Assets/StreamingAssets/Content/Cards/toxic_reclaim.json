@@ -1,33 +1,40 @@
 {
+  "cardFormat": 2,
   "id": "toxic_reclaim",
   "name": "독성 환원",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self",
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "consume_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "maxAmount": 1,
-      "selector": "FrontOne"
+      "amount": 1,
+      "mode": "UpTo"
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     },
     {
       "kind": "apply_status",
+      "id": "e2",
+      "targetFaction": "Ally",
       "status": "block",
       "count": 4,
-      "condition": {
-        "kind": "ConsumedStatusAtLeast",
-        "n": 1,
-        "successEffectValue": 4,
-        "skipOnBasic": true
+      "requires": {
+        "sourceEffectId": "e0",
+        "minimumConsumed": 1
       }
     }
   ],

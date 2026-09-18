@@ -25,8 +25,10 @@ namespace FateWeaver.Tests
         /// <summary>C# 원본 경로에서 실측한 서명의 SHA-256(소문자 hex). 이관 때문에 바꾸지 않는다 — 바뀌면 이관이
         /// 동작을 바꾼 것이다. 규칙을 의도적으로 바꿀 때만 차이를 확인하고 갱신한다.
         /// 2026-09-18 갱신(전투 실행 계약 T1): 죽은 고블린의 남은 goblin_jab이 그 카드 차례의
-        /// CardCancelled(OwnerDied) 대신 죽인 카드 직후의 CardRemoved로 기록된다. 그 밖의 서명은 같다.</summary>
-        private const string ExpectedSignatureSha256 = "9c3d9be5d288010132cf9c9f5ff3c594658c04150f0662be9d2665e4ff35984d";
+        /// CardCancelled(OwnerDied) 대신 죽인 카드 직후의 CardRemoved로 기록된다. 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T2a): toxic_reclaim의 소비 보상이 조건이 아니라 requires가 되어
+        /// 카드 시작 조건이 없으므로 CardResolved.ConditionTier가 Success에서 Basic이 된다. 피해·상태·HP는 같다.</summary>
+        private const string ExpectedSignatureSha256 = "cd1c4cde8fb9ba992cc35b9d76badacb79285da91bec872d9c66f52c7ea69477";
 
         private static CombatNode BeginNode()
         {

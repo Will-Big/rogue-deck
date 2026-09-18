@@ -106,11 +106,10 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("quick_cut", "quick_cut", Side.Player, 2,
-                new[]
-                {
-                    EffectData.Conditional(
-                        EffectKeys.Damage, 2, new WithinNth(2), successEffectValue: 10)
-                });
+                new[] { new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 } })
+            {
+                StartCondition = new WithinNth(2)
+            };
             state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
@@ -236,11 +235,10 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("quick_cut", "quick_cut", Side.Player, 1,
-                new[]
-                {
-                    EffectData.Conditional(
-                        EffectKeys.Damage, 2, new WithinNth(1), successEffectValue: 10)
-                });
+                new[] { new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 } })
+            {
+                StartCondition = new WithinNth(1)
+            };
             var card = new ExecutionCardInstance(def) { InstanceId = 4 };
             card.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
             state.Zone.Add(card);

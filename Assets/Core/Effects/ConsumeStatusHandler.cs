@@ -5,7 +5,7 @@ using FateWeaver.Core.Combat;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>대상 적의 상태(예: 독)를 최대치까지 소비한다. 소비 0은 취소가 아니라 그냥 무소득
+    /// <summary>대상 적의 상태(예: 독)를 소비 방식(ConsumptionMode)대로 소비한다. 소비 0은 취소가 아니라 그냥 무소득
     /// (독성 환원의 첫 사용). 대상 선택은 damage와 같은 규칙: TargetSelector 지정 시 위치 선택,
     /// 아니면 레거시(TargetId → 첫 적).</summary>
     public sealed class ConsumeStatusHandler : IEffectHandler, IEffectDataValidator
@@ -44,27 +44,7 @@ namespace FateWeaver.Core.Effects
                 return;
             }
 
-            var status = enemy.Statuses.Get(payload.Key);
-            var consumed = status == null ? 0 : Math.Min(status.Magnitude, payload.MaxAmount);
-            if (consumed > 0)
-            {
-                status.Magnitude -= consumed;
-                if (status.Magnitude <= 0)
-                {
-                    enemy.Statuses.Remove(payload.Key);
-                }
-
-                ctx.Card.RecordConsumedStatus(consumed);
-                ctx.ExtraEvents.Add(new Events.StatusConsumed(enemy.Id, payload.Key.Id, consumed));
-                if (payload.DamageBonusPerConsumed != 0)
-                {
-                    var bonus = consumed * payload.DamageBonusPerConsumed;
-                    ctx.Card.AddPendingDamageBonus(bonus);
-                    ctx.ExtraEvents.Add(new Events.CardBuffGranted(
-                        ctx.Card.InstanceId, ctx.Card.Def.Id, Events.CardBuffIds.DamageBonus, bonus));
-                }
-            }
-
+            ctx.ConsumedAmount += ConsumeFrom(ctx, enemy, payload);
             ctx.TargetId = enemy.Id;
         }
 
@@ -82,27 +62,7 @@ namespace FateWeaver.Core.Effects
                     continue;
                 }
 
-                var status = enemy.Statuses.Get(payload.Key);
-                var consumed = status == null ? 0 : Math.Min(status.Magnitude, payload.MaxAmount);
-                if (consumed > 0)
-                {
-                    status.Magnitude -= consumed;
-                    if (status.Magnitude <= 0)
-                    {
-                        enemy.Statuses.Remove(payload.Key);
-                    }
-
-                    ctx.Card.RecordConsumedStatus(consumed);
-                    ctx.ExtraEvents.Add(new Events.StatusConsumed(enemy.Id, payload.Key.Id, consumed));
-                    if (payload.DamageBonusPerConsumed != 0)
-                    {
-                        var bonus = consumed * payload.DamageBonusPerConsumed;
-                        ctx.Card.AddPendingDamageBonus(bonus);
-                        ctx.ExtraEvents.Add(new Events.CardBuffGranted(
-                            ctx.Card.InstanceId, ctx.Card.Def.Id, Events.CardBuffIds.DamageBonus, bonus));
-                    }
-                }
-
+                ctx.ConsumedAmount += ConsumeFrom(ctx, enemy, payload);
                 onlyTargetId = enemy.Id;
                 affected++;
             }
@@ -112,6 +72,28 @@ namespace FateWeaver.Core.Effects
             {
                 ctx.Cancel(CardCancellationReason.NoValidTarget);
             }
+        }
+
+        /// <summary>대상 하나에서 규칙대로 차감하고 실제 소비량을 돌려준다. 여러 대상을 소비하는 카드의
+        /// 집계 방식은 아직 정하지 않았다(스펙 §5) — 지금은 합산하며, 저작 콘텐츠는 단일 대상뿐이다.</summary>
+        private static int ConsumeFrom(EffectContext ctx, Enemy enemy, ConsumeStatusPayload payload)
+        {
+            var status = enemy.Statuses.Get(payload.Key);
+            var available = status == null ? 0 : status.Magnitude;
+            var consumed = ConsumptionRule.Take(available, payload.Amount, payload.Mode);
+            if (consumed <= 0)
+            {
+                return 0;
+            }
+
+            status.Magnitude -= consumed;
+            if (status.Magnitude <= 0)
+            {
+                enemy.Statuses.Remove(payload.Key);
+            }
+
+            ctx.ExtraEvents.Add(new Events.StatusConsumed(enemy.Id, payload.Key.Id, consumed));
+            return consumed;
         }
 
         public IEnumerable<string> ValidateData(EffectData effect)
@@ -127,9 +109,9 @@ namespace FateWeaver.Core.Effects
                 yield return "consume_status payload requires a status key.";
             }
 
-            if (payload.MaxAmount < 1)
+            if (payload.Amount < 1)
             {
-                yield return "consume_status MaxAmount must be at least 1.";
+                yield return "consume_status Amount must be at least 1.";
             }
         }
     }

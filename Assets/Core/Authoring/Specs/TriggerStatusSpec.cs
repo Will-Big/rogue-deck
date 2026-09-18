@@ -12,15 +12,17 @@ namespace FateWeaver.Core.Authoring
     public sealed class TriggerStatusSpec : EffectSpec
     {
         public StatusKeyRef Status;
-        public TargetSelectorRef Selector;
 
         public override EffectKey Key => EffectKeys.TriggerStatus;
 
-        public override EffectData ToEffectData()
-            => ApplyCondition(new EffectData(Key, 0)
+        public override bool IsTargeted => true;
+
+        protected override EffectData Build(Side cardSide, CardTargetKey? target)
+            => new EffectData(Key, 0)
             {
-                Payload = new TriggerStatusPayload(Status.ToKey())
-            }) with { TargetSelector = ToSelector(Selector) };
+                Payload = new TriggerStatusPayload(Status.ToKey()),
+                TargetSelector = SelectorFor(target.Value.Range)
+            };
 
         public override IEnumerable<string> Validate(AuthoringContext context)
         {
@@ -28,11 +30,9 @@ namespace FateWeaver.Core.Authoring
             {
                 yield return "trigger_status spec requires a known status key.";
             }
-
-            foreach (var error in ValidateSelector(Selector))
-            {
-                yield return error;
-            }
         }
+
+        public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
+            => RequirePositional(target, CardTargetFaction.Enemy);
     }
 }

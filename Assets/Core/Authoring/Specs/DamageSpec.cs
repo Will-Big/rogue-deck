@@ -5,25 +5,20 @@ using FateWeaver.Core.Effects;
 
 namespace FateWeaver.Core.Authoring
 {
-    /// <summary>Deals flat damage to the target selected by <see cref="Selector"/> (or the handler's
-    /// default when unset).</summary>
+    /// <summary>상대 진영의 카드 위치 규칙이 고른 대상에게 고정 피해를 준다.</summary>
     [Serializable]
     public sealed class DamageSpec : EffectSpec
     {
         public int Value;
-        public TargetSelectorRef Selector;
 
         public override EffectKey Key => EffectKeys.Damage;
 
-        public override EffectData ToEffectData()
-            => ApplyCondition(new EffectData(Key, Value)) with { TargetSelector = ToSelector(Selector) };
+        public override bool IsTargeted => true;
 
-        public override IEnumerable<string> Validate(AuthoringContext context)
-        {
-            foreach (var error in ValidateSelector(Selector))
-            {
-                yield return error;
-            }
-        }
+        protected override EffectData Build(Side cardSide, CardTargetKey? target)
+            => new EffectData(Key, Value) { TargetSelector = SelectorFor(target.Value.Range) };
+
+        public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
+            => RequirePositional(target, OpposingFaction(cardSide));
     }
 }

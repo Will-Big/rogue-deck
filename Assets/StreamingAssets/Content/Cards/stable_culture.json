@@ -1,23 +1,27 @@
 {
+  "cardFormat": 2,
   "id": "stable_culture",
   "name": "안정 배양",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "enemy": "BackOne"
+  },
   "effects": [
     {
       "kind": "apply_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 2,
-      "target": "TargetEnemy",
-      "selector": "BackOne"
+      "count": 2
     },
     {
       "kind": "apply_status",
-      "status": "poison_stasis",
-      "target": "TargetEnemy",
-      "selector": "BackOne"
+      "id": "e1",
+      "targetFaction": "Enemy",
+      "status": "poison_stasis"
     }
   ],
   "grade": "Common",

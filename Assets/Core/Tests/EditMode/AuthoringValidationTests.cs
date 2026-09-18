@@ -55,25 +55,23 @@ namespace FateWeaver.Tests
             Assert.IsNotEmpty(errors);
         }
 
-        [TestCase(2)]
-        [TestCase(4)]
-        public void Undefined_authored_selector_reports_the_card_id(int rawValue)
+        [Test]
+        public void Targeted_effect_without_a_card_axis_reports_the_card_and_effect()
         {
             var spec = new ExecutionCardSpec
             {
-                Id = "legacy_selector",
+                Id = "no_axis",
                 Category = CardCategory.Execution,
                 Effects = new EffectSpec[]
                 {
-                    new DamageSpec { Value = 1, Selector = (TargetSelectorRef)rawValue }
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 1 }
                 }
             };
 
             var errors = AuthoringValidator.Validate(
                 new[] { spec }, AuthoringContext.Default());
 
-            Assert.That(errors, Has.Some.Contains("Card 'legacy_selector'"));
-            Assert.That(errors, Has.Some.Contains("unsupported target selector value " + rawValue));
+            Assert.That(errors, Has.Some.Contains("Card 'no_axis': effects[0] (id 'hit'): targetFaction Enemy needs targets.enemy"));
         }
 
         [Test]

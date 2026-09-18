@@ -34,13 +34,15 @@ namespace FateWeaver.Tests
                 new[]
                 {
                     new EffectData(EffectKeys.Damage, 1),
-                    EffectData.Conditional(EffectKeys.Damage, 0,
-                        new AllOf(new Condition[]
-                        {
-                            new PreviousExecutedCardIs(Side.Player),
-                            new WithinNth(3)
-                        }), 5)
-                });
+                    new EffectData(EffectKeys.Damage, 0) { SuccessEffectValue = 5 }
+                })
+            {
+                StartCondition = new AllOf(new Condition[]
+                {
+                    new PreviousExecutedCardIs(Side.Player),
+                    new WithinNth(3)
+                })
+            };
 
             var scenario = new MultiTurnScenario("chain-no-trigger", 30,
                 new[] { new EnemySpec("goblin", 100) },

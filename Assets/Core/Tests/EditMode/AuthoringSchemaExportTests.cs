@@ -68,14 +68,15 @@ namespace FateWeaver.Tests
         {
             var schema = new JObject();
             schema["effects"] = BuildEffects();
+            schema["effectCommonFields"] = new JArray(EffectCommonFields);
             schema["interventions"] = BuildInterventions();
             schema["condition"] = BuildCondition();
             schema["cardFields"] = BuildCardFields();
             schema["sides"] = Names(typeof(Side));
             schema["categories"] = Names(typeof(CardCategory));
             schema["grades"] = Names(typeof(CardGrade));
-            schema["selectors"] = Names(typeof(TargetSelectorRef));
-            schema["statusTargets"] = Names(typeof(StatusApplyTarget));
+            schema["factions"] = Names(typeof(CardTargetFaction));
+            schema["ranges"] = Names(typeof(CardTargetRange));
             return schema;
         }
 
@@ -91,19 +92,30 @@ namespace FateWeaver.Tests
             return fields;
         }
 
+        /// <summary>모든 효과가 공유하는 필드(EffectSpec 기반 클래스). 효과별 fields에서는 빼고 한 번만 낸다
+        /// — 노트북은 이것을 효과 종류와 무관한 공통 편집부로 그린다(전투 실행 계약 계획 T2b).</summary>
+        private static readonly string[] EffectCommonFields =
+            { "id", "targetFaction", "successEffectValue", "skipOnBasic", "requires", "scaleBy" };
+
+        /// <summary>효과 종류마다: 대상을 고르는지(targeted), 소비량을 결과로 내는지(producesConsumption),
+        /// 종류 고유 필드(fields), 그리고 공통 필드를 포함한 전체 키 순서(order).</summary>
         private static JArray BuildEffects()
         {
             var effects = new JArray();
             foreach (var info in EffectSpecCatalog.All())
             {
+                var spec = info.Create();
                 var entry = new JObject();
-                entry["kind"] = info.Create().Key.Id;
+                entry["kind"] = spec.Key.Id;
                 entry["label"] = info.DisplayName;
+                entry["targeted"] = spec.IsTargeted;
+                entry["producesConsumption"] = spec.ProducesConsumption;
 
+                var order = PropertyOrder(spec);
                 var fields = new JArray();
-                foreach (var name in PropertyOrder(info.Create()))
+                foreach (var name in order)
                 {
-                    if (name == "condition")
+                    if (Array.IndexOf(EffectCommonFields, name) >= 0)
                     {
                         continue;
                     }
@@ -112,23 +124,25 @@ namespace FateWeaver.Tests
                 }
 
                 entry["fields"] = fields;
+                entry["order"] = new JArray(order.ToArray());
                 effects.Add(entry);
             }
 
             return effects;
         }
 
+        /// <summary>카드 시작 조건(StartConditionSpec). 효과가 아니라 카드에 하나 붙는다.</summary>
         private static JObject BuildCondition()
         {
             var fields = new JArray();
-            foreach (var name in PropertyOrder(new ConditionSpec()))
+            foreach (var name in PropertyOrder(new StartConditionSpec()))
             {
                 if (name == "kind")
                 {
                     continue;
                 }
 
-                fields.Add(DescribeField(typeof(ConditionSpec), name));
+                fields.Add(DescribeField(typeof(StartConditionSpec), name));
             }
 
             var condition = new JObject();
@@ -169,6 +183,14 @@ namespace FateWeaver.Tests
             var field = FieldFor(owner, camelName);
             var entry = new JObject();
             entry["name"] = camelName;
+
+            // 기본값이어도 파일에 항상 쓰는 필드(예: consume_status의 mode). 노트북 라이터가 생략하면
+            // 저장소 파일과 바이트가 달라진다.
+            var property = field.GetCustomAttribute<JsonPropertyAttribute>();
+            if (property != null && property.DefaultValueHandling == DefaultValueHandling.Include)
+            {
+                entry["always"] = true;
+            }
 
             var type = field.FieldType;
             if (type == typeof(int))

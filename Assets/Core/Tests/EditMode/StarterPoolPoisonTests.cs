@@ -92,6 +92,25 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, state.Enemies[0].Statuses.Get(StatusKeys.Poison).Magnitude);
         }
 
+        /// <summary>구형 damageBonusPerConsumed가 scaleBy로 옮겨져도 피해는 2 + 소비×2 그대로다(계획 D2).</summary>
+        [TestCase(3, 8)]
+        [TestCase(1, 4)]
+        [TestCase(0, 2)]
+        public void Condensed_burst_damage_scales_with_what_was_consumed(int poison, int damage)
+        {
+            var state = NewState(new Enemy("goblin", 30));
+            if (poison > 0)
+            {
+                state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, poison);
+            }
+
+            Place(state, Pool.Get("condensed_burst"));
+
+            var events = Resolve(state);
+
+            Assert.AreEqual(damage, events.OfType<CardResolved>().Single().DamageDealt);
+        }
+
         [Test]
         public void Toxic_reclaim_blocks_only_after_a_real_consume()
         {
@@ -112,12 +131,12 @@ namespace FateWeaver.Tests
             // 독 있음: 1 소비 후 재부여, 자신 방어 4 → 뒤이은 공격 4를 흡수.
             var with = NewState(new Enemy("goblin", 20));
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
-            var card = Place(with, Pool.Get("toxic_reclaim"));
+            Place(with, Pool.Get("toxic_reclaim"));
             with.Zone.Add(new ExecutionCardInstance(
                 CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
-            Resolve(with);
-            Assert.AreEqual(1, card.ConsumedStatusAmount);
+            var events = Resolve(with);
+            Assert.AreEqual(1, events.OfType<StatusConsumed>().Single().Amount);
             Assert.AreEqual(30, with.Party[0].Hp); // 방어 4가 공격 4를 흡수 → 무피해
         }
 

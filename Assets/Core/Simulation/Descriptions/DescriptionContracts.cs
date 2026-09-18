@@ -25,6 +25,12 @@ namespace FateWeaver.Simulation.Descriptions
     {
         string Symbol(CardTargetKey target);
         string Condition(Condition condition);
+
+        /// <summary>앞 효과의 결과를 요구하는 문장의 머리("소비했다면").</summary>
+        string Requirement(EffectResultRequirement requirement);
+
+        /// <summary>앞 효과의 소비량에 비례한 가산을 효과 문장 뒤에 붙이는 꼬리(" (소비 1당 +2)").</summary>
+        string ScalingSuffix(EffectResultScaling scaling);
         /// <summary>수명 종류(count가 지속일 때만 의미가 있다)와 그 count로 "(N턴)"/"(N회)" 접미사를
         /// 만든다. 카드는 더 이상 StatusLifetime을 갖지 않으므로 종류와 개수를 따로 받는다.</summary>
         string LifetimeSuffix(StatusLifetimeKind kind, int count);
@@ -85,6 +91,10 @@ namespace FateWeaver.Simulation.Descriptions
                 CardTargetRange.Self);
 
         public string Condition(Condition condition) => _grammar.Condition(condition);
+
+        public string Requirement(EffectResultRequirement requirement) => _grammar.Requirement(requirement);
+
+        public string ScalingSuffix(EffectResultScaling scaling) => _grammar.ScalingSuffix(scaling);
 
         public string LifetimeSuffix(StatusLifetimeKind kind, int count)
             => _grammar.LifetimeSuffix(kind, count);

@@ -15,7 +15,6 @@ namespace FateWeaver.Unity
             {
                 case "chapter-8-three-turn-opening": return "8장 3턴 도입부";
                 case "mark-combo": return "표식 연계";
-                case "counter-stance": return "반격 자세";
                 case "chain-slash": return "연쇄 베기";
                 default: return fallback;
             }

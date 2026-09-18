@@ -8,10 +8,12 @@ namespace FateWeaver.Core.Authoring.Json
 {
     /// <summary>CardSpec의 다형 (역)직렬화. 판별자는 카드 분류이며 스펙의 실제 필드이기도 하므로,
     /// EffectSpecJsonConverter와 달리 읽기 전에 떼어내거나 쓰기 후에 되붙일 필요가 없다.
-    /// CardContentLoader의 RequiredKeys가 "category"를 필수로 강제하므로 판별자는 항상 존재한다.</summary>
+    /// CardContentLoader의 RequiredKeys가 "category"를 필수로 강제하므로 판별자는 항상 존재한다.
+    /// cardFormat이 없는 구형 파일은 여기서 CardFormatMigration이 현재 형식으로 올린다.</summary>
     public sealed class CardSpecJsonConverter : JsonConverter<CardSpec>
     {
         public const string CategoryProperty = "category";
+        public const string FormatProperty = "cardFormat";
 
         private static readonly Dictionary<string, Func<CardSpec>> FactoryByCategory =
             new Dictionary<string, Func<CardSpec>>(StringComparer.Ordinal)
@@ -35,6 +37,17 @@ namespace FateWeaver.Core.Authoring.Json
             if (!FactoryByCategory.TryGetValue(category, out var create))
             {
                 throw new JsonSerializationException("Unknown card category '" + category + "'.");
+            }
+
+            var format = entry[FormatProperty];
+            if (format == null)
+            {
+                CardFormatMigration.Upgrade(entry);
+            }
+            else if (format.Type != JTokenType.Integer || (int)format != CardSpec.CurrentFormat)
+            {
+                throw new JsonSerializationException(
+                    "Unsupported card format '" + format + "'; expected " + CardSpec.CurrentFormat + ".");
             }
 
             var spec = create();

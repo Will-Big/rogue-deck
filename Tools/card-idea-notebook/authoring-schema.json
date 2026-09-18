@@ -3,28 +3,29 @@
     {
       "kind": "damage",
       "label": "피해",
+      "targeted": true,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "value",
           "type": "int"
-        },
-        {
-          "name": "selector",
-          "type": "enum",
-          "options": [
-            "None",
-            "FrontOne",
-            "BackOne",
-            "All",
-            "FrontTwo",
-            "BackTwo"
-          ]
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "value",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "apply_status",
       "label": "상태 부여",
+      "targeted": true,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "status",
@@ -33,119 +34,162 @@
         {
           "name": "count",
           "type": "int"
-        },
-        {
-          "name": "target",
-          "type": "enum",
-          "options": [
-            "Self",
-            "TargetEnemy",
-            "PartyMember",
-            "AllPartyMembers",
-            "PartyBySelector"
-          ]
-        },
-        {
-          "name": "selector",
-          "type": "enum",
-          "options": [
-            "None",
-            "FrontOne",
-            "BackOne",
-            "All",
-            "FrontTwo",
-            "BackTwo"
-          ]
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "status",
+        "count",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "grant_next_player_damage_card_bonus",
       "label": "다음 피해 카드 강화",
+      "targeted": false,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "value",
           "type": "int"
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "value",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "nullify_next_player_condition_reward",
       "label": "다음 보상 무효화",
-      "fields": []
+      "targeted": false,
+      "producesConsumption": false,
+      "fields": [],
+      "order": [
+        "id",
+        "targetFaction",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
+      ]
     },
     {
       "kind": "move_formation",
       "label": "대형 이동",
+      "targeted": true,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "value",
           "type": "int"
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "value",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "consume_status",
       "label": "상태 소비",
+      "targeted": true,
+      "producesConsumption": true,
       "fields": [
         {
           "name": "status",
           "type": "status"
         },
         {
-          "name": "maxAmount",
+          "name": "amount",
           "type": "int"
         },
         {
-          "name": "damageBonusPerConsumed",
-          "type": "int"
-        },
-        {
-          "name": "selector",
+          "name": "mode",
+          "always": true,
           "type": "enum",
           "options": [
-            "None",
-            "FrontOne",
-            "BackOne",
-            "All",
-            "FrontTwo",
-            "BackTwo"
+            "UpTo",
+            "Exact"
           ]
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "status",
+        "amount",
+        "mode",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "trigger_status",
       "label": "상태 즉시 발동",
+      "targeted": true,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "status",
           "type": "status"
-        },
-        {
-          "name": "selector",
-          "type": "enum",
-          "options": [
-            "None",
-            "FrontOne",
-            "BackOne",
-            "All",
-            "FrontTwo",
-            "BackTwo"
-          ]
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "status",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     },
     {
       "kind": "grant_next_turn_fate",
       "label": "다음 턴 운명력",
+      "targeted": false,
+      "producesConsumption": false,
       "fields": [
         {
           "name": "value",
           "type": "int"
         }
+      ],
+      "order": [
+        "id",
+        "targetFaction",
+        "value",
+        "successEffectValue",
+        "skipOnBasic",
+        "requires",
+        "scaleBy"
       ]
     }
+  ],
+  "effectCommonFields": [
+    "id",
+    "targetFaction",
+    "successEffectValue",
+    "skipOnBasic",
+    "requires",
+    "scaleBy"
   ],
   "interventions": [
     {
@@ -203,37 +247,32 @@
       "PrevExecutedIsEnemyDamageCard",
       "NoPrecedingPlayerCard",
       "NoFollowingEnemyCard",
-      "NoFollowingPlayerCard",
-      "ConsumedStatusAtLeast"
+      "NoFollowingPlayerCard"
     ],
     "fields": [
       {
         "name": "n",
         "type": "int"
-      },
-      {
-        "name": "successEffectValue",
-        "type": "int"
-      },
-      {
-        "name": "skipOnBasic",
-        "type": "bool"
       }
     ]
   },
   "cardFields": {
     "Execution": [
+      "cardFormat",
       "id",
       "name",
       "side",
       "category",
       "energyCost",
       "baseExecutionOrder",
+      "targets",
+      "startCondition",
       "effects",
       "grade",
       "tags"
     ],
     "Intervention": [
+      "cardFormat",
       "id",
       "name",
       "side",
@@ -259,19 +298,16 @@
     "Rare",
     "Other"
   ],
-  "selectors": [
-    "None",
-    "FrontOne",
-    "BackOne",
-    "All",
-    "FrontTwo",
-    "BackTwo"
+  "factions": [
+    "Ally",
+    "Enemy"
   ],
-  "statusTargets": [
+  "ranges": [
     "Self",
-    "TargetEnemy",
-    "PartyMember",
-    "AllPartyMembers",
-    "PartyBySelector"
+    "FrontOne",
+    "FrontTwo",
+    "BackOne",
+    "BackTwo",
+    "All"
   ]
 }

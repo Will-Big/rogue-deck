@@ -337,8 +337,13 @@
     .effect-params { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
     .effect-params label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
     .effect-params input[type="number"] { width: 84px; }
-    .effect-condition { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
-    .effect-condition label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-common,
+    .effect-reference > div { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .effect-common label,
+    .effect-reference label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+    .effect-common input[type="number"],
+    .effect-reference input[type="number"] { width: 84px; }
+    .effect-common input[type="text"] { width: 96px; }
     .effect-actions { display: flex; gap: 4px; }
     .effect-actions button { padding: 4px 8px; font-size: 11px; }
     .effect-glyph { color: var(--gold); font-size: 12px; letter-spacing: .12em; }
@@ -468,8 +473,12 @@
       if (!raw.cardFields || !Array.isArray(raw.cardFields.Execution)) {
         throw new Error("저작 스키마에 분류별 cardFields가 없습니다.");
       }
+      if (!Array.isArray(raw.effectCommonFields) || !Array.isArray(raw.factions) || !Array.isArray(raw.ranges)) {
+        throw new Error("저작 스키마에 효과 공통 필드·진영·위치 목록이 없습니다.");
+      }
 
-      /// 효과와 개입은 스키마에서 같은 모양이므로 같은 함수로 색인한다.
+      /// 효과와 개입은 스키마에서 같은 모양이므로 같은 함수로 색인한다. 효과만 대상 여부·소비량
+      /// 생산 여부·공통 필드를 포함한 키 순서(order)를 더 갖는다(전투 실행 계약 T2b).
       function indexByKind(entries) {
         const byKind = {};
         const order = [];
@@ -477,7 +486,10 @@
           byKind[entry.kind] = Object.freeze({
             kind: entry.kind,
             label: entry.label,
+            targeted: entry.targeted === true,
+            producesConsumption: entry.producesConsumption === true,
             fields: Object.freeze(entry.fields.map((field) => Object.freeze({ ...field }))),
+            order: Object.freeze([...(entry.order ?? entry.fields.map((field) => field.name))]),
           });
           order.push(entry.kind);
         }
@@ -495,6 +507,7 @@
       return Object.freeze({
         effects: effects.byKind,
         effectOrder: effects.order,
+        effectCommonFields: Object.freeze([...raw.effectCommonFields]),
         interventions: interventions.byKind,
         interventionOrder: interventions.order,
         condition: Object.freeze({
@@ -505,19 +518,23 @@
         sides: Object.freeze([...raw.sides]),
         categories: Object.freeze([...raw.categories]),
         grades: Object.freeze([...raw.grades]),
-        selectors: Object.freeze([...raw.selectors]),
-        statusTargets: Object.freeze([...raw.statusTargets]),
+        factions: Object.freeze([...raw.factions]),
+        ranges: Object.freeze([...raw.ranges]),
       });
     }
 
-    const SCHEMA_VERSION = 7;
+    /// 노트북 자체의 저장 형식 버전(미반영 편집분). 카드 JSON의 cardFormat과 다른 값이다.
+    const SCHEMA_VERSION = 8;
     const STORAGE_KEY = "fate-weaver.card-idea-notebook";
     const LEGACY_BACKUP_KEY = `${STORAGE_KEY}.v6-backup`;
     const CARD_REQUIRED_KEYS = Object.freeze(["id", "name", "side", "category"]);
 
-    function emptyConditionValue() {
-      return { kind: "None", n: 0, successEffectValue: 0, skipOnBasic: false };
-    }
+    /// 게임이 읽는 카드 JSON 형식. 이것이 없는 파일은 구형이며 노트북은 올리지 않는다 — 변환은 게임의
+    /// 로딩 경계(CardFormatMigration)가 맡는다.
+    const CARD_FORMAT = 2;
+
+    /// 효과 ID 형식. 카드 id와 같은 규칙이다.
+    const EFFECT_ID_PATTERN = /^[a-z0-9_]+$/;
 
     /// 스키마가 아는 파라미터만 골라 담는다. 파일에 없는 키는 모델에도 넣지 않는다 -
     /// 생략된 기본값을 되살려 넣으면 왕복에서 없던 키가 생긴다.
@@ -530,23 +547,37 @@
       return params;
     }
 
+    function readReference(value, amountKey) {
+      if (!value || typeof value !== "object") return null;
+      return {
+        sourceEffectId: String(value.sourceEffectId ?? ""),
+        [amountKey]: Number(value[amountKey] ?? 0),
+      };
+    }
+
     /// 효과 하나를 모델 행으로. 스키마에 없는 kind는 원본을 통째로 들고 있는다(설계 §10.2).
+    /// 효과 공통 필드(id·진영·성공 수치·생략·결과 참조)는 종류와 무관하게 같은 자리에 둔다.
     function readEffectEntry(entry, schema) {
       const kind = String(entry?.kind ?? "");
       const known = schema.effects[kind];
       if (!known) {
-        return { kind, params: {}, condition: null, raw: entry };
+        return { kind, id: String(entry?.id ?? ""), raw: entry };
       }
 
-      let condition = null;
-      if (entry.condition) {
-        condition = { ...emptyConditionValue(), ...entry.condition };
-      }
-
-      return { kind, params: readParams(entry, known), condition, raw: null };
+      return {
+        kind,
+        id: String(entry.id ?? ""),
+        targetFaction: entry.targetFaction ?? null,
+        params: readParams(entry, known),
+        successEffectValue: entry.successEffectValue ?? null,
+        skipOnBasic: entry.skipOnBasic === true,
+        requires: readReference(entry.requires, "minimumConsumed"),
+        scaleBy: readReference(entry.scaleBy, "perConsumed"),
+        raw: null,
+      };
     }
 
-    /// 개입 하나를 모델 행으로. 효과와 같되 조건이 없다 - 개입에는 조건 시스템이 없다.
+    /// 개입 하나를 모델 행으로. 개입에는 조건·결과 참조가 없다.
     function readInterventionEntry(entry, schema) {
       const kind = String(entry?.kind ?? "");
       const known = schema.interventions[kind];
@@ -555,6 +586,16 @@
       }
 
       return { kind, params: readParams(entry, known), raw: null };
+    }
+
+    function readTargets(value) {
+      if (!value || typeof value !== "object") return { ally: null, enemy: null };
+      return { ally: value.ally ?? null, enemy: value.enemy ?? null };
+    }
+
+    function readStartCondition(value) {
+      if (!value || typeof value !== "object") return null;
+      return { kind: String(value.kind ?? ""), n: Number(value.n ?? 0) };
     }
 
     function readCardJson(text, schema) {
@@ -570,6 +611,15 @@
         if (!Object.hasOwn(raw, key)) errors.push(`필수 키 '${key}'가 없습니다.`);
       }
       if (errors.length) return { card: null, errors };
+
+      if (raw.cardFormat !== CARD_FORMAT) {
+        return {
+          card: null,
+          errors: [raw.cardFormat === undefined
+            ? "cardFormat이 없는 구형 카드입니다. 게임의 변환기(CardFormatMigration)로 올린 파일만 편집할 수 있습니다."
+            : `지원하지 않는 cardFormat입니다: ${raw.cardFormat}`],
+        };
+      }
 
       /// 모르는 키의 기준이 분류마다 다르다 - 실행 카드의 intervention은 모르는 키다.
       const category = String(raw.category);
@@ -589,12 +639,15 @@
 
       const card = {
         uid: repoUid(String(raw.id)),
+        cardFormat: CARD_FORMAT,
         id: String(raw.id),
         name: String(raw.name),
         side: String(raw.side),
         category,
         energyCost: Number(raw.energyCost ?? 0),
         baseExecutionOrder: Number(raw.baseExecutionOrder ?? 0),
+        targets: readTargets(raw.targets),
+        startCondition: readStartCondition(raw.startCondition),
         effects: Array.isArray(raw.effects)
           ? raw.effects.map((entry) => readEffectEntry(entry, schema))
           : null,
@@ -643,17 +696,35 @@
       return { ...card, [field]: String(value).trim() };
     }
 
+    /// 카드의 진영 축 하나(ally 또는 enemy)의 위치. 빈 값이면 축을 뗀다.
+    function setCardTarget(card, axis, range) {
+      if (axis !== "ally" && axis !== "enemy") return card;
+      const value = range ? String(range) : null;
+      return { ...card, targets: { ...(card.targets ?? { ally: null, enemy: null }), [axis]: value } };
+    }
+
+    /// patch가 null이면 카드 시작 조건을 뗀다. 아니면 있는 조건 위에 얹는다 - 폼이 칸 하나씩 보낸다.
+    function setStartCondition(card, patch) {
+      if (patch === null) return { ...card, startCondition: null };
+
+      const merged = { kind: "", n: 0, ...card.startCondition, ...patch };
+      return { ...card, startCondition: { kind: String(merged.kind), n: toCardNumber(merged.n) } };
+    }
+
     /// 빈 카드. 분류에 없는 쪽 필드도 채워 두는 이유는 설계 5 그대로다 - 편집 중 분류를
     /// 바꿔도 값이 사라지지 않아야 하고, 어차피 라이터가 분류별 키 목록만 내보낸다.
     function createCardModel({ schema, uid }) {
       return {
         uid,
+        cardFormat: CARD_FORMAT,
         id: "",
         name: "",
         side: schema.sides[0],
         category: schema.categories[0],
         energyCost: 0,
         baseExecutionOrder: 0,
+        targets: { ally: null, enemy: null },
+        startCondition: null,
         effects: [],
         intervention: null,
         grade: schema.grades[0],
@@ -690,13 +761,36 @@
       return { ...card, effects };
     }
 
+    /// 카드 안에서 쓰이지 않은 가장 작은 e<n>. 변환기가 붙이는 이름과 같은 꼴이다.
+    function nextEffectId(effects) {
+      const used = new Set((effects ?? []).map((effect) => effect.id));
+      let n = 0;
+      while (used.has(`e${n}`)) n += 1;
+      return `e${n}`;
+    }
+
+    function copyReference(reference) {
+      return reference ? { ...reference } : null;
+    }
+
     function addEffect(card, kind, schema) {
       const spec = schema.effects[kind];
       if (!spec) return card;
 
+      const effects = card.effects ?? [];
       return replaceEffects(card, [
-        ...(card.effects ?? []),
-        { kind, params: emptyParams(spec), condition: null, raw: null },
+        ...effects,
+        {
+          kind,
+          id: nextEffectId(effects),
+          targetFaction: null,
+          params: emptyParams(spec),
+          successEffectValue: null,
+          skipOnBasic: false,
+          requires: null,
+          scaleBy: null,
+          raw: null,
+        },
       ]);
     }
 
@@ -708,7 +802,7 @@
       return replaceEffects(card, effects);
     }
 
-    /// 파라미터를 얕은 복사한다. 같은 객체를 가리키면 한쪽을 고칠 때 둘 다 바뀐다.
+    /// 파라미터·참조를 얕은 복사하고 새 ID를 준다. 같은 ID가 둘이 되면 결과 참조가 모호해진다.
     function duplicateEffect(card, index) {
       const effects = [...(card.effects ?? [])];
       const source = effects[index];
@@ -716,12 +810,15 @@
 
       effects.splice(index + 1, 0, {
         ...source,
-        params: { ...source.params },
-        condition: source.condition ? { ...source.condition } : null,
+        id: nextEffectId(effects),
+        params: source.params ? { ...source.params } : source.params,
+        requires: copyReference(source.requires),
+        scaleBy: copyReference(source.scaleBy),
       });
       return replaceEffects(card, effects);
     }
 
+    /// 순서만 바꾼다. ID는 그대로다 - 다른 효과의 참조가 가리키는 이름이다.
     function moveEffect(card, from, to) {
       const effects = [...(card.effects ?? [])];
       if (from < 0 || from >= effects.length) return card;
@@ -732,14 +829,20 @@
     }
 
     /// 종류가 바뀌면 파라미터가 통째로 갈린다 - 계획 3.5가 파라미터를 액션에 소속시켰으므로
-    /// 쓰지 않는 칸이 남을 자리가 없다. 조건은 효과 종류와 독립이라 유지한다.
+    /// 쓰지 않는 칸이 남을 자리가 없다. ID·성공 수치·결과 참조는 종류와 독립이라 유지하고, 대상이 없는
+    /// 종류로 바뀌면 진영을 뗀다.
     function setEffectKind(card, index, kind, schema) {
       const effects = [...(card.effects ?? [])];
       const current = effects[index];
       const spec = schema.effects[kind];
       if (!current || current.raw || !spec) return card;
 
-      effects[index] = { kind, params: emptyParams(spec), condition: current.condition, raw: null };
+      effects[index] = {
+        ...current,
+        kind,
+        targetFaction: spec.targeted ? current.targetFaction : null,
+        params: emptyParams(spec),
+      };
       return replaceEffects(card, effects);
     }
 
@@ -758,29 +861,58 @@
       return replaceEffects(card, effects);
     }
 
-    /// patch가 null이면 조건을 뗀다. 아니면 있는 조건 위에 얹는다 - 폼이 칸 하나씩 보내므로
-    /// 나머지 칸이 유지되어야 한다.
-    function setEffectCondition(card, index, patch) {
+    const EFFECT_COMMON_EDITABLE = Object.freeze(["id", "targetFaction", "successEffectValue", "skipOnBasic"]);
+
+    /// 효과 공통 필드 하나. 빈 진영·빈 성공 수치는 "없음"이다.
+    function setEffectCommon(card, index, name, value) {
       const effects = [...(card.effects ?? [])];
       const current = effects[index];
-      if (!current || current.raw) return card;
+      if (!current || current.raw || !EFFECT_COMMON_EDITABLE.includes(name)) return card;
+
+      let next;
+      if (name === "id") next = String(value ?? "").trim();
+      else if (name === "targetFaction") next = value ? String(value) : null;
+      else if (name === "successEffectValue") {
+        next = value === null || value === undefined || String(value).trim() === ""
+          ? null
+          : toCardNumber(value);
+      } else next = value === true || value === "true";
+
+      effects[index] = { ...current, [name]: next };
+      return replaceEffects(card, effects);
+    }
+
+    const REFERENCE_AMOUNT = Object.freeze({ requires: "minimumConsumed", scaleBy: "perConsumed" });
+
+    /// 결과 참조(requires·scaleBy) 하나. patch가 null이면 뗀다. 폼이 칸 하나씩 보내므로 위에 얹는다.
+    function setEffectReference(card, index, field, patch) {
+      const amountKey = REFERENCE_AMOUNT[field];
+      const effects = [...(card.effects ?? [])];
+      const current = effects[index];
+      if (!amountKey || !current || current.raw) return card;
 
       if (patch === null) {
-        effects[index] = { ...current, condition: null };
+        effects[index] = { ...current, [field]: null };
         return replaceEffects(card, effects);
       }
 
-      const merged = { ...emptyConditionValue(), ...current.condition, ...patch };
+      const merged = { sourceEffectId: "", [amountKey]: 0, ...current[field], ...patch };
       effects[index] = {
         ...current,
-        condition: {
-          kind: String(merged.kind),
-          n: toCardNumber(merged.n),
-          successEffectValue: toCardNumber(merged.successEffectValue),
-          skipOnBasic: merged.skipOnBasic === true || merged.skipOnBasic === "true",
+        [field]: {
+          sourceEffectId: String(merged.sourceEffectId ?? ""),
+          [amountKey]: toCardNumber(merged[amountKey]),
         },
       };
       return replaceEffects(card, effects);
+    }
+
+    /// 결과 참조가 가리킬 수 있는 효과: 이 효과보다 앞에 있고, 소비량을 결과로 내며, ID가 있는 것.
+    function consumptionSources(card, index, schema) {
+      return (card.effects ?? [])
+        .slice(0, Math.max(0, index))
+        .filter((effect) => !effect.raw && effect.id && schema.effects[effect.kind]?.producesConsumption)
+        .map((effect) => effect.id);
     }
 
     /// 개입은 효과에서 조건을 뺀 것이고 행이 하나뿐이다. kind가 비면 뗀다.
@@ -821,34 +953,58 @@
       return false;
     }
 
-    /// 파라미터 블록 하나를 파일 형태로. 효과와 개입이 스키마에서 같은 모양이라 함께 쓴다.
+    /// 파라미터 하나를 쓸지. always(스키마가 C#의 DefaultValueHandling.Include를 옮긴 표시)면 기본값도 쓴다.
+    function writesParam(field, value) {
+      if (value === null || value === undefined) return false;
+      if (field.always) return true;
+      const fallback = field.type === "enum" ? field.options : null;
+      return !isDefaultValue(value, field.type, fallback);
+    }
+
+    /// 개입 파라미터 블록을 파일 형태로.
     function writeParams(entry, known) {
       const out = { kind: entry.kind };
       for (const field of known.fields) {
         const value = entry.params[field.name];
-        const fallback = field.type === "enum" ? field.options : null;
-        if (isDefaultValue(value, field.type, fallback)) continue;
-        out[field.name] = value;
+        if (writesParam(field, value)) out[field.name] = value;
       }
 
       return out;
     }
 
+    function writeReference(reference, amountKey) {
+      const out = {};
+      if (reference.sourceEffectId) out.sourceEffectId = reference.sourceEffectId;
+      if (Number(reference[amountKey] ?? 0) !== 0) out[amountKey] = Number(reference[amountKey]);
+      return out;
+    }
+
+    /// 효과 하나를 파일 형태로. 키 순서는 스키마의 order(공통 필드 포함)가 정한다 — C# 직렬화기의 순서다.
     function writeEffectEntry(effect, schema) {
       if (effect.raw) return effect.raw;
 
-      const entry = writeParams(effect, schema.effects[effect.kind]);
-      if (effect.condition && effect.condition.kind !== schema.condition.kinds[0]) {
-        const condition = { kind: effect.condition.kind };
-        for (const field of schema.condition.fields) {
-          const value = effect.condition[field.name];
-          if (isDefaultValue(value, field.type, null)) continue;
-          condition[field.name] = value;
+      const known = schema.effects[effect.kind];
+      const out = { kind: effect.kind };
+      for (const name of known.order) {
+        if (name === "id") {
+          if (effect.id) out.id = effect.id;
+        } else if (name === "targetFaction") {
+          if (effect.targetFaction) out.targetFaction = effect.targetFaction;
+        } else if (name === "successEffectValue") {
+          if (effect.successEffectValue !== null && effect.successEffectValue !== undefined) {
+            out.successEffectValue = effect.successEffectValue;
+          }
+        } else if (name === "skipOnBasic") {
+          if (effect.skipOnBasic === true) out.skipOnBasic = true;
+        } else if (name === "requires" || name === "scaleBy") {
+          if (effect[name]) out[name] = writeReference(effect[name], REFERENCE_AMOUNT[name]);
+        } else {
+          const field = known.fields.find((entry) => entry.name === name);
+          if (field && writesParam(field, effect.params[name])) out[name] = effect.params[name];
         }
-        entry.condition = condition;
       }
 
-      return entry;
+      return out;
     }
 
     /// 개입은 효과에서 조건만 뺀 것이다.
@@ -857,16 +1013,31 @@
       return writeParams(intervention, schema.interventions[intervention.kind]);
     }
 
+    function writeTargets(targets) {
+      const out = {};
+      if (targets?.ally) out.ally = targets.ally;
+      if (targets?.enemy) out.enemy = targets.enemy;
+      return Object.keys(out).length ? out : null;
+    }
+
+    /// 조건 종류는 C#에서 항상 쓴다(DefaultValueHandling.Include). n은 0이면 생략한다.
+    function writeStartCondition(condition) {
+      if (!condition) return null;
+      const out = { kind: condition.kind };
+      if (Number(condition.n ?? 0) !== 0) out.n = Number(condition.n);
+      return out;
+    }
+
     /// 카드 하나를 저장소 파일과 바이트가 같은 문자열로. 키 순서와 어떤 키가 나갈지는 둘 다
     /// 스키마의 분류별 cardFields가 정한다 - 그래서 실행 카드에 intervention이, 개입 카드에
     /// effects가 실릴 수 없다(설계 8, 계획 3.5의 타입 분리).
     function writeCardJson(card, schema) {
-      const always = new Set(["side", "category"]);
+      const always = new Set(["cardFormat", "side", "category"]);
       const enumOf = { side: schema.sides, category: schema.categories, grade: schema.grades };
       const typeOf = {
         id: "string", name: "string",
         side: "enum", category: "enum", grade: "enum",
-        energyCost: "int", baseExecutionOrder: "int",
+        energyCost: "int", baseExecutionOrder: "int", cardFormat: "int",
       };
 
       const fields = schema.cardFields[card.category];
@@ -874,6 +1045,10 @@
 
       const out = {};
       for (const key of fields) {
+        if (key === "cardFormat") {
+          out.cardFormat = CARD_FORMAT;
+          continue;
+        }
         if (key === "effects") {
           if (card.effects !== null) {
             out.effects = card.effects.map((effect) => writeEffectEntry(effect, schema));
@@ -884,6 +1059,16 @@
           if (card.intervention !== null) {
             out.intervention = writeInterventionEntry(card.intervention, schema);
           }
+          continue;
+        }
+        if (key === "targets") {
+          const targets = writeTargets(card.targets);
+          if (targets) out.targets = targets;
+          continue;
+        }
+        if (key === "startCondition") {
+          const condition = writeStartCondition(card.startCondition);
+          if (condition) out.startCondition = condition;
           continue;
         }
         if (key === "tags") {
@@ -986,6 +1171,97 @@
 
     /// 로더가 거부할 것을 내보내기 전에 잡는다(설계 9). 통과가 부팅 성공을 보장하지는 않지만,
     /// 실패가 드러나는 시점을 게임 실행에서 저작 중으로 당긴다.
+    const AXIS_OF_FACTION = Object.freeze({ Ally: "ally", Enemy: "enemy" });
+
+    /// 실행 카드의 효과를 게임 로더(AuthoringValidator)와 같은 기준으로 검사한다(전투 실행 계약 T2b):
+    /// 효과 ID, 대상 효과의 진영과 카드 축, 결과 참조, 카드 시작 조건 없는 성공 수치·생략. 효과 종류마다
+    /// 허용되는 (진영, 위치) 조합은 스키마에 없으므로 게임 로더만 검사한다.
+    function validateExecutionEffects(card, effects, statuses, schema, fail) {
+      const at = (index, effect) => `effects[${index}]${effect.id ? ` (id '${effect.id}')` : ""}: `;
+      const earlier = new Map();
+      const usedAxes = new Set();
+
+      if (card.startCondition && (!card.startCondition.kind || card.startCondition.kind === schema.condition.kinds[0])) {
+        fail(card.id, "카드 시작 조건의 종류를 골라야 합니다.");
+      }
+
+      effects.forEach((effect, index) => {
+        const where = at(index, effect);
+        if (effect.raw) {
+          fail(card.id, `${where}노트북이 모르는 효과입니다: '${effect.kind}'`);
+          return;
+        }
+
+        if (!effect.id) fail(card.id, `${where}효과 id가 없습니다.`);
+        else if (!EFFECT_ID_PATTERN.test(effect.id)) {
+          fail(card.id, `${where}효과 id 형식이 잘못되었습니다. 소문자·숫자·밑줄만 씁니다.`);
+        } else if (earlier.has(effect.id)) {
+          fail(card.id, `${where}효과 id가 중복입니다: '${effect.id}'`);
+        }
+
+        const spec = schema.effects[effect.kind];
+        const status = effect.params.status;
+        if (status !== undefined && !statuses.has(status)) {
+          fail(card.id, `${where}등록되지 않은 상태 키입니다: '${status}'`);
+        }
+        if (effect.kind === "consume_status" && Number(effect.params.amount ?? 0) < 1) {
+          fail(card.id, `${where}consume_status의 amount는 1 이상이어야 합니다.`);
+        }
+
+        if (spec.targeted) {
+          if (!effect.targetFaction) {
+            fail(card.id, `${where}대상 진영(targetFaction)이 필요합니다.`);
+          } else {
+            const axis = AXIS_OF_FACTION[effect.targetFaction];
+            usedAxes.add(axis);
+            if (!card.targets?.[axis]) {
+              fail(card.id, `${where}${effect.targetFaction} 진영을 치려면 카드에 targets.${axis}가 있어야 합니다.`);
+            }
+          }
+        } else if (effect.targetFaction) {
+          fail(card.id, `${where}${effect.kind}에는 대상이 없으므로 진영을 비워야 합니다.`);
+        }
+
+        if (!card.startCondition) {
+          if (effect.successEffectValue !== null && effect.successEffectValue !== undefined) {
+            fail(card.id, `${where}성공 수치는 카드 시작 조건이 있어야 쓸 수 있습니다.`);
+          }
+          if (effect.skipOnBasic) {
+            fail(card.id, `${where}skipOnBasic은 카드 시작 조건이 있어야 쓸 수 있습니다.`);
+          }
+        }
+
+        for (const field of ["requires", "scaleBy"]) {
+          const reference = effect[field];
+          if (!reference) continue;
+
+          const source = reference.sourceEffectId;
+          if (source === effect.id) {
+            fail(card.id, `${where}${field}가 자기 자신을 가리킵니다.`);
+          } else if (!earlier.has(source)) {
+            fail(card.id, `${where}${field}가 가리키는 '${source}'는 이 카드의 앞 효과가 아닙니다.`);
+          } else if (!schema.effects[earlier.get(source).kind]?.producesConsumption) {
+            fail(card.id, `${where}${field}가 가리키는 '${source}'는 소비량을 내지 않습니다.`);
+          }
+        }
+
+        if (effect.requires && Number(effect.requires.minimumConsumed) < 1) {
+          fail(card.id, `${where}requires의 최소 소비량은 1 이상이어야 합니다.`);
+        }
+        if (effect.scaleBy && Number(effect.scaleBy.perConsumed) === 0) {
+          fail(card.id, `${where}scaleBy의 계수는 0이 아니어야 합니다.`);
+        }
+
+        if (effect.id && !earlier.has(effect.id)) earlier.set(effect.id, effect);
+      });
+
+      for (const [faction, axis] of Object.entries(AXIS_OF_FACTION)) {
+        if (card.targets?.[axis] && !usedAxes.has(axis)) {
+          fail(card.id, `targets.${axis}가 있지만 ${faction} 진영을 치는 효과가 없습니다.`);
+        }
+      }
+    }
+
     function validateContent({ cards, pools, statusKeys, schema }) {
       const errors = [];
       const warnings = [];
@@ -1023,21 +1299,7 @@
 
         const effects = card.effects ?? [];
         if (!effects.length) warn(card.id, "실행 카드인데 효과가 없습니다.");
-
-        for (const effect of effects) {
-          if (effect.raw) {
-            fail(card.id, `노트북이 모르는 효과입니다: '${effect.kind}'`);
-            continue;
-          }
-
-          const status = effect.params.status;
-          if (status !== undefined && !statuses.has(status)) {
-            fail(card.id, `등록되지 않은 상태 키입니다: '${status}'`);
-          }
-          if (effect.kind === "consume_status" && Number(effect.params.maxAmount ?? 0) < 1) {
-            fail(card.id, "consume_status의 maxAmount는 1 이상이어야 합니다.");
-          }
-        }
+        validateExecutionEffects(card, effects, statuses, schema, fail);
       }
 
       const pooled = new Set();
@@ -1480,6 +1742,7 @@
     /// STORAGE_KEY와 별개다. STORAGE_KEY는 이제 HANDLE_DB_NAME의 이름 공간 접두사로만 쓰이므로,
     /// 미반영은 자체 키와 자체 버전을 쓴다.
     const PENDING_STORAGE_KEY = "fate-weaver.card-idea-notebook.pending";
+    const PENDING_BACKUP_KEY = `${PENDING_STORAGE_KEY}.card-format-1-backup`;
 
     /// 설계 14: 옛 데이터는 능력이 자유 텍스트라 자동 변환이 불가능하다. 지우지 않고 옮긴 뒤
     /// 안내한다 - 저장소의 카드 26장을 읽으면 대부분 복원된다.
@@ -1521,9 +1784,26 @@
         };
       }
 
-      /// 계획 C가 쓴 버전 1은 모양이 지금과 같다. 거부하면 그때의 미반영 편집이 조용히 사라지므로
-      /// 받아들이고 올린다.
-      if (!saved || ![1, SCHEMA_VERSION].includes(saved.version)) {
+      /// 버전 1·7은 카드 형식 1의 모델(효과마다 조건·selector)이다. 노트북은 카드 형식을 올리지 않으므로
+      /// (변환은 게임의 CardFormatMigration이 맡는다) 버리지 않고 백업 키로 옮긴 뒤 알린다.
+      if (saved && (saved.version === 1 || saved.version === 7)) {
+        try {
+          storage.setItem(PENDING_BACKUP_KEY, raw);
+          storage.removeItem(PENDING_STORAGE_KEY);
+        } catch (error) {
+          return {
+            pending: emptyPending(),
+            errors: [`옛 형식의 미반영 편집분을 백업하지 못했습니다: ${error?.message ?? error}`],
+          };
+        }
+
+        return {
+          pending: emptyPending(),
+          errors: [`카드 형식이 바뀌어 옛 미반영 편집분을 ${PENDING_BACKUP_KEY}에 백업했습니다. 저장소 카드는 새 형식으로 다시 읽습니다.`],
+        };
+      }
+
+      if (!saved || saved.version !== SCHEMA_VERSION) {
         return {
           pending: emptyPending(),
           errors: [`지원하지 않는 미반영 데이터 버전: ${saved?.version}`],
@@ -1634,7 +1914,11 @@
       moveEffect,
       setEffectKind,
       setEffectParam,
-      setEffectCondition,
+      setEffectCommon,
+      setEffectReference,
+      consumptionSources,
+      setCardTarget,
+      setStartCondition,
       setIntervention,
       setInterventionParam,
       writeCardJson,
@@ -1648,7 +1932,8 @@
       resolvePoolState,
       diffLines,
       exportPlan,
-      emptyConditionValue,
+      PENDING_BACKUP_KEY,
+      CARD_FORMAT,
       SCHEMA_VERSION,
       STORAGE_KEY,
     });
@@ -2476,8 +2761,10 @@
 
     /// 위치 범위의 글리프 표기. 기존 도구에서 검증된 표기이고 방향 감각을 숫자보다 잘
     /// 전달하므로 selector 드롭다운 옆에 남긴다(설계 6).
+    /// 카드 위치 축의 범위를 대형 모양으로 보여준다. Self는 대형 위치가 아니라 카드 주인이다.
     const SELECTOR_GLYPHS = Object.freeze({
       None: "",
+      Self: "자신",
       FrontOne: "◆━━━━",
       FrontTwo: "◆◆━━━",
       BackOne: "━━━━◆",
@@ -2528,46 +2815,70 @@
       for (const field of spec.fields) {
         const control = paramControl(field, params[field.name], (next) => onParam(field.name, next));
         block.append(formField(field.name, control));
-
-        if (field.name === "selector") {
-          const glyph = document.createElement("output");
-          glyph.className = "effect-glyph";
-          glyph.textContent = SELECTOR_GLYPHS[params.selector] ?? "";
-          block.append(glyph);
-        }
       }
 
       return block;
     }
 
-    function conditionBlock(card, index, effect) {
+    const NONE = "(없음)";
+
+    /// 효과 공통 필드: id, 대상 진영(대상 효과만), 카드 시작 조건이 있을 때만 성공 수치·생략.
+    function effectCommonBlock(card, index, effect) {
+      const block = document.createElement("div");
+      block.className = "effect-common";
+      const spec = repoStore.schema.effects[effect.kind];
+      const edit = (name) => (value) => applyCardEdit(core.setEffectCommon(card, index, name, value));
+
+      block.append(formField("id", textControl(effect.id ?? "", edit("id"))));
+      if (spec.targeted) {
+        block.append(formField("대상 진영", selectControl(
+          [NONE, ...repoStore.schema.factions],
+          effect.targetFaction ?? NONE,
+          (value) => edit("targetFaction")(value === NONE ? "" : value),
+        )));
+      }
+
+      if (card.startCondition) {
+        const success = document.createElement("input");
+        success.type = "number";
+        success.step = "1";
+        success.placeholder = "없음";
+        success.value = effect.successEffectValue ?? "";
+        success.addEventListener("change", () => edit("successEffectValue")(success.value));
+        block.append(formField("성공 수치", success));
+        block.append(formField("Basic이면 생략", checkboxControl(effect.skipOnBasic, edit("skipOnBasic"))));
+      }
+
+      return block;
+    }
+
+    /// 결과 참조 하나(requires 또는 scaleBy). 참조 대상은 이 효과보다 앞의 소비 효과만 고를 수 있다.
+    function referenceBlock(card, index, effect, field, label, amountKey, amountLabel) {
       const wrap = document.createElement("details");
-      wrap.open = Boolean(effect.condition);
+      wrap.className = "effect-reference";
+      wrap.open = Boolean(effect[field]);
 
       const summary = document.createElement("summary");
-      summary.textContent = effect.condition ? `조건: ${effect.condition.kind}` : "조건";
+      summary.textContent = effect[field]
+        ? `${label}: ${effect[field].sourceEffectId} · ${amountLabel} ${effect[field][amountKey]}`
+        : label;
       wrap.append(summary);
 
       const body = document.createElement("div");
-      body.className = "effect-condition";
-      const kinds = repoStore.schema.condition.kinds;
-      const current = effect.condition ?? core.emptyConditionValue();
-
-      body.append(formField("kind", selectControl(kinds, current.kind, (next) => {
-        applyCardEdit(next === kinds[0]
-          ? core.setEffectCondition(card, index, null)
-          : core.setEffectCondition(card, index, { kind: next }));
+      const sources = core.consumptionSources(card, index, repoStore.schema);
+      const current = effect[field]?.sourceEffectId ?? NONE;
+      const options = [NONE, ...sources];
+      if (current !== NONE && !sources.includes(current)) options.push(current);
+      body.append(formField("앞 소비 효과", selectControl(options, current, (value) => {
+        applyCardEdit(value === NONE
+          ? core.setEffectReference(card, index, field, null)
+          : core.setEffectReference(card, index, field, { sourceEffectId: value }));
       })));
 
-      if (effect.condition) {
-        for (const field of repoStore.schema.condition.fields) {
-          body.append(formField(field.name, paramControl(
-            field,
-            current[field.name],
-            (value) => applyCardEdit(
-              core.setEffectCondition(card, index, { [field.name]: value })),
-          )));
-        }
+      if (effect[field]) {
+        body.append(formField(amountLabel, numberControl(effect[field][amountKey], (value) => {
+          applyCardEdit(core.setEffectReference(card, index, field, { [amountKey]: value }));
+        })));
       }
 
       wrap.append(body);
@@ -2614,13 +2925,15 @@
 
       if (effect.raw) return row;
 
+      row.append(effectCommonBlock(card, index, effect));
       row.append(paramsBlock(
         repoStore.schema.effects[effect.kind],
         effect.params,
         (name, value) => applyCardEdit(
           core.setEffectParam(card, index, name, value, repoStore.schema)),
       ));
-      row.append(conditionBlock(card, index, effect));
+      row.append(referenceBlock(card, index, effect, "requires", "소비했다면", "minimumConsumed", "최소 소비량"));
+      row.append(referenceBlock(card, index, effect, "scaleBy", "소비량 비례", "perConsumed", "1당 가산"));
       return row;
     }
 
@@ -2935,6 +3248,45 @@
       render();
     }
 
+    /// 실행 카드의 위치 규칙(진영별 축)과 카드 시작 조건. 둘 다 카드 단위다(전투 실행 계약 스펙 §4).
+    function renderCardRules(card) {
+      const rules = document.createElement("div");
+      rules.className = "row";
+      const ranges = [NONE, ...repoStore.schema.ranges];
+      for (const [axis, label] of [["ally", "아군 위치"], ["enemy", "적 위치"]]) {
+        const value = card.targets?.[axis] ?? NONE;
+        const select = selectControl(ranges, value, (next) => {
+          applyCardEdit(core.setCardTarget(card, axis, next === NONE ? "" : next));
+        });
+        const field = formField(label, select);
+        const glyph = document.createElement("output");
+        glyph.className = "effect-glyph";
+        glyph.textContent = SELECTOR_GLYPHS[value] ?? "";
+        field.append(glyph);
+        rules.append(field);
+      }
+
+      const kinds = repoStore.schema.condition.kinds;
+      rules.append(formField("시작 조건", selectControl(
+        kinds,
+        card.startCondition?.kind ?? kinds[0],
+        (next) => applyCardEdit(next === kinds[0]
+          ? core.setStartCondition(card, null)
+          : core.setStartCondition(card, { kind: next })),
+      )));
+      if (card.startCondition) {
+        for (const field of repoStore.schema.condition.fields) {
+          rules.append(formField(field.name, paramControl(
+            field,
+            card.startCondition[field.name],
+            (value) => applyCardEdit(core.setStartCondition(card, { [field.name]: value })),
+          )));
+        }
+      }
+
+      return rules;
+    }
+
     function renderCardDetail(card) {
       elements.detailTitle.textContent = `${card.name || "(이름 없음)"} · ${card.id || "(id 없음)"}`;
       renderSource({
@@ -2989,6 +3341,8 @@
           numberControl(card.baseExecutionOrder, edit("baseExecutionOrder"))));
       }
       form.append(numbers);
+
+      if (card.category === "Execution") form.append(renderCardRules(card));
 
       const meta = document.createElement("div");
       meta.className = "row";

@@ -1,20 +1,27 @@
 {
+  "cardFormat": 2,
   "id": "spore_veil",
   "name": "포자막",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self",
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "apply_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Ally",
       "status": "block",
       "count": 2
     }

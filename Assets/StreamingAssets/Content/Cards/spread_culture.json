@@ -1,22 +1,27 @@
 {
+  "cardFormat": 2,
   "id": "spread_culture",
   "name": "확산 배양",
   "side": "Player",
   "category": "Execution",
   "energyCost": 2,
   "baseExecutionOrder": 6,
+  "targets": {
+    "enemy": "All"
+  },
   "effects": [
     {
       "kind": "damage",
-      "value": 2,
-      "selector": "All"
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 2
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "All"
+      "count": 1
     }
   ],
   "grade": "Common",

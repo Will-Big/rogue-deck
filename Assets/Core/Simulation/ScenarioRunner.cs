@@ -73,7 +73,10 @@ namespace FateWeaver.Simulation
                     card.Name,
                     card.Side,
                     card.ExecutionOrder,
-                    card.Effects);
+                    card.Effects)
+                {
+                    StartCondition = card.StartCondition
+                };
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);
                 cardsById.Add(card.Id, instance);

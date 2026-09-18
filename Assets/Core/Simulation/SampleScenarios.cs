@@ -50,12 +50,11 @@ namespace FateWeaver.Simulation
                         executionOrder: 2,
                         effects: new[]
                         {
-                            EffectData.Conditional(
-                                EffectKeys.Damage,
-                                effectValue: 2,
-                                condition: new FirstToTrigger(),
-                                successEffectValue: 10)
+                            new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 }
                         })
+                    {
+                        StartCondition = new FirstToTrigger()
+                    }
                 },
                 interventionPlays: new[]
                 {
@@ -83,12 +82,11 @@ namespace FateWeaver.Simulation
                         executionOrder: 1,
                         effects: new[]
                         {
-                            EffectData.Conditional(
-                                EffectKeys.Damage,
-                                effectValue: 2,
-                                condition: new FirstToTrigger(),
-                                successEffectValue: 10)
-                        }),
+                            new EffectData(EffectKeys.Damage, 2) { SuccessEffectValue = 10 }
+                        })
+                    {
+                        StartCondition = new FirstToTrigger()
+                    },
                     new ZoneCardSpec(
                         "wrist_cut",
                         "Wrist Cut",
@@ -136,15 +134,14 @@ namespace FateWeaver.Simulation
                         executionOrder: 4,
                         effects: new[]
                         {
-                            EffectData.Conditional(
-                                EffectKeys.GrantNextPlayerDamageCardBonus,
-                                effectValue: 0,
-                                condition: new AdjacentCardHasEffect(
-                                    AdjacentDirection.Next,
-                                    Side.Player,
-                                    EffectKeys.Damage),
-                                successEffectValue: 6)
-                        }),
+                            new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 0) { SuccessEffectValue = 6 }
+                        })
+                    {
+                        StartCondition = new AdjacentCardHasEffect(
+                            AdjacentDirection.Next,
+                            Side.Player,
+                            EffectKeys.Damage)
+                    },
                     new ZoneCardSpec(
                         "chain_slash",
                         "Chain Slash",
@@ -152,16 +149,15 @@ namespace FateWeaver.Simulation
                         executionOrder: 4,
                         effects: new[]
                         {
-                            EffectData.Conditional(
-                                EffectKeys.Damage,
-                                effectValue: 1,
-                                condition: new AllOf(new Condition[]
-                                {
-                                    new PreviousExecutedCardIs(Side.Player),
-                                    new WithinNth(3)
-                                }),
-                                successEffectValue: 6)
-                        }),
+                            new EffectData(EffectKeys.Damage, 1) { SuccessEffectValue = 6 }
+                        })
+                    {
+                        StartCondition = new AllOf(new Condition[]
+                        {
+                            new PreviousExecutedCardIs(Side.Player),
+                            new WithinNth(3)
+                        })
+                    },
                     new ZoneCardSpec(
                         "gap_exposure",
                         "Gap Exposure",

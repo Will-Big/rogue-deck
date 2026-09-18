@@ -19,14 +19,20 @@ namespace FateWeaver.Simulation.Descriptions
                     return "이전에 실행한 " + SideName(n.Side) + " 카드가 없으면";
                 case NoFollowingCardOfSide n:
                     return "뒤에 배치된 " + SideName(n.Side) + " 카드가 없으면";
-                case ConsumedStatusAtLeast _:
-                    return "소비했다면";
                 case AllOf all:
                     return JoinAll(all.Conditions) + "이면";
                 default:
                     return ConditionStem(condition) + "이면";
             }
         }
+
+        public string Requirement(EffectResultRequirement requirement)
+            => requirement.MinimumConsumed <= 1
+                ? "소비했다면"
+                : requirement.MinimumConsumed + " 이상 소비했다면";
+
+        public string ScalingSuffix(EffectResultScaling scaling)
+            => " (소비 1당 " + (scaling.PerConsumed > 0 ? "+" : "") + scaling.PerConsumed + ")";
 
         public string LifetimeSuffix(StatusLifetimeKind kind, int count)
         {
