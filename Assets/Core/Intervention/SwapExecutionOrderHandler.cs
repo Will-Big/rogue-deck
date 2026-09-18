@@ -12,6 +12,9 @@ namespace FateWeaver.Core.Intervention
             return payload != null
                 && ctx.Target != null
                 && ctx.SecondaryTarget != null
+                && !ReferenceEquals(ctx.Target, ctx.SecondaryTarget)
+                && ctx.State.Zone.Contains(ctx.Target)
+                && ctx.State.Zone.Contains(ctx.SecondaryTarget)
                 && !ctx.Target.IsLocked
                 && !ctx.SecondaryTarget.IsLocked
                 && ctx.State.FateEnergy >= ctx.Intervention.InterventionCost
@@ -30,10 +33,7 @@ namespace FateWeaver.Core.Intervention
 
             ctx.State.FateEnergy -= ctx.Intervention.InterventionCost;
             ctx.FateEnergySpent = ctx.Intervention.InterventionCost;
-
-            var executionOrder = ctx.Target.ExecutionOrder;
-            ctx.Target.ExecutionOrder = ctx.SecondaryTarget.ExecutionOrder;
-            ctx.SecondaryTarget.ExecutionOrder = executionOrder;
+            ctx.State.Zone.SwapPositions(ctx.Target, ctx.SecondaryTarget);
         }
 
         private SwapExecutionOrderPayload PayloadOf(InterventionPlayContext ctx)

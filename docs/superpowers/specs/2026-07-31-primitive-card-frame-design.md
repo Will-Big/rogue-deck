@@ -4,6 +4,8 @@
 - 문서 유형: `architecture`, `ux-design`
 - 주 도메인: `card-frame`, `card-description`, `responsive-hand`
 - 상태: `current` — 실행·개입 카드 프레임, 대상 심볼, 구조화 설명과 반응형 핸드의 권위 문서
+- **2026-09-18 후속:** [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 설명 핸들러는 `TargetSelector` 대신 `DescriptionContext.TargetOf(effect)`
+  (효과 진영 + 카드 축, 실행과 같은 계산)로 대상 심볼을 얻는다. 진영별 범위 충돌 검사는 카드 축이 구조로 보장해 지웠다.
 - 선행 규칙:
   [위치 대상과 카드 텍스트](2026-07-27-position-targeting-card-text-design.md),
   [카드 설명 레지스트리](2026-07-16-description-registry-design.md)

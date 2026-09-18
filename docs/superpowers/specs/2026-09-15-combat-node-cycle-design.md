@@ -6,6 +6,9 @@
 
 **상태:** `active` — 1단계(흐름) 구현 완료·머지(2026-09-15). 2단계(구성 저작) 구현 완료(2026-09-17). 구현 계획 [`plans/2026-09-17-combat-node-stage2.md`](../.archive/plans/2026-09-17-combat-node-stage2.md)는 보관됐다. 1단계 구현 계획도 보관됐다.
 
+**2026-09-18 제거:** 이 문서의 `surviveCharges`·`SurviveCharges`(치명타 버티기 충전)는 전투 실행 계약 구현 계획
+T0에서 코드·캐릭터 JSON 모두 제거됐다(사용자 결정 D8). 아래 해당 서술은 작성 당시 기준이며, 재도입은 별도 설계로 한다.
+
 ## 상세
 
 ### 목표와 범위
@@ -437,7 +440,7 @@ public sealed class EnemyPolicyRegistry
 
 - **손으로 쓰지 않는다.** 카드 왕복 바이트 테스트(`CardContentJsonTests.cs:236`, 노트북 `index.test.mjs:192`)가 키
   순서·생략을 잠그므로 `CardSpec`을 만들어 `ContentJson` 직렬화기로 산출한다.
-- `StatusApplyTarget.Self`는 enum 값 0이라(`ApplyStatusHandler.cs:12`) `ContentJson`이 기본값으로 생략한다
+- (2026-09-18: `StatusApplyTarget`은 [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 제거됐다 — 아래는 작성 당시 기준) `StatusApplyTarget.Self`는 enum 값 0이라(`ApplyStatusHandler.cs:12`) `ContentJson`이 기본값으로 생략한다
   (`ContentJson.cs:37`). 산출 파일에 `"target"`이 없는 것이 정상이다.
 - `NoPrecedingPlayerCard`는 `NoPrecedingCardOfSide(Side.Player)`로 매핑된다(`EffectSpec.cs:44-45`).
 - 풀 로더의 등급·태그 검사는 풀 소속 카드에만 걸리므로(`PoolContentLoader.cs:122-131`) 적 카드가 보상에 들어갈 수 없다.

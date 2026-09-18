@@ -162,7 +162,6 @@ namespace FateWeaver.Tests
             foreach (var id in characters.Ids)
             {
                 Assert.AreEqual(25, characters.Get(id).MaxHp, id);
-                Assert.AreEqual(1, characters.Get(id).SurviveCharges, id);
             }
         }
 

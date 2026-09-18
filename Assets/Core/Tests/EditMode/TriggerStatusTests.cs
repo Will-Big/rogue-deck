@@ -29,6 +29,7 @@ namespace FateWeaver.Tests
 
         private static EffectData Trigger() => new EffectData(EffectKeys.TriggerStatus, 0)
         {
+            TargetFaction = CardTargetFaction.Enemy,
             Payload = new TriggerStatusPayload(StatusKeys.Poison)
         };
 
@@ -41,9 +42,9 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("early_onset", "조기 발병", Side.Player, 3, new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.TargetEnemy, 1),
+                EffectData.ApplyStatus(StatusKeys.Poison, CardTargetFaction.Enemy, 1),
                 Trigger()
-            });
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -62,24 +63,20 @@ namespace FateWeaver.Tests
         public void Trigger_without_the_status_only_plants_the_marker()
         {
             // 마커(PoisonDormant)는 ThisTurn이라 EndOfTurn 정리에서 사라진다 — TurnResolver.Resolve로
-            // 턴 전체를 돌리면 심어졌는지 확인할 수 없으므로, 핸들러를 직접 호출해 정리 전 상태를 본다.
+            // 턴 전체를 돌리면 심어졌는지 확인할 수 없으므로, 핸들러만 효과 적용 경계로 돌려 정리 전 상태를 본다.
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
             var enemy = new Enemy("goblin", 20);
             state.Enemies.Add(enemy);
             var effect = Trigger();
             var card = new ExecutionCardInstance(
-                new CardDefinition("t", "발동", Side.Player, 3, new[] { effect }))
+                new CardDefinition("t", "발동", Side.Player, 3, new[] { effect }) { EnemyTarget = CardTargetRange.FrontOne })
                 { OwnerId = CombatState.SoloPlayerId };
-            var ctx = new EffectContext
-            {
-                Card = card, State = state, Effect = effect, EffectValue = 0, StatusRegistry = Statuses()
-            };
-
-            new TriggerStatusHandler().Apply(ctx);
+            var result = EffectHarness.Apply(new TriggerStatusHandler(), state, card, effect, Statuses());
 
             Assert.AreEqual(20, enemy.Hp);
-            Assert.IsEmpty(ctx.ExtraEvents.OfType<StatusTicked>().ToList());
+            Assert.IsTrue(result.Applied);
+            Assert.IsEmpty(result.Events.OfType<StatusTicked>().ToList());
             Assert.IsNull(card.CancellationReason); // 취소 아님
             Assert.IsTrue(enemy.Statuses.Has(StatusKeys.PoisonDormant)); // 선점 잠복 마커가 실제로 심어졌다
         }

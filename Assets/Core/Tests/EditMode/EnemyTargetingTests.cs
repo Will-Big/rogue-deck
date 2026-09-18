@@ -20,14 +20,14 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AreEqual(
                 new[] { "b", "c" },
-                EnemyTargeting.SelectRange(state, TargetSelector.BackTwo)
+                EnemyTargeting.SelectRange(state, CardTargetRange.BackTwo)
                     .Select(enemy => enemy.Id));
         }
 
-        [TestCase(TargetSelector.FrontTwo)]
-        [TestCase(TargetSelector.BackTwo)]
-        [TestCase(TargetSelector.All)]
-        public void One_living_enemy_range_returns_that_enemy_once(TargetSelector selector)
+        [TestCase(CardTargetRange.FrontTwo)]
+        [TestCase(CardTargetRange.BackTwo)]
+        [TestCase(CardTargetRange.All)]
+        public void One_living_enemy_range_returns_that_enemy_once(CardTargetRange selector)
         {
             var state = new CombatState(TestContent.Statuses());
             var only = new Enemy("only", 10);
@@ -69,7 +69,7 @@ namespace FateWeaver.Tests
         {
             var state = TwoEnemies();
             var def = new CardDefinition("back_hit", "후열 타격", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.BackOne } });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.BackOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -84,7 +84,7 @@ namespace FateWeaver.Tests
             var state = TwoEnemies();
             state.Enemies.Add(new Enemy("dead", 0)); // 생존 대형에서 제외
             var def = new CardDefinition("sweep", "휩쓸기", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 2) { TargetSelector = TargetSelector.All } });
+                new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.All };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 10));
 
             var def = new CardDefinition("goblin_sweep", "고블린 휩쓸기", Side.Enemy, 4,
-                new[] { new EffectData(EffectKeys.Damage, 3) { TargetSelector = TargetSelector.All } });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.All };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "goblin" });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -123,8 +123,7 @@ namespace FateWeaver.Tests
         {
             var state = TwoEnemies();
             var def = new CardDefinition("back_status", "후열 부여", Side.Player, 4,
-            new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.TargetEnemy, 2)
-                    with { TargetSelector = TargetSelector.BackOne } });
+            new[] { EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Enemy, 2) }) { EnemyTarget = CardTargetRange.BackOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -135,8 +134,7 @@ namespace FateWeaver.Tests
             // 더 이상 수명을 고를 수 없다 — Task 4).
             var state2 = TwoEnemies();
             var def2 = new CardDefinition("back_status2", "후열 부여2", Side.Player, 4,
-            new[] { EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.TargetEnemy, 2)
-                    with { TargetSelector = TargetSelector.BackOne } });
+            new[] { EffectData.ApplyStatus(StatusKeys.Poison, CardTargetFaction.Enemy, 2) }) { EnemyTarget = CardTargetRange.BackOne };
             state2.Zone.Add(new ExecutionCardInstance(def2) { OwnerId = CombatState.SoloPlayerId });
             new TurnResolver(Effects(), Statuses()).Resolve(state2, 0);
             // 부여된 독 2가 턴 종료 틱에서 피해 2를 준 뒤 카탈로그의 턴당 성장치(1)만큼 자란다: 2 + 1 = 3.
@@ -154,8 +152,7 @@ namespace FateWeaver.Tests
             // 검증할 수 있는 Permanent 상태(독)로 확인한다 — 카드는 더 이상 수명을 고르지 않는다
             // (Task 4).
             var def = new CardDefinition("cover_front", "전열 엄호", Side.Player, 4,
-            new[] { EffectData.ApplyStatus(StatusKeys.Poison, StatusApplyTarget.PartyBySelector, 4)
-                    with { TargetSelector = TargetSelector.FrontOne } });
+            new[] { EffectData.ApplyStatus(StatusKeys.Poison, CardTargetFaction.Ally, 4) }) { AllyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "b" });
 
             new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -172,11 +169,11 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 10));
             var block3 = new CardDefinition("b3", "방어3", Side.Player, 4,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 3) }) { AllyTarget = CardTargetRange.Self };
             var block1 = new CardDefinition("b1", "방어1", Side.Player, 5,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 1) });
+                new[] { EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 1) }) { AllyTarget = CardTargetRange.Self };
             var enemyHit = new CardDefinition("jab", "찌르기", Side.Enemy, 6,
-                new[] { new EffectData(EffectKeys.Damage, 4) });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(block3) { OwnerId = CombatState.SoloPlayerId });
             state.Zone.Add(new ExecutionCardInstance(block1) { OwnerId = CombatState.SoloPlayerId });
             state.Zone.Add(new ExecutionCardInstance(enemyHit) { OwnerId = "goblin" });

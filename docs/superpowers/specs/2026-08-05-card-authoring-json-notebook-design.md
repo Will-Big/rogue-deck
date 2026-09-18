@@ -4,6 +4,8 @@
 - 문서 유형: `tool-design`
 - 주 도메인: `card-authoring`
 - 하위 유형: `static-web-tool`, `json-round-trip`, `generated-schema`, `pool-composition`
+- **2026-09-18 후속:** [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 카드 JSON은 형식 2(`cardFormat`·카드 위치 축·시작 조건·효과 id·결과 참조)가
+  됐고 스키마의 `selectors`·`statusTargets`는 `factions`·`ranges`로 바뀌었다. 여러 개 고르는 필드 타입 `enumSet`(피해 속성)을 더했다.
 - 관련 규칙:
   [플레이어 캐릭터 및 카드풀](2026-07-20-character-card-pools-design.md),
   [위치 대상과 카드 텍스트](2026-07-27-position-targeting-card-text-design.md),

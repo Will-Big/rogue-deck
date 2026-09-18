@@ -85,21 +85,6 @@ namespace FateWeaver.Tests.EditMode
         }
 
         [Test]
-        public void Conflicting_ranges_include_card_id_and_both_ranges()
-        {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                DescriptionComposer.Compose(
-                    Execution("conflict",
-                        DamageEnemy(3, TargetSelector.FrontOne),
-                        PoisonEnemy(1, TargetSelector.BackOne)),
-                    Korean));
-
-            StringAssert.Contains("conflict", ex.Message);
-            StringAssert.Contains("FrontOne", ex.Message);
-            StringAssert.Contains("BackOne", ex.Message);
-        }
-
-        [Test]
         public void Every_default_and_generated_card_composes_deterministically()
         {
             // TestContent.Cards().Cards.Values는 Content/Cards/*.json 전부다 — 시작 풀 22장,
@@ -119,25 +104,19 @@ namespace FateWeaver.Tests.EditMode
             }
         }
 
+        /// <summary>플레이어 실행 카드. 아군 효과는 자신, 적 효과는 적 전열 하나를 고른다.</summary>
         private static CardDefinition Execution(string id, params EffectData[] effects)
             => new CardDefinition(id, id, Side.Player, 0, effects)
             {
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.FrontOne,
                 Category = CardCategory.Execution
             };
 
-        private static EffectData DamageEnemy(int amount, TargetSelector selector = TargetSelector.FrontOne)
-            => new EffectData(EffectKeys.Damage, amount) { TargetSelector = selector };
-
-        private static EffectData PoisonEnemy(int amount, TargetSelector selector)
-            => EffectData.ApplyStatus(
-                StatusKeys.Poison,
-                StatusApplyTarget.TargetEnemy,
-                amount) with { TargetSelector = selector };
+        private static EffectData DamageEnemy(int amount)
+            => new EffectData(EffectKeys.Damage, amount) { TargetFaction = CardTargetFaction.Enemy };
 
         private static EffectData BlockSelf(int amount)
-            => EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusApplyTarget.Self,
-                amount);
+            => EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, amount);
     }
 }

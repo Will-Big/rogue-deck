@@ -21,7 +21,11 @@ namespace FateWeaver.Tests
         private static ExecutionCardInstance Card(string id, Side side, int executionOrder, int damage)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } })
+            {
+                AllyTarget = CardTargetRange.FrontOne,
+                EnemyTarget = CardTargetRange.FrontOne
+            };
             return new ExecutionCardInstance(def);
         }
 
@@ -115,22 +119,20 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Multi_target_effect_clears_a_previous_single_target_from_card_resolved()
+        public void Card_resolved_target_is_the_first_target_of_the_first_applied_effect()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("front", 12));
             state.Enemies.Add(new Enemy("back", 12));
-            var self = EffectData.ApplyStatus(
-                StatusKeys.Block,
-                StatusApplyTarget.Self,
-                count: 1);
-            var all = new EffectData(EffectKeys.Damage, 2)
-            {
-                TargetSelector = TargetSelector.All
-            };
+            var self = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: 1);
+            var all = new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy };
             state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "self_then_all", "Self Then All", Side.Player, 1, new[] { self, all }))
+                "self_then_all", "Self Then All", Side.Player, 1, new[] { self, all })
+            {
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.All
+            })
             {
                 OwnerId = CombatState.SoloPlayerId
             });
@@ -139,7 +141,8 @@ namespace FateWeaver.Tests
                 .OfType<CardResolved>()
                 .Single();
 
-            Assert.IsNull(resolved.TargetId);
+            // 처음 적용된 효과(자신에게 방어)의 첫 대상. 뒤의 광역 효과가 이를 지우지 않는다.
+            Assert.AreEqual(CombatState.SoloPlayerId, resolved.TargetId);
             Assert.AreEqual(10, state.Enemies[0].Hp);
             Assert.AreEqual(10, state.Enemies[1].Hp);
         }

@@ -1,19 +1,25 @@
 {
+  "cardFormat": 2,
   "id": "foresight",
   "name": "예견",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self"
+  },
+  "startCondition": {
+    "kind": "NextIsEnemyDamageCard"
+  },
   "effects": [
     {
       "kind": "apply_status",
+      "id": "e0",
+      "targetFaction": "Ally",
       "status": "block",
       "count": 2,
-      "condition": {
-        "kind": "NextIsEnemyDamageCard",
-        "successEffectValue": 6
-      }
+      "successEffectValue": 6
     }
   ],
   "grade": "Common",

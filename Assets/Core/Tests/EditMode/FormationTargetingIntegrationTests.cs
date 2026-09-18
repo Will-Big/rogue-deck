@@ -26,14 +26,25 @@ namespace FateWeaver.Tests
                 name,
                 side,
                 executionOrder,
-                new[] { effect }))
+                new[] { effect })
+            {
+                // 자기 진영 효과(이동)는 자신, 상대 진영 효과(공격)는 전열 하나를 고른다.
+                AllyTarget = side == Side.Player ? CardTargetRange.Self : CardTargetRange.FrontOne,
+                EnemyTarget = side == Side.Player ? CardTargetRange.FrontOne : CardTargetRange.Self
+            })
             {
                 OwnerId = ownerId
             };
 
+        private static EffectData Move(Side side, int distance)
+            => new EffectData(EffectKeys.MoveFormation, distance)
+            {
+                TargetFaction = side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy
+            };
+
         private static void ApplyMove(CombatState state, Side side, string ownerId, int distance)
         {
-            var effect = new EffectData(EffectKeys.MoveFormation, distance);
+            var effect = Move(side, distance);
             var card = Card(
                 "validation_move",
                 "[검증] 대형 이동",
@@ -41,38 +52,24 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = distance
-            };
-
-            new MoveFormationHandler().Apply(context);
+            Assert.IsTrue(EffectHarness.Apply(new MoveFormationHandler(), state, card, effect).Applied);
         }
 
         [Test]
-        public void Later_effect_does_not_promote_a_new_enemy_after_captured_front_two_die()
+        public void Later_effect_reselects_front_two_after_the_first_effect_kills_them()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(MemberHp);
             state.Enemies.Add(new Enemy("a", 2));
             state.Enemies.Add(new Enemy("b", 2));
             state.Enemies.Add(new Enemy("c", 2));
-            var damage = new EffectData(EffectKeys.Damage, 2)
-            {
-                TargetSelector = TargetSelector.FrontTwo
-            };
-            var poison = EffectData.ApplyStatus(
-                StatusKeys.Poison,
-                StatusApplyTarget.TargetEnemy,
-                count: 1) with
-            {
-                TargetSelector = TargetSelector.FrontTwo
-            };
+            var damage = new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy };
+            var poison = EffectData.ApplyStatus(StatusKeys.Poison, CardTargetFaction.Enemy, count: 1);
             state.Zone.Add(new ExecutionCardInstance(new CardDefinition(
-                "snapshot_kill", "Snapshot Kill", Side.Player, 1, new[] { damage, poison }))
+                "snapshot_kill", "Snapshot Kill", Side.Player, 1, new[] { damage, poison })
+            {
+                EnemyTarget = CardTargetRange.FrontTwo
+            })
             {
                 OwnerId = CombatState.SoloPlayerId
             });
@@ -82,8 +79,9 @@ namespace FateWeaver.Tests
 
             new TurnResolver(effects).Resolve(state, 0);
 
+            // 효과마다 그 시작의 위치로 다시 고른다(스펙 §2): a·b가 죽은 뒤 FrontTwo는 c 하나다.
             Assert.AreEqual(2, state.Enemies[2].Hp);
-            Assert.IsFalse(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
+            Assert.IsTrue(state.Enemies[2].Statuses.Has(StatusKeys.Poison));
         }
 
         [Test]
@@ -169,17 +167,14 @@ namespace FateWeaver.Tests
                 "[검증] 대형 이동",
                 Side.Player,
                 executionOrder: 2,
-                new EffectData(EffectKeys.MoveFormation, -1),
+                Move(Side.Player, -1),
                 ownerId: memberB.Id);
             var attack = Card(
                 "validation_frontmost_attack",
                 "[검증] 전열 공격",
                 Side.Enemy,
                 executionOrder: 5,
-                new EffectData(EffectKeys.Damage, AttackDamage)
-                {
-                    TargetSelector = TargetSelector.FrontOne
-                },
+                new EffectData(EffectKeys.Damage, AttackDamage) { TargetFaction = CardTargetFaction.Ally },
                 ownerId: "validation_enemy");
             state.Zone.Add(move);
             state.Zone.Add(attack);
@@ -210,7 +205,7 @@ namespace FateWeaver.Tests
                 state.Party.Add(dead);
             }
 
-            var effect = new EffectData(EffectKeys.MoveFormation, 1);
+            var effect = Move(Side.Player, 1);
             var card = Card(
                 "validation_invalid_player_move",
                 "[검증] 무효 플레이어 이동",
@@ -218,17 +213,10 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = effect.EffectValue
-            };
+            var result = EffectHarness.Apply(new MoveFormationHandler(), state, card, effect);
 
-            new MoveFormationHandler().Apply(context);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason);
             Assert.AreSame(front, state.Party[0]);
         }
 
@@ -246,7 +234,7 @@ namespace FateWeaver.Tests
                 state.Enemies.Add(new Enemy(id: null, hp: MemberHp));
             }
 
-            var effect = new EffectData(EffectKeys.MoveFormation, 1);
+            var effect = Move(Side.Enemy, 1);
             var card = Card(
                 "validation_invalid_enemy_move",
                 "[검증] 무효 적 이동",
@@ -254,17 +242,10 @@ namespace FateWeaver.Tests
                 executionOrder: 1,
                 effect,
                 ownerId);
-            var context = new EffectContext
-            {
-                Card = card,
-                State = state,
-                Effect = effect,
-                EffectValue = effect.EffectValue
-            };
+            var result = EffectHarness.Apply(new MoveFormationHandler(), state, card, effect);
 
-            new MoveFormationHandler().Apply(context);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason);
             Assert.AreSame(front, state.Enemies[0]);
         }
     }

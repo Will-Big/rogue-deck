@@ -6,6 +6,9 @@
 - 선행 문서: [아키텍처 리팩터링 백로그 §5](../plans/2026-07-16-architecture-refactor-backlog.md),
   [파티 기반 전투](2026-07-15-party-foundation-design.md),
   [열린 카드 저작 구조](2026-07-19-open-card-authoring-design.md)
+- **2026-09-18 후속:** [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 실행 카드의 자동 대상은 `StatusApplyTarget`·`TargetSelector`가 아니라
+  카드 위치 축 + 효과 진영으로 정해지고, 효과마다 그 시작의 대형으로 다시 고른다. 명시 아군 대상(`PartyMember`)과
+  `PartyTargetRules`는 제거됐다. 아래 해당 서술은 작성 당시 기준이다.
 
 ## 1. 문제
 

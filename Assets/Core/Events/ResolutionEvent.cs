@@ -39,29 +39,21 @@ namespace FateWeaver.Core.Events
         }
     }
 
-    /// <summary>A placed execution card that did not complete. Effects applied before cancellation
-    /// persist, and their independent state-change events may follow this single cancellation event.
+    /// <summary>차례가 온 실행 카드가 효과를 하나도 수행하지 않고 끝났다(예: 상태의 가로채기). 효과가 대상을
+    /// 찾지 못하는 것은 취소가 아니다 — 그 효과만 미적용되고 카드는 CardResolved로 끝난다(전투 실행 계약 스펙 §2).
     /// Reason distinguishes why (see CardCancellationReason).</summary>
     public sealed record CardCancelled(
         int InstanceId,
         string CardId,
         string OwnerId,
-        CardCancellationReason Reason) : ResolutionEvent
-    {
-        /// <summary>취소 전에 이미 적용된 효과가 준 실제 피해와 그 단계 내역. 취소가 피해를
-        /// 되돌리지 않으므로 로그에서도 사라지면 안 된다. 효과 실행 전에 취소된 카드는 기본값
-        /// (0, 빈 목록)이다.</summary>
-        public int DamageDealt { get; init; }
-        public System.Collections.Generic.IReadOnlyList<DamageStep> DamageSteps { get; init; }
-            = System.Array.Empty<DamageStep>();
-    }
+        CardCancellationReason Reason) : ResolutionEvent;
 
-    /// <summary>A party member's HP reached zero or below and they had no SurviveCharges left to
-    /// absorb the hit.</summary>
+    /// <summary>주인이 죽어 차례가 오기 전에 실행선에서 빠진 카드(전투 실행 계약 스펙 §6). 그 카드의
+    /// 차례가 온 것이 아니므로 CardCancelled와 구분한다 — 주인을 죽인 카드의 이벤트 뒤에 이어 붙는다.</summary>
+    public sealed record CardRemoved(int InstanceId, string CardId, string OwnerId) : ResolutionEvent;
+
+    /// <summary>A party member's HP reached zero or below.</summary>
     public sealed record PartyMemberDied(string MemberId) : ResolutionEvent;
-
-    /// <summary>A party member spent one SurviveCharges charge to steady at 1 HP instead of dying.</summary>
-    public sealed record DeathsDoorSurvived(string MemberId) : ResolutionEvent;
 
     /// <summary>An enemy's HP reached zero or below (from card effects or a status tick).</summary>
     public sealed record EnemyDied(string EnemyId) : ResolutionEvent;
@@ -84,10 +76,10 @@ namespace FateWeaver.Core.Events
         string FromHolderId, string ToHolderId, string StatusId, int Magnitude) : ResolutionEvent;
 
     /// <summary>HP 변화의 원인 종류. 새 원인(회복 등)이 생기면 멤버를 추가한다.</summary>
-    public enum HpChangeSource { CardDamage, StatusTick }
+    public enum HpChangeSource { CardDamage, StatusTick, Reaction }
 
     /// <summary>보유자의 HP가 실제로 바뀌었다. Before/After는 치명 버팀 클램프 이후의 실측값이고,
-    /// SourceId는 원인 카드 id(CardDamage) 또는 상태 키(StatusTick)다. HP가 안 바뀐 명중은
+    /// SourceId는 원인 카드 id(CardDamage) 또는 상태 키(StatusTick·Reaction — 반응 능력을 준 상태)다. HP가 안 바뀐 명중은
     /// 남기지 않는다.</summary>
     public sealed record HpChanged(
         string HolderId, int Before, int After, HpChangeSource Source, string SourceId) : ResolutionEvent;

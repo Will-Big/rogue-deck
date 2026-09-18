@@ -14,6 +14,7 @@ namespace FateWeaver.Tests
         {
             var effects = new EffectRegistry();
             effects.Register(new DamageHandler());
+            effects.Register(new TransferStatusHandler());
             return effects;
         }
 
@@ -38,10 +39,10 @@ namespace FateWeaver.Tests
             state.Enemies[0].Statuses.Add(StatusKeys.Contagion, StatusLifetime.Turns(2));
 
             var def = new CardDefinition("finisher", "마무리", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
-            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var events = new TurnResolver(Effects(), Statuses(), FateWeaver.Core.CombatRegistries.Reactions()).Resolve(state, 0);
 
             var transfer = events.OfType<StatusTransferred>().Single();
             Assert.AreEqual("victim", transfer.FromHolderId);
@@ -61,10 +62,10 @@ namespace FateWeaver.Tests
             state.Enemies[0].Statuses.Add(StatusKeys.Contagion, StatusLifetime.Turns(2));
 
             var def = new CardDefinition("finisher", "마무리", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
-            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var events = new TurnResolver(Effects(), Statuses(), FateWeaver.Core.CombatRegistries.Reactions()).Resolve(state, 0);
 
             Assert.IsEmpty(events.OfType<StatusTransferred>().ToList());
             Assert.IsFalse(state.Enemies[1].Statuses.Has(StatusKeys.Poison));
@@ -80,10 +81,10 @@ namespace FateWeaver.Tests
             state.Enemies[0].Statuses.Add(StatusKeys.Contagion, StatusLifetime.Turns(2));
 
             var def = new CardDefinition("finisher", "마무리", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
-            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+            var events = new TurnResolver(Effects(), Statuses(), FateWeaver.Core.CombatRegistries.Reactions()).Resolve(state, 0);
 
             Assert.IsEmpty(events.OfType<StatusTransferred>().ToList());
         }

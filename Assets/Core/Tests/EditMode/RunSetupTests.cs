@@ -23,7 +23,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual("member_a", a.Id);
             Assert.AreEqual("파티원 A", a.Name);
             Assert.AreEqual(25, a.MaxHp);
-            Assert.AreEqual(1, a.SurviveCharges);
             Assert.AreEqual(a.MaxHp, a.Hp);
             CollectionAssert.AreEqual(
                 content.Decks.Get("starter").ToArray(),

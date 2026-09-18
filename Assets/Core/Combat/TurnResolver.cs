@@ -8,19 +8,28 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Freezes the zone order at resolution, runs each card's effects, emits the event timeline.
-    /// Per card: intercept/pre-cancellation check, then effects (with a per-effect death-sweep snapshot),
-    /// then either CardResolved or CardCancelled, followed by pending survive/death events from effects
-    /// that already applied. See the class-level design note in the Task 3 brief for the exact ordering.</summary>
+    /// <summary>실행선의 카드를 차례대로 실행하고 이벤트 타임라인을 낸다. 실행선은 고정 사본이 아니다 —
+    /// 매번 아직 차례가 오지 않은 다음 카드를 묻는다(전투 실행 계약 스펙 §6).
+    /// 카드 하나의 진행은 CardExecutor가 맡고, 이 클래스는 턴 단계(CombatPhase)의 호출 순서만 정한다:
+    /// Prepare(준비 만료) · StartTurn(턴 시작 상태) — 세션이 적 배치·드로우 전에 부른다 —, Resolve(카드마다 실행 → 승패 판정,
+    /// 결판이 나면 그 자리에서 종료) → TurnEnd(상태 틱 → 사망 정리 → 직접 반응) → Cleanup(정리 만료) → 승패.</summary>
     public sealed class TurnResolver
     {
-        private readonly EffectRegistry _effects;
         private readonly StatusRegistry _statuses;
+        private readonly EffectExecutor _executor;
+        private readonly CardExecutor _cards;
 
-        public TurnResolver(EffectRegistry effects, StatusRegistry statuses = null)
+        /// <param name="removeOwnedCards">주인이 죽는 즉시 그 주인의 카드를 덱(뽑을 더미·손·버린 더미)에서 빼는
+        /// 동작. 덱은 세션이 가지므로 동작으로 받는다. 덱이 없는 전투(러너·코어 테스트)는 생략한다.</param>
+        public TurnResolver(
+            EffectRegistry effects,
+            StatusRegistry statuses = null,
+            ReactionRegistry reactions = null,
+            System.Action<string> removeOwnedCards = null)
         {
-            _effects = effects;
             _statuses = statuses;
+            _executor = new EffectExecutor(effects, statuses, reactions, removeOwnedCards);
+            _cards = new CardExecutor(_executor, statuses);
         }
 
         public List<ResolutionEvent> Resolve(CombatState state, int turnIndex)
@@ -28,337 +37,76 @@ namespace FateWeaver.Core.Combat
             var events = new List<ResolutionEvent> { new TurnStarted(turnIndex) };
             var resolutionContext = ResolutionContext.From(state);
 
-            foreach (var card in resolutionContext.Order)
+            for (var card = state.Zone.NextPending(); card != null; card = state.Zone.NextPending())
             {
-                ResolveCard(state, resolutionContext, card, events);
+                _cards.Execute(state, resolutionContext, card, events);
+
+                // 승패는 카드 하나(직접 반응 포함)가 끝났을 때만 판정한다. 결판이 나면 다음 카드와 턴 종료 상태
+                // 처리를 하지 않고 전투 종료를 알린다(스펙 §2).
+                var outcome = CombatOutcomeEvaluator.Evaluate(state);
+                if (outcome != Outcome.Ongoing)
+                {
+                    events.Add(new TurnEnded(turnIndex, outcome));
+                    return events;
+                }
             }
 
-            EndOfTurnMaintenance(state, events);
-            events.Add(new TurnEnded(turnIndex, ComputeOutcome(state)));
+            EndOfTurnMaintenance(state, resolutionContext, events);
+            events.Add(new TurnEnded(turnIndex, CombatOutcomeEvaluator.Evaluate(state)));
             return events;
         }
 
-        private void ResolveCard(
-            CombatState state,
-            ResolutionContext resolutionContext,
-            ExecutionCardInstance card,
-            List<ResolutionEvent> events)
+        /// <summary>턴 준비(스펙 §8): 준비 시점 방문으로 상태를 만료시킨다(방어 = 다음 턴 준비). 비용 초기화는 운명력을
+        /// 가진 호출자(세션)가 이어서 한다.</summary>
+        public List<ResolutionEvent> Prepare(CombatState state)
         {
-            // Step 6 (part 1): a cancellation reason recorded before this card's turn to resolve
-            // (OwnerDied from an earlier card's death sweep this same turn) skips effects entirely.
-            if (card.CancellationReason == null && IsInterceptedByStatus(state, card, events))
-            {
-                card.CancellationReason = CardCancellationReason.StatusIntercepted;
-            }
-
-            if (card.CancellationReason != null)
-            {
-                events.Add(new CardCancelled(card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value));
-                return;
-            }
-
-            int totalDamage = 0;
-            string targetId = null;
-            var strongestTier = ConditionTier.Basic;
-            var pendingDeathEvents = new List<ResolutionEvent>();
-            var damageSteps = new List<DamageStep>();
-
-            var handlers = card.Def.Effects
-                .Select(effect => _effects.Resolve(effect.Key))
-                .ToArray();
-            var targetBindings = card.Def.Effects
-                .Select((effect, index) => (Effect: effect, Key: handlers[index].TargetFor(card.Def, effect)))
-                .ToArray();
-            var targetKeys = targetBindings
-                .Where(binding => binding.Key.HasValue)
-                .Select(binding => binding.Key.Value)
-                .ToArray();
-            var legacyExplicitTargetKeys = targetBindings
-                .Where(binding => binding.Key.HasValue
-                    && card.Def.Side == Cards.Side.Player
-                    && !string.IsNullOrEmpty(card.TargetId)
-                    && binding.Effect.TargetSelector == null
-                    && binding.Key.Value.Faction == Cards.CardTargetFaction.Enemy)
-                .Select(binding => binding.Key.Value)
-                .ToArray();
-            var targets = CardTargetSnapshot.Capture(
-                state, card, targetKeys, legacyExplicitTargetKeys);
-
-            for (var effectIndex = 0; effectIndex < card.Def.Effects.Count; effectIndex++)
-            {
-                if (card.CancellationReason != null)
-                {
-                    break;
-                }
-
-                var effect = card.Def.Effects[effectIndex];
-                var tier = ResolveTier(effect, card, resolutionContext, pendingDeathEvents);
-                if (tier > strongestTier)
-                {
-                    strongestTier = tier;
-                }
-
-                if (effect.SkipOnBasic && effect.Condition != null && tier == ConditionTier.Basic)
-                {
-                    continue;
-                }
-
-                var beforeSnapshot = SnapshotParty(state);
-                var enemiesBefore = SnapshotEnemies(state);
-
-                var ctx = new EffectContext
-                {
-                    Card = card,
-                    State = state,
-                    ResolutionContext = resolutionContext,
-                    StatusRegistry = _statuses,
-                    ActorStatuses = CardActor.StatusesFor(state, card),
-                    Effect = effect,
-                    EffectValue = ResolveEffectValue(effect, tier),
-                    Targets = targets
-                };
-                handlers[effectIndex].Apply(ctx);
-                totalDamage += ctx.DamageDealt;
-                damageSteps.AddRange(ctx.DamageSteps);
-                if (ctx.TargetId != null)
-                {
-                    targetId = ctx.TargetId;
-                }
-                else if (targetBindings[effectIndex].Key.HasValue)
-                {
-                    targetId = null;
-                }
-                pendingDeathEvents.AddRange(ctx.ExtraEvents);   // 틱 이벤트가 사망 이벤트보다 앞서도록
-
-                CollectDeathSweepEvents(state, beforeSnapshot, pendingDeathEvents);
-                CollectEnemyDeathEvents(state, enemiesBefore, pendingDeathEvents);
-
-                // Step 6 (part 2): once an effect records NoValidTarget, the card is cancelled and
-                // its remaining effects must not run (enforced centrally here, not per-handler).
-                if (card.CancellationReason != null)
-                {
-                    break;
-                }
-            }
-
-            var newlyDeadOwnerIds = CollectNewlyDeadOwnerIds(pendingDeathEvents);
-
-            if (card.CancellationReason == null)
-            {
-                // Step 4: CardResolved first, LastExecutedCard updates, then the pending survive/death
-                // events in the order they occurred (so a death caused by this card's own effects
-                // follows its CardResolved immediately).
-                events.Add(new CardResolved(
-                    card.InstanceId, card.OwnerId, card.Def.Id, card.Def.Side, totalDamage, targetId, strongestTier)
-                {
-                    DamageSteps = damageSteps
-                });
-                resolutionContext.MarkExecuted(card);
-                events.AddRange(pendingDeathEvents);
-            }
-            else
-            {
-                // Step 6: a card cancelled mid-effects (NoValidTarget) emits no CardResolved and one
-                // CardCancelled. State-change events from earlier, already-applied effects follow in
-                // occurrence order, then the OwnerDied sweep below uses the same newly-dead set.
-                events.Add(new CardCancelled(
-                    card.InstanceId, card.Def.Id, card.OwnerId, card.CancellationReason.Value)
-                {
-                    DamageDealt = totalDamage,
-                    DamageSteps = damageSteps
-                });
-                events.AddRange(pendingDeathEvents);
-            }
-
-            // Step 5: mark OwnerDied on every not-yet-resolved card owned by an actor who just died,
-            // regardless of whether the current card itself ended up resolved or cancelled.
-            foreach (var ownerId in newlyDeadOwnerIds)
-            {
-                MarkOwnerDiedForFutureCards(resolutionContext, card, ownerId);
-            }
+            var events = new List<ResolutionEvent>();
+            ExpireAt(state, CombatPhase.Prepare, events);
+            return events;
         }
 
-        /// <summary>Snapshots (IsAlive, SurviveCharges) for every party member immediately before an
-        /// effect applies, so the caller can diff after the effect and detect a death or a
-        /// SurviveCharges-consuming save. HP alone (e.g. "HP == 1") is never the trigger.</summary>
-        private static Dictionary<string, (bool IsAlive, int SurviveCharges)> SnapshotParty(CombatState state)
+        /// <summary>턴 시작 상태 처리(스펙 §8): 보유자 부여 순서로 턴 시작 능력 → 사망 정리 → 직접 반응(Primary 기원, D7).
+        /// 승패는 호출자가 이 묶음이 끝난 뒤 판정한다.</summary>
+        public List<ResolutionEvent> StartTurn(CombatState state)
         {
-            var snapshot = new Dictionary<string, (bool, int)>();
-            foreach (var member in state.Party)
-            {
-                snapshot[member.Id] = (member.IsAlive, member.SurviveCharges);
-            }
-
-            return snapshot;
+            var events = new List<ResolutionEvent>();
+            RunStatusPhase(state, ResolutionContext.From(state), events, (behavior, ctx) => behavior.OnTurnStart(ctx));
+            return events;
         }
 
-        /// <summary>Diffs the party against a pre-effect snapshot and appends DeathsDoorSurvived /
-        /// PartyMemberDied to the pending list for any member whose state actually changed this effect.
-        /// A newly-dead member also gets OnHolderDied dispatched on every status it carried.</summary>
-        private void CollectDeathSweepEvents(
-            CombatState state,
-            Dictionary<string, (bool IsAlive, int SurviveCharges)> before,
-            List<ResolutionEvent> pending)
+        /// <summary>턴 종료 상태 처리 → 턴 정리(Cleanup) 만료.</summary>
+        private void EndOfTurnMaintenance(
+            CombatState state, ResolutionContext resolutionContext, List<ResolutionEvent> events)
+        {
+            RunStatusPhase(state, resolutionContext, events, (behavior, ctx) => behavior.OnTurnEnd(ctx));
+            ExpireAt(state, CombatPhase.Cleanup, events);
+        }
+
+        /// <summary>턴 시점의 상태 능력 묶음: 파티 대형 순 → 적 대형 순, 보유자 안에서는 부여 순서. 사망은 즉시 정리하고,
+        /// 묶음이 끝나면 그 사건에 직접 반응한다(턴 시점 처리는 Primary 기원, 계획 D7).</summary>
+        private void RunStatusPhase(
+            CombatState state, ResolutionContext resolutionContext, List<ResolutionEvent> events,
+            Action<IStatusBehavior, StatusTickContext> hook)
+        {
+            var before = DeathProcessor.Capture(state);
+            var signals = new List<CombatSignal>();
+
+            RunTicks(state, events, signals, hook);
+
+            foreach (var died in _executor.Deaths.Process(state, before, events))
+            {
+                signals.Add(died);
+            }
+
+            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events);
+        }
+
+        /// <summary>시점 하나를 모든 보유자의 상태가 방문한다(StatusLifetimePolicy). 만료마다 StatusExpired를 남긴다.</summary>
+        private static void ExpireAt(CombatState state, CombatPhase phase, List<ResolutionEvent> events)
         {
             foreach (var member in state.Party)
             {
-                var prior = before[member.Id];
-
-                if (member.SurviveCharges < prior.SurviveCharges && member.IsAlive)
-                {
-                    pending.Add(new DeathsDoorSurvived(member.Id));
-                }
-                else if (prior.IsAlive && !member.IsAlive)
-                {
-                    pending.Add(new PartyMemberDied(member.Id));
-                    DispatchHolderDied(state, member.Statuses, member.Id, pending);
-                }
-            }
-        }
-
-        private static Dictionary<string, bool> SnapshotEnemies(CombatState state)
-        {
-            var snapshot = new Dictionary<string, bool>();
-            foreach (var enemy in state.Enemies)
-            {
-                snapshot[enemy.Id] = enemy.Hp > 0;
-            }
-
-            return snapshot;
-        }
-
-        /// <summary>Diffs enemies against a pre-effect snapshot; a newly-dead enemy emits EnemyDied and
-        /// dispatches OnHolderDied on every status it carried.</summary>
-        private void CollectEnemyDeathEvents(
-            CombatState state, Dictionary<string, bool> before, List<ResolutionEvent> pending)
-        {
-            foreach (var enemy in state.Enemies)
-            {
-                if (before.TryGetValue(enemy.Id, out var wasAlive) && wasAlive && enemy.Hp <= 0)
-                {
-                    pending.Add(new EnemyDied(enemy.Id));
-                    DispatchHolderDied(state, enemy.Statuses, enemy.Id, pending);
-                }
-            }
-        }
-
-        private void DispatchHolderDied(
-            CombatState state, StatusBag bag, string holderId, List<ResolutionEvent> events)
-        {
-            if (_statuses == null)
-            {
-                return;
-            }
-
-            var snapshot = new List<StatusInstance>(bag.All);
-            foreach (var status in snapshot)
-            {
-                if (_statuses.TryResolve(status.Key, out var behavior))
-                {
-                    behavior.OnHolderDied(new StatusDeathContext
-                    {
-                        Instance = status,
-                        HolderBag = bag,
-                        HolderId = holderId,
-                        State = state,
-                        Events = events
-                    });
-                }
-            }
-        }
-
-        /// <summary>사망 이벤트에서 소유자 id를 뽑는다. 파티원과 적을 대칭으로 다뤄, 한 턴 안에서 먼저
-        /// 죽은 적의 남은 카드도 파티원과 똑같이 OwnerDied로 취소되게 한다. 소유자를 모르는 카드
-        /// (OwnerId가 비어 있는 단일 적 호환 경로)를 잘못 지목하지 않도록 빈 id는 제외한다.</summary>
-        private static List<string> CollectNewlyDeadOwnerIds(List<ResolutionEvent> pendingDeathEvents)
-        {
-            var ownerIds = new List<string>();
-            foreach (var pending in pendingDeathEvents)
-            {
-                string ownerId = null;
-                if (pending is PartyMemberDied partyDeath)
-                {
-                    ownerId = partyDeath.MemberId;
-                }
-                else if (pending is EnemyDied enemyDeath)
-                {
-                    ownerId = enemyDeath.EnemyId;
-                }
-
-                if (!string.IsNullOrEmpty(ownerId))
-                {
-                    ownerIds.Add(ownerId);
-                }
-            }
-
-            return ownerIds;
-        }
-
-        /// <summary>Records OwnerDied on every card later in the frozen resolution order that belongs
-        /// to the given (now-dead) party member or enemy and has not already concluded.</summary>
-        private static void MarkOwnerDiedForFutureCards(
-            ResolutionContext resolutionContext,
-            ExecutionCardInstance current,
-            string deadOwnerId)
-        {
-            var currentIndex = resolutionContext.IndexOf(current);
-            for (int i = currentIndex + 1; i < resolutionContext.Order.Count; i++)
-            {
-                var future = resolutionContext.Order[i];
-                if (future.CancellationReason == null && future.OwnerId == deadOwnerId)
-                {
-                    future.CancellationReason = CardCancellationReason.OwnerDied;
-                }
-            }
-        }
-
-        private bool IsInterceptedByStatus(
-            CombatState state, ExecutionCardInstance card, List<ResolutionEvent> events)
-        {
-            if (_statuses == null)
-            {
-                return false;
-            }
-
-            // Snapshot: consuming may modify the bag mid-iteration.
-            var snapshot = new List<StatusInstance>(card.Statuses.All);
-            foreach (var status in snapshot)
-            {
-                if (_statuses.TryResolve(status.Key, out var behavior)
-                    && behavior.Scope == StatusScope.CardInstance
-                    && behavior.InterceptCardResolve(
-                        new StatusContext { Instance = status, Rules = state.StatusRules }))
-                {
-                    var countBefore = status.Count;
-                    card.Statuses.Consume(status);
-                    var remaining = card.Statuses.Get(status.Key);
-                    var consumed = countBefore - (remaining?.Count ?? 0);
-                    if (consumed > 0)
-                    {
-                        events.Add(new CardBuffConsumed(
-                            card.InstanceId, card.Def.Id, status.Key.Id, consumed));
-                    }
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private void EndOfTurnMaintenance(CombatState state, List<ResolutionEvent> events)
-        {
-            var partyBefore = SnapshotParty(state);
-            var enemiesBefore = SnapshotEnemies(state);
-
-            RunTurnEndTicks(state, events);
-
-            CollectDeathSweepEvents(state, partyBefore, events);
-            CollectEnemyDeathEvents(state, enemiesBefore, events);
-
-            foreach (var member in state.Party)
-            {
-                foreach (var key in member.Statuses.EndOfTurn())
+                foreach (var key in StatusLifetimePolicy.VisitAll(member.Statuses, phase, null))
                 {
                     events.Add(new StatusExpired(member.Id, key.Id));
                 }
@@ -366,42 +114,64 @@ namespace FateWeaver.Core.Combat
 
             foreach (var enemy in state.Enemies)
             {
-                foreach (var key in enemy.Statuses.EndOfTurn())
+                foreach (var key in StatusLifetimePolicy.VisitAll(enemy.Statuses, phase, null))
                 {
                     events.Add(new StatusExpired(enemy.Id, key.Id));
                 }
             }
         }
 
-        /// <summary>행동 턴 종료 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
-        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2).</summary>
-        private void RunTurnEndTicks(CombatState state, List<ResolutionEvent> events)
+        /// <summary>턴 시점 사건에는 효과 대상 목록이 없으므로 발생 순서만 붙인다(틱은 대형 순으로 일어난다).</summary>
+        private static List<CombatSignal> Numbered(List<CombatSignal> signals)
+        {
+            var numbered = new List<CombatSignal>(signals.Count);
+            for (var i = 0; i < signals.Count; i++)
+            {
+                numbered.Add(signals[i] with { Origin = EffectOrigin.Primary, TargetOrdinal = 0, Sequence = i });
+            }
+
+            return numbered;
+        }
+
+        /// <summary>턴 시점 틱: 파티 대형 순 → 적 대형 순. 보유자별로 발동 직전에 생존을 확인하므로
+        /// 앞선 틱으로 이미 사망한 대상은 제외된다(카드풀 스펙 §3.2). 틱 피해는 공통 피해 경로를 지난다.</summary>
+        private void RunTicks(
+            CombatState state, List<ResolutionEvent> events, List<CombatSignal> signals,
+            Action<IStatusBehavior, StatusTickContext> hook)
         {
             if (_statuses == null)
             {
                 return;
             }
 
+            var sink = new DamageSink(events, signals);
             foreach (var member in state.Party)
             {
                 if (!member.IsAlive) continue;
                 var target = member;
-                TickHolder(target.Statuses, target.Id, () => target.Hp,
-                    damage => target.TakeDamage(damage), events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent, hook,
+                    key => damage => _executor.Damage.Deal(
+                        state, target, StatusDamage(state, key, damage), sink));
             }
 
             foreach (var enemy in state.Enemies)
             {
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
-                TickHolder(target.Statuses, target.Id, () => target.Hp,
-                    damage => target.Hp -= damage, events, state.StatusContent);
+                TickHolder(target.Statuses, target.Id, events, state.StatusContent, hook,
+                    key => damage => _executor.Damage.Deal(
+                        state, target, StatusDamage(state, key, damage), sink));
             }
         }
 
+        /// <summary>상태 피해 요청. 관통·배율 미적용은 그 상태의 저작 데이터가 정한다.</summary>
+        private static DamageRequest StatusDamage(CombatState state, StatusKey key, int damage)
+            => DamageRequest.StatusTick(damage, key.Id, state.StatusContent.DamageTraitsOf(key));
+
         private void TickHolder(
-            StatusBag bag, string holderId, Func<int> getHp, Action<int> dealDamage,
-            List<ResolutionEvent> events, Authoring.Statuses.StatusContentCatalog content)
+            StatusBag bag, string holderId, List<ResolutionEvent> events,
+            Authoring.Statuses.StatusContentCatalog content, Action<IStatusBehavior, StatusTickContext> hook,
+            Func<StatusKey, Action<int>> dealDamageFor)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -409,72 +179,18 @@ namespace FateWeaver.Core.Combat
             {
                 if (_statuses.TryResolve(status.Key, out var behavior))
                 {
-                    var hpBefore = getHp();
-                    behavior.OnTurnEnd(new StatusTickContext
+                    hook(behavior, new StatusTickContext
                     {
                         Instance = status,
                         HolderBag = bag,
                         HolderId = holderId,
-                        DealDamage = dealDamage,
+                        DealDamage = dealDamageFor(status.Key),
                         Events = events,
                         Content = content
                     });
-                    var hpAfter = getHp();
-                    if (hpAfter != hpBefore)
-                    {
-                        events.Add(new HpChanged(
-                            holderId, hpBefore, hpAfter, HpChangeSource.StatusTick, status.Key.Id));
-                    }
                 }
             }
         }
 
-        private static ConditionTier ResolveTier(
-            Cards.EffectData effect,
-            ExecutionCardInstance card,
-            ResolutionContext resolutionContext,
-            List<ResolutionEvent> pending)
-        {
-            if (effect.Condition == null)
-            {
-                return ConditionTier.Basic;
-            }
-
-            var tier = ConditionEvaluator.Evaluate(effect.Condition, card, resolutionContext);
-            if (tier == ConditionTier.Success)
-            {
-                // reward-nullified disruption forces a success down to basic, spending its charge.
-                var nullified = card.Statuses.Get(StatusKeys.RewardNullified);
-                if (nullified != null)
-                {
-                    var countBefore = nullified.Count;
-                    card.Statuses.Consume(nullified);
-                    var remaining = card.Statuses.Get(StatusKeys.RewardNullified);
-                    var consumed = countBefore - (remaining?.Count ?? 0);
-                    if (consumed > 0)
-                    {
-                        pending.Add(new CardBuffConsumed(
-                            card.InstanceId, card.Def.Id,
-                            StatusKeys.RewardNullified.Id, consumed));
-                    }
-
-                    return ConditionTier.Basic;
-                }
-            }
-
-            return tier;
-        }
-
-        private static int ResolveEffectValue(Cards.EffectData effect, ConditionTier tier)
-            => tier == ConditionTier.Success && effect.SuccessEffectValue.HasValue
-                ? effect.SuccessEffectValue.Value
-                : effect.EffectValue;
-
-        private static Outcome ComputeOutcome(CombatState state)
-        {
-            if (state.Party.All(m => !m.IsAlive)) return Outcome.Lose;
-            if (state.Enemies.All(e => e.Hp <= 0)) return Outcome.Win;
-            return Outcome.Ongoing;
-        }
     }
 }

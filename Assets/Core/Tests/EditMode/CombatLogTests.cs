@@ -56,7 +56,7 @@ namespace FateWeaver.Tests
             var grant = new CardDefinition("empower", "empower", Side.Player, 1,
                 new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 2) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(grant) { OwnerId = CombatState.SoloPlayerId, InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
             var effects = new EffectRegistry();
@@ -83,7 +83,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 1) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike) { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
             var effects = new EffectRegistry();
@@ -106,11 +106,11 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("quick_cut", "quick_cut", Side.Player, 2,
-                new[]
-                {
-                    EffectData.Conditional(
-                        EffectKeys.Damage, 2, new WithinNth(2), successEffectValue: 10)
-                });
+                new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = new WithinNth(2)
+            };
             state.Zone.Add(new ExecutionCardInstance(nullify) { OwnerId = "goblin", InstanceId = 1 });
             state.Zone.Add(new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 });
@@ -136,7 +136,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var card = new ExecutionCardInstance(def)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 7 };
             card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.UntilConsumed(1));
@@ -163,7 +163,7 @@ namespace FateWeaver.Tests
             var grant = new CardDefinition("empty_empower", "empty_empower", Side.Player, 1,
                 new[] { new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(grant));
             state.Zone.Add(new ExecutionCardInstance(strike));
             var effects = new EffectRegistry();
@@ -185,7 +185,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var strikeCard = new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
             strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.UntilConsumed(1));
@@ -210,7 +210,7 @@ namespace FateWeaver.Tests
             var nullify = new CardDefinition("disrupt", "disrupt", Side.Enemy, 1,
                 new[] { new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0) });
             var strike = new CardDefinition("strike", "strike", Side.Player, 2,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var strikeCard = new ExecutionCardInstance(strike)
                 { OwnerId = CombatState.SoloPlayerId, InstanceId = 2 };
             strikeCard.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
@@ -236,11 +236,11 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("quick_cut", "quick_cut", Side.Player, 1,
-                new[]
-                {
-                    EffectData.Conditional(
-                        EffectKeys.Damage, 2, new WithinNth(1), successEffectValue: 10)
-                });
+                new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = new WithinNth(1)
+            };
             var card = new ExecutionCardInstance(def) { InstanceId = 4 };
             card.Statuses.Add(StatusKeys.RewardNullified, StatusLifetime.Permanent);
             state.Zone.Add(card);
@@ -261,7 +261,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var card = new ExecutionCardInstance(def) { InstanceId = 8 };
             card.Statuses.Add(TimelineNullifyingBehavior.TestKey, StatusLifetime.Permanent);
             state.Zone.Add(card);
@@ -289,7 +289,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
 
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 10) });
+                new[] { new EffectData(EffectKeys.Damage, 10) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -316,7 +316,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
 
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 10) });
+                new[] { new EffectData(EffectKeys.Damage, 10) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -333,7 +333,7 @@ namespace FateWeaver.Tests
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 30));
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -342,26 +342,26 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void A_card_cancelled_mid_effects_keeps_its_dealt_damage_on_the_event()
+        public void A_card_whose_later_effect_finds_no_target_resolves_with_the_damage_dealt()
         {
-            // 효과 1(피해 5)이 마지막 적을 죽이고, 효과 2(피해)가 대상을 못 찾아 카드가 취소된다.
-            // 취소는 이미 준 피해를 되돌리지 않으므로 로그에서도 사라지면 안 된다.
+            // 효과 1(피해 5)이 마지막 적을 죽이고, 효과 2(피해)는 대상이 없어 미적용된다 — 카드는 취소되지
+            // 않고 해결되며, 준 피해가 CardResolved에 남는다(스펙 §2).
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 3));
             var def = new CardDefinition("double_strike", "double_strike", Side.Player, 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 5),
-                    new EffectData(EffectKeys.Damage, 5)
-                });
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy },
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy }
+                }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
-            var cancelled = events.OfType<CardCancelled>().Single();
+            var resolved = events.OfType<CardResolved>().Single();
 
-            Assert.IsEmpty(events.OfType<CardResolved>());
-            Assert.AreEqual(5, cancelled.DamageDealt);
+            Assert.IsEmpty(events.OfType<CardCancelled>());
+            Assert.AreEqual(5, resolved.DamageDealt);
             Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "goblin"));
         }
 
@@ -375,8 +375,8 @@ namespace FateWeaver.Tests
             var def = new CardDefinition("guard", "guard", Side.Player, 1,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 5)
-                });
+                    EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 5)
+                }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -401,7 +401,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Formatter_spells_out_each_damage_step_and_the_deaths_door_save()
+        public void Formatter_spells_out_each_damage_step()
         {
             var timeline = new ResolutionEvent[]
             {
@@ -414,7 +414,6 @@ namespace FateWeaver.Tests
                         new DamageStep("member_a", "block", 6, 4)
                     }
                 },
-                new DeathsDoorSurvived("member_a"),
                 new TurnEnded(0, Outcome.Ongoing)
             };
 
@@ -424,7 +423,6 @@ namespace FateWeaver.Tests
             StringAssert.Contains("4", text);
             StringAssert.Contains("6", text);
             StringAssert.Contains("방어", text);
-            StringAssert.Contains("치명", text);   // 왜 살아남았는지가 반드시 보여야 한다
             StringAssert.Contains("member_a", text);
         }
 
@@ -436,7 +434,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin_a", 10));
             state.Enemies.Add(new Enemy("goblin_b", 10));
             var def = new CardDefinition("sweep", "sweep", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.All } });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.All };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -446,25 +444,6 @@ namespace FateWeaver.Tests
             Assert.AreEqual(("goblin_a", 10, 6, HpChangeSource.CardDamage, "sweep"),
                 (changes[0].HolderId, changes[0].Before, changes[0].After, changes[0].Source, changes[0].SourceId));
             Assert.AreEqual(("goblin_b", 10, 6), (changes[1].HolderId, changes[1].Before, changes[1].After));
-        }
-
-        [Test]
-        public void Deaths_door_hp_change_shows_the_clamp_to_one()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            var player = state.AddSoloPlayer(30);
-            player.Hp = 4;
-            player.SurviveCharges = 1;
-            state.Enemies.Add(new Enemy("goblin", 10));
-            var def = new CardDefinition("jab", "jab", Side.Enemy, 1,
-                new[] { new EffectData(EffectKeys.Damage, 6) });
-            state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = "goblin" });
-
-            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
-            var change = events.OfType<HpChanged>().Single();
-
-            Assert.AreEqual((CombatState.SoloPlayerId, 4, 1), (change.HolderId, change.Before, change.After));
-            Assert.IsTrue(events.OfType<DeathsDoorSurvived>().Any());
         }
 
         [Test]
@@ -492,7 +471,7 @@ namespace FateWeaver.Tests
             enemy.Statuses.Add(StatusKeys.Block, StatusLifetime.Turns(2), 10);
             state.Enemies.Add(enemy);
             var def = new CardDefinition("strike", "strike", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 4) });
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
             var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
@@ -537,9 +516,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
             var def = new CardDefinition("drain", "흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0)
-                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
-            });
+                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();
             effects.Register(new ConsumeStatusHandler());
@@ -578,9 +556,8 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("empty_drain", "빈 흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0)
-                    { Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
-            });
+                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+            }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();
             effects.Register(new ConsumeStatusHandler());
@@ -601,7 +578,7 @@ namespace FateWeaver.Tests
             state.Party.Add(back);
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("advance", "advance", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def)
                 { OwnerId = back.Id, InstanceId = 3 });
             var effects = new EffectRegistry();
@@ -625,7 +602,7 @@ namespace FateWeaver.Tests
             state.Party.Add(new PartyMember("member_b", "B", 10));
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("advance", "advance", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.MoveFormation, -1) });
+                new[] { new EffectData(EffectKeys.MoveFormation, -1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.Self };
             state.Zone.Add(new ExecutionCardInstance(def)
                 { OwnerId = front.Id, InstanceId = 3 });
             var effects = new EffectRegistry();
@@ -642,6 +619,15 @@ namespace FateWeaver.Tests
         {
             var text = TimelineTextFormatter.FormatEvent(new TurnStarted(0), Korean);
             Assert.AreEqual("== 1턴 시작 ==", text);
+        }
+
+        [Test]
+        public void Format_event_says_a_removed_card_left_because_its_owner_died()
+        {
+            var text = TimelineTextFormatter.FormatEvent(new CardRemoved(2, "goblin_jab", "goblin"), Korean);
+
+            StringAssert.Contains("goblin_jab", text);
+            StringAssert.Contains("주인 사망", text);
         }
 
         [Test]
@@ -677,15 +663,70 @@ namespace FateWeaver.Tests
             }
         }
 
+        /// <summary>CardResolved의 피해는 요약일 뿐이다 — HP 변화는 HpChanged 하나로만 전해진다. 타임라인을 재생하는 쪽이
+        /// HpChanged만 적용하면 최종 HP가 맞고, 요약까지 적용하면 두 번 깎인다(계획 T7).</summary>
         [Test]
-        public void Cancelled_card_entry_includes_pre_cancel_damage()
+        public void Replaying_only_hp_changes_reproduces_the_final_hp()
         {
-            var text = TimelineTextFormatter.FormatEvent(
-                new CardCancelled(1, "double_strike", "member_a", CardCancellationReason.NoValidTarget)
-                {
-                    DamageDealt = 5
-                }, Korean);
-            StringAssert.Contains("5", text);
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            var goblin = new Enemy("goblin", 20);
+            goblin.Statuses.Stack(StatusKeys.Block, StatusLifetime.Permanent, 2);
+            goblin.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 2);
+            state.Enemies.Add(goblin);
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("jab", "jab", Side.Enemy, 1,
+                new[] { new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Ally } })
+            {
+                AllyTarget = CardTargetRange.FrontOne
+            }));
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("slash", "slash", Side.Player, 2,
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne
+            })
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            var replayed = new System.Collections.Generic.Dictionary<string, int> { ["player"] = 30, ["goblin"] = 20 };
+            foreach (var hp in events.OfType<HpChanged>())
+            {
+                Assert.AreEqual(replayed[hp.HolderId], hp.Before, "HpChanged는 이전 값에서 이어진다");
+                replayed[hp.HolderId] = hp.After;
+            }
+
+            Assert.AreEqual(player.Hp, replayed["player"]);
+            Assert.AreEqual(goblin.Hp, replayed["goblin"]);
+            Assert.AreEqual(20 - 3 - 2, goblin.Hp, "방어 2가 흡수한 3, 독 틱 2");
+        }
+
+        /// <summary>승리로 끝난 턴의 TurnEnded는 전투 종료 알림이지 턴 종료 상태를 수행했다는 뜻이 아니다(계획 T5·T7).</summary>
+        [Test]
+        public void A_winning_turn_ends_without_running_turn_end_statuses()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(30);
+            player.Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 3);
+            player.Statuses.Add(StatusKeys.Weak, StatusLifetime.Turns(1));
+            state.Enemies.Add(new Enemy("goblin", 3));
+            state.Zone.Add(new ExecutionCardInstance(new CardDefinition("finish", "finish", Side.Player, 1,
+                new[] { new EffectData(EffectKeys.Damage, 9) { TargetFaction = CardTargetFaction.Enemy } })
+            {
+                EnemyTarget = CardTargetRange.FrontOne
+            })
+            {
+                OwnerId = CombatState.SoloPlayerId
+            });
+
+            var events = new TurnResolver(Effects(), Statuses()).Resolve(state, 0);
+
+            Assert.AreEqual(Outcome.Win, events.OfType<TurnEnded>().Single().Outcome);
+            Assert.IsEmpty(events.OfType<StatusTicked>(), "턴 종료 틱이 없다");
+            Assert.IsEmpty(events.OfType<StatusExpired>(), "턴 정리 만료가 없다");
+            Assert.AreEqual(30, player.Hp);
+            Assert.AreEqual(1, player.Statuses.Get(StatusKeys.Weak).Count, "턴 정리를 방문하지 않았다");
         }
     }
 }

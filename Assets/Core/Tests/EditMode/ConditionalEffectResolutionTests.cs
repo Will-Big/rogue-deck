@@ -23,11 +23,21 @@ namespace FateWeaver.Tests
             string id,
             Side side,
             int executionOrder,
-            EffectData effect)
+            EffectData effect,
+            Condition startCondition = null)
         {
-            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect });
+            var def = new CardDefinition(id, id, side, executionOrder, new[] { effect })
+            {
+                // 이 파일의 효과는 상대 진영 전열 하나를 친다.
+                AllyTarget = CardTargetRange.FrontOne,
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = startCondition
+            };
             return new ExecutionCardInstance(def);
         }
+
+        private static EffectData DamageTwoOrTen()
+            => new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 };
 
         [Test]
         public void Conditional_damage_uses_success_amount_when_condition_succeeds()
@@ -39,7 +49,7 @@ namespace FateWeaver.Tests
                 "quick_cut",
                 Side.Player,
                 1,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
+                DamageTwoOrTen(), new FirstToTrigger()));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = (CardResolved)events[1];
@@ -55,12 +65,12 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 12));
-            state.Zone.Add(Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1)));
+            state.Zone.Add(Card("enemy_jab", Side.Enemy, 1, new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally }));
             state.Zone.Add(Card(
                 "late_cut",
                 Side.Player,
                 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new FirstToTrigger(), successEffectValue: 10)));
+                DamageTwoOrTen(), new FirstToTrigger()));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "late_cut");
@@ -79,7 +89,7 @@ namespace FateWeaver.Tests
             var enemy = Card("wrist_cut", Side.Enemy, 1,
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
             var player = Card("quick_cut", Side.Player, 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new WithinNth(2), successEffectValue: 10));
+                DamageTwoOrTen(), new WithinNth(2));
             state.Zone.Add(enemy);
             state.Zone.Add(player);
 
@@ -98,7 +108,7 @@ namespace FateWeaver.Tests
             state.Zone.Add(Card("wrist_cut", Side.Enemy, 1,
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)));
             state.Zone.Add(Card("quick_cut", Side.Player, 2,
-                EffectData.Conditional(EffectKeys.Damage, effectValue: 2, condition: new WithinNth(2), successEffectValue: 10)));
+                DamageTwoOrTen(), new WithinNth(2)));
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
             var resolved = events.OfType<CardResolved>().Single(e => e.CardId == "quick_cut");
@@ -123,16 +133,16 @@ namespace FateWeaver.Tests
                 {
                     new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 6)
                 }));
-            var block = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.TargetEnemy, 2);
+            var block = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Enemy, 2);
             var blockOnly = new ExecutionCardInstance(new CardDefinition(
                 "block_only",
                 "Block Only",
                 Side.Player,
                 2,
-                new[] { block }));
+                new[] { block }) { EnemyTarget = CardTargetRange.FrontOne });
             var hybridEffects = new[]
             {
-                new EffectData(EffectKeys.Damage, 1),
+                new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy },
                 block
             };
             var hybrid = new ExecutionCardInstance(new CardDefinition(
@@ -140,7 +150,7 @@ namespace FateWeaver.Tests
                 "Hybrid",
                 Side.Player,
                 3,
-                hybridEffects));
+                hybridEffects) { EnemyTarget = CardTargetRange.FrontOne });
             state.Zone.Add(mark);
             state.Zone.Add(blockOnly);
             state.Zone.Add(hybrid);
@@ -159,7 +169,7 @@ namespace FateWeaver.Tests
         public void Pending_damage_bonus_applies_per_target_on_an_all_target_damage_card()
         {
             // Pinning test for the deliberate rule (DamageHandler.Apply, All branch): a pending
-            // damage-card bonus raises the CARD's damage value, so with TargetSelector.All it applies
+            // damage-card bonus raises the CARD's damage value, so with CardTargetRange.All it applies
             // to every target independently, not as a one-time pool split across hits.
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
@@ -181,8 +191,8 @@ namespace FateWeaver.Tests
                 2,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 2) { TargetSelector = TargetSelector.All }
-                }));
+                    new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy }
+                }) { EnemyTarget = CardTargetRange.All });
             state.Zone.Add(mark);
             state.Zone.Add(sweep);
             var registry = Registry();

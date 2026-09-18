@@ -9,7 +9,9 @@ namespace FateWeaver.Simulation.Descriptions
         public EffectKey Key => EffectKeys.Damage;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
-            => new EffectDescriptionFragment(context.OpposingRange(effect.TargetSelector), "피해 " + effectValue);
+            => new EffectDescriptionFragment(
+                context.TargetOf(effect),
+                "피해 " + effectValue + context.DamageTraitsSuffix((effect.Payload as DamagePayload)?.Traits));
     }
 
     public sealed class ApplyStatusDescriptionHandler : IEffectDescriptionHandler
@@ -24,28 +26,7 @@ namespace FateWeaver.Simulation.Descriptions
                     nameof(effect));
 
             var statusName = context.Statuses.Resolve(payload.Key);
-            CardTargetKey? target;
-            switch (payload.Target)
-            {
-                case StatusApplyTarget.Self:
-                    target = context.SelfTarget();
-                    break;
-                case StatusApplyTarget.TargetEnemy:
-                    target = context.EnemyRange(effect.TargetSelector);
-                    break;
-                case StatusApplyTarget.PartyBySelector:
-                    target = context.AllyRange(effect.TargetSelector);
-                    break;
-                case StatusApplyTarget.AllPartyMembers:
-                    target = new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.All);
-                    break;
-                case StatusApplyTarget.PartyMember:
-                    throw new InvalidOperationException(
-                        "Card '" + context.CardId
-                        + "' uses PartyMember, which has no approved card-frame target schema.");
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(payload.Target));
-            }
+            var target = context.TargetOf(effect);
 
             // 숫자가 세기인지 지속인지는 카드가 아니라 상태 콘텐츠가 결정한다. 구조화 대상과
             // JSON 기반 상태 메타데이터를 함께 보존해, UI가 문장을 다시 해석하지 않게 한다.
@@ -94,12 +75,12 @@ namespace FateWeaver.Simulation.Descriptions
             DescriptionContext context)
         {
             if (effectValue == 0)
-                return new EffectDescriptionFragment(context.SelfTarget(), "대형 위치 유지");
+                return new EffectDescriptionFragment(context.TargetOf(effect), "대형 위치 유지");
 
             var distance = effectValue < 0 ? -(long)effectValue : effectValue;
             var direction = effectValue < 0 ? "전방" : "후방";
             return new EffectDescriptionFragment(
-                context.SelfTarget(),
+                context.TargetOf(effect),
                 "대형 " + direction + "으로 " + distance + "칸 이동");
         }
     }
@@ -114,12 +95,12 @@ namespace FateWeaver.Simulation.Descriptions
                 throw new ArgumentException(
                     "Consume-status description requires a ConsumeStatusPayload.", nameof(effect));
 
-            var text = context.Statuses.Resolve(payload.Key) + " 최대 " + payload.MaxAmount + " 소비";
+            var amount = payload.Mode == ConsumptionMode.UpTo
+                ? "최대 " + payload.Amount
+                : payload.Amount.ToString();
             return new EffectDescriptionFragment(
-                context.EnemyRange(effect.TargetSelector),
-                payload.DamageBonusPerConsumed > 0
-                    ? text + " (소비 1당 피해 +" + payload.DamageBonusPerConsumed + ")"
-                    : text);
+                context.TargetOf(effect),
+                context.Statuses.Resolve(payload.Key) + " " + amount + " 소비");
         }
     }
 
@@ -134,7 +115,7 @@ namespace FateWeaver.Simulation.Descriptions
                     "Trigger-status description requires a TriggerStatusPayload.", nameof(effect));
 
             return new EffectDescriptionFragment(
-                context.EnemyRange(effect.TargetSelector),
+                context.TargetOf(effect),
                 context.Statuses.Resolve(payload.Key) + " 즉시 발동 (이번 턴 종료에는 발동하지 않음)");
         }
     }

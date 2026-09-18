@@ -30,27 +30,19 @@ namespace FateWeaver.Tests
                 EnergyCost = cost
             };
 
-        private static CardDefinition DirectBlock(string id = "direct_block")
-            => Execution(
-                id,
-                cost: 1,
-                effects: new[]
-                {
-                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, count: 3)
-                });
-
         private static CardDefinition EnemyStrike(
             string id = "enemy_strike",
             int order = 1,
             int damage = 50,
-            TargetSelector selector = TargetSelector.FrontOne)
+            CardTargetRange range = CardTargetRange.FrontOne)
             => new CardDefinition(
                 id,
                 id,
                 Side.Enemy,
                 order,
-                new[] { new EffectData(EffectKeys.Damage, damage) { TargetSelector = selector } })
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } })
             {
+                AllyTarget = range,
                 Category = CardCategory.Execution
             };
 
@@ -58,9 +50,8 @@ namespace FateWeaver.Tests
             string id,
             IReadOnlyList<CardDefinition> cards = null,
             int maxHp = 25,
-            string name = null,
-            int surviveCharges = 1)
-            => new PartyMemberLoadout(id, name ?? id, maxHp, surviveCharges, cards ?? Array.Empty<CardDefinition>());
+            string name = null)
+            => new PartyMemberLoadout(id, name ?? id, maxHp, cards ?? Array.Empty<CardDefinition>());
 
         private static PartyTuning Tuning(int partySize)
         {
@@ -110,7 +101,7 @@ namespace FateWeaver.Tests
             Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", maxHp: 0) }, tuning: Tuning(1)));
             Assert.Throws<ArgumentException>(() => Session(new[]
             {
-                new PartyMemberLoadout("a", "A", 25, 1, null)
+                new PartyMemberLoadout("a", "A", 25, null)
             }, tuning: Tuning(1)));
             Assert.Throws<ArgumentException>(() => Session(new[]
             {
@@ -121,7 +112,6 @@ namespace FateWeaver.Tests
                 new[] { new Enemy("goblin", 100) },
                 new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()),
                 tuning: null));
-            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", surviveCharges: -1) }, tuning: Tuning(1)));
         }
 
         [Test]
@@ -144,47 +134,21 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Each_member_starts_with_its_own_survive_charges()
-        {
-            var session = Session(new[] { Loadout("a", surviveCharges: 0), Loadout("b", surviveCharges: 2) });
-
-            Assert.AreEqual(0, session.State.Party[0].SurviveCharges);
-            Assert.AreEqual(2, session.State.Party[1].SurviveCharges);
-        }
-
-        [Test]
-        public void Zero_and_nonzero_survive_charges_resolve_independently_on_a_shared_lethal_hit()
+        public void A_shared_lethal_hit_kills_every_member_it_reaches()
         {
             var session = Session(
                 new[]
                 {
-                    Loadout("a", maxHp: 10, surviveCharges: 0),
-                    Loadout("b", maxHp: 10, surviveCharges: 1)
+                    Loadout("a", maxHp: 10),
+                    Loadout("b", maxHp: 10)
                 },
-                new[] { EnemyStrike(damage: 50, selector: TargetSelector.All) });
+                new[] { EnemyStrike(damage: 50, range: CardTargetRange.All) });
 
             var timeline = session.ResolveTurn();
 
-            var a = session.State.Party.Single(member => member.Id == "a");
-            var b = session.State.Party.Single(member => member.Id == "b");
-            Assert.IsFalse(a.IsAlive);
-            Assert.IsTrue(b.IsAlive);
-            Assert.AreEqual(1, b.Hp);
-            Assert.AreEqual(0, b.SurviveCharges);
+            Assert.IsTrue(session.State.Party.All(member => !member.IsAlive));
             Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "a"));
-            Assert.IsTrue(timeline.OfType<DeathsDoorSurvived>().Any(e => e.MemberId == "b"));
-        }
-
-        [Test]
-        public void Session_rejects_player_execution_card_that_requires_direct_target()
-        {
-            var direct = DirectBlock();
-
-            Assert.Throws<ArgumentException>(() => Session(new[]
-            {
-                Loadout("a", new[] { direct }),
-                Loadout("b")
-            }));
+            Assert.IsTrue(timeline.OfType<PartyMemberDied>().Any(e => e.MemberId == "b"));
         }
 
         [Test]
@@ -200,18 +164,7 @@ namespace FateWeaver.Tests
 
             var placed = session.CurrentOrder.Single(card => card.Def.Id == "guard");
             Assert.AreEqual("a", placed.OwnerId);
-            Assert.IsNull(placed.TargetId);
             Assert.AreEqual(energyBefore - placed.Def.EnergyCost, session.FateEnergy);
-        }
-
-        [Test]
-        public void Legacy_session_also_rejects_direct_target_execution_definition()
-        {
-            Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
-                new[] { DirectBlock() },
-                playerHp: 30,
-                enemies: Array.Empty<Enemy>(),
-                enemyPolicy: new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>())));
         }
 
         [Test]
@@ -226,7 +179,6 @@ namespace FateWeaver.Tests
                 },
                 new[] { EnemyStrike() },
                 partyCards: new[] { Execution("party_card") });
-            session.State.Party.Single(member => member.Id == "a").SurviveCharges = 0;
 
             session.ResolveTurn();
 
@@ -236,7 +188,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Kill_then_cancel_path_removes_dead_owner_from_every_pile_and_keeps_party_cards()
+        public void Kill_then_no_target_path_removes_dead_owner_from_every_pile_and_keeps_party_cards()
         {
             var ownedByA = Enumerable.Range(0, 8).Select(i => Execution("a_" + i, order: 2)).ToArray();
             var killThenCancel = new CardDefinition(
@@ -246,17 +198,17 @@ namespace FateWeaver.Tests
                 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 25),
-                    new EffectData(EffectKeys.Damage, 1)
+                    new EffectData(EffectKeys.Damage, 25) { TargetFaction = CardTargetFaction.Ally },
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally }
                 })
             {
+                AllyTarget = CardTargetRange.FrontOne,
                 Category = CardCategory.Execution
             };
             var session = Session(
                 new[] { Loadout("a", ownedByA) },
                 new[] { killThenCancel },
                 partyCards: new[] { Execution("party_0"), Execution("party_1") });
-            session.State.Party.Single().SurviveCharges = 0;
             var ownedHandIndex = session.Hand
                 .Select((card, index) => new { card, index })
                 .First(entry => entry.card.OwnerId == "a")
@@ -265,11 +217,15 @@ namespace FateWeaver.Tests
 
             var timeline = session.ResolveTurn();
 
-            var relevant = timeline.Where(e => e is CardCancelled || e is PartyMemberDied).ToArray();
+            // 둘째 피해는 대상이 없어 미적용될 뿐 카드는 해결된다(스펙 §2).
+            var relevant = timeline
+                .Where(e => (e is CardResolved r && r.CardId == "kill_then_cancel")
+                    || e is CardCancelled || e is PartyMemberDied || e is CardRemoved)
+                .ToArray();
             Assert.AreEqual(3, relevant.Length);
-            Assert.AreEqual("kill_then_cancel", ((CardCancelled)relevant[0]).CardId);
+            Assert.AreEqual("kill_then_cancel", ((CardResolved)relevant[0]).CardId);
             Assert.AreEqual("a", ((PartyMemberDied)relevant[1]).MemberId);
-            Assert.AreEqual(CardCancellationReason.OwnerDied, ((CardCancelled)relevant[2]).Reason);
+            Assert.AreEqual("a", ((CardRemoved)relevant[2]).OwnerId);
             Assert.IsFalse(session.DrawPile.Any(card => card.OwnerId == "a"));
             Assert.IsFalse(session.Hand.Any(card => card.OwnerId == "a"));
             Assert.IsFalse(session.DiscardPile.Any(card => card.OwnerId == "a"));
@@ -288,7 +244,6 @@ namespace FateWeaver.Tests
                     Loadout("b", Enumerable.Range(0, 8).Select(i => Execution("b_" + i)).ToArray())
                 },
                 new[] { EnemyStrike() });
-            session.State.Party.Single(member => member.Id == "a").SurviveCharges = 0;
             Assert.AreEqual(4, session.Hand.Count);
 
             session.ResolveTurn();
@@ -304,7 +259,6 @@ namespace FateWeaver.Tests
             var session = Session(
                 new[] { Loadout("a"), Loadout("b", new[] { Execution("b_card") }) },
                 new[] { EnemyStrike() });
-            session.State.Party.Single(member => member.Id == "a").SurviveCharges = 0;
 
             var timeline = session.ResolveTurn();
 

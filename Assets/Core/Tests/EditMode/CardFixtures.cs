@@ -19,45 +19,49 @@ namespace FateWeaver.Tests
         /// 같은 값 5를 쓴다.</summary>
         public const int DefaultExecutionOrder = 5;
 
+        /// <summary>카드 쪽에서 본 상대 진영(플레이어 카드면 적, 적 카드면 파티). 위치를 저작하지 않던 피해 픽스처가
+        /// 예전 처리기 기본값(상대 진영 FrontOne)과 같은 대상을 고르게 한다 — 런타임에는 기본값이 없다(계획 T3b).</summary>
+        public static CardTargetFaction Opposing(Side side)
+            => side == Side.Player ? CardTargetFaction.Enemy : CardTargetFaction.Ally;
+
         public static CardDefinition Damage(
             string id, int damage, int executionOrder = DefaultExecutionOrder, int cost = 1)
-            => Execution(id, executionOrder, cost, new EffectData(EffectKeys.Damage, damage));
+            => Execution(id, executionOrder, cost, new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Enemy });
 
         public static CardDefinition Block(
             string id, int magnitude, int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, magnitude));
+                EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, magnitude));
 
         public static CardDefinition DamageOnFirstTrigger(
             string id, int baseDamage, int whenFirst,
             int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.Conditional(
-                    EffectKeys.Damage, baseDamage, new FirstToTrigger(), whenFirst));
+                new EffectData(EffectKeys.Damage, baseDamage) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = whenFirst })
+                with { StartCondition = new FirstToTrigger() };
 
         public static CardDefinition DamageAfterEnemyDamage(
             string id, int baseDamage, int whenAfter,
             int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.Conditional(
-                    EffectKeys.Damage, baseDamage,
-                    new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage), whenAfter));
+                new EffectData(EffectKeys.Damage, baseDamage) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = whenAfter })
+                with { StartCondition = new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage) };
 
         public static CardDefinition BlockBeforeEnemyDamage(
             string id, int baseMagnitude, int whenBefore,
             int executionOrder = DefaultExecutionOrder, int cost = 1)
             => Execution(
                 id, executionOrder, cost,
-                EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, baseMagnitude)
-                    with
-                    {
-                        Condition = new AdjacentCardHasEffect(
-                            AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage),
-                        SuccessEffectValue = whenBefore
-                    });
+                EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, baseMagnitude)
+                    with { SuccessEffectValue = whenBefore })
+                with
+                {
+                    StartCondition = new AdjacentCardHasEffect(
+                        AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage)
+                };
 
         public static CardDefinition ChangeExecutionOrder(string id, int delta, int cost = 1)
             => Intervention(
@@ -79,13 +83,19 @@ namespace FateWeaver.Tests
         public static CardDefinition EnemyAttack(string id, int executionOrder, int damage)
             => new CardDefinition(
                 id, id, Side.Enemy, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) })
-                { EnergyCost = 0, Category = CardCategory.Execution };
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } })
+                { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
+        /// <summary>플레이어 실행 카드. 아군 효과는 자신, 적 효과는 적 전열 하나를 고른다.</summary>
         private static CardDefinition Execution(
             string id, int executionOrder, int cost, EffectData effect)
             => new CardDefinition(id, id, Side.Player, executionOrder, new[] { effect })
-                { EnergyCost = cost, Category = CardCategory.Execution };
+            {
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.FrontOne,
+                EnergyCost = cost,
+                Category = CardCategory.Execution
+            };
 
         private static CardDefinition Intervention(
             string id, int cost, InterventionActionData action)

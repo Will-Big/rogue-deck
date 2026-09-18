@@ -1,5 +1,6 @@
 using System.Linq;
 using NUnit.Framework;
+using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
@@ -10,42 +11,51 @@ namespace FateWeaver.Tests
     public class NewEffectSpecTests
     {
         [Test]
-        public void Consume_status_spec_maps_payload_selector_and_condition()
+        public void Consume_status_spec_maps_payload_and_faction()
         {
             var spec = new ConsumeStatusSpec
             {
+                Id = "pay",
+                TargetFaction = CardTargetFaction.Enemy,
                 Status = StatusKeyRef.Of(StatusKeys.Poison),
-                MaxAmount = 3,
-                DamageBonusPerConsumed = 2,
-                Selector = TargetSelectorRef.FrontOne
+                Amount = 3,
+                Mode = ConsumptionMode.UpTo
             };
             var effect = spec.ToEffectData();
 
             Assert.AreEqual(EffectKeys.ConsumeStatus, effect.Key);
             var payload = (ConsumeStatusPayload)effect.Payload;
             Assert.AreEqual(StatusKeys.Poison, payload.Key);
-            Assert.AreEqual(3, payload.MaxAmount);
-            Assert.AreEqual(2, payload.DamageBonusPerConsumed);
+            Assert.AreEqual(3, payload.Amount);
+            Assert.AreEqual(ConsumptionMode.UpTo, payload.Mode);
+            Assert.AreEqual(CardTargetFaction.Enemy, effect.TargetFaction);
             Assert.IsEmpty(spec.Validate(AuthoringContext.Default()).ToList());
+            Assert.IsTrue(spec.ProducesConsumption);
         }
 
         [Test]
-        public void Condition_spec_maps_new_kinds_and_skip_on_basic()
+        public void Start_condition_spec_maps_new_kinds()
         {
-            var noFollowing = new ConditionSpec
-                { Kind = ConditionKind.NoFollowingPlayerCard, SuccessEffectValue = 2 };
+            var noFollowing = new StartConditionSpec { Kind = ConditionKind.NoFollowingPlayerCard };
             Assert.IsInstanceOf<NoFollowingCardOfSide>(noFollowing.ToCondition());
-            Assert.AreEqual(FateWeaver.Core.Cards.Side.Player,
-                ((NoFollowingCardOfSide)noFollowing.ToCondition()).Side);
+            Assert.AreEqual(Side.Player, ((NoFollowingCardOfSide)noFollowing.ToCondition()).Side);
+        }
 
-            var consumed = new ConditionSpec
-                { Kind = ConditionKind.ConsumedStatusAtLeast, N = 1, SuccessEffectValue = 4, SkipOnBasic = true };
-            Assert.AreEqual(1, ((ConsumedStatusAtLeast)consumed.ToCondition()).N);
+        [Test]
+        public void Requirement_and_skip_are_carried_onto_the_effect()
+        {
+            var spec = new GrantNextTurnFateSpec
+            {
+                Id = "reward",
+                Value = 1,
+                Requires = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
+            };
 
-            var spec = new GrantNextTurnFateSpec { Value = 1, Condition = consumed };
             var effect = spec.ToEffectData();
-            Assert.IsTrue(effect.SkipOnBasic);
+
             Assert.AreEqual(EffectKeys.GrantNextTurnFate, effect.Key);
+            Assert.AreEqual("reward", effect.Id);
+            Assert.AreEqual(new EffectResultRequirement("pay", 1), effect.Requirement);
         }
 
         [Test]

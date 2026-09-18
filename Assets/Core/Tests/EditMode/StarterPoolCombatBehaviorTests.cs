@@ -78,7 +78,7 @@ namespace FateWeaver.Tests
         }
 
         private static System.Collections.Generic.List<ResolutionEvent> Resolve(CombatState state)
-            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses())
+            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses(), CombatRegistriesAccessor.Reactions())
                 .Resolve(state, 0);
     }
 
@@ -97,8 +97,12 @@ namespace FateWeaver.Tests
             effects.Register(new FateWeaver.Core.Effects.MoveFormationHandler());
             effects.Register(new FateWeaver.Core.Effects.NullifyNextPlayerConditionRewardHandler());
             effects.Register(new FateWeaver.Core.Effects.GrantNextPlayerDamageCardBonusHandler());
+            effects.Register(new FateWeaver.Core.Effects.TransferStatusHandler());
             return effects;
         }
+
+        /// <summary>반응 능력(전염의 사망 능력 등)은 기본 등록을 그대로 쓴다.</summary>
+        public static ReactionRegistry Reactions() => FateWeaver.Core.CombatRegistries.Reactions();
 
         public static StatusRegistry Statuses()
         {

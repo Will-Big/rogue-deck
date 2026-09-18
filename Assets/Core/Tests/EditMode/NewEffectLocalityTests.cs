@@ -21,14 +21,11 @@ namespace FateWeaver.Tests
         {
             public EffectKey Key => HealKey;
 
-            public CardTargetKey? TargetFor(CardDefinition card, EffectData effect) => null;
-
             public void Apply(EffectContext ctx)
             {
                 var member = PartyTargeting.LivingById(ctx.State, ctx.Card.OwnerId);
                 if (member == null)
                 {
-                    ctx.Cancel(CardCancellationReason.NoValidTarget);
                     return;
                 }
 
@@ -42,7 +39,7 @@ namespace FateWeaver.Tests
 
             public override EffectKey Key => HealKey;
 
-            public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, Value));
+            protected override EffectData Build() => new EffectData(Key, Value);
         }
 
         private sealed class HealDescriptionHandler : IEffectDescriptionHandler
@@ -83,8 +80,7 @@ namespace FateWeaver.Tests
                 new KoreanDescriptionGrammar(),
                 new StatusDescriptionRegistry(),
                 TestContent.Statuses(),
-                card.Id,
-                card.Side);
+                card);
             Assert.AreEqual("치유 5",
                 registry.Resolve(HealKey).Describe(new EffectData(HealKey, 5), 5, context).Text);
         }

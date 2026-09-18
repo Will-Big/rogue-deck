@@ -8,8 +8,8 @@ namespace FateWeaver.Unity.Playback
     /// <summary>카드가 해결되면 시전자가 앞으로 내지른다. 비트를 여는 개시 큐다 — 뒤따르는 피격
     /// 큐들이 이 뒤에 서로 겹쳐 흐르면서 "시전 한 번 → 여러 명이 동시에 피격"이 된다.
     ///
-    /// 대상이 여럿인 광역 공격은 TargetId가 null이므로(DamageHandler가 그렇게 둔다) 특정 대상 쪽이
-    /// 아니라 자기 진영의 정면으로 내지른다.</summary>
+    /// TargetId는 처음 적용된 효과의 첫 대상이다(광역이면 그 목록의 첫 대상, 상대 진영 쪽이라 방향은
+    /// 정면과 같다). 대상을 고른 효과가 없으면 null이고, 그때는 자기 진영의 정면으로 내지른다.</summary>
     public sealed class CardResolvedPresenter : IResolutionEventPresenter
     {
         private readonly BattleStage _stage;

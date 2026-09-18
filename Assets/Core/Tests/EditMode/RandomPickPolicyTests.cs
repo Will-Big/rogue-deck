@@ -12,7 +12,7 @@ namespace FateWeaver.Tests
     public class RandomPickPolicyTests
     {
         private static CardDefinition Card(string id) => new CardDefinition(
-            id, id, Side.Enemy, 5, new[] { new EffectData(EffectKeys.Damage, 1) });
+            id, id, Side.Enemy, 5, new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
 
         /// <summary>id 문자열 하나가 묶음 하나다 — "ab"는 카드 a와 b를 함께 내는 묶음.</summary>
         private static IReadOnlyList<EnemyCardBundle> Bundles(params string[] specs) =>

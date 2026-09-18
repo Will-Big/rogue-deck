@@ -1,17 +1,23 @@
 {
+  "cardFormat": 2,
   "id": "sly_jab",
   "name": "약삭빠른 찌르기",
   "side": "Enemy",
   "category": "Execution",
   "baseExecutionOrder": 3,
+  "targets": {
+    "ally": "FrontOne"
+  },
+  "startCondition": {
+    "kind": "NoPrecedingPlayerCard"
+  },
   "effects": [
     {
       "kind": "damage",
+      "id": "e0",
+      "targetFaction": "Ally",
       "value": 3,
-      "condition": {
-        "kind": "NoPrecedingPlayerCard",
-        "successEffectValue": 6
-      }
+      "successEffectValue": 6
     }
   ]
 }

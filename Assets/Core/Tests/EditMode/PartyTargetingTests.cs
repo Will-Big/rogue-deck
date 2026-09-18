@@ -22,14 +22,14 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AreEqual(
                 new[] { "b", "c" },
-                PartyTargeting.SelectRange(state, TargetSelector.FrontTwo)
+                PartyTargeting.SelectRange(state, CardTargetRange.FrontTwo)
                     .Select(member => member.Id));
         }
 
-        [TestCase(TargetSelector.FrontTwo)]
-        [TestCase(TargetSelector.BackTwo)]
-        [TestCase(TargetSelector.All)]
-        public void One_living_member_range_returns_that_member_once(TargetSelector selector)
+        [TestCase(CardTargetRange.FrontTwo)]
+        [TestCase(CardTargetRange.BackTwo)]
+        [TestCase(CardTargetRange.All)]
+        public void One_living_member_range_returns_that_member_once(CardTargetRange selector)
         {
             var state = new CombatState(TestContent.Statuses());
             var only = new PartyMember("only", "Only", maxHp: 10);
@@ -49,36 +49,15 @@ namespace FateWeaver.Tests
             return r;
         }
 
-        private static ExecutionCardInstance Card(string id, Side side, EffectData effect)
-            => new ExecutionCardInstance(new CardDefinition(id, id, side, 1, new[] { effect }));
+        /// <summary>효과 하나짜리 카드. 두 진영 축을 같은 범위로 둔다 — 효과 진영이 어느 축을 쓸지 고른다.</summary>
+        private static ExecutionCardInstance Card(string id, Side side, EffectData effect, CardTargetRange range)
+            => new ExecutionCardInstance(new CardDefinition(id, id, side, 1, new[] { effect })
+            {
+                AllyTarget = range,
+                EnemyTarget = range
+            });
 
-        // --- Strict explicit ally / self resolution ----------------------------------------------
-
-        [Test]
-        public void Dead_explicit_ally_does_not_fall_back_to_owner_or_front()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var a = new PartyMember("a", "A", maxHp: 10);
-            var b = new PartyMember("b", "B", maxHp: 10);
-            var c = new PartyMember("c", "C", maxHp: 10);
-            b.Hp = 0; // the explicit target is dead
-            state.Party.Add(a);
-            state.Party.Add(b);
-            state.Party.Add(c);
-
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, 4);
-            var card = Card("aid", Side.Player, effect);
-            card.OwnerId = "a";
-            card.TargetId = "b";
-            var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
-
-            new ApplyStatusHandler().Apply(ctx);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
-            Assert.IsFalse(a.Statuses.Has(StatusKeys.Block), "must not fall back to the owner");
-            Assert.IsFalse(state.Party[0].Statuses.Has(StatusKeys.Block), "must not fall back to the front");
-        }
+        // --- Strict self resolution ------------------------------------------------------------------
 
         [Test]
         public void Missing_owner_in_multi_party_self_effect_does_not_fall_back_to_front()
@@ -90,14 +69,13 @@ namespace FateWeaver.Tests
             state.Party.Add(a);
             state.Party.Add(b);
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4);
-            var card = Card("guard", Side.Player, effect);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 4);
+            var card = Card("guard", Side.Player, effect, CardTargetRange.Self);
             // OwnerId intentionally left null.
-            var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
+            var result = EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect);
 
-            new ApplyStatusHandler().Apply(ctx);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason, "대상 없음은 카드 취소가 아니다");
             Assert.IsFalse(a.Statuses.Has(StatusKeys.Block), "must not fall back to the front member");
             Assert.IsFalse(b.Statuses.Has(StatusKeys.Block));
         }
@@ -108,31 +86,28 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses());
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3);
-            var card = Card("crude_guard", Side.Enemy, effect);
-            var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 3 };
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Enemy, 3);
+            var card = Card("crude_guard", Side.Enemy, effect, CardTargetRange.Self);
+            var result = EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect);
 
-            new ApplyStatusHandler().Apply(ctx);
-
-            Assert.IsNull(card.CancellationReason);
+            Assert.IsTrue(result.Applied);
             Assert.IsTrue(state.Enemies[0].Statuses.Has(StatusKeys.Block));
             Assert.AreEqual(3, state.Enemies[0].Statuses.Get(StatusKeys.Block).Magnitude);
         }
 
         [Test]
-        public void Enemy_self_without_owner_cancels_when_multiple_enemies_exist()
+        public void Enemy_self_without_owner_is_not_applied_when_multiple_enemies_exist()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Enemies.Add(new Enemy("a", 20));
             state.Enemies.Add(new Enemy("b", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3);
-            var card = Card("crude_guard", Side.Enemy, effect);
-            var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 3 };
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Enemy, 3);
+            var card = Card("crude_guard", Side.Enemy, effect, CardTargetRange.Self);
+            var result = EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect);
 
-            new ApplyStatusHandler().Apply(ctx);
-
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, card.CancellationReason);
+            Assert.IsFalse(result.Applied);
+            Assert.IsNull(card.CancellationReason, "대상 없음은 카드 취소가 아니다");
             Assert.IsFalse(state.Enemies[0].Statuses.Has(StatusKeys.Block));
             Assert.IsFalse(state.Enemies[1].Statuses.Has(StatusKeys.Block));
         }
@@ -145,15 +120,13 @@ namespace FateWeaver.Tests
             state.Party.Add(hero);
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var effect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 4);
-            var card = Card("guard", Side.Player, effect);
+            var effect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 4);
+            var card = Card("guard", Side.Player, effect, CardTargetRange.Self);
             // OwnerId left null: with only one party member, Self resolves unambiguously — symmetric
             // with Enemy_self_without_owner_uses_the_only_enemy_for_legacy_runners above.
-            var ctx = new EffectContext { Card = card, State = state, Effect = effect, EffectValue = 4 };
+            var result = EffectHarness.Apply(new ApplyStatusHandler(), state, card, effect);
 
-            new ApplyStatusHandler().Apply(ctx);
-
-            Assert.IsNull(card.CancellationReason);
+            Assert.IsTrue(result.Applied);
             Assert.IsTrue(hero.Statuses.Has(StatusKeys.Block));
         }
 
@@ -170,10 +143,9 @@ namespace FateWeaver.Tests
             state.Party.Add(b);
             state.Enemies.Add(new Enemy("goblin", 20));
 
-            var applyEffect = EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.AllPartyMembers, 5);
-            var applyCard = Card("guard_all", Side.Player, applyEffect);
-            var applyCtx = new EffectContext { Card = applyCard, State = state, Effect = applyEffect, EffectValue = 5 };
-            new ApplyStatusHandler().Apply(applyCtx);
+            var applyEffect = EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 5);
+            var applyCard = Card("guard_all", Side.Player, applyEffect, CardTargetRange.All);
+            var applyResult = EffectHarness.Apply(new ApplyStatusHandler(), state, applyCard, applyEffect);
 
             Assert.IsTrue(a.Statuses.Has(StatusKeys.Block));
             Assert.IsTrue(b.Statuses.Has(StatusKeys.Block));
@@ -181,10 +153,9 @@ namespace FateWeaver.Tests
             Assert.AreEqual(5, b.Statuses.Get(StatusKeys.Block).Magnitude);
 
             // Consume A's block via an enemy attack that targets the front (A); B's must remain untouched.
-            var damageEffect = new EffectData(EffectKeys.Damage, 5) { TargetSelector = TargetSelector.FrontOne };
-            var damageCard = Card("smash", Side.Enemy, damageEffect);
-            var damageCtx = new EffectContext { Card = damageCard, State = state, Effect = damageEffect, EffectValue = 5, StatusRegistry = Statuses() };
-            new DamageHandler().Apply(damageCtx);
+            var damageEffect = new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Ally };
+            var damageCard = Card("smash", Side.Enemy, damageEffect, CardTargetRange.FrontOne);
+            var damageResult = EffectHarness.Apply(new DamageHandler(), state, damageCard, damageEffect, Statuses());
 
             Assert.AreEqual(20, a.Hp); // fully absorbed
             Assert.AreEqual(0, a.Statuses.Get(StatusKeys.Block).Magnitude); // A's charge spent
@@ -204,14 +175,12 @@ namespace FateWeaver.Tests
             a.Statuses.Add(StatusKeys.Vulnerable, StatusLifetime.Turns(2));
             a.Statuses.Add(StatusKeys.Block, StatusLifetime.ThisTurn, magnitude: 10);
 
-            var damageEffect = new EffectData(EffectKeys.Damage, 4) { TargetSelector = TargetSelector.BackOne };
-            var card = Card("smash", Side.Enemy, damageEffect);
-            var ctx = new EffectContext { Card = card, State = state, Effect = damageEffect, EffectValue = 4, StatusRegistry = Statuses() };
+            var damageEffect = new EffectData(EffectKeys.Damage, 4) { TargetFaction = CardTargetFaction.Ally };
+            var card = Card("smash", Side.Enemy, damageEffect, CardTargetRange.BackOne);
+            var result = EffectHarness.Apply(new DamageHandler(), state, card, damageEffect, Statuses());
 
-            new DamageHandler().Apply(ctx);
-
-            Assert.AreEqual("b", ctx.TargetId);
-            Assert.AreEqual(4, ctx.DamageDealt); // unmodified by A's vulnerable/block
+            CollectionAssert.AreEqual(new[] { "b" }, result.TargetIds);
+            Assert.AreEqual(4, result.DamageDealt); // unmodified by A's vulnerable/block
             Assert.AreEqual(16, b.Hp);
             Assert.AreEqual(20, a.Hp); // A untouched
             Assert.AreEqual(10, a.Statuses.Get(StatusKeys.Block).Magnitude); // A's block untouched
@@ -220,7 +189,7 @@ namespace FateWeaver.Tests
         // --- Independent formations -----------------------------------------------------------
 
         [Test]
-        public void Position_selector_ignores_dead_members_without_reindexing_the_other_side()
+        public void Position_range_ignores_dead_members_without_reindexing_the_other_side()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
@@ -234,56 +203,17 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("e1", 10));
             state.Enemies.Add(new Enemy("e2", 10));
 
-            var frontOne = PartyTargeting.Select(state, TargetSelector.FrontOne);
+            var frontOne = PartyTargeting.Select(state, CardTargetRange.FrontOne);
             Assert.AreEqual("b", frontOne.Id, "position selection skips the dead front member");
 
             // The player formation change above must have no bearing on enemy-formation indexing.
-            var damageEffect = new EffectData(EffectKeys.Damage, 3);
-            var card = Card("slash", Side.Player, damageEffect);
-            card.TargetId = "e2";
-            var ctx = new EffectContext { Card = card, State = state, Effect = damageEffect, EffectValue = 3 };
-
-            new DamageHandler().Apply(ctx);
+            var damageEffect = new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy };
+            var card = Card("slash", Side.Player, damageEffect, CardTargetRange.BackOne);
+            var result = EffectHarness.Apply(new DamageHandler(), state, card, damageEffect);
 
             Assert.AreEqual(10, state.Enemies[0].Hp, "e1 untouched");
             Assert.AreEqual(7, state.Enemies[1].Hp, "e2 hit at its original index");
-            Assert.AreEqual("e2", ctx.TargetId);
-        }
-
-        // --- PartyTargetRules ----------------------------------------------------------------------
-
-        [Test]
-        public void RequiresExplicitAllyTarget_is_true_only_for_partymember_status_effects()
-        {
-            var partyMemberCard = new CardDefinition("aid", "aid", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.PartyMember, 3) });
-            var selfCard = new CardDefinition("guard", "guard", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, 3) });
-            var allCard = new CardDefinition("guard_all", "guard_all", Side.Player, 1,
-                new[] { EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.AllPartyMembers, 3) });
-            var damageCard = new CardDefinition("slash", "slash", Side.Player, 1,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
-
-            Assert.IsTrue(PartyTargetRules.RequiresExplicitAllyTarget(partyMemberCard));
-            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(selfCard));
-            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(allCard));
-            Assert.IsFalse(PartyTargetRules.RequiresExplicitAllyTarget(damageCard));
-        }
-
-        [Test]
-        public void IsValidExplicitAllyTarget_rejects_dead_or_missing_ids()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var a = new PartyMember("a", "A", maxHp: 10);
-            var b = new PartyMember("b", "B", maxHp: 10);
-            b.Hp = 0;
-            state.Party.Add(a);
-            state.Party.Add(b);
-
-            Assert.IsTrue(PartyTargetRules.IsValidExplicitAllyTarget(state, "a"));
-            Assert.IsFalse(PartyTargetRules.IsValidExplicitAllyTarget(state, "b"));
-            Assert.IsFalse(PartyTargetRules.IsValidExplicitAllyTarget(state, "no-such-id"));
+            CollectionAssert.AreEqual(new[] { "e2" }, result.TargetIds);
         }
     }
 }

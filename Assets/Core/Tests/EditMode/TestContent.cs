@@ -48,6 +48,24 @@ namespace FateWeaver.Tests
             return result.Catalog;
         }
 
+        /// <summary>테스트 전용 상태만 담은 카탈로그(수명 Permanent, 피해 속성 없음 = 보통 피해). 저장소 콘텐츠에 없는
+        /// 상태로 턴 시점 처리를 검증할 때 쓴다 — 코어는 등록된 상태마다 저작 콘텐츠가 있다고 가정한다.</summary>
+        public static StatusContentCatalog PlainStatuses(params FateWeaver.Core.Status.StatusKey[] keys)
+        {
+            var specs = new System.Collections.Generic.Dictionary<FateWeaver.Core.Status.StatusKey, FateWeaver.Core.Authoring.Statuses.StatusSpec>();
+            foreach (var key in keys)
+            {
+                specs[key] = new FateWeaver.Core.Authoring.Statuses.StatusSpec
+                {
+                    Key = FateWeaver.Core.Authoring.StatusKeyRef.Of(key),
+                    DisplayName = key.Id,
+                    Lifetime = FateWeaver.Core.Status.StatusLifetimeKind.Permanent
+                };
+            }
+
+            return new StatusContentCatalog(specs);
+        }
+
         /// <summary>저장소 JSON 전체를 읽은 콘텐츠 번들. 상태 카탈로그와 같은 이유로 호출마다
         /// 새로 만든다 — 카탈로그의 Rules가 가변이다.</summary>
         public static GameContent Content()

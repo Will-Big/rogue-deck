@@ -16,17 +16,23 @@ namespace FateWeaver.Simulation.Descriptions
             switch (condition)
             {
                 case NoPrecedingCardOfSide n:
-                    return "이전에 실행한 " + SideName(n.Side) + " 카드가 없으면";
+                    return "앞에 배치된 " + SideName(n.Side) + " 카드가 없으면";
                 case NoFollowingCardOfSide n:
                     return "뒤에 배치된 " + SideName(n.Side) + " 카드가 없으면";
-                case ConsumedStatusAtLeast _:
-                    return "소비했다면";
                 case AllOf all:
                     return JoinAll(all.Conditions) + "이면";
                 default:
                     return ConditionStem(condition) + "이면";
             }
         }
+
+        public string Requirement(EffectResultRequirement requirement)
+            => requirement.MinimumConsumed <= 1
+                ? "소비했다면"
+                : requirement.MinimumConsumed + " 이상 소비했다면";
+
+        public string ScalingSuffix(EffectResultScaling scaling)
+            => " (소비 1당 " + (scaling.PerConsumed > 0 ? "+" : "") + scaling.PerConsumed + ")";
 
         public string LifetimeSuffix(StatusLifetimeKind kind, int count)
         {
@@ -51,8 +57,6 @@ namespace FateWeaver.Simulation.Descriptions
                     return w.N + "번째 안";
                 case BeforeNextEnemyDamageCard _:
                     return "다음 적 피해 카드 전";
-                case SameTarget _:
-                    return "같은 대상";
                 case AdjacentCardIs a:
                     return AdjacentStem(a);
                 case AdjacentCardHasEffect a:
@@ -87,11 +91,11 @@ namespace FateWeaver.Simulation.Descriptions
         private static string PreviousExecutedStem(PreviousExecutedCardIs previous)
         {
             var subject = SideName(previous.Side) + " 카드";
-            return "직전에 실행한 카드가 " + subject;
+            return "직전에 실행된 카드가 " + subject;
         }
 
         private static string PreviousExecutedEffectStem(PreviousExecutedCardHasEffect previous)
-            => "직전에 실행한 카드가 " + SideName(previous.Side) + " "
+            => "직전에 실행된 카드가 " + SideName(previous.Side) + " "
                 + EffectCardName(previous.EffectKey);
 
         private static string JoinAll(IReadOnlyList<Condition> children)
@@ -100,6 +104,32 @@ namespace FateWeaver.Simulation.Descriptions
             for (var i = 0; i < children.Count; i++)
                 stems[i] = ConditionStem(children[i]);
             return string.Join("이고 ", stems);
+        }
+
+        public string DamageTraitsSuffix(DamageTraits traits)
+        {
+            if (traits == null || traits.All.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var names = new string[traits.All.Count];
+            for (var i = 0; i < names.Length; i++)
+            {
+                names[i] = DamageTraitName(traits.All[i]);
+            }
+
+            return " (" + string.Join(", ", names) + ")";
+        }
+
+        private static string DamageTraitName(DamageTrait trait)
+        {
+            switch (trait)
+            {
+                case DamageTrait.Piercing: return "관통";
+                case DamageTrait.IgnoresMultipliers: return "배율 무시";
+                default: throw new System.ArgumentOutOfRangeException(nameof(trait), trait, "No Korean name for damage trait.");
+            }
         }
 
         private static string SideName(Side side) => side == Side.Player ? "플레이어" : "적";

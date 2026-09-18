@@ -40,17 +40,29 @@ namespace FateWeaver.Tests
 
         /// <summary>키 순서를 추측하지 않고 Newtonsoft에게 물어본다. 노트북이 재현해야 하는 순서가
         /// 바로 이 직렬화기의 순서이므로, 같은 계약(camelCase + 키 참조 컨버터)으로 빈 인스턴스를
-        /// 직렬화해 속성 순서를 읽는다. 기본값도 봐야 하므로 Include를 쓴다.</summary>
+        /// 직렬화해 속성 순서를 읽는다. 기본값도 봐야 하므로 Include를 쓰고, 조건부로 생략되는 필드
+        /// (ShouldSerializeX — 빈 목록 생략)도 보이도록 그 조건을 끈다 — 끄지 않으면 필드가 스키마에서
+        /// 조용히 빠진다.</summary>
         private static JsonSerializer OrderProbe()
         {
             var settings = new JsonSerializerSettings
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ContractResolver = new EveryFieldResolver(),
                 DefaultValueHandling = DefaultValueHandling.Include
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StatusKeyRefJsonConverter());
             return JsonSerializer.Create(settings);
+        }
+
+        private sealed class EveryFieldResolver : CamelCasePropertyNamesContractResolver
+        {
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var property = base.CreateProperty(member, memberSerialization);
+                property.ShouldSerialize = null;
+                return property;
+            }
         }
 
         private static List<string> PropertyOrder(object instance)
@@ -68,14 +80,15 @@ namespace FateWeaver.Tests
         {
             var schema = new JObject();
             schema["effects"] = BuildEffects();
+            schema["effectCommonFields"] = new JArray(EffectCommonFields);
             schema["interventions"] = BuildInterventions();
             schema["condition"] = BuildCondition();
             schema["cardFields"] = BuildCardFields();
             schema["sides"] = Names(typeof(Side));
             schema["categories"] = Names(typeof(CardCategory));
             schema["grades"] = Names(typeof(CardGrade));
-            schema["selectors"] = Names(typeof(TargetSelectorRef));
-            schema["statusTargets"] = Names(typeof(StatusApplyTarget));
+            schema["factions"] = Names(typeof(CardTargetFaction));
+            schema["ranges"] = Names(typeof(CardTargetRange));
             return schema;
         }
 
@@ -91,19 +104,30 @@ namespace FateWeaver.Tests
             return fields;
         }
 
+        /// <summary>모든 효과가 공유하는 필드(EffectSpec 기반 클래스). 효과별 fields에서는 빼고 한 번만 낸다
+        /// — 노트북은 이것을 효과 종류와 무관한 공통 편집부로 그린다(전투 실행 계약 계획 T2b).</summary>
+        private static readonly string[] EffectCommonFields =
+            { "id", "targetFaction", "successEffectValue", "skipOnBasic", "requires", "scaleBy" };
+
+        /// <summary>효과 종류마다: 대상을 고르는지(targeted), 소비량을 결과로 내는지(producesConsumption),
+        /// 종류 고유 필드(fields), 그리고 공통 필드를 포함한 전체 키 순서(order).</summary>
         private static JArray BuildEffects()
         {
             var effects = new JArray();
             foreach (var info in EffectSpecCatalog.All())
             {
+                var spec = info.Create();
                 var entry = new JObject();
-                entry["kind"] = info.Create().Key.Id;
+                entry["kind"] = spec.Key.Id;
                 entry["label"] = info.DisplayName;
+                entry["targeted"] = spec.IsTargeted;
+                entry["producesConsumption"] = spec.ProducesConsumption;
 
+                var order = PropertyOrder(spec);
                 var fields = new JArray();
-                foreach (var name in PropertyOrder(info.Create()))
+                foreach (var name in order)
                 {
-                    if (name == "condition")
+                    if (Array.IndexOf(EffectCommonFields, name) >= 0)
                     {
                         continue;
                     }
@@ -112,23 +136,25 @@ namespace FateWeaver.Tests
                 }
 
                 entry["fields"] = fields;
+                entry["order"] = new JArray(order.ToArray());
                 effects.Add(entry);
             }
 
             return effects;
         }
 
+        /// <summary>카드 시작 조건(StartConditionSpec). 효과가 아니라 카드에 하나 붙는다.</summary>
         private static JObject BuildCondition()
         {
             var fields = new JArray();
-            foreach (var name in PropertyOrder(new ConditionSpec()))
+            foreach (var name in PropertyOrder(new StartConditionSpec()))
             {
                 if (name == "kind")
                 {
                     continue;
                 }
 
-                fields.Add(DescribeField(typeof(ConditionSpec), name));
+                fields.Add(DescribeField(typeof(StartConditionSpec), name));
             }
 
             var condition = new JObject();
@@ -170,6 +196,14 @@ namespace FateWeaver.Tests
             var entry = new JObject();
             entry["name"] = camelName;
 
+            // 기본값이어도 파일에 항상 쓰는 필드(예: consume_status의 mode). 노트북 라이터가 생략하면
+            // 저장소 파일과 바이트가 달라진다.
+            var property = field.GetCustomAttribute<JsonPropertyAttribute>();
+            if (property != null && property.DefaultValueHandling == DefaultValueHandling.Include)
+            {
+                entry["always"] = true;
+            }
+
             var type = field.FieldType;
             if (type == typeof(int))
             {
@@ -187,6 +221,12 @@ namespace FateWeaver.Tests
             {
                 entry["type"] = "enum";
                 entry["options"] = Names(type);
+            }
+            else if (type.IsArray && type.GetElementType().IsEnum)
+            {
+                // 여러 개를 고르는 열거형(예: 피해 속성). 빈 목록은 파일에서 생략한다.
+                entry["type"] = "enumSet";
+                entry["options"] = Names(type.GetElementType());
             }
             else
             {

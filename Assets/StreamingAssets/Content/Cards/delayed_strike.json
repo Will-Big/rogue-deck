@@ -1,15 +1,20 @@
 {
+  "cardFormat": 2,
   "id": "delayed_strike",
   "name": "늦춘 일격",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "damage",
-      "value": 5,
-      "selector": "FrontOne"
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 5
     }
   ],
   "grade": "Common",

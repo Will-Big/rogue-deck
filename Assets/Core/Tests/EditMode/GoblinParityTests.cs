@@ -22,8 +22,22 @@ namespace FateWeaver.Tests
         private const int RunSeed = 20260917;
         private const int MaxTurns = 40;
 
-        /// <summary>C# 원본 경로에서 실측한 서명의 SHA-256(소문자 hex). 바꾸지 않는다 — 바뀌면 이관이 동작을 바꾼 것이다.</summary>
-        private const string ExpectedSignatureSha256 = "d2838fe33041eeecf71d2ff977f55512d52994cee6c081a49badc004b065ff64";
+        /// <summary>C# 원본 경로에서 실측한 서명의 SHA-256(소문자 hex). 이관 때문에 바꾸지 않는다 — 바뀌면 이관이
+        /// 동작을 바꾼 것이다. 규칙을 의도적으로 바꿀 때만 차이를 확인하고 갱신한다.
+        /// 2026-09-18 갱신(전투 실행 계약 T1): 죽은 고블린의 남은 goblin_jab이 그 카드 차례의
+        /// CardCancelled(OwnerDied) 대신 죽인 카드 직후의 CardRemoved로 기록된다. 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T2a): toxic_reclaim의 소비 보상이 조건이 아니라 requires가 되어
+        /// 카드 시작 조건이 없으므로 CardResolved.ConditionTier가 Success에서 Basic이 된다. 피해·상태·HP는 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T3): 효과마다 대상을 고르고 대상 없음은 미적용이다. ① CardResolved.TargetId가
+        /// "마지막 대상"에서 "처음 적용된 효과의 첫 대상"이 되어 spore_veil·probing_strike·toxic_reclaim이 member_a 대신
+        /// goblin#0을 가리킨다. ② 고블린이 죽은 뒤의 spore_veil·delayed_strike가 NoValidTarget 취소 대신 해결되고,
+        /// spore_veil의 자신 방어 2가 적용된다(같은 턴 끝에 만료). 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T5): 승패는 카드가 끝날 때마다 판정한다. 고블린을 죽인 카드가 끝나는 순간
+        /// 승리가 확정되어 그 뒤의 spore_veil·delayed_strike와 턴 끝 방어 만료(StatusExpired)가 실행되지 않는다.
+        /// 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T6): 방어 만료가 턴 정리(Cleanup)에서 다음 턴 준비(Prepare)로 옮겨져, 해석
+        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.</summary>
+        private const string ExpectedSignatureSha256 = "64ac73c90706d0f173eaf9b0a79e3f252895c9a02314623b5cd3f9af04b550ed";
 
         private static CombatNode BeginNode()
         {

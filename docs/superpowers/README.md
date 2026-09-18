@@ -40,8 +40,7 @@
 
 | 문서 | 상태 | 권위 범위 | 다음 사용 시점 |
 |---|---|---|---|
-| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `active` | 2026-09-18 승인된 설계. 실행 카드·효과별 위치·반응·소비 보상·만료·승패 경계의 상충 규칙을 대체. 다중 적 정책 제외. 현재 구현 설명은 아님 | 별도 구현 요청 후 적용 |
-| [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) — [HTML 개요](plans/2026-09-18-combat-execution-contract.html) | `active` | 승인 설계를 T0~T7(T2a·T2b 포함 아홉 작업)로 분해한 계획. 2026-09-18 검토 결정 D1~D8 반영(치명타 버티기 제거, 편집 도구 새 형식 편집 지원, 독 관통·배율 미적용, Unity 배치 검증). 아직 구현하지 않음 | 별도 구현 요청 후 워크트리에서 순차 실행 |
+| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `current` | 실행 카드·효과별 위치(카드 축 + 효과 진영)·직접 반응·피해 속성·소비 보상·카드 종료 승패·공통 만료 시점의 권위 문서. 2026-09-18 구현 완료(브랜치 `combat-execution-contract`, master 머지 전). 구현 계획은 보관됨. 다중 적 정책 제외 | 전투 실행·반응·만료 규칙 변경 |
 
 ### 전투와 파티 규칙
 
@@ -379,8 +378,8 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   2. 계획 4의 범위를 카드에 한정할 것인가, 층 전반으로 넓힐 것인가.
 
 - [ ] **치명타 버티기 재도입** — 2026-09-18 사용자 결정으로
-  [전투 실행 계약 구현 계획](plans/2026-09-18-combat-execution-contract.md) T0에서 `SurviveCharges`·`DeathsDoor`를
-  전부 제거한다. 나중에 **다른 방식으로** 다시 도입할 예정이며, 옛 구조(캐릭터 JSON의 충전 수, 피해 처리 안의 분기)를
+  전투 실행 계약 구현 계획 T0에서 `SurviveCharges`·`DeathsDoor`를
+  전부 제거했다. 나중에 **다른 방식으로** 다시 도입할 예정이며, 옛 구조(캐릭터 JSON의 충전 수, 피해 처리 안의 분기)를
   되살리지 않고 새 설계부터 시작한다.
 
 - [ ] **조건 평가의 등록형 전환** — 전투 실행 계약 계획 검토(2026-09-18)에서 범위 밖으로 뺐다. 런타임

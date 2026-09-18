@@ -8,9 +8,8 @@ using FateWeaver.Core.Events;
 
 namespace FateWeaver.Tests
 {
-    /// <summary>Task 3: execution-card cancellation events (CardCancelled) and the per-effect death
-    /// sweep (PartyMemberDied / DeathsDoorSurvived), including the owner-death cascade that cancels a
-    /// dead owner's still-pending cards — symmetrically for party members and enemies.</summary>
+    /// <summary>실행 카드 취소(CardCancelled)와 효과마다의 사망 정리(PartyMemberDied), 그리고 주인이 죽으면
+    /// 그 주인의 차례가 오지 않은 카드를 실행선에서 빼는 것(CardRemoved)을 파티원·적 대칭으로 잠근다.</summary>
     public class CardCancellationTests
     {
         private static EffectRegistry Registry()
@@ -26,15 +25,13 @@ namespace FateWeaver.Tests
             int executionOrder,
             int damage,
             string ownerId = null,
-            string targetId = null,
             int instanceId = -1)
         {
             var def = new CardDefinition(id, id, side, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardFixtures.Opposing(side) } }) { AllyTarget = CardTargetRange.FrontOne, EnemyTarget = CardTargetRange.FrontOne };
             return new ExecutionCardInstance(def)
             {
                 OwnerId = ownerId,
-                TargetId = targetId,
                 InstanceId = instanceId
             };
         }
@@ -61,9 +58,12 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            var cancelledWarriorCard = events.OfType<CardCancelled>().Single(e => e.CardId == "warrior_card");
-            Assert.AreEqual(CardCancellationReason.OwnerDied, cancelledWarriorCard.Reason);
-            Assert.AreEqual("warrior", cancelledWarriorCard.OwnerId);
+            var removedWarriorCard = events.OfType<CardRemoved>().Single(e => e.CardId == "warrior_card");
+            Assert.AreEqual(2, removedWarriorCard.InstanceId);
+            Assert.AreEqual("warrior", removedWarriorCard.OwnerId);
+            Assert.IsFalse(events.OfType<CardCancelled>().Any(e => e.CardId == "warrior_card"));
+            Assert.IsFalse(state.Zone.Cards.Contains(warriorCard));
+            Assert.AreEqual(CardExecutionState.Removed, warriorCard.ExecutionState);
 
             Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "mage_card"));
             Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "ownerless_card"));
@@ -71,20 +71,71 @@ namespace FateWeaver.Tests
             Assert.IsFalse(events.OfType<CardCancelled>().Any(e => e.CardId == "ownerless_card"));
         }
 
+        // V03
         [Test]
-        public void Cancelled_card_emits_no_card_resolved_event()
+        public void Owner_death_keeps_already_executed_cards_and_removes_only_pending_ones()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.Party.Clear();
+            state.Party.Add(new PartyMember("warrior", "Warrior", maxHp: 5));
+            state.Party.Add(new PartyMember("mage", "Mage", maxHp: 5));
+            state.Enemies.Add(new Enemy("goblin", 100));
+
+            var earlyWarriorCard = Card("early", Side.Player, executionOrder: 1, damage: 1, ownerId: "warrior", instanceId: 1);
+            var enemyStrike = Card("enemy_strike", Side.Enemy, executionOrder: 2, damage: 10, instanceId: 2);
+            var lateWarriorCard = Card("late", Side.Player, executionOrder: 3, damage: 1, ownerId: "warrior", instanceId: 3);
+            state.Zone.Add(earlyWarriorCard);
+            state.Zone.Add(enemyStrike);
+            state.Zone.Add(lateWarriorCard);
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "early"));
+            Assert.AreEqual("late", events.OfType<CardRemoved>().Single().CardId);
+            CollectionAssert.AreEqual(new[] { earlyWarriorCard, enemyStrike }, state.Zone.Cards);
+            Assert.AreEqual(CardExecutionState.Executed, earlyWarriorCard.ExecutionState);
+            Assert.AreEqual(CardExecutionState.Executed, enemyStrike.ExecutionState);
+            Assert.AreEqual(CardExecutionState.Removed, lateWarriorCard.ExecutionState);
+        }
+
+        [Test]
+        public void Removal_follows_the_death_inside_the_killing_card()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            state.Party.Clear();
+            state.Party.Add(new PartyMember("warrior", "Warrior", maxHp: 5));
+            state.Party.Add(new PartyMember("mage", "Mage", maxHp: 5));
+            state.Enemies.Add(new Enemy("goblin", 100));
+            state.Zone.Add(Card("enemy_strike", Side.Enemy, executionOrder: 1, damage: 10, instanceId: 1));
+            state.Zone.Add(Card("warrior_card", Side.Player, executionOrder: 2, damage: 1, ownerId: "warrior", instanceId: 2));
+            state.Zone.Add(Card("mage_card", Side.Player, executionOrder: 3, damage: 1, ownerId: "mage", instanceId: 3));
+
+            var events = new TurnResolver(Registry()).Resolve(state, 0);
+
+            var kinds = events
+                .Where(e => e is CardResolved || e is PartyMemberDied || e is CardRemoved)
+                .Select(e => e.GetType().Name)
+                .ToArray();
+            CollectionAssert.AreEqual(
+                new[] { "CardResolved", "PartyMemberDied", "CardRemoved", "CardResolved" }, kinds);
+        }
+
+        [Test]
+        public void A_card_whose_effect_finds_no_target_still_resolves_without_cancelling()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
-            // No enemies -> the player card's target can never resolve.
+            // 적이 없다 -> 피해 효과는 대상이 없어 미적용될 뿐, 카드는 실행된다(스펙 §2).
             var strike = Card("strike", Side.Player, executionOrder: 1, damage: 4);
             state.Zone.Add(strike);
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            Assert.IsFalse(events.OfType<CardResolved>().Any());
-            var cancelled = events.OfType<CardCancelled>().Single();
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, cancelled.Reason);
+            Assert.IsFalse(events.OfType<CardCancelled>().Any());
+            var resolved = events.OfType<CardResolved>().Single();
+            Assert.AreEqual(0, resolved.DamageDealt);
+            Assert.IsNull(resolved.TargetId);
+            Assert.IsNull(strike.CancellationReason);
         }
 
         [Test]
@@ -107,57 +158,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Hp_reaching_exactly_one_without_spending_a_charge_emits_no_deaths_door_event()
+        public void Kill_then_no_target_resolves_then_death_then_owner_removal()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
-            var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
-            state.Party.Add(hero);
-
-            var strike = Card("goblin_jab", Side.Enemy, executionOrder: 1, damage: 4); // 5 -> 1, no charge spent
-            state.Zone.Add(strike);
-
-            var events = new TurnResolver(Registry()).Resolve(state, 0);
-
-            Assert.AreEqual(1, hero.Hp);
-            Assert.AreEqual(1, hero.SurviveCharges);
-            Assert.IsFalse(events.OfType<DeathsDoorSurvived>().Any());
-            Assert.IsFalse(events.OfType<PartyMemberDied>().Any());
-        }
-
-        [Test]
-        public void Charge_decrease_emits_deaths_door_even_when_hp_was_already_one_before_a_later_effect()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var hero = new PartyMember("hero", "Hero", maxHp: 5, surviveCharges: 1);
-            state.Party.Add(hero);
-
-            // Two effects on one card: first lands hero exactly on 1 HP (no charge spent), second
-            // would be lethal and must spend the charge even though HP was already 1 going in.
-            var def = new CardDefinition("double_strike", "double_strike", Side.Enemy, 1,
-                new[]
-                {
-                    new EffectData(EffectKeys.Damage, 4),
-                    new EffectData(EffectKeys.Damage, 1)
-                });
-            state.Zone.Add(new ExecutionCardInstance(def));
-
-            var events = new TurnResolver(Registry()).Resolve(state, 0);
-
-            Assert.AreEqual(1, hero.Hp);
-            Assert.AreEqual(0, hero.SurviveCharges);
-            var survived = events.OfType<DeathsDoorSurvived>().Single();
-            Assert.AreEqual("hero", survived.MemberId);
-            Assert.IsFalse(events.OfType<PartyMemberDied>().Any());
-        }
-
-        [Test]
-        public void Kill_then_no_target_emits_cancellation_before_death_and_owner_cancellation()
-        {
-            var state = new CombatState(TestContent.Statuses());
-            state.Party.Clear();
-            var memberA = new PartyMember("a", "A", maxHp: 5, surviveCharges: 0);
+            var memberA = new PartyMember("a", "A", maxHp: 5);
             state.Party.Add(memberA);
             state.Enemies.Add(new Enemy("goblin", 100));
 
@@ -168,9 +173,9 @@ namespace FateWeaver.Tests
                 1,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 5),
-                    new EffectData(EffectKeys.Damage, 1)
-                });
+                    new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Ally },
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally }
+                }) { AllyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(killThenCancel) { InstanceId = 1, OwnerId = "goblin" });
             state.Zone.Add(Card(
                 "a_pending",
@@ -182,29 +187,27 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
+            // 둘째 피해는 대상이 없어 미적용될 뿐 카드를 취소하지 않는다(스펙 §2).
             var relevant = events
-                .Where(e => e is CardCancelled || e is PartyMemberDied)
+                .Where(e => e is CardResolved || e is CardCancelled || e is PartyMemberDied || e is CardRemoved)
                 .ToArray();
             Assert.AreEqual(3, relevant.Length);
-            Assert.AreEqual(typeof(CardCancelled), relevant[0].GetType());
-            var current = (CardCancelled)relevant[0];
+            Assert.AreEqual(typeof(CardResolved), relevant[0].GetType());
+            var current = (CardResolved)relevant[0];
             Assert.AreEqual("kill_then_cancel", current.CardId);
-            Assert.AreEqual(CardCancellationReason.NoValidTarget, current.Reason);
+            Assert.AreEqual(5, current.DamageDealt);
 
             Assert.AreEqual(typeof(PartyMemberDied), relevant[1].GetType());
             var died = (PartyMemberDied)relevant[1];
             Assert.AreEqual(memberA.Id, died.MemberId);
 
-            Assert.AreEqual(typeof(CardCancelled), relevant[2].GetType());
-            var pending = (CardCancelled)relevant[2];
-            Assert.AreEqual("a_pending", pending.CardId);
-            Assert.AreEqual(CardCancellationReason.OwnerDied, pending.Reason);
-            Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "kill_then_cancel"));
-            Assert.AreEqual(1, events.OfType<CardCancelled>().Count(e => e.CardId == "kill_then_cancel"));
+            Assert.AreEqual(typeof(CardRemoved), relevant[2].GetType());
+            Assert.AreEqual("a_pending", ((CardRemoved)relevant[2]).CardId);
+            Assert.IsFalse(events.OfType<CardCancelled>().Any());
         }
 
         [Test]
-        public void Enemy_death_cancels_that_enemys_own_pending_cards()
+        public void Enemy_death_removes_that_enemys_own_pending_cards()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
@@ -220,15 +223,14 @@ namespace FateWeaver.Tests
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
             Assert.IsTrue(events.OfType<EnemyDied>().Any(e => e.EnemyId == "goblin"));
-            var cancelled = events.OfType<CardCancelled>().Single(e => e.CardId == "goblin_strike");
-            Assert.AreEqual(CardCancellationReason.OwnerDied, cancelled.Reason);
-            Assert.AreEqual("goblin", cancelled.OwnerId);
+            var removed = events.OfType<CardRemoved>().Single(e => e.CardId == "goblin_strike");
+            Assert.AreEqual("goblin", removed.OwnerId);
             Assert.IsFalse(events.OfType<CardResolved>().Any(e => e.CardId == "goblin_strike"));
             Assert.AreEqual(30, state.Party[0].Hp);
         }
 
         [Test]
-        public void Enemy_death_marks_only_pending_cards_owned_by_that_enemy()
+        public void Enemy_death_removes_only_pending_cards_owned_by_that_enemy()
         {
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
@@ -247,10 +249,8 @@ namespace FateWeaver.Tests
 
             var events = new TurnResolver(Registry()).Resolve(state, 0);
 
-            var cancelled = events.OfType<CardCancelled>().Single(e => e.CardId == "front_strike");
-            Assert.AreEqual(CardCancellationReason.OwnerDied, cancelled.Reason);
+            Assert.AreEqual("front_strike", events.OfType<CardRemoved>().Single().CardId);
             Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "back_strike"));
-            Assert.IsFalse(events.OfType<CardCancelled>().Any(e => e.CardId == "back_strike"));
             Assert.AreEqual(27, state.Party[0].Hp); // back's 3 damage only
         }
 
@@ -260,6 +260,8 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 5));
+            // 마지막 적이 죽으면 그 카드가 끝나는 즉시 전투가 끝나므로(스펙 §2), 적을 하나 더 둔다.
+            state.Enemies.Add(new Enemy("bystander", 100));
 
             // Resolves before the death; must stay resolved.
             var earlyStrike = Card(
@@ -277,6 +279,7 @@ namespace FateWeaver.Tests
             Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "early_strike"));
             Assert.IsTrue(events.OfType<CardResolved>().Any(e => e.CardId == "ownerless_strike"));
             Assert.IsFalse(events.OfType<CardCancelled>().Any());
+            Assert.IsFalse(events.OfType<CardRemoved>().Any());
             Assert.AreEqual(27, state.Party[0].Hp);
         }
 

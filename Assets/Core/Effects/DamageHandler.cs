@@ -1,38 +1,21 @@
-using System.Collections.Generic;
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Combat;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Player cards hit an enemy target resolved by the effect's TargetSelector (position in
-    /// the living formation, or All for every living enemy); with no selector, falls back to the
-    /// legacy path (explicit id, else the raw first enemy) for pre-selector content. Enemy cards hit a
-    /// party member chosen the same way — by the effect's TargetSelector (null defaults to FrontOne,
-    /// for pre-party compat). Incoming damage is folded through the target's entity-scoped statuses
-    /// (e.g. Vulnerable, Block) when a StatusRegistry is present; with no registry it applies raw. If no
-    /// target can be resolved the card is cancelled (NoValidTarget) and nothing is mutated.</summary>
+    /// <summary>이 효과가 고른 대상 모두에게 고정 피해를 준다. 대상은 효과 진영과 카드의 그 진영 축으로
+    /// EffectExecutor가 효과 시작 때 고른다. 광역이면 그 목록 전체에 같은 수치로 적용한다. 받는 피해는 대상의 개체 상태(취약·방어 등)로 접힌다(StatusRegistry가 있을 때).</summary>
     public sealed class DamageHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.Damage;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-        {
-            var faction = card.Side == Side.Player
-                ? CardTargetFaction.Enemy
-                : CardTargetFaction.Ally;
-            var selector = effect.TargetSelector ?? Cards.TargetSelector.FrontOne;
-            return new CardTargetKey(faction, CardTargetSnapshot.RangeFor(selector));
-        }
-
         public void Apply(EffectContext ctx)
         {
-            if (ctx.Card.CancellationReason != null)
-            {
-                return;
-            }
-
-            var bonus = ctx.Card.ConsumePendingDamageBonus();
+            // Deliberate rule: a pending damage bonus (GrantNextPlayerDamageCardBonus) raises the
+            // CARD's damage value, not a fixed pool split across targets — so with an All-target card
+            // it applies to EVERY target independently ("다음 플레이어 피해 카드가 주는 피해 +X" reads
+            // per hit dealt, not a one-time budget). 반응 효과에는 카드가 없어 버프도 없다.
+            var bonus = ctx.Card?.ConsumePendingDamageBonus() ?? 0;
             if (bonus != 0)
             {
                 ctx.ExtraEvents.Add(new Events.CardBuffConsumed(
@@ -40,201 +23,23 @@ namespace FateWeaver.Core.Effects
             }
 
             var amount = FoldOutgoing(ctx, ctx.EffectValue + bonus);
-            if (ctx.Targets != null)
+            var request = DamageRequest.Attack(
+                amount,
+                ctx.ActorId,
+                ctx.Card != null ? Events.HpChangeSource.CardDamage : Events.HpChangeSource.Reaction,
+                ctx.SourceId,
+                (ctx.Effect.Payload as DamagePayload)?.Traits);
+            var targets = ctx.RequireTargets();
+            foreach (var target in targets.Enemies)
             {
-                ApplySnapshotTargets(ctx, amount);
-                return;
+                ctx.DamageDealt += ctx.Damage.Deal(ctx.State, target, request, ctx.Sink);
             }
-            if (ctx.Card.Def.Side == Side.Player)
+
+            foreach (var target in targets.Party)
             {
-                if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
-                {
-                    // Deliberate rule: a pending damage bonus (GrantNextPlayerDamageCardBonus) raises
-                    // the CARD's damage value, not a fixed pool split across targets — so with an
-                    // All-target card it applies to EVERY target independently ("다음 플레이어 피해
-                    // 카드가 주는 피해 +X" reads per hit dealt, not a one-time budget). E.g. +3 bonus
-                    // on a base-2 All-target card deals 5 to each enemy, not 2 to one and 3 total spread.
-                    var targets = EnemyTargeting.SelectAll(ctx.State);
-                    if (targets.Count == 0)
-                    {
-                        ctx.Cancel(CardCancellationReason.NoValidTarget);
-                        return;
-                    }
-
-                    var total = 0;
-                    foreach (var each in targets)
-                    {
-                        var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
-                        HitEnemy(ctx, each, dealt);
-                        total += dealt;
-                    }
-
-                    ctx.DamageDealt = total;
-                    return;
-                }
-
-                var target = ctx.Effect?.TargetSelector is Cards.TargetSelector selector
-                    ? EnemyTargeting.Select(ctx.State, selector)
-                    : EnemyTargeting.ByIdOrFront(ctx.State, ctx.Card.TargetId);
-                if (target == null)
-                {
-                    ctx.Cancel(CardCancellationReason.NoValidTarget);
-                    return;
-                }
-
-                var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                HitEnemy(ctx, target, damage);
-                ctx.DamageDealt = damage;
-                ctx.TargetId = target.Id;
-            }
-            else
-            {
-                if (ctx.Effect?.TargetSelector == Cards.TargetSelector.All)
-                {
-                    var targets = AllLivingParty(ctx.State);
-                    if (targets.Count == 0)
-                    {
-                        ctx.Cancel(CardCancellationReason.NoValidTarget);
-                        return;
-                    }
-
-                    var total = 0;
-                    foreach (var each in targets)
-                    {
-                        var dealt = FoldIncoming(ctx, each.Statuses, each.Id, amount);
-                        HitParty(ctx, each, dealt);
-                        total += dealt;
-                    }
-
-                    ctx.DamageDealt = total;
-                    return;
-                }
-
-                var target = SelectPartyTarget(ctx);
-                if (target == null)
-                {
-                    ctx.Cancel(CardCancellationReason.NoValidTarget);
-                    return;
-                }
-
-                var damage = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                HitParty(ctx, target, damage);
-                ctx.DamageDealt = damage;
-                ctx.TargetId = target.Id;
+                ctx.DamageDealt += ctx.Damage.Deal(ctx.State, target, request, ctx.Sink);
             }
         }
-
-        private static void ApplySnapshotTargets(EffectContext ctx, int amount)
-        {
-            var key = new DamageHandler().TargetFor(ctx.Card.Def, ctx.Effect).Value;
-            if (key.Faction == CardTargetFaction.Enemy)
-            {
-                var total = 0;
-                string onlyTargetId = null;
-                var affected = 0;
-                foreach (var target in ctx.Targets.EnemyTargets(key))
-                {
-                    if (target.Hp <= 0)
-                    {
-                        continue;
-                    }
-
-                    var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                    HitEnemy(ctx, target, dealt);
-                    total += dealt;
-                    onlyTargetId = target.Id;
-                    affected++;
-                }
-
-                ctx.DamageDealt = total;
-                ctx.TargetId = affected == 1 ? onlyTargetId : null;
-                if (affected == 0)
-                {
-                    ctx.Cancel(CardCancellationReason.NoValidTarget);
-                }
-                return;
-            }
-
-            var partyTotal = 0;
-            string partyOnlyTargetId = null;
-            var partyAffected = 0;
-            foreach (var target in ctx.Targets.PartyTargets(key))
-            {
-                if (!target.IsAlive)
-                {
-                    continue;
-                }
-
-                var dealt = FoldIncoming(ctx, target.Statuses, target.Id, amount);
-                HitParty(ctx, target, dealt);
-                partyTotal += dealt;
-                partyOnlyTargetId = target.Id;
-                partyAffected++;
-            }
-
-            ctx.DamageDealt = partyTotal;
-            ctx.TargetId = partyAffected == 1 ? partyOnlyTargetId : null;
-            if (partyAffected == 0)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-            }
-        }
-
-        /// <summary>적에게 피해를 적용하고, HP가 실제로 바뀌었으면 HpChanged를 남긴다.</summary>
-        private static void HitEnemy(EffectContext ctx, Enemy target, int dealt)
-        {
-            var before = target.Hp;
-            target.Hp -= dealt;
-            if (target.Hp != before)
-            {
-                ctx.ExtraEvents.Add(new Events.HpChanged(
-                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
-            }
-        }
-
-        /// <summary>파티원에게 피해를 적용하고(치명 버팀 경유), HP가 실제로 바뀌었으면 HpChanged를
-        /// 남긴다. After는 클램프 이후 실측값이라 치명 버팀 발동 시 1로 남는다.</summary>
-        private static void HitParty(EffectContext ctx, PartyMember target, int dealt)
-        {
-            var before = target.Hp;
-            target.TakeDamage(dealt);
-            if (target.Hp != before)
-            {
-                ctx.ExtraEvents.Add(new Events.HpChanged(
-                    target.Id, before, target.Hp, Events.HpChangeSource.CardDamage, ctx.Card.Def.Id));
-            }
-        }
-
-        /// <summary>Picks the party member an enemy attack hits, via the effect's position selector
-        /// (defaulting to FrontOne) evaluated against the living party formation at execution time.</summary>
-        private static PartyMember SelectPartyTarget(EffectContext ctx)
-        {
-            var selector = ctx.Effect?.TargetSelector ?? Cards.TargetSelector.FrontOne;
-            return PartyTargeting.Select(ctx.State, selector);
-        }
-
-        /// <summary>Every currently-living party member (a snapshot taken at resolution time, so
-        /// mid-loop deaths from earlier hits in the same All sweep can't change who's hit next).</summary>
-        private static List<PartyMember> AllLivingParty(CombatState state)
-        {
-            var living = new List<PartyMember>();
-            foreach (var member in state.Party)
-            {
-                if (member.IsAlive)
-                {
-                    living.Add(member);
-                }
-            }
-
-            return living;
-        }
-
-        /// <summary>Folds the target's entity-scoped statuses into incoming damage: the multiplier
-        /// layer first, then the absorb layer (see StatusDamageFold). An UntilConsumed status that
-        /// actually changed the damage spends a charge (auto-consume).</summary>
-        private static int FoldIncoming(EffectContext ctx, StatusBag bag, string holderId, int damage)
-            => StatusDamageFold.Incoming(
-                bag, ctx.StatusRegistry, ctx.State.StatusRules, damage, holderId, ctx.DamageSteps);
 
         /// <summary>Folds the acting side's entity-scoped statuses into the damage it deals (e.g.
         /// Weak). Applied once per effect, before any target's incoming statuses — so an All-target
@@ -242,6 +47,6 @@ namespace FateWeaver.Core.Effects
         private static int FoldOutgoing(EffectContext ctx, int damage)
             => StatusDamageFold.Outgoing(
                 ctx.ActorStatuses, ctx.StatusRegistry, ctx.State.StatusRules, damage,
-                ctx.Card.OwnerId, ctx.DamageSteps);
+                ctx.Card != null ? ctx.Card.OwnerId : ctx.ActorId, ctx.DamageSteps);
     }
 }

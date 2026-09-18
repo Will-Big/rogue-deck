@@ -66,14 +66,12 @@ namespace FateWeaver.Core.Conditions
 
             if (condition is NoPrecedingCardOfSide noPreceding)
             {
-                // Only counts cards that actually finished resolution: a placed-but-cancelled card
-                // (OwnerDied / NoValidTarget / StatusIntercepted) never "preceded" anything. By the
-                // time this card resolves, every earlier-index card has already concluded, so its
-                // final CancellationReason is settled.
+                // 배치 질의는 현재 실행선을 본다. 주인이 죽어 빠진 카드는 이미 실행선에 없고,
+                // 차례가 왔지만 효과가 없었던 카드는 앞 카드로 센다(스펙 §6).
                 for (int i = 0; i < index; i++)
                 {
                     var earlier = ctx.Order[i];
-                    if (earlier.Def.Side == noPreceding.Side && earlier.CancellationReason == null)
+                    if (earlier.Def.Side == noPreceding.Side)
                     {
                         return ConditionTier.Basic;
                     }
@@ -112,25 +110,6 @@ namespace FateWeaver.Core.Conditions
                     && last.Def.HasEffect(previousEffect.EffectKey)
                         ? ConditionTier.Success
                         : ConditionTier.Basic;
-            }
-
-            if (condition is SameTarget)
-            {
-                // Skips cancelled player cards: only the last player card that actually resolved
-                // (and therefore has a meaningful TargetId) counts.
-                var previous = ctx.LastExecutedPlayerCard;
-                return previous != null
-                    && !string.IsNullOrEmpty(card.TargetId)
-                    && card.TargetId == previous.TargetId
-                        ? ConditionTier.Success
-                        : ConditionTier.Basic;
-            }
-
-            if (condition is ConsumedStatusAtLeast consumedAtLeast)
-            {
-                return card.ConsumedStatusAmount >= consumedAtLeast.N
-                    ? ConditionTier.Success
-                    : ConditionTier.Basic;
             }
 
             if (condition is AllOf allOf)

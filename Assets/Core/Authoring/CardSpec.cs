@@ -15,6 +15,14 @@ namespace FateWeaver.Core.Authoring
     /// 앞서게 고정한다.</summary>
     public abstract class CardSpec
     {
+        /// <summary>지금 게임이 쓰는 카드 JSON 형식. 이 값이 없는 파일은 구형(1)이며 로딩 경계에서
+        /// CardFormatMigration이 올린다(전투 실행 계약 스펙 §4).</summary>
+        public const int CurrentFormat = 2;
+
+        /// <summary>카드 JSON 형식 버전. 편집 도구의 저장 형식 버전(schemaVersion)과 다른 값이다.</summary>
+        [JsonProperty(Order = -11, DefaultValueHandling = DefaultValueHandling.Include)]
+        public int CardFormat = CurrentFormat;
+
         [JsonProperty(Order = -10)]
         public string Id;
 
@@ -46,10 +54,13 @@ namespace FateWeaver.Core.Authoring
         public string[] Tags;
     }
 
-    /// <summary>실행 카드의 저작 데이터. 레일에 올라 효과를 순서대로 발동한다.</summary>
+    /// <summary>실행 카드의 저작 데이터. 레일에 올라 효과를 순서대로 발동한다(전투 실행 계약 스펙 §4):
+    /// 진영별 위치 규칙(targets), 선택적 카드 시작 조건, 순서 있는 효과.</summary>
     public sealed class ExecutionCardSpec : CardSpec
     {
         public int BaseExecutionOrder;
+        public CardTargetsSpec Targets;
+        public StartConditionSpec StartCondition;
         public EffectSpec[] Effects;
     }
 

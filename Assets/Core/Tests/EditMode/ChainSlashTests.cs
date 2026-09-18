@@ -29,18 +29,21 @@ namespace FateWeaver.Tests
         public void Chain_does_not_re_trigger_after_an_enemy_card()
         {
             var enemy = new ZoneCardSpec("enemy_jab", "enemy_jab", Side.Enemy, 1,
-                new[] { new EffectData(EffectKeys.Damage, 3) });
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
             var chain = new ZoneCardSpec("chain", "Chain Slash", Side.Player, 2,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 1),
-                    EffectData.Conditional(EffectKeys.Damage, 0,
-                        new AllOf(new Condition[]
-                        {
-                            new PreviousExecutedCardIs(Side.Player),
-                            new WithinNth(3)
-                        }), 5)
-                });
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy },
+                    new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 5 }
+                })
+            {
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = new AllOf(new Condition[]
+                {
+                    new PreviousExecutedCardIs(Side.Player),
+                    new WithinNth(3)
+                })
+            };
 
             var scenario = new MultiTurnScenario("chain-no-trigger", 30,
                 new[] { new EnemySpec("goblin", 100) },

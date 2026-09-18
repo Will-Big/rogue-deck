@@ -17,9 +17,6 @@ namespace FateWeaver.Simulation
                 "mark-combo",
                 MarkCombo),
             new SampleMultiTurnScenarioEntry(
-                "counter-stance",
-                CounterStance),
-            new SampleMultiTurnScenarioEntry(
                 "chain-slash",
                 ChainSlash)
         };
@@ -92,19 +89,21 @@ namespace FateWeaver.Simulation
                                 "mark", "Mark", Side.Player, executionOrder: 2,
                                 effects: new[]
                                 {
-                                    EffectData.Conditional(
-                                        EffectKeys.GrantNextPlayerDamageCardBonus,
-                                        effectValue: 0,
-                                        condition: new AllOf(new Condition[]
-                                        {
-                                            new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Player, EffectKeys.Damage),
-                                            new BeforeNextEnemyDamageCard()
-                                        }),
-                                        successEffectValue: 6)
-                                }),
+                                    new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 0)
+                                    {
+                                        SuccessEffectValue = 6
+                                    }
+                                })
+                            {
+                                StartCondition = new AllOf(new Condition[]
+                                {
+                                    new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Player, EffectKeys.Damage),
+                                    new BeforeNextEnemyDamageCard()
+                                })
+                            },
                             new ZoneCardSpec(
                                 "slash", "Slash", Side.Player, executionOrder: 3,
-                                effects: new[] { new EffectData(EffectKeys.Damage, 2) })
+                                effects: new[] { new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne }
                         },
                         interventionPlays: new[]
                         {
@@ -114,52 +113,6 @@ namespace FateWeaver.Simulation
                         })
                 });
         }
-
-        /// <summary>반격 자세 (doc §11.4 후보 A / §2.3 후행 보상): gain 2 block, and if an enemy attack
-        /// resolved immediately before this card, counter that enemy for 7 (+2 if within the 3rd slot).
-        /// Targets the first enemy (precise "그 적" multi-enemy targeting awaits attacker→entity mapping).</summary>
-        public static MultiTurnScenario CounterStance()
-        {
-            return new MultiTurnScenario(
-                "counter-stance",
-                "Counter Stance",
-                playerHp: 30,
-                enemies: new[] { new EnemySpec("goblin", 100) },
-                turns: new[]
-                {
-                    new TurnScript(
-                        fateEnergy: 3,
-                        zoneCards: new[]
-                        {
-                            EnemyAttack("goblin_jab", executionOrder: 1, damage: 3),
-                            CounterCard("counter", executionOrder: 2)
-                        },
-                        interventionPlays: new InterventionPlaySpec[0])
-                });
-        }
-
-        private static ZoneCardSpec CounterCard(string id, int executionOrder)
-            => new ZoneCardSpec(
-                id, "Counter Stance", Side.Player, executionOrder,
-                new[]
-                {
-                    EffectData.ApplyStatus(
-                        StatusKeys.Block, StatusApplyTarget.Self, count: 2),
-                    EffectData.Conditional(
-                        EffectKeys.Damage,
-                        effectValue: 0,
-                        condition: new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
-                        successEffectValue: 7),
-                    EffectData.Conditional(
-                        EffectKeys.Damage,
-                        effectValue: 0,
-                        condition: new AllOf(new Condition[]
-                        {
-                            new PreviousExecutedCardHasEffect(Side.Enemy, EffectKeys.Damage),
-                            new WithinNth(3)
-                        }),
-                        successEffectValue: 2)
-                });
 
         /// <summary>연쇄 베기 (doc §11.3): deal 1, and if the immediately-previous card is a player action
         /// card AND this resolves within the 3rd slot, "activate once more" — modelled as a second hit of
@@ -178,7 +131,7 @@ namespace FateWeaver.Simulation
                         zoneCards: new[]
                         {
                             new ZoneCardSpec("prep", "Prep", Side.Player, 1,
-                                new[] { new EffectData(EffectKeys.Damage, 1) }),
+                                new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne },
                             ChainSlashCard("chain", executionOrder: 2)
                         },
                         interventionPlays: new InterventionPlaySpec[0])
@@ -190,17 +143,17 @@ namespace FateWeaver.Simulation
                 id, "Chain Slash", Side.Player, executionOrder,
                 new[]
                 {
-                    new EffectData(EffectKeys.Damage, 1),
-                    EffectData.Conditional(
-                        EffectKeys.Damage,
-                        effectValue: 0,
-                        condition: new AllOf(new Condition[]
-                        {
-                            new PreviousExecutedCardIs(Side.Player), // any player execution card
-                            new WithinNth(3)
-                        }),
-                        successEffectValue: 5)
-                });
+                    new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Enemy },
+                    new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 5 }
+                })
+            {
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = new AllOf(new Condition[]
+                {
+                    new PreviousExecutedCardIs(Side.Player), // any player execution card
+                    new WithinNth(3)
+                })
+            };
 
         private static TurnScript OpeningTurn(string suffix, string enemyId, int enemyDamage)
         {
@@ -234,9 +187,9 @@ namespace FateWeaver.Simulation
                         executionOrder: 1,
                         effects: new[]
                         {
-                            new EffectData(EffectKeys.Damage, 3),
+                            new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally },
                             new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0)
-                        }),
+                        }) { AllyTarget = CardTargetRange.FrontOne },
                     QuickCut(quickCutId, executionOrder: 2)
                 },
                 interventionPlays: new[]
@@ -255,12 +208,12 @@ namespace FateWeaver.Simulation
                 executionOrder,
                 new[]
                 {
-                    EffectData.Conditional(
-                        EffectKeys.Damage,
-                        effectValue: 2,
-                        condition: new FirstToTrigger(),
-                        successEffectValue: 10)
-                });
+                    new EffectData(EffectKeys.Damage, 2) { TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 10 }
+                })
+            {
+                EnemyTarget = CardTargetRange.FrontOne,
+                StartCondition = new FirstToTrigger()
+            };
 
         private static ZoneCardSpec EnemyAttack(string id, int executionOrder, int damage)
             => new ZoneCardSpec(
@@ -268,7 +221,7 @@ namespace FateWeaver.Simulation
                 id,
                 Side.Enemy,
                 executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
     }
 
     public sealed class SampleMultiTurnScenarioEntry

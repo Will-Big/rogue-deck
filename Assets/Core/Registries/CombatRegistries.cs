@@ -20,6 +20,7 @@ namespace FateWeaver.Core
             effects.Register(new ConsumeStatusHandler());
             effects.Register(new TriggerStatusHandler());
             effects.Register(new GrantNextTurnFateHandler());
+            effects.Register(new TransferStatusHandler());
             return effects;
         }
 
@@ -38,6 +39,14 @@ namespace FateWeaver.Core
             statuses.Register(new WeakBehavior());
             statuses.Register(new DamagedBehavior());
             return statuses;
+        }
+
+        /// <summary>상태가 주는 반응 능력(전투 실행 계약 스펙 §7). 사건에 직접 반응하는 능력만 여기 둔다.</summary>
+        public static ReactionRegistry Reactions()
+        {
+            var reactions = new ReactionRegistry();
+            reactions.Register(new ContagionReaction());
+            return reactions;
         }
 
         public static InterventionActionRegistry InterventionActions()

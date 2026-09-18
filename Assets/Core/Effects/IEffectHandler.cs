@@ -10,45 +10,68 @@ namespace FateWeaver.Core.Effects
     /// <summary>Per-effect inputs/outputs. Handler mutates State and writes its outcome here.</summary>
     public sealed class EffectContext
     {
+        /// <summary>효과를 낸 카드. 반응 능력이 낸 효과면 null이다(카드 버프를 쓰지 않는다).</summary>
         public ExecutionCardInstance Card;
         public CombatState State;
         public ResolutionContext ResolutionContext;
         public StatusRegistry StatusRegistry;
+
+        /// <summary>모든 피해가 지나는 공통 경로.</summary>
+        public DamageService Damage;
+
+        /// <summary>Primary(카드·턴 시점) 또는 Reaction(반응 능력).</summary>
+        public EffectOrigin Origin;
+
+        /// <summary>효과를 쓰는 개체 id(카드 주인 또는 반응 보유자). 사건의 SourceId가 된다. 확정 못 하면 null.</summary>
+        public string ActorId;
+
+        /// <summary>표시용 원인 id: 카드 정의 id, 반응이면 능력을 준 상태 키.</summary>
+        public string SourceId;
 
         /// <summary>이 카드를 쓰는 쪽의 상태 (약화처럼 주는 피해를 접는 훅이 읽는다).
         /// 소유자를 확정할 수 없으면 null이며, 그 경우 행위자 상태는 적용되지 않는다.</summary>
         public StatusBag ActorStatuses;
         public EffectData Effect;
         public int EffectValue;
-        public CardTargetSnapshot Targets;
 
-        // outputs (read by TurnResolver)
+        /// <summary>이 효과가 시작할 때 고른 대상(진영이 없는 효과는 null). 비어 있지 않다 —
+        /// 대상이 없으면 EffectExecutor가 처리기를 부르지 않는다.</summary>
+        public EffectTargetSnapshot Targets;
+
+        /// <summary>대상을 고르는 효과의 대상. 진영 없이 저작된 효과면 데이터 오류로 예외를 던진다 — 저작 콘텐츠는
+        /// 로딩 검증(EffectSpec.IsTargeted)이 진영을 요구하므로 C# 정의 오류다.</summary>
+        public EffectTargetSnapshot RequireTargets()
+            => Targets ?? throw new System.InvalidOperationException(
+                "Effect '" + Effect?.Key.Id + "' on card '" + Card?.Def.Id + "' needs a TargetFaction.");
+
+        // outputs (read by EffectExecutor)
         public int DamageDealt;
-        public string TargetId;
+
+        /// <summary>이 효과가 실제로 소비한 양. 효과 결과(EffectResult.ConsumedAmount)가 된다.</summary>
+        public int ConsumedAmount;
 
         /// <summary>이 효과가 만든 부가 타임라인 이벤트 (예: 즉시 상태 발동의 StatusTicked).
-        /// TurnResolver가 CardResolved/CardCancelled 뒤에 발생 순서대로 붙인다.</summary>
+        /// 발생 순서대로 EffectResult.Events가 된다.</summary>
         public List<ResolutionEvent> ExtraEvents = new List<ResolutionEvent>();
 
-        /// <summary>이 효과의 피해가 상태로 바뀐 단계들. TurnResolver가 카드 단위로 모아
-        /// CardResolved에 싣는다.</summary>
+        /// <summary>이 효과의 피해가 상태로 바뀐 단계들. 카드 단위로 모여 CardResolved에 실린다.</summary>
         public List<Events.DamageStep> DamageSteps = new List<Events.DamageStep>();
 
-        /// <summary>Records why this card's effects could not resolve. Only the first reason is kept;
-        /// handlers must not mutate state or HP after cancelling (see ExecutionCardInstance.CancellationReason).</summary>
-        public void Cancel(Combat.CardCancellationReason reason)
-        {
-            if (Card != null && Card.CancellationReason == null)
-            {
-                Card.CancellationReason = reason;
-            }
-        }
+        /// <summary>이 효과가 낸 규칙 사건(공격받음·상태 획득 등), 발생 순서대로. 효과 실행기가 순번을 붙여
+        /// 반응에 넘긴다.</summary>
+        public List<CombatSignal> Signals = new List<CombatSignal>();
+
+        /// <summary>피해 계산이 결과를 쓰는 곳(이 효과의 이벤트·사건·피해 단계).</summary>
+        public DamageSink Sink => new DamageSink(ExtraEvents, Signals, DamageSteps);
     }
 
+    /// <summary>효과 하나를 적용한다. 처리기는 받은 대상에만 적용하며 카드 전체를 취소하거나 다음 효과를
+    /// 부르지 않는다(전투 실행 계약 스펙 §3). 누구를 고를지는 처리기가 아니라 데이터(효과 진영 + 카드 축)가
+    /// 정한다.</summary>
     public interface IEffectHandler
     {
         EffectKey Key { get; }
-        CardTargetKey? TargetFor(CardDefinition card, EffectData effect);
+
         void Apply(EffectContext ctx);
     }
 }

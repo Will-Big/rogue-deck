@@ -68,10 +68,10 @@ namespace FateWeaver.Tests.EditMode
                 {
                     EffectData.ApplyStatus(
                         new StatusKey("unknown_status"),
-                        StatusApplyTarget.Self,
+                        CardTargetFaction.Ally,
                         1)
                 })
-                { Category = CardCategory.Execution };
+                { AllyTarget = CardTargetRange.Self, Category = CardCategory.Execution };
 
             Assert.Throws<KeyNotFoundException>(() =>
                 DescriptionCatalogValidator.ValidateDefault(

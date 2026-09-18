@@ -6,6 +6,7 @@ using FateWeaver.Core.Combat;
 using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Intervention;
+using FateWeaver.Core.Status;
 using FateWeaver.Simulation;
 
 namespace FateWeaver.Tests
@@ -83,6 +84,46 @@ namespace FateWeaver.Tests
 
             var timeline = session.ResolveTurn();
             Assert.AreEqual(8, DamageOf(timeline, "quick_fx")); // first-strike success
+        }
+
+        /// <summary>교환 뒤 새 카드 배치까지 실제 세션 경로로 실행 순서를 확인한다(스펙 §6, 2026-09-18 결정).
+        /// 5번 [P, 적]을 교환하면 적이 플레이어 자리에 서고, 5번 P2는 교환을 모르는 것처럼 플레이어 자리들의
+        /// 끝 — 적 뒤, 교환된 P 앞 — 에 선다. 세 카드 모두 그 순서로 실행되어 효과를 낸다.</summary>
+        [Test]
+        public void Cards_placed_after_a_swap_execute_in_the_swapped_slot_order()
+        {
+            var session = NewSession(
+                new[]
+                {
+                    CardFixtures.Damage("p_fx", damage: 4, executionOrder: 5),
+                    CardFixtures.SwapExecutionOrder("swap_fx"),
+                    CardFixtures.Damage("p2_fx", damage: 2, executionOrder: 5)
+                },
+                Goblin(5, 3));
+
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "p_fx")));
+            CollectionAssert.AreEqual(
+                new[] { "p_fx", "goblin_jab" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            Assert.IsTrue(session.PlayInterventionCard(
+                HandIndex(session, "swap_fx"), ZoneIndex(session, "p_fx"), ZoneIndex(session, "goblin_jab")));
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p_fx" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "p2_fx")));
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p2_fx", "p_fx" }, session.CurrentOrder.Select(c => c.Def.Id).ToArray());
+
+            var timeline = session.ResolveTurn();
+
+            CollectionAssert.AreEqual(
+                new[] { "goblin_jab", "p2_fx", "p_fx" },
+                timeline.OfType<CardResolved>().Select(e => e.CardId).ToArray());
+            Assert.IsFalse(timeline.OfType<CardCancelled>().Any());
+            Assert.AreEqual(4, DamageOf(timeline, "p_fx"));
+            Assert.AreEqual(2, DamageOf(timeline, "p2_fx"));
+            Assert.AreEqual(27, session.State.Party.Single().Hp);   // goblin_jab 3
+            Assert.AreEqual(94, session.State.Enemies.Single().Hp); // p_fx 4 + p2_fx 2
         }
 
         [Test]
@@ -217,7 +258,7 @@ namespace FateWeaver.Tests
         }
 
         /// <summary>적이 하나뿐인 지금의 모든 전투에서는 소유자가 확정된다 — 이것이 죽은 적의 남은
-        /// 카드를 OwnerDied로 취소하는 근거다.</summary>
+        /// 카드를 실행선에서 빼는 근거다.</summary>
         [Test]
         public void Enemy_cards_are_owned_by_the_only_enemy_in_the_fight()
         {
@@ -230,7 +271,7 @@ namespace FateWeaver.Tests
 
         /// <summary>IEnemyTurnPolicy는 어느 적의 카드인지 말하지 않는다. 그래서 적이 둘 이상이면
         /// 소유자를 비워 둔다 — 임의로 Enemies[0]을 찍으면 그 적이 먼저 죽었을 때 남의 카드가
-        /// OwnerDied로 취소된다.</summary>
+        /// 실행선에서 빠진다.</summary>
         [Test]
         public void Enemy_cards_have_no_owner_when_the_owning_enemy_is_ambiguous()
         {
@@ -242,6 +283,26 @@ namespace FateWeaver.Tests
 
             CollectionAssert.AreEqual(
                 new string[] { null }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
+        }
+
+        // 방어는 턴 해석 동안 남아 있다가 다음 턴 준비(Prepare)에 만료된다(스펙 §8, 계획 T6). 그 만료 이벤트는 해석
+        // 타임라인이 아니라 턴 시작 타임라인에 나온다.
+        [Test]
+        public void Block_expires_at_the_next_turn_preparation()
+        {
+            var session = NewSession(
+                new[] { CardFixtures.Block("guard_fx", magnitude: 4, executionOrder: 1) },
+                Goblin(executionOrder: 9, damage: 0));
+            Assert.IsTrue(session.PlayExecutionCard(HandIndex(session, "guard_fx")));
+
+            var turn = session.ResolveTurn();
+            var player = session.State.Party[0];
+            Assert.IsTrue(player.Statuses.Has(StatusKeys.Block), "해석이 끝나도 방어는 남는다");
+            Assert.IsFalse(turn.OfType<StatusExpired>().Any(e => e.StatusId == StatusKeys.Block.Id));
+
+            Assert.IsTrue(session.BeginNextTurn());
+            Assert.IsFalse(player.Statuses.Has(StatusKeys.Block));
+            Assert.AreEqual(StatusKeys.Block.Id, session.LastTurnStartTimeline.OfType<StatusExpired>().Single().StatusId);
         }
 
         private static DeckCombatSession NewSession(

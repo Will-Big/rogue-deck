@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
+using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Enemies;
 using FateWeaver.Core.Status;
@@ -120,7 +121,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
-            => new PartyMemberLoadout(id, name, maxHp, 0, Array.Empty<CardDefinition>());
+            => new PartyMemberLoadout(id, name, maxHp, Array.Empty<CardDefinition>());
 
         private RectTransform ChildRect(string name)
         {
@@ -131,16 +132,22 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private void ApplyMove(Side side, string ownerId, int distance)
         {
-            var effect = new EffectData(EffectKeys.MoveFormation, distance);
+            var faction = side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy;
+            var effect = new EffectData(EffectKeys.MoveFormation, distance) { TargetFaction = faction };
             var definition = new CardDefinition(
-                "move", "move", side, 1, new[] { effect });
-            new MoveFormationHandler().Apply(new EffectContext
+                "move", "move", side, 1, new[] { effect })
             {
-                Card = new ExecutionCardInstance(definition) { OwnerId = ownerId },
-                State = _session.State,
-                Effect = effect,
-                EffectValue = distance
-            });
+                AllyTarget = CardTargetRange.Self,
+                EnemyTarget = CardTargetRange.Self
+            };
+            var effects = new EffectRegistry();
+            effects.Register(new MoveFormationHandler());
+            var context = new CardExecutionContext(
+                new ExecutionCardInstance(definition) { OwnerId = ownerId },
+                ConditionTier.Basic,
+                _session.State,
+                ResolutionContext.From(_session.State));
+            Assert.IsTrue(new EffectExecutor(effects).Apply(context, effect).Applied);
         }
 
         private PartyMember Party(string id) => _session.State.Party.Single(member => member.Id == id);

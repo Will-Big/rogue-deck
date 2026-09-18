@@ -11,14 +11,22 @@ namespace FateWeaver.Core.Status
             StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage,
             string holderId = null, List<Events.DamageStep> trace = null)
         {
+            damage = Incoming(bag, registry, rules, damage, StatusDamageLayer.Multiplier, holderId, trace);
+            return Incoming(bag, registry, rules, damage, StatusDamageLayer.Absorb, holderId, trace);
+        }
+
+        /// <summary>받는 피해를 한 층만 접는다. 공통 피해 경로(DamageService)가 관통·배율 미적용 요청에 따라
+        /// 층을 골라 부른다.</summary>
+        public static int Incoming(
+            StatusBag bag, StatusRegistry registry, StatusRuleSet rules, int damage, StatusDamageLayer layer,
+            string holderId = null, List<Events.DamageStep> trace = null)
+        {
             if (registry == null || bag == null)
             {
                 return damage;
             }
 
-            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Multiplier, holderId, trace);
-            damage = FoldLayer(bag, registry, rules, damage, StatusDamageLayer.Absorb, holderId, trace);
-            return damage;
+            return FoldLayer(bag, registry, rules, damage, layer, holderId, trace);
         }
 
         /// <summary>행위자의 엔티티 스코프 상태를 접어 주는 피해를 계산한다. 흡수는 받는 쪽

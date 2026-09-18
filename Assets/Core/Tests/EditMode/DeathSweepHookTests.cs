@@ -13,13 +13,28 @@ namespace FateWeaver.Tests
     {
         private static readonly StatusKey RecorderKey = new StatusKey("death_recorder_test");
 
-        private sealed class DeathRecorderBehavior : StatusBehavior
+        /// <summary>사망 사건에 반응하는 능력(사망한 보유자 허용) — 전염과 같은 경로로 불린다.</summary>
+        private sealed class DeathRecorderReaction : IReactionHandler
         {
             public readonly List<string> DiedHolders = new List<string>();
-            public override StatusKey Key => RecorderKey;
-            public override StatusScope Scope => StatusScope.Entity;
-            public override void OnHolderDied(StatusDeathContext ctx)
-                => DiedHolders.Add(ctx.HolderId);
+            public StatusKey Key => RecorderKey;
+            public CombatSignalKey SignalKey => CombatSignalKeys.HolderDied;
+
+            public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
+            {
+                DiedHolders.Add(signal.TargetId);
+                return false;
+            }
+
+            public IReadOnlyList<ReactionEffect> EffectsFor(StatusInstance instance, CombatSignal signal)
+                => System.Array.Empty<ReactionEffect>();
+        }
+
+        private static ReactionRegistry Reactions(DeathRecorderReaction recorder)
+        {
+            var reactions = new ReactionRegistry();
+            reactions.Register(recorder);
+            return reactions;
         }
 
         private static EffectRegistry Effects()
@@ -32,9 +47,8 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_killed_by_card_emits_enemy_died_and_dispatches_hook()
         {
-            var recorder = new DeathRecorderBehavior();
+            var recorder = new DeathRecorderReaction();
             var statuses = new StatusRegistry();
-            statuses.Register(recorder);
 
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(20);
@@ -42,10 +56,10 @@ namespace FateWeaver.Tests
             state.Enemies[0].Statuses.Add(RecorderKey, StatusLifetime.Permanent);
 
             var def = new CardDefinition("slash", "베기", Side.Player, 4,
-                new[] { new EffectData(EffectKeys.Damage, 5) });
+                new[] { new EffectData(EffectKeys.Damage, 5) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
 
-            var events = new TurnResolver(Effects(), statuses).Resolve(state, 0);
+            var events = new TurnResolver(Effects(), statuses, Reactions(recorder)).Resolve(state, 0);
 
             var died = events.OfType<EnemyDied>().Single();
             Assert.AreEqual("goblin", died.EnemyId);
@@ -57,18 +71,17 @@ namespace FateWeaver.Tests
         [Test]
         public void Enemy_killed_by_turn_end_tick_emits_enemy_died_before_turn_ended()
         {
-            var recorder = new DeathRecorderBehavior();
+            var recorder = new DeathRecorderReaction();
             var statuses = new StatusRegistry();
-            statuses.Register(recorder);
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState(TestContent.Statuses());
+            var state = new CombatState(TestContent.PlainStatuses(LethalTickBehavior.TickKey));
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 2));
             state.Enemies[0].Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
             state.Enemies[0].Statuses.Add(RecorderKey, StatusLifetime.Permanent);
 
-            var events = new TurnResolver(new EffectRegistry(), statuses).Resolve(state, 0);
+            var events = new TurnResolver(new EffectRegistry(), statuses, Reactions(recorder)).Resolve(state, 0);
 
             var died = events.OfType<EnemyDied>().Single();
             Assert.Less(events.IndexOf(died), events.FindIndex(e => e is TurnEnded));
@@ -80,18 +93,17 @@ namespace FateWeaver.Tests
         [Test]
         public void Party_member_killed_by_turn_end_tick_emits_party_died_before_turn_ended_and_loses()
         {
-            var recorder = new DeathRecorderBehavior();
+            var recorder = new DeathRecorderReaction();
             var statuses = new StatusRegistry();
-            statuses.Register(recorder);
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState(TestContent.Statuses());
+            var state = new CombatState(TestContent.PlainStatuses(LethalTickBehavior.TickKey));
             var member = state.AddSoloPlayer(3);
             member.Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
             member.Statuses.Add(RecorderKey, StatusLifetime.Permanent);
             state.Enemies.Add(new Enemy("goblin", 10));
 
-            var events = new TurnResolver(new EffectRegistry(), statuses).Resolve(state, 0);
+            var events = new TurnResolver(new EffectRegistry(), statuses, Reactions(recorder)).Resolve(state, 0);
 
             var died = events.OfType<PartyMemberDied>().Single();
             Assert.AreEqual(CombatState.SoloPlayerId, died.MemberId);

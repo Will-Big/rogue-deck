@@ -12,7 +12,6 @@ namespace FateWeaver.Core.Authoring
 
         public override EffectKey Key => EffectKeys.GrantNextTurnFate;
 
-        public override EffectData ToEffectData()
-            => ApplyCondition(new EffectData(Key, Value));
+        protected override EffectData Build() => new EffectData(Key, Value);
     }
 }

@@ -1,145 +1,41 @@
 using System;
+using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Moves the acting card's living owner within its own side formation. Negative values
-    /// move toward that side's front (index 0), positive values toward its back, clamped to bounds.
-    /// Missing or dead owners cancel instead of falling back to the front entity.</summary>
+    /// <summary>Moves the acting card's living owner (its Self target) within its own side formation.
+    /// Negative values move toward that side's front (index 0), positive values toward its back, clamped
+    /// to bounds. A missing or dead owner has no target, so the effect is not applied.</summary>
     public sealed class MoveFormationHandler : IEffectHandler
     {
         public EffectKey Key => EffectKeys.MoveFormation;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect)
-            => new CardTargetKey(
-                card.Side == Side.Player ? CardTargetFaction.Ally : CardTargetFaction.Enemy,
-                CardTargetRange.Self);
-
         public void Apply(EffectContext ctx)
         {
-            if (ctx.Card.CancellationReason != null)
+            foreach (var owner in ctx.RequireTargets().Party)
             {
-                return;
+                Move(ctx, ctx.State.Party, owner, owner.Id, Side.Player);
             }
 
-            if (ctx.Card.Def.Side == Side.Player)
+            foreach (var owner in ctx.RequireTargets().Enemies)
             {
-                if (ctx.Targets != null)
-                {
-                    MoveSnapshotPartyOwner(ctx, TargetFor(ctx.Card.Def, ctx.Effect).Value);
-                    return;
-                }
-
-                MovePartyOwner(ctx);
-                return;
-            }
-
-            if (ctx.Targets != null)
-            {
-                MoveSnapshotEnemyOwner(ctx, TargetFor(ctx.Card.Def, ctx.Effect).Value);
-                return;
-            }
-
-            MoveEnemyOwner(ctx);
-        }
-
-        private static void MoveSnapshotPartyOwner(EffectContext ctx, CardTargetKey key)
-        {
-            var targets = ctx.Targets.PartyTargets(key);
-            if (targets.Count != 1 || !targets[0].IsAlive)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            var owner = targets[0];
-            var currentIndex = ctx.State.Party.IndexOf(owner);
-            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Party.Count);
-            ctx.State.Party.RemoveAt(currentIndex);
-            ctx.State.Party.Insert(destinationIndex, owner);
-            if (destinationIndex != currentIndex)
-            {
-                ctx.ExtraEvents.Add(new Events.FormationMoved(
-                    owner.Id, Side.Player, currentIndex, destinationIndex));
-            }
-            ctx.TargetId = owner.Id;
-        }
-
-        private static void MoveSnapshotEnemyOwner(EffectContext ctx, CardTargetKey key)
-        {
-            var targets = ctx.Targets.EnemyTargets(key);
-            if (targets.Count != 1 || targets[0].Hp <= 0)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            var owner = targets[0];
-            var currentIndex = ctx.State.Enemies.IndexOf(owner);
-            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Enemies.Count);
-            ctx.State.Enemies.RemoveAt(currentIndex);
-            ctx.State.Enemies.Insert(destinationIndex, owner);
-            if (destinationIndex != currentIndex)
-            {
-                ctx.ExtraEvents.Add(new Events.FormationMoved(
-                    owner.Id, Side.Enemy, currentIndex, destinationIndex));
-            }
-            ctx.TargetId = owner.Id;
-        }
-
-        private static void MovePartyOwner(EffectContext ctx)
-        {
-            var owner = PartyTargeting.LivingById(ctx.State, ctx.Card.OwnerId);
-            if (owner == null)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            var currentIndex = ctx.State.Party.IndexOf(owner);
-            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Party.Count);
-            ctx.State.Party.RemoveAt(currentIndex);
-            ctx.State.Party.Insert(destinationIndex, owner);
-            if (destinationIndex != currentIndex)
-            {
-                ctx.ExtraEvents.Add(new Events.FormationMoved(
-                    owner.Id, Side.Player, currentIndex, destinationIndex));
+                Move(ctx, ctx.State.Enemies, owner, owner.Id, Side.Enemy);
             }
         }
 
-        private static void MoveEnemyOwner(EffectContext ctx)
+        private static void Move<T>(EffectContext ctx, List<T> formation, T owner, string ownerId, Side side)
         {
-            if (string.IsNullOrEmpty(ctx.Card.OwnerId))
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            Enemy owner = null;
-            foreach (var enemy in ctx.State.Enemies)
-            {
-                if (enemy.Id == ctx.Card.OwnerId && enemy.Hp > 0)
-                {
-                    owner = enemy;
-                    break;
-                }
-            }
-
-            if (owner == null)
-            {
-                ctx.Cancel(CardCancellationReason.NoValidTarget);
-                return;
-            }
-
-            var currentIndex = ctx.State.Enemies.IndexOf(owner);
-            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, ctx.State.Enemies.Count);
-            ctx.State.Enemies.RemoveAt(currentIndex);
-            ctx.State.Enemies.Insert(destinationIndex, owner);
+            var currentIndex = formation.IndexOf(owner);
+            var destinationIndex = ClampDestination(currentIndex, ctx.EffectValue, formation.Count);
+            formation.RemoveAt(currentIndex);
+            formation.Insert(destinationIndex, owner);
             if (destinationIndex != currentIndex)
             {
-                ctx.ExtraEvents.Add(new Events.FormationMoved(
-                    owner.Id, Side.Enemy, currentIndex, destinationIndex));
+                ctx.ExtraEvents.Add(new Events.FormationMoved(ownerId, side, currentIndex, destinationIndex));
+                ctx.Signals.Add(new Events.CombatSignal(
+                    Events.CombatSignalKeys.FormationMoved, ownerId, ownerId, destinationIndex - currentIndex));
             }
         }
 

@@ -10,22 +10,22 @@ namespace FateWeaver.Core.Combat
     /// independent formations (see PartyMember.cs).</summary>
     public static class PartyTargeting
     {
-        public static PartyMember Select(CombatState state, TargetSelector selector)
+        public static PartyMember Select(CombatState state, CardTargetRange range)
         {
             var living = LivingInFormationOrder(state);
-            return selector switch
+            return range switch
             {
-                TargetSelector.FrontOne => living.Count > 0 ? living[0] : null,
-                TargetSelector.BackOne => living.Count > 0 ? living[^1] : null,
+                CardTargetRange.FrontOne => living.Count > 0 ? living[0] : null,
+                CardTargetRange.BackOne => living.Count > 0 ? living[^1] : null,
                 _ => null
             };
         }
 
-        public static List<PartyMember> SelectRange(CombatState state, TargetSelector selector)
+        public static List<PartyMember> SelectRange(CombatState state, CardTargetRange range)
         {
             var living = LivingInFormationOrder(state);
-            var take = TakeCount(selector, living.Count);
-            if (selector == TargetSelector.BackOne || selector == TargetSelector.BackTwo)
+            var take = TakeCount(range, living.Count);
+            if (range == CardTargetRange.BackOne || range == CardTargetRange.BackTwo)
             {
                 return living.GetRange(living.Count - take, take);
             }
@@ -73,16 +73,16 @@ namespace FateWeaver.Core.Combat
             return living;
         }
 
-        private static int TakeCount(TargetSelector selector, int livingCount)
+        private static int TakeCount(CardTargetRange range, int livingCount)
         {
-            switch (selector)
+            switch (range)
             {
-                case TargetSelector.FrontOne:
-                case TargetSelector.BackOne: return Math.Min(1, livingCount);
-                case TargetSelector.FrontTwo:
-                case TargetSelector.BackTwo: return Math.Min(2, livingCount);
-                case TargetSelector.All: return livingCount;
-                default: throw new ArgumentOutOfRangeException(nameof(selector));
+                case CardTargetRange.FrontOne:
+                case CardTargetRange.BackOne: return Math.Min(1, livingCount);
+                case CardTargetRange.FrontTwo:
+                case CardTargetRange.BackTwo: return Math.Min(2, livingCount);
+                case CardTargetRange.All: return livingCount;
+                default: throw new ArgumentOutOfRangeException(nameof(range), range, "Self is not a formation position.");
             }
         }
     }

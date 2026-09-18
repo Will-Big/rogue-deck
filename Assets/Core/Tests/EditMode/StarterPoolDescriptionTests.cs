@@ -83,6 +83,14 @@ namespace FateWeaver.Tests
                 "[◆] 독 최대 1 소비. 독 1.\n소비했다면 다음 사용 턴에 운명력 1 획득.",
                 Describe(Pool.Get("distill")));
 
+        /// <summary>소비량 비례 가산은 피해 효과 문장에 붙는다(scaleBy). 구형은 소비 문장에 "(소비 1당 피해 +2)"를
+        /// 달았다 — 가산을 받는 쪽이 피해 효과임을 문장 위치로 드러낸다(전투 실행 계약 T2a).</summary>
+        [Test]
+        public void Korean_condensed_burst() =>
+            Assert.AreEqual(
+                "[◆] 독 최대 3 소비. 피해 2 (소비 1당 +2). 독 1.",
+                Describe(Pool.Get("condensed_burst")));
+
         [Test]
         public void Korean_quick_cover() =>
             Assert.AreEqual(

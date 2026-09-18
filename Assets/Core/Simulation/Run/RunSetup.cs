@@ -21,7 +21,6 @@ namespace FateWeaver.Simulation.Run
                     character.Id,
                     character.DisplayName,
                     character.MaxHp,
-                    character.SurviveCharges,
                     DeckCards(content, character.Deck)));
             }
 

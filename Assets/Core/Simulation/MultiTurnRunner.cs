@@ -40,7 +40,7 @@ namespace FateWeaver.Simulation
                 state.Enemies.Add(new Enemy(enemy.Id, enemy.Hp));
             }
 
-            var resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses());
+            var resolver = new TurnResolver(CombatRegistries.Effects(), CombatRegistries.Statuses(), CombatRegistries.Reactions());
             var interventionActions = CombatRegistries.InterventionActions();
 
             var turns = new List<TurnOutcome>();
@@ -48,6 +48,15 @@ namespace FateWeaver.Simulation
 
             for (int i = 0; i < scenario.Turns.Count; i++)
             {
+                // 턴 준비(공통 만료) → 턴 시작 상태 → 승패(스펙 §8). 운명력은 턴 대본이 정한다.
+                var start = resolver.Prepare(state);
+                start.AddRange(resolver.StartTurn(state));
+                outcome = CombatOutcomeEvaluator.Evaluate(state);
+                if (outcome != Outcome.Ongoing)
+                {
+                    break;
+                }
+
                 var script = scenario.Turns[i];
                 var cardsById = LoadZone(state, script.ZoneCards);
                 state.FateEnergy = script.FateEnergy;
@@ -57,7 +66,8 @@ namespace FateWeaver.Simulation
                     .Resolve(state, BuildPlays(script.InterventionPlays, cardsById));
                 var manipulatedOrder = Summarize(state.Zone.ResolutionOrder());
 
-                var timeline = resolver.Resolve(state, i);
+                var timeline = start;
+                timeline.AddRange(resolver.Resolve(state, i));
                 turns.Add(new TurnOutcome(i, initialOrder, manipulatedOrder, interventionResult, timeline));
 
                 outcome = OutcomeOf(timeline);
@@ -97,7 +107,12 @@ namespace FateWeaver.Simulation
             foreach (var card in zoneCards)
             {
                 var def = new CardDefinition(
-                    card.Id, card.Name, card.Side, card.ExecutionOrder, card.Effects);
+                    card.Id, card.Name, card.Side, card.ExecutionOrder, card.Effects)
+                {
+                    StartCondition = card.StartCondition,
+                    AllyTarget = card.AllyTarget,
+                    EnemyTarget = card.EnemyTarget
+                };
                 var instance = new ExecutionCardInstance(def);
                 state.Zone.Add(instance);
                 cardsById.Add(card.Id, instance);

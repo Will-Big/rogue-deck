@@ -8,14 +8,13 @@ namespace FateWeaver.Core.Authoring.Characters
     public sealed class CharacterContent
     {
         public CharacterContent(
-            string id, string displayName, string deck, string pool, int maxHp, int surviveCharges)
+            string id, string displayName, string deck, string pool, int maxHp)
         {
             Id = id;
             DisplayName = displayName;
             Deck = deck;
             Pool = pool;
             MaxHp = maxHp;
-            SurviveCharges = surviveCharges;
         }
 
         public string Id { get; }
@@ -29,9 +28,6 @@ namespace FateWeaver.Core.Authoring.Characters
 
         /// <summary>최대 HP. 매 전투 이 값으로 시작한다(HP 인계는 후속 작업).</summary>
         public int MaxHp { get; }
-
-        /// <summary>죽을 피해를 버티는 횟수. 전투마다 전량 충전된다.</summary>
-        public int SurviveCharges { get; }
     }
 
     /// <summary>부팅 시 한 번 만들어져 상주하는 id → CharacterContent 사전. 색 틴트는 표현

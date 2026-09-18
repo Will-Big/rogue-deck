@@ -60,30 +60,64 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void RoundTripsSpecParametersAndCondition()
+        public void RoundTripsEffectCommonFields()
         {
             var original = new ApplyStatusSpec
             {
+                Id = "venom",
+                TargetFaction = CardTargetFaction.Enemy,
                 Status = new StatusKeyRef { Id = "poison" },
                 Count = 2,
-                Target = StatusApplyTarget.TargetEnemy,
-                Selector = TargetSelectorRef.BackOne,
-                Condition = new ConditionSpec
-                {
-                    Kind = ConditionKind.WithinNth, N = 2, SuccessEffectValue = 5, SkipOnBasic = true
-                }
+                SuccessEffectValue = 5,
+                SkipOnBasic = true,
+                Requires = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 2 },
+                ScaleBy = new EffectScalingSpec { SourceEffectId = "pay", PerConsumed = 3 }
             };
 
             var restored = (ApplyStatusSpec)ContentJson.Read<EffectSpec>(ContentJson.Write(original));
 
+            Assert.AreEqual("venom", restored.Id);
+            Assert.AreEqual(CardTargetFaction.Enemy, restored.TargetFaction);
             Assert.AreEqual("poison", restored.Status.Id);
             Assert.AreEqual(2, restored.Count);
-            Assert.AreEqual(StatusApplyTarget.TargetEnemy, restored.Target);
-            Assert.AreEqual(TargetSelectorRef.BackOne, restored.Selector);
-            Assert.AreEqual(ConditionKind.WithinNth, restored.Condition.Kind);
-            Assert.AreEqual(2, restored.Condition.N);
-            Assert.AreEqual(5, restored.Condition.SuccessEffectValue);
-            Assert.IsTrue(restored.Condition.SkipOnBasic);
+            Assert.AreEqual(5, restored.SuccessEffectValue);
+            Assert.IsTrue(restored.SkipOnBasic);
+            Assert.AreEqual("pay", restored.Requires.SourceEffectId);
+            Assert.AreEqual(2, restored.Requires.MinimumConsumed);
+            Assert.AreEqual("pay", restored.ScaleBy.SourceEffectId);
+            Assert.AreEqual(3, restored.ScaleBy.PerConsumed);
+        }
+
+        [Test]
+        public void WritesTheEffectIdAndFactionRightAfterTheKind()
+        {
+            var json = ContentJson.Write(new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 4 });
+
+            var kind = json.IndexOf("\"kind\"", System.StringComparison.Ordinal);
+            var id = json.IndexOf("\"id\"", System.StringComparison.Ordinal);
+            var faction = json.IndexOf("\"targetFaction\"", System.StringComparison.Ordinal);
+            var value = json.IndexOf("\"value\"", System.StringComparison.Ordinal);
+            Assert.That(kind < id && id < faction && faction < value, json);
+        }
+
+        [Test]
+        public void ConsumptionModeIsAlwaysWritten()
+        {
+            var json = ContentJson.Write(new ConsumeStatusSpec
+            {
+                Id = "pay", TargetFaction = CardTargetFaction.Enemy,
+                Status = new StatusKeyRef { Id = "poison" }, Amount = 1, Mode = ConsumptionMode.UpTo
+            });
+
+            StringAssert.Contains("\"mode\": \"UpTo\"", json);
+        }
+
+        [Test]
+        public void CardFormatIsWrittenFirst()
+        {
+            var json = ContentJson.Write(new ExecutionCardSpec { Id = "x", Name = "x" });
+
+            StringAssert.StartsWith("{\n  \"cardFormat\": 2,", json.Replace("\r\n", "\n"));
         }
 
         [Test]
@@ -114,14 +148,17 @@ namespace FateWeaver.Tests
                 Category = CardCategory.Execution,
                 EnergyCost = 1,
                 BaseExecutionOrder = 4,
+                Targets = new CardTargetsSpec { Ally = CardTargetRange.Self, Enemy = CardTargetRange.FrontOne },
+                StartCondition = new StartConditionSpec { Kind = ConditionKind.WithinNth, N = 2 },
                 Effects = new EffectSpec[]
                 {
-                    new DamageSpec { Value = 4, Selector = TargetSelectorRef.FrontOne },
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 4 },
                     new ApplyStatusSpec
                     {
+                        Id = "guard",
+                        TargetFaction = CardTargetFaction.Ally,
                         Status = new StatusKeyRef { Id = "block" },
-                        Count = 1,
-                        Target = StatusApplyTarget.Self
+                        Count = 1
                     }
                 }
             };
@@ -136,6 +173,10 @@ namespace FateWeaver.Tests
             Assert.AreEqual(4, ((DamageSpec)restored.Effects[0]).Value);
             Assert.IsInstanceOf<ApplyStatusSpec>(restored.Effects[1]);
             Assert.AreEqual("block", ((ApplyStatusSpec)restored.Effects[1]).Status.Id);
+            Assert.AreEqual(CardTargetRange.Self, restored.Targets.Ally);
+            Assert.AreEqual(CardTargetRange.FrontOne, restored.Targets.Enemy);
+            Assert.AreEqual(ConditionKind.WithinNth, restored.StartCondition.Kind);
+            Assert.AreEqual(2, restored.StartCondition.N);
         }
 
         [Test]
@@ -173,7 +214,11 @@ namespace FateWeaver.Tests
                 Category = CardCategory.Execution,
                 EnergyCost = 1,
                 BaseExecutionOrder = 5,
-                Effects = new EffectSpec[] { new DamageSpec { Value = 5 } }
+                Targets = new CardTargetsSpec { Enemy = CardTargetRange.FrontOne },
+                Effects = new EffectSpec[]
+                {
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 5 }
+                }
             };
 
             var before = CardSpecMapper.ToDefinition(original);
@@ -188,6 +233,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(before.Effects.Count, after.Effects.Count);
             Assert.AreEqual(before.Effects[0].Key, after.Effects[0].Key);
             Assert.AreEqual(before.Effects[0].EffectValue, after.Effects[0].EffectValue);
+            Assert.AreEqual(before.Effects[0], after.Effects[0]);
         }
 
         [Test]
@@ -252,5 +298,24 @@ namespace FateWeaver.Tests
         /// 그것이 이 테스트가 잠그려는 것이기 때문이다.</summary>
         private static string Normalize(string json)
             => json.Replace("\r\n", "\n").TrimEnd();
+
+        // V22(게임 쪽): 저장소 카드 전부가 새 형식으로 읽고-쓰고-다시 읽어도 같은 정규 직렬화를 낸다. 의미 보존은 이것만으로
+        // 대신하지 않는다 — 로딩 검증·구형 변환 테스트가 따로 있다.
+        [Test]
+        public void Every_card_preserves_its_canonical_serialized_definition()
+        {
+            var paths = System.IO.Directory.GetFiles(System.IO.Path.Combine(TestContent.Root(), "Cards"), "*.json");
+            Assert.IsNotEmpty(paths);
+            foreach (var path in paths)
+            {
+                var first = ContentJson.Read<CardSpec>(System.IO.File.ReadAllText(path));
+                var canonical = ContentJson.Write(first);
+                var second = ContentJson.Read<CardSpec>(canonical);
+                Assert.IsTrue(Newtonsoft.Json.Linq.JToken.DeepEquals(
+                    Newtonsoft.Json.Linq.JToken.Parse(canonical),
+                    Newtonsoft.Json.Linq.JToken.Parse(ContentJson.Write(second))), path);
+                Assert.AreEqual(2, (int)Newtonsoft.Json.Linq.JObject.Parse(canonical)["cardFormat"], path);
+            }
+        }
     }
 }

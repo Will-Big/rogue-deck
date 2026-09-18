@@ -88,11 +88,11 @@ namespace FateWeaver.Tests
 
         private static CardDefinition PlayerStrike() => new CardDefinition(
             "p_strike", "찌르기", Side.Player, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
         private static CardDefinition EnemyJab() => new CardDefinition(
             "e_jab", "적찌르기", Side.Enemy, 5,
-            new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 0, Category = CardCategory.Execution };
+            new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
         private static SequencePolicy JabEachTurn() => new SequencePolicy(new IReadOnlyList<CardDefinition>[]
         {
@@ -154,11 +154,13 @@ namespace FateWeaver.Tests
             Category = CardCategory.Execution,
             EnergyCost = 1,
             BaseExecutionOrder = 3,
+            Targets = new CardTargetsSpec { Enemy = CardTargetRange.FrontOne },
             Effects = new EffectSpec[] { new ApplyStatusSpec
             {
+                Id = "slow",
+                TargetFaction = CardTargetFaction.Enemy,
                 Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Count = 2,
-                Target = StatusApplyTarget.TargetEnemy
+                Count = 2
             } }
         };
 

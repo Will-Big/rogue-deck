@@ -32,7 +32,7 @@ namespace FateWeaver.Tests
             var effect = card.Effects.Single();
             Assert.AreEqual(2, effect.EffectValue);
             Assert.AreEqual(8, effect.SuccessEffectValue);
-            Assert.IsInstanceOf<FirstToTrigger>(effect.Condition);
+            Assert.IsInstanceOf<FirstToTrigger>(card.StartCondition);
         }
 
         [Test]

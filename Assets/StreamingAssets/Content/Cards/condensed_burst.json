@@ -1,29 +1,39 @@
 {
+  "cardFormat": 2,
   "id": "condensed_burst",
   "name": "응축 파열",
   "side": "Player",
   "category": "Execution",
   "energyCost": 2,
   "baseExecutionOrder": 6,
+  "targets": {
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "consume_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "maxAmount": 3,
-      "damageBonusPerConsumed": 2,
-      "selector": "FrontOne"
+      "amount": 3,
+      "mode": "UpTo"
     },
     {
       "kind": "damage",
+      "id": "e1",
+      "targetFaction": "Enemy",
       "value": 2,
-      "selector": "FrontOne"
+      "scaleBy": {
+        "sourceEffectId": "e0",
+        "perConsumed": 2
+      }
     },
     {
       "kind": "apply_status",
+      "id": "e2",
+      "targetFaction": "Enemy",
       "status": "poison",
-      "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne"
+      "count": 1
     }
   ],
   "grade": "Common",

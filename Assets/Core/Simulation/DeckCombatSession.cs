@@ -40,6 +40,7 @@ namespace FateWeaver.Simulation
         private readonly bool _isPartyMode;
         private readonly ReadOnlyCollection<OwnedCard> _allCards;
         private IReadOnlyList<ResolutionEvent> _lastTimeline;
+        private IReadOnlyList<ResolutionEvent> _lastTurnStartTimeline = System.Array.Empty<ResolutionEvent>();
         private int _nextInstanceId;
 
         public DeckCombatSession(
@@ -128,8 +129,7 @@ namespace FateWeaver.Simulation
                     _state.Party.Add(new PartyMember(
                         loadout.Id,
                         loadout.Name,
-                        loadout.MaxHp,
-                        loadout.SurviveCharges));
+                        loadout.MaxHp));
                 }
             }
             else
@@ -142,14 +142,15 @@ namespace FateWeaver.Simulation
                 _state.Enemies.Add(enemy);
             }
 
-            ValidateBaseExecutionDefinitions(deckCards);
+            ValidateDeckCards(deckCards);
             _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
             _deck = new Deck(deckCards, _state.Rng);
             _enemyPolicy = enemyPolicy;
             _handSize = handSize;
             _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
-            _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses);
+            _resolver = new TurnResolver(
+                CombatRegistries.Effects(), _statuses, CombatRegistries.Reactions(), RemoveOwnedCards);
             _interventionActions = CombatRegistries.InterventionActions();
             _interventionResolver = new InterventionPlayResolver(_interventionActions);
 
@@ -162,6 +163,9 @@ namespace FateWeaver.Simulation
         public CombatState State => _state;
         public IReadOnlyList<ExecutionCardInstance> CurrentOrder => _state.Zone.ResolutionOrder();
         public IReadOnlyList<ResolutionEvent> LastTimeline => _lastTimeline;
+
+        /// <summary>이번 턴의 준비·턴 시작 단계가 낸 이벤트(준비 만료된 방어의 StatusExpired 등). 해석 타임라인과 따로다.</summary>
+        public IReadOnlyList<ResolutionEvent> LastTurnStartTimeline => _lastTurnStartTimeline;
         public Outcome Outcome { get; private set; } = Outcome.Ongoing;
         public bool CurrentTurnResolved { get; private set; }
         public bool IsComplete => Outcome != Outcome.Ongoing;
@@ -232,7 +236,7 @@ namespace FateWeaver.Simulation
                 card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses, _state.StatusRules,
                 _state.StatusContent);
 
-        private static void ValidateBaseExecutionDefinitions(IReadOnlyList<OwnedCard> cards)
+        private static void ValidateDeckCards(IReadOnlyList<OwnedCard> cards)
         {
             if (cards == null)
             {
@@ -244,13 +248,6 @@ namespace FateWeaver.Simulation
                 if (card == null || card.Def == null)
                 {
                     throw new System.ArgumentException("Deck contains an invalid owned card.");
-                }
-
-                if (!PartyTargetRules.IsValidBaseExecutionDefinition(card.Def))
-                {
-                    throw new System.ArgumentException(
-                        "Player execution cards cannot require a directly selected target: "
-                        + card.Def.Id);
                 }
             }
         }
@@ -269,8 +266,8 @@ namespace FateWeaver.Simulation
         }
 
         /// <summary>Answers what the player must pick before playing this hand card.
-        /// Execution cards never require explicit targets (targets are authored via
-        /// StatusApplyTarget / TargetSelector and resolved by the core).</summary>
+        /// Execution cards never require explicit targets (targets are authored as the card's ally/enemy
+        /// ranges plus each effect's faction, and resolved by the core per effect).</summary>
         public TargetingRequirement DescribeTargeting(int handIndex)
         {
             if (handIndex < 0 || handIndex >= _deck.Hand.Count)
@@ -343,20 +340,20 @@ namespace FateWeaver.Simulation
                 return _lastTimeline;
             }
 
-            _lastTimeline = _resolver.Resolve(_state, TurnIndex);
-            var removedOwners = new HashSet<string>();
-            foreach (var resolutionEvent in _lastTimeline)
+            if (IsComplete)
             {
-                if (resolutionEvent is PartyMemberDied died && removedOwners.Add(died.MemberId))
-                {
-                    _deck.RemoveOwnedBy(died.MemberId);
-                }
+                // 턴 시작 단계에서 결판이 났다 — 해석할 턴이 없다.
+                return System.Array.Empty<ResolutionEvent>();
             }
 
+            _lastTimeline = _resolver.Resolve(_state, TurnIndex);
             CurrentTurnResolved = true;
             Outcome = OutcomeOf(_lastTimeline);
             return _lastTimeline;
         }
+
+        /// <summary>주인이 죽는 순간 사망 처리 경로(DeathProcessor)가 부른다 — 그 주인의 카드를 덱에서 뺀다.</summary>
+        private void RemoveOwnedCards(string ownerId) => _deck.RemoveOwnedBy(ownerId);
 
         /// <summary>Discard the leftover hand and start the next turn (enemy intent, energy refill, redraw).
         /// Returns false when the current turn is unresolved or combat is already decided.</summary>
@@ -377,8 +374,21 @@ namespace FateWeaver.Simulation
             TurnIndex = index;
             CurrentTurnResolved = false;
             _lastTimeline = null;
-
             _state.Zone.Clear();
+
+            // 턴 준비(공통 만료·비용 초기화) → 턴 시작 상태 → 승패 → 적 배치·드로우(스펙 §8).
+            var start = _resolver.Prepare(_state);
+            _state.FateEnergy = _state.FateEnergyPerTurn + _state.PendingNextTurnFateEnergy;
+            _state.PendingNextTurnFateEnergy = 0;
+            start.AddRange(_resolver.StartTurn(_state));
+            _lastTurnStartTimeline = start;
+
+            Outcome = CombatOutcomeEvaluator.Evaluate(_state);
+            if (IsComplete)
+            {
+                return;
+            }
+
             var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
             foreach (var enemyCard in _enemyPolicy.CardsForTurn(index, _state.Rng))
             {
@@ -387,7 +397,7 @@ namespace FateWeaver.Simulation
                     // IEnemyTurnPolicy는 카드 정의만 돌려줄 뿐 소유자를 말하지 않는다. 그래서 적이
                     // 정확히 하나일 때만 소유자를 확정하고, 둘 이상이면 비워 둔다 — CardActor의
                     // 규약과 같다. 임의로 Enemies[0]을 찍으면 그 적이 죽었을 때 남의 카드가
-                    // OwnerDied로 취소된다.
+                    // 실행선에서 빠진다.
                     InstanceId = _nextInstanceId++,
                     OwnerId = _state.Enemies.Count == 1 ? _state.Enemies[0].Id : null
                 };
@@ -402,8 +412,6 @@ namespace FateWeaver.Simulation
                 _state.Zone.Add(inst);
             }
 
-            _state.FateEnergy = _state.FateEnergyPerTurn + _state.PendingNextTurnFateEnergy;
-            _state.PendingNextTurnFateEnergy = 0;
             var drawCount = _partyTuning == null
                 ? _handSize
                 : _partyTuning.DrawFor(LivingPartyCount());
@@ -475,7 +483,6 @@ namespace FateWeaver.Simulation
                     || string.IsNullOrEmpty(loadout.Id)
                     || !ids.Add(loadout.Id)
                     || loadout.MaxHp <= 0
-                    || loadout.SurviveCharges < 0
                     || loadout.Cards == null)
                 {
                     throw new System.ArgumentException("Party loadout is invalid.");

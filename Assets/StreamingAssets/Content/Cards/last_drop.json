@@ -1,21 +1,25 @@
 {
+  "cardFormat": 2,
   "id": "last_drop",
   "name": "마지막 한 방울",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 7,
+  "targets": {
+    "enemy": "FrontOne"
+  },
+  "startCondition": {
+    "kind": "NoFollowingPlayerCard"
+  },
   "effects": [
     {
       "kind": "apply_status",
+      "id": "e0",
+      "targetFaction": "Enemy",
       "status": "poison",
       "count": 1,
-      "target": "TargetEnemy",
-      "selector": "FrontOne",
-      "condition": {
-        "kind": "NoFollowingPlayerCard",
-        "successEffectValue": 2
-      }
+      "successEffectValue": 2
     }
   ],
   "grade": "Common",

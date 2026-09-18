@@ -10,6 +10,6 @@ namespace FateWeaver.Core.Authoring
     {
         public override EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;
 
-        public override EffectData ToEffectData() => ApplyCondition(new EffectData(Key, 0));
+        protected override EffectData Build() => new EffectData(Key, 0);
     }
 }

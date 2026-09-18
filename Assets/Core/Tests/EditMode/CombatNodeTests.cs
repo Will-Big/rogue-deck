@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         private static CardDefinition Hit() => CardFixtures.Damage("hit", 5, cost: 0);
 
         private static RunMember Member(string id, int hitCount)
-            => new RunMember(id, id, 20, 0, Enumerable.Range(0, hitCount).Select(_ => Hit()));
+            => new RunMember(id, id, 20, Enumerable.Range(0, hitCount).Select(_ => Hit()));
 
         private static PartyTuning Tuning() => new PartyTuning
         {

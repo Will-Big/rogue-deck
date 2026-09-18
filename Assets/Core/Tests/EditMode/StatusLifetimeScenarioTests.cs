@@ -14,18 +14,18 @@ namespace FateWeaver.Tests
     {
         private static ZoneCardSpec Strike(string id, int executionOrder, int damage)
             => new ZoneCardSpec(id, id, Side.Player, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
 
         private static ZoneCardSpec EnemyHit(string id, int executionOrder, int damage)
             => new ZoneCardSpec(id, id, Side.Enemy, executionOrder,
-                new[] { new EffectData(EffectKeys.Damage, damage) });
+                new[] { new EffectData(EffectKeys.Damage, damage) { TargetFaction = CardTargetFaction.Ally } }) { AllyTarget = CardTargetRange.FrontOne };
 
         private static ZoneCardSpec Guard(string id, int executionOrder, int block)
             => new ZoneCardSpec(id, id, Side.Player, executionOrder,
                 new[]
                 {
-                    EffectData.ApplyStatus(StatusKeys.Block, StatusApplyTarget.Self, count: block)
-                });
+                    EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, count: block)
+                }) { AllyTarget = CardTargetRange.Self };
 
         private static MultiTurnScenario OneTurn(int playerHp, EnemySpec[] enemies, params ZoneCardSpec[] cards)
             => new MultiTurnScenario("t", playerHp, enemies,
@@ -58,7 +58,7 @@ namespace FateWeaver.Tests
         {
             var expose = new[]
             {
-                EffectData.ApplyStatus(StatusKeys.Vulnerable, StatusApplyTarget.TargetEnemy, count: 2)
+                EffectData.ApplyStatus(StatusKeys.Vulnerable, CardTargetFaction.Enemy, count: 2)
             };
 
             var scenario = new MultiTurnScenario(
@@ -68,7 +68,7 @@ namespace FateWeaver.Tests
                 {
                     new TurnScript(3, new[]
                     {
-                        new ZoneCardSpec("expose", "Expose", Side.Player, 1, expose),
+                        new ZoneCardSpec("expose", "Expose", Side.Player, 1, expose) { EnemyTarget = CardTargetRange.FrontOne },
                         Strike("strike1", 2, 4)
                     }, new InterventionPlaySpec[0]),
                     new TurnScript(3, new[] { Strike("strike2", 1, 4) }, new InterventionPlaySpec[0]),

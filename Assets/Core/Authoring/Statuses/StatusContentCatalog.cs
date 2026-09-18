@@ -45,11 +45,19 @@ namespace FateWeaver.Core.Authoring.Statuses
         /// <summary>정렬된 키 목록. 반복 순서가 사전 구현에 좌우되지 않게 한다(규칙 7).</summary>
         public IReadOnlyList<string> Keys => _keys;
 
-        public StatusLifetimeKind LifetimeOf(StatusKey key) => Spec(key).Lifetime;
+        /// <summary>수명 종류(설명의 "(N턴)" 접미사 등). expiry로 저작한 상태는 PhaseVisits다.</summary>
+        public StatusLifetimeKind LifetimeOf(StatusKey key)
+            => Spec(key).Expiry != null ? StatusLifetimeKind.PhaseVisits : Spec(key).Lifetime ?? StatusLifetimeKind.Permanent;
+
+        /// <summary>카드가 count를 주었을 때 이 상태가 받는 수명(만료 정책 포함).</summary>
+        public StatusLifetime LifetimeFor(StatusKey key, int count) => Spec(key).LifetimeFor(count);
 
         public string DisplayNameOf(StatusKey key) => Spec(key).DisplayName;
 
         public bool CountIsDuration(StatusKey key) => Spec(key).CountIsDuration;
+
+        /// <summary>이 상태가 주는 피해의 속성들. 저작하지 않았으면 보통 피해다.</summary>
+        public Effects.DamageTraits DamageTraitsOf(StatusKey key) => Effects.DamageTraits.Of(Spec(key).DamageTraits);
 
         public int ExecutionOrderDeltaOf(StatusKey key)
             => Spec(key) is ExecutionOrderStatusSpec spec ? spec.ExecutionOrderDelta : 0;

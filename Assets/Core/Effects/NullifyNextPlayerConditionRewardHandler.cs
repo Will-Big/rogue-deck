@@ -7,8 +7,6 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect) => null;
-
         public void Apply(EffectContext ctx)
         {
             var currentIndex = ctx.ResolutionContext.IndexOf(ctx.Card);
@@ -29,7 +27,6 @@ namespace FateWeaver.Core.Effects
                         ctx.ExtraEvents.Add(new Events.CardBuffGranted(
                             card.InstanceId, card.Def.Id, StatusKeys.RewardNullified.Id, 1));
                     }
-                    ctx.TargetId = card.Def.Id;
                     return;
                 }
             }

@@ -6,8 +6,6 @@ namespace FateWeaver.Core.Effects
     {
         public EffectKey Key => EffectKeys.GrantNextPlayerDamageCardBonus;
 
-        public CardTargetKey? TargetFor(CardDefinition card, EffectData effect) => null;
-
         public void Apply(EffectContext ctx)
         {
             var currentIndex = ctx.ResolutionContext.IndexOf(ctx.Card);
@@ -24,7 +22,6 @@ namespace FateWeaver.Core.Effects
                             card.InstanceId, card.Def.Id,
                             Events.CardBuffIds.DamageBonus, ctx.EffectValue));
                     }
-                    ctx.TargetId = card.Def.Id;
                     return;
                 }
             }

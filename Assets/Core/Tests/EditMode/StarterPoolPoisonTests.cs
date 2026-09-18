@@ -30,7 +30,7 @@ namespace FateWeaver.Tests
         }
 
         private static System.Collections.Generic.List<ResolutionEvent> Resolve(CombatState state)
-            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses())
+            => new TurnResolver(CombatRegistriesAccessor.Effects(), CombatRegistriesAccessor.Statuses(), CombatRegistriesAccessor.Reactions())
                 .Resolve(state, 0);
 
         [Test]
@@ -92,6 +92,25 @@ namespace FateWeaver.Tests
             Assert.AreEqual(3, state.Enemies[0].Statuses.Get(StatusKeys.Poison).Magnitude);
         }
 
+        /// <summary>구형 damageBonusPerConsumed가 scaleBy로 옮겨져도 피해는 2 + 소비×2 그대로다(계획 D2).</summary>
+        [TestCase(3, 8)]
+        [TestCase(1, 4)]
+        [TestCase(0, 2)]
+        public void Condensed_burst_damage_scales_with_what_was_consumed(int poison, int damage)
+        {
+            var state = NewState(new Enemy("goblin", 30));
+            if (poison > 0)
+            {
+                state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, poison);
+            }
+
+            Place(state, Pool.Get("condensed_burst"));
+
+            var events = Resolve(state);
+
+            Assert.AreEqual(damage, events.OfType<CardResolved>().Single().DamageDealt);
+        }
+
         [Test]
         public void Toxic_reclaim_blocks_only_after_a_real_consume()
         {
@@ -112,12 +131,12 @@ namespace FateWeaver.Tests
             // 독 있음: 1 소비 후 재부여, 자신 방어 4 → 뒤이은 공격 4를 흡수.
             var with = NewState(new Enemy("goblin", 20));
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
-            var card = Place(with, Pool.Get("toxic_reclaim"));
+            Place(with, Pool.Get("toxic_reclaim"));
             with.Zone.Add(new ExecutionCardInstance(
                 CardFixtures.EnemyAttack("goblin_jab", 7, 4))
                 { OwnerId = "goblin" });
-            Resolve(with);
-            Assert.AreEqual(1, card.ConsumedStatusAmount);
+            var events = Resolve(with);
+            Assert.AreEqual(1, events.OfType<StatusConsumed>().Single().Amount);
             Assert.AreEqual(30, with.Party[0].Hp); // 방어 4가 공격 4를 흡수 → 무피해
         }
 
@@ -167,8 +186,7 @@ namespace FateWeaver.Tests
         {
             // Position spec §3: "앞 하나" is re-evaluated against the living formation — a card that
             // kills the front enemy must not leave a later card's FrontOne selector locked onto the
-            // now-dead corpse (the legacy ByIdOrFront fallback would return raw Enemies[0] regardless
-            // of HP).
+            // now-dead corpse.
             var state = NewState(new Enemy("front", 3), new Enemy("back", 20));
             Place(state, Pool.Get("vanguard_slash")); // 순서 3, 피해 5 → front(3) 처치
             Place(state, Pool.Get("venom_thrust"));   // 순서 4, 새 전열(back)을 타격해야 함
@@ -187,7 +205,7 @@ namespace FateWeaver.Tests
         {
             // Distinguishes the tick-death path (EndOfTurnMaintenance) from the mid-turn card-kill path
             // already covered by ContagionStatusTests: here RunTurnEndTicks ticks every living enemy
-            // BEFORE the post-tick death sweep dispatches OnHolderDied/StatusTransferred, so the
+            // BEFORE the post-tick death cleanup's HolderDied reaction (contagion → StatusTransferred), so the
             // recipient's newly-received poison must NOT tick again in the same EndOfTurnMaintenance.
             var state = NewState(new Enemy("victim", 1), new Enemy("next", 20));
             state.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);

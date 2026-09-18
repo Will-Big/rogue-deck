@@ -28,7 +28,7 @@ namespace FateWeaver.Tests
         {
             var card = new CardDefinition(
                 "slash", "베기", Side.Player, 5,
-                new[] { new EffectData(EffectKeys.Damage, 3) }) { EnergyCost = 1 };
+                new[] { new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, EnergyCost = 1 };
 
             Assert.AreEqual(CardCategory.Execution, card.Category);
             Assert.AreEqual(1, card.EnergyCost);
@@ -55,12 +55,9 @@ namespace FateWeaver.Tests
             bool hasBlock)
         {
             var effects = new List<EffectData>();
-            if (hasDamage) effects.Add(new EffectData(EffectKeys.Damage, 3));
+            if (hasDamage) effects.Add(new EffectData(EffectKeys.Damage, 3) { TargetFaction = CardTargetFaction.Enemy });
             if (hasBlock)
-                effects.Add(EffectData.ApplyStatus(
-                    StatusKeys.Block,
-                    StatusApplyTarget.Self,
-                    2));
+                effects.Add(EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 2));
 
             var card = new CardDefinition(
                 "test", "test", Side.Player, 5, effects);

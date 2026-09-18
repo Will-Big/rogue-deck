@@ -1,18 +1,26 @@
 {
+  "cardFormat": 2,
   "id": "parry_strike",
   "name": "쳐내기",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self",
+    "enemy": "FrontOne"
+  },
   "effects": [
     {
       "kind": "damage",
-      "value": 1,
-      "selector": "FrontOne"
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 1
     },
     {
       "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Ally",
       "status": "block",
       "count": 3
     }
