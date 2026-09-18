@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전투 실행 계약 — 설계 검토</title>
+<style>
+:root{color-scheme:light}body{margin:0;background:#f3f5f7;color:#202c39;font:17px/1.8 system-ui,sans-serif}main{max-width:1020px;margin:auto;padding:48px 28px 80px}h1{font-size:36px;line-height:1.3}h2{font-size:25px;margin:0 0 18px}h3{font-size:19px}section{background:white;border:1px solid #d7e0e6;border-radius:14px;padding:28px;margin:24px 0}.tag{color:#286461;font-weight:700}.note{background:#fff6df;padding:18px;border-left:4px solid #bb8527}table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #dde4e8;padding:12px}th{background:#eff5f5}a{color:#176b83}svg{width:100%;height:auto}svg text{font-family:system-ui,sans-serif;fill:#202c39;font-size:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.box{padding:18px;background:#eff5f5;border-radius:10px}code{background:#edf1f4;padding:2px 5px;font-size:.9em}@media(max-width:700px){main{padding:24px 14px}section{padding:18px}.grid{grid-template-columns:1fr}table{font-size:13px}h1{font-size:28px}}
+</style><main>
+<p class="tag">FATE WEAVER · 설계 검토 · 2026-09-18</p>
+<h1>효과마다 반응하고,<br>카드가 끝나면 승패를 판정한다</h1>
+<p>실행 카드의 위치 선택·조건·소비 보상을 명확히 분리하고, 사건에 반응하는 능력과 상태 만료를 공통 계약으로 만든다. 다중 적 정책 작업, 런·유산·세이브, 표현 연출은 이번 범위에서 제외한다.</p>
+<p><a href="2026-09-18-combat-execution-contract-design.md">구현 인계용 상세 Markdown</a> · 문서 상태 active / 코드 미변경</p>
+<section><h2>무엇을 만드나</h2>
+<p>카드 내부 효과는 순서대로 진행한다. 각 효과는 현재 위치에서 대상을 선택하고, 그 효과가 유발한 반응을 즉시 해결한다. 카드가 시작된 뒤 수행자가 죽어도 남은 효과를 처리하며, 카드와 직접 반응이 모두 끝난 시점에 패배 우선으로 승패를 판정한다.</p>
+<p>광역 효과는 전체 대상에 적용한 뒤 반응한다. 반응이 만든 변화는 정상 반영하지만 추가 반응을 발동시키지 않는다. 카드 시작 성공 조건은 고정하고, 소비에 대한 보상은 실제 소비 결과를 참조한다.</p>
+</section>
+<section><h2>구조와 책임</h2>
+<table><tr><th>객체 / 경계</th><th>책임</th><th>모르는 것</th></tr>
+<tr><td>콘텐츠 변환 경계</td><td>검증된 카드 정의 생성</td><td>실행 중 개체와 결과</td></tr>
+<tr><td>FutureZone</td><td>현재 카드 자리 관리</td><td>피해·상태 능력</td></tr>
+<tr><td>TurnResolver</td><td>턴 단계 호출 순서</td><td>개별 조건·효과 계산</td></tr>
+<tr><td>CardExecutor</td><td>카드 실행 진행</td><td>피해 공식·구체 상태 이름</td></tr>
+<tr><td>EffectExecutor</td><td>효과 적용 경계 수행</td><td>턴 진행·카드 전체 분기</td></tr>
+<tr><td>ReactionDispatcher</td><td>사건에 반응하는 능력 실행</td><td>개별 효과 계산</td></tr>
+<tr><td>StatusLifetimePolicy</td><td>상태 만료 판단</td><td>독·방어 등 개별 능력</td></tr></table>
+<p>새 이름은 제안이다. 기존 효과 처리기와 레지스트리를 재사용한다. 조정자는 호출 순서만 결정하고, 피해·조건·만료 규칙을 직접 소유하지 않는다.</p>
+</section>
+<section><h2>의존 방향</h2>
+<svg viewBox="0 0 950 420" role="img" aria-label="콘텐츠에서 카드 실행으로, 효과에서 반응으로 이어지는 의존 방향">
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8" fill="#337d79"/></marker></defs>
+<g fill="#edf5f4" stroke="#8dbab7"><rect x="20" y="20" width="260" height="62" rx="10"/><rect x="365" y="20" width="240" height="62" rx="10"/><rect x="675" y="20" width="250" height="62" rx="10"/><rect x="20" y="170" width="260" height="64" rx="10"/><rect x="365" y="170" width="240" height="64" rx="10"/><rect x="675" y="170" width="250" height="64" rx="10"/><rect x="365" y="330" width="240" height="62" rx="10"/><rect x="675" y="330" width="250" height="62" rx="10"/></g>
+<g text-anchor="middle"><text x="150" y="58">JSON → 검증된 카드 정의</text><text x="485" y="58">카드 실행 진행</text><text x="800" y="58">현재 실행선 / 실행 이력</text><text x="150" y="209">턴 단계 호출</text><text x="485" y="209">효과 단위 대상 선택·적용</text><text x="800" y="209">등록된 개별 효과 처리기</text><text x="485" y="368">사건의 직접 반응 처리</text><text x="800" y="368">상태별 반응 정의</text></g>
+<g stroke="#337d79" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M280 50H360"/><path d="M675 65H610"/><path d="M280 196L365 80"/><path d="M485 82V165"/><path d="M605 198H670"/><path d="M485 234V325"/><path d="M675 360H610"/></g>
+<text x="285" y="35">정의 제공</text><text x="607" y="48">질의</text><text x="220" y="130">실행 요청</text><text x="499" y="130">효과 요청</text><text x="606" y="181">키로 위임</text><text x="499" y="285">사건 전달</text><text x="611" y="345">조건 제공</text>
+</svg>
+<p>카드 실행기에 호출이 모이는 이유는 효과 간 진행을 제어하기 위해서다. 효과 계산은 처리기에 위임한다. 반응 효과도 동일한 효과 경계를 사용하되, 반응 기원 표시로 재발동을 차단한다. 공통 사망 정리는 능력이 아니라 필수 상태 정리다.</p>
+</section>
+<section><h2>확장 축</h2>
+<table><tr><th>등록·데이터로 확장</th><th>이번 계약에서 고정</th></tr>
+<tr><td>효과 종류, 조건 판정, 위치 선택, 사건 종류, 능력별 발동 요건, 상태 만료 정책</td><td>효과 순차 수행, 효과 직후 반응, 반응의 추가 반응 금지, 카드 종료 승패 판정</td></tr>
+<tr><td>Exact / UpTo 소비와 특정 효과 결과를 읽는 보상</td><td>카드 시작 조건 결과 고정, 효과마다 위치 재선택</td></tr>
+<tr><td>사망 시 능력과 생존이 필요한 반격의 개별 요건</td><td>방어로 전부 막아도 공격받음 사건 발생, 피해 계산·사망 정리는 항상 수행</td></tr></table>
+<p>위치 규칙은 아군·적군 축에 각각 두고 효과가 축을 참조한다. JSON 오류는 로딩에서 거부한다. 실행 결과는 콘텐츠에 저장하지 않는다. 신규 스키마 버전과 구형 변환은 로딩 경계에 두는 안을 제안한다.</p>
+<p>방어도 전용 시점은 만들지 않는다. 모든 상태가 공유하는 ‘턴 준비 만료’를 방어에 적용하고, 턴 시작 능력은 그 뒤에 발동한다. 재부여는 기존 부여 순서를 유지한다.</p>
+</section>
+<section><h2>대안과 기각 이유</h2>
+<div class="grid"><div class="box"><h3>채택: 효과 직후 반응</h3><svg viewBox="0 0 390 160" aria-label="피해 다음 반격 다음 방어" role="img"><g fill="#fff" stroke="#8dbab7"><rect x="5" y="45" width="100" height="65"/><rect x="145" y="45" width="100" height="65"/><rect x="285" y="45" width="100" height="65"/></g><text x="29" y="84">피해</text><text x="169" y="84">반격</text><text x="309" y="84">방어</text><text x="114" y="84">→</text><text x="254" y="84">→</text></svg><p>모든 효과에 동일한 경계를 적용한다. 연속 피해도 타격마다 반응한다.</p></div>
+<div class="box"><h3>기각: 카드 종료까지 보류</h3><svg viewBox="0 0 390 160" aria-label="피해 다음 방어 다음 반격" role="img"><g fill="#fff" stroke="#aab5bc"><rect x="5" y="45" width="100" height="65"/><rect x="145" y="45" width="100" height="65"/><rect x="285" y="45" width="100" height="65"/></g><text x="29" y="84">피해</text><text x="169" y="84">방어</text><text x="309" y="84">반격</text><text x="114" y="84">→</text><text x="254" y="84">→</text></svg><p>연속 공격 중 매번 반격하는 의도를 충족하지 않는다. 카드별 임의 묶음도 숨은 규칙이므로 채택하지 않는다.</p></div></div>
+<div class="grid"><div class="box"><h3>채택: 효과마다 위치 선택</h3><p>앞 효과 → 위치 변화 → 다음 효과가 새 위치를 해석</p></div><div class="box"><h3>기각: 카드 전체 대상 고정</h3><p>카드 시작의 개체를 계속 기억 → 위치를 지정한다는 의도와 불일치</p></div></div>
+</section>
+<section><h2>이 선택으로 어려워지는 것</h2>
+<ul><li>효과 순서가 규칙 의미가 되므로 JSON 재정렬이나 편집 도구 이동이 결과를 바꾼다. 왕복 검증이 필요하다.</li><li>기존 카드별 대상 고정 테스트와 취소 처리 테스트는 새 계약으로 바꿔야 한다. 과거 테스트 통과만으로 새 규칙을 보증할 수 없다.</li><li>반응에서 발생한 사망 능력도 연쇄 금지 대상이다. 필수 사망 정리와 능력 발동을 혼동하면 카드 제거까지 누락된다.</li><li>수행자가 죽어도 시작한 카드가 계속되고, 마지막 적이 죽어도 남은 아군 효과가 진행된다. 카드 종료 경계까지 승패를 미뤄야 한다.</li><li>일반 카드 성공 조건과 소비 결과 의존을 따로 표현해야 한다. 서로 다른 기존 조건을 자동으로 한 조건에 합치면 카드 의미가 변한다.</li></ul>
+</section>
+<section><h2>실행 예시</h2>
+<p>가상 카드: 적군 가장 앞, <strong>피해 3 → 자신 방어 3 → 피해 3</strong>. 아군 P의 HP 10, 적 A의 HP 8. A는 공격받을 때 피해 2로 반격한다.</p>
+<table><tr><th>담당·입력</th><th>결과</th></tr>
+<tr><td>CardExecutor: 카드 시작 조건 확정</td><td>이번 카드의 조건 결과 유지</td></tr>
+<tr><td>EffectExecutor: 첫 피해 3, FrontOne=A</td><td>A HP 5, 공격받음 사건</td></tr>
+<tr><td>ReactionDispatcher: A 반격 2</td><td>P HP 8. 추가 반응 없음</td></tr>
+<tr><td>EffectExecutor: 자신 방어 3</td><td>P 방어 3</td></tr>
+<tr><td>EffectExecutor: 두 번째 피해 3, 현재 FrontOne=A</td><td>A HP 2</td></tr>
+<tr><td>ReactionDispatcher: A 반격 2</td><td>P HP 8, 방어 1</td></tr>
+<tr><td>카드 종료 승패 판정</td><td>전투 계속</td></tr></table>
+<p>첫 피해가 마지막 적을 처치한 경우에도 자신 방어 효과는 수행하고, 다음 피해는 대상이 없어 미적용된 뒤 카드 종료 시 승리한다. 카드 안에서 양측이 전멸하면 패배다.</p>
+</section>
+<section><h2>검토가 필요한 구체화와 실행 순서</h2>
+<p class="note">추가 제안: 교환으로 동률 카드 순서가 뒤집힌 뒤 새 카드를 넣을 때 기존 카드들은 재정렬하지 않는다. 새 플레이어 카드는 해당 번호의 마지막 플레이어 뒤(없으면 구간 맨 앞), 새 적 카드는 구간 맨 뒤에 삽입한다. 신규 JSON에는 버전을 명시한다. 이 세칙은 대화 합의를 구현 가능한 형태로 구체화한 제안이다.</p>
+<p>현재 반응 수용 사례는 사건 당사자의 능력이다. 사건 대상 외의 전역 관찰자까지 지원할 때는 관찰자 순서를 추가로 명시해야 한다. 사건 등록 구조는 확장 가능하게 두며 모든 반응 종류가 이미 구현됐다고 간주하지 않는다.</p>
+<ol><li>실행선·실행 이력의 일관성</li><li>효과 결과·카드 시작 조건·소비 보상</li><li>효과마다 위치 재선택</li><li>즉시 반응·사망·카드 종료 승패</li><li>공통 상태 만료와 턴 준비</li><li>각 변경과 함께 JSON·설명·도구 왕복을 전환</li></ol>
+<p>상세 문서에 입력과 기대 결과를 가진 검증 사례 V01~V22를 수록했다. 전용 워크트리에서 헤드리스 검증으로 구현하고, 최종적으로 저장소 전체 검증을 수행한다. 이번 문서는 코드 구현 완료 보고가 아니다.</p>
+</section></main></html>
