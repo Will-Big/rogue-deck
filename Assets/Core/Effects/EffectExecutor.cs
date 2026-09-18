@@ -9,8 +9,8 @@ using FateWeaver.Core.Status;
 namespace FateWeaver.Core.Effects
 {
     /// <summary>효과 하나의 적용 경계(전투 실행 계약 스펙 §3·§7). 수행 여부와 수치를 정하고 지금의 위치로 대상을
-    /// 고른 뒤, 처리기 적용 → 사망 정리(DeathProcessor) → Primary일 때만 직접 반응(ReactionDispatcher)을 한 번에
-    /// 수행하고 EffectResult를 돌려준다. 결과를 결과표에 기록하는 일과 다음 효과로 넘어가는 일은 호출자(카드 실행)가 한다.</summary>
+    /// 고른 뒤, 처리기 적용 → 사망 정리(DeathProcessor) → 직접 반응(ReactionDispatcher, 기원에 따라 반응할 수 있는
+    /// 능력이 다르다)을 한 번에 수행하고 EffectResult를 돌려준다. 결과를 결과표에 기록하는 일과 다음 효과로 넘어가는 일은 호출자(카드 실행)가 한다.</summary>
     public sealed class EffectExecutor
     {
         private readonly EffectRegistry _effects;
@@ -115,10 +115,7 @@ namespace FateWeaver.Core.Effects
             Number(ctx.Signals, targetIds, signals);
             Number(Deaths.Process(ctx.State, before, events), targetIds, signals);
 
-            if (ReactionDispatcher.CanDispatch(ctx.Origin))
-            {
-                Reactions.Dispatch(ctx.State, ctx.ResolutionContext, signals, events);
-            }
+            Reactions.Dispatch(ctx.State, ctx.ResolutionContext, signals, events, ctx.Origin);
 
             return new EffectResult(true, ctx.ConsumedAmount, ctx.DamageDealt)
             {

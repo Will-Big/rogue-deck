@@ -28,6 +28,7 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => Counter;
             public CombatSignalKey SignalKey => CombatSignalKeys.Attacked;
+            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
                 => Units.IsAlive(state, signal.TargetId);
@@ -44,6 +45,7 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => GuardOnHit;
             public CombatSignalKey SignalKey => CombatSignalKeys.Attacked;
+            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
                 => Units.IsAlive(state, signal.TargetId);
@@ -63,6 +65,7 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => BlockWatch;
             public CombatSignalKey SignalKey => CombatSignalKeys.StatusGained;
+            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
                 => signal.Detail == StatusKeys.Block.Id && Units.IsAlive(state, signal.TargetId);
@@ -81,6 +84,7 @@ namespace FateWeaver.Tests
         {
             public StatusKey Key => PingWatch;
             public CombatSignalKey SignalKey => Ping;
+            public bool RespondsToReactionEvents => false;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal) => true;
 
@@ -160,9 +164,34 @@ namespace FateWeaver.Tests
 
         [TestCase(EffectOrigin.Primary, true)]
         [TestCase(EffectOrigin.Reaction, false)]
-        public void Only_primary_effects_open_a_reaction_boundary(EffectOrigin origin, bool expected)
+        public void A_reaction_attack_answers_only_primary_events(EffectOrigin origin, bool expected)
         {
-            Assert.AreEqual(expected, ReactionDispatcher.CanDispatch(origin));
+            Assert.AreEqual(expected, ReactionDispatcher.Allows(origin, new CounterReaction()));
+        }
+
+        [TestCase(EffectOrigin.Primary)]
+        [TestCase(EffectOrigin.Reaction)]
+        public void A_death_ability_answers_events_of_either_origin(EffectOrigin origin)
+        {
+            Assert.IsTrue(ReactionDispatcher.Allows(origin, new ContagionReaction()));
+        }
+
+        // D11: 반응 공격은 반응 공격을 부르지 않는다.
+        [Test]
+        public void A_counter_does_not_trigger_the_attackers_counter()
+        {
+            var state = new CombatState(TestContent.Statuses());
+            var player = state.AddSoloPlayer(10);
+            player.Statuses.Add(Counter, StatusLifetime.Permanent, magnitude: 3);
+            var a = new Enemy("a", 20);
+            a.Statuses.Add(Counter, StatusLifetime.Permanent, magnitude: 2);
+            state.Enemies.Add(a);
+            state.Zone.Add(PlayerCard(CardTargetRange.FrontOne, Hit(4)));
+
+            Resolver().Resolve(state, 0);
+
+            Assert.AreEqual(8, player.Hp, "a의 반격은 들어온다");
+            Assert.AreEqual(16, a.Hp, "플레이어의 반격은 a의 반격(반응 공격)에 발동하지 않는다");
         }
 
         // V07: 피해 다음 방어, 상대 반격 — 반격은 방어 획득 전.
@@ -305,9 +334,9 @@ namespace FateWeaver.Tests
             Assert.Less(IndexOf(events, e => e is EnemyDied), IndexOf(events, e => e is StatusTransferred));
         }
 
-        // V09: 반응 피해로 죽은 사망 능력 보유자 — 사망 정리는 수행하고 능력은 발동하지 않는다.
+        // V09(D11로 개정): 반응 피해로 죽어도 사망 정리를 하고, 사망 시 반응(전염)도 실행한다.
         [Test]
-        public void A_death_caused_by_a_reaction_is_cleaned_up_without_running_death_abilities()
+        public void A_death_caused_by_a_reaction_is_cleaned_up_and_runs_the_death_ability()
         {
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
@@ -338,8 +367,10 @@ namespace FateWeaver.Tests
 
             Assert.IsTrue(events.OfType<PartyMemberDied>().Any(e => e.MemberId == "p"));
             Assert.AreEqual("later", events.OfType<CardRemoved>().Single().CardId, "사망 정리는 수행한다");
-            Assert.IsEmpty(events.OfType<StatusTransferred>(), "반응이 만든 사망은 사망 능력을 발동하지 않는다");
-            Assert.IsFalse(a.Statuses.Has(StatusKeys.Poison));
+            var transfer = events.OfType<StatusTransferred>().Single();
+            Assert.AreEqual("p", transfer.FromHolderId, "반격으로 죽어도 사망 시 반응은 발동한다");
+            Assert.AreEqual("a", transfer.ToHolderId);
+            Assert.Less(IndexOf(events, e => e is PartyMemberDied), IndexOf(events, e => e is StatusTransferred));
         }
 
         [Test]
@@ -380,7 +411,7 @@ namespace FateWeaver.Tests
             Assert.IsFalse(result.Signals.Any(s => s.Key == CombatSignalKeys.HpDamaged));
         }
 
-        // D1: 독은 관통(방어 우회)이고 피해 배율(취약)을 받지 않는다.
+        // D1·D10: 독은 관통(방어 우회)이고 피해 배율(취약)을 받지 않는다 — poison.json의 damage 속성.
         [Test]
         public void Poison_tick_pierces_block_and_ignores_vulnerable()
         {
@@ -416,6 +447,14 @@ namespace FateWeaver.Tests
 
             Assert.AreEqual("next", events.OfType<StatusTransferred>().Single().ToHolderId);
             Assert.AreEqual(4, next.Statuses.Get(StatusKeys.Poison).Magnitude, "성장한 독 전량이 옮겨간다");
+        }
+
+        [Test]
+        public void Poison_damage_traits_come_from_its_status_data()
+        {
+            Assert.AreEqual(new DamageTraits(true, true), TestContent.Statuses().DamageTraitsOf(StatusKeys.Poison));
+            Assert.AreEqual(DamageTraits.Normal, TestContent.Statuses().DamageTraitsOf(StatusKeys.Block),
+                "피해 속성을 저작하지 않은 상태는 보통 피해다");
         }
 
         [Test]

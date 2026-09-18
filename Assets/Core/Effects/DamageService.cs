@@ -13,19 +13,16 @@ namespace FateWeaver.Core.Effects
         Status
     }
 
-    /// <summary>피해 한 번의 입력. Piercing은 흡수 층(방어)을 건너뛰고, ApplyMultipliers가 false면 배율 층
-    /// (취약 등)을 건너뛴다. 독은 원인=상태, Piercing, 배율 미적용이다(계획 D1).
-    /// HpSource·HpSourceId는 표시용 HpChanged의 원인 표기다.</summary>
+    /// <summary>피해 한 번의 입력: 양, 원인, 피해 속성(관통·배율 미적용 — 데이터가 정한다), 원인 개체와 표시용 원인.</summary>
     public readonly struct DamageRequest
     {
         public DamageRequest(
-            int amount, DamageCause cause, bool piercing, bool applyMultipliers,
+            int amount, DamageCause cause, DamageTraits traits,
             string sourceId, HpChangeSource hpSource, string hpSourceId)
         {
             Amount = amount;
             Cause = cause;
-            Piercing = piercing;
-            ApplyMultipliers = applyMultipliers;
+            Traits = traits ?? DamageTraits.Normal;
             SourceId = sourceId;
             HpSource = hpSource;
             HpSourceId = hpSourceId;
@@ -33,21 +30,21 @@ namespace FateWeaver.Core.Effects
 
         public int Amount { get; }
         public DamageCause Cause { get; }
-        public bool Piercing { get; }
-        public bool ApplyMultipliers { get; }
+        public DamageTraits Traits { get; }
 
         /// <summary>피해를 준 개체 id(사건의 SourceId). 상태 피해면 null.</summary>
         public string SourceId { get; }
         public HpChangeSource HpSource { get; }
         public string HpSourceId { get; }
 
-        /// <summary>공격 피해: 배율과 흡수를 모두 거친다.</summary>
-        public static DamageRequest Attack(int amount, string sourceId, HpChangeSource hpSource, string hpSourceId)
-            => new DamageRequest(amount, DamageCause.Attack, false, true, sourceId, hpSource, hpSourceId);
+        /// <summary>공격 피해. 속성을 주지 않으면 보통 피해다.</summary>
+        public static DamageRequest Attack(
+            int amount, string sourceId, HpChangeSource hpSource, string hpSourceId, DamageTraits traits = null)
+            => new DamageRequest(amount, DamageCause.Attack, traits, sourceId, hpSource, hpSourceId);
 
-        /// <summary>상태 피해(독 틱): 관통, 배율 미적용.</summary>
-        public static DamageRequest StatusTick(int amount, string statusId)
-            => new DamageRequest(amount, DamageCause.Status, true, false, null, HpChangeSource.StatusTick, statusId);
+        /// <summary>상태 피해(틱·즉시 발동). 속성은 그 상태의 저작 데이터(StatusContentCatalog.DamageTraitsOf)에서 온다.</summary>
+        public static DamageRequest StatusTick(int amount, string statusId, DamageTraits traits)
+            => new DamageRequest(amount, DamageCause.Status, traits, null, HpChangeSource.StatusTick, statusId);
     }
 
     /// <summary>피해 계산이 결과를 쓰는 곳: 표시 이벤트, 규칙 사건, 피해 단계 내역.</summary>
@@ -66,7 +63,8 @@ namespace FateWeaver.Core.Effects
     }
 
     /// <summary>모든 피해가 지나는 공통 경로(스펙 §7): 받는 쪽 상태 접기(배율 → 흡수), HP 차감, HpChanged,
-    /// 공격받음·체력 피해 사건. 원인·관통·배율 여부는 호출자가 요청으로 밝힌다 — 독만의 우회 경로를 두지 않는다.</summary>
+    /// 공격받음·체력 피해 사건. 원인은 호출자가, 관통·배율 미적용은 피해 속성(데이터)이 정한다 — 원인이나
+    /// 특정 상태에 따라 경로를 가르지 않는다.</summary>
     public sealed class DamageService
     {
         private readonly StatusRegistry _statuses;
@@ -89,13 +87,13 @@ namespace FateWeaver.Core.Effects
             DamageRequest request, DamageSink sink)
         {
             var amount = request.Amount;
-            if (request.ApplyMultipliers)
+            if (!request.Traits.IgnoresMultipliers)
             {
                 amount = StatusDamageFold.Incoming(
                     bag, _statuses, state.StatusRules, amount, StatusDamageLayer.Multiplier, holderId, sink.Steps);
             }
 
-            if (!request.Piercing)
+            if (!request.Traits.Piercing)
             {
                 amount = StatusDamageFold.Incoming(
                     bag, _statuses, state.StatusRules, amount, StatusDamageLayer.Absorb, holderId, sink.Steps);

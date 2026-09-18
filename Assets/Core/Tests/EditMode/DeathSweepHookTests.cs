@@ -19,6 +19,7 @@ namespace FateWeaver.Tests
             public readonly List<string> DiedHolders = new List<string>();
             public StatusKey Key => RecorderKey;
             public CombatSignalKey SignalKey => CombatSignalKeys.HolderDied;
+            public bool RespondsToReactionEvents => true;
 
             public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
             {
@@ -75,7 +76,7 @@ namespace FateWeaver.Tests
             var statuses = new StatusRegistry();
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState(TestContent.Statuses());
+            var state = new CombatState(TestContent.PlainStatuses(LethalTickBehavior.TickKey));
             state.AddSoloPlayer(20);
             state.Enemies.Add(new Enemy("goblin", 2));
             state.Enemies[0].Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
@@ -97,7 +98,7 @@ namespace FateWeaver.Tests
             var statuses = new StatusRegistry();
             statuses.Register(new LethalTickBehavior());
 
-            var state = new CombatState(TestContent.Statuses());
+            var state = new CombatState(TestContent.PlainStatuses(LethalTickBehavior.TickKey));
             var member = state.AddSoloPlayer(3);
             member.Statuses.Add(LethalTickBehavior.TickKey, StatusLifetime.Permanent, 5);
             member.Statuses.Add(RecorderKey, StatusLifetime.Permanent);

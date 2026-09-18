@@ -2,5 +2,9 @@
   "growthPerTurn": 1,
   "key": "poison",
   "displayName": "독",
-  "lifetime": "Permanent"
+  "lifetime": "Permanent",
+  "damage": {
+    "piercing": true,
+    "ignoresMultipliers": true
+  }
 }

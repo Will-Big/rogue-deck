@@ -18,7 +18,7 @@ namespace FateWeaver.Core.Status
     }
 
     /// <summary>턴 종료 틱 훅 입력. DealDamage는 보유자에게 상태 피해를 주는 배선이다 — 호출자가 공통 피해
-    /// 경로(DamageService)에 원인=상태·관통·배율 미적용으로 연결하고, 그 경로가 HpChanged를 남긴다.
+    /// 경로(DamageService)에 원인=상태와 그 상태의 저작된 피해 속성으로 연결하고, 그 경로가 HpChanged를 남긴다.
     /// Events에 추가한 이벤트는 타임라인의 현재 위치에 이어 붙는다.</summary>
     public sealed class StatusTickContext
     {

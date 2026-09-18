@@ -51,6 +51,10 @@ namespace FateWeaver.Core.Authoring.Statuses
 
         public bool CountIsDuration(StatusKey key) => Spec(key).CountIsDuration;
 
+        /// <summary>이 상태가 주는 피해의 속성. 저작하지 않았으면 보통 피해다.</summary>
+        public Effects.DamageTraits DamageTraitsOf(StatusKey key)
+            => Spec(key).Damage?.ToTraits() ?? Effects.DamageTraits.Normal;
+
         public int ExecutionOrderDeltaOf(StatusKey key)
             => Spec(key) is ExecutionOrderStatusSpec spec ? spec.ExecutionOrderDelta : 0;
 

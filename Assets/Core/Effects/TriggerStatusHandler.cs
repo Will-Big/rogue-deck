@@ -26,16 +26,16 @@ namespace FateWeaver.Core.Effects
                 var status = enemy.Statuses.Get(payload.Key);
                 if (status != null)
                 {
-                    // 즉시 발동도 턴 종료 틱과 같은 공통 피해 경로(상태 원인·관통·배율 미적용)를 쓴다.
+                    // 즉시 발동도 턴 종료 틱과 같은 공통 피해 경로를 쓴다(원인=상태, 속성은 그 상태의 데이터).
                     var target = enemy;
-                    var statusId = payload.Key.Id;
+                    var traits = ctx.State.StatusContent.DamageTraitsOf(payload.Key);
                     behavior.OnTurnEnd(new StatusTickContext
                     {
                         Instance = status,
                         HolderBag = target.Statuses,
                         HolderId = target.Id,
                         DealDamage = damage => ctx.DamageDealt += ctx.Damage.Deal(
-                            ctx.State, target, DamageRequest.StatusTick(damage, statusId), ctx.Sink),
+                            ctx.State, target, DamageRequest.StatusTick(damage, payload.Key.Id, traits), ctx.Sink),
                         Events = ctx.ExtraEvents,
                         Content = ctx.State.StatusContent
                     });

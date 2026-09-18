@@ -25,6 +25,10 @@ namespace FateWeaver.Core.Authoring.Statuses
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
         public StatusLifetimeKind Lifetime;
 
+        /// <summary>이 상태가 주는 피해(독 틱 등)의 속성. 피해를 주지 않는 상태는 생략한다 — 생략하면 보통
+        /// 피해(방어·배율 적용)다. 관통·배율 미적용은 상태가 아니라 이 데이터가 정한다.</summary>
+        public DamageTraitsSpec Damage;
+
         [JsonIgnore]
         public bool CountIsDuration
             => Lifetime == StatusLifetimeKind.Turns

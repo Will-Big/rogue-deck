@@ -7,7 +7,7 @@ using FateWeaver.Core.Events;
 namespace FateWeaver.Core.Status
 {
     /// <summary>사후 전염의 사망 능력: 보유자가 독 상태로 죽으면 남은 독 전량을 현재 적 전열 하나(생존)에게
-    /// 옮긴다. 사망한 보유자를 허용하는 능력이다. 반응이 만든 사망에는 발동하지 않는다(스펙 §7).</summary>
+    /// 옮긴다. 사망한 보유자를 허용하는 능력이고, 반격 등 반응이 만든 사망에도 발동한다(계획 D11).</summary>
     public sealed class ContagionReaction : IReactionHandler
     {
         private static readonly IReadOnlyList<ReactionEffect> Transfer = new[]
@@ -19,6 +19,9 @@ namespace FateWeaver.Core.Status
 
         public StatusKey Key => StatusKeys.Contagion;
         public CombatSignalKey SignalKey => CombatSignalKeys.HolderDied;
+
+        /// <summary>사망 시 반응은 사망 원인이 반응 공격이어도 발동한다(계획 D11).</summary>
+        public bool RespondsToReactionEvents => true;
 
         public bool CanReact(CombatState state, StatusInstance instance, CombatSignal signal)
         {

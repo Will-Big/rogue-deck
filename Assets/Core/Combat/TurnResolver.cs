@@ -148,7 +148,7 @@ namespace FateWeaver.Core.Combat
                 signals.Add(died);
             }
 
-            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events);
+            _executor.Reactions.Dispatch(state, resolutionContext, Numbered(signals), events, EffectOrigin.Primary);
 
             foreach (var member in state.Party)
             {
@@ -194,8 +194,8 @@ namespace FateWeaver.Core.Combat
                 if (!member.IsAlive) continue;
                 var target = member;
                 TickHolder(target.Statuses, target.Id, events, state.StatusContent,
-                    statusId => damage => _executor.Damage.Deal(
-                        state, target, DamageRequest.StatusTick(damage, statusId), sink));
+                    key => damage => _executor.Damage.Deal(
+                        state, target, StatusDamage(state, key, damage), sink));
             }
 
             foreach (var enemy in state.Enemies)
@@ -203,14 +203,18 @@ namespace FateWeaver.Core.Combat
                 if (enemy.Hp <= 0) continue;
                 var target = enemy;
                 TickHolder(target.Statuses, target.Id, events, state.StatusContent,
-                    statusId => damage => _executor.Damage.Deal(
-                        state, target, DamageRequest.StatusTick(damage, statusId), sink));
+                    key => damage => _executor.Damage.Deal(
+                        state, target, StatusDamage(state, key, damage), sink));
             }
         }
 
+        /// <summary>상태 피해 요청. 관통·배율 미적용은 그 상태의 저작 데이터가 정한다.</summary>
+        private static DamageRequest StatusDamage(CombatState state, StatusKey key, int damage)
+            => DamageRequest.StatusTick(damage, key.Id, state.StatusContent.DamageTraitsOf(key));
+
         private void TickHolder(
             StatusBag bag, string holderId, List<ResolutionEvent> events,
-            Authoring.Statuses.StatusContentCatalog content, Func<string, Action<int>> dealDamageFor)
+            Authoring.Statuses.StatusContentCatalog content, Func<StatusKey, Action<int>> dealDamageFor)
         {
             // Snapshot: a hook may modify the bag mid-iteration.
             var snapshot = new List<StatusInstance>(bag.All);
@@ -223,7 +227,7 @@ namespace FateWeaver.Core.Combat
                         Instance = status,
                         HolderBag = bag,
                         HolderId = holderId,
-                        DealDamage = dealDamageFor(status.Key.Id),
+                        DealDamage = dealDamageFor(status.Key),
                         Events = events,
                         Content = content
                     });
