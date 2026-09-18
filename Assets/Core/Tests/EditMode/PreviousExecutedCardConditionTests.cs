@@ -73,6 +73,8 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses());
             state.Party.Clear();
             state.Party.Add(new PartyMember("ally", "Ally", maxHp: 3));
+            // 파티가 전멸하면 카드가 끝나는 즉시 전투가 끝나므로(스펙 §2), 뒤 카드를 쓸 생존 파티원을 둔다.
+            state.Party.Add(new PartyMember("hero", "Hero", maxHp: 30));
             state.Enemies.Add(new Enemy("goblin", 100));
 
             // A: enemy attack, resolves, kills "ally" outright.

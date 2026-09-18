@@ -30,7 +30,7 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 
 ### 진행 상황과 세션 인계 (2026-09-18 갱신)
 
-**다음 작업은 T5이다.** T0·T1·T2a·T2b·T3·T3b·T4는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
+**다음 작업은 T6이다.** T0·T1·T2a·T2b·T3·T3b·T4·T5는 끝났다. 각 작업 절 첫머리의 "완료" 문단에 구현 중 결정이 있다 —
 특히 T2a 문단의 "런타임 위치 축은 T3로 미뤘다"는 T3의 입력이다.
 
 - 작업 위치: 워크트리 `/Users/ish/Git/rogue-deck/.claude/worktrees/combat-execution-contract`, 브랜치
@@ -38,8 +38,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
   들어간다 — 메인 체크아웃이나 새 워크트리에서 시작하면 이 작업이 없다.
 - 브랜치 커밋: `f013518`(T0) · `06ba017`(T1) · `597ba42`(교환 자리 진영, 사용자 결정) · `30d3870`(교환 세션 테스트) ·
   `5cd1186`(T2a+T2b 한 커밋) · `b792090`(편집 도구 참조 칸 한 줄 표시, 사용자 지적) · `c06b2e4`(T3) ·
-  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · T4 커밋(아래 T4 절).
-- 기준 수치(T4 끝): 헤드리스 715 · 편집 도구 161 · Unity EditMode 908(통과 901, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
+  `fdccf6f`(T3b 계획) · `aa9e85b`(T3b) · `4a7bda6`·`406b746`·`9842341`(T4와 검토 반영) · T5 커밋(아래 T5 절).
+- 기준 수치(T5 끝): 헤드리스 725 · 편집 도구 161 · Unity EditMode 918(통과 911, 실패 0, 건너뜀 7 = `CardFrameRenderCapture`).
 
 계획 밖에서 사용자가 정한 것(해당 작업 절에도 적었다):
 - 교환은 실행 순서만 바꾼다 — 교환된 두 카드는 자리의 진영까지 물려받고, 뒤에 오는 카드는 교환을 모르는 것처럼
@@ -60,6 +60,8 @@ T0 신설, T2를 T2a·T2b로 분리, 조건 레지스트리 제외, 카드 형�
 - **인앱 브라우저는 폴더 연결(File System Access API)과 `data:` 주소의 localStorage를 지원하지 않는다.** 편집 도구를 확인하려면
   `index.html` 앞에 메모리 폴더·메모리 localStorage를 주입한 임시 페이지를 워크트리 안에 만들어 열고, 확인 뒤 지운다.
 - 워크트리 격리 세션은 복잡한 셸 한 줄(루프·치환이 섞인 명령)을 거부한다. 긴 편집은 scratchpad의 파이썬 스크립트로 나눠 돌렸다.
+- T5부터 승패는 카드마다 판정하고 결판이 나면 턴이 그 자리에서 끝난다. 테스트에서 "마지막 적을 죽인 뒤 다른 카드"를 보려면
+  적을 하나 더 두어야 한다.
 - T4부터 효과 하나의 사망 정리와 직접 반응은 `EffectExecutor` 안에서 끝난다. 반응이 필요한 전투(전염 포함)는
   `TurnResolver`에 `CombatRegistries.Reactions()`를 넘겨야 한다 — 빠뜨리면 전염이 조용히 발동하지 않는다.
   전염이 쓰는 `transfer_status`도 효과 레지스트리에 있어야 한다(`CombatRegistries.Effects()`에는 있다).
@@ -716,6 +718,22 @@ ReactionDispatcher:
 
 ### T5. 카드를 종료 단위로 만든다
 
+완료(2026-09-18). 구현 중 결정과 계획과 달라진 점:
+- `CardExecutor`는 카드 한 장의 진행(가로채기 → 시작 조건 고정 → 실행 사실 기록 → 효과들 → CardResolved/CardCancelled →
+  Executed)을 맡고 승패를 모른다. 실행 사실(`MarkExecuted`)은 계획대로 **시작 조건을 읽은 직후** 기록한다(전에는 카드 끝).
+  카드 효과 도중 `LastExecutedCard`가 자기 자신이 되지만, 이력을 읽는 것은 카드 시작 조건뿐이라 결과는 같다.
+- `TurnResolver`는 턴 단계의 호출 순서만 정한다: 카드마다 실행 → `CombatOutcomeEvaluator.Evaluate` → 결판이 나면
+  `TurnEnded(결과)`를 내고 즉시 끝(남은 카드는 Pending으로 남고, 턴 종료 상태 틱·수명 만료를 하지 않는다).
+  결판이 안 나면 턴 종료 묶음 뒤 판정. `TurnEnded`는 소비자 호환을 위해 그대로 전투 종료 이벤트로 쓴다.
+- **덱 제거 주입은 계획과 다르다.** `DeathProcessor`는 `Action<string> removeOwnedCards`를 필수로 받지만, `TurnResolver`·
+  `EffectExecutor`에서는 선택 인자다(생략하면 빈 동작). 계획의 "덱 없는 코어 테스트도 빈 동작을 명시적으로 전달"을 따르면
+  `TurnResolver` 생성 114곳 대부분을 고쳐야 해서 택하지 않았다. 덱이 있는 유일한 곳인 `DeckCombatSession`이
+  `RemoveOwnedCards`를 넘기고, 타임라인의 `PartyMemberDied`를 훑던 턴 끝 제거 루프는 지웠다(사망 즉시 제거).
+- 고정 서명 갱신: 고블린을 죽인 카드가 끝나는 순간 승리가 확정되어 뒤의 `spore_veil`·`delayed_strike`와 턴 끝 방어 만료가
+  실행되지 않는다(사유는 테스트 주석). 콘텐츠 카드 설명과 샘플 Compare 6개는 바뀌지 않았다 — 샘플에 턴 중간 결판이 없다.
+- 결판 뒤 실행이 멈추므로 "마지막 적 처치 뒤에도 카드가 계속된다"에 기대던 테스트 2개는 적·파티원을 하나 더 둬 전투를 잇게 했다.
+- 검증: 헤드리스 725 · 편집 도구 161 · Unity EditMode 918(통과 911, 실패 0, 건너뜀 7).
+
 수정: `Assets/Core/Combat/TurnResolver.cs`, `ExecutionCardInstance.cs`, `CombatState.cs`,
 `Assets/Core/Simulation/DeckCombatSession.cs`, `Assets/Core/Combat/Deck.cs`, `DeathProcessor.cs`.
 생성: `Assets/Core/Combat/CardExecutor.cs`, `CombatOutcomeEvaluator.cs`.
@@ -732,7 +750,7 @@ ReactionDispatcher:
   동작을 주입한다. 덱 없는 코어 테스트는 빈 동작을 명시적으로 전달한다.
 - 기존 TurnEnded 이벤트는 소비자 호환을 위해 유지한다. 이 이벤트 출력 때문에 미실행 TurnEnd 능력을 실행하지 않는다.
 
-- [ ] 아래 패배 우선 테스트와 V11~13을 추가한다. Outcome은 기존 Events 네임스페이스를 사용한다.
+- [x] 아래 패배 우선 테스트와 V11~13을 추가한다. Outcome은 기존 Events 네임스페이스를 사용한다.
 
 ```csharp
 [Test]
@@ -745,7 +763,7 @@ public void Defeat_wins_when_both_sides_are_dead()
 }
 ```
 
-- [ ] `Tools/verify.sh --quick` 실패 확인 후 카드 수행을 CardExecutor로 옮긴다.
+- [x] `Tools/verify.sh --quick` 실패 확인 후 카드 수행을 CardExecutor로 옮긴다.
 
 ```text
 시작 전에 Removed이면 실행하지 않음
@@ -758,14 +776,14 @@ Executed로 전환 (무효과·수행자 사망도 동일)
 호출자인 TurnResolver가 카드 종료 승패 판정
 ```
 
-- [ ] 반응 처리에서 부모 카드의 조건을 재평가하거나 부모 효과 ID의 결과를 덮어쓰지 않는다.
+- [x] 반응 처리에서 부모 카드의 조건을 재평가하거나 부모 효과 ID의 결과를 덮어쓰지 않는다.
   반응 실행 문맥은 부모 사건을 참조하되 결과표를 분리한다.
-- [ ] 현재 수행자 사망은 남은 효과를 중단하지 않는다. 죽은 Self의 일반 회복/방어는 미적용,
+- [x] 현재 수행자 사망은 남은 효과를 중단하지 않는다. 죽은 Self의 일반 회복/방어는 미적용,
   다른 생존 아군 효과는 계속 적용한다. 구현되지 않은 부활 능력을 추가하지 않는다.
-- [ ] 마지막 적 처치 후 아군 효과, 카드 내 양측 전멸, 승리 후 독 발동 중단을 테스트한다.
+- [x] 마지막 적 처치 후 아군 효과, 카드 내 양측 전멸, 승리 후 독 발동 중단을 테스트한다.
   회복 처리기가 없다면 테스트 전용 효과를 등록해 V12를 검증하며 제품 회복 능력을 임의로 신설하지 않는다.
-- [ ] 소유 카드 삭제를 턴 종료 로그 순회에서 즉시 사망 처리로 이동한다. 별도 다중 적 정책 API는 변경하지 않는다.
-- [ ] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 카드 종료 시 승패를 확정한다`.
+- [x] 소유 카드 삭제를 턴 종료 로그 순회에서 즉시 사망 처리로 이동한다. 별도 다중 적 정책 API는 변경하지 않는다.
+- [x] `Tools/verify.sh --quick` 통과 후 커밋: `refactor(core): 카드 종료 시 승패를 확정한다`.
 
 ### T6. 공통 만료 시점과 턴 경계
 

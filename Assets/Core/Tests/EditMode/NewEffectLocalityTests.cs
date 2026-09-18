@@ -21,8 +21,6 @@ namespace FateWeaver.Tests
         {
             public EffectKey Key => HealKey;
 
-            public CardTargetKey? TargetFor(CardDefinition card, EffectData effect) => null;
-
             public void Apply(EffectContext ctx)
             {
                 var member = PartyTargeting.LivingById(ctx.State, ctx.Card.OwnerId);

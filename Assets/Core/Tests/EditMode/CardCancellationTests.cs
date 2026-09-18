@@ -260,6 +260,8 @@ namespace FateWeaver.Tests
             var state = new CombatState(TestContent.Statuses());
             state.AddSoloPlayer(30);
             state.Enemies.Add(new Enemy("goblin", 5));
+            // 마지막 적이 죽으면 그 카드가 끝나는 즉시 전투가 끝나므로(스펙 §2), 적을 하나 더 둔다.
+            state.Enemies.Add(new Enemy("bystander", 100));
 
             // Resolves before the death; must stay resolved.
             var earlyStrike = Card(

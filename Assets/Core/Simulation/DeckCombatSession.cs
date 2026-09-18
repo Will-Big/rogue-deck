@@ -148,7 +148,8 @@ namespace FateWeaver.Simulation
             _handSize = handSize;
             _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
-            _resolver = new TurnResolver(CombatRegistries.Effects(), _statuses, CombatRegistries.Reactions());
+            _resolver = new TurnResolver(
+                CombatRegistries.Effects(), _statuses, CombatRegistries.Reactions(), RemoveOwnedCards);
             _interventionActions = CombatRegistries.InterventionActions();
             _interventionResolver = new InterventionPlayResolver(_interventionActions);
 
@@ -336,19 +337,13 @@ namespace FateWeaver.Simulation
             }
 
             _lastTimeline = _resolver.Resolve(_state, TurnIndex);
-            var removedOwners = new HashSet<string>();
-            foreach (var resolutionEvent in _lastTimeline)
-            {
-                if (resolutionEvent is PartyMemberDied died && removedOwners.Add(died.MemberId))
-                {
-                    _deck.RemoveOwnedBy(died.MemberId);
-                }
-            }
-
             CurrentTurnResolved = true;
             Outcome = OutcomeOf(_lastTimeline);
             return _lastTimeline;
         }
+
+        /// <summary>주인이 죽는 순간 사망 처리 경로(DeathProcessor)가 부른다 — 그 주인의 카드를 덱에서 뺀다.</summary>
+        private void RemoveOwnedCards(string ownerId) => _deck.RemoveOwnedBy(ownerId);
 
         /// <summary>Discard the leftover hand and start the next turn (enemy intent, energy refill, redraw).
         /// Returns false when the current turn is unresolved or combat is already decided.</summary>

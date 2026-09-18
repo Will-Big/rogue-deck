@@ -31,8 +31,11 @@ namespace FateWeaver.Tests
         /// 2026-09-18 갱신(전투 실행 계약 T3): 효과마다 대상을 고르고 대상 없음은 미적용이다. ① CardResolved.TargetId가
         /// "마지막 대상"에서 "처음 적용된 효과의 첫 대상"이 되어 spore_veil·probing_strike·toxic_reclaim이 member_a 대신
         /// goblin#0을 가리킨다. ② 고블린이 죽은 뒤의 spore_veil·delayed_strike가 NoValidTarget 취소 대신 해결되고,
-        /// spore_veil의 자신 방어 2가 적용된다(같은 턴 끝에 만료). 그 밖의 서명은 같다.</summary>
-        private const string ExpectedSignatureSha256 = "c60778856588d9e0bb9fccc3400b06ab018fe8180b0c72ce762476d9c65f8598";
+        /// spore_veil의 자신 방어 2가 적용된다(같은 턴 끝에 만료). 그 밖의 서명은 같다.
+        /// 2026-09-18 갱신(전투 실행 계약 T5): 승패는 카드가 끝날 때마다 판정한다. 고블린을 죽인 카드가 끝나는 순간
+        /// 승리가 확정되어 그 뒤의 spore_veil·delayed_strike와 턴 끝 방어 만료(StatusExpired)가 실행되지 않는다.
+        /// 그 밖의 서명은 같다.</summary>
+        private const string ExpectedSignatureSha256 = "50391923d3c1bc1b28a949cb001ecf9ce45de7926dea06d1a1c6576dc3ba9d4a";
 
         private static CombatNode BeginNode()
         {

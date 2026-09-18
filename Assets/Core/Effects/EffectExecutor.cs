@@ -18,13 +18,17 @@ namespace FateWeaver.Core.Effects
         private readonly StatusRegistry _statuses;
         private readonly EffectTargetResolver _targets = new EffectTargetResolver();
 
+        /// <param name="removeOwnedCards">죽은 주인의 카드를 덱에서 빼는 동작(DeathProcessor). 덱이 없으면 생략한다.</param>
         public EffectExecutor(
-            EffectRegistry effects, StatusRegistry statuses = null, ReactionRegistry reactions = null)
+            EffectRegistry effects,
+            StatusRegistry statuses = null,
+            ReactionRegistry reactions = null,
+            Action<string> removeOwnedCards = null)
         {
             _effects = effects ?? throw new ArgumentNullException(nameof(effects));
             _statuses = statuses;
             Damage = new DamageService(statuses);
-            Deaths = new DeathProcessor();
+            Deaths = new DeathProcessor(removeOwnedCards ?? (_ => { }));
             Reactions = new ReactionDispatcher(reactions, this);
         }
 
