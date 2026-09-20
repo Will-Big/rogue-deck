@@ -48,6 +48,7 @@
 |---|---|---|---|
 | [덱 기반 코어 루프](specs/2026-06-22-deck-loop-design.md) | `current` | 덱·손패·행동 턴과 상태 타이밍 | 전투 흐름 또는 드로우 경제 변경 |
 | [파티 기반 전투](specs/2026-07-15-party-foundation-design.md) | `current` | 파티, 개별 HP, 대형, 전투 중 사망 | 캐릭터 영입·사망·대형 변경 |
+| [전투 템포 개선](specs/2026-09-20-combat-pacing-design.md) — 개요는 [HTML](specs/2026-09-20-combat-pacing-design.html) | `current` | 전투 길이와 단조로움을 콘텐츠로 잡은 결정과 수치: 파티원 B의 직접 피해 덱, 방어 3 대 고블린 공격 5의 상쇄 해소, 고블린의 `shuffle_bag` 정책과 빈 턴 제거, 짝 전투용 약체 `goblin_runt`. 2026-09-20 구현·사용자 확인 완료(단독 5·4·5턴, 짝 5·5·6턴). 구현 계획은 보관됨 | 전투 길이·적 수치 조정, 새 적·편성 저작 |
 | [전투 노드 한 사이클](specs/2026-09-15-combat-node-cycle-design.md) — 개요는 [HTML](specs/2026-09-15-combat-node-cycle-design.html) | `active` | 전투 한 판의 시작~끝(승패·보상 선택·덱 반영·다음 전투), 노드 시드와 목적별 스트림 파생, 적·편성·캐릭터 스탯·전투 규칙 JSON. 1단계 흐름 → 2단계 구성 저작. 1단계 구현 완료(2026-09-15). 2단계 구현 완료(2026-09-17) | 전투 결과·보상 구현, 시드 동작 추가, 적·편성 저작 |
 
 ### 카드풀과 콘텐츠
@@ -103,7 +104,6 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
-| [전투 템포 개선](specs/2026-09-20-combat-pacing-design.md) — 개요는 [HTML](specs/2026-09-20-combat-pacing-design.html), 실행은 [구현 계획](plans/2026-09-20-combat-pacing.md)([HTML](plans/2026-09-20-combat-pacing.html)) | `active` | 전투가 길고 단조로운 원인을 콘텐츠로 고친다. 파티원 B의 직접 피해 덱(새 카드 5종), 방어·적 공격의 상쇄 해소, 고블린의 빈 턴 제거, 짝 전투용 약체 `goblin_runt`. 목표는 단독 전투 4~5턴 — **2026-09-20 실측 5·4·5턴으로 달성, 밸런스 수치 추가 조정 없음**(짝은 5·5·6턴). **규칙 변경 없음** |
 | [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
