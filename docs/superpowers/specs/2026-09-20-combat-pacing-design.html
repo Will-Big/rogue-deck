@@ -11,6 +11,7 @@
 
 <section><h2>무엇을 만드나</h2>
 <p>파티원 B의 픽스처 덱을 직접 피해 덱 여섯 장으로 교체해 A(독)와 역할을 나눈다. 방어와 적 공격의 균형을 깨서 매 턴 2씩 새어 들어오게 하고, 고블린의 공격 없는 묶음을 없앤다.</p>
+<p>적 정책을 <code>random_pick</code>(복원 추출)에서 <code>shuffle_bag</code>(비복원)으로 바꾼다. 그래야 묶음 목록이 비로소 <b>덱</b>이 된다 — 한 주기 안에 모든 묶음이 정확히 한 번씩 나오고, 개체마다 섞은 순서가 다르며, 같은 시드면 그 순서가 재현된다.</p>
 <p>짝 전투는 지금 고블린 2마리로는 성립하지 않는다 — 턴당 13.5, 최악 22가 한 명에게 집중된다. 전용 약체 <code>goblin_runt</code>(HP 14, 피해 3)를 저작해 단독과 총량이 비슷하되 표적 선택이 재미인 전투로 만든다.</p>
 <p class="note">규칙은 건드리지 않는다. 방어가 닳는 방식도, 독의 성장·발동 시점도, 대상 선택 규칙도 그대로다. 전부 <code>Assets/StreamingAssets/Content/</code> 안의 JSON이다.</p>
 </section>
@@ -20,8 +21,8 @@
 <tr><td><code>Decks/striker.json</code> (신설)</td><td>파티원 B가 들고 오는 6장</td><td>카드의 수치·효과</td></tr>
 <tr><td>새 카드 5종 (<code>Cards/</code>)</td><td>피해·방어·실행 순서·비용</td><td>누가 드는지, 언제 뽑히는지</td></tr>
 <tr><td><code>Cards/goblin_jab</code>·<code>quick_cover</code>·<code>early_guard</code>·<code>toxic_reclaim</code></td><td>상쇄를 깨는 수치 네 개</td><td>방어가 닳는 방식(규칙)</td></tr>
-<tr><td><code>Enemies/goblin.json</code></td><td>단독 고블린의 묶음 구성</td><td>묶음을 고르는 방식(<code>random_pick</code>)</td></tr>
-<tr><td><code>Enemies/goblin_runt.json</code> (신설)</td><td>짝 전투용 약체의 HP·묶음</td><td>편성에 몇 마리가 나오는지</td></tr>
+<tr><td><code>Enemies/goblin.json</code></td><td>단독 고블린의 묶음 구성과 정책(<code>shuffle_bag</code>)</td><td>가방을 섞는 방식(정책 구현)</td></tr>
+<tr><td><code>Enemies/goblin_runt.json</code> (신설)</td><td>짝 전투용 약체의 HP·묶음·정책</td><td>편성에 몇 마리가 나오는지</td></tr>
 <tr><td><code>Battles/goblin_pair.json</code></td><td>짝 전투에 어떤 적이 나오는지</td><td>전투 안 id 부여(공급자가 한다)</td></tr></table>
 <p>새 카드는 풀에 넣지 않는다. 덱 로더는 카드 카탈로그에만 있으면 통과하므로 보상 후보는 지금 그대로 유지된다.</p>
 </section>
@@ -30,11 +31,12 @@
 <svg viewBox="0 0 950 300" role="img" aria-label="캐릭터에서 덱으로, 편성에서 적과 묶음으로 이어지는 콘텐츠 참조 방향">
 <defs><marker id="a2" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8" fill="#337d79"/></marker></defs>
 <g fill="#edf5f4" stroke="#8dbab7"><rect x="20" y="20" width="230" height="58" rx="10"/><rect x="350" y="20" width="230" height="58" rx="10"/><rect x="690" y="115" width="240" height="70" rx="10"/><rect x="20" y="210" width="230" height="58" rx="10"/><rect x="350" y="210" width="230" height="58" rx="10"/></g>
-<g text-anchor="middle"><text x="135" y="55">member_b.json</text><text x="465" y="55">striker.json (덱 6장)</text><text x="810" y="145">Cards/*.json</text><text x="810" y="170">피해·방어·순서·비용</text><text x="135" y="245">goblin_pair.json</text><text x="465" y="245">goblin_runt.json (묶음)</text></g>
+<g text-anchor="middle"><text x="135" y="55">member_b.json</text><text x="465" y="55">striker.json (시작 덱 6장)</text><text x="810" y="145">Cards/*.json</text><text x="810" y="170">피해·방어·순서·비용</text><text x="135" y="245">goblin_pair.json (배치)</text><text x="465" y="245">goblin_runt.json (종류 + 덱)</text></g>
 <g stroke="#337d79" stroke-width="2" fill="none" marker-end="url(#a2)"><path d="M250 49H345"/><path d="M580 52L685 128"/><path d="M250 239H345"/><path d="M580 236L685 172"/></g>
-<text x="258" y="38">deck 키</text><text x="600" y="95">카드 id</text><text x="258" y="228">적 id 2개</text><text x="600" y="215">카드 id</text>
+<text x="252" y="38">런 시작 시 1회 복사</text><text x="600" y="95">카드 id</text><text x="258" y="228">같은 적 id ×2</text><text x="600" y="215">카드 id</text>
 </svg>
-<p>참조는 한 방향이다. 카드는 자기를 누가 드는지 모르고, 적은 편성에 몇 마리 나오는지 모른다. 그래서 짝 전투의 난이도를 조정할 때 카드를 건드릴 필요가 없고, 반대로 카드 수치를 바꿔도 편성 구조는 그대로다.</p>
+<p>참조는 한 방향이고 <b>런 시작에서 한 번만</b> 쓰인다. 덱 JSON의 카드는 <code>RunMember.Cards</code>로 복사되고, 그 뒤 보상으로 고른 카드는 거기에만 쌓인다 — 덱 JSON은 변하지 않는다. 그래서 풀에 없는 카드는 "시작할 때 들고 오지만 소유하지는 않는" 카드가 된다.</p>
+<p>아래쪽도 같은 구조다. 배치는 적 종류 id를 나열할 뿐이고, 수치와 덱(묶음 목록)은 종류 정의가 가진다 — <b>종류와 덱은 구조적으로 1:1</b>이다. 같은 id를 두 번 적었으므로 정의는 하나이고, 두 개체는 그 덱의 사본을 각자 섞어 쓴다.</p>
 </section>
 
 <section><h2>확장 축</h2>
@@ -66,7 +68,7 @@
 <g fill="#fff" stroke="#8dbab7"><rect x="20" y="30" width="150" height="60" rx="8"/><rect x="215" y="30" width="150" height="60" rx="8"/></g>
 <text x="45" y="66">새끼 HP 14</text><text x="240" y="66">새끼 HP 14</text>
 <text x="20" y="130">합 28 · 턴당 4.5 · 앞줄을 잡으면 절반으로</text></svg>
-<p>단독(28·6.75)과 총량이 비슷하다. 같은 노드에서 무작위로 뽑혀도 난이도가 튀지 않는다.</p></div>
+<p>단독(28·6.75)과 총량이 비슷하다. 같은 노드에서 무작위로 뽑혀도 난이도가 튀지 않는다. 덱은 하나를 공유하되 각자 섞은 사본을 쓰므로 둘의 행동 순서가 갈린다.</p></div>
 <div class="box"><h3>기각: 강한 고블린 2마리</h3>
 <svg viewBox="0 0 390 170" role="img" aria-label="HP 28 두 마리가 합쳐 56, 턴당 13.5">
 <g fill="#fff" stroke="#aab5bc"><rect x="20" y="30" width="150" height="60" rx="8"/><rect x="215" y="30" width="150" height="60" rx="8"/></g>
