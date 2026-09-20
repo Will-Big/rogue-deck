@@ -39,8 +39,10 @@ namespace FateWeaver.Tests
         /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.
         /// 2026-09-20 갱신(전투 템포 개선 과제 2): member_b의 덱이 party_prototype(픽스처 카드)에서
         /// striker(cleave·flank_jab·heavy_swing·shield_bash·brace)로 바뀌어 손패·배치·피해가 전부
-        /// 달라진다. 의도한 콘텐츠 변경이라 서명을 다시 잡았다.</summary>
-        private const string ExpectedSignatureSha256 = "abce4e36eb59d6c0e5398c78a717779b1014c0f1cfbe19ffd0ef5011ad8f3f37";
+        /// 달라진다. 의도한 콘텐츠 변경이라 서명을 다시 잡았다.
+        /// 2026-09-20 갱신(전투 템포 변경 2): 방어 카드 셋이 4에서 3으로, goblin_jab이 4에서 5로 바뀌어
+        /// 피해·방어 수치와 HP 추이가 달라진다. 카드 순서와 이벤트 종류는 같다.</summary>
+        private const string ExpectedSignatureSha256 = "bf04a27632c4d40ee217a5e30d2ca3c64a3ec195b97a597ba1676b2b9b09f2e2";
 
         /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
         /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,
@@ -78,7 +80,9 @@ namespace FateWeaver.Tests
         {
             var signature = Signature(BeginNode());
 
-            Assert.AreEqual(ExpectedSignatureSha256, Sha256(signature), "실측 서명:\n" + signature);
+            Assert.AreEqual(
+                ExpectedSignatureSha256, Sha256(signature),
+                "실측 SHA: " + Sha256(signature) + "\n실측 서명:\n" + signature);
         }
 
         [Test]

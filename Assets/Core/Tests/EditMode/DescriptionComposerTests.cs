@@ -265,7 +265,7 @@ namespace FateWeaver.Tests.EditMode
 
         [Test]
         public void Korean_goblin_jab() =>
-            Assert.AreEqual("[◆] 피해 4.",
+            Assert.AreEqual("[◆] 피해 5.",
                 DescriptionComposer.Describe(TestContent.Cards().Get("goblin_jab"), Korean));
 
         [Test]

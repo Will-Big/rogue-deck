@@ -28,9 +28,9 @@ namespace FateWeaver.Tests.EditMode
                 },
                 layout.TargetEntries);
             Assert.AreEqual("독 최대 1 소비. 독 1.", layout.Lines[0].Text);
-            Assert.AreEqual("소비했다면 방어 4.", layout.Lines[1].Text);
+            Assert.AreEqual("소비했다면 방어 3.", layout.Lines[1].Text);
             Assert.AreEqual(
-                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 4.",
+                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 3.",
                 layout.PlainText);
         }
 

@@ -31,7 +31,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual("찌르기", thrust.Name);
             Assert.AreEqual(6, thrust.BaseExecutionOrder);
             Assert.AreEqual(EffectKeys.Damage, thrust.Effects.Single().Key);
-            Assert.AreEqual(4, thrust.Effects.Single().EffectValue);
+            Assert.AreEqual(5, thrust.Effects.Single().EffectValue);
 
             Assert.AreEqual("조잡한 방어", guard.Name);
             Assert.AreEqual(4, guard.BaseExecutionOrder);

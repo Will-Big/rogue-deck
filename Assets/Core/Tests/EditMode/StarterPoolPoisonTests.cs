@@ -128,7 +128,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(2, without.Enemies[0].Statuses.Get(StatusKeys.Poison).Magnitude); // 1 부여→틱 성장
             Assert.AreEqual(30 - 4, without.Party[0].Hp); // 방어 없음 → 4 그대로 적중
 
-            // 독 있음: 1 소비 후 재부여, 자신 방어 4 → 뒤이은 공격 4를 흡수.
+            // 독 있음: 1 소비 후 재부여, 자신 방어 3 → 뒤이은 공격 4 중 3만 흡수.
             var with = NewState(new Enemy("goblin", 20));
             with.Enemies[0].Statuses.Stack(StatusKeys.Poison, StatusLifetime.Permanent, 1);
             Place(with, Pool.Get("toxic_reclaim"));
@@ -137,7 +137,7 @@ namespace FateWeaver.Tests
                 { OwnerId = "goblin" });
             var events = Resolve(with);
             Assert.AreEqual(1, events.OfType<StatusConsumed>().Single().Amount);
-            Assert.AreEqual(30, with.Party[0].Hp); // 방어 4가 공격 4를 흡수 → 무피해
+            Assert.AreEqual(29, with.Party[0].Hp); // 방어 3이 공격 4를 부분 흡수 → 피해 1 관통
         }
 
         [Test]

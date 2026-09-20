@@ -43,7 +43,7 @@ namespace FateWeaver.Tests
 
             Resolve(state);
 
-            Assert.AreEqual(20, state.Party[0].Hp);   // 전열이 방어 4로 흡수
+            Assert.AreEqual(19, state.Party[0].Hp);   // 전열이 방어 3으로 부분 흡수, 피해 1이 관통
         }
 
         [Test]
