@@ -48,6 +48,7 @@ namespace FateWeaver.Tests
         {
             var brace = Card("brace");
 
+            Assert.AreEqual(4, brace.BaseExecutionOrder, "brace의 실행 순서");
             Assert.AreEqual(3, BlockOf(brace));
             Assert.AreEqual(0, DamageOf(brace));
             Assert.AreEqual(1, brace.EnergyCost);

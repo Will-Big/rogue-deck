@@ -1,4 +1,5 @@
 using System.Linq;
+using FateWeaver.Core.Effects;
 using FateWeaver.Core.Enemies;
 using NUnit.Framework;
 
@@ -14,7 +15,7 @@ namespace FateWeaver.Tests
             var goblin = TestContent.Content().Enemies.Get("goblin");
 
             Assert.IsTrue(
-                goblin.Bundles.All(bundle => bundle.Cards.Any(card => card.Id != "crude_guard")),
+                goblin.Bundles.All(bundle => bundle.Cards.Any(card => card.HasEffect(EffectKeys.Damage))),
                 "방어만 있는 묶음이 있으면 적이 아무것도 하지 않는 턴이 생긴다.");
         }
 
