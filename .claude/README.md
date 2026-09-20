@@ -12,7 +12,6 @@ Codex·Cursor·Gemini CLI 등으로 열면 이 폴더는 무시되고 나머지�
 | `skills/graphify-usage/` | 그래프 조회가 필요할 때 문서를 물어 온다 | `docs/agents/graphify-usage.md` | O |
 | `skills/unity-batch-runs/` | Unity 배치·라이선싱 장애 때 문서를 물어 온다 | `docs/agents/unity-batch-runs.md` | O |
 | `skills/unity-mcp/` | 에디터를 MCP로 조작할 때 문서를 물어 온다 | `docs/agents/unity-mcp.md` | O |
-| `skills/unity-cli/` | Unity CLI 사용법. **포인터가 아니라 업스트림 벤더링 사본** | `unity skill install` 출력 | O |
 | `settings.local.json` | 개인 설정 | — | X (`.gitignore`) |
 | `worktrees/` | 세션 워크트리 | — | X (`.gitignore`) |
 
@@ -34,8 +33,9 @@ Codex·Cursor·Gemini CLI 등으로 열면 이 폴더는 무시되고 나머지�
 거기 두면 정작 지켜야 할 규칙이 묻힌다. 그래서 판단 기준만 규칙에 남기고 절차는 `docs/agents/`로
 내렸다. Claude Code는 스킬로 그것을 필요할 때 찾아 오고, 다른 도구는 AGENTS.md의 링크를 따라간다.
 
-**`skills/unity-cli/`만 예외다.** 이것은 우리가 쓴 문서가 아니라 Unity CLI 바이너리가 자기 사용법을
-내보낸 사본이며, 원본은 저장소 밖(CLI 바이너리 안)에 있어 가리킬 자리가 없다. 클라이언트마다
-스킬 탐색 경로가 달라 Codex용 사본이 `.agents/skills/unity-cli/`에 하나 더 있고, 둘 다 손으로 고치지
-않는다. 썩는 것은 `unity self-update` 뒤 `unity skill refresh`로 막는다 —
-[`docs/agents/unity-mcp.md`](../docs/agents/unity-mcp.md)의 「갱신」 절.
+**예외였던 `skills/unity-cli/`는 없앴다.** 그것만은 우리가 쓴 문서가 아니라 Unity CLI가 자기 사용법을
+내보낸 사본이어서 가리킬 원본이 저장소 안에 없었고, 클라이언트마다 탐색 경로가 달라 Codex용 사본이
+`.agents/skills/unity-cli/`에 하나 더 있었다. 사본 둘을 `unity self-update`마다 손으로 다시 렌더해야
+했고 실제로 낡았다. 2026-09-20에 Unity 공식 플러그인(`unity@unity-agent-plugin`)으로 옮겼다 — 같은
+스킬을 CLI와 맞는 버전으로 주고 도메인 스킬 30개가 딸려 온다. 설치는 머신마다 한 번이고 저장소에는
+아무것도 남지 않는다. [`docs/agents/unity-mcp.md`](../docs/agents/unity-mcp.md)의 「갱신」 절.

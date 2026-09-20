@@ -19,14 +19,17 @@
 | `Packages/manifest.json`의 `com.unity.pipeline` | 에디터 쪽 절반. 이게 로드돼야 에디터가 Pipeline 서버를 연다 | O |
 | `.mcp.json` | Claude Code용 MCP 서버 등록(프로젝트 스코프) | O |
 | `.codex/config.toml`의 `[mcp_servers.unity]` | Codex CLI용 MCP 서버 등록(프로젝트 스코프) | O |
-| `.claude/skills/unity-cli/` | Unity CLI 사용법 문서. Claude Code가 읽는 자리 | O |
-| `.agents/skills/unity-cli/` | 같은 문서. Codex가 읽는 자리 | O |
+| `unity@unity-agent-plugin` | Unity 공식 플러그인. `unity-cli`를 포함한 스킬 31개를 Claude Code·Codex 양쪽에 준다 | — |
 | `~/.unity/bin/unity` | CLI 본체 겸 MCP 서버. 저장소 밖, 머신 로컬 | — |
 
-`.claude/skills/unity-cli/`와 `.agents/skills/unity-cli/`는 **내용이 같은 사본 둘**이다. 클라이언트마다
-스킬을 찾는 경로가 다르고 `unity skill install`이 심볼릭 링크를 통한 쓰기를 거부하므로, 사본을
-합치지 않는다. 이 둘은 `.claude/skills/graphify-usage/`처럼 `docs/agents/`를 가리키는 포인터가
-아니라 **업스트림 문서의 벤더링 사본**이다 — 손으로 고치지 말고 아래 「갱신」대로 다시 렌더한다.
+**Unity CLI 사용법은 저장소에 두지 않는다.** 2026-09-20까지는 `unity skill install --local`로 렌더한
+벤더링 사본을 `.claude/skills/unity-cli/`와 `.agents/skills/unity-cli/`에 각각 커밋했다. 사본이 둘이라
+`unity self-update`마다 손으로 다시 렌더해야 했고, 실제로 한 버전 낡아 있었다(스킬 `beta.8` / CLI
+`beta.9`). 지금은 Unity 공식 플러그인이 같은 `unity-cli` 스킬을 CLI와 맞는 버전으로, 도메인 스킬
+30개와 함께 준다 — 사본 둘을 지우고 플러그인으로 옮겼다.
+
+**대신 플러그인은 저장소 밖에 있어 클론만으로 따라오지 않는다.** 새 머신에서는 아래 「갱신」의
+설치 명령을 한 번 돌린다.
 
 ## 서버가 어느 에디터에 붙나 — 규칙 15와 겹치는 자리
 
@@ -148,12 +151,11 @@ unity command                     # 이 에디터가 노출하는 커맨드 목�
 
 ## 갱신
 
-CLI를 올리면 벤더링된 스킬 사본이 낡는다. **`unity self-update` 뒤에는 반드시 다시 렌더한다.**
+스킬은 플러그인이 들고 있으므로 **저장소에서 갱신할 것이 없다.** CLI 본체와 플러그인을 따로 올린다.
 
 ```bash
-unity self-update
-unity skill refresh --yes          # 추적 중인 모든 설치본을 다시 렌더
-git status                         # 두 사본의 변경을 함께 커밋
+unity self-update                  # CLI 본체 겸 MCP 서버
+claude plugin update unity         # 스킬
 ```
 
 Pipeline 패키지는 따로 올린다. `manifest.json`이 바뀌므로 워크트리에서 하고 커밋한다.
@@ -166,8 +168,21 @@ unity pipeline upgrade
 
 ```bash
 unity pipeline install             # Packages/manifest.json에 com.unity.pipeline 추가
-unity skill install claude-code --local --yes
-unity skill install codex --local --yes
 unity mcp configure codex --local --yes
 # Claude Code는 .mcp.json을 직접 쓴다 — 위 「함정」의 이유
+```
+
+스킬 플러그인은 저장소가 아니라 머신에 깐다(머신마다 한 번).
+
+```bash
+claude plugin marketplace add Unity-Technologies/unity-agent-plugin
+claude plugin install unity@unity-agent-plugin
+```
+
+Codex도 같은 저장소를 쓴다 — 명령은 플러그인 README 기준이며, 2026-09-20 시점에 이 머신에서는
+`codex`가 PATH에 없어 실행으로 확인하지 못했다.
+
+```bash
+codex plugin marketplace add Unity-Technologies/unity-agent-plugin
+codex plugin add unity@unity-agent-plugin
 ```
