@@ -50,19 +50,19 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Goblin_is_authored_with_four_bundles_and_random_pick()
+        public void Goblin_is_authored_with_four_bundles_and_shuffle_bag()
         {
             var goblin = TestContent.Content().Enemies.Get("goblin");
             Assert.AreEqual("고블린", goblin.DisplayName);
             Assert.AreEqual(28, goblin.MaxHp);
-            Assert.AreEqual(EnemyPolicyKeys.RandomPick, goblin.Policy);
+            Assert.AreEqual(EnemyPolicyKeys.ShuffleBag, goblin.Policy);
             CollectionAssert.AreEqual(
                 new[]
                 {
                     "goblin_jab",                 // A 늦은 단타
                     "sly_jab,crude_guard",        // B 선공 후 방어
                     "sly_jab,goblin_jab",         // C 앞뒤로 벌린 2연타
-                    "crude_guard,crude_guard"     // D 농성 (방어 재부여는 합산 → 방어도 6)
+                    "crude_guard,goblin_jab"      // D 방어 후 단타 (쉬는 턴 없이 묶음마다 공격 하나)
                 },
                 goblin.Bundles.Select(b => string.Join(",", b.Cards.Select(c => c.Id))).ToArray());
         }

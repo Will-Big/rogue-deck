@@ -26,7 +26,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual("goblin#0", pair.Enemy.Id);
             Assert.AreEqual("goblin", pair.Enemy.SpecId);
             Assert.AreEqual(28, pair.Enemy.Hp);
-            Assert.IsInstanceOf<RandomPickPolicy>(pair.Policy);
+            Assert.IsInstanceOf<ShuffleBagPolicy>(pair.Policy);
         }
 
         [Test]

@@ -39,12 +39,12 @@ namespace FateWeaver.Tests
             {
                 CopyDirectory(ContentRoot(), root);
                 var goblin = Path.Combine(root, "Enemies", "goblin.json");
-                File.WriteAllText(goblin, File.ReadAllText(goblin).Replace("\"random_pick\"", "\"random_pik\""));
+                File.WriteAllText(goblin, File.ReadAllText(goblin).Replace("\"shuffle_bag\"", "\"shuffle_bak\""));
 
                 var result = ContentBootstrap.Load(root);
 
                 Assert.IsFalse(result.Succeeded);
-                CollectionAssert.Contains(result.Errors, "goblin.json: unknown enemy policy 'random_pik'.");
+                CollectionAssert.Contains(result.Errors, "goblin.json: unknown enemy policy 'shuffle_bak'.");
             }
             finally
             {

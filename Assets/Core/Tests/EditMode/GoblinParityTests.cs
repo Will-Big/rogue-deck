@@ -41,8 +41,10 @@ namespace FateWeaver.Tests
         /// striker(cleave·flank_jab·heavy_swing·shield_bash·brace)로 바뀌어 손패·배치·피해가 전부
         /// 달라진다. 의도한 콘텐츠 변경이라 서명을 다시 잡았다.
         /// 2026-09-20 갱신(전투 템포 변경 2): 방어 카드 셋이 4에서 3으로, goblin_jab이 4에서 5로 바뀌어
-        /// 피해·방어 수치와 HP 추이가 달라진다. 카드 순서와 이벤트 종류는 같다.</summary>
-        private const string ExpectedSignatureSha256 = "bf04a27632c4d40ee217a5e30d2ca3c64a3ec195b97a597ba1676b2b9b09f2e2";
+        /// 피해·방어 수치와 HP 추이가 달라진다. 카드 순서와 이벤트 종류는 같다.
+        /// 2026-09-20 갱신(전투 템포 변경 3): 고블린 정책이 shuffle_bag이 되어 턴마다 나오는 묶음이
+        /// 달라지고, 방어 전용 묶음이 crude_guard+goblin_jab으로 바뀌었다.</summary>
+        private const string ExpectedSignatureSha256 = "f57be5e099b9181f7edb281b489e270f405b9451fb5446dac2802ec82dedaa9d";
 
         /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
         /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,
