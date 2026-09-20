@@ -103,7 +103,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
 | [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
-| [전투 템포 개선](specs/2026-09-20-combat-pacing-design.md) — 개요는 [HTML](specs/2026-09-20-combat-pacing-design.html), 실행은 [구현 계획](plans/2026-09-20-combat-pacing.md)([HTML](plans/2026-09-20-combat-pacing.html)) | `active` | 전투가 길고 단조로운 원인을 콘텐츠로 고친다. 파티원 B의 직접 피해 덱(새 카드 5종), 방어·적 공격의 상쇄 해소, 고블린의 빈 턴 제거, 짝 전투용 약체 `goblin_runt`. 목표는 단독 전투 4~5턴. **규칙 변경 없음** |
+| [전투 템포 개선](specs/2026-09-20-combat-pacing-design.md) — 개요는 [HTML](specs/2026-09-20-combat-pacing-design.html), 실행은 [구현 계획](plans/2026-09-20-combat-pacing.md)([HTML](plans/2026-09-20-combat-pacing.html)) | `active` | 전투가 길고 단조로운 원인을 콘텐츠로 고친다. 파티원 B의 직접 피해 덱(새 카드 5종), 방어·적 공격의 상쇄 해소, 고블린의 빈 턴 제거, 짝 전투용 약체 `goblin_runt`. 목표는 단독 전투 4~5턴 — **2026-09-20 실측 4·5·5턴으로 달성, 밸런스 수치 추가 조정 없음**(짝은 5·5·6턴). **규칙 변경 없음** |
 | [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
 ## 진행 중인 작업 흐름: 카드 콘텐츠 (2026-08-03 인계)
@@ -204,8 +204,13 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 테스트를 더한 결과다. 전체 리뷰 이후 최종 수정으로 148 → 150이 됐다), Unity EditMode **672 total / 665 passed / 0 failed / 7 skipped**
 (EditMode는 계획 3.5 시점 수치이며 계획 A 이후 재측정하지 않았다 — 신규 테스트는 `Tests/Headless`가
 포함하는 EditMode 폴더에 있으므로 Unity 쪽도 1 늘어날 것이다).
-카드 JSON **26**(실행 22 + 개입 4 중 fixture 4, 플레이어 카드는 전부 등급·태그 보유), 상태 JSON **11**,
-덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**. 프로젝트 씬은 `FateWeaverBattle`·`SampleScene` 둘
+헤드리스는 **2026-09-20 실측 778/778**이다(전투 템포 개선이 콘텐츠·측정 테스트를 더한 결과).
+카드 JSON **35**, 적 JSON **2**(`goblin`·`goblin_runt`) — 이 둘도 **2026-09-20 실측**이다(전투 템포
+개선이 플레이어 카드 5종과 `runt_jab`을 더하고 `goblin_runt`를 신설했다). 본문에 오래 적혀 있던
+"카드 JSON 26"은 2026-08-28 기준이라 낡았고, 그 시점과 이 시점 사이에 29를 거쳤다.
+상태 JSON **11**, 덱 JSON **2**, 풀 JSON **1**, 캐릭터 JSON **2**(2026-08-28 실측, 이후 개수 변동
+없음 — 덱은 `party_prototype`이 `striker`로 이름만 바뀌었다).
+프로젝트 씬은 `FateWeaverBattle`·`SampleScene` 둘
 (`Settings/Scenes/URP2DSceneTemplate`은 URP 템플릿 자산이며 프로젝트 씬이 아니다).
 
 계획 D는 `Tools/card-idea-notebook/index.html`을 Markdown 저작 경로 제거로 3,206줄까지 줄였고
