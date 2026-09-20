@@ -31,7 +31,6 @@ namespace FateWeaver.Unity
         private float _placementFlightCurveSplit = 0.85f;
 
         private static readonly Vector2 CardSize = new Vector2(96f, 132f);
-        private static readonly Vector2 PreviewSize = new Vector2(200f, 280f);
         private static readonly Color BackdropColor = new Color(0f, 0f, 0f, 0.25f);
         private static readonly Color DropHintColor = new Color(0.95f, 0.72f, 0.25f, 0.14f);
         private const float PlacementPreviewAlpha = 0.5f;
@@ -369,7 +368,6 @@ namespace FateWeaver.Unity
                 _preview = _cardPrefabs.Create(data, _previewLayer);
                 var previewRect = (RectTransform)_preview.transform;
                 previewRect.anchorMin = previewRect.anchorMax = new Vector2(0.5f, 0.5f);
-                previewRect.sizeDelta = PreviewSize;
                 foreach (var graphic in _preview.GetComponentsInChildren<Graphic>(true))
                 {
                     graphic.raycastTarget = false;
@@ -382,10 +380,14 @@ namespace FateWeaver.Unity
             var screen = RectTransformUtility.WorldToScreenPoint(null, source.transform.position);
             Vector2 local;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(_previewLayer, screen, null, out local);
-            local.y += CardSize.y * 0.5f + PreviewSize.y * 0.5f + 14f;
-            float maxX = _previewLayer.rect.width * 0.5f - PreviewSize.x * 0.5f - 8f;
+            var fullRect = (RectTransform)_preview.transform;
+            var size = fullRect.rect.size;
+            local.y += CardSize.y * 0.5f + size.y * 0.5f + 14f;
+            float maxX = Mathf.Max(0f, _previewLayer.rect.width * 0.5f - size.x * 0.5f - 8f);
+            float maxY = Mathf.Max(0f, _previewLayer.rect.height * 0.5f - size.y * 0.5f - 24f);
             local.x = Mathf.Clamp(local.x, -maxX, maxX);
-            ((RectTransform)_preview.transform).anchoredPosition = local;
+            local.y = Mathf.Clamp(local.y, -maxY, maxY);
+            fullRect.anchoredPosition = local;
         }
 
         private void EnsurePlacementPreview()

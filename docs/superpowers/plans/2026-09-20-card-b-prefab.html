@@ -2,12 +2,14 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>B안 카드 프리팹 적용 계획</title>
 <style>body{margin:0;background:#f4f2ec;color:#252b30;font:16px/1.75 system-ui,sans-serif}main{max-width:1020px;margin:auto;padding:48px 24px}h1{font-size:32px;line-height:1.3}h2{margin-top:44px;font-size:23px}h3{font-size:18px}a{color:#315a86}small,.muted{color:#60686e}table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:12px 10px;border-bottom:1px solid #cac9c1;text-align:left;vertical-align:top}.notice{padding:16px 20px;background:#e9e4d8;border-left:4px solid #946221}.cards{display:flex;gap:24px;flex-wrap:wrap;margin:34px 0}.card{width:220px;min-height:350px;border:1px solid #aaa99f;background:#faf9f5;border-radius:0 0 8px 8px;padding:0 10px 5px;display:flex;flex-direction:column;gap:7px}.head{display:flex;gap:9px;align-items:center;min-height:52px}.tab{width:31px;height:53px;background:#946221;color:white;display:grid;place-items:center;align-self:flex-start;margin-top:-16px}.purple{background:#635298}.name{flex:1;text-align:center;font-size:17px;font-weight:600}.cost{width:30px;height:30px;border-radius:50%;border:1px solid #aaa;display:grid;place-items:center}.art{height:120px;border:1px solid #bbb;background:repeating-linear-gradient(135deg,#f7f6f0,#f7f6f0 12px,#e4e2da 12px,#e4e2da 13px);display:grid;place-items:center;color:#687076}.targets{display:flex;justify-content:center;border:1px solid #b8b8b1;padding:2px 0}.targets span{flex:1;text-align:center}.targets span+span{border-left:1px solid #bbb}.enemy{color:#93483c}.ally{color:#326d75}.desc{flex:1;display:flex;flex-direction:column;font-size:13px}.group{flex:1}.group+.group{border-top:1px solid #bbb;padding-top:5px}.label{font-size:11px}.body{margin-top:4px}.single .group{display:flex;flex-direction:column}.single .body{flex:1;display:flex;align-items:center;text-align:left}.foot{font-size:10px;border-top:1px solid #bbb;display:flex;justify-content:space-between}.diagram{width:100%;height:auto;background:#faf9f5;border:1px solid #ddd}.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}.box{background:#faf9f5;border:1px solid #ccc;padding:18px}code{font-size:13px;overflow-wrap:anywhere}.sources{font-size:13px}@media(max-width:640px){main{padding:24px 16px}.compare{grid-template-columns:1fr}table{display:block;overflow:auto}}</style></head>
 <body><main>
-<small>FATE WEAVER · 2026-09-20 · 구현 전 검토</small>
+<small>FATE WEAVER · 2026-09-21 · 구현 결과 검수</small>
 <h1>확정한 B안을 실제 카드 프리팹으로</h1>
 <p>종류별 돌출 표식, 내부 이름·비용, 넓은 아트, 기호만 있는 대상 띠를 적용합니다. 대상 제목과 능력 본문을 분리하여 단일·복합 대상에 대응하고, 실제 게임이 생성한 간소화 문구를 그대로 표시합니다.</p>
 <p><a href="2026-09-20-card-b-prefab.md">구현 상세</a> · <a href="references/2026-09-20-card-b-layout.html">확정 배치 보존본</a> · <a href="references/2026-09-20-card-target-comparison.html">모두·자신 비교 보존본</a></p>
-<div class="notice"><strong>검토할 구조 선택</strong><br>대상 띠와 설명 패널을 CardView에서 분리합니다. 크기는 목업 비율을 유지하는 안을 제안하며 손패와 레일 확대까지 함께 검증합니다. 이 개요는 구현 승인 전 검토안입니다.</div>
+<div class="notice"><strong>구현 결과</strong><br>기존 카드 데이터를 유지하고 대상 띠와 설명 패널의 표시 참조를 분리했습니다. 제안 크기 200×336을 적용했고 손패·호버는 균일 배율을 보존합니다. 자동 검증 이후 사용자 시각 검수·Play와 master 머지가 남아 있습니다.</div>
 
+<p><a href="references/2026-09-21-card-b-prefab-gallery.png">실제 Unity 프리팹 캡처 · 5종</a> · <a href="references/2026-09-21-card-b-hand-960x720.png">혼합 손패 · 960×720</a></p>
+<p>실제 게임의 어두운 바탕에 밝은 글자색을 적용했습니다. 설명 문구는 원문을 그대로 사용하고 대상 제목만 별도로 표시합니다. 전체 JSON 카드의 본문 범위·긴 제목, 재바인딩, 상태·선택·뒷면, 네 화면비 손패를 자동 검증합니다.</p>
 <h2>구조</h2>
 <table><thead><tr><th>객체</th><th>책임</th><th>모르는 것</th></tr></thead><tbody>
 <tr><td>CardView</td><td>전체 카드 갱신 순서 조정</td><td>대상 구분선·본문 배치 계산</td></tr>
@@ -17,7 +19,7 @@
 <tr><td>TargetGlyphView</td><td>대상 키를 저작된 모양으로 표시</td><td>피해·소유자</td></tr>
 <tr><td>CardPrefabCatalog</td><td>카테고리별 프리팹 공급</td><td>대상 규칙·본문 정렬</td></tr>
 </tbody></table>
-<p>CardView가 이미 담당하는 대상·설명 생성 책임을 두 표시 컴포넌트로 옮기는 제안입니다. 새로운 표시 로직을 CardView에 누적하지 않습니다. 기존 uGUI·TMP로 배치하며 코어 규칙과 콘텐츠를 바꾸지 않습니다.</p>
+<p>CardView가 이미 담당하는 대상·설명 생성 책임을 두 표시 컴포넌트로 옮겼습니다. 새로운 표시 로직을 CardView에 누적하지 않습니다. 기존 uGUI·TMP로 배치하며 코어 규칙과 콘텐츠를 바꾸지 않습니다.</p>
 <p class="sources">현행 근거: <a href="../../../Assets/Unity/Scripts/Cards/CardView.cs">CardView.cs · BindTargetEntries / BindDescriptionLines</a>, <a href="../../../Assets/Unity/Scripts/Cards/DescriptionLineView.cs">DescriptionLineView.cs · Bind</a>.</p>
 
 <h2>의존 방향</h2>
@@ -34,14 +36,14 @@
 <p>모두는 여러 칸을 감싼 괄호, 자신은 원과 중심점입니다. 이 모양은 프리팹의 Image로 조립합니다. 대상 띠에 ‘모두·자신’ 글씨를 넣지 않고, 능력 제목에는 대상 이름을 유지합니다. 소유자 앞 기호와 ‘공용’ 폴백 표시는 없습니다.</p>
 
 <h2>대안과 선택 이유</h2>
-<div class="compare"><div class="box"><h3>채택 제안 · 제목과 본문 분리</h3><div class="label enemy">◆ 적군 모두</div><div style="min-height:95px;display:flex;align-items:center">피해.</div><small>제목은 상단에 남고 단일 본문만 중앙에 위치합니다.</small></div><div class="box"><h3>기각 · TMP 하나에 전부 넣기</h3><div style="min-height:120px;display:flex;align-items:center">◆ 적군 모두 피해.</div><small>본문 정렬을 바꾸면 대상 제목도 함께 움직입니다.</small></div></div>
-<div class="compare" style="margin-top:18px"><div class="box"><h3>채택 제안 · 목업 비율 보존</h3><div style="width:60px;height:101px;border:1px solid #777;background:#e5e1d5"></div><small>아트와 설명 공간을 보존합니다. 손패·미리보기 소비처를 함께 수정합니다.</small></div><div class="box"><h3>대안 · 기존 외형 유지</h3><div style="width:60px;height:84px;border:1px solid #777;background:#e5e1d5"></div><small>소비처 영향은 작지만 내부 영역이 압축됩니다. 사용자 크기 선택에 따라 두 문서를 함께 갱신합니다.</small></div></div>
+<div class="compare"><div class="box"><h3>채택 · 제목과 본문 분리</h3><div class="label enemy">◆ 적군 모두</div><div style="min-height:95px;display:flex;align-items:center">피해.</div><small>제목은 상단에 남고 단일 본문만 중앙에 위치합니다.</small></div><div class="box"><h3>기각 · TMP 하나에 전부 넣기</h3><div style="min-height:120px;display:flex;align-items:center">◆ 적군 모두 피해.</div><small>본문 정렬을 바꾸면 대상 제목도 함께 움직입니다.</small></div></div>
+<div class="compare" style="margin-top:18px"><div class="box"><h3>채택 · 목업 비율 보존</h3><div style="width:60px;height:101px;border:1px solid #777;background:#e5e1d5"></div><small>아트와 설명 공간을 보존합니다. 손패·미리보기 소비처를 함께 수정합니다.</small></div><div class="box"><h3>대안 · 기존 외형 유지</h3><div style="width:60px;height:84px;border:1px solid #777;background:#e5e1d5"></div><small>소비처 영향은 작지만 내부 영역이 압축됩니다. 사용자 크기 선택에 따라 두 문서를 함께 갱신합니다.</small></div></div>
 
 <h2>나중에 어려워지는 것</h2>
 <ul><li>더 긴 카드와 안쪽 비용은 손패가 겹칠 때 가독성에 영향을 줍니다. 실제 화면비와 hover 캡처가 필요합니다.</li><li>고정 크기에 임의 길이 설명을 무한히 넣을 수 없습니다. 최소 글꼴 크기에서도 넘치는 현행 카드는 ID와 캡처로 검토하며 문장을 숨기지 않습니다.</li><li>모두의 여러 칸이 고정 인원수로 보일 수 있습니다. 괄호와 대상 제목을 함께 검수합니다.</li><li>직렬화 참조를 분리하므로 기존 테스트 fixture와 모든 프리팹 배선을 함께 바꿔야 합니다.</li></ul>
 
 <h2>실행 예시</h2>
-<p>제안 기준 크기는 전체 카드 <strong>200×336</strong>, 손패 <strong>170×285.6</strong>입니다. 아래 예시 입력은 비용 1, 실행 순서 4, 소유자 A입니다. 적군 모두에게 <code>피해 8.</code>, 아군 자신에게 <code>방어 3.</code>이라는 두 설명 그룹이 들어옵니다.</p>
+<p>초기 구현 크기는 전체 카드 <strong>200×336</strong>, 손패 <strong>170×285.6</strong>입니다. 아래 예시 입력은 비용 1, 실행 순서 4, 소유자 A입니다. 적군 모두에게 <code>피해 8.</code>, 아군 자신에게 <code>방어 3.</code>이라는 두 설명 그룹이 들어옵니다.</p>
 <div class="cards">
 <div class="card"><div class="head"><span class="tab">4</span><span class="name">휩쓸기</span><span class="cost">1</span></div><div class="art">ART</div><div class="targets"><span class="enemy">◆ 〔■■■〕</span><span class="ally">● ⊙</span></div><div class="desc"><div class="group"><div class="label enemy">◆ 적군 모두</div><div class="body">피해 8.</div></div><div class="group"><div class="label ally">● 아군 자신</div><div class="body">방어 3.</div></div></div><div class="foot"><span>소유자 A</span><span>실행</span></div></div>
 <div class="card single"><div class="head"><span class="tab">4</span><span class="name">몸 굳히기</span><span class="cost">1</span></div><div class="art">ART</div><div class="targets"><span class="ally">● ⊙</span></div><div class="desc"><div class="group"><div class="label ally">● 아군 자신</div><div class="body">방어 3.</div></div></div><div class="foot"><span>소유자 A</span><span>실행</span></div></div>

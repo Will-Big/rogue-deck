@@ -14,11 +14,19 @@ namespace FateWeaver.Unity
         [SerializeField] private RectTransform _allVisual;
         [SerializeField] private RectTransform _selfVisual;
         [SerializeField] private RectTransform _emptyVisual;
+        [SerializeField] private Image _allyMarker;
+        [SerializeField] private Image _enemyMarker;
         [SerializeField] private Color _allyColor;
         [SerializeField] private Color _enemyColor;
 
         public void Bind(CardTargetKey? key)
         {
+            if (_allyMarker == null || _enemyMarker == null)
+                throw new InvalidOperationException("TargetGlyphView is missing its faction markers.");
+            _allyMarker.gameObject.SetActive(key.HasValue && key.Value.Faction == CardTargetFaction.Ally);
+            _enemyMarker.gameObject.SetActive(key.HasValue && key.Value.Faction == CardTargetFaction.Enemy);
+            _allyMarker.color = _allyColor;
+            _enemyMarker.color = _enemyColor;
             if (!key.HasValue)
             {
                 ActivateOnly(_emptyVisual);

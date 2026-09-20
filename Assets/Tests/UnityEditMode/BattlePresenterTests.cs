@@ -70,15 +70,14 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void PartySharedCardUsesTheSharedOwnerName()
+        public void MissingOwnerDoesNotInventADisplayName()
         {
             var card = new OwnedCard(PlayerCard(), null);
 
             var presentation = _presenter.For(card);
 
             Assert.IsTrue(presentation.IsPartyOwned);
-            Assert.AreEqual(
-                PlaytestKoreanText.PartyOwnerName(), presentation.OwnerDisplayName);
+            Assert.IsNull(presentation.OwnerDisplayName);
         }
 
         [Test]

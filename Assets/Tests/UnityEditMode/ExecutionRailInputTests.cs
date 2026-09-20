@@ -434,6 +434,35 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        [TestCase(-1000f, -1000f)]
+        [TestCase(1000f, 1000f)]
+        public void Detail_preview_uses_prefab_size_and_stays_inside_overlay(float x, float y)
+        {
+            var root = new GameObject("Root", typeof(RectTransform));
+            try
+            {
+                var overlay = ChildRect(root.transform, "Overlay");
+                overlay.sizeDelta = new Vector2(960, 720);
+                var catalog = CardPrefabCatalogTests.LoadCatalog();
+                var mini = RailCardView.EditorCreate(ChildRect(root.transform, "Mini"), new Vector2(96, 132));
+                mini.transform.position = new Vector3(x, y, 0);
+                var rail = Child<ExecutionRailView>(root.transform, "Rail");
+                rail.EditorBuild(catalog, mini, overlay);
+                typeof(ExecutionRailView).GetMethod("OnHover", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(rail, new object[] { mini, Card("preview", 3, Side.Player), true });
+                var detail = Field<CardView>(rail, "_preview");
+                Assert.AreEqual(((RectTransform)catalog.Resolve(CardCategory.Execution).transform).rect.size,
+                    ((RectTransform)detail.transform).rect.size);
+                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(overlay, detail.transform);
+                Assert.GreaterOrEqual(bounds.min.x, overlay.rect.xMin);
+                Assert.LessOrEqual(bounds.max.x, overlay.rect.xMax);
+                Assert.GreaterOrEqual(bounds.min.y, overlay.rect.yMin);
+                Assert.LessOrEqual(bounds.max.y, overlay.rect.yMax);
+                Assert.IsTrue(detail.GetComponentsInChildren<Graphic>(true).All(graphic => !graphic.raycastTarget));
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
         private static T Child<T>(Transform parent, string name) where T : Component
         {
             var child = new GameObject(name, typeof(RectTransform), typeof(T));

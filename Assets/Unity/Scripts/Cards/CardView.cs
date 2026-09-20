@@ -26,9 +26,8 @@ namespace FateWeaver.Unity
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _executionOrderText;
         [SerializeField] private TMP_Text _costText;
-        [SerializeField] private RectTransform _descriptionContent;
-        [SerializeField] private RectTransform _targetContent;
-        [SerializeField] private RectTransform _targetPanel;
+        [SerializeField] private CardDescriptionPanelView _descriptionPanel;
+        [SerializeField] private CardTargetStripView _targetStrip;
         [SerializeField] private RectTransform _executionOrderBadge;
         [SerializeField] private Outline _selectionOutline;
         [SerializeField] private GameObject _ownerChip;
@@ -37,8 +36,6 @@ namespace FateWeaver.Unity
         [SerializeField] private GameObject _lockBadge;
         [SerializeField] private Button _button;
         [SerializeField] private CardBackView _backFace;
-        [SerializeField] private TargetGlyphView _targetGlyphPrefab;
-        [SerializeField] private DescriptionLineView _descriptionLinePrefab;
 
         private static readonly Color OutlinePrimary =
             new Color(0.95f, 0.72f, 0.25f, 1f);
@@ -58,8 +55,10 @@ namespace FateWeaver.Unity
                 throw new ArgumentNullException(nameof(catalog));
             }
 
-            _targetGlyphPrefab = catalog.TargetGlyphPrefab;
-            _descriptionLinePrefab = catalog.DescriptionLinePrefab;
+            if (_targetStrip != null) _targetStrip.Configure(catalog.TargetGlyphPrefab);
+            if (_descriptionPanel == null)
+                throw new InvalidOperationException("Card prefab is missing its description panel.");
+            _descriptionPanel.Configure(catalog.DescriptionLinePrefab);
         }
 
         public void Bind(CardPresentation data, Action onClick)
@@ -129,64 +128,17 @@ namespace FateWeaver.Unity
 
         private void BindTargetEntries(CardPresentation data)
         {
-            if (_prefabCategory == CardCategory.Intervention)
-            {
-                return;
-            }
-
-            if (_targetPanel == null || _targetContent == null)
-            {
-                throw new InvalidOperationException(
-                    "Execution card prefab is missing its target panel.");
-            }
-
-            if (_targetGlyphPrefab == null)
-            {
-                throw new InvalidOperationException(
-                    "CardView is not configured with a target glyph prefab.");
-            }
-
-            ClearGeneratedChildren(_targetContent);
-            var entries = data.DescriptionLayout.TargetEntries;
-            if (entries.Count == 0)
-            {
-                CreateTargetGlyph(null);
-                return;
-            }
-
-            for (int index = 0; index < entries.Count; index++)
-            {
-                CreateTargetGlyph(entries[index]);
-            }
-        }
-
-        private void CreateTargetGlyph(CardTargetKey? key)
-        {
-            var glyph = Instantiate(_targetGlyphPrefab, _targetContent);
-            glyph.Bind(key);
+            if (_prefabCategory == CardCategory.Intervention) return;
+            if (_targetStrip == null)
+                throw new InvalidOperationException("Execution card prefab is missing its target strip.");
+            _targetStrip.Bind(data.DescriptionLayout.TargetEntries);
         }
 
         private void BindDescriptionLines(CardPresentation data)
         {
-            if (_descriptionContent == null)
-            {
-                throw new InvalidOperationException(
-                    "Card prefab is missing its description content.");
-            }
-
-            if (_descriptionLinePrefab == null)
-            {
-                throw new InvalidOperationException(
-                    "CardView is not configured with a description line prefab.");
-            }
-
-            ClearGeneratedChildren(_descriptionContent);
-            var lines = data.DescriptionLayout.Lines;
-            for (int index = 0; index < lines.Count; index++)
-            {
-                var line = Instantiate(_descriptionLinePrefab, _descriptionContent);
-                line.Bind(lines[index]);
-            }
+            if (_descriptionPanel == null)
+                throw new InvalidOperationException("Card prefab is missing its description panel.");
+            _descriptionPanel.Bind(data.DescriptionLayout.Lines);
         }
 
         private void BindArt(CardPresentation data)
@@ -289,24 +241,6 @@ namespace FateWeaver.Unity
                     : Instantiate(_lockBadge, statusRoot);
                 iconObject.SetActive(true);
                 ConfigureStatusIcon(iconObject, icons[index]);
-            }
-        }
-
-        private static void ClearGeneratedChildren(RectTransform parent)
-        {
-            for (int index = parent.childCount - 1; index >= 0; index--)
-            {
-                var child = parent.GetChild(index).gameObject;
-                child.SetActive(false);
-                if (Application.isPlaying)
-                {
-                    child.transform.SetParent(null, false);
-                    Destroy(child);
-                }
-                else
-                {
-                    DestroyImmediate(child);
-                }
             }
         }
 

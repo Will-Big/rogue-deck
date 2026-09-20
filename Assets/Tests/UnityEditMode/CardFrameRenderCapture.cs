@@ -55,6 +55,10 @@ namespace FateWeaver.Tests.UnityEditMode
             1680,
             720,
             CaptureContent.MixedFive)]
+        [TestCase("b-gallery-1440x720", 1440, 720, CaptureContent.BGallery)]
+        [TestCase("single-ally-1280x720", 1280, 720, CaptureContent.SingleAlly)]
+        [TestCase("single-enemy-all-1280x720", 1280, 720, CaptureContent.SingleEnemyAll)]
+        [TestCase("long-description-1280x720", 1280, 720, CaptureContent.LongDescription)]
         public void Render_card_frame_case(
             string caseName,
             int width,
@@ -89,11 +93,10 @@ namespace FateWeaver.Tests.UnityEditMode
                 catalogResources = CloneCatalogForCapture(
                     CardPrefabCatalogTests.LoadCatalog(),
                     out var captureCatalog);
-                BuildHand(
-                    (RectTransform)canvasObject.transform,
-                    width,
-                    Presentations(content),
-                    captureCatalog);
+                if (content == CaptureContent.BGallery)
+                    BuildGallery((RectTransform)canvasObject.transform, Presentations(content), captureCatalog);
+                else
+                    BuildHand((RectTransform)canvasObject.transform, width, Presentations(content), captureCatalog);
                 PrewarmFontsForCapture(canvasObject);
                 fontIsolation = IsolateFontsForCapture(canvasObject);
                 Canvas.ForceUpdateCanvases();
@@ -364,16 +367,45 @@ namespace FateWeaver.Tests.UnityEditMode
             hand.SetCards(presentations, _ => { }, (_, __) => { });
         }
 
+        private static void BuildGallery(RectTransform canvas, CardPresentation[] cards, CardPrefabCatalog catalog)
+        {
+            for (int index = 0; index < cards.Length; index++)
+            {
+                var view = catalog.Create(cards[index], canvas);
+                var rect = (RectTransform)view.transform;
+                rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+                rect.anchoredPosition = new Vector2((index - (cards.Length - 1) * .5f) * 275f, 0);
+                rect.localScale = Vector3.one * 1.25f;
+                view.Bind(cards[index], null);
+            }
+        }
+
         private static CardPresentation[] Presentations(CaptureContent content)
         {
             switch (content)
             {
+                case CaptureContent.BGallery:
+                    return new[] { Presentations(CaptureContent.ToxicReclaim)[0], Presentations(CaptureContent.SingleEnemyAll)[0],
+                        Presentations(CaptureContent.SingleAlly)[0], Presentations(CaptureContent.LongDescription)[0],
+                        Presentations(CaptureContent.Intervention)[0] };
+                case CaptureContent.SingleEnemyAll:
+                    var all = new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.All);
+                    return new[] { Presentation("all", "파열", CardCategory.Execution, new[] { all },
+                        new[] { new CardDescriptionLine(all, "피해 8. 약화 1.") }) };
+                case CaptureContent.SingleAlly:
+                    var selfTarget = new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self);
+                    return new[] { Presentation("self", "굳건한 결의", CardCategory.Execution, new[] { selfTarget },
+                        new[] { new CardDescriptionLine(selfTarget, "방어 3.") }) };
+                case CaptureContent.LongDescription:
+                    var front = new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontTwo);
+                    return new[] { Presentation("long", "무너지지 않는 수호의 맹세", CardCategory.Execution, new[] { front },
+                        new[] { new CardDescriptionLine(front, "피해 8. 약화 1. 대상에게 독이 있으면 피해 3 추가. 독을 소비했다면 방어 4. 카드 1장 뽑기.") }) };
                 case CaptureContent.Execution:
                     return new[]
                     {
                         Presentation(
                             "execution",
-                            "Execution",
+                            "기본 공격",
                             CardCategory.Execution,
                             Array.Empty<CardTargetKey>(),
                             new[]
@@ -390,7 +422,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     {
                         Presentation(
                             "intervention",
-                            "Intervention",
+                            "운명의 전환",
                             CardCategory.Intervention,
                             Array.Empty<CardTargetKey>(),
                             new[]
@@ -477,14 +509,18 @@ namespace FateWeaver.Tests.UnityEditMode
                 new CardDescriptionLayout(targets, lines, string.Empty),
                 null,
                 false,
-                category: category);
+                category: category, ownerDisplayName: "소유자 A");
 
         public enum CaptureContent
         {
             Execution,
             Intervention,
             ToxicReclaim,
-            MixedFive
+            MixedFive,
+            BGallery,
+            SingleAlly,
+            SingleEnemyAll,
+            LongDescription
         }
 
         private readonly struct FontState

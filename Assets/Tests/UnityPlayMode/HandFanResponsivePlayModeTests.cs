@@ -36,7 +36,8 @@ namespace FateWeaver.Tests.UnityPlayMode
 
                 Assert.AreEqual(revisionBeforeResize + 1, LayoutRevision(hand));
                 Assert.That(content.localScale.x, Is.GreaterThan(scaleBeforeResize));
-                Assert.AreEqual(1f, content.localScale.x, 0.0001f);
+                Assert.That(content.localScale.x, Is.LessThanOrEqualTo(1f));
+                Assert.AreEqual(content.localScale.x, content.localScale.y, .0001f);
                 int revisionAfterResize = LayoutRevision(hand);
 
                 yield return null;

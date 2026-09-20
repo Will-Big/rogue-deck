@@ -69,7 +69,6 @@ namespace FateWeaver.Unity
 
             if (ownerId == null)
             {
-                name = PlaytestKoreanText.PartyOwnerName();
                 color = PartyOwnerColor;
                 isPartyOwned = true;
                 return;

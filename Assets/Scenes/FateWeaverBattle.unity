@@ -6277,12 +6277,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView
   _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
   _content: {fileID: 890533497}
-  _cardSize: {x: 170, y: 238}
+  _cardSize: {x: 170, y: 285.6}
   _baseSpacing: 150
   _minimumSpacing: 72
   _anglePerCard: 4
   _arcDrop: 10
-  _badgeOverflow: 85.36
+  _badgeOverflow: 24
   _horizontalSafeMargins: 32
   _verticalSafeMargins: 16
   _minimumScale: 0.65

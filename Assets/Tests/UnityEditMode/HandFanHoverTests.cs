@@ -100,7 +100,7 @@ namespace FateWeaver.Tests.UnityEditMode
 
                 Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(Vector3.one * (.85f * 1.35f), rect.localScale);
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hover.OnPointerExit(null);
@@ -109,7 +109,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.Less(
                     Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
                     0.01f);
-                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(Vector3.one * .85f, rect.localScale);
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally
@@ -134,7 +134,7 @@ namespace FateWeaver.Tests.UnityEditMode
 
                 Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.AreEqual(Vector3.one * 1.35f, rect.localScale);
+                Assert.AreEqual(Vector3.one * (.85f * 1.35f), rect.localScale);
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hand.SetHeld(1, false);
@@ -143,7 +143,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.Less(
                     Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
                     0.01f);
-                Assert.AreEqual(Vector3.one, rect.localScale);
+                Assert.AreEqual(Vector3.one * .85f, rect.localScale);
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally

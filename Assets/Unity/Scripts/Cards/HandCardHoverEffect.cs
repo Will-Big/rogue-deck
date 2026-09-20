@@ -12,6 +12,7 @@ namespace FateWeaver.Unity
         private RectTransform _rect;
         private Vector2 _basePosition;
         private Quaternion _baseRotation;
+        private Vector3 _baseScale = Vector3.one;
         private int _baseSiblingIndex;
         private bool _hovering;
         private bool _held;
@@ -30,6 +31,7 @@ namespace FateWeaver.Unity
             _rect = (RectTransform)transform;
             _basePosition = _rect.anchoredPosition;
             _baseRotation = _rect.localRotation;
+            _baseScale = _rect.localScale;
             _baseSiblingIndex = _rect.GetSiblingIndex();
         }
 
@@ -124,7 +126,7 @@ namespace FateWeaver.Unity
             _rect.SetAsLastSibling();
             _rect.localRotation = Quaternion.identity;
             _rect.anchoredPosition = _basePosition + new Vector2(0f, HoverLift);
-            _rect.localScale = Vector3.one * HoverScale;
+            _rect.localScale = _baseScale * HoverScale;
         }
 
         private void Restore()
@@ -137,7 +139,7 @@ namespace FateWeaver.Unity
             _rect.SetSiblingIndex(_baseSiblingIndex);
             _rect.localRotation = _baseRotation;
             _rect.anchoredPosition = _basePosition;
-            _rect.localScale = Vector3.one;
+            _rect.localScale = _baseScale;
         }
     }
 }

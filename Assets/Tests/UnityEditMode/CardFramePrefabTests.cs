@@ -123,7 +123,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 .ToArray();
 
             Assert.That(widths.Max() - widths.Min(), Is.LessThanOrEqualTo(0.5f));
-            Assert.That(widths, Has.All.EqualTo(48f).Within(0.5f));
+            Assert.That(widths, Has.All.EqualTo(31.2f).Within(0.5f));
         }
 
         [Test]
@@ -170,27 +170,15 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Target_glyph_has_no_faction_shape_nodes_and_all_has_two_endpoints()
+        public void Target_glyph_has_separate_faction_markers_and_bracketed_all()
         {
             var prefab = Load<TargetGlyphView>(CardPrefabCatalogTests.TargetGlyphPath);
-            var direct = DirectChildNames(prefab.transform);
-            var layout = prefab.GetComponent<LayoutElement>();
-
-            CollectionAssert.AreEquivalent(GlyphVisualNames, direct);
-            CollectionAssert.DoesNotContain(direct, "AllyDirection");
-            CollectionAssert.DoesNotContain(direct, "EnemyDirection");
-            CollectionAssert.AreEqual(
-                new[] { "LeftDiamond", "Rail", "RightDiamond" },
-                DirectChildNames(Child(prefab.transform, "All")));
-            Assert.IsEmpty(prefab.GetComponentsInChildren<Outline>(true));
+            Assert.IsNotNull(CardPrefabCatalogTests.Field<Image>(prefab, "_allyMarker"));
+            Assert.IsNotNull(CardPrefabCatalogTests.Field<Image>(prefab, "_enemyMarker"));
+            var all = Child(prefab.transform, "All");
+            CollectionAssert.IsSubsetOf(new[] { "Unit0", "Unit1", "Unit2", "LeftBracket", "RightBracket" }, DirectChildNames(all));
             Assert.IsEmpty(prefab.GetComponentsInChildren<TMP_Text>(true));
-            Assert.IsNotNull(layout);
-            Assert.AreEqual(52f, layout.minWidth);
-            Assert.AreEqual(32f, layout.minHeight);
-            Assert.AreEqual(52f, layout.preferredWidth);
-            Assert.AreEqual(32f, layout.preferredHeight);
-            Assert.AreEqual(0f, layout.flexibleWidth);
-            Assert.AreEqual(0f, layout.flexibleHeight);
+            Assert.IsEmpty(prefab.GetComponentsInChildren<Outline>(true));
         }
 
         [Test]
@@ -215,6 +203,8 @@ namespace FateWeaver.Tests.UnityEditMode
                     ("_allVisual", typeof(RectTransform)),
                     ("_selfVisual", typeof(RectTransform)),
                     ("_emptyVisual", typeof(RectTransform)),
+                    ("_allyMarker", typeof(Image)),
+                    ("_enemyMarker", typeof(Image)),
                     ("_allyColor", typeof(Color)),
                     ("_enemyColor", typeof(Color))
                 },
@@ -237,75 +227,48 @@ namespace FateWeaver.Tests.UnityEditMode
 
         [TestCase(CardTargetFaction.Ally, "#5DADE2")]
         [TestCase(CardTargetFaction.Enemy, "#E85D5D")]
-        public void Description_line_colors_only_the_shared_symbol(
-            CardTargetFaction faction,
-            string expectedHex)
+        public void Description_line_colors_heading_symbol_and_preserves_body(CardTargetFaction faction, string expectedHex)
         {
             var line = InstantiateDescriptionLine();
             try
             {
-                line.Bind(new CardDescriptionLine(
-                    new CardTargetKey(faction, CardTargetRange.Self),
-                    "방어 2."));
-
-                Assert.AreEqual(
-                    "<color=" + expectedHex + ">◆</color> 방어 2.",
-                    CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+                line.Bind(new CardDescriptionLine(new CardTargetKey(faction, CardTargetRange.Self), "방어 2."));
+                Assert.AreEqual("방어 2.", CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+                string label = faction == CardTargetFaction.Ally ? "●</color> 아군" : "◆</color> 적군";
+                Assert.AreEqual("<color=" + expectedHex + ">" + label + " 자신",
+                    CardPrefabCatalogTests.Field<TMP_Text>(line, "_headingText").text);
             }
-            finally
-            {
-                Object.DestroyImmediate(line.gameObject);
-            }
+            finally { Object.DestroyImmediate(line.gameObject); }
         }
 
         [Test]
-        public void Description_line_uses_full_width_text_without_a_glyph_slot()
+        public void Description_line_uses_separate_heading_and_full_width_body()
         {
-            var prefab = Load<DescriptionLineView>(
-                CardPrefabCatalogTests.DescriptionLinePath);
+            var prefab = Load<DescriptionLineView>(CardPrefabCatalogTests.DescriptionLinePath);
             var text = CardPrefabCatalogTests.Field<TMP_Text>(prefab, "_text");
-            var layout = prefab.GetComponent<HorizontalLayoutGroup>();
-
             Assert.IsEmpty(prefab.GetComponentsInChildren<TargetGlyphView>(true));
-            Assert.AreEqual(1, prefab.GetComponentsInChildren<TMP_Text>(true).Length);
-            Assert.IsNull(
-                typeof(DescriptionLineView).GetField(
-                    "_glyphSlot",
-                    BindingFlags.Instance | BindingFlags.NonPublic));
-            Assert.IsNull(
-                typeof(DescriptionLineView).GetField(
-                    "_glyph",
-                    BindingFlags.Instance | BindingFlags.NonPublic));
-            Assert.IsNotNull(layout);
-            Assert.AreEqual(0f, layout.spacing);
-            Assert.IsTrue(layout.childControlWidth);
-            Assert.IsTrue(layout.childControlHeight);
-            Assert.IsTrue(layout.childForceExpandWidth);
-            Assert.IsFalse(layout.childForceExpandHeight);
+            Assert.AreEqual(2, prefab.GetComponentsInChildren<TMP_Text>(true).Length);
+            Assert.IsNotNull(prefab.GetComponent<VerticalLayoutGroup>());
             Assert.AreEqual(TextWrappingModes.Normal, text.textWrappingMode);
+            Assert.AreEqual(TextOverflowModes.Overflow, text.overflowMode);
             Assert.IsTrue(text.richText);
+            Assert.IsTrue(text.enableAutoSizing);
         }
 
         [Test]
-        public void Description_line_declares_only_inline_serialized_fields()
+        public void Description_line_rejects_missing_or_duplicate_range_labels()
         {
-            var serializedFields = typeof(DescriptionLineView)
-                .GetFields(
-                    BindingFlags.Instance
-                    | BindingFlags.NonPublic
-                    | BindingFlags.DeclaredOnly)
-                .Where(field => field.GetCustomAttribute<SerializeField>() != null)
-                .Select(field => (field.Name, field.FieldType))
-                .ToArray();
-
-            CollectionAssert.AreEquivalent(
-                new[]
-                {
-                    ("_text", typeof(TMP_Text)),
-                    ("_allySymbolColor", typeof(Color)),
-                    ("_enemySymbolColor", typeof(Color))
-                },
-                serializedFields);
+            var line = InstantiateDescriptionLine();
+            try
+            {
+                var field = typeof(DescriptionLineView).GetField("_rangeLabels", BindingFlags.NonPublic | BindingFlags.Instance);
+                var labels = CardPrefabCatalogTests.Field<DescriptionLineView.RangeLabel[]>(line, "_rangeLabels");
+                field.SetValue(line, labels.Take(1).ToArray());
+                Assert.Throws<InvalidOperationException>(() => line.Bind(new CardDescriptionLine(null, "피해 8.")));
+                field.SetValue(line, labels.Concat(new[] { labels[0] }).ToArray());
+                Assert.Throws<InvalidOperationException>(() => line.Bind(new CardDescriptionLine(null, "피해 8.")));
+            }
+            finally { Object.DestroyImmediate(line.gameObject); }
         }
 
         [Test]
@@ -358,7 +321,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     new CardTargetKey(CardTargetFaction.Enemy, range),
                     "피해 3."));
                 Assert.AreEqual(
-                    "<color=#E85D5D>◆</color> 피해 3.",
+                    "피해 3.",
                     CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
 
                 line.Bind(new CardDescriptionLine(null, "카드 1장 뽑기."));
@@ -401,6 +364,8 @@ namespace FateWeaver.Tests.UnityEditMode
                     "A sufficiently long card effect description should wrap "
                     + "across several lines inside the remaining width."));
 
+                line.SetLayout(true, false);
+                line.Measure(158f);
                 var lineRect = (RectTransform)line.transform;
                 var text = CardPrefabCatalogTests.Field<TMP_Text>(line, "_text");
                 Canvas.ForceUpdateCanvases();
@@ -468,89 +433,57 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Execution_frame_has_symbol_target_panel_and_protruding_badges()
+        public void Execution_frame_has_internal_cost_centered_name_and_protruding_order_tab()
         {
             var view = LoadExecution();
-            var targetPanel = Child(view.transform, "SymbolOnlyTargetPanel");
-            var overlay = Child(view.transform, "OverlayLayer");
             var cost = Child(view.transform, "CostBadge");
             var order = Child(view.transform, "ExecutionOrderBadge");
-
-            Assert.IsEmpty(targetPanel.GetComponentsInChildren<TMP_Text>(true));
-            Assert.AreSame(overlay, cost.parent);
-            Assert.AreSame(overlay, order.parent);
-            AssertBadgeOutsideFrame(view, cost);
+            var name = CardPrefabCatalogTests.Field<TMP_Text>(view, "_nameText").rectTransform;
+            Assert.IsEmpty(Child(view.transform, "SymbolOnlyTargetPanel").GetComponentsInChildren<TMP_Text>(true));
             AssertBadgeOutsideFrame(view, order);
-            AssertNoMaskAncestor(cost, view.transform);
+            var frame = (RectTransform)view.transform;
+            var corners = new Vector3[4]; cost.GetWorldCorners(corners);
+            foreach (var corner in corners) Assert.IsTrue(frame.rect.Contains(frame.InverseTransformPoint(corner)));
+            Assert.AreEqual(frame.rect.center.x, frame.InverseTransformPoint(name.TransformPoint(name.rect.center)).x, .01f);
+            Assert.AreEqual(cost.TransformPoint(cost.rect.center).y, name.TransformPoint(name.rect.center).y, .01f);
+            Assert.AreEqual(0, Mathf.DeltaAngle(order.localEulerAngles.z, 0), .01f);
             AssertNoMaskAncestor(order, view.transform);
-            Assert.That(cost.rect.size, Is.EqualTo(new Vector2(68f, 68f)));
-            Assert.That(order.rect.size, Is.EqualTo(new Vector2(50f, 50f)));
-            Assert.That(
-                Mathf.Abs(Mathf.DeltaAngle(order.localEulerAngles.z, 45f)),
-                Is.LessThan(0.01f));
         }
 
         [Test]
         public void Execution_target_panel_is_one_centered_horizontal_row()
         {
             var view = LoadExecution();
-            var panel = Child(view.transform, "SymbolOnlyTargetPanel");
-            var layout = panel.GetComponent<HorizontalLayoutGroup>();
-
+            var strip = CardPrefabCatalogTests.Field<CardTargetStripView>(view, "_targetStrip");
+            var layout = strip.GetComponent<HorizontalLayoutGroup>();
             Assert.IsNotNull(layout);
             Assert.AreEqual(TextAnchor.MiddleCenter, layout.childAlignment);
-            Assert.AreEqual(8, layout.padding.left);
-            Assert.AreEqual(8, layout.padding.right);
-            Assert.AreEqual(8f, layout.spacing);
-            Assert.IsFalse(layout.childForceExpandWidth);
-            Assert.IsFalse(layout.childForceExpandHeight);
             Assert.IsFalse(layout.reverseArrangement);
-            Assert.AreSame(
-                panel,
-                CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent"));
-            Assert.AreSame(
-                panel,
-                CardPrefabCatalogTests.Field<RectTransform>(view, "_targetPanel"));
+            Assert.IsNotNull(CardPrefabCatalogTests.Field<RectTransform>(strip, "_firstSlot"));
+            Assert.IsNotNull(CardPrefabCatalogTests.Field<RectTransform>(strip, "_secondSlot"));
+            Assert.IsNotNull(CardPrefabCatalogTests.Field<GameObject>(strip, "_separator"));
         }
 
         [Test]
-        public void Two_factions_bind_ally_left_enemy_right_on_the_same_y()
+        public void Two_factions_bind_enemy_left_ally_right_without_changing_input_order()
         {
             var view = InstantiateConfigured(LoadExecution());
             try
             {
-                view.Bind(
-                    CardPrefabCatalogTests.Presentation(
-                        CardCategory.Execution,
-                        new[]
-                        {
-                            new CardTargetKey(
-                                CardTargetFaction.Ally,
-                                CardTargetRange.Self),
-                            new CardTargetKey(
-                                CardTargetFaction.Enemy,
-                                CardTargetRange.FrontOne)
-                        },
-                        Array.Empty<CardDescriptionLine>()),
-                    null);
-
-                var content =
-                    CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent");
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-                var ally = (RectTransform)content.GetChild(0);
-                var enemy = (RectTransform)content.GetChild(1);
-
-                Assert.Less(ally.anchoredPosition.x, enemy.anchoredPosition.x);
-                Assert.AreEqual(
-                    ally.anchoredPosition.y,
-                    enemy.anchoredPosition.y,
-                    0.01f);
+                var input = new[] { new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self),
+                    new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.FrontOne) };
+                view.Bind(CardPrefabCatalogTests.Presentation(CardCategory.Execution, input, Array.Empty<CardDescriptionLine>()), null);
+                var strip = CardPrefabCatalogTests.Field<CardTargetStripView>(view, "_targetStrip");
+                LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)strip.transform);
+                var enemy = CardPrefabCatalogTests.Field<RectTransform>(strip, "_firstSlot");
+                var ally = CardPrefabCatalogTests.Field<RectTransform>(strip, "_secondSlot");
+                Assert.Less(enemy.position.x, ally.position.x);
+                Assert.AreEqual(enemy.position.y, ally.position.y, .01f);
+                Assert.IsTrue(CardPrefabCatalogTests.Field<Image>(enemy.GetComponentInChildren<TargetGlyphView>(), "_enemyMarker").gameObject.activeSelf);
+                Assert.IsTrue(CardPrefabCatalogTests.Field<Image>(ally.GetComponentInChildren<TargetGlyphView>(), "_allyMarker").gameObject.activeSelf);
+                Assert.AreEqual(CardTargetFaction.Ally, input[0].Faction);
             }
-            finally
-            {
-                Object.DestroyImmediate(view.gameObject);
-            }
+            finally { Object.DestroyImmediate(view.gameObject); }
         }
 
         [Test]
@@ -571,9 +504,7 @@ namespace FateWeaver.Tests.UnityEditMode
                         },
                         Array.Empty<CardDescriptionLine>()),
                     null);
-                var content = CardPrefabCatalogTests.Field<RectTransform>(
-                    execution,
-                    "_targetContent");
+                var content = TargetSlot(execution);
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(content);
                 var target = (RectTransform)content.GetChild(0);
@@ -651,13 +582,9 @@ namespace FateWeaver.Tests.UnityEditMode
                 intervention.transform,
                 "ExecutionOrderBadge"));
             Assert.IsNull(
-                CardPrefabCatalogTests.Field<RectTransform>(
-                    intervention,
-                    "_targetContent"));
+                CardPrefabCatalogTests.Field<CardTargetStripView>(intervention, "_targetStrip"));
             Assert.IsNull(
-                CardPrefabCatalogTests.Field<RectTransform>(
-                    intervention,
-                    "_targetPanel"));
+                (RectTransform)CardPrefabCatalogTests.Field<CardTargetStripView>(intervention, "_targetStrip")?.transform);
             Assert.IsNull(
                 CardPrefabCatalogTests.Field<RectTransform>(
                     intervention,
@@ -666,9 +593,9 @@ namespace FateWeaver.Tests.UnityEditMode
                 Child(intervention.transform, "ExpandedDescriptionPanel").rect.height,
                 Child(execution.transform, "DescriptionPanel").rect.height);
             Assert.AreSame(overlay, cost.parent);
-            AssertBadgeOutsideFrame(intervention, cost);
+            Assert.IsNotNull(Child(intervention.transform, "CategoryTab"));
             AssertNoMaskAncestor(cost, intervention.transform);
-            Assert.That(cost.rect.size, Is.EqualTo(new Vector2(68f, 68f)));
+            Assert.That(cost.rect.size, Is.EqualTo(new Vector2(28f, 28f)));
         }
 
         [Test]
@@ -788,7 +715,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     null);
 
                 var targetContent =
-                    CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent");
+                    TargetSlot(view);
                 Assert.AreEqual(1, targetContent.childCount);
                 var glyph = targetContent.GetChild(0).GetComponent<TargetGlyphView>();
                 Assert.IsNotNull(glyph);
@@ -832,16 +759,16 @@ namespace FateWeaver.Tests.UnityEditMode
                     null);
 
                 var targetContent =
-                    CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent");
+                    TargetSlot(view);
                 var descriptionContent =
-                    CardPrefabCatalogTests.Field<RectTransform>(view, "_descriptionContent");
-                Assert.AreEqual(2, targetContent.childCount);
+                    DescriptionContent(view);
+                Assert.AreEqual(2, view.GetComponentsInChildren<TargetGlyphView>().Length);
                 Assert.AreEqual(3, descriptionContent.childCount);
                 CollectionAssert.AreEqual(
                     new[]
                     {
-                        "<color=#E85D5D>◆</color> 피해 3.",
-                        "<color=#5DADE2>◆</color> 방어 2.",
+                        "피해 3.",
+                        "방어 2.",
                         "카드 1장 뽑기."
                     },
                     descriptionContent
@@ -868,8 +795,7 @@ namespace FateWeaver.Tests.UnityEditMode
                         new[] { new CardDescriptionLine(null, "순서를 바꾼다.") }),
                     null);
 
-                Assert.IsNull(
-                    CardPrefabCatalogTests.Field<RectTransform>(view, "_targetContent"));
+                Assert.IsNull(CardPrefabCatalogTests.Field<CardTargetStripView>(view, "_targetStrip"));
                 Assert.IsEmpty(view.GetComponentsInChildren<TargetGlyphView>(true)
                     .Where(glyph => glyph.GetComponentInParent<DescriptionLineView>() == null));
             }
@@ -976,6 +902,132 @@ namespace FateWeaver.Tests.UnityEditMode
                 ColorUtility.ToHtmlStringRGB(description.color));
             Assert.AreEqual(2, tooltip.GetComponentsInChildren<TMP_Text>(true).Length);
         }
+
+        [Test]
+        public void Description_body_preserves_compact_text_without_faction_prefix()
+        {
+            var view = InstantiateDescriptionLine();
+            try
+            {
+                view.Bind(new CardDescriptionLine(
+                    new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.All),
+                    "피해 8. 약화 1."));
+                Assert.AreEqual("피해 8. 약화 1.",
+                    CardPrefabCatalogTests.Field<TMP_Text>(view, "_text").text);
+            }
+            finally { Object.DestroyImmediate(view.gameObject); }
+        }
+
+        [Test]
+        public void Description_rebind_keeps_headings_above_body_and_clears_old_groups()
+        {
+            var view = InstantiateConfigured(LoadExecution());
+            try
+            {
+                var enemy = new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.All);
+                var ally = new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self);
+                var pairs = new[] { new CardDescriptionLine(enemy, "피해 8. 약화 1."), new CardDescriptionLine(ally, "방어 3.") };
+                var panel = CardPrefabCatalogTests.Field<CardDescriptionPanelView>(view, "_descriptionPanel");
+                var content = DescriptionContent(view);
+                foreach (var lines in new[] { pairs, new[] { pairs[0] }, Array.Empty<CardDescriptionLine>(), pairs,
+                    new[] { pairs[0], new CardDescriptionLine(null, "카드 1장 뽑기.") } })
+                {
+                    panel.Bind(lines);
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                    Assert.AreEqual(lines.Length, content.childCount);
+                    var groups = content.GetComponentsInChildren<DescriptionLineView>();
+                    Assert.AreEqual(Mathf.Max(0, lines.Length - 1), groups.Count(group =>
+                        CardPrefabCatalogTests.Field<GameObject>(group, "_separator").activeSelf));
+                    for (int index = 0; index < groups.Length; index++)
+                    {
+                        var body = CardPrefabCatalogTests.Field<TMP_Text>(groups[index], "_text");
+                        var heading = CardPrefabCatalogTests.Field<TMP_Text>(groups[index], "_headingText");
+                        Assert.AreEqual(lines[index].Text, body.text);
+                        Assert.AreEqual(lines[index].Target.HasValue, heading.gameObject.activeSelf);
+                        Assert.AreEqual(lines.Length == 1 ? TextAlignmentOptions.Left : TextAlignmentOptions.TopLeft, body.alignment);
+                        var bodyBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(content, body.transform);
+                        Assert.GreaterOrEqual(bodyBounds.min.y, content.rect.yMin - .1f);
+                        Assert.LessOrEqual(bodyBounds.max.y, content.rect.yMax + .1f);
+                        if (heading.gameObject.activeSelf)
+                        {
+                            var headingBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(content, heading.transform);
+                            Assert.GreaterOrEqual(headingBounds.min.y, bodyBounds.max.y);
+                        }
+                    }
+                }
+            }
+            finally { Object.DestroyImmediate(view.gameObject); }
+        }
+
+        [TestCase(CardTargetFaction.Enemy, CardTargetRange.FrontOne)]
+        [TestCase(CardTargetFaction.Ally, CardTargetRange.FrontTwo)]
+        [TestCase(CardTargetFaction.Ally, CardTargetRange.All)]
+        [TestCase(CardTargetFaction.Enemy, CardTargetRange.Self)]
+        public void Target_strip_rebind_centers_single_and_empty_and_restores_divider(CardTargetFaction faction, CardTargetRange range)
+        {
+            var view = InstantiateConfigured(LoadExecution());
+            try
+            {
+                var strip = CardPrefabCatalogTests.Field<CardTargetStripView>(view, "_targetStrip");
+                var rect = (RectTransform)strip.transform;
+                var divider = CardPrefabCatalogTests.Field<GameObject>(strip, "_separator");
+                var both = new[] { new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self), new CardTargetKey(CardTargetFaction.Enemy, CardTargetRange.All) };
+                foreach (var entries in new[] { both, new[] { new CardTargetKey(faction, range) }, Array.Empty<CardTargetKey>(), both })
+                {
+                    strip.Bind(entries);
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+                    var glyphs = strip.GetComponentsInChildren<TargetGlyphView>();
+                    Assert.AreEqual(Mathf.Max(1, entries.Length), glyphs.Length);
+                    Assert.AreEqual(entries.Length == 2, divider.activeSelf);
+                    if (entries.Length < 2)
+                    {
+                        var glyph = (RectTransform)glyphs[0].transform;
+                        Assert.AreEqual(rect.rect.center.x, rect.InverseTransformPoint(glyph.TransformPoint(glyph.rect.center)).x, .1f);
+                    }
+                }
+            }
+            finally { Object.DestroyImmediate(view.gameObject); }
+        }
+
+        [Test]
+        public void Every_content_card_keeps_body_inside_its_authored_area()
+        {
+            var root = new GameObject("ContentCardCanvas", typeof(RectTransform), typeof(Canvas));
+            using (CardFrameRenderCapture.CloneCatalogForCapture(CardPrefabCatalogTests.LoadCatalog(), out var catalog))
+            {
+                try
+                {
+                    var korean = KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses());
+                    foreach (var pair in UnityTestContent.Cards().Cards)
+                    {
+                        var presentation = CardPresentation.FromDefinition(pair.Value, korean);
+                        var view = catalog.Create(presentation, (RectTransform)root.transform);
+                        try
+                        {
+                            view.Bind(presentation, null);
+                            LayoutRebuilder.ForceRebuildLayoutImmediate(DescriptionContent(view));
+                            foreach (var group in view.GetComponentsInChildren<DescriptionLineView>())
+                            {
+                                var body = CardPrefabCatalogTests.Field<TMP_Text>(group, "_text");
+                                body.ForceMeshUpdate(true, true);
+                                Assert.LessOrEqual(body.textBounds.size.y, body.rectTransform.rect.height + 1f, pair.Key + ": " + body.text);
+                                Assert.IsFalse(body.isTextOverflowing, pair.Key + ": " + body.text);
+                            }
+                            var title = CardPrefabCatalogTests.Field<TMP_Text>(view, "_nameText");
+                            title.ForceMeshUpdate(true, true);
+                            Assert.LessOrEqual(title.textInfo.lineCount, 2, pair.Key + " title");
+                        }
+                        finally { Object.DestroyImmediate(view.gameObject); }
+                    }
+                }
+                finally { Object.DestroyImmediate(root); }
+            }
+        }
+
+        private static RectTransform TargetSlot(CardView view)
+            => CardPrefabCatalogTests.Field<RectTransform>(CardPrefabCatalogTests.Field<CardTargetStripView>(view, "_targetStrip"), "_firstSlot");
+        private static RectTransform DescriptionContent(CardView view)
+            => CardPrefabCatalogTests.Field<RectTransform>(CardPrefabCatalogTests.Field<CardDescriptionPanelView>(view, "_descriptionPanel"), "_content");
 
         private static TargetGlyphView InstantiateGlyph()
             => Object.Instantiate(

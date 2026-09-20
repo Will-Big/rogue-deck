@@ -27,12 +27,12 @@ namespace FateWeaver.Unity
 
         [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private RectTransform _content;
-        [SerializeField] private Vector2 _cardSize = new Vector2(170f, 238f);
+        [SerializeField] private Vector2 _cardSize = new Vector2(170f, 285.6f);
         [SerializeField] private float _baseSpacing = 150f;
         [SerializeField] private float _minimumSpacing = 72f;
         [SerializeField] private float _anglePerCard = 4f;
         [SerializeField] private float _arcDrop = 10f;
-        [SerializeField] private float _badgeOverflow = 85.36f;
+        [SerializeField] private float _badgeOverflow = 24f;
         [SerializeField] private float _horizontalSafeMargins = 32f;
         [SerializeField] private float _verticalSafeMargins = 16f;
         [SerializeField] private float _minimumScale = 0.65f;
@@ -66,7 +66,8 @@ namespace FateWeaver.Unity
                 var view = _cardPrefabs.Create(cards[i], _content);
                 var rect = (RectTransform)view.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = _cardSize;
+                float scale = Mathf.Min(_cardSize.x / rect.rect.width, _cardSize.y / rect.rect.height);
+                rect.localScale = Vector3.one * scale;
                 int captured = i;
                 view.Bind(cards[i], () => onClick?.Invoke(captured));
                 var hover = view.gameObject.AddComponent<HandCardHoverEffect>();

@@ -135,10 +135,10 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.AreSame(root.transform, view.transform.parent);
                 Assert.AreEqual(
                     1,
-                    Field<RectTransform>(view, "_targetContent").childCount);
+                    view.GetComponentsInChildren<TargetGlyphView>().Length);
                 Assert.AreEqual(
                     1,
-                    Field<RectTransform>(view, "_descriptionContent").childCount);
+                    view.GetComponentsInChildren<DescriptionLineView>().Length);
             }
             finally
             {

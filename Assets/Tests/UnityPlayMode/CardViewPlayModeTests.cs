@@ -40,7 +40,7 @@ namespace FateWeaver.Tests.UnityPlayMode
                             new CardDescriptionLine(null, "Second line.")
                         }),
                     null);
-                var staleTargets = Children(fixture.TargetContent);
+                var staleTargets = fixture.TargetContent.GetComponentsInChildren<TargetGlyphView>().Select(g => g.transform).ToArray();
                 var staleLines = Children(fixture.DescriptionContent);
                 Assert.AreEqual(2, staleTargets.Length);
                 Assert.AreEqual(2, staleLines.Length);
@@ -56,7 +56,7 @@ namespace FateWeaver.Tests.UnityPlayMode
                         new[] { new CardDescriptionLine(null, "Replacement.") }),
                     null);
 
-                Assert.AreEqual(1, fixture.TargetContent.childCount);
+                Assert.AreEqual(1, fixture.TargetContent.GetComponentsInChildren<TargetGlyphView>().Length);
                 Assert.AreEqual(1, fixture.DescriptionContent.childCount);
                 Assert.IsTrue(staleTargets.All(child => child.parent == null));
                 Assert.IsTrue(staleLines.All(child => child.parent == null));
@@ -131,6 +131,25 @@ namespace FateWeaver.Tests.UnityPlayMode
                 lineTemplateObject.transform,
                 "LineText");
             SetField(lineTemplate, "_text", lineText);
+            SetField(lineTemplate, "_headingText", ChildText(lineTemplateObject.transform, "Heading"));
+            SetField(lineTemplate, "_separator", ChildRect(lineTemplateObject.transform, "Separator").gameObject);
+            SetField(lineTemplate, "_bodyLayout", lineText.gameObject.AddComponent<LayoutElement>());
+            SetField(lineTemplate, "_factionLabels", new[] {
+                new DescriptionLineView.FactionLabel { Faction = CardTargetFaction.Ally, Symbol = "●", Label = "Ally" },
+                new DescriptionLineView.FactionLabel { Faction = CardTargetFaction.Enemy, Symbol = "◆", Label = "Enemy" }
+            });
+            SetField(lineTemplate, "_rangeLabels", Enum.GetValues(typeof(CardTargetRange)).Cast<CardTargetRange>()
+                .Select(range => new DescriptionLineView.RangeLabel { Range = range, Label = range.ToString() }).ToArray());
+            SetField(targetTemplate, "_allyMarker", ChildImage(targetTemplateObject.transform, "Ally"));
+            SetField(targetTemplate, "_enemyMarker", ChildImage(targetTemplateObject.transform, "Enemy"));
+            var strip = targetContent.gameObject.AddComponent<CardTargetStripView>();
+            SetField(strip, "_firstSlot", ChildRect(targetContent, "First"));
+            SetField(strip, "_secondSlot", ChildRect(targetContent, "Second"));
+            SetField(strip, "_separator", ChildRect(targetContent, "Divider").gameObject);
+            strip.Configure(targetTemplate);
+            var panel = descriptionContent.gameObject.AddComponent<CardDescriptionPanelView>();
+            SetField(panel, "_content", descriptionContent);
+            panel.Configure(lineTemplate);
 
             SetField(view, "_prefabCategory", CardCategory.Execution);
             SetField(view, "_art", ChildImage(root.transform, "Art"));
@@ -144,13 +163,10 @@ namespace FateWeaver.Tests.UnityPlayMode
                 "_executionOrderText",
                 ChildText(root.transform, "ExecutionOrder"));
             SetField(view, "_costText", ChildText(root.transform, "Cost"));
-            SetField(view, "_descriptionContent", descriptionContent);
-            SetField(view, "_targetContent", targetContent);
-            SetField(view, "_targetPanel", targetContent);
+            SetField(view, "_descriptionPanel", panel);
+            SetField(view, "_targetStrip", strip);
             SetField(view, "_selectionOutline", root.GetComponent<Outline>());
             SetField(view, "_button", root.GetComponent<Button>());
-            SetField(view, "_targetGlyphPrefab", targetTemplate);
-            SetField(view, "_descriptionLinePrefab", lineTemplate);
 
             return new Fixture(
                 view,

@@ -58,9 +58,10 @@ namespace FateWeaver.Tests.UnityEditMode
                 AssertUniformContentScale(fixture.Content);
                 foreach (var view in fixture.Views)
                 {
-                    Assert.AreEqual(Vector3.one, view.transform.localScale);
+                    Assert.That(view.transform.localScale.x, Is.EqualTo(.85f).Within(.001f));
+                    Assert.AreEqual(view.transform.localScale.x, view.transform.localScale.y);
                     Assert.AreEqual(
-                        new Vector2(170f, 238f),
+                        new Vector2(200f, 336f),
                         ((RectTransform)view.transform).sizeDelta);
                 }
             }
