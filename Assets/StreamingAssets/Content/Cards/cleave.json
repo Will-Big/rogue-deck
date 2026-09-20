@@ -1,0 +1,25 @@
+{
+  "cardFormat": 2,
+  "id": "cleave",
+  "name": "베기",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 4,
+  "targets": {
+    "enemy": "FrontOne"
+  },
+  "effects": [
+    {
+      "kind": "damage",
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 4
+    }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "공격"
+  ]
+}

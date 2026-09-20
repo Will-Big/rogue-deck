@@ -17,7 +17,7 @@ namespace FateWeaver.Tests
             var result = ContentBootstrap.Load(ContentRoot());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-            Assert.AreEqual(29, result.Content.Cards.Ids.Count);
+            Assert.AreEqual(34, result.Content.Cards.Ids.Count);
             Assert.AreEqual(2, result.Content.Decks.Ids.Count);
             Assert.AreEqual(1, result.Content.Pools.Ids.Count);
             Assert.AreEqual(2, result.Content.Characters.Ids.Count);
