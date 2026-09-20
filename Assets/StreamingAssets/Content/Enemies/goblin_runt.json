@@ -1,0 +1,12 @@
+{
+  "id": "goblin_runt",
+  "displayName": "고블린 새끼",
+  "maxHp": 14,
+  "policy": "shuffle_bag",
+  "bundles": [
+    ["runt_jab"],
+    ["runt_jab"],
+    ["crude_guard"],
+    ["runt_jab", "crude_guard"]
+  ]
+}

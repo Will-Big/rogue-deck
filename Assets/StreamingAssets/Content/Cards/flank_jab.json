@@ -1,0 +1,25 @@
+{
+  "cardFormat": 2,
+  "id": "flank_jab",
+  "name": "파고들기",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 2,
+  "targets": {
+    "enemy": "BackOne"
+  },
+  "effects": [
+    {
+      "kind": "damage",
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 3
+    }
+  ],
+  "grade": "Common",
+  "tags": [
+    "시작",
+    "공격"
+  ]
+}

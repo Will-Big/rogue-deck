@@ -31,7 +31,7 @@
       "id": "e2",
       "targetFaction": "Ally",
       "status": "block",
-      "count": 4,
+      "count": 3,
       "requires": {
         "sourceEffectId": "e0",
         "minimumConsumed": 1

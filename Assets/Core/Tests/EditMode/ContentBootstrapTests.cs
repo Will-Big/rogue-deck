@@ -17,11 +17,11 @@ namespace FateWeaver.Tests
             var result = ContentBootstrap.Load(ContentRoot());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-            Assert.AreEqual(29, result.Content.Cards.Ids.Count);
+            Assert.AreEqual(35, result.Content.Cards.Ids.Count);
             Assert.AreEqual(2, result.Content.Decks.Ids.Count);
             Assert.AreEqual(1, result.Content.Pools.Ids.Count);
             Assert.AreEqual(2, result.Content.Characters.Ids.Count);
-            CollectionAssert.AreEqual(new[] { "goblin" }, result.Content.Enemies.Ids);
+            CollectionAssert.AreEqual(new[] { "goblin", "goblin_runt" }, result.Content.Enemies.Ids);
             CollectionAssert.AreEqual(new[] { "goblin_pair", "goblin_single" }, result.Content.Battles.Ids);
             Assert.AreEqual(3, result.Content.CombatRules.RewardChoices);
         }
@@ -39,12 +39,12 @@ namespace FateWeaver.Tests
             {
                 CopyDirectory(ContentRoot(), root);
                 var goblin = Path.Combine(root, "Enemies", "goblin.json");
-                File.WriteAllText(goblin, File.ReadAllText(goblin).Replace("\"random_pick\"", "\"random_pik\""));
+                File.WriteAllText(goblin, File.ReadAllText(goblin).Replace("\"shuffle_bag\"", "\"shuffle_bak\""));
 
                 var result = ContentBootstrap.Load(root);
 
                 Assert.IsFalse(result.Succeeded);
-                CollectionAssert.Contains(result.Errors, "goblin.json: unknown enemy policy 'random_pik'.");
+                CollectionAssert.Contains(result.Errors, "goblin.json: unknown enemy policy 'shuffle_bak'.");
             }
             finally
             {

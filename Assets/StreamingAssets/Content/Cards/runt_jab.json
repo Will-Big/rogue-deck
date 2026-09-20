@@ -1,7 +1,7 @@
 {
   "cardFormat": 2,
-  "id": "goblin_jab",
-  "name": "찌르기",
+  "id": "runt_jab",
+  "name": "서툰 찌르기",
   "side": "Enemy",
   "category": "Execution",
   "baseExecutionOrder": 6,
@@ -13,7 +13,7 @@
       "kind": "damage",
       "id": "e0",
       "targetFaction": "Ally",
-      "value": 5
+      "value": 3
     }
   ]
 }

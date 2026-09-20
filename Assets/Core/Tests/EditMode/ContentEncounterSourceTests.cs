@@ -26,17 +26,17 @@ namespace FateWeaver.Tests
             Assert.AreEqual("goblin#0", pair.Enemy.Id);
             Assert.AreEqual("goblin", pair.Enemy.SpecId);
             Assert.AreEqual(28, pair.Enemy.Hp);
-            Assert.IsInstanceOf<RandomPickPolicy>(pair.Policy);
+            Assert.IsInstanceOf<ShuffleBagPolicy>(pair.Policy);
         }
 
         [Test]
-        public void Repository_goblin_pair_gives_two_goblins_with_separate_combat_ids()
+        public void Repository_goblin_pair_gives_two_runts_with_separate_combat_ids()
         {
             var setup = RepositorySource().For("goblin_pair");
 
             CollectionAssert.AreEqual(
-                new[] { "goblin#0", "goblin#1" }, setup.Enemies.Select(e => e.Enemy.Id).ToArray());
-            Assert.IsTrue(setup.Enemies.All(e => e.Enemy.SpecId == "goblin"));
+                new[] { "goblin_runt#0", "goblin_runt#1" }, setup.Enemies.Select(e => e.Enemy.Id).ToArray());
+            Assert.IsTrue(setup.Enemies.All(e => e.Enemy.SpecId == "goblin_runt"));
             Assert.AreNotSame(
                 setup.Enemies[0].Policy, setup.Enemies[1].Policy,
                 "같은 적이라도 정책 인스턴스는 따로다 — 가방 상태를 공유하면 안 된다.");

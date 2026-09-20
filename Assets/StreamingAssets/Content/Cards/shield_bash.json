@@ -1,0 +1,33 @@
+{
+  "cardFormat": 2,
+  "id": "shield_bash",
+  "name": "방패 치기",
+  "side": "Player",
+  "category": "Execution",
+  "energyCost": 1,
+  "baseExecutionOrder": 5,
+  "targets": {
+    "ally": "Self",
+    "enemy": "FrontOne"
+  },
+  "effects": [
+    {
+      "kind": "damage",
+      "id": "e0",
+      "targetFaction": "Enemy",
+      "value": 3
+    },
+    {
+      "kind": "apply_status",
+      "id": "e1",
+      "targetFaction": "Ally",
+      "status": "block",
+      "count": 2
+    }
+  ],
+  "grade": "Common",
+  "tags": [
+    "공격",
+    "방어"
+  ]
+}

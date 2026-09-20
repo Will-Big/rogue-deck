@@ -1,26 +1,25 @@
 {
   "cardFormat": 2,
-  "id": "early_guard",
-  "name": "앞선 대비",
+  "id": "cleave",
+  "name": "베기",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 4,
   "targets": {
-    "ally": "Self"
+    "enemy": "FrontOne"
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "kind": "damage",
       "id": "e0",
-      "targetFaction": "Ally",
-      "status": "block",
-      "count": 3
+      "targetFaction": "Enemy",
+      "value": 4
     }
   ],
   "grade": "Common",
   "tags": [
     "시작",
-    "방어"
+    "공격"
   ]
 }

@@ -1,13 +1,13 @@
 {
   "cardFormat": 2,
-  "id": "early_guard",
-  "name": "앞선 대비",
+  "id": "brace",
+  "name": "버티기",
   "side": "Player",
   "category": "Execution",
   "energyCost": 1,
   "baseExecutionOrder": 4,
   "targets": {
-    "ally": "Self"
+    "ally": "FrontOne"
   },
   "effects": [
     {
@@ -20,7 +20,6 @@
   ],
   "grade": "Common",
   "tags": [
-    "시작",
     "방어"
   ]
 }

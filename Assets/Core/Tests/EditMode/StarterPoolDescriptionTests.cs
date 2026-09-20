@@ -57,9 +57,9 @@ namespace FateWeaver.Tests
         public void Skip_on_basic_effects_do_not_duplicate_the_basic_clause()
         {
             // Before the DescriptionComposer fix, a SkipOnBasic effect rendered its basic fragment
-            // AND the success fragment with identical wording ("방어 4. 소비했다면 방어 4.").
+            // AND the success fragment with identical wording ("방어 3. 소비했다면 방어 3.").
             var toxic = Describe(Pool.Get("toxic_reclaim"));
-            Assert.AreEqual(1, CountOccurrences(toxic, "방어 4"));
+            Assert.AreEqual(1, CountOccurrences(toxic, "방어 3"));
 
             var distill = Describe(Pool.Get("distill"));
             Assert.AreEqual(1, CountOccurrences(distill, "운명력 1 획득"));
@@ -74,7 +74,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Korean_toxic_reclaim() =>
             Assert.AreEqual(
-                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 4.",
+                "[◆] 독 최대 1 소비. 독 1.\n[◆] 소비했다면 방어 3.",
                 Describe(Pool.Get("toxic_reclaim")));
 
         [Test]
@@ -94,7 +94,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Korean_quick_cover() =>
             Assert.AreEqual(
-                "[◆] 방어 4.",
+                "[◆] 방어 3.",
                 Describe(Pool.Get("quick_cover")));
 
         private static int CountOccurrences(string haystack, string needle)

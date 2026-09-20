@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -36,26 +35,19 @@ namespace FateWeaver.Tests
         /// 승리가 확정되어 그 뒤의 spore_veil·delayed_strike와 턴 끝 방어 만료(StatusExpired)가 실행되지 않는다.
         /// 그 밖의 서명은 같다.
         /// 2026-09-18 갱신(전투 실행 계약 T6): 방어 만료가 턴 정리(Cleanup)에서 다음 턴 준비(Prepare)로 옮겨져, 해석
-        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.</summary>
-        private const string ExpectedSignatureSha256 = "64ac73c90706d0f173eaf9b0a79e3f252895c9a02314623b5cd3f9af04b550ed";
+        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.
+        /// 2026-09-20 갱신(전투 템포 개선 과제 2): member_b의 덱이 party_prototype(픽스처 카드)에서
+        /// striker(cleave·flank_jab·heavy_swing·shield_bash·brace)로 바뀌어 손패·배치·피해가 전부
+        /// 달라진다. 의도한 콘텐츠 변경이라 서명을 다시 잡았다.
+        /// 2026-09-20 갱신(전투 템포 변경 2): 방어 카드 셋이 4에서 3으로, goblin_jab이 4에서 5로 바뀌어
+        /// 피해·방어 수치와 HP 추이가 달라진다. 카드 순서와 이벤트 종류는 같다.
+        /// 2026-09-20 갱신(전투 템포 변경 3): 고블린 정책이 shuffle_bag이 되어 턴마다 나오는 묶음이
+        /// 달라지고, 방어 전용 묶음이 crude_guard+goblin_jab으로 바뀌었다.</summary>
+        private const string ExpectedSignatureSha256 = "f57be5e099b9181f7edb281b489e270f405b9451fb5446dac2802ec82dedaa9d";
 
         /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
         /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,
         /// 그 흔들림은 이관 회귀와 구분되지 않는다(2026-09-20, `goblin_pair` 추가 때 실제로 겪었다).</summary>
-        private sealed class FixedBattle : IEncounterSource
-        {
-            private readonly ContentEncounterSource _source;
-            private readonly string _battleId;
-
-            public FixedBattle(ContentEncounterSource source, string battleId)
-            {
-                _source = source;
-                _battleId = battleId;
-            }
-
-            public EncounterSetup Pick(Random encounterRng) => _source.For(_battleId);
-        }
-
         private static CombatNode BeginNode()
         {
             var content = TestContent.Content();
@@ -64,7 +56,7 @@ namespace FateWeaver.Tests
             var context = new CombatNodeContext(
                 content.Statuses,
                 content.CombatRules,
-                new FixedBattle(
+                new FixedBattleEncounter(
                     new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()), "goblin_single"),
                 new CharacterPoolRewardSource(content));
             return CombatNode.Begin(run, context);
@@ -75,7 +67,9 @@ namespace FateWeaver.Tests
         {
             var signature = Signature(BeginNode());
 
-            Assert.AreEqual(ExpectedSignatureSha256, Sha256(signature), "실측 서명:\n" + signature);
+            Assert.AreEqual(
+                ExpectedSignatureSha256, Sha256(signature),
+                "실측 SHA: " + Sha256(signature) + "\n실측 서명:\n" + signature);
         }
 
         [Test]

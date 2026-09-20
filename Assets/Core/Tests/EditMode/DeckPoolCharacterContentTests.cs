@@ -13,11 +13,11 @@ namespace FateWeaver.Tests
         private const int StarterDeckSize = 10;
         private const int StarterPoolSize = 22;
 
-        /// <summary>Decks/starter.json·Decks/party_prototype.json·Pools/starter.json의 id
+        /// <summary>Decks/starter.json·Decks/striker.json·Pools/starter.json의 id
         /// 필드를 그대로 옮겨 적은 값이다. JSON이 유일 원본이라 다른 클래스의 상수를 빌려 쓰지
         /// 않는다.</summary>
         private const string StarterDeckId = "starter";
-        private const string PartyPrototypeDeckId = "party_prototype";
+        private const string StrikerDeckId = "striker";
         private const string StarterPoolId = "starter";
 
         /// <summary>추첨으로 고정된 10장. 순서까지 계약이다 — 무작위 시작 덱 설계 §3이
@@ -28,11 +28,10 @@ namespace FateWeaver.Tests
             "hasten", "toxic_reclaim", "early_onset", "spore_veil", "last_drop"
         };
 
-        /// <summary>fixture_* 6장. Decks/party_prototype.json에서 그대로 옮겨 적었다.</summary>
-        private static readonly string[] PartyPrototypeDeckGolden =
+        /// <summary>직접 피해 6장. Decks/striker.json에서 그대로 옮겨 적었다.</summary>
+        private static readonly string[] StrikerDeckGolden =
         {
-            "fixture_attack", "fixture_attack", "fixture_selected_block", "fixture_selected_block",
-            "fixture_all_block", "fixture_move_forward"
+            "cleave", "cleave", "flank_jab", "heavy_swing", "shield_bash", "brace"
         };
 
         /// <summary>풀 22장. Pools/starter.json에서 그대로 옮겨 적었다.</summary>
@@ -98,11 +97,11 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void PartyPrototypeDeckJsonMatchesTheGoldenDeck()
+        public void StrikerDeckJsonMatchesTheGoldenDeck()
         {
             CollectionAssert.AreEqual(
-                PartyPrototypeDeckGolden,
-                Decks().Get(PartyPrototypeDeckId));
+                StrikerDeckGolden,
+                Decks().Get(StrikerDeckId));
         }
 
         [Test]
@@ -139,7 +138,7 @@ namespace FateWeaver.Tests
                 StarterDeckId,
                 characters.Get("member_a").Deck);
             Assert.AreEqual(
-                PartyPrototypeDeckId,
+                StrikerDeckId,
                 characters.Get("member_b").Deck);
         }
 

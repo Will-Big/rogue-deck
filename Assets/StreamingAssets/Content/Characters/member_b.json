@@ -1,7 +1,7 @@
 {
   "id": "member_b",
   "displayName": "파티원 B",
-  "deck": "party_prototype",
+  "deck": "striker",
   "pool": "starter",
   "maxHp": 25
 }
