@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,20 +48,6 @@ namespace FateWeaver.Tests
         /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
         /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,
         /// 그 흔들림은 이관 회귀와 구분되지 않는다(2026-09-20, `goblin_pair` 추가 때 실제로 겪었다).</summary>
-        private sealed class FixedBattle : IEncounterSource
-        {
-            private readonly ContentEncounterSource _source;
-            private readonly string _battleId;
-
-            public FixedBattle(ContentEncounterSource source, string battleId)
-            {
-                _source = source;
-                _battleId = battleId;
-            }
-
-            public EncounterSetup Pick(Random encounterRng) => _source.For(_battleId);
-        }
-
         private static CombatNode BeginNode()
         {
             var content = TestContent.Content();
@@ -71,7 +56,7 @@ namespace FateWeaver.Tests
             var context = new CombatNodeContext(
                 content.Statuses,
                 content.CombatRules,
-                new FixedBattle(
+                new FixedBattleEncounter(
                     new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()), "goblin_single"),
                 new CharacterPoolRewardSource(content));
             return CombatNode.Begin(run, context);
