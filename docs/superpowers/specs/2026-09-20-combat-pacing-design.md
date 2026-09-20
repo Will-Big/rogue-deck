@@ -67,21 +67,28 @@
 
 **픽스처 카드 JSON(`fixture_*.json` 4장)은 지우지 않는다** — 테스트가 쓰는 합성 카드다. 실제 덱에서만 뺀다.
 
-새 카드 6종(`Content/Cards/`, 전부 `side: Player`, `category: Execution`, `grade: Common`):
+새 카드 **5종**(`Content/Cards/`, 전부 `side: Player`, `category: Execution`, `grade: Common`).
+덱에는 `cleave`가 두 장 들어가 6장이 된다:
 
 | id | 이름 | 순서 | 비용 | 효과 | targets | tags |
 |---|---|---|---|---|---|---|
 | `cleave` | 베기 | 4 | 1 | 적에게 피해 4 | `enemy: FrontOne` | 시작, 공격 |
-| `quick_jab` | 선제 찌르기 | 2 | 1 | 적에게 피해 3 | `enemy: FrontOne` | 시작, 공격 |
+| `flank_jab` | 파고들기 | 2 | 1 | 적에게 피해 3 | `enemy: BackOne` | 시작, 공격 |
 | `heavy_swing` | 내려찍기 | 6 | 2 | 적에게 피해 7 | `enemy: FrontOne` | 공격 |
 | `shield_bash` | 방패 치기 | 5 | 1 | 적에게 피해 3 + 자신 방어 2 | `enemy: FrontOne`, `ally: Self` | 공격, 방어 |
 | `brace` | 버티기 | 4 | 1 | 아군 앞줄에 방어 3 | `ally: FrontOne` | 방어 |
 
-`striker` 덱 6장 = `cleave` ×2 + `quick_jab` + `heavy_swing` + `shield_bash` + `brace`.
+`striker` 덱 6장 = `cleave` ×2 + `flank_jab` + `heavy_swing` + `shield_bash` + `brace`.
 
 **순서를 2·4·5·6으로 흩은 것이 이 덱의 설계 의도다.** 고블린의 `crude_guard`가 순서 4이므로
-`quick_jab`(2)은 방어가 서기 전에 들어가고 `heavy_swing`(6)은 방어 뒤에 들어간다. 플레이어가 "지금
+`flank_jab`(2)은 방어가 서기 전에 들어가고 `heavy_swing`(6)은 방어 뒤에 들어간다. 플레이어가 "지금
 적이 방어를 낼 것 같다"를 읽고 카드를 고르는 재료가 된다.
+
+**`flank_jab`만 `BackOne`을 때린다(2026-09-20 사용자 결정 A안).** 시작 덱 16장의 다른 적 대상 카드는
+전부 `FrontOne`이고, `BackOne`·`All` 카드(`stable_culture`·`spread_culture`)는 풀에만 있어 보상으로
+뽑기 전에는 손에 들어오지 않는다. 그래서 이 한 장이 없으면 **짝 전투에 표적 선택이 아예 없다** —
+앞의 것을 잡고 그다음을 잡는 한 줄짜리 전투가 된다. 적이 하나면 앞줄과 뒷줄이 같으므로 단독 전투는
+이 결정에 영향받지 않는다.
 
 **새 카드는 풀에 넣지 않는다.** 덱 로더는 카드 카탈로그에만 있으면 통과하므로
 (`Assets/Core/Authoring/Decks/DeckContentLoader.cs:85`) 보상 후보는 지금 그대로다. 캐릭터 설계 때
@@ -156,8 +163,12 @@ HP 28과 `crude_guard`의 방어 3은 유지한다. 방어 3은 `quick_jab`(3)�
 그래서 방어만 하는 턴(묶음 3)도 두 마리가 각각 주기당 한 번씩, 대개 다른 턴에 겪는다. 한 마리가
 쉬어도 다른 한 마리가 때리므로 "아무 일 없는 턴"은 생기지 않는다.
 
-**이 전투의 재미는 표적 선택이다.** 앞줄을 먼저 잡으면 적의 출력이 절반으로 떨어지고, 독을 어느 쪽에
-쌓을지가 실제 선택이 된다. 독 스택이 붙은 적을 먼저 죽이면 그 독은 사라진다.
+**이 전투의 재미는 표적 선택이다.** 앞줄을 먼저 잡으면 적의 출력이 절반으로 떨어지지만, `flank_jab`으로
+뒤를 미리 깎아 두면 앞을 지운 다음 턴에 바로 둘째를 마무리할 수 있다. 독은 `FrontOne`에만 쌓이므로
+독을 올린 적을 먼저 죽이면 그 스택은 사라진다 — 어느 쪽을 먼저 지울지가 독의 효율과 맞물린다.
+
+이 선택은 `flank_jab` 한 장에 걸려 있다. 그 카드의 대상을 `FrontOne`으로 되돌리면 짝 전투는
+선택 없는 전투가 된다.
 
 ### 구조 확인 (2026-09-20)
 
@@ -180,14 +191,21 @@ HP 28과 `crude_guard`의 방어 3은 유지한다. 방어 3은 `quick_jab`(3)�
   단언한다)를 새 `striker` 덱으로 옮긴다. 테스트 이름에 남은 `PartyPrototype`도 함께 바꾼다.
 - **노트북 왕복 테스트.** 새 카드 JSON은 저작 도구의 바이트 왕복 대상이므로 키 순서·생략 규칙을 기존
   카드와 똑같이 맞춘다.
-- **색인 수치.** 카드 JSON 26 → 32장(플레이어 5종 6장 + 적 1장), 덱 JSON은 2개 유지(이름만 교체),
-  적 JSON 1 → 2.
+- **색인 수치.** 카드 JSON **29 → 35장**(플레이어 5종 + 적 `runt_jab` 1종), 덱 JSON은 2개 유지(이름만
+  교체), 적 JSON 1 → 2. 색인 본문의 "카드 JSON 26"은 계획 D 시점(2026-08-28) 수치라 이미 낡았다 —
+  2026-09-20 실측이 29다(`ls Assets/StreamingAssets/Content/Cards/*.json | wc -l`, `ContentBootstrapTests`의
+  단언값과 일치).
+- **`ContentBootstrapTests.BootstrapLoadsEveryCatalog`.** 카드 수 29 → 35, 적 목록
+  `["goblin"]` → `["goblin", "goblin_runt"]`.
 
 ### 검증 절차
 
 1. `Tools/verify.sh` — 규칙 검사와 헤드리스, 노트북.
-2. **밸런스는 `MultiTurnRunner.Compare`로 잰다**(규칙 12). 목표는 단독 전투 4~5턴, 짝 전투도 비슷한
-   턴 수. 벗어나면 이 순서로 조정한다: 고블린 HP → `heavy_swing` 피해 → 방어 수치.
+2. **턴 수는 스크립트 플레이 하네스로 잰다.** `Compare`(무조작 vs 조작)는 개입 카드의 효과를 보는
+   도구라 "몇 턴에 끝나는가"를 재지 못한다. 그래서 헤드리스 테스트에 **탐욕 스크립트**(매 턴 손패에서
+   낼 수 있는 실행 카드를 비용 큰 것부터 에너지가 다할 때까지 낸다)를 두고 승리까지의 턴 수를 센다.
+   목표는 단독 전투 4~5턴, 짝 전투도 비슷한 턴 수. 벗어나면 이 순서로 조정한다: 고블린 HP →
+   `heavy_swing` 피해 → 방어 수치. 개입 카드가 결과를 바꾸는지는 기존 `Compare` 테스트가 계속 본다(규칙 12).
 3. 짝 전투에서 **앞줄을 먼저 잡는 플레이**와 **뒤를 먼저 잡는 플레이**의 결과 차이를 확인한다. 차이가
    없으면 표적 선택이 의미 없다는 뜻이므로 `runt_jab` 피해를 올린다.
 4. Unity 배치 EditMode 회귀.
