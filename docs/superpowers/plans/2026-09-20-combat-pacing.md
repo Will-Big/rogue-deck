@@ -70,23 +70,53 @@
 - 생성: `Assets/StreamingAssets/Content/Cards/heavy_swing.json` (+ `.meta`)
 - 생성: `Assets/StreamingAssets/Content/Cards/shield_bash.json` (+ `.meta`)
 - 생성: `Assets/StreamingAssets/Content/Cards/brace.json` (+ `.meta`)
+- 생성(테스트): `Assets/Core/Tests/EditMode/CardContentAssertions.cs` (+ `.meta`) — 공유 헬퍼
 - 생성(테스트): `Assets/Core/Tests/EditMode/StrikerCardContentTests.cs` (+ `.meta`)
 - 수정: `Assets/Core/Tests/EditMode/ContentBootstrapTests.cs:19` (카드 수 29 → 34)
 
 **인터페이스**
 - 소비: `TestContent.Content()` — 저장소 콘텐츠를 읽어 `GameContent`를 돌려준다. 호출마다 새로 만든다.
 - 생산: 카드 id `cleave`·`flank_jab`·`heavy_swing`·`shield_bash`·`brace`. 과제 2의 `striker` 덱이 쓴다.
+- 생산: `CardContentAssertions.DamageOf(CardDefinition)`·`.BlockOf(CardDefinition)` — 과제 3이 그대로 쓴다.
+  **과제 3에서 같은 헬퍼를 다시 정의하지 않는다**(2026-09-20 사용자 결정: 공유 헬퍼로 뽑는다).
 
 - [ ] **단계 1: 실패하는 테스트를 쓴다**
 
-`Assets/Core/Tests/EditMode/StrikerCardContentTests.cs`:
+먼저 공유 헬퍼 `Assets/Core/Tests/EditMode/CardContentAssertions.cs`:
 
 ```csharp
 using System.Linq;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
+
+namespace FateWeaver.Tests
+{
+    /// <summary>저작된 카드에서 수치를 꺼내는 공용 헬퍼. 카드 수치를 단언하는 테스트가 둘 이상이라
+    /// 한곳에 둔다(2026-09-20 사용자 결정).</summary>
+    public static class CardContentAssertions
+    {
+        /// <summary>이 카드가 주는 직접 피해의 합.</summary>
+        public static int DamageOf(CardDefinition card)
+            => card.Effects.Where(e => e.Key == EffectKeys.Damage).Sum(e => e.EffectValue);
+
+        /// <summary>이 카드가 거는 방어의 합. 카드가 상태에 주는 것은 count 하나이고 그것이
+        /// EffectValue에 실린다(EffectData 주석). 어떤 상태인지는 Payload가 든다.</summary>
+        public static int BlockOf(CardDefinition card)
+            => card.Effects
+                .Where(e => e.Key == EffectKeys.ApplyStatus
+                    && e.Payload is ApplyStatusPayload payload && payload.Key == StatusKeys.Block)
+                .Sum(e => e.EffectValue);
+    }
+}
+```
+
+그리고 `Assets/Core/Tests/EditMode/StrikerCardContentTests.cs`:
+
+```csharp
+using FateWeaver.Core.Cards;
 using NUnit.Framework;
+using static FateWeaver.Tests.CardContentAssertions;
 
 namespace FateWeaver.Tests
 {
@@ -95,17 +125,6 @@ namespace FateWeaver.Tests
     public class StrikerCardContentTests
     {
         private static CardDefinition Card(string id) => TestContent.Content().Cards.Get(id);
-
-        private static int DamageOf(CardDefinition card)
-            => card.Effects.Where(e => e.Key == EffectKeys.Damage).Sum(e => e.EffectValue);
-
-        /// <summary>방어량은 apply_status 효과의 EffectValue다 — 카드가 상태에 주는 것은 count 하나이고
-        /// 그것이 EffectValue에 실린다(EffectData 주석). 어떤 상태인지는 Payload가 든다.</summary>
-        private static int BlockOf(CardDefinition card)
-            => card.Effects
-                .Where(e => e.Key == EffectKeys.ApplyStatus
-                    && e.Payload is ApplyStatusPayload payload && payload.Key == StatusKeys.Block)
-                .Sum(e => e.EffectValue);
 
         [TestCase("cleave", 4, 1, 4)]
         [TestCase("flank_jab", 2, 1, 3)]
@@ -504,11 +523,11 @@ MSG
 - 수정: `Assets/StreamingAssets/Content/Cards/early_guard.json` (방어 4 → 3)
 - 수정: `Assets/StreamingAssets/Content/Cards/toxic_reclaim.json` (방어 4 → 3)
 - 수정: `Assets/StreamingAssets/Content/Cards/goblin_jab.json` (피해 4 → 5)
-- 생성(테스트): `Assets/Core/Tests/EditMode/DefenseBalanceContentTests.cs` (+ `.meta`)
+- 생성(테스트): `Assets/Core/Tests/EditMode/DefenseBalanceContentTests.cs` (+ `.meta`) — 과제 1의 `CardContentAssertions`를 쓴다
 - 수정: `Assets/Core/Tests/EditMode/GoblinParityTests.cs` (실패 메시지에 SHA 추가, 골든 갱신)
 
 **인터페이스**
-- 소비: 없음.
+- 소비: 과제 1의 `CardContentAssertions.DamageOf`·`BlockOf`. **다시 정의하지 않는다.**
 - 생산: 없음. 과제 4가 같은 골든 상수를 다시 고친다.
 
 - [ ] **단계 1: 실패하는 테스트를 쓴다**
@@ -516,11 +535,9 @@ MSG
 `Assets/Core/Tests/EditMode/DefenseBalanceContentTests.cs`:
 
 ```csharp
-using System.Linq;
 using FateWeaver.Core.Cards;
-using FateWeaver.Core.Effects;
-using FateWeaver.Core.Status;
 using NUnit.Framework;
+using static FateWeaver.Tests.CardContentAssertions;
 
 namespace FateWeaver.Tests
 {
@@ -530,29 +547,24 @@ namespace FateWeaver.Tests
     {
         private static CardDefinition Card(string id) => TestContent.Content().Cards.Get(id);
 
-        private static int BlockOf(string id)
-            => Card(id).Effects
-                .Where(e => e.Key == EffectKeys.ApplyStatus
-                    && e.Payload is ApplyStatusPayload payload && payload.Key == StatusKeys.Block)
-                .Sum(e => e.EffectValue);
+        private static int Block(string id) => BlockOf(Card(id));
 
-        private static int DamageOf(string id)
-            => Card(id).Effects.Where(e => e.Key == EffectKeys.Damage).Sum(e => e.EffectValue);
+        private static int Damage(string id) => DamageOf(Card(id));
 
         [TestCase("quick_cover", 3)]
         [TestCase("early_guard", 3)]
         [TestCase("toxic_reclaim", 3)]
         public void Guard_cards_grant_three_block(string id, int expected)
         {
-            Assert.AreEqual(expected, BlockOf(id));
+            Assert.AreEqual(expected, Block(id));
         }
 
         [Test]
         public void Goblin_jab_out_damages_a_single_guard_card()
         {
-            Assert.AreEqual(5, DamageOf("goblin_jab"));
+            Assert.AreEqual(5, Damage("goblin_jab"));
             Assert.AreEqual(
-                2, DamageOf("goblin_jab") - BlockOf("quick_cover"),
+                2, Damage("goblin_jab") - Block("quick_cover"),
                 "방어 한 장을 뚫고 2가 들어와야 한다.");
         }
     }
@@ -902,7 +914,10 @@ MSG
 ### 과제 6: 턴 수를 재고 목표에 맞춘다
 
 **파일**
+- 생성(테스트): `Assets/Core/Tests/EditMode/FixedBattleEncounter.cs` (+ `.meta`) — 공유 헬퍼
 - 생성(테스트): `Assets/Core/Tests/EditMode/CombatPacingTests.cs` (+ `.meta`)
+- 수정: `Assets/Core/Tests/EditMode/GoblinParityTests.cs` — 자기 안의 `FixedBattle` 중첩 클래스를 지우고
+  공유 `FixedBattleEncounter`를 쓴다
 - 수정(필요 시): 과제 3~5가 만진 콘텐츠 수치
 - 수정: `docs/superpowers/specs/2026-09-20-combat-pacing-design.md` (실측 결과 기록)
 - 수정: `docs/superpowers/README.md` (색인 수치와 계획 행)
@@ -915,7 +930,39 @@ MSG
 
 - [ ] **단계 1: 측정 하네스를 테스트로 쓴다**
 
-`Assets/Core/Tests/EditMode/CombatPacingTests.cs`:
+먼저 공유 헬퍼 `Assets/Core/Tests/EditMode/FixedBattleEncounter.cs`. `GoblinParityTests`가 자기 안에
+같은 클래스를 들고 있으므로 **그것을 지우고 이 파일을 쓰게 바꾼다**(2026-09-20 사용자 결정: 공유 헬퍼로 뽑는다).
+
+```csharp
+using System;
+using FateWeaver.Simulation.Run;
+
+namespace FateWeaver.Tests
+{
+    /// <summary>편성을 이름으로 고정하는 테스트용 공급자. 추첨을 거치지 않으므로 편성 후보가 늘어도
+    /// 결과가 변하지 않는다 — 특정 편성을 전제하는 테스트가 쓴다.</summary>
+    public sealed class FixedBattleEncounter : IEncounterSource
+    {
+        private readonly ContentEncounterSource _source;
+        private readonly string _battleId;
+
+        public FixedBattleEncounter(ContentEncounterSource source, string battleId)
+        {
+            _source = source;
+            _battleId = battleId;
+        }
+
+        public EncounterSetup Pick(Random encounterRng) => _source.For(_battleId);
+    }
+}
+```
+
+`GoblinParityTests.cs`에서는 중첩 `FixedBattle` 클래스와 그 주석을 지우고, `BeginNode()`의
+`new FixedBattle(...)`를 `new FixedBattleEncounter(...)`로 바꾼다. 주석의 근거("이 골든이 잠그는 것은
+이관이지 편성 목록이 아니다")는 공유 파일이 아니라 **`BeginNode()` 옆에 남긴다** — 그 이유는 그
+테스트의 것이다.
+
+그리고 `Assets/Core/Tests/EditMode/CombatPacingTests.cs`:
 
 ```csharp
 using System;
@@ -945,7 +992,7 @@ namespace FateWeaver.Tests
             var context = new CombatNodeContext(
                 content.Statuses,
                 content.CombatRules,
-                new FixedBattle(
+                new FixedBattleEncounter(
                     new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()), battleId),
                 new CharacterPoolRewardSource(content));
             var node = CombatNode.Begin(run, context);
@@ -991,20 +1038,6 @@ namespace FateWeaver.Tests
                     }
                 }
             }
-        }
-
-        private sealed class FixedBattle : IEncounterSource
-        {
-            private readonly ContentEncounterSource _source;
-            private readonly string _battleId;
-
-            public FixedBattle(ContentEncounterSource source, string battleId)
-            {
-                _source = source;
-                _battleId = battleId;
-            }
-
-            public EncounterSetup Pick(Random encounterRng) => _source.For(_battleId);
         }
 
         [TestCase(1)]
