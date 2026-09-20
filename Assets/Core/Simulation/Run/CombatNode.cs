@@ -97,7 +97,8 @@ namespace FateWeaver.Simulation.Run
             var nodeIndex = run.EnterNode();
             var nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex);
             var loadouts = run.LivingMembers
-                .Select(member => new PartyMemberLoadout(member.Id, member.Name, member.MaxHp, member.Cards.ToList()))
+                .Select(member => new PartyMemberLoadout(
+                    member.Id, member.Name, member.MaxHp, member.Cards.ToList(), member.Hp))
                 .ToList();
             var session = new DeckCombatSession(
                 context.Statuses,
@@ -119,6 +120,8 @@ namespace FateWeaver.Simulation.Run
                 throw new InvalidOperationException("Conclude requires a finished combat in the combat phase.");
             }
 
+            RecordHp();
+
             if (Session.Outcome == Outcome.Lose)
             {
                 _run.SetOutcome(RunOutcome.Defeat);
@@ -128,6 +131,21 @@ namespace FateWeaver.Simulation.Run
 
             Offer = BuildOffer();
             Phase = CombatNodePhase.Reward;
+        }
+
+        /// <summary>전투가 끝난 HP를 런에 기록한다. 이긴 전투에서 죽은 파티원도 사망으로 남는다
+        /// (2026-09-19 사용자 결정) — 0으로 기록되어 RunState.LivingMembers에서 빠진다. 치명타가
+        /// 남긴 음수 HP는 런에 흘리지 않는다.</summary>
+        private void RecordHp()
+        {
+            foreach (var member in Session.State.Party)
+            {
+                var runMember = _run.Party.FirstOrDefault(m => m.Id == member.Id);
+                if (runMember != null)
+                {
+                    runMember.Hp = Math.Max(0, member.Hp);
+                }
+            }
         }
 
         public void Choose(int index)

@@ -668,13 +668,18 @@ IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다
   `FateWeaver.Core`에 들어간다. Simulation에서만 쓰던 타입이지만 콘텐츠 검증이 코어에 있으므로 따라 들어간다.
 - **편성은 적 한 마리만 저작할 수 있다.** 세션이 정책 하나만 받기 때문이다. 모양(적 id 분리, 적마다 정책 쌍)은
   이번에 맞추므로 후속 작업은 세션과 편성 검증 한 줄로 좁혀진다.
-- **HP가 전투 사이에 이어지지 않는다.** 매 전투 최대 HP로 시작한다. `RunMember.Hp` 자리는 이미 있다.
+- ~~**HP가 전투 사이에 이어지지 않는다.**~~ **2026-09-19 후속 1이 해결했다.** 전투를 끝낸 HP가
+  `RunMember.Hp`에 기록되고 다음 전투가 그 HP로 시작한다. **회복 수단이 아직 없다** — 치유 효과도
+  휴식 노드도 없으므로 런의 HP는 단조 감소한다.
 - 런 시드는 `CombatNodeFlow` 인스펙터 값이다. 새 게임마다 바꾸는 입력 경로는 없다.
 
 ### 반드시 할 후속 작업 (사용자 지정 필수, 색인 「후속 작업 대기열」에 기록)
 
-1. **HP 인계.** 로드아웃에 현재 HP, 세션이 그 HP로 시작, `Conclude`가 `RunMember.Hp`에 기록.
-   선행 결정: 전투 중 HP 0이 됐지만 파티가 이긴 파티원의 런 처리(사망 유지 / 부활 / 기타).
+1. ~~**HP 인계.**~~ **2026-09-19 완료.** 로드아웃이 현재 HP를 싣고(`PartyMemberLoadout.Hp`, 생략하면
+   최대 HP), 세션이 그 HP로 파티원을 만들며, `CombatNode.Conclude`가 승패와 무관하게 전투가 끝난 HP를
+   `RunMember.Hp`에 기록한다(음수는 0으로 깎는다). **선행 결정은 "사망 유지"로 정해졌다**(사용자 결정
+   2026-09-19) — 이긴 전투에서 HP 0이 된 파티원은 런에서도 죽은 채로 남아 `RunState.LivingMembers`에서
+   빠지고, 다음 전투와 보상 후보에 들어가지 않는다. 체력 1로 버티는 방식은 나중에 별도 설계로 도입한다.
 2. **다중 적.** `DeckCombatSession`이 `EncounterEnemy` 목록을 받아 적마다 정책을 호출하고 그 적을 카드
    주인으로 확정. 실행 순서 보정도 적별 상태로(`DeckCombatSession.cs:381`의 `Enemies[0].Statuses` 가정 제거).
    선행 결정: 죽은 적의 정책을 건너뛰는지. 끝나면 `BattleContentLoader`의 "적 정확히 1개" 검증을 지운다.

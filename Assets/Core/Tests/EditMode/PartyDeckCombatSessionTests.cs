@@ -50,8 +50,9 @@ namespace FateWeaver.Tests
             string id,
             IReadOnlyList<CardDefinition> cards = null,
             int maxHp = 25,
-            string name = null)
-            => new PartyMemberLoadout(id, name ?? id, maxHp, cards ?? Array.Empty<CardDefinition>());
+            string name = null,
+            int? hp = null)
+            => new PartyMemberLoadout(id, name ?? id, maxHp, cards ?? Array.Empty<CardDefinition>(), hp);
 
         private static PartyTuning Tuning(int partySize)
         {
@@ -112,6 +113,33 @@ namespace FateWeaver.Tests
                 new[] { new Enemy("goblin", 100) },
                 new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()),
                 tuning: null));
+        }
+
+        [Test]
+        public void A_loadout_starts_the_member_at_the_carried_hp_not_at_full()
+        {
+            var session = Session(new[] { Loadout("a", maxHp: 25, hp: 11) }, tuning: Tuning(1));
+
+            var member = session.State.Party.Single();
+            Assert.AreEqual(11, member.Hp);
+            Assert.AreEqual(25, member.MaxHp, "최대 HP는 캐릭터 저작값 그대로여야 한다.");
+        }
+
+        [Test]
+        public void A_loadout_without_a_carried_hp_starts_at_full()
+        {
+            var session = Session(new[] { Loadout("a", maxHp: 25) }, tuning: Tuning(1));
+
+            Assert.AreEqual(25, session.State.Party.Single().Hp);
+        }
+
+        [Test]
+        public void Constructor_rejects_a_carried_hp_outside_one_to_max()
+        {
+            // 0 이하는 죽은 파티원이 전투에 들어온 것이고, 최대 초과는 인계 기록이 깨진 것이다.
+            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", maxHp: 25, hp: 0) }, tuning: Tuning(1)));
+            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", maxHp: 25, hp: -3) }, tuning: Tuning(1)));
+            Assert.Throws<ArgumentException>(() => Session(new[] { Loadout("a", maxHp: 25, hp: 26) }, tuning: Tuning(1)));
         }
 
         [Test]
