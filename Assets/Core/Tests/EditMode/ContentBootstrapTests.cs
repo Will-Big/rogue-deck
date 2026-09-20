@@ -17,11 +17,11 @@ namespace FateWeaver.Tests
             var result = ContentBootstrap.Load(ContentRoot());
 
             Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
-            Assert.AreEqual(34, result.Content.Cards.Ids.Count);
+            Assert.AreEqual(35, result.Content.Cards.Ids.Count);
             Assert.AreEqual(2, result.Content.Decks.Ids.Count);
             Assert.AreEqual(1, result.Content.Pools.Ids.Count);
             Assert.AreEqual(2, result.Content.Characters.Ids.Count);
-            CollectionAssert.AreEqual(new[] { "goblin" }, result.Content.Enemies.Ids);
+            CollectionAssert.AreEqual(new[] { "goblin", "goblin_runt" }, result.Content.Enemies.Ids);
             CollectionAssert.AreEqual(new[] { "goblin_pair", "goblin_single" }, result.Content.Battles.Ids);
             Assert.AreEqual(3, result.Content.CombatRules.RewardChoices);
         }
