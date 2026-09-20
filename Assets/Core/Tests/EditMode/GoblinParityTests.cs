@@ -39,6 +39,23 @@ namespace FateWeaver.Tests
         /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.</summary>
         private const string ExpectedSignatureSha256 = "64ac73c90706d0f173eaf9b0a79e3f252895c9a02314623b5cd3f9af04b550ed";
 
+        /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
+        /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,
+        /// 그 흔들림은 이관 회귀와 구분되지 않는다(2026-09-20, `goblin_pair` 추가 때 실제로 겪었다).</summary>
+        private sealed class FixedBattle : IEncounterSource
+        {
+            private readonly ContentEncounterSource _source;
+            private readonly string _battleId;
+
+            public FixedBattle(ContentEncounterSource source, string battleId)
+            {
+                _source = source;
+                _battleId = battleId;
+            }
+
+            public EncounterSetup Pick(Random encounterRng) => _source.For(_battleId);
+        }
+
         private static CombatNode BeginNode()
         {
             var content = TestContent.Content();
@@ -47,7 +64,8 @@ namespace FateWeaver.Tests
             var context = new CombatNodeContext(
                 content.Statuses,
                 content.CombatRules,
-                new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()),
+                new FixedBattle(
+                    new ContentEncounterSource(content, CombatRegistries.EnemyPolicies()), "goblin_single"),
                 new CharacterPoolRewardSource(content));
             return CombatNode.Begin(run, context);
         }
