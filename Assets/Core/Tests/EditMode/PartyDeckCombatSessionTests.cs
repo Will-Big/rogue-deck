@@ -77,11 +77,15 @@ namespace FateWeaver.Tests
             int seed = 1)
             => new DeckCombatSession(TestContent.Statuses(),
                 party,
-                new[] { new Enemy("goblin", 100) },
-                new SequencePolicy(new IReadOnlyList<CardDefinition>[]
+                new[]
                 {
-                    enemyCards ?? Array.Empty<CardDefinition>()
-                }),
+                    new EncounterEnemy(
+                        new Enemy("goblin", 100),
+                        new SequencePolicy(new IReadOnlyList<CardDefinition>[]
+                        {
+                            enemyCards ?? Array.Empty<CardDefinition>()
+                        }))
+                },
                 tuning ?? Tuning(party.Count),
                 partyCards,
                 fateEnergyPerTurn,
@@ -110,8 +114,12 @@ namespace FateWeaver.Tests
             }, tuning: Tuning(1)));
             Assert.Throws<ArgumentException>(() => new DeckCombatSession(TestContent.Statuses(),
                 new[] { Loadout("a") },
-                new[] { new Enemy("goblin", 100) },
-                new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()),
+                new[]
+                {
+                    new EncounterEnemy(
+                        new Enemy("goblin", 100),
+                        new SequencePolicy(Array.Empty<IReadOnlyList<CardDefinition>>()))
+                },
                 tuning: null));
         }
 

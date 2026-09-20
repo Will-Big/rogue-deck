@@ -44,11 +44,10 @@ namespace FateWeaver.Tests.UnityEditMode
                 },
                 new[]
                 {
-                    new Enemy("enemy_a", 10),
-                    new Enemy("enemy_b", 20),
-                    new Enemy("enemy_c", 30)
+                    Idle(new Enemy("enemy_a", 10)),
+                    Idle(new Enemy("enemy_b", 20)),
+                    Idle(new Enemy("enemy_c", 30))
                 },
-                new SequencePolicy(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }),
                 new PartyTuning
                 {
                     DrawByLivingCount = new Dictionary<int, int> { { 1, 1 }, { 2, 1 }, { 3, 1 } }
@@ -119,6 +118,11 @@ namespace FateWeaver.Tests.UnityEditMode
                 new[] { "enemy_b", "enemy_c", "enemy_a" },
                 _session.State.Enemies.Select(enemy => enemy.Id).ToArray());
         }
+
+        /// <summary>카드를 내지 않는 적. 표현 테스트는 적이 무엇을 내는지에 관심이 없다.</summary>
+        private static EncounterEnemy Idle(Enemy enemy)
+            => new EncounterEnemy(
+                enemy, new SequencePolicy(new[] { (IReadOnlyList<CardDefinition>)Array.Empty<CardDefinition>() }));
 
         private static PartyMemberLoadout Loadout(string id, string name, int maxHp)
             => new PartyMemberLoadout(id, name, maxHp, Array.Empty<CardDefinition>());

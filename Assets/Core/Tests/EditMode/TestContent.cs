@@ -92,7 +92,7 @@ namespace FateWeaver.Tests
         }
 
         /// <summary>저장소 고블린의 새 적·정책 쌍. 원본은 Enemies/goblin.json.</summary>
-        public static FateWeaver.Simulation.Run.EncounterEnemy Goblin()
+        public static FateWeaver.Simulation.EncounterEnemy Goblin()
             => new FateWeaver.Simulation.Run.ContentEncounterSource(
                     Content(), FateWeaver.Core.CombatRegistries.EnemyPolicies())
                 .Pick(new System.Random(0)).Enemies[0];

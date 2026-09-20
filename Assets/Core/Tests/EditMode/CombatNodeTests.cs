@@ -153,7 +153,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Begin_rejects_more_than_one_enemy()
+        public void Begin_takes_every_enemy_in_the_encounter()
         {
             var twoEnemies = new FixedEncounter(() => new EncounterSetup(new[]
             {
@@ -162,7 +162,11 @@ namespace FateWeaver.Tests
             }));
             var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
 
-            Assert.Throws<InvalidOperationException>(() => CombatNode.Begin(run, Context(twoEnemies, SixEach())));
+            var node = CombatNode.Begin(run, Context(twoEnemies, SixEach()));
+
+            CollectionAssert.AreEqual(
+                new[] { "dummy#0", "dummy#1" },
+                node.Session.State.Enemies.Select(enemy => enemy.Id).ToArray());
         }
 
         [Test]

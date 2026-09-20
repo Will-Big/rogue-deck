@@ -87,13 +87,6 @@ namespace FateWeaver.Simulation.Run
                 throw new InvalidOperationException("The encounter source returned no setup.");
             }
 
-            if (setup.Enemies.Count != 1)
-            {
-                // 세션이 정책 하나만 받는다. 다중 적은 세션이 적마다 정책을 받게 된 뒤 지원한다(필수 후속 작업).
-                throw new InvalidOperationException(
-                    "The combat session supports exactly one enemy until per-enemy policies land.");
-            }
-
             var nodeIndex = run.EnterNode();
             var nodeSeed = SeedDerivation.NodeSeed(run.RunSeed, nodeIndex);
             var loadouts = run.LivingMembers
@@ -103,8 +96,7 @@ namespace FateWeaver.Simulation.Run
             var session = new DeckCombatSession(
                 context.Statuses,
                 loadouts,
-                new[] { setup.Enemies[0].Enemy },
-                setup.Enemies[0].Policy,
+                setup.Enemies,
                 context.Rules.Party,
                 partyCards: null,
                 fateEnergyPerTurn: context.Rules.FateEnergyPerTurn,

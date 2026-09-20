@@ -34,6 +34,17 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Loads_several_enemies_including_the_same_one_twice()
+        {
+            var result = Load(
+                Source("pack.json", "{ \"id\": \"pack\", \"enemies\": [\"goblin\", \"goblin\", \"rat\"] }"));
+
+            Assert.IsTrue(result.Succeeded, string.Join("\n", result.Errors));
+            CollectionAssert.AreEqual(
+                new[] { "goblin", "goblin", "rat" }, result.Catalog.Get("pack").Enemies);
+        }
+
+        [Test]
         public void Requires_at_least_one_battle()
         {
             var result = Load();
@@ -46,8 +57,7 @@ namespace FateWeaver.Tests
         [TestCase("{ \"id\": \"b\" }", "b.json: required key 'enemies' is missing.")]
         [TestCase("{ \"id\": \"\", \"enemies\": [\"goblin\"] }", "b.json: required key 'id' must be a non-empty string.")]
         [TestCase("{ \"id\": \"b\", \"enemies\": [\"ghost\"] }", "b.json: unknown enemy id 'ghost'.")]
-        [TestCase("{ \"id\": \"b\", \"enemies\": [] }", "b.json: exactly one enemy is supported until per-enemy policies land.")]
-        [TestCase("{ \"id\": \"b\", \"enemies\": [\"goblin\", \"goblin\"] }", "b.json: exactly one enemy is supported until per-enemy policies land.")]
+        [TestCase("{ \"id\": \"b\", \"enemies\": [] }", "b.json: at least one enemy is required.")]
         public void Rejects_an_invalid_battle(string json, string error)
         {
             var result = Load(Source("b.json", json));
