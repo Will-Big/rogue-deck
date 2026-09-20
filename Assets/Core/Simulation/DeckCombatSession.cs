@@ -30,7 +30,7 @@ namespace FateWeaver.Simulation
     {
         private readonly CombatState _state;
         private readonly Deck _deck;
-        private readonly IEnemyTurnPolicy _enemyPolicy;
+        private readonly Dictionary<string, IEnemyTurnPolicy> _enemyPolicies;
         private readonly TurnResolver _resolver;
         private readonly InterventionPlayResolver _interventionResolver;
         private readonly InterventionActionRegistry _interventionActions;
@@ -71,8 +71,7 @@ namespace FateWeaver.Simulation
                 statusContent,
                 deckCards,
                 playerHp,
-                enemies,
-                enemyPolicy,
+                SingleActor(enemies, enemyPolicy),
                 fateEnergyPerTurn,
                 handSize,
                 seed,
@@ -84,8 +83,7 @@ namespace FateWeaver.Simulation
         public DeckCombatSession(
             StatusContentCatalog statusContent,
             IReadOnlyList<PartyMemberLoadout> party,
-            IReadOnlyList<Enemy> enemies,
-            IEnemyTurnPolicy enemyPolicy,
+            IReadOnlyList<EncounterEnemy> enemies,
             PartyTuning tuning,
             IReadOnlyList<CardDefinition> partyCards = null,
             int fateEnergyPerTurn = 3,
@@ -95,7 +93,6 @@ namespace FateWeaver.Simulation
                 BuildPartyDeck(party, partyCards, tuning),
                 0,
                 enemies,
-                enemyPolicy,
                 fateEnergyPerTurn,
                 0,
                 seed,
@@ -108,8 +105,7 @@ namespace FateWeaver.Simulation
             StatusContentCatalog statusContent,
             IReadOnlyList<OwnedCard> deckCards,
             int playerHp,
-            IReadOnlyList<Enemy> enemies,
-            IEnemyTurnPolicy enemyPolicy,
+            IReadOnlyList<EncounterEnemy> enemies,
             int fateEnergyPerTurn,
             int handSize,
             int seed,
@@ -129,7 +125,10 @@ namespace FateWeaver.Simulation
                     _state.Party.Add(new PartyMember(
                         loadout.Id,
                         loadout.Name,
-                        loadout.MaxHp));
+                        loadout.MaxHp)
+                    {
+                        Hp = loadout.Hp
+                    });
                 }
             }
             else
@@ -137,15 +136,20 @@ namespace FateWeaver.Simulation
                 _state.AddSoloPlayer(playerHp);
             }
 
-            foreach (var enemy in enemies)
+            ValidateEnemies(enemies);
+            _enemyPolicies = new Dictionary<string, IEnemyTurnPolicy>();
+            foreach (var pair in enemies)
             {
-                _state.Enemies.Add(enemy);
+                _state.Enemies.Add(pair.Enemy);
+                if (pair.Policy != null)
+                {
+                    _enemyPolicies.Add(pair.Enemy.Id, pair.Policy);
+                }
             }
 
             ValidateDeckCards(deckCards);
             _allCards = new List<OwnedCard>(deckCards).AsReadOnly();
             _deck = new Deck(deckCards, _state.Rng);
-            _enemyPolicy = enemyPolicy;
             _handSize = handSize;
             _partyTuning = partyTuning;
             _statuses = CombatRegistries.Statuses();
@@ -235,6 +239,46 @@ namespace FateWeaver.Simulation
             => StatusExecutionOrder.ExecutionOrderFor(
                 card.Def.BaseExecutionOrder, OwnerStatusesFor(card), _statuses, _state.StatusRules,
                 _state.StatusContent);
+
+        /// <summary>정책 하나짜리 옛 경로(플레이어 HP 기반 시뮬레이션)를 쌍으로 옮긴다. 카드를 내는
+        /// 적은 첫 번째 하나이고 나머지는 대상 전용이다 — 정책이 어느 적 것인지 말하지 않는 서명이라
+        /// 그 이상은 알 수 없다. 파티 경로는 편성 공급자가 적마다 정책을 만들어 넘긴다.</summary>
+        private static IReadOnlyList<EncounterEnemy> SingleActor(
+            IReadOnlyList<Enemy> enemies, IEnemyTurnPolicy policy)
+        {
+            if (enemies == null)
+            {
+                throw new System.ArgumentException("Enemies are required.");
+            }
+
+            var pairs = new List<EncounterEnemy>(enemies.Count);
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                pairs.Add(i == 0 && policy != null
+                    ? new EncounterEnemy(enemies[i], policy)
+                    : EncounterEnemy.Passive(enemies[i]));
+            }
+
+            return pairs;
+        }
+
+        private static void ValidateEnemies(IReadOnlyList<EncounterEnemy> enemies)
+        {
+            if (enemies == null || enemies.Count == 0)
+            {
+                throw new System.ArgumentException("At least one enemy is required.");
+            }
+
+            var ids = new HashSet<string>();
+            foreach (var pair in enemies)
+            {
+                if (pair == null || string.IsNullOrEmpty(pair.Enemy.Id) || !ids.Add(pair.Enemy.Id))
+                {
+                    // 전투 안 id가 겹치면 카드 주인과 사망 처리가 남의 것을 지목한다.
+                    throw new System.ArgumentException("Encounter enemy ids must be present and unique.");
+                }
+            }
+        }
 
         private static void ValidateDeckCards(IReadOnlyList<OwnedCard> cards)
         {
@@ -389,27 +433,35 @@ namespace FateWeaver.Simulation
                 return;
             }
 
-            var enemyBag = _state.Enemies.Count > 0 ? _state.Enemies[0].Statuses : null;
-            foreach (var enemyCard in _enemyPolicy.CardsForTurn(index, _state.Rng))
+            // 대형 순서(state.Enemies)로 돈다 — 앞줄 적이 먼저 카드를 올리므로, 실행 순서가 같은
+            // 카드끼리는 앞줄 것이 앞선다. 진형이 바뀌면 그 다음 턴부터 따라간다.
+            foreach (var enemy in _state.Enemies)
             {
-                var inst = new ExecutionCardInstance(enemyCard)
+                // 죽은 적은 정책을 부르지 않는다 — 카드를 내지 않고, RNG도 소비하지 않는다
+                // (2026-09-19 사용자 결정). 적을 먼저 죽이면 이후 추첨이 달라지는 것은 의도다.
+                if (enemy.Hp <= 0 || !_enemyPolicies.TryGetValue(enemy.Id, out var policy))
                 {
-                    // IEnemyTurnPolicy는 카드 정의만 돌려줄 뿐 소유자를 말하지 않는다. 그래서 적이
-                    // 정확히 하나일 때만 소유자를 확정하고, 둘 이상이면 비워 둔다 — CardActor의
-                    // 규약과 같다. 임의로 Enemies[0]을 찍으면 그 적이 죽었을 때 남의 카드가
-                    // 실행선에서 빠진다.
-                    InstanceId = _nextInstanceId++,
-                    OwnerId = _state.Enemies.Count == 1 ? _state.Enemies[0].Id : null
-                };
-                inst.IsLocked = enemyCard.StartsLocked;
-                if (!inst.IsLocked)
-                {
-                    inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(
-                        inst.ExecutionOrder, enemyBag, _statuses, _state.StatusRules,
-                        _state.StatusContent);
+                    continue;
                 }
 
-                _state.Zone.Add(inst);
+                foreach (var enemyCard in policy.CardsForTurn(index, _state.Rng))
+                {
+                    var inst = new ExecutionCardInstance(enemyCard)
+                    {
+                        InstanceId = _nextInstanceId++,
+                        OwnerId = enemy.Id
+                    };
+                    inst.IsLocked = enemyCard.StartsLocked;
+                    if (!inst.IsLocked)
+                    {
+                        // 실행 순서 보정은 카드를 낸 그 적의 상태(가속·감속)로만 한다.
+                        inst.ExecutionOrder = StatusExecutionOrder.ExecutionOrderFor(
+                            inst.ExecutionOrder, enemy.Statuses, _statuses, _state.StatusRules,
+                            _state.StatusContent);
+                    }
+
+                    _state.Zone.Add(inst);
+                }
             }
 
             var drawCount = _partyTuning == null
@@ -483,6 +535,8 @@ namespace FateWeaver.Simulation
                     || string.IsNullOrEmpty(loadout.Id)
                     || !ids.Add(loadout.Id)
                     || loadout.MaxHp <= 0
+                    || loadout.Hp <= 0
+                    || loadout.Hp > loadout.MaxHp
                     || loadout.Cards == null)
                 {
                     throw new System.ArgumentException("Party loadout is invalid.");

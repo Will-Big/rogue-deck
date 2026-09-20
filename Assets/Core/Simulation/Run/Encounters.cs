@@ -12,21 +12,6 @@ namespace FateWeaver.Simulation.Run
         EncounterSetup Pick(Random encounterRng);
     }
 
-    /// <summary>적 하나와 그 적의 정책. 편성 전체에 정책 하나를 두면 "이 카드가 어느 적 것인가"를
-    /// 말할 수단이 없어진다 — 지금 세션이 적 둘 이상에서 카드 주인을 비우는 원인이 그것이다
-    /// (DeckCombatSession.BeginTurn). 세션이 쌍 목록을 받게 되는 것은 필수 후속 작업이다.</summary>
-    public sealed class EncounterEnemy
-    {
-        public EncounterEnemy(Enemy enemy, IEnemyTurnPolicy policy)
-        {
-            Enemy = enemy ?? throw new ArgumentNullException(nameof(enemy));
-            Policy = policy ?? throw new ArgumentNullException(nameof(policy));
-        }
-
-        public Enemy Enemy { get; }
-        public IEnemyTurnPolicy Policy { get; }
-    }
-
     public sealed class EncounterSetup
     {
         public EncounterSetup(IReadOnlyList<EncounterEnemy> enemies)

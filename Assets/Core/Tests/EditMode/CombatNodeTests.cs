@@ -64,6 +64,9 @@ namespace FateWeaver.Tests
 
         private static CardDefinition Smash() => CardFixtures.EnemyAttack("smash", 1, 999);
 
+        /// <summary>죽이지 않고 3만 깎는 적 카드. 실행 순서 1이라 플레이어 카드(기본 5)보다 먼저 맞는다.</summary>
+        private static CardDefinition Jab() => CardFixtures.EnemyAttack("jab", 1, 3);
+
         /// <summary>캐릭터 id → 풀 카드 id. 카드 정의는 id마다 하나를 공유한다.</summary>
         private sealed class FakePools : IRewardCandidateSource
         {
@@ -150,7 +153,7 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Begin_rejects_more_than_one_enemy()
+        public void Begin_takes_every_enemy_in_the_encounter()
         {
             var twoEnemies = new FixedEncounter(() => new EncounterSetup(new[]
             {
@@ -159,7 +162,11 @@ namespace FateWeaver.Tests
             }));
             var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
 
-            Assert.Throws<InvalidOperationException>(() => CombatNode.Begin(run, Context(twoEnemies, SixEach())));
+            var node = CombatNode.Begin(run, Context(twoEnemies, SixEach()));
+
+            CollectionAssert.AreEqual(
+                new[] { "dummy#0", "dummy#1" },
+                node.Session.State.Enemies.Select(enemy => enemy.Id).ToArray());
         }
 
         [Test]
@@ -382,6 +389,88 @@ namespace FateWeaver.Tests
             Assert.AreEqual(1, next.NodeIndex);
             Assert.AreEqual(13, next.Session.AllDeckCards.Count);
             Assert.AreEqual(1, next.Session.AllDeckCards.Count(card => card.Def.Id == chosenId));
+        }
+
+        // --- HP 인계 ---------------------------------------------------------
+
+        [Test]
+        public void Conclude_writes_the_hp_left_after_combat_back_to_the_run()
+        {
+            var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
+            var node = CombatNode.Begin(run, Context(Dummy(5, Jab()), SixEach()));
+            WinOnTurn(node, 0);
+            Assert.AreEqual(
+                17, node.Session.State.Party.Single().Hp, "전제: 3 피해를 한 번 맞고 이겨야 한다.");
+
+            node.Conclude();
+
+            Assert.AreEqual(17, run.Party.Single().Hp);
+            Assert.AreEqual(20, run.Party.Single().MaxHp, "최대 HP는 전투가 바꾸지 않는다.");
+        }
+
+        [Test]
+        public void The_next_node_starts_from_the_hp_carried_out_of_the_last_one()
+        {
+            var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
+            var context = Context(Dummy(5, Jab()), SixEach());
+            var first = CombatNode.Begin(run, context);
+            WinOnTurn(first, 0);
+            first.Conclude();
+            first.Skip();
+
+            var second = CombatNode.Begin(run, context);
+
+            Assert.AreEqual(17, second.Session.State.Party.Single().Hp);
+            Assert.AreEqual(20, second.Session.State.Party.Single().MaxHp);
+        }
+
+        [Test]
+        public void A_member_who_died_in_a_won_combat_stays_dead_in_the_run()
+        {
+            // a는 카드가 없고 앞줄이라 적의 999 피해에 먼저 죽는다. b의 hit이 적을 잡아 이긴다.
+            var run = new RunState(new[] { Member("a", 0), Member("b", 6) }, 11);
+            var node = CombatNode.Begin(run, Context(Dummy(5, Smash()), SixEach()));
+            WinOnTurn(node, 0);
+
+            node.Conclude();
+
+            var dead = run.Party.First(m => m.Id == "a");
+            Assert.AreEqual(0, dead.Hp, "치명타 피해가 음수로 새지 않고 0으로 기록돼야 한다.");
+            Assert.IsFalse(dead.IsAlive);
+            CollectionAssert.AreEqual(new[] { "b" }, run.LivingMembers.Select(m => m.Id).ToArray());
+
+            node.Skip();
+            var next = CombatNode.Begin(run, Context(Dummy(), SixEach()));
+
+            CollectionAssert.AreEqual(
+                new[] { "b" }, next.Session.State.Party.Select(m => m.Id).ToArray(),
+                "죽은 파티원은 다음 전투에 들어가지 않는다.");
+        }
+
+        [Test]
+        public void Defeat_records_the_hp_too()
+        {
+            // 패배 분기가 기록보다 먼저 돌아가면 이 단언이 깨진다 — 런이 끝나도 기록은 남긴다.
+            var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
+            var node = CombatNode.Begin(run, Context(Dummy(99, Smash()), SixEach()));
+            node.Session.ResolveTurn();
+            Assert.AreEqual(Outcome.Lose, node.Session.Outcome, "전제: 999 피해로 한 턴에 져야 한다.");
+
+            node.Conclude();
+
+            Assert.AreEqual(0, run.Party.Single().Hp);
+        }
+
+        [Test]
+        public void The_loadout_copies_the_run_cards()
+        {
+            var run = new RunState(new[] { Member("a", 6) }, runSeed: 11);
+            var node = CombatNode.Begin(run, Context(Dummy(), SixEach()));
+
+            run.Party.Single().Cards.Add(Hit());
+
+            Assert.AreEqual(
+                6, node.Session.AllDeckCards.Count, "시작한 전투의 덱은 런 덱의 이후 변경을 보지 않는다.");
         }
 
         // --- 잘못된 호출 -----------------------------------------------------

@@ -76,10 +76,10 @@ namespace FateWeaver.Core.Authoring.Battles
                 var ids = spec.Enemies ?? new string[0];
                 var rejected = false;
 
-                // 세션이 정책 하나만 받는 동안의 제약이다. 다중 적 후속 작업에서 이 검사를 지운다.
-                if (ids.Length != 1)
+                // 같은 적 id가 여러 번 나와도 된다 — 편성 공급자가 전투 안 id(goblin#0, goblin#1)로 가른다.
+                if (ids.Length == 0)
                 {
-                    errors.Add(source.Name + ": exactly one enemy is supported until per-enemy policies land.");
+                    errors.Add(source.Name + ": at least one enemy is required.");
                     rejected = true;
                 }
 

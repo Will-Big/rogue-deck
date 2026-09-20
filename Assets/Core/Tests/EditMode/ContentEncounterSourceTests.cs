@@ -19,7 +19,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Repository_goblin_single_gives_one_goblin_with_combat_and_spec_ids()
         {
-            var setup = RepositorySource().Pick(new Random(1));
+            var setup = RepositorySource().For("goblin_single");
 
             Assert.AreEqual(1, setup.Enemies.Count);
             var pair = setup.Enemies[0];
@@ -27,6 +27,19 @@ namespace FateWeaver.Tests
             Assert.AreEqual("goblin", pair.Enemy.SpecId);
             Assert.AreEqual(28, pair.Enemy.Hp);
             Assert.IsInstanceOf<RandomPickPolicy>(pair.Policy);
+        }
+
+        [Test]
+        public void Repository_goblin_pair_gives_two_goblins_with_separate_combat_ids()
+        {
+            var setup = RepositorySource().For("goblin_pair");
+
+            CollectionAssert.AreEqual(
+                new[] { "goblin#0", "goblin#1" }, setup.Enemies.Select(e => e.Enemy.Id).ToArray());
+            Assert.IsTrue(setup.Enemies.All(e => e.Enemy.SpecId == "goblin"));
+            Assert.AreNotSame(
+                setup.Enemies[0].Policy, setup.Enemies[1].Policy,
+                "같은 적이라도 정책 인스턴스는 따로다 — 가방 상태를 공유하면 안 된다.");
         }
 
         [Test]

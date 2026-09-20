@@ -269,11 +269,11 @@ namespace FateWeaver.Tests
                 new[] { "goblin" }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
         }
 
-        /// <summary>IEnemyTurnPolicy는 어느 적의 카드인지 말하지 않는다. 그래서 적이 둘 이상이면
-        /// 소유자를 비워 둔다 — 임의로 Enemies[0]을 찍으면 그 적이 먼저 죽었을 때 남의 카드가
-        /// 실행선에서 빠진다.</summary>
+        /// <summary>정책 하나만 받는 옛 경로(플레이어 HP 기반)에서는 첫 번째 적이 카드를 내는
+        /// 행위자이고 나머지는 대상 전용이다. 소유자는 그 행위자로 확정된다 — 비워 두면 그 적이
+        /// 죽어도 카드가 실행선에 남는다.</summary>
         [Test]
-        public void Enemy_cards_have_no_owner_when_the_owning_enemy_is_ambiguous()
+        public void With_one_policy_the_first_enemy_owns_the_cards()
         {
             var session = new DeckCombatSession(TestContent.Statuses(),
                 new[] { CardFixtures.Damage("slash_fx", damage: 4, executionOrder: 4) },
@@ -282,7 +282,7 @@ namespace FateWeaver.Tests
                 enemyPolicy: Goblin(4, 3), fateEnergyPerTurn: 3, handSize: 5, seed: 1);
 
             CollectionAssert.AreEqual(
-                new string[] { null }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
+                new[] { "front" }, session.CurrentOrder.Select(c => c.OwnerId).ToArray());
         }
 
         // 방어는 턴 해석 동안 남아 있다가 다음 턴 준비(Prepare)에 만료된다(스펙 §8, 계획 T6). 그 만료 이벤트는 해석

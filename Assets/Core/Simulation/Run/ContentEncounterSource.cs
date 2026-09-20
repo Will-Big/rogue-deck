@@ -23,7 +23,14 @@ namespace FateWeaver.Simulation.Run
         public EncounterSetup Pick(Random encounterRng)
         {
             var ids = _content.Battles.Ids;
-            var battle = _content.Battles.Get(ids[encounterRng.Next(ids.Count)]);
+            return For(ids[encounterRng.Next(ids.Count)]);
+        }
+
+        /// <summary>편성 하나를 이름으로 만든다. 추첨을 거치지 않으므로 편성 후보가 늘어도 결과가
+        /// 변하지 않는다 — 특정 편성을 전제하는 테스트가 쓴다.</summary>
+        public EncounterSetup For(string battleId)
+        {
+            var battle = _content.Battles.Get(battleId);
             var enemies = new List<EncounterEnemy>(battle.Enemies.Count);
             for (int i = 0; i < battle.Enemies.Count; i++)
             {
