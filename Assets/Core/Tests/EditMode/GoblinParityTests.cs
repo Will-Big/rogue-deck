@@ -36,8 +36,11 @@ namespace FateWeaver.Tests
         /// 승리가 확정되어 그 뒤의 spore_veil·delayed_strike와 턴 끝 방어 만료(StatusExpired)가 실행되지 않는다.
         /// 그 밖의 서명은 같다.
         /// 2026-09-18 갱신(전투 실행 계약 T6): 방어 만료가 턴 정리(Cleanup)에서 다음 턴 준비(Prepare)로 옮겨져, 해석
-        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.</summary>
-        private const string ExpectedSignatureSha256 = "64ac73c90706d0f173eaf9b0a79e3f252895c9a02314623b5cd3f9af04b550ed";
+        /// 타임라인의 StatusExpired(block) 7줄이 빠진다(세션의 LastTurnStartTimeline으로 간다). HP·피해·턴 흐름은 같다.
+        /// 2026-09-20 갱신(전투 템포 개선 과제 2): member_b의 덱이 party_prototype(픽스처 카드)에서
+        /// striker(cleave·flank_jab·heavy_swing·shield_bash·brace)로 바뀌어 손패·배치·피해가 전부
+        /// 달라진다. 의도한 콘텐츠 변경이라 서명을 다시 잡았다.</summary>
+        private const string ExpectedSignatureSha256 = "abce4e36eb59d6c0e5398c78a717779b1014c0f1cfbe19ffd0ef5011ad8f3f37";
 
         /// <summary>편성을 `goblin_single`로 고정한다. 이 골든이 잠그는 것은 C# 원본에서 JSON으로의
         /// 이관이지 편성 후보 목록이 아니다 — 추첨을 쓰면 편성을 하나 더 저작할 때마다 골든이 흔들리고,

@@ -34,9 +34,9 @@ namespace FateWeaver.Tests
         {
             var run = RunSetup.NewRun(
                 TestContent.Content(), new[] { "member_b" }, runSeed: 1);
-            var attacks = run.Party[0].Cards.Where(card => card.Id == "fixture_attack").ToArray();
+            var attacks = run.Party[0].Cards.Where(card => card.Id == "cleave").ToArray();
 
-            Assert.AreEqual(2, attacks.Length, "party_prototype 덱은 fixture_attack을 둘 갖는다.");
+            Assert.AreEqual(2, attacks.Length, "striker 덱은 cleave를 둘 갖는다.");
             Assert.AreSame(attacks[0], attacks[1]);
         }
 

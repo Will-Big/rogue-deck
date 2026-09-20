@@ -30,8 +30,8 @@ namespace FateWeaver.Tests
         {
             var spec = new DeckSpec
             {
-                Id = "party_prototype",
-                Cards = new[] { "fixture_attack", "fixture_attack", "fixture_all_block" }
+                Id = "striker",
+                Cards = new[] { "cleave", "cleave", "flank_jab" }
             };
 
             var read = ContentJson.Read<DeckSpec>(ContentJson.Write(spec));

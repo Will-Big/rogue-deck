@@ -15,16 +15,16 @@ namespace FateWeaver.Tests.EditMode
         private static IReadOnlyList<CardDefinition> DefaultCards()
             => TestContent.StarterDeckCards()
                 .Concat(new[] { "goblin_jab", "crude_guard", "sly_jab" }.Select(id => TestContent.Cards().Get(id)))
-                .Concat(PartyPrototypeCards())
+                .Concat(StrikerCards())
                 .ToArray();
 
-        /// <summary>party_prototype 덱의 모든 카드를 콘텐츠에서 읽는다 — id를 여기 박아두면
-        /// 다섯 번째 프로토타입 카드가 이 "모든 기본 카드에 등록이 있다" 검사를 조용히 피해 갈 수
-        /// 있다. 덱은 같은 id를 중복해서 담으므로(예: fixture_attack 2장) Distinct로 접는다.</summary>
-        private static IReadOnlyList<CardDefinition> PartyPrototypeCards()
+        /// <summary>striker 덱의 모든 카드를 콘텐츠에서 읽는다 — id를 여기 박아두면
+        /// 다섯 번째 카드가 이 "모든 기본 카드에 등록이 있다" 검사를 조용히 피해 갈 수
+        /// 있다. 덱은 같은 id를 중복해서 담으므로(예: cleave 2장) Distinct로 접는다.</summary>
+        private static IReadOnlyList<CardDefinition> StrikerCards()
         {
             var content = TestContent.Content();
-            return content.Decks.Get("party_prototype")
+            return content.Decks.Get("striker")
                 .Distinct()
                 .Select(id => content.Cards.Get(id))
                 .ToArray();
