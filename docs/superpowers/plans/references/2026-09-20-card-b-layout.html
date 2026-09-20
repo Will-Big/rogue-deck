@@ -1,0 +1,70 @@
+<style>
+#fw-mock{--paper:light-dark(#f8f7f3,#25272a);--ink:light-dark(#24282c,#ecece7);--soft:light-dark(#e9e8e2,#34373b);--line:light-dark(#c2c3bd,#62676b);--sub:light-dark(#5a6268,#b5bdc2);color:var(--ink);font-family:system-ui,-apple-system,sans-serif;font-size:14px;color-scheme:light dark}
+#fw-mock *{box-sizing:border-box}#fw-mock h2{font-size:19px;margin:0 0 6px;font-weight:600}#fw-mock p{margin:0;color:var(--sub);font-size:12px}#fw-mock .variants{display:grid;gap:32px}#fw-mock .variant{border-bottom:1px solid var(--line);padding-bottom:28px}#fw-mock .variant-head{display:flex;gap:12px;align-items:baseline;margin-bottom:20px;flex-wrap:wrap}#fw-mock .variant-head span{font-size:12px;color:var(--sub)}#fw-mock .pair{display:grid;grid-template-columns:repeat(2,minmax(0,250px));gap:22px;justify-content:center;padding:12px 5px 5px}#fw-mock .specimen{min-width:0}#fw-mock .caption{font-size:11px;letter-spacing:.1em;color:var(--sub);margin-bottom:10px}#fw-mock .playing-card{position:relative;display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:var(--corner,8px);min-height:354px;isolation:isolate;padding:12px;gap:10px;box-shadow:0 3px 0 var(--soft)}#fw-mock .top{display:flex;align-items:center;gap:8px;min-height:43px}#fw-mock .title{flex:1;min-width:0;font-size:15px;font-weight:650;word-break:keep-all}#fw-mock .badge{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:38px;height:43px;background:var(--soft);border:1px solid var(--line);font-size:20px;font-weight:650;line-height:1.05}#fw-mock .badge small{font-size:9px;line-height:1.4;font-weight:500;color:var(--sub)}#fw-mock .cost{border-radius:50%;width:37px;height:37px;font-size:18px}#fw-mock .type{font-size:11px;font-weight:600;border:1px solid var(--line);padding:5px 3px;writing-mode:vertical-rl;letter-spacing:2px}#fw-mock .art{height:84px;flex-shrink:0;display:grid;place-content:center;text-align:center;background:repeating-linear-gradient(135deg,transparent,transparent 12px,var(--soft) 12px,var(--soft) 13px),var(--paper);border:1px solid var(--line);color:var(--sub)}#fw-mock .art-symbol{font-size:28px;line-height:1.2}#fw-mock .art small{font-size:9px;letter-spacing:2px;margin-top:5px}#fw-mock .target{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px;font-size:11px;flex-wrap:wrap}#fw-mock .range{letter-spacing:3px;font-size:14px}#fw-mock .effects{flex:1;font-size:13px;line-height:1.65;display:flex;flex-direction:column;gap:8px}#fw-mock .effect{display:flex;gap:6px}#fw-mock .marker{color:var(--sub);flex-shrink:0}#fw-mock .footer{display:flex;justify-content:space-between;align-items:center;gap:6px;padding-top:8px;border-top:1px solid var(--line);font-size:10px;color:var(--sub)}#fw-mock .owner{display:flex;align-items:center;gap:5px}#fw-mock .owner:before{content:'';width:7px;height:7px;background:var(--sub)}#fw-mock .lock{border:1px solid var(--line);padding:2px 5px;display:none}#fw-mock .locked .lock{display:block}#fw-mock .selected{outline:2px solid var(--ink);outline-offset:3px}#fw-mock .b .playing-card{margin-top:18px;border-radius:0 0 var(--corner,8px) var(--corner,8px);border-top:3px solid var(--ink)}#fw-mock .b .top{padding-left:43px}#fw-mock .b .order,#fw-mock .b .type{position:absolute;top:-21px;left:12px;height:66px;width:38px;background:var(--ink);color:var(--paper)}#fw-mock .b .order{font-size:28px}#fw-mock .b .order small{color:var(--paper)}#fw-mock .b .type{writing-mode:horizontal-tb;display:grid;place-items:center;letter-spacing:0;font-size:12px}#fw-mock .b .target{border:1px solid var(--line);padding:7px}#fw-mock .c .art{height:145px;order:1}#fw-mock .c .top{order:0}#fw-mock .c .target{order:2}#fw-mock .c .effects{order:3}#fw-mock .c .footer{order:4}#fw-mock .c .playing-card{min-height:415px}#fw-mock .c .art-symbol{font-size:44px}#fw-mock .c .effects{background:var(--soft);padding:9px}#fw-mock .c .target{border-bottom:0;padding-bottom:0}#fw-mock .sample-label{font-size:11px;color:var(--sub);margin-bottom:22px}#fw-mock .parts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}#fw-mock .part{border:1px solid var(--line);padding:5px 8px;font-size:11px;color:var(--sub)}@media(max-width:440px){#fw-mock .pair{grid-template-columns:minmax(0,250px);gap:24px}#fw-mock .variant-head{gap:4px}}
+#fw-mock{--enemy:light-dark(#93483c,#eda293);--ally:light-dark(#326d75,#8ccbd0)}
+#fw-mock .specimen{display:flex;flex-direction:column}#fw-mock .playing-card{flex:1;min-height:420px}#fw-mock .c .playing-card{min-height:481px}
+#fw-mock .execution .target{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:stretch}
+#fw-mock .target-entry{display:flex;flex-direction:column;gap:2px;padding:5px 7px;background:var(--soft);min-width:0}
+#fw-mock .faction-label{font-size:11px;font-weight:600}#fw-mock .enemy .faction-label{color:var(--enemy)}#fw-mock .ally .faction-label{color:var(--ally)}
+#fw-mock .effect-group{display:flex;flex-direction:column;gap:3px;padding:2px 0 7px;border-bottom:1px solid var(--line)}#fw-mock .effect-group:last-child{border-bottom:0;padding-bottom:0}
+#fw-mock .effect-heading{font-size:11px;color:var(--sub);display:flex;gap:5px;flex-wrap:wrap}#fw-mock .effect-copy{font-size:13px;line-height:1.6}
+#fw-mock{--execution-tab:light-dark(#946221,#d7ae68);--intervention-tab:light-dark(#635298,#b6a3e4);--tab-ink:light-dark(#ffffff,#211c2b)}
+#fw-mock .b .playing-card{padding:0 12px 6px;gap:8px;border-top:1px solid var(--line);min-height:420px}
+#fw-mock .b .top{padding:0;margin-top:-21px;height:auto;min-height:66px;flex-shrink:0;gap:8px;margin-bottom:-4px}
+#fw-mock .b .order,#fw-mock .b .type{position:static;width:38px;height:66px;flex-shrink:0;border:0;color:var(--tab-ink);background:var(--execution-tab)}
+#fw-mock .b .type{background:var(--intervention-tab)}#fw-mock .b .order small{color:var(--tab-ink)}
+#fw-mock .b .order,#fw-mock .b .type{align-self:flex-start}
+#fw-mock .b .title{font-size:18px;line-height:1.2;font-weight:650;letter-spacing:-.035em;text-wrap:balance;display:flex;align-items:center;justify-content:center;text-align:center;min-height:37px;margin-top:26px;margin-bottom:3px}
+#fw-mock .b .cost{align-self:center;margin-top:26px;margin-bottom:3px}
+#fw-mock .b .art{height:156px}
+#fw-mock .b .target{display:flex;flex-wrap:nowrap;align-items:center;gap:0;padding:3px 0;border:1px solid var(--line)}
+#fw-mock .b .target-entry{flex:1;flex-direction:row;align-items:center;justify-content:center;padding:0 6px;gap:8px;background:transparent;line-height:20px}
+#fw-mock .b .target-entry+.target-entry{border-left:1px solid var(--line)}
+#fw-mock .b .target-entry .faction-label{font-size:13px}#fw-mock .b .target-entry .range{font-size:14px;letter-spacing:2px}
+#fw-mock .b .footer{padding-top:3px;font-size:11px;line-height:14px;min-height:18px}
+#fw-mock .b .lock{padding:0 4px}#fw-mock .variant{border-bottom:0;padding-bottom:4px}
+#fw-mock .owner:before{content:none}
+#fw-mock .execution .effects{min-height:138px}
+#fw-mock .effect-group{flex:1}
+#fw-mock .effect-heading{flex-shrink:0}
+#fw-mock .effect-group:only-child{display:grid;grid-template-rows:auto minmax(min-content,1fr);flex:1;border:0;padding:2px 0 0;gap:0}
+#fw-mock .effect-group:only-child .effect-copy{align-self:center;text-align:left;width:100%;padding:8px 0}
+#fw-mock .pair{row-gap:32px}
+</style>
+<div id="fw-mock" aria-label="Fate Weaver 카드 프리미티브 목업">
+  <div class="sample-label">FATE WEAVER / PRIMITIVE STUDIES · 문구와 수치는 배치 검토용 가상 예시</div>
+  <div class="variants">
+    <section class="variant b"><div class="variant-head"><h2>B · 확정안의 표현 상태</h2><span>양쪽 대상 / 개입 / 적군만 / 아군만</span></div><div class="pair" data-variant="b"></div></section>
+  </div>
+  <div class="parts" aria-label="공통 프리미티브"><span class="part">순서 = 사각 배지</span><span class="part">비용 = 원형 배지</span><span class="part">대상 = 기호 띠</span><span class="part">소유자 = 하단 칩</span><span class="part">선택 = 외곽선</span><span class="part">상태 = 독립 타일</span></div>
+</div>
+<script>
+(()=>{
+const root=document.getElementById('fw-mock');
+const state={longText:false,locked:false,selection:'none',radius:8};
+const saved=globalThis.openai?.widgetState?.modelContent;
+if(saved){for(const key of Object.keys(state)){if(typeof saved[key]===typeof state[key])state[key]=saved[key];}}
+function card(intervention,mode='both'){return `<div class="specimen"><div class="caption">${intervention?'INTERVENTION / 개입':'EXECUTION / '+({both:'적군 + 아군',enemy:'적군만',ally:'아군만'}[mode])}</div><article class="playing-card ${intervention?'intervention':'execution'}" data-target-mode="${mode}" aria-label="${intervention?'개입':mode+' 실행'} 카드 목업"><header class="top">${intervention?'<span class="type">개입</span>':'<span class="badge order"><small>순서</small>4</span>'}<div class="title"></div><span class="badge cost"><small>비용</small>${intervention?'2':'1'}</span></header><div class="art" aria-label="아트 자리"><span class="art-symbol">${intervention?'◇':'△'}</span><small>ART PLACEHOLDER</small></div>${intervention?'':'<div class="target"></div>'}<div class="effects"></div><footer class="footer"><span class="owner">${intervention?'소유자 B':'소유자 A'}</span><span class="lock">잠금</span><span>${intervention?'개입':'실행'}</span></footer></article></div>`;}
+root.querySelectorAll('.pair').forEach(pair=>pair.innerHTML=card(false)+card(true)+card(false,'enemy')+card(false,'ally'));
+function render(){
+root.style.setProperty('--corner',state.radius+'px');
+root.querySelectorAll('.playing-card').forEach(el=>{
+const intervention=el.classList.contains('intervention');
+el.classList.toggle('locked',state.locked&&!intervention);
+el.classList.toggle('selected',state.selection===(intervention?'intervention':'execution'));
+el.querySelector('.title').textContent=intervention?(state.longText?'엇갈린 운명의 재배치':'순서 바꾸기'):(state.longText?'전열을 지키는 날카로운 반격':'엄호 베기');
+el.querySelector('.effects').innerHTML=intervention?(state.longText?'<div class="effect">실행 카드 2장을 선택하여 실행 순서를 서로 바꿉니다.</div><div class="effect">잠긴 카드는 선택할 수 없습니다. 변경된 순서를 확인한 뒤 개입을 확정합니다.</div>':'<div class="effect">실행 카드 2장의<br>실행 순서를 서로 바꿉니다.</div>'):`<div class="effect-group enemy"><div class="effect-heading"><span class="faction-label">◆ 적군</span><span>전방 1명</span></div><div class="effect-copy">${state.longText?'피해 <b>8</b>을 줍니다.<br>약화 <b>1</b>을 부여합니다.':'피해 <b>8</b>을 줍니다.'}</div></div><div class="effect-group ally"><div class="effect-heading"><span class="faction-label">● 아군</span><span>전방 2명</span></div><div class="effect-copy">${state.longText?'각각 방어 <b>3</b>을 부여합니다.<br>각각 체력 <b>2</b>를 회복합니다.':'각각 방어 <b>3</b>을 부여합니다.'}</div></div>`;
+if(!intervention)el.querySelector('.target').innerHTML='<div class="target-entry enemy" role="img" aria-label="적군 전방 1명"><span class="faction-label" aria-hidden="true">◆</span><span class="range" aria-hidden="true">■□□</span></div><div class="target-entry ally" role="img" aria-label="아군 전방 2명"><span class="faction-label" aria-hidden="true">●</span><span class="range" aria-hidden="true">■■□</span></div>';
+if(!intervention && el.dataset.targetMode!=='both'){
+const mode=el.dataset.targetMode;
+const excluded=mode==='enemy'?'ally':'enemy';
+el.querySelector('.target-entry.'+excluded).remove();
+el.querySelector('.effect-group.'+excluded).remove();
+el.querySelector('.title').textContent=mode==='enemy'?(state.longText?'전열을 가르는 날카로운 일격':'전방 베기'):(state.longText?'전열을 지키는 굳건한 수호':'전열 수호');
+}
+});}
+render();
+if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:()=>{render();globalThis.openai?.setWidgetState?.({modelContent:{...state}})?.catch(()=>{});}});tweak.addToggle(state,'longText',{label:'긴 이름 · 복합 효과'});tweak.addToggle(state,'locked',{label:'실행 카드 잠금'});tweak.addSelect(state,'selection',{label:'선택 상태',options:[{label:'선택 없음',value:'none'},{label:'실행 카드 선택',value:'execution'},{label:'개입 카드 선택',value:'intervention'}]});tweak.addSlider(state,'radius',{label:'모서리 반경',min:0,max:18,unit:'px'});}
+window.addEventListener('openai:set_globals',event=>{const next=event.detail?.globals?.widgetState?.modelContent;if(next){for(const key of Object.keys(state))if(typeof next[key]===typeof state[key])state[key]=next[key];render();}});
+})();
+</script>

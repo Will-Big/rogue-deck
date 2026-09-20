@@ -1,5 +1,9 @@
 # Card Frame Follow-up Implementation Plan
 
+> **2026-09-20 후속 검토:** [B안 적용 계획](2026-09-20-card-b-prefab.md) 승인 후 표식 및 카드
+> 내부 배치 검수는 그 계획을 따른다. 이 인계의 손패 높낮이 추가 작업은 이번 B안 범위가 아니며,
+> 해당 목적의 별도 요청 없이 함께 구현하지 않는다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:brainstorming for Task 2's visual rule, then superpowers:writing-plans and superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Preserve the reviewed primitive card-frame work after its checkpoint merge, finish the execution-order badge review, add a subtle per-card hand-height rhythm without losing the shallow fan, and archive the completed primitive-frame plan.

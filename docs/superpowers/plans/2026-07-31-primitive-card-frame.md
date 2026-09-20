@@ -1,5 +1,9 @@
 # Primitive Card Frame and Structured Description Continuation Plan
 
+> **2026-09-20 후속 검토:** [B안 적용 계획](2026-09-20-card-b-prefab.md) 승인 후 카드 배치·
+> 대상 기호·설명 표시 작업은 그 계획으로 실행한다. 아래의 비용 돌출·색상 전용 기호와 사용자 직접
+> 프리팹 저작 체크포인트를 중복 실행하지 않는다. 그 밖의 잔여 범위는 해당 계획과 대조한다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 현재 프리미티브 카드 프레임 구현을 승인된 색상 전용 진영 문법, 카드 전체 대상 그룹화, 실행·개입별 폼팩터로 완성하고 반응형 손패 회귀를 닫는다.
