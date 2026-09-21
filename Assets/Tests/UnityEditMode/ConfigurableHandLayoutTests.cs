@@ -68,6 +68,46 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Baseline_padding_translates_the_hand_without_rescaling_cards()
+        {
+            Set("_baselinePadding", 16f);
+            _layout.Refresh();
+            Vector3 scale = Rect(0).lossyScale;
+            Vector3 position = Rect(0).position;
+            Set("_baselinePadding", 116f);
+            _layout.Refresh();
+            Assert.That(Vector3.Distance(scale, Rect(0).lossyScale), Is.LessThan(.0001f));
+            Assert.That(Rect(0).position.y - position.y, Is.EqualTo(100f).Within(.01f));
+            Assert.That(Rect(0).position.x, Is.EqualTo(position.x).Within(.01f));
+        }
+
+        [TestCase(true, 120f, -80f)]
+        [TestCase(false, -120f, 80f)]
+        public void Position_offset_moves_both_axes_without_changing_world_scale(
+            bool bottomBaseline, float x, float y)
+        {
+            Set("_useBottomBaseline", bottomBaseline);
+            _layout.Refresh();
+            Vector3 scale = Rect(0).lossyScale;
+            Vector3 position = Rect(0).position;
+            Set("_positionOffset", new Vector2(x, y));
+            _layout.Refresh();
+            Assert.That(Vector3.Distance(scale, Rect(0).lossyScale), Is.LessThan(.0001f));
+            Assert.That(Vector3.Distance(position + new Vector3(x, y, 0f), Rect(0).position),
+                Is.LessThan(.01f));
+        }
+
+        [Test]
+        public void Baseline_mode_only_changes_alignment_not_scale()
+        {
+            _layout.Refresh();
+            Vector3 scale = Rect(0).lossyScale;
+            Set("_useBottomBaseline", false);
+            _layout.Refresh();
+            Assert.That(Vector3.Distance(scale, Rect(0).lossyScale), Is.LessThan(.0001f));
+        }
+
+        [Test]
         public void Scale_toggle_restores_prefab_scale_without_accumulating_multiplier()
         {
             Set("_cardScale", .5f);

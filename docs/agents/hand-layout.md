@@ -16,9 +16,10 @@ Y 방향 반전은 제공하지 않는다. 유료 에셋은 추가하지 않는�
 | Adaptive Spread | 카드가 적으면 펼침 각도를 줄인다. |
 | Cards For Full Spread | 최대 펼침에 도달하는 장수. 최소 2장. |
 | Min Angle | 장수별 펼침의 시작 각도. Total Angle보다 크게 적용되지 않는다. 0·1장은 항상 중앙에 둔다. |
-| Use Bottom Baseline | 회전과 배지 돌출을 포함한 손패의 가장 아래를 기준으로 정렬한다. |
-| Baseline Padding | HandFan 영역의 아래 끝에서 띄울 여백. 화면 전체 아래 끝이 아닌 HandFan RectTransform 기준이다. |
-| Safe Margins | 손패 영역의 가로·세로 총 안전 여백. 좁은 영역에서는 공통 Content를 균일 축소한다. |
+| Use Bottom Baseline | 켜면 회전·배지 돌출을 포함한 손패 하단을 기준으로 정렬하고, 끄면 손패 전체 경계의 중앙을 영역 중앙에 맞춘다. 크기는 바꾸지 않는다. |
+| Baseline Padding | HandFan 영역의 아래 끝에서 띄울 여백. 값을 늘리면 크기를 유지하며 위로 이동한다. Use Bottom Baseline이 켜져 있을 때 적용한다. |
+| Position Offset | 정렬된 손패를 크기 변화 없이 이동한다. X는 오른쪽, Y는 위쪽이 양수이고 음수도 입력할 수 있다. |
+| Safe Margins (Card Scale) | 자동 크기 맞춤에 사용하는 가로·세로 총 안전 여백. 위치 이동용이 아니며, 값을 늘리면 공통 Content가 축소될 수 있다. |
 | Control Card Scale | 개별 카드 배율을 제어한다. 끄면 연결 시의 프리팹 배율로 복원한다. |
 | Card Scale | 개별 카드의 절대 로컬 배율. 영역에 맞추는 Content 배율과 별개다. |
 | Smooth | 실행 중 위치·회전·크기를 DOTween으로 전환한다. 첫 배치와 화면 리사이즈는 즉시 맞춘다. |
@@ -31,7 +32,8 @@ Y 방향 반전은 제공하지 않는다. 유료 에셋은 추가하지 않는�
 ## 조절 순서
 
 Play 중 Card Scale로 크기를 정하고 Radius·Total Angle로 너비와 기울기를 맞춘다.
-그다음 Baseline Padding으로 하단 위치를 조절한다. Play 중 수정한 값은 Unity가 Play 종료 시
+그다음 Baseline Padding으로 하단 기준을 맞추고 Position Offset으로 상하좌우 이동한다.
+위치 설정은 자동 축소 계산에 포함하지 않으므로 크게 이동하면 손패 영역 밖으로 나갈 수 있다. Play 중 수정한 값은 Unity가 Play 종료 시
 되돌리므로 원하는 값을 기록해 두었다가 편집 모드에서 저장한다.
 
 마우스를 올린 카드, 선택해 붙잡은 카드, 적은 손패와 많은 손패, 창 크기를 줄인 상태를 각각

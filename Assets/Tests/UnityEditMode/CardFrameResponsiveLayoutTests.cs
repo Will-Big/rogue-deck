@@ -128,6 +128,10 @@ namespace FateWeaver.Tests.UnityEditMode
 
             var hand = handRect.gameObject.AddComponent<HandFanView>();
             hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
+            // Verify fitting before intentional position offsets move the hand outside the safe area.
+            typeof(HandFanLayoutView).GetField("_baselinePadding",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(hand.GetComponent<HandFanLayoutView>(), VerticalSafeMarginPerSide);
             hand.SetCards(
                 Presentations(cardCount),
                 _ => { },

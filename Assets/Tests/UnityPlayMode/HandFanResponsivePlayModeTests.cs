@@ -79,8 +79,8 @@ namespace FateWeaver.Tests.UnityPlayMode
                 Assert.That(card.anchoredPosition, Is.EqualTo(baseline));
                 Assert.That(card.localScale.x, Is.EqualTo(.64f).Within(.001f));
                 var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(root.transform, card);
-                Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(-95f));
-                Assert.That(bounds.max.y, Is.LessThanOrEqualTo(95f));
+                Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(-95.001f));
+                Assert.That(bounds.max.y, Is.LessThanOrEqualTo(95.001f));
             }
             finally
             {

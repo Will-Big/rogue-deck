@@ -30,12 +30,14 @@ namespace FateWeaver.Unity
 
         [Header("Positioning")]
         [SerializeField] private bool _useBottomBaseline = true;
-        [Tooltip("Distance from the hand area's bottom edge to the lowest card, in canvas units.")]
+        [Tooltip("Distance from the hand area's bottom edge to the lowest card. Changes position only, in canvas units.")]
         [SerializeField, Min(0f)] private float _baselinePadding = 16f;
-        [Tooltip("Total horizontal and vertical safety margins used for fitting the hand.")]
-        [SerializeField] private Vector2 _safeMargins = new Vector2(32f, 16f);
+        [Tooltip("Move the whole hand without changing its size. Positive X moves right; positive Y moves up.")]
+        [SerializeField] private Vector2 _positionOffset;
 
         [Header("Card Scale")]
+        [Tooltip("Total horizontal and vertical margins for automatic size fitting, not position offsets.")]
+        [SerializeField] private Vector2 _safeMargins = new Vector2(32f, 16f);
         [SerializeField] private bool _controlCardScale = true;
         [SerializeField, Min(.01f)] private float _cardScale = .64f;
 
@@ -108,23 +110,21 @@ namespace FateWeaver.Unity
         {
             var root = (RectTransform)transform;
             float width = Mathf.Max(0f, root.rect.width - Mathf.Max(0f, _safeMargins.x));
-            float marginY = Mathf.Max(0f, _safeMargins.y) * .5f;
-            float padding = Mathf.Clamp(_baselinePadding, marginY,
-                Mathf.Max(marginY, root.rect.height - marginY));
-            float height = Mathf.Max(0f, root.rect.height
-                - (_useBottomBaseline ? padding + marginY : marginY * 2f));
-            float requiredHeight = _useBottomBaseline ? bounds.size.y
-                : 2f * Mathf.Max(Mathf.Abs(bounds.min.y), Mathf.Abs(bounds.max.y));
+            // Fit the unpositioned hand once. Alignment and offsets must never feed back into scale.
+            float height = Mathf.Max(0f, root.rect.height - Mathf.Max(0f, _safeMargins.y));
             float scale = !hasBounds ? 1f : Mathf.Min(1f,
                 width / Mathf.Max(.001f, bounds.size.x),
-                height / Mathf.Max(.001f, requiredHeight));
+                height / Mathf.Max(.001f, bounds.size.y));
             // A small positive scale keeps pointer coordinate conversion well-defined in collapsed UI.
             scale = Mathf.Max(.0001f, scale);
             _content.localScale = Vector3.one * scale;
-            _content.anchoredPosition = new Vector2(
-                hasBounds ? -bounds.center.x * scale : 0f,
-                _useBottomBaseline && hasBounds
-                    ? -root.rect.height * .5f + padding - bounds.min.y * scale : 0f);
+            Vector2 position = hasBounds
+                ? new Vector2(-bounds.center.x * scale, -bounds.center.y * scale)
+                : Vector2.zero;
+            if (_useBottomBaseline && hasBounds)
+                position.y = -root.rect.height * .5f + Mathf.Max(0f, _baselinePadding)
+                    - bounds.min.y * scale;
+            _content.anchoredPosition = position + _positionOffset;
         }
 
         private static void EncapsulateCard(ref Bounds bounds, ref bool hasBounds,
