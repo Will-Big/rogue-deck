@@ -2521,6 +2521,8 @@ GameObject:
   - component: {fileID: 4888029675168363856}
   - component: {fileID: 2013988361205687626}
   - component: {fileID: 2197522753874795815}
+  - component: {fileID: 6842761712870995986}
+  - component: {fileID: 8287492812277349650}
   m_Layer: 0
   m_Name: ExecutionCardView
   m_TagString: Untagged
@@ -2703,3 +2705,27 @@ MonoBehaviour:
   _lockBadge: {fileID: 5919003312859038567}
   _button: {fileID: 4888029675168363856}
   _backFace: {fileID: 1100000000000000005}
+--- !u!114 &6842761712870995986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145218196501635394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb6a60f5a25b38dc4cb68adcf34dece, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandCardHoverEffect
+--- !u!225 &8287492812277349650
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145218196501635394}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

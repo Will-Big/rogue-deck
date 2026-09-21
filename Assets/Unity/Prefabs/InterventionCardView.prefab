@@ -2038,6 +2038,8 @@ GameObject:
   - component: {fileID: 2895659652267845433}
   - component: {fileID: 4412086949922170217}
   - component: {fileID: 4277096803620574812}
+  - component: {fileID: 6979598453515180632}
+  - component: {fileID: 6502705847210141327}
   m_Layer: 0
   m_Name: InterventionCardView
   m_TagString: Untagged
@@ -2219,6 +2221,30 @@ MonoBehaviour:
   _lockBadge: {fileID: 6349978953129458523}
   _button: {fileID: 2895659652267845433}
   _backFace: {fileID: 1153477466509046653}
+--- !u!114 &6979598453515180632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8359035652342525776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb6a60f5a25b38dc4cb68adcf34dece, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandCardHoverEffect
+--- !u!225 &6502705847210141327
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8359035652342525776}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8807661043874331226
 GameObject:
   m_ObjectHideFlags: 0
