@@ -30,8 +30,8 @@ namespace FateWeaver.Unity
 
         [Header("Positioning")]
         [SerializeField] private bool _useBottomBaseline = true;
-        [Tooltip("Distance from the hand area's bottom edge to the lowest card. Changes position only, in canvas units.")]
-        [SerializeField, Min(0f)] private float _baselinePadding = 16f;
+        [Tooltip("Distance from the hand area's bottom edge to the lowest card. Negative values move below the edge. Changes position only, in canvas units.")]
+        [SerializeField] private float _baselinePadding = 16f;
         [Tooltip("Move the whole hand without changing its size. Positive X moves right; positive Y moves up.")]
         [SerializeField] private Vector2 _positionOffset;
 
@@ -122,7 +122,7 @@ namespace FateWeaver.Unity
                 ? new Vector2(-bounds.center.x * scale, -bounds.center.y * scale)
                 : Vector2.zero;
             if (_useBottomBaseline && hasBounds)
-                position.y = -root.rect.height * .5f + Mathf.Max(0f, _baselinePadding)
+                position.y = -root.rect.height * .5f + _baselinePadding
                     - bounds.min.y * scale;
             _content.anchoredPosition = position + _positionOffset;
         }

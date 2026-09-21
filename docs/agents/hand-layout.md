@@ -17,7 +17,7 @@ Y 방향 반전은 제공하지 않는다. 유료 에셋은 추가하지 않는�
 | Cards For Full Spread | 최대 펼침에 도달하는 장수. 최소 2장. |
 | Min Angle | 장수별 펼침의 시작 각도. Total Angle보다 크게 적용되지 않는다. 0·1장은 항상 중앙에 둔다. |
 | Use Bottom Baseline | 켜면 회전·배지 돌출을 포함한 손패 하단을 기준으로 정렬하고, 끄면 손패 전체 경계의 중앙을 영역 중앙에 맞춘다. 크기는 바꾸지 않는다. |
-| Baseline Padding | HandFan 영역의 아래 끝에서 띄울 여백. 값을 늘리면 크기를 유지하며 위로 이동한다. Use Bottom Baseline이 켜져 있을 때 적용한다. |
+| Baseline Padding | HandFan 영역의 아래 끝에서 띄울 여백. 0은 아래 끝에 맞추고, 양수는 위로, 음수는 아래로 이동한다. 카드 크기는 유지한다. Use Bottom Baseline이 켜져 있을 때 적용한다. |
 | Position Offset | 정렬된 손패를 크기 변화 없이 이동한다. X는 오른쪽, Y는 위쪽이 양수이고 음수도 입력할 수 있다. |
 | Safe Margins (Card Scale) | 자동 크기 맞춤에 사용하는 가로·세로 총 안전 여백. 위치 이동용이 아니며, 값을 늘리면 공통 Content가 축소될 수 있다. |
 | Control Card Scale | 개별 카드 배율을 제어한다. 끄면 연결 시의 프리팹 배율로 복원한다. |

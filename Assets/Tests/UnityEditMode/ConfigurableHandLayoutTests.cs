@@ -67,17 +67,19 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.That(bounds.min.y, Is.EqualTo(-105f).Within(.1f));
         }
 
-        [Test]
-        public void Baseline_padding_translates_the_hand_without_rescaling_cards()
+        [TestCase(116f, 100f)]
+        [TestCase(-84f, -100f)]
+        [TestCase(0f, -16f)]
+        public void Baseline_padding_translates_the_hand_without_rescaling_cards(float padding, float deltaY)
         {
             Set("_baselinePadding", 16f);
             _layout.Refresh();
             Vector3 scale = Rect(0).lossyScale;
             Vector3 position = Rect(0).position;
-            Set("_baselinePadding", 116f);
+            Set("_baselinePadding", padding);
             _layout.Refresh();
             Assert.That(Vector3.Distance(scale, Rect(0).lossyScale), Is.LessThan(.0001f));
-            Assert.That(Rect(0).position.y - position.y, Is.EqualTo(100f).Within(.01f));
+            Assert.That(Rect(0).position.y - position.y, Is.EqualTo(deltaY).Within(.01f));
             Assert.That(Rect(0).position.x, Is.EqualTo(position.x).Within(.01f));
         }
 
