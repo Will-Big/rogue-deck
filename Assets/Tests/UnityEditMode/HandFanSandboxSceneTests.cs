@@ -69,6 +69,58 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
+        public void Saved_prefab_wires_the_current_configurable_hand_layout()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var hand = prefab.GetComponentInChildren<HandFanView>(true);
+            var layout = hand.GetComponent<HandFanLayoutView>();
+            Assert.That(layout, Is.Not.Null, "Sandbox must use the configurable HandFan merged into master.");
+            Assert.That(CardPrefabCatalogTests.Field<HandFanLayoutView>(hand, "_layout"), Is.SameAs(layout));
+            Assert.That(CardPrefabCatalogTests.Field<RectTransform>(layout, "_content"),
+                Is.SameAs(CardPrefabCatalogTests.Field<RectTransform>(hand, "_content")));
+        }
+
+        [Test]
+        public void Sandbox_cards_use_inspector_arc_settings_after_add_remove_and_clear()
+        {
+            var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+            var panel = root.GetComponentInChildren<HandFanSandboxPanel>();
+            var controller = root.GetComponentInChildren<HandFanSandboxController>();
+            try
+            {
+                Invoke(panel, "OnEnable"); Invoke(controller, "Start");
+                var add = CardPrefabCatalogTests.Field<Button>(panel, "_addButton");
+                for (int i = 0; i < 5; i++) add.onClick.Invoke();
+                var hand = root.GetComponentInChildren<HandFanView>();
+                var content = CardPrefabCatalogTests.Field<RectTransform>(hand, "_content");
+                var layout = hand.GetComponent<HandFanLayoutView>();
+                Assert.That(layout, Is.Not.Null);
+                var cards = content.GetComponentsInChildren<CardView>();
+                Assert.That(cards, Has.Length.EqualTo(5));
+                float before = ((RectTransform)cards[4].transform).anchoredPosition.x;
+                var so = new SerializedObject(layout);
+                so.FindProperty("_radius").floatValue *= 2f;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                layout.Refresh();
+                Assert.That(((RectTransform)cards[4].transform).anchoredPosition.x,
+                    Is.EqualTo(before * 2f).Within(.01f));
+                cards[2].GetComponent<Button>().onClick.Invoke();
+                CardPrefabCatalogTests.Field<Button>(panel, "_removeButton").onClick.Invoke();
+                Assert.That(content.GetComponentsInChildren<CardView>(), Has.Length.EqualTo(4));
+                var state = CardPrefabCatalogTests.Field<HandFanSandboxState>(controller, "_state");
+                Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "quick_cover", "quick_cover", "brace" }));
+                CardPrefabCatalogTests.Field<Button>(panel, "_clearButton").onClick.Invoke();
+                Assert.That(content.GetComponentsInChildren<CardView>(), Is.Empty);
+                Assert.That(state.Cards, Is.Empty);
+            }
+            finally
+            {
+                Invoke(controller, "OnDisable"); Invoke(panel, "OnDisable");
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Prefab_stores_persistent_input_references_without_default_action_fallback()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);

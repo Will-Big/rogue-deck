@@ -19,8 +19,8 @@ superpowers:subagent-driven-development를 사용한다. 2026-09-22 사용자 �
 
 아래 경로는 저장소 루트 기준이며 작성 시 직접 확인했다.
 
-- `Assets/Unity/Scripts/Cards/HandFanView.cs:51`: SetCards는 기존 뷰를 제거하고 카탈로그에서 다시 생성한다. 증감 후 목록 전체를 전달한다. 풀링·차분 갱신으로 바꾸지 않는다.
-- 같은 파일 `:201`: SetSelection(index, CardView.SelectionKind)으로 선택 테두리를 지정할 수 있다.
+- `Assets/Unity/Scripts/Cards/HandFanView.cs`, SetCards: SetCards는 기존 뷰를 제거하고 카탈로그에서 다시 생성한다. 증감 후 목록 전체를 전달한다. 풀링·차분 갱신으로 바꾸지 않는다.
+- 같은 파일의 SetSelection(index, CardView.SelectionKind)으로 선택 테두리를 지정할 수 있다.
 - `Assets/Unity/Scripts/Cards/CardPresentation.cs`, FromDefinition: 정의와 설명 카탈로그를 표현 데이터로 변환한다.
 - `Assets/Unity/Scripts/Content/CardPrefabCatalog.cs`, Create/ValidateOrThrow: 카테고리별 실제 프리팹 인스턴스와 참조 검증을 제공한다.
 - `Assets/Unity/Scripts/Battle/CombatNodeFlow.cs:42`: ContentBootstrap.Load(UnityContentRoot.Path) 및 Succeeded/Errors 처리 예시.
@@ -28,6 +28,8 @@ superpowers:subagent-driven-development를 사용한다. 2026-09-22 사용자 �
 - `Assets/Unity/Editor/BattleSceneBuilder.cs:138`: 전투 씬의 HandFan 배치와 Content 자식 참조 구성.
 - `Assets/Tests/UnityPlayMode/HandFanResponsivePlayModeTests.cs`: 크기 변경에 대한 기존 레이아웃 회귀 검사.
 - `docs/agents/worktrees.md`, 규칙 15·16: Assets 변경은 전용 워크트리에서 수행한다.
+
+- 최신 기준: master `80f0586`의 `HandFanView` + `HandFanLayoutView`를 사용한다. 배치 설정은 `Assets/Unity/Scripts/Cards/HandFanLayoutView.cs`, 조절 방법은 `docs/agents/hand-layout.md`가 근거다. 테스트 프리팹의 HandFan은 최신 전투 씬 설정을 복사하고 내부 Content 참조를 다시 연결한다.
 
 ### 확정할 동작
 
@@ -191,9 +193,9 @@ master 머지는 별도 사용자 승인과 전체 verify 통과 후에만 수�
 - 브랜치: `codex/handfan-sandbox`. 작업 위치: `/Users/ish/.codex/worktrees/handfan-sandbox/rogue-deck`.
 - 씬: `Assets/Scenes/HandFanSandbox.unity`. 프리팹: `Assets/Unity/Prefabs/Testing/HandFanSandbox.prefab`.
 - 구현 커밋: `b79fc6a`(조작부), `29059d3`(저장 씬·입력 회귀 검사).
-- `Tools/verify.sh`: 헤드리스 778개, 노트북 161개 통과. 실행 로그: `/private/tmp/handfan-reviewed-verify.log`.
-- 전체 Unity EditMode: 985개 통과, 11개 스킵, 실패 0개. 결과: `/private/tmp/handfan-reviewed-editmode.xml`.
-- 신규 검사는 상태·콘텐츠 8개, 패널 2개, 씬·입력·조정자 5개다. 근거: 위 표의 세 테스트 파일.
+- `Tools/verify.sh`: 헤드리스 785개, 노트북 161개 통과. 실행 로그: `/private/tmp/handfan-master-verify-sequential.log`.
+- 전체 Unity EditMode: 1005개 통과, 11개 스킵, 실패 0개. 결과: `/private/tmp/handfan-master-final.xml`.
+- 신규 검사는 상태·콘텐츠 8개, 패널 2개, 씬·입력·조정자 7개다. 근거: 위 표의 세 테스트 파일.
 - 저작은 일회성 Editor 스크립트로 수행한 후 저장 에셋만 남겼다. 입력 참조는 기존 `UIInputActions.inputactions`의 영구 서브에셋이다. Input System의 기본 입력 자동 할당이 저장 누락을 가릴 수 있어 `HandFanSandboxSceneTests.Prefab_stores_persistent_input_references_without_default_action_fallback`이 프리팹 에셋 자체를 검사한다.
 - 사용자 확인: 워크트리 프로젝트를 Unity에서 열고 해당 씬에서 Play한다. 상단 버튼으로 장수를 늘리고 카드를 클릭해 선택한 뒤 제거한다. `SandboxControls`의 CardSource 인스펙터에서 테스트 카드 ID 목록을 바꿀 수 있다.
 - 사용자 시각 검수와 master 머지는 아직 수행하지 않았다. 시각 확인 전에는 문서를 보관하지 않는다.
@@ -204,3 +206,19 @@ master 머지는 별도 사용자 승인과 전체 verify 통과 후에만 수�
 근거 테스트: `HandFanSandboxSceneTests.Missing_hand_catalog_reports_error_and_stops_further_commands`
 (실패 확인 후 수정, 최종 전체 테스트 통과). 기존 HandFan은 변경하지 않았다.
 리뷰가 판단을 유보한 간격·잘림·호버·좁은 화면은 규칙 17에 따라 사용자 Play 확인으로 남긴다.
+
+### 최신 master HandFan 반영 — 2026-09-22 사용자 수정 요청
+
+초기 작업 기준 이후 master에 통합된 `80f0586`을 작업 브랜치로 가져왔다.
+기존 테스트 프리팹은 새 `_layout` 참조가 연결되지 않아 회귀 테스트가 실패했다.
+Unity 에디터 저작으로 최신 전투 씬의 `HandFanLayoutView` 설정과 RectTransform 값을 반영하고,
+테스트 프리팹 내부의 Content와 HandFanView._layout을 연결했다.
+근거: `Assets/Tests/UnityEditMode/HandFanSandboxSceneTests.cs`의
+`Saved_prefab_wires_the_current_configurable_hand_layout`과
+`Sandbox_cards_use_inspector_arc_settings_after_add_remove_and_clear`.
+새 테스트는 저장 배선뿐 아니라 카드 추가 후 Radius 변경 → 간격 변화 → 선택 제거 → 전체 비우기를 확인한다.
+사용자는 테스트 씬 HandFan의 **Hand Fan Layout View** 인스펙터에서 Radius, Total Angle,
+Baseline Padding, Position Offset, Card Scale을 조절할 수 있다. 옵션 의미는
+[손패 레이아웃 조절](../../agents/hand-layout.md)을 따른다.
+
+최신 기준 재검증: Unity EditMode 1005개 통과·11개 스킵·실패 0개, 헤드리스 785개와 노트북 161개 통과. 위 구현 결과의 로그 경로는 이 최신 실행을 가리킨다. 병렬 실행에서는 기존 BootstrapReportsAnUnknownEnemyPolicy가 공용 임시 폴더 삭제 경합으로 한 번 실패했으며, Unity 종료 후 Tools/verify.sh 순차 실행에서 통과했다(근거: Assets/Core/Tests/EditMode/ContentBootstrapTests.cs의 고정 임시 경로).
