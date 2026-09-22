@@ -144,6 +144,37 @@ namespace FateWeaver.Tests.UnityEditMode
             finally { Object.DestroyImmediate(root); }
         }
 
+        [Test]
+        public void Missing_hand_catalog_reports_error_and_stops_further_commands()
+        {
+            var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+            var panel = root.GetComponentInChildren<HandFanSandboxPanel>();
+            var controller = root.GetComponentInChildren<HandFanSandboxController>();
+            try
+            {
+                var hand = root.GetComponentInChildren<HandFanView>();
+                var so = new SerializedObject(hand);
+                so.FindProperty("_cardPrefabs").objectReferenceValue = null;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Invoke(panel, "OnEnable");
+                Invoke(controller, "Start");
+                var add = CardPrefabCatalogTests.Field<Button>(panel, "_addButton");
+                LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("핸드 표시 실패:"));
+                Assert.DoesNotThrow(() => add.onClick.Invoke());
+                Assert.That(controller.enabled, Is.False);
+                Assert.That(root.GetComponentsInChildren<Button>().All(b => !b.interactable), Is.True);
+                Assert.That(CardPrefabCatalogTests.Field<TMP_Text>(panel, "_errorText").text, Does.StartWith("핸드 표시 실패:"));
+                var state = CardPrefabCatalogTests.Field<HandFanSandboxState>(controller, "_state");
+                add.onClick.Invoke();
+                Assert.That(state.Cards.Count, Is.EqualTo(1));
+            }
+            finally
+            {
+                Invoke(controller, "OnDisable"); Invoke(panel, "OnDisable");
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static void Invoke(Component component, string method)
             => component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
     }

@@ -72,8 +72,15 @@ namespace FateWeaver.Unity
 
         private void RefreshCards()
         {
-            _hand.SetCards(_state.Cards, OnCardClicked, null);
-            RefreshSelection();
+            try
+            {
+                _hand.SetCards(_state.Cards, OnCardClicked, null);
+                RefreshSelection();
+            }
+            catch (System.Exception exception)
+            {
+                Fail("핸드 표시 실패: 카드 프리팹과 Content 참조를 확인하세요. " + exception.Message);
+            }
         }
 
         private void RefreshSelection()
@@ -84,9 +91,9 @@ namespace FateWeaver.Unity
 
         private void Fail(string message)
         {
+            enabled = false;
             if (_panel != null) _panel.ShowError(message);
             Debug.LogError(message, this);
-            enabled = false;
         }
     }
 }
