@@ -231,12 +231,13 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var card = ExecutionPresentation();
             var source = Field<List<CardView>>(_hand, "_views")[0];
+            var baselineScale = source.transform.localScale;
 
             _controller.ShowPlacementHover(0, card, 0);
             _controller.BeginPlacement(0, card, 0);
 
             Assert.AreEqual(Quaternion.identity, source.transform.localRotation);
-            Assert.AreEqual(Vector3.one * (.85f * 1.35f), source.transform.localScale);
+            Assert.AreEqual(baselineScale * 1.35f, source.transform.localScale);
             var outline = Field<Outline>(source, "_selectionOutline");
             Assert.IsTrue(outline.enabled);
             Assert.AreEqual(SelectedOutline, outline.effectColor);

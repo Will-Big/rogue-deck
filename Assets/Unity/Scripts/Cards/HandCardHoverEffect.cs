@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -18,12 +19,21 @@ namespace FateWeaver.Unity
         private bool _held;
         private bool _suppressed;
         private System.Action<bool> _onHover;
+        private Vector3 _authoredScale = Vector3.one;
+        private bool _initialized;
+        private bool _smooth;
+        private float _smoothSpeed;
+        private Sequence _motion;
+        private bool _snapNext;
+
+        internal Vector3 AuthoredScale => _authoredScale;
 
         internal bool IsActive => _hovering || _held;
 
         public void Initialize(System.Action<bool> onHover)
         {
             _onHover = onHover;
+            _initialized = true;
         }
 
         public void Capture()
@@ -32,13 +42,14 @@ namespace FateWeaver.Unity
             _basePosition = _rect.anchoredPosition;
             _baseRotation = _rect.localRotation;
             _baseScale = _rect.localScale;
+            _authoredScale = _baseScale;
             _baseSiblingIndex = _rect.GetSiblingIndex();
         }
 
         public void UpdateBaseline(
             Vector2 position,
             Quaternion rotation,
-            int siblingIndex)
+            int siblingIndex, Vector3 scale, bool smooth, float smoothSpeed, bool immediate = false)
         {
             if (_rect == null)
             {
@@ -48,6 +59,10 @@ namespace FateWeaver.Unity
             _basePosition = position;
             _baseRotation = rotation;
             _baseSiblingIndex = siblingIndex;
+            _baseScale = scale;
+            _smooth = smooth;
+            _smoothSpeed = smoothSpeed;
+            _snapNext = immediate;
             if (_hovering || _held)
             {
                 Enlarge();
@@ -91,7 +106,7 @@ namespace FateWeaver.Unity
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (_suppressed || _held)
+            if (!_initialized || _suppressed || _held)
             {
                 return;
             }
@@ -103,6 +118,7 @@ namespace FateWeaver.Unity
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!_initialized) return;
             bool wasHovering = _hovering;
             _hovering = false;
             if (!_held)
@@ -124,9 +140,8 @@ namespace FateWeaver.Unity
             }
 
             _rect.SetAsLastSibling();
-            _rect.localRotation = Quaternion.identity;
-            _rect.anchoredPosition = _basePosition + new Vector2(0f, HoverLift);
-            _rect.localScale = _baseScale * HoverScale;
+            MoveTo(_basePosition + new Vector2(0f, HoverLift),
+                Quaternion.identity, _baseScale * HoverScale);
         }
 
         private void Restore()
@@ -137,9 +152,46 @@ namespace FateWeaver.Unity
             }
 
             _rect.SetSiblingIndex(_baseSiblingIndex);
-            _rect.localRotation = _baseRotation;
-            _rect.anchoredPosition = _basePosition;
-            _rect.localScale = _baseScale;
+            MoveTo(_basePosition, _baseRotation, _baseScale);
         }
+        private void MoveTo(Vector2 position, Quaternion rotation, Vector3 scale)
+        {
+            _motion?.Kill();
+            _motion = null;
+            bool snap = _snapNext;
+            _snapNext = false;
+            if (snap || !_smooth || !Application.isPlaying || !isActiveAndEnabled)
+            {
+                _rect.anchoredPosition = position;
+                _rect.localRotation = rotation;
+                _rect.localScale = scale;
+                return;
+            }
+            float duration = 1f / Mathf.Max(.01f, _smoothSpeed);
+            _motion = DOTween.Sequence()
+                .Join(_rect.DOAnchorPos(position, duration))
+                .Join(_rect.DOLocalRotateQuaternion(rotation, duration))
+                .Join(_rect.DOScale(scale, duration))
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true)
+                .SetLink(gameObject);
+        }
+
+        private void OnDisable()
+        {
+            _motion?.Kill();
+            _motion = null;
+            _hovering = false;
+            _held = false;
+            if (_initialized && _rect != null)
+            {
+                // Unity forbids sibling changes while a parent is activating/deactivating.
+                _rect.anchoredPosition = _basePosition;
+                _rect.localRotation = _baseRotation;
+                _rect.localScale = _baseScale;
+            }
+        }
+
+        private void OnDestroy() => _motion?.Kill();
     }
 }

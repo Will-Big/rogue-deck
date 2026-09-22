@@ -6236,6 +6236,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2036578487}
   - component: {fileID: 2036578488}
+  - component: {fileID: 2036578489}
   m_Layer: 0
   m_Name: HandFan
   m_TagString: Untagged
@@ -6277,15 +6278,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView
   _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
   _content: {fileID: 890533497}
-  _cardSize: {x: 170, y: 285.6}
-  _baseSpacing: 150
-  _minimumSpacing: 72
-  _anglePerCard: 4
-  _arcDrop: 10
-  _badgeOverflow: 24
-  _horizontalSafeMargins: 32
-  _verticalSafeMargins: 16
-  _minimumScale: 0.65
+  _layout: {fileID: 2036578489}
+--- !u!114 &2036578489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2036578486}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 829c91f422ffa480da8eaf9a2fff3637, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanLayoutView
+  _content: {fileID: 890533497}
+  _radius: 800
+  _totalAngle: 32
+  _rotateWithArc: 1
+  _invertRotation: 0
+  _useSiblingOrder: 1
+  _perItemExtraAngle: 0
+  _adaptiveSpread: 1
+  _cardsForFullSpread: 5
+  _minAngle: 0
+  _useBottomBaseline: 1
+  _baselinePadding: 16
+  _safeMargins: {x: 32, y: 16}
+  _controlCardScale: 1
+  _cardScale: 0.64
+  _smooth: 1
+  _smoothSpeed: 12
 --- !u!1 &2075203869
 GameObject:
   m_ObjectHideFlags: 0

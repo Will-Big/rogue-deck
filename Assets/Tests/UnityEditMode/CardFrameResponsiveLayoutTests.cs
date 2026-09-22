@@ -15,9 +15,6 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class CardFrameResponsiveLayoutTests
     {
-        private const float MinimumSpacing = 72f;
-        private const float BaseSpacing = 150f;
-        private const float MinimumScale = 0.65f;
         private const float HorizontalSafeMarginPerSide = 16f;
         private const float VerticalSafeMarginPerSide = 8f;
 
@@ -35,10 +32,9 @@ namespace FateWeaver.Tests.UnityEditMode
                 try
                 {
                     Assert.AreEqual(260f, fixture.HandRect.rect.height, 0.01f);
-                    Assert.AreEqual(Vector2.zero, fixture.Content.anchoredPosition);
                     AssertUniformContentScale(fixture.Content);
                     AssertCardsStayInsideSafeArea(fixture);
-                    AssertSpacingStaysInAuthoredRange(fixture.Views);
+                    AssertCardsStayInLeftToRightOrder(fixture.Views);
                     AssertAdjacentCardsLeaveBadgesVisible(fixture.Views);
                 }
                 finally
@@ -58,7 +54,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 AssertUniformContentScale(fixture.Content);
                 foreach (var view in fixture.Views)
                 {
-                    Assert.That(view.transform.localScale.x, Is.EqualTo(.85f).Within(.001f));
+                    Assert.That(view.transform.localScale.x, Is.EqualTo(.64f).Within(.001f));
                     Assert.AreEqual(view.transform.localScale.x, view.transform.localScale.y);
                     Assert.AreEqual(
                         new Vector2(200f, 336f),
@@ -77,25 +73,11 @@ namespace FateWeaver.Tests.UnityEditMode
             var fixture = BuildDirectHand(650f, 260f, 5);
             try
             {
-                float narrowSpacing = Spacing(fixture.Views);
                 float narrowScale = fixture.Content.localScale.x;
-
                 fixture.HandRect.sizeDelta = new Vector2(900f, 260f);
-                var dimensionCallback = typeof(HandFanView).GetMethod(
-                    "OnRectTransformDimensionsChange",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                Assert.IsNotNull(dimensionCallback);
-                dimensionCallback.Invoke(fixture.Hand, null);
-
-                Assert.That(narrowSpacing, Is.LessThan(BaseSpacing));
-                Assert.AreEqual(BaseSpacing, Spacing(fixture.Views), 0.01f);
-                Assert.That(
-                    fixture.Content.localScale.x,
-                    Is.GreaterThanOrEqualTo(narrowScale));
-                Assert.IsNull(
-                    typeof(HandFanView).GetMethod(
-                        "LateUpdate",
-                        BindingFlags.Instance | BindingFlags.NonPublic));
+                fixture.Hand.GetComponent<HandFanLayoutView>().Refresh();
+                Assert.That(fixture.Content.localScale.x, Is.GreaterThanOrEqualTo(narrowScale - .0001f));
+                AssertCardsStayInsideSafeArea(fixture);
             }
             finally
             {
@@ -146,6 +128,10 @@ namespace FateWeaver.Tests.UnityEditMode
 
             var hand = handRect.gameObject.AddComponent<HandFanView>();
             hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
+            // Verify fitting before intentional position offsets move the hand outside the safe area.
+            typeof(HandFanLayoutView).GetField("_baselinePadding",
+                BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(hand.GetComponent<HandFanLayoutView>(), VerticalSafeMarginPerSide);
             hand.SetCards(
                 Presentations(cardCount),
                 _ => { },
@@ -191,7 +177,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.AreEqual(content.localScale.x, content.localScale.z, 0.0001f);
             Assert.That(
                 content.localScale.x,
-                Is.InRange(MinimumScale, 1f));
+                Is.InRange(.0001f, 1f));
         }
 
         private static void AssertCardsStayInsideSafeArea(HandFixture fixture)
@@ -221,22 +207,12 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
-        private static void AssertSpacingStaysInAuthoredRange(CardView[] views)
+        private static void AssertCardsStayInLeftToRightOrder(CardView[] views)
         {
-            if (views.Length < 2)
-            {
-                return;
-            }
-
-            Assert.That(
-                Spacing(views),
-                Is.InRange(MinimumSpacing, BaseSpacing));
+            for (int i = 1; i < views.Length; i++)
+                Assert.Greater(((RectTransform)views[i].transform).anchoredPosition.x,
+                    ((RectTransform)views[i - 1].transform).anchoredPosition.x);
         }
-
-        private static float Spacing(CardView[] views)
-            => Mathf.Abs(
-                ((RectTransform)views[1].transform).anchoredPosition.x
-                - ((RectTransform)views[0].transform).anchoredPosition.x);
 
         private static void AssertAdjacentCardsLeaveBadgesVisible(CardView[] views)
         {

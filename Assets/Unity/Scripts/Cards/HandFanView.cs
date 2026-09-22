@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using FateWeaver.Simulation.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>The hand as a slight curved fan (spec §2): full CardViews positioned by HandFanLayout,
-    /// no layout group — poses are absolute so cards can tilt. Hover and held presentation
-    /// are layered on each prefab instance without changing the underlying card data.</summary>
+    /// <summary>Connects hand card presentations to selection and placement interactions.</summary>
+    [RequireComponent(typeof(HandFanLayoutView))]
     public sealed class HandFanView : MonoBehaviour
     {
         public sealed class PlacementFlightVisual
@@ -27,25 +24,18 @@ namespace FateWeaver.Unity
 
         [SerializeField] private CardPrefabCatalog _cardPrefabs;
         [SerializeField] private RectTransform _content;
-        [SerializeField] private Vector2 _cardSize = new Vector2(170f, 285.6f);
-        [SerializeField] private float _baseSpacing = 150f;
-        [SerializeField] private float _minimumSpacing = 72f;
-        [SerializeField] private float _anglePerCard = 4f;
-        [SerializeField] private float _arcDrop = 10f;
-        [SerializeField] private float _badgeOverflow = 24f;
-        [SerializeField] private float _horizontalSafeMargins = 32f;
-        [SerializeField] private float _verticalSafeMargins = 16f;
-        [SerializeField] private float _minimumScale = 0.65f;
+        [SerializeField] private HandFanLayoutView _layout;
 
         private readonly List<CardView> _views = new List<CardView>();
         private readonly List<HandCardHoverEffect> _hoverEffects = new List<HandCardHoverEffect>();
         private readonly List<CanvasGroup> _groups = new List<CanvasGroup>();
-        private int _layoutRevision;
 
         public void EditorBuild(CardPrefabCatalog catalog, RectTransform content)
         {
             _cardPrefabs = catalog;
             _content = content;
+            _layout = GetComponent<HandFanLayoutView>();
+            _layout.EditorBuild(content);
         }
 
         public void SetCards(
@@ -55,7 +45,8 @@ namespace FateWeaver.Unity
         {
             foreach (var view in _views)
             {
-                Destroy(view.gameObject);
+                if (Application.isPlaying) Destroy(view.gameObject);
+                else DestroyImmediate(view.gameObject);
             }
 
             _views.Clear();
@@ -66,23 +57,21 @@ namespace FateWeaver.Unity
                 var view = _cardPrefabs.Create(cards[i], _content);
                 var rect = (RectTransform)view.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-                float scale = Mathf.Min(_cardSize.x / rect.rect.width, _cardSize.y / rect.rect.height);
-                rect.localScale = Vector3.one * scale;
                 int captured = i;
                 view.Bind(cards[i], () => onClick?.Invoke(captured));
-                var hover = view.gameObject.AddComponent<HandCardHoverEffect>();
+                var hover = view.GetComponent<HandCardHoverEffect>();
                 hover.Capture();
                 hover.Initialize(hovering =>
                 {
-                    NormalizeSiblingOrder();
+                    _layout.NormalizeSiblingOrder();
                     onHover?.Invoke(captured, hovering);
                 });
                 _hoverEffects.Add(hover);
-                _groups.Add(view.gameObject.AddComponent<CanvasGroup>());
+                _groups.Add(view.GetComponent<CanvasGroup>());
                 _views.Add(view);
             }
 
-            RecalculateLayout();
+            _layout.Bind(_hoverEffects);
         }
 
         public void SetHeld(int index, bool value)
@@ -90,7 +79,7 @@ namespace FateWeaver.Unity
             if (index >= 0 && index < _hoverEffects.Count)
             {
                 _hoverEffects[index].Hold(value);
-                NormalizeSiblingOrder();
+                _layout.NormalizeSiblingOrder();
             }
         }
 
@@ -195,7 +184,7 @@ namespace FateWeaver.Unity
                 hover.SetSuppressed(value);
             }
 
-            NormalizeSiblingOrder();
+            if (_hoverEffects.Count > 0) _layout.NormalizeSiblingOrder();
         }
 
         public void SetSelection(int index, CardView.SelectionKind kind)
@@ -211,86 +200,6 @@ namespace FateWeaver.Unity
             foreach (var view in _views)
             {
                 view.SetInteractable(value);
-            }
-        }
-
-        private void OnRectTransformDimensionsChange()
-        {
-            RecalculateLayout();
-        }
-
-        private void RecalculateLayout()
-        {
-            if (_content == null)
-            {
-                return;
-            }
-
-            var root = transform as RectTransform;
-            if (root == null)
-            {
-                return;
-            }
-
-            _layoutRevision++;
-
-            var activeInBackToFrontOrder = _hoverEffects
-                .Where(effect => effect.IsActive)
-                .OrderBy(effect => effect.transform.GetSiblingIndex())
-                .ToArray();
-
-            var settings = new ResponsiveHandSettings(
-                _cardSize.x,
-                _cardSize.y,
-                _baseSpacing,
-                _minimumSpacing,
-                _badgeOverflow,
-                _horizontalSafeMargins,
-                _verticalSafeMargins,
-                _minimumScale);
-            var metrics = ResponsiveHandLayout.Calculate(
-                root.rect.width,
-                root.rect.height,
-                _views.Count,
-                settings);
-            _content.localScale = Vector3.one * metrics.Scale;
-            for (int i = 0; i < _views.Count; i++)
-            {
-                var pose = HandFanLayout.PoseFor(
-                    i,
-                    _views.Count,
-                    metrics.Spacing,
-                    _anglePerCard,
-                    _arcDrop);
-                _hoverEffects[i].UpdateBaseline(
-                    new Vector2(pose.XOffset, pose.YOffset),
-                    Quaternion.Euler(0f, 0f, pose.AngleDegrees),
-                    i);
-            }
-
-            NormalizeSiblingOrder(activeInBackToFrontOrder);
-        }
-
-        private void NormalizeSiblingOrder()
-        {
-            var activeInBackToFrontOrder = _hoverEffects
-                .Where(effect => effect.IsActive)
-                .OrderBy(effect => effect.transform.GetSiblingIndex())
-                .ToArray();
-            NormalizeSiblingOrder(activeInBackToFrontOrder);
-        }
-
-        private void NormalizeSiblingOrder(
-            IReadOnlyList<HandCardHoverEffect> activeInBackToFrontOrder)
-        {
-            for (int index = 0; index < _views.Count; index++)
-            {
-                _views[index].transform.SetSiblingIndex(index);
-            }
-
-            foreach (var hover in activeInBackToFrontOrder)
-            {
-                hover.ReapplyActiveSiblingOrder();
             }
         }
 

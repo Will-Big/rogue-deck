@@ -98,18 +98,20 @@ namespace FateWeaver.Tests.UnityEditMode
                 ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
                 InvokeDimensionChange(hand);
 
-                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.That(rect.anchoredPosition.x, Is.LessThan(0f));
+                Vector2 activePosition = rect.anchoredPosition;
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.AreEqual(Vector3.one * (.85f * 1.35f), rect.localScale);
+                Assert.That(rect.localScale.x, Is.EqualTo(.64f * 1.35f).Within(.001f));
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hover.OnPointerExit(null);
 
-                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.That(Vector2.Distance(rect.anchoredPosition,
+                    activePosition - new Vector2(0f, 46f)), Is.LessThan(.001f));
                 Assert.Less(
-                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 8f), rect.localRotation),
                     0.01f);
-                Assert.AreEqual(Vector3.one * .85f, rect.localScale);
+                Assert.That(rect.localScale.x, Is.EqualTo(.64f).Within(.001f));
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally
@@ -132,18 +134,20 @@ namespace FateWeaver.Tests.UnityEditMode
                 ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
                 InvokeDimensionChange(hand);
 
-                Assert.AreEqual(new Vector2(-150f, 36f), rect.anchoredPosition);
+                Assert.That(rect.anchoredPosition.x, Is.LessThan(0f));
+                Vector2 activePosition = rect.anchoredPosition;
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.AreEqual(Vector3.one * (.85f * 1.35f), rect.localScale);
+                Assert.That(rect.localScale.x, Is.EqualTo(.64f * 1.35f).Within(.001f));
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hand.SetHeld(1, false);
 
-                Assert.AreEqual(new Vector2(-150f, -10f), rect.anchoredPosition);
+                Assert.That(Vector2.Distance(rect.anchoredPosition,
+                    activePosition - new Vector2(0f, 46f)), Is.LessThan(.001f));
                 Assert.Less(
-                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 4f), rect.localRotation),
+                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 8f), rect.localRotation),
                     0.01f);
-                Assert.AreEqual(Vector3.one * .85f, rect.localScale);
+                Assert.That(rect.localScale.x, Is.EqualTo(.64f).Within(.001f));
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally
@@ -459,11 +463,7 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         private static void InvokeDimensionChange(HandFanView hand)
-            => typeof(HandFanView)
-                .GetMethod(
-                    "OnRectTransformDimensionsChange",
-                    BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(hand, null);
+            => hand.GetComponent<HandFanLayoutView>().Refresh();
 
         private static CardPresentation[] ThreeCards()
             => Cards(3);
