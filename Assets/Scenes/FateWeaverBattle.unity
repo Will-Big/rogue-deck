@@ -6262,7 +6262,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 210}
-  m_SizeDelta: {x: 0, y: 260}
+  m_SizeDelta: {x: 0, y: 420}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2036578488
 MonoBehaviour:
@@ -6292,8 +6292,8 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanLayoutView
   _content: {fileID: 890533497}
-  _radius: 1250
-  _totalAngle: 32
+  _radius: 1650
+  _totalAngle: 18
   _rotateWithArc: 1
   _invertRotation: 0
   _useSiblingOrder: 1
@@ -6301,11 +6301,14 @@ MonoBehaviour:
   _adaptiveSpread: 1
   _cardsForFullSpread: 5
   _minAngle: 0
+  _cardsForMaxSpread: 10
+  _maxAngle: 24
   _useBottomBaseline: 1
   _baselinePadding: 16
   _safeMargins: {x: 32, y: 16}
   _controlCardScale: 1
-  _cardScale: 0.64
+  _cardScale: 1
+  _hoverScale: 1.15
   _smooth: 1
   _smoothSpeed: 12
 --- !u!1 &2075203869

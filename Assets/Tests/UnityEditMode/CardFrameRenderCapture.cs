@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Descriptions;
@@ -55,6 +56,9 @@ namespace FateWeaver.Tests.UnityEditMode
             1680,
             720,
             CaptureContent.MixedFive)]
+        [TestCase("mixed-five-1280x720-hover", 1280, 720, CaptureContent.MixedFive, 1)]
+        [TestCase("mixed-five-960x720-hover-edge", 960, 720, CaptureContent.MixedFive, 4)]
+        [TestCase("mixed-ten-1280x720", 1280, 720, CaptureContent.MixedTen)]
         [TestCase("b-gallery-1440x720", 1440, 720, CaptureContent.BGallery)]
         [TestCase("single-ally-1280x720", 1280, 720, CaptureContent.SingleAlly)]
         [TestCase("single-enemy-all-1280x720", 1280, 720, CaptureContent.SingleEnemyAll)]
@@ -63,7 +67,8 @@ namespace FateWeaver.Tests.UnityEditMode
             string caseName,
             int width,
             int height,
-            CaptureContent content)
+            CaptureContent content,
+            int hoverIndex = -1)
         {
             var cameraObject = new GameObject("CaptureCamera", typeof(Camera));
             var canvasObject = new GameObject(
@@ -96,7 +101,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 if (content == CaptureContent.BGallery)
                     BuildGallery((RectTransform)canvasObject.transform, Presentations(content), captureCatalog);
                 else
-                    BuildHand((RectTransform)canvasObject.transform, width, Presentations(content), captureCatalog);
+                    BuildHand((RectTransform)canvasObject.transform, width, Presentations(content), captureCatalog, hoverIndex);
                 PrewarmFontsForCapture(canvasObject);
                 fontIsolation = IsolateFontsForCapture(canvasObject);
                 Canvas.ForceUpdateCanvases();
@@ -346,14 +351,15 @@ namespace FateWeaver.Tests.UnityEditMode
             RectTransform canvas,
             int logicalWidth,
             CardPresentation[] presentations,
-            CardPrefabCatalog catalog)
+            CardPrefabCatalog catalog,
+            int hoverIndex = -1)
         {
             var handObject = new GameObject("HandFan", typeof(RectTransform));
             var handRect = (RectTransform)handObject.transform;
             handRect.SetParent(canvas, false);
             handRect.anchorMin = handRect.anchorMax = new Vector2(0.5f, 0f);
             handRect.anchoredPosition = new Vector2(0f, 210f);
-            handRect.sizeDelta = new Vector2(logicalWidth, 260f);
+            handRect.sizeDelta = new Vector2(logicalWidth, 420f);
 
             var contentObject = new GameObject("Content", typeof(RectTransform));
             var content = (RectTransform)contentObject.transform;
@@ -365,6 +371,8 @@ namespace FateWeaver.Tests.UnityEditMode
             var hand = handObject.AddComponent<HandFanView>();
             hand.EditorBuild(catalog, content);
             hand.SetCards(presentations, _ => { }, (_, __) => { });
+            if (hoverIndex >= 0)
+                content.GetChild(hoverIndex).GetComponent<HandCardHoverEffect>().OnPointerEnter(null);
         }
 
         private static void BuildGallery(RectTransform canvas, CardPresentation[] cards, CardPrefabCatalog catalog)
@@ -452,6 +460,10 @@ namespace FateWeaver.Tests.UnityEditMode
                                 new CardDescriptionLine(self, "소비했다면 방어 4.")
                             })
                     };
+                case CaptureContent.MixedTen:
+                    return Presentations(CaptureContent.MixedFive)
+                        .Concat(Presentations(CaptureContent.MixedFive))
+                        .ToArray();
                 case CaptureContent.MixedFive:
                     return new[]
                     {
@@ -517,6 +529,7 @@ namespace FateWeaver.Tests.UnityEditMode
             Intervention,
             ToxicReclaim,
             MixedFive,
+            MixedTen,
             BGallery,
             SingleAlly,
             SingleEnemyAll,

@@ -196,7 +196,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     new Vector2(0f, 210f),
                     ((RectTransform)hand.transform).anchoredPosition);
                 Assert.AreEqual(
-                    new Vector2(0f, 260f),
+                    new Vector2(0f, 420f),
                     ((RectTransform)hand.transform).sizeDelta);
                 Assert.AreEqual(Vector2.zero, handContent.anchoredPosition);
                 Assert.AreSame(catalog, Field<CardPrefabCatalog>(rail, "_cardPrefabs"));

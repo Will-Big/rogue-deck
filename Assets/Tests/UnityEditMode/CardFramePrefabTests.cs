@@ -433,18 +433,20 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Execution_frame_has_internal_cost_centered_name_and_protruding_order_tab()
+        public void Execution_frame_reads_order_tab_cost_then_left_aligned_name()
         {
             var view = LoadExecution();
             var cost = Child(view.transform, "CostBadge");
             var order = Child(view.transform, "ExecutionOrderBadge");
-            var name = CardPrefabCatalogTests.Field<TMP_Text>(view, "_nameText").rectTransform;
+            var nameText = CardPrefabCatalogTests.Field<TMP_Text>(view, "_nameText");
+            var name = nameText.rectTransform;
             Assert.IsEmpty(Child(view.transform, "SymbolOnlyTargetPanel").GetComponentsInChildren<TMP_Text>(true));
             AssertBadgeOutsideFrame(view, order);
             var frame = (RectTransform)view.transform;
             var corners = new Vector3[4]; cost.GetWorldCorners(corners);
             foreach (var corner in corners) Assert.IsTrue(frame.rect.Contains(frame.InverseTransformPoint(corner)));
-            Assert.AreEqual(frame.rect.center.x, frame.InverseTransformPoint(name.TransformPoint(name.rect.center)).x, .01f);
+            AssertHeaderReadsLeftToRight(frame, order, cost, name);
+            Assert.AreEqual(HorizontalAlignmentOptions.Left, nameText.horizontalAlignment);
             Assert.AreEqual(cost.TransformPoint(cost.rect.center).y, name.TransformPoint(name.rect.center).y, .01f);
             Assert.AreEqual(0, Mathf.DeltaAngle(order.localEulerAngles.z, 0), .01f);
             AssertNoMaskAncestor(order, view.transform);
@@ -596,6 +598,30 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.IsNotNull(Child(intervention.transform, "CategoryTab"));
             AssertNoMaskAncestor(cost, intervention.transform);
             Assert.That(cost.rect.size, Is.EqualTo(new Vector2(28f, 28f)));
+        }
+
+        [Test]
+        public void Intervention_frame_reads_category_tab_cost_then_left_aligned_name()
+        {
+            var view = LoadIntervention();
+            var nameText = CardPrefabCatalogTests.Field<TMP_Text>(view, "_nameText");
+            var cost = Child(view.transform, "CostBadge");
+            AssertHeaderReadsLeftToRight((RectTransform)view.transform,
+                Child(view.transform, "CategoryTab"), cost, nameText.rectTransform);
+            Assert.AreEqual(HorizontalAlignmentOptions.Left, nameText.horizontalAlignment);
+            Assert.AreEqual(cost.TransformPoint(cost.rect.center).y,
+                nameText.rectTransform.TransformPoint(nameText.rectTransform.rect.center).y, .01f);
+        }
+
+        // Overlapping hand cards show only their left strip, so the tab, the cost and the start of
+        // the name must read left to right without overlapping.
+        private static void AssertHeaderReadsLeftToRight(
+            RectTransform frame, RectTransform tab, RectTransform cost, RectTransform name)
+        {
+            float Left(RectTransform rect) => RectTransformUtility.CalculateRelativeRectTransformBounds(frame, rect).min.x;
+            float Right(RectTransform rect) => RectTransformUtility.CalculateRelativeRectTransformBounds(frame, rect).max.x;
+            Assert.LessOrEqual(Right(tab), Left(cost) + .01f, "cost must follow the tab");
+            Assert.LessOrEqual(Right(cost), Left(name) + .01f, "name must follow the cost");
         }
 
         [Test]

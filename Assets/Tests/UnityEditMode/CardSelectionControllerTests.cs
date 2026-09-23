@@ -237,7 +237,8 @@ namespace FateWeaver.Tests.UnityEditMode
             _controller.BeginPlacement(0, card, 0);
 
             Assert.AreEqual(Quaternion.identity, source.transform.localRotation);
-            Assert.AreEqual(baselineScale * 1.35f, source.transform.localScale);
+            float hoverScale = Field<float>(_hand.GetComponent<HandFanLayoutView>(), "_hoverScale");
+            Assert.AreEqual(baselineScale * hoverScale, source.transform.localScale);
             var outline = Field<Outline>(source, "_selectionOutline");
             Assert.IsTrue(outline.enabled);
             Assert.AreEqual(SelectedOutline, outline.effectColor);

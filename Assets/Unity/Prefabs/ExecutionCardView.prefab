@@ -35,7 +35,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 160, y: -8}
+  m_AnchoredPosition: {x: 44, y: -8}
   m_SizeDelta: {x: 28, y: 28}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1020000000000000003
@@ -2072,7 +2072,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 44, y: -4}
+  m_AnchoredPosition: {x: 76, y: -4}
   m_SizeDelta: {x: 112, y: 36}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &7636811639768102927
@@ -2137,7 +2137,7 @@ MonoBehaviour:
   m_fontSizeMin: 11
   m_fontSizeMax: 15
   m_fontStyle: 1
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -2717,6 +2717,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4eb6a60f5a25b38dc4cb68adcf34dece, type: 3}
   m_Name:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandCardHoverEffect
+  _restLine: {fileID: 2753429300905984503}
 --- !u!225 &8287492812277349650
 CanvasGroup:
   m_ObjectHideFlags: 0

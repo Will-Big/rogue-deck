@@ -67,17 +67,24 @@ namespace FateWeaver.Tests.UnityPlayMode
 
                 Time.timeScale = 0f;
                 var baseline = card.anchoredPosition;
+                float restScale = card.localScale.x;
+                float hoverScale = (float)typeof(HandFanLayoutView)
+                    .GetField("_hoverScale", System.Reflection.BindingFlags.NonPublic
+                        | System.Reflection.BindingFlags.Instance)
+                    .GetValue(layout);
                 hover.OnPointerEnter(null);
-                Assert.That(card.anchoredPosition.y, Is.EqualTo(baseline.y).Within(.001f));
+                Assert.That(card.localScale.x, Is.EqualTo(restScale).Within(.001f));
                 yield return new WaitForSecondsRealtime(.2f);
-                Assert.That(card.anchoredPosition.y, Is.EqualTo(baseline.y + 46f).Within(.01f));
-                Assert.That(card.localScale.x, Is.EqualTo(.64f * 1.35f).Within(.001f));
+                Assert.That(card.localScale.x, Is.EqualTo(restScale * hoverScale).Within(.001f));
+                var hovered = RectTransformUtility.CalculateRelativeRectTransformBounds(root.transform, card);
+                Assert.That(hovered.min.y, Is.GreaterThanOrEqualTo(-150.001f));
+                Assert.That(hovered.max.y, Is.LessThanOrEqualTo(150.001f));
 
                 rootRect.sizeDelta = new Vector2(400f, 190f);
                 hover.OnPointerExit(null);
                 yield return new WaitForSecondsRealtime(.2f);
                 Assert.That(card.anchoredPosition, Is.EqualTo(baseline));
-                Assert.That(card.localScale.x, Is.EqualTo(.64f).Within(.001f));
+                Assert.That(card.localScale.x, Is.EqualTo(restScale).Within(.001f));
                 var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(root.transform, card);
                 Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(-95.001f));
                 Assert.That(bounds.max.y, Is.LessThanOrEqualTo(95.001f));

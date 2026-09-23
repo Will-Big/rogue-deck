@@ -510,30 +510,48 @@ DescriptionLineView
 카드 내부 좌표는 해상도별로 다시 계산하지 않는다. 프리팹 기준 좌표와 비율을 유지하고 핸드의 간격과
 전체 스케일만 조정한다.
 
-현재 `CanvasScaler`의 기준 해상도 `1280×720`을 논리 좌표계로 사용한다. `HandFan` 루트는 화면 하단
-안전 영역 안에서 좌우로 늘어나며 실제 사용 가능한 폭과 높이를 제공한다.
+현재 `CanvasScaler`의 기준 해상도 `1280×720`을 논리 좌표계로 사용한다.
+
+> **2026-09-23 개정 — 참고 이미지형 손패.** 사용자가 제시한 참고 화면에 맞춰 손패를 화면 아래로
+> 잘리게 둔다. 이전의 "카드 전체가 안전 영역 안" 원칙은 가로에만 남는다.
+
+- `HandFan` 루트의 바닥은 화면 하단에 붙고, 높이는 호버 카드가 온전히 올라올 공간이다(전투 씬 420).
+- 쉬는 카드는 **일러스트 하단까지만** 화면에 남고 그 아래는 핸드 영역 밖으로 나간다. 기준선은 카드
+  프리팹 `HandCardHoverEffect._restLine`에 직렬화한 `ArtPanel`이다. 기준선이 없는 카드는 카드 면 전체를 쓴다.
+- 기준선은 **호 꼭대기(가운데 카드)** 에서 잰다. 호를 따라 내려가는 양끝 카드는 일러스트 아래 모서리가
+  조금 잘린다. 가장 낮은 카드에 맞추면 장수가 늘 때마다 손패가 위로 떠올라서 이렇게 정했다(2026-09-23).
+- 호버 카드는 회전 없이 `_hoverScale`배로 커지고 카드 전체가 안전 영역 안에 들어온다. 좌우 끝 카드는
+  안쪽으로 밀고, 쉬는 자세보다 낮아지지 않는다.
+- 퍼짐은 2단이다. 1~5장은 전체 각도 0°→18°로 넓어지고, 5~10장은 18°→24°로 완만하게 넓어지며,
+  10장 이후는 고정이다. 5장 기준 인접 카드는 약 36% 겹친다. 가려진 카드에는 왼쪽 띠만 남으므로 순서·종류 탭, 비용, 이름 앞부분이
+  왼쪽부터 읽히도록 카드 머리 행을 배치한다([B안 계획 개정](../plans/2026-09-20-card-b-prefab.md)).
 
 ### 13.2 계산 순서
 
 ```text
-availableWidth = handRoot.width - safeMargins
+scale       = controlCardScale ? cardScale : 1
+arcRadius   = radius × scale                       // 호는 카드 단위로 저작한다
+spread      = count ≤ fullCount ? lerp(minAngle, totalAngle, (count-1)/(fullCount-1))
+                                : lerp(totalAngle, maxAngle, (count-fullCount)/(maxCount-fullCount))
+pose[i]     = ArcHandLayout.PoseFor(i, count, arcRadius, spread, …)
+restBounds  = 자세·배율을 적용한 카드 면(돌출 배지 포함)의 합
+apexLine    = min(각 카드 _restLine 하단 × 배율)   // 호 꼭대기에 놓였을 때의 기준선(없으면 카드 면)
+hoverHeight = max(카드 면 높이 × 배율 × hoverScale)
 
-spacing = clamp(
-    (availableWidth - cardWidth - badgeOverflow) / (cardCount - 1),
-    minimumSpacing,
-    baseSpacing)
+fit = min(1,
+          (handRoot.width  - safeMargins.x) / restBounds.width,
+          (handRoot.height - safeMargins.y) / hoverHeight)
 
-fanScale = min(
-    1,
-    availableWidth / widthAtMinimumSpacing,
-    availableHeight / requiredFanHeight)
+content.y   = 핸드 바닥 + baselinePadding - apexLine × fit
+hoverPose   = 회전 0, 배율 × hoverScale, 안전 영역 안으로 clamp, 쉬는 자세보다 낮지 않음
 ```
 
-1. 기준 해상도와 여유 화면에서는 현재 기본값인 카드 폭 170, 간격 150, 약 20 겹침을 유지한다.
-2. 화면이 좁아지거나 카드가 늘면 간격을 최소 간격까지 줄여 겹침을 늘린다.
-3. 최소 간격으로도 들어가지 않으면 부채꼴 `Content` 전체를 균일 축소한다.
+1. 호와 카드가 같은 배율로 커지므로 배치 전체가 카드 배율에 상사다. 카드 배율은 영역을 채울 때까지
+   화면에 1:1로 반영되고, 그 뒤로는 화면비 맞춤이 크기를 정한다.
+2. 쉬는 손패는 폭에만 맞춘다. 세로 예산은 온전히 올라와야 하는 호버 카드의 몫이다.
+3. 위치 오프셋과 기준선 여백은 배율에 되먹이지 않는다.
 4. 비용, 실행 순서, 본문, 클릭 영역은 같은 루트 아래에서 함께 축소된다.
-5. 카드 위치, 회전, 낙차는 기존 `HandFanLayout.PoseFor`의 결정론적 계산을 사용한다.
+5. 카드 위치, 회전, 낙차는 `ArcHandLayout.PoseFor`의 결정론적 계산을 사용한다.
 6. 루트 크기 또는 카드 수가 바뀔 때만 재계산한다. `LateUpdate()`에서 자식 좌표를 반복 지정하지 않는다.
 
 ### 13.3 직렬화 설정
@@ -541,11 +559,10 @@ fanScale = min(
 다음 시각 튜닝 값은 `const`가 아니라 `[SerializeField] private` 또는 프리팹 `RectTransform`에 둔다.
 
 - 기준 카드 크기
-- 기본 간격과 최소 간격
-- 카드당 회전량
-- 부채꼴 낙차
-- 좌우·하단 안전 여백
-- 최소 전체 스케일
+- 호 반지름(카드 단위)·전체 각도·적응형 퍼짐(최대 장수·최대 각도 포함)
+- 좌우·하단 안전 여백과 기준선 여백
+- 카드 배율과 호버 배율
+- 쉬는 손패 기준선(`_restLine`)
 - 비용·실행 순서 크기와 오프셋
 
 해상도별 `if` 분기나 좌표 테이블을 만들지 않는다.
@@ -600,7 +617,10 @@ fanScale = min(
 - 비용과 실행 순서가 프레임 밖에 있으면서 마스크에 잘리지 않는다.
 - 겹치는 인접 핸드 카드의 비용과 실행 순서 경계가 서로 가리지 않는다.
 - 호버 카드가 형제 순서 최상위에 올라온다.
-- 4:3, 16:10, 16:9, 21:9 크기에서 카드가 안전 영역을 벗어나지 않는다.
+- 4:3, 16:10, 16:9, 21:9 크기에서 쉬는 카드는 가로 안전 영역 안에 있고, 호 꼭대기 카드의 일러스트
+  하단이 핸드 바닥 여백에 붙으며(다른 카드는 그보다 낮다), 카드 아랫부분은 핸드 영역 밖으로 나간다.
+- 카드 수가 바뀌어도 호 꼭대기 카드의 일러스트 하단 높이는 변하지 않는다.
+- 같은 크기에서 호버 카드는 회전 없이 가로·세로 안전 영역 안에 온전히 들어온다.
 - 1장부터 최대 핸드 수까지 간격과 전체 스케일이 허용 범위 안에 있다.
 - 배치 비행이 원본 카드 카테고리의 프리팹을 유지한다.
 - 실행 영역의 `RailCardView`가 핸드 돌출 배지를 참조하지 않는다.

@@ -43,6 +43,26 @@ namespace FateWeaver.Tests
         }
 
         [Test]
+        public void Second_stage_widens_gently_from_full_count_to_maximum_count_then_caps()
+        {
+            float Edge(int count) => ArcHandLayout.PoseFor(0, count, 100f, 18f,
+                cardsForFullSpread: 5, cardsForMaxSpread: 10, maximumAngle: 24f).AngleDegrees;
+            Assert.That(Edge(3), Is.EqualTo(4.5f).Within(.001f), "first stage is unchanged");
+            Assert.That(Edge(5), Is.EqualTo(9f).Within(.001f));
+            Assert.That(Edge(7), Is.EqualTo(10.2f).Within(.001f));
+            Assert.That(Edge(10), Is.EqualTo(12f).Within(.001f));
+            Assert.That(Edge(14), Is.EqualTo(12f).Within(.001f), "caps at the maximum count");
+        }
+
+        [Test]
+        public void Second_stage_never_narrows_the_fan()
+        {
+            var pose = ArcHandLayout.PoseFor(0, 10, 100f, 18f,
+                cardsForFullSpread: 5, cardsForMaxSpread: 10, maximumAngle: 10f);
+            Assert.That(pose.AngleDegrees, Is.EqualTo(9f).Within(.001f));
+        }
+
+        [Test]
         public void Extra_angle_applies_per_gap_including_even_hands()
         {
             var left = ArcHandLayout.PoseFor(0, 4, 100f, 30f,

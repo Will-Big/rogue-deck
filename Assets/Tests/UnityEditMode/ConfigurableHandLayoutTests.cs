@@ -32,11 +32,7 @@ namespace FateWeaver.Tests.UnityEditMode
             _hand = _root.AddComponent<HandFanView>();
             _hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), _content);
             _layout = _root.GetComponent<HandFanLayoutView>();
-            _hand.SetCards(Enumerable.Range(0, 5).Select(i => new CardPresentation(
-                "card-" + i, "card-" + i, 3, 1, Side.Player,
-                new CardDescriptionLayout(Array.Empty<CardTargetKey>(),
-                    Array.Empty<CardDescriptionLine>(), string.Empty), null, false)).ToArray(), index => _lastClicked = index, null);
-            _cards = _content.GetComponentsInChildren<CardView>();
+            SetHand(5);
         }
 
         [TearDown]
@@ -55,16 +51,69 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Bottom_baseline_includes_rotated_card_bounds_and_padding()
+        public void Bottom_baseline_rests_the_apex_art_edge_on_the_padding()
         {
             Set("_baselinePadding", 25f);
             _layout.Refresh();
-            var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_root.transform, _content);
-            Assert.That(bounds.min.y, Is.EqualTo(-125f).Within(.1f));
+            Assert.That(ArtEdge(2), Is.EqualTo(-125f).Within(.1f));
             Set("_baselinePadding", 45f);
             _layout.Refresh();
-            bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_root.transform, _content);
-            Assert.That(bounds.min.y, Is.EqualTo(-105f).Within(.1f));
+            Assert.That(ArtEdge(2), Is.EqualTo(-105f).Within(.1f));
+        }
+
+        [TestCase(3)]
+        [TestCase(7)]
+        public void Apex_art_edge_stays_on_the_baseline_as_the_hand_grows(int count)
+        {
+            Set("_baselinePadding", 25f);
+            _layout.Refresh();
+            float five = ArtEdge(2);
+            SetHand(count);
+            _layout.Refresh();
+            Assert.That(ArtEdge(count / 2), Is.EqualTo(five).Within(.1f));
+        }
+
+        [Test]
+        public void Fan_keeps_widening_gently_until_the_max_spread_count()
+        {
+            float full = (float)typeof(HandFanLayoutView)
+                .GetField("_totalAngle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_layout);
+            float max = (float)typeof(HandFanLayoutView)
+                .GetField("_maxAngle", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_layout);
+            Assert.Greater(max, full);
+            _layout.Refresh();
+            Assert.Less(Quaternion.Angle(Quaternion.Euler(0f, 0f, -full * .5f), Rect(4).localRotation), .01f);
+            SetHand(10);
+            _layout.Refresh();
+            Assert.Less(Quaternion.Angle(Quaternion.Euler(0f, 0f, -max * .5f), Rect(9).localRotation), .01f);
+        }
+
+        [Test]
+        public void Resting_cards_below_the_art_edge_leave_the_hand_area()
+        {
+            _layout.Refresh();
+            float bottom = ((RectTransform)_root.transform).rect.yMin;
+            for (int i = 0; i < _cards.Length; i++)
+                Assert.Less(BoundsOf(Rect(i)).min.y, bottom, "card " + i + " should be clipped");
+        }
+
+        [Test]
+        public void Hovered_card_rises_upright_and_fully_inside_the_hand_area()
+        {
+            _layout.Refresh();
+            _cards[2].GetComponent<HandCardHoverEffect>().OnPointerEnter(null);
+            Assert.Less(Quaternion.Angle(Quaternion.identity, Rect(2).localRotation), .01f);
+            AssertInsideSafeArea(Rect(2));
+        }
+
+        [Test]
+        public void Hovered_edge_card_is_pushed_inside_the_hand_width()
+        {
+            Set("_hoverScale", 1.6f);
+            ((RectTransform)_root.transform).sizeDelta = new Vector2(420f, 300f);
+            _layout.Refresh();
+            _cards[0].GetComponent<HandCardHoverEffect>().OnPointerEnter(null);
+            AssertInsideSafeArea(Rect(0));
         }
 
         [TestCase(116f, 100f)]
@@ -134,7 +183,7 @@ namespace FateWeaver.Tests.UnityEditMode
             hover.OnPointerExit(null);
             _layout.Refresh();
             Assert.That(rect.anchoredPosition.x, Is.EqualTo(before.x).Within(.001f));
-            Assert.That(rect.localScale.x, Is.EqualTo(.675f).Within(.001f));
+            Assert.That(rect.localScale.x, Is.EqualTo(.5f * HoverScale()).Within(.001f));
             Assert.AreEqual(4, rect.GetSiblingIndex());
             _hand.SetHeld(1, false);
             Assert.That(rect.anchoredPosition, Is.EqualTo(before));
@@ -171,14 +220,14 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Hand_is_capped_to_the_hand_area()
+        public void Resting_hand_is_capped_to_the_hand_width()
         {
             Set("_controlCardScale", true);
             Set("_cardScale", 1.5f);
             _layout.Refresh();
             Assert.Less(Rect(0).lossyScale.x, 1.5f);
             var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_root.transform, _content);
-            Assert.That(bounds.size.y, Is.LessThanOrEqualTo(((RectTransform)_root.transform).rect.height + .01f));
+            Assert.That(bounds.size.x, Is.LessThanOrEqualTo(((RectTransform)_root.transform).rect.width + .01f));
         }
 
         [Test]
@@ -197,7 +246,45 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.Less(capped, 1.5f);
         }
 
+        // Default _safeMargins split per side.
+        private const float HorizontalMargin = 16f;
+        private const float VerticalMargin = 8f;
+
         private RectTransform Rect(int index) => (RectTransform)_cards[index].transform;
+
+        private Bounds BoundsOf(RectTransform rect)
+            => RectTransformUtility.CalculateRelativeRectTransformBounds(_root.transform, rect);
+
+        private void AssertInsideSafeArea(RectTransform card)
+        {
+            var area = ((RectTransform)_root.transform).rect;
+            var bounds = BoundsOf(card);
+            Assert.That(bounds.min.x, Is.GreaterThanOrEqualTo(area.xMin + HorizontalMargin - .5f));
+            Assert.That(bounds.max.x, Is.LessThanOrEqualTo(area.xMax - HorizontalMargin + .5f));
+            Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(area.yMin + VerticalMargin - .5f));
+            Assert.That(bounds.max.y, Is.LessThanOrEqualTo(area.yMax - VerticalMargin + .5f));
+        }
+
+        private float ArtEdge(int index) => BoundsOf(RestLine(_cards[index])).min.y;
+
+        private void SetHand(int count)
+        {
+            _hand.SetCards(Enumerable.Range(0, count).Select(i => new CardPresentation(
+                "card-" + i, "card-" + i, 3, 1, Side.Player,
+                new CardDescriptionLayout(Array.Empty<CardTargetKey>(),
+                    Array.Empty<CardDescriptionLine>(), string.Empty), null, false)).ToArray(), index => _lastClicked = index, null);
+            _cards = _content.GetComponentsInChildren<CardView>();
+        }
+
+        private static RectTransform RestLine(CardView card)
+            => (RectTransform)typeof(HandCardHoverEffect)
+                .GetField("_restLine", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(card.GetComponent<HandCardHoverEffect>());
+
+        private float HoverScale()
+            => (float)typeof(HandFanLayoutView)
+                .GetField("_hoverScale", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(_layout);
         private void Set(string field, object value)
             => typeof(HandFanLayoutView).GetField(field, BindingFlags.NonPublic | BindingFlags.Instance)
                 .SetValue(_layout, value);

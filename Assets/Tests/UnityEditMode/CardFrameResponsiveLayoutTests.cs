@@ -22,7 +22,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [TestCase(1280f, 800f)]
         [TestCase(1280f, 720f)]
         [TestCase(1680f, 720f)]
-        public void Logical_root_keeps_one_to_five_mixed_cards_inside_safe_area(
+        public void Hand_rests_on_art_edge_and_reveals_each_hovered_card_inside_safe_area(
             float width,
             float height)
         {
@@ -31,11 +31,14 @@ namespace FateWeaver.Tests.UnityEditMode
                 var fixture = BuildSceneEquivalentHand(width, height, cardCount);
                 try
                 {
-                    Assert.AreEqual(260f, fixture.HandRect.rect.height, 0.01f);
+                    Assert.AreEqual(420f, fixture.HandRect.rect.height, 0.01f);
                     AssertUniformContentScale(fixture.Content);
-                    AssertCardsStayInsideSafeArea(fixture);
+                    AssertRestingCardsStayInsideHorizontalSafeArea(fixture);
+                    AssertApexArtEdgeRestsOnHandBottom(fixture);
+                    AssertRestingCardsLeaveHandBottom(fixture);
                     AssertCardsStayInLeftToRightOrder(fixture.Views);
                     AssertAdjacentCardsLeaveBadgesVisible(fixture.Views);
+                    AssertHoveredCardsStayInsideHandSafeArea(fixture);
                 }
                 finally
                 {
@@ -54,7 +57,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 AssertUniformContentScale(fixture.Content);
                 foreach (var view in fixture.Views)
                 {
-                    Assert.That(view.transform.localScale.x, Is.EqualTo(.64f).Within(.001f));
+                    Assert.That(view.transform.localScale.x, Is.EqualTo(1f).Within(.001f));
                     Assert.AreEqual(view.transform.localScale.x, view.transform.localScale.y);
                     Assert.AreEqual(
                         new Vector2(200f, 336f),
@@ -77,7 +80,8 @@ namespace FateWeaver.Tests.UnityEditMode
                 fixture.HandRect.sizeDelta = new Vector2(900f, 260f);
                 fixture.Hand.GetComponent<HandFanLayoutView>().Refresh();
                 Assert.That(fixture.Content.localScale.x, Is.GreaterThanOrEqualTo(narrowScale - .0001f));
-                AssertCardsStayInsideSafeArea(fixture);
+                AssertRestingCardsStayInsideHorizontalSafeArea(fixture);
+                AssertHoveredCardsStayInsideHandSafeArea(fixture);
             }
             finally
             {
@@ -99,7 +103,7 @@ namespace FateWeaver.Tests.UnityEditMode
             handRect.anchorMin = new Vector2(0f, 0f);
             handRect.anchorMax = new Vector2(1f, 0f);
             handRect.anchoredPosition = new Vector2(0f, 210f);
-            handRect.sizeDelta = new Vector2(0f, 260f);
+            handRect.sizeDelta = new Vector2(0f, 420f);
             return BuildHand(root, handRect, cardCount);
         }
 
@@ -180,32 +184,72 @@ namespace FateWeaver.Tests.UnityEditMode
                 Is.InRange(.0001f, 1f));
         }
 
-        private static void AssertCardsStayInsideSafeArea(HandFixture fixture)
+        private static void AssertRestingCardsStayInsideHorizontalSafeArea(HandFixture fixture)
         {
-            var rootRect = (RectTransform)fixture.Root.transform;
+            var area = fixture.HandRect.rect;
             foreach (var view in fixture.Views)
             {
-                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
-                    rootRect,
-                    view.transform);
-                Assert.That(
-                    bounds.min.x,
-                    Is.GreaterThanOrEqualTo(
-                        rootRect.rect.xMin + HorizontalSafeMarginPerSide - 0.5f));
-                Assert.That(
-                    bounds.max.x,
-                    Is.LessThanOrEqualTo(
-                        rootRect.rect.xMax - HorizontalSafeMarginPerSide + 0.5f));
-                Assert.That(
-                    bounds.min.y,
-                    Is.GreaterThanOrEqualTo(
-                        rootRect.rect.yMin + VerticalSafeMarginPerSide - 0.5f));
-                Assert.That(
-                    bounds.max.y,
-                    Is.LessThanOrEqualTo(
-                        rootRect.rect.yMax - VerticalSafeMarginPerSide + 0.5f));
+                var bounds = BoundsInHand(fixture, view.transform);
+                Assert.That(bounds.min.x,
+                    Is.GreaterThanOrEqualTo(area.xMin + HorizontalSafeMarginPerSide - 0.5f));
+                Assert.That(bounds.max.x,
+                    Is.LessThanOrEqualTo(area.xMax - HorizontalSafeMarginPerSide + 0.5f));
             }
         }
+
+        private static void AssertApexArtEdgeRestsOnHandBottom(HandFixture fixture)
+        {
+            float line = fixture.HandRect.rect.yMin + VerticalSafeMarginPerSide;
+            var edges = fixture.Views.Select(view => BoundsInHand(fixture, RestLine(view)).min.y).ToArray();
+            // Cards away from the top of the arc sit lower, so no art edge rises above the line.
+            Assert.That(edges.Max(), Is.LessThanOrEqualTo(line + 0.5f));
+            if (edges.Length % 2 == 1)
+            {
+                Assert.That(edges[edges.Length / 2], Is.EqualTo(line).Within(0.5f));
+            }
+        }
+
+        private static void AssertRestingCardsLeaveHandBottom(HandFixture fixture)
+        {
+            foreach (var view in fixture.Views)
+            {
+                Assert.Less(BoundsInHand(fixture, view.transform).min.y, fixture.HandRect.rect.yMin);
+            }
+        }
+
+        private static void AssertHoveredCardsStayInsideHandSafeArea(HandFixture fixture)
+        {
+            var area = fixture.HandRect.rect;
+            foreach (var view in fixture.Views)
+            {
+                var hover = view.GetComponent<HandCardHoverEffect>();
+                hover.OnPointerEnter(null);
+                try
+                {
+                    Assert.Less(
+                        Quaternion.Angle(Quaternion.identity, view.transform.localRotation), 0.01f);
+                    var bounds = BoundsInHand(fixture, view.transform);
+                    Assert.That(bounds.min.x,
+                        Is.GreaterThanOrEqualTo(area.xMin + HorizontalSafeMarginPerSide - 0.5f));
+                    Assert.That(bounds.max.x,
+                        Is.LessThanOrEqualTo(area.xMax - HorizontalSafeMarginPerSide + 0.5f));
+                    Assert.That(bounds.min.y,
+                        Is.GreaterThanOrEqualTo(area.yMin + VerticalSafeMarginPerSide - 0.5f));
+                    Assert.That(bounds.max.y,
+                        Is.LessThanOrEqualTo(area.yMax - VerticalSafeMarginPerSide + 0.5f));
+                }
+                finally
+                {
+                    hover.OnPointerExit(null);
+                }
+            }
+        }
+
+        private static Bounds BoundsInHand(HandFixture fixture, Transform target)
+            => RectTransformUtility.CalculateRelativeRectTransformBounds(fixture.HandRect, target);
+
+        private static RectTransform RestLine(CardView view)
+            => Field<RectTransform>(view.GetComponent<HandCardHoverEffect>(), "_restLine");
 
         private static void AssertCardsStayInLeftToRightOrder(CardView[] views)
         {

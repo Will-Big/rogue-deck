@@ -4,16 +4,18 @@ using UnityEngine.EventSystems;
 
 namespace FateWeaver.Unity
 {
-    /// <summary>Enlarges a hand card for reading while preserving its authored fan pose.</summary>
+    /// <summary>Moves a hand card between the fan pose and the reading pose its layout reserves.</summary>
     public sealed class HandCardHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private const float HoverScale = 1.35f;
-        private const float HoverLift = 46f;
+        [Tooltip("A resting hand keeps this rect on screen; the card face below it may leave the hand area.")]
+        [SerializeField] private RectTransform _restLine;
 
         private RectTransform _rect;
         private Vector2 _basePosition;
         private Quaternion _baseRotation;
         private Vector3 _baseScale = Vector3.one;
+        private Vector2 _activePosition;
+        private Vector3 _activeScale = Vector3.one;
         private int _baseSiblingIndex;
         private bool _hovering;
         private bool _held;
@@ -27,6 +29,8 @@ namespace FateWeaver.Unity
         private bool _snapNext;
 
         internal Vector3 AuthoredScale => _authoredScale;
+
+        internal RectTransform RestLine => _restLine;
 
         internal bool IsActive => _hovering || _held;
 
@@ -44,12 +48,15 @@ namespace FateWeaver.Unity
             _baseScale = _rect.localScale;
             _authoredScale = _baseScale;
             _baseSiblingIndex = _rect.GetSiblingIndex();
+            _activePosition = _basePosition;
+            _activeScale = _baseScale;
         }
 
         public void UpdateBaseline(
             Vector2 position,
             Quaternion rotation,
-            int siblingIndex, Vector3 scale, bool smooth, float smoothSpeed, bool immediate = false)
+            int siblingIndex, Vector3 scale, Vector2 activePosition, Vector3 activeScale,
+            bool smooth, float smoothSpeed, bool immediate = false)
         {
             if (_rect == null)
             {
@@ -60,6 +67,8 @@ namespace FateWeaver.Unity
             _baseRotation = rotation;
             _baseSiblingIndex = siblingIndex;
             _baseScale = scale;
+            _activePosition = activePosition;
+            _activeScale = activeScale;
             _smooth = smooth;
             _smoothSpeed = smoothSpeed;
             _snapNext = immediate;
@@ -140,8 +149,7 @@ namespace FateWeaver.Unity
             }
 
             _rect.SetAsLastSibling();
-            MoveTo(_basePosition + new Vector2(0f, HoverLift),
-                Quaternion.identity, _baseScale * HoverScale);
+            MoveTo(_activePosition, Quaternion.identity, _activeScale);
         }
 
         private void Restore()

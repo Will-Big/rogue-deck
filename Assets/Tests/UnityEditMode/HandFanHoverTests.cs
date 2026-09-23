@@ -93,25 +93,26 @@ namespace FateWeaver.Tests.UnityEditMode
                 var middleLeft = root.GetComponentsInChildren<CardView>()[1];
                 var hover = middleLeft.GetComponent<HandCardHoverEffect>();
                 var rect = (RectTransform)middleLeft.transform;
+                // The resting pose lives in content space, so resizing the root only rescales it.
+                Vector2 restPosition = rect.anchoredPosition;
+                Quaternion restRotation = rect.localRotation;
+                float restScale = rect.localScale.x;
 
                 hover.OnPointerEnter(null);
                 ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
                 InvokeDimensionChange(hand);
 
                 Assert.That(rect.anchoredPosition.x, Is.LessThan(0f));
-                Vector2 activePosition = rect.anchoredPosition;
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.That(rect.localScale.x, Is.EqualTo(.64f * 1.35f).Within(.001f));
+                Assert.That(rect.localScale.x, Is.EqualTo(restScale * HoverScale(hand)).Within(.001f));
+                AssertInsideRoot(root, rect);
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hover.OnPointerExit(null);
 
-                Assert.That(Vector2.Distance(rect.anchoredPosition,
-                    activePosition - new Vector2(0f, 46f)), Is.LessThan(.001f));
-                Assert.Less(
-                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 8f), rect.localRotation),
-                    0.01f);
-                Assert.That(rect.localScale.x, Is.EqualTo(.64f).Within(.001f));
+                Assert.That(Vector2.Distance(rect.anchoredPosition, restPosition), Is.LessThan(.001f));
+                Assert.Less(Quaternion.Angle(restRotation, rect.localRotation), 0.01f);
+                Assert.That(rect.localScale.x, Is.EqualTo(restScale).Within(.001f));
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally
@@ -129,25 +130,26 @@ namespace FateWeaver.Tests.UnityEditMode
                 var hand = BuildResponsiveHand(root, FiveCards(), 650f, 260f);
                 var middleLeft = root.GetComponentsInChildren<CardView>()[1];
                 var rect = (RectTransform)middleLeft.transform;
+                // The resting pose lives in content space, so resizing the root only rescales it.
+                Vector2 restPosition = rect.anchoredPosition;
+                Quaternion restRotation = rect.localRotation;
+                float restScale = rect.localScale.x;
 
                 hand.SetHeld(1, true);
                 ((RectTransform)root.transform).sizeDelta = new Vector2(900f, 260f);
                 InvokeDimensionChange(hand);
 
                 Assert.That(rect.anchoredPosition.x, Is.LessThan(0f));
-                Vector2 activePosition = rect.anchoredPosition;
                 Assert.Less(Quaternion.Angle(Quaternion.identity, rect.localRotation), 0.01f);
-                Assert.That(rect.localScale.x, Is.EqualTo(.64f * 1.35f).Within(.001f));
+                Assert.That(rect.localScale.x, Is.EqualTo(restScale * HoverScale(hand)).Within(.001f));
+                AssertInsideRoot(root, rect);
                 Assert.AreEqual(rect.parent.childCount - 1, rect.GetSiblingIndex());
 
                 hand.SetHeld(1, false);
 
-                Assert.That(Vector2.Distance(rect.anchoredPosition,
-                    activePosition - new Vector2(0f, 46f)), Is.LessThan(.001f));
-                Assert.Less(
-                    Quaternion.Angle(Quaternion.Euler(0f, 0f, 8f), rect.localRotation),
-                    0.01f);
-                Assert.That(rect.localScale.x, Is.EqualTo(.64f).Within(.001f));
+                Assert.That(Vector2.Distance(rect.anchoredPosition, restPosition), Is.LessThan(.001f));
+                Assert.Less(Quaternion.Angle(restRotation, rect.localRotation), 0.01f);
+                Assert.That(rect.localScale.x, Is.EqualTo(restScale).Within(.001f));
                 Assert.AreEqual(1, rect.GetSiblingIndex());
             }
             finally
@@ -460,6 +462,19 @@ namespace FateWeaver.Tests.UnityEditMode
             hand.EditorBuild(CardPrefabCatalogTests.LoadCatalog(), content);
             hand.SetCards(cards, _ => { }, (_, __) => { });
             return hand;
+        }
+
+        private static float HoverScale(HandFanView hand)
+            => Field<float>(hand.GetComponent<HandFanLayoutView>(), "_hoverScale");
+
+        private static void AssertInsideRoot(GameObject root, RectTransform card)
+        {
+            var area = ((RectTransform)root.transform).rect;
+            var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(root.transform, card);
+            Assert.That(bounds.min.x, Is.GreaterThanOrEqualTo(area.xMin - .5f));
+            Assert.That(bounds.max.x, Is.LessThanOrEqualTo(area.xMax + .5f));
+            Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(area.yMin - .5f));
+            Assert.That(bounds.max.y, Is.LessThanOrEqualTo(area.yMax + .5f));
         }
 
         private static void InvokeDimensionChange(HandFanView hand)
