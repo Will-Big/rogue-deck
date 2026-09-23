@@ -1,8 +1,9 @@
 # Primitive Card Frame and Structured Description Continuation Plan
 
-> **2026-09-20 후속 검토:** [B안 적용 계획](2026-09-20-card-b-prefab.md) 승인 후 카드 배치·
-> 대상 기호·설명 표시 작업은 그 계획으로 실행한다. 아래의 비용 돌출·색상 전용 기호와 사용자 직접
-> 프리팹 저작 체크포인트를 중복 실행하지 않는다. 그 밖의 잔여 범위는 해당 계획과 대조한다.
+> **2026-09-20 후속 검토:** 카드 배치·대상 기호·설명 표시 작업은 B안 적용 계획으로 실행했다(2026-09-24
+> 완료·보관). 현재 계약은 [프레임 스펙](../specs/2026-07-31-primitive-card-frame-design.md) §6·§11이다.
+> 아래의 비용 돌출·색상 전용 기호와 사용자 직접 프리팹 저작 체크포인트를 실행하지 않는다. 그 밖의 잔여
+> 범위는 스펙과 대조한다.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

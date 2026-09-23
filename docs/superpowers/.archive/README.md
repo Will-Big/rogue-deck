@@ -70,6 +70,7 @@
 - [배치 비행 카드 플립](plans/2026-07-19-placement-flight-flip.md)
 - [전투 화면 컴포넌트 분해 (구현 기록 포함)](plans/2026-08-04-battle-screen-decomposition.md)
 - [HandFan 시각 테스트 씬](plans/2026-09-22-handfan-sandbox.md) — 개요는 [HTML](plans/2026-09-22-handfan-sandbox.html). 2026-09-24 머지(`b62696c`). 손패 배치 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §13.
+- [B안 카드 프리팹 적용](plans/2026-09-20-card-b-prefab.md) — 개요는 [HTML](plans/2026-09-20-card-b-prefab.html). 2026-09-21 머지(`a9a4790`), 2026-09-23 머리 행 개정. 카드 앞면 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §6·§11로 옮겼다.
 
 ### 아키텍처 개선 P0
 

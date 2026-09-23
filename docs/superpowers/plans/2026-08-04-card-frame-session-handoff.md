@@ -1,8 +1,8 @@
 # Card Frame Follow-up Implementation Plan
 
-> **2026-09-20 후속 검토:** [B안 적용 계획](2026-09-20-card-b-prefab.md) 승인 후 표식 및 카드
-> 내부 배치 검수는 그 계획을 따른다. 이 인계의 손패 높낮이 추가 작업은 이번 B안 범위가 아니며,
-> 해당 목적의 별도 요청 없이 함께 구현하지 않는다.
+> **2026-09-20 후속 검토:** 표식과 카드 내부 배치 검수는 B안 적용 계획으로 끝났다(2026-09-24 완료·보관).
+> 현재 계약은 [프레임 스펙](../specs/2026-07-31-primitive-card-frame-design.md) §11이다. 이 인계의 손패
+> 높낮이 추가 작업은 B안 범위가 아니었으며, 해당 목적의 별도 요청 없이 함께 구현하지 않는다.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:brainstorming for Task 2's visual rule, then superpowers:writing-plans and superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax for tracking.
 
