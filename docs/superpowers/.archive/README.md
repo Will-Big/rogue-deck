@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-09-15
+- 개정일: 2026-09-24
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -69,6 +69,7 @@
 - [카드 선택과 배치 모션](plans/2026-07-19-card-selection-placement-motion.md)
 - [배치 비행 카드 플립](plans/2026-07-19-placement-flight-flip.md)
 - [전투 화면 컴포넌트 분해 (구현 기록 포함)](plans/2026-08-04-battle-screen-decomposition.md)
+- [HandFan 시각 테스트 씬](plans/2026-09-22-handfan-sandbox.md) — 개요는 [HTML](plans/2026-09-22-handfan-sandbox.html). 2026-09-24 머지(`b62696c`). 손패 배치 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §13.
 
 ### 아키텍처 개선 P0
 
