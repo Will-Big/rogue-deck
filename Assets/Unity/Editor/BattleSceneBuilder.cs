@@ -20,6 +20,8 @@ namespace FateWeaver.Unity.Editor
         private const string FloatingNumberPrefabPath = "Assets/Unity/Prefabs/FloatingNumberView.prefab";
         private const string RewardChoicePrefabPath = "Assets/Unity/Prefabs/RewardChoiceView.prefab";
         private const string CombatResultPrefabPath = "Assets/Unity/Prefabs/CombatResultView.prefab";
+        // 손패는 샌드박스 씬과 공유하는 저작 프리팹이다. 조정값을 지우지 않도록 여기서 다시 만들지 않는다.
+        private const string HandFanPrefabPath = "Assets/Unity/Prefabs/HandFan.prefab";
         private const string MemberAPath = "Assets/Unity/Data/member_a.asset";
         private const string MemberBPath = "Assets/Unity/Data/member_b.asset";
         private const string InputActionsPath = "Assets/Unity/Input/UIInputActions.inputactions";
@@ -69,7 +71,9 @@ namespace FateWeaver.Unity.Editor
             var unitPrefab = AssetDatabase.LoadAssetAtPath<UnitView>(UnitPrefabPath);
             var railCardPrefab = AssetDatabase.LoadAssetAtPath<RailCardView>(RailCardPrefabPath);
             var targetingArrowPrefab = AssetDatabase.LoadAssetAtPath<TargetingArrowView>(TargetingArrowPrefabPath);
-            if (cardPrefabs == null || unitPrefab == null || railCardPrefab == null || targetingArrowPrefab == null)
+            var handPrefab = AssetDatabase.LoadAssetAtPath<HandFanView>(HandFanPrefabPath);
+            if (cardPrefabs == null || unitPrefab == null || railCardPrefab == null || targetingArrowPrefab == null
+                || handPrefab == null)
             {
                 Debug.LogError("BattleSceneBuilder: missing required battle view prefab.");
                 return;
@@ -135,18 +139,9 @@ namespace FateWeaver.Unity.Editor
             rail.EditorBuild(cardPrefabs, railCardPrefab, overlay);
 
             // --- hand fan ---
-            var handRect = BattleUiKit.Rect(canvasRect, "HandFan");
-            handRect.anchorMin = new Vector2(0f, 0f);
-            handRect.anchorMax = new Vector2(1f, 0f);
-            handRect.anchoredPosition = new Vector2(0f, 210f);
-            handRect.sizeDelta = new Vector2(0f, 260f);
-            var handContent = BattleUiKit.Rect(handRect, "Content");
-            handContent.anchorMin = handContent.anchorMax =
-                new Vector2(0.5f, 0.5f);
-            handContent.anchoredPosition = Vector2.zero;
-            handContent.sizeDelta = Vector2.zero;
-            var hand = handRect.gameObject.AddComponent<HandFanView>();
-            hand.EditorBuild(cardPrefabs, handContent);
+            var handObject = (GameObject)PrefabUtility.InstantiatePrefab(handPrefab.gameObject, canvasRect);
+            var hand = handObject.GetComponent<HandFanView>();
+            var handRect = (RectTransform)handObject.transform;
 
             // --- HUD texts ---
             var energy = BattleUiKit.Text(canvasRect, "Energy", 34f, TextAlignmentOptions.Center);

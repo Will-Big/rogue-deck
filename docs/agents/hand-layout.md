@@ -1,6 +1,9 @@
 # 손패 레이아웃 조절
 
-전투 씬의 `HandFan`에서 `Hand Fan Layout View` 컴포넌트를 조절한다.
+`Assets/Unity/Prefabs/HandFan.prefab`의 `Hand Fan Layout View` 컴포넌트를 조절한다. 전투 씬과
+`HandFanSandbox` 테스트 씬이 이 프리팹을 함께 쓰므로 프리팹에 저장한 값은 두 곳에 모두 반영된다.
+씬 인스턴스에서 값을 바꾸면 오버라이드가 되어 반영이 끊기니, 조정값은 프리팹에 적용(Apply)한다.
+손패 영역 자체(루트 RectTransform의 앵커·위치·크기)는 씬마다 따로 둔다.
 Y 방향 반전은 제공하지 않는다. 유료 에셋은 추가하지 않는다.
 
 ## 인스펙터

@@ -1165,92 +1165,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!1 &6792948586757367955
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3073006178914095484}
-  - component: {fileID: 7153032898968846286}
-  - component: {fileID: 5213149858295261447}
-  m_Layer: 0
-  m_Name: HandFan
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &3073006178914095484
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6792948586757367955}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3257691645390485805}
-  m_Father: {fileID: 2742418653940036735}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 210}
-  m_SizeDelta: {x: 0, y: 420}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7153032898968846286
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6792948586757367955}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59764cd91465d4ff1afb830b07437037, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView
-  _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
-  _content: {fileID: 3257691645390485805}
-  _layout: {fileID: 5213149858295261447}
---- !u!114 &5213149858295261447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6792948586757367955}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 829c91f422ffa480da8eaf9a2fff3637, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanLayoutView
-  _content: {fileID: 3257691645390485805}
-  _radius: 1650
-  _totalAngle: 18
-  _rotateWithArc: 1
-  _invertRotation: 0
-  _useSiblingOrder: 1
-  _perItemExtraAngle: 0
-  _adaptiveSpread: 1
-  _cardsForFullSpread: 5
-  _minAngle: 0
-  _cardsForMaxSpread: 10
-  _maxAngle: 24
-  _useBottomBaseline: 1
-  _baselinePadding: 16
-  _positionOffset: {x: 0, y: 0}
-  _safeMargins: {x: 32, y: 16}
-  _controlCardScale: 1
-  _cardScale: 1
-  _hoverScale: 1.15
-  _smooth: 1
-  _smoothSpeed: 12
 --- !u!1 &7476079001155218389
 GameObject:
   m_ObjectHideFlags: 0
@@ -1697,41 +1611,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &8614788081336915233
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3257691645390485805}
-  m_Layer: 0
-  m_Name: Content
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &3257691645390485805
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8614788081336915233}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3073006178914095484}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &9195729847591112101
 GameObject:
   m_ObjectHideFlags: 0
@@ -1869,3 +1748,116 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &2868252338289835620
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2742418653940036735}
+    m_Modifications:
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 420
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 210
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8758220283369281271, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Name
+      value: HandFan
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+--- !u!224 &3073006178914095484 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+  m_PrefabInstance: {fileID: 2868252338289835620}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7153032898968846286 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4938964226724757930, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+  m_PrefabInstance: {fileID: 2868252338289835620}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59764cd91465d4ff1afb830b07437037, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView

@@ -766,7 +766,7 @@ RectTransform:
   - {fileID: 1075683036}
   - {fileID: 823932741}
   - {fileID: 1200093404}
-  - {fileID: 2036578487}
+  - {fileID: 1480783547}
   - {fileID: 419006653}
   - {fileID: 1974148471}
   - {fileID: 1160575979}
@@ -971,7 +971,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.BattleScreenController
   _presenter: {fileID: 1559819299}
-  _hand: {fileID: 2036578488}
+  _hand: {fileID: 1480783548}
   _rail: {fileID: 1200093406}
   _units: {fileID: 823932742}
   _piles: {fileID: 1349775322}
@@ -2329,41 +2329,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 864680199}
   m_CullTransparentMesh: 1
---- !u!1 &890533496
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 890533497}
-  m_Layer: 0
-  m_Name: Content
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &890533497
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890533496}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2036578487}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &952635127
 GameObject:
   m_ObjectHideFlags: 0
@@ -3742,7 +3707,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77698b4cf24f2559d443c7caae5f7675, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardSelectionController
-  _hand: {fileID: 2036578488}
+  _hand: {fileID: 1480783548}
   _rail: {fileID: 1200093406}
   _dimLayer: {fileID: 1075683035}
   _confirmButton: {fileID: 419006654}
@@ -4542,6 +4507,119 @@ MonoBehaviour:
   _units: {fileID: 823932742}
   _floatingNumberPrefab: {fileID: 9149858660943728584, guid: 69a595ac0780d4868967f2f0fe3d10d5, type: 3}
   _numberLayer: {fileID: 1160575979}
+--- !u!1001 &1480783546
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 264365987}
+    m_Modifications:
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 420
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 210
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8758220283369281271, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+      propertyPath: m_Name
+      value: HandFan
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+--- !u!224 &1480783547 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 967032126781501208, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+  m_PrefabInstance: {fileID: 1480783546}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1480783548 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4938964226724757930, guid: a2871cb5abad3435d96398682ee4ec56, type: 3}
+  m_PrefabInstance: {fileID: 1480783546}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59764cd91465d4ff1afb830b07437037, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView
 --- !u!1 &1533877682
 GameObject:
   m_ObjectHideFlags: 0
@@ -6226,91 +6304,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!1 &2036578486
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2036578487}
-  - component: {fileID: 2036578488}
-  - component: {fileID: 2036578489}
-  m_Layer: 0
-  m_Name: HandFan
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2036578487
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2036578486}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 890533497}
-  m_Father: {fileID: 264365987}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 210}
-  m_SizeDelta: {x: 0, y: 420}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2036578488
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2036578486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59764cd91465d4ff1afb830b07437037, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanView
-  _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
-  _content: {fileID: 890533497}
-  _layout: {fileID: 2036578489}
---- !u!114 &2036578489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2036578486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 829c91f422ffa480da8eaf9a2fff3637, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanLayoutView
-  _content: {fileID: 890533497}
-  _radius: 1650
-  _totalAngle: 18
-  _rotateWithArc: 1
-  _invertRotation: 0
-  _useSiblingOrder: 1
-  _perItemExtraAngle: 0
-  _adaptiveSpread: 1
-  _cardsForFullSpread: 5
-  _minAngle: 0
-  _cardsForMaxSpread: 10
-  _maxAngle: 24
-  _useBottomBaseline: 1
-  _baselinePadding: 16
-  _safeMargins: {x: 32, y: 16}
-  _controlCardScale: 1
-  _cardScale: 1
-  _hoverScale: 1.15
-  _smooth: 1
-  _smoothSpeed: 12
 --- !u!1 &2075203869
 GameObject:
   m_ObjectHideFlags: 0
