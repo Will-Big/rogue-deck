@@ -101,7 +101,7 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
-| [HandFan 시각 테스트 씬](plans/2026-09-22-handfan-sandbox.md) — [HTML 검토](plans/2026-09-22-handfan-sandbox.html) | `active` | 최신 master의 HandFanView·HandFanLayoutView를 사용하는 카드 추가·선택 제거·전체 비우기·장수 표시. codex/handfan-sandbox에서 구현·자동 검증 완료, 사용자 Play 검수·머지 대기. 전투 규칙·새 연출 제외 |
+| [HandFan 시각 테스트 씬](plans/2026-09-22-handfan-sandbox.md) — [HTML 검토](plans/2026-09-22-handfan-sandbox.html) | `active` | 최신 master의 HandFanView·HandFanLayoutView를 사용하는 카드 추가·맨 뒤 1장 제거·전체 비우기·장수 표시. codex/handfan-sandbox에서 구현·자동 검증 완료, 사용자 Play 검수·머지 대기. 전투 규칙·새 연출 제외 |
 | [B안 카드 프리팹 적용](plans/2026-09-20-card-b-prefab.md) — [HTML 검토](plans/2026-09-20-card-b-prefab.html) | `active` | B안 표식·내부 이름/비용·단일/복합 대상·고정 제목 구현. 기존 데이터 유지, 표시 참조만 분리. codex/card-b-prefab에서 자동 검증 후 사용자 시각 검수·Play 및 머지 대기 |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
 | [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |

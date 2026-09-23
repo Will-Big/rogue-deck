@@ -6,7 +6,7 @@
 
 ### 목표와 실행 경계
 
-상태: active — 구현·자동 검증 완료, 사용자 Play 검수·master 머지 대기. 근거: 이번 대화에서 승인한 카드 추가·선택 제거·전체 비우기·장수 표시 구성.
+상태: active — 구현·자동 검증 완료, 사용자 Play 검수·master 머지 대기. 근거: 이번 대화에서 승인한 카드 추가·맨 뒤 1장 제거·전체 비우기·장수 표시 구성.
 기존 HandFan에 카드가 늘고 줄 때 배치와 호버를 눈으로 확인하는 독립 씬을 만든다.
 실제 드로우·덱·전투 상태·새 이동 연출·자동 시나리오·범용 테스트 프레임워크는 만들지 않는다.
 기존 호버 효과는 그대로 사용한다. 향후 기능을 위한 인터페이스나 레지스트리를 미리 만들지 않는다.
@@ -34,10 +34,10 @@ superpowers:subagent-driven-development를 사용한다. 2026-09-22 사용자 �
 ### 확정할 동작
 
 1. 씬 시작은 빈 핸드다. 추가 버튼은 인스펙터의 카드 ID 목록을 순서대로 반복한다. 무작위는 쓰지 않는다.
-2. 카드 클릭은 제거 대상을 선택한다. 선택은 데이터 ID가 아니라 목록 인덱스를 사용해 중복 카드를 구분한다.
-3. 추가 시 기존 선택 인덱스를 유지한다. 선택 제거 후에는 선택을 해제한다. 미선택 제거는 아무 변화가 없다.
+2. “1장 제거”는 선택 여부와 무관하게 목록의 맨 뒤 카드를 제거한다. 카드 클릭의 선택 테두리는 표현 확인용으로 유지한다.
+3. 추가 시 기존 선택 인덱스를 유지한다. 맨 뒤 제거 후 선택한 카드가 남아 있으면 선택을 유지하고, 선택한 마지막 카드가 제거되면 해제한다. 빈 목록 제거는 아무 변화가 없다.
 4. 전체 비우기는 목록·선택·추가 순서를 초기화한다. 빈 상태에서 다시 눌러도 안전하다.
-5. 장수는 실제 테스트 목록 길이로 표시한다. 미선택이면 제거 버튼, 빈 목록이면 비우기 버튼을 비활성화한다.
+5. 장수는 실제 테스트 목록 길이로 표시한다. 빈 목록이면 제거·비우기 버튼을 비활성화한다.
 6. ID 목록이 비었거나 존재하지 않는 ID가 있으면 부분 실행하지 않는다. 오류를 패널에 표시하고 조작을 비활성화한다.
 7. 필수 씬 참조 누락은 Editor 검증으로 잡는다. 런타임에는 명확한 오류 로그를 남기고 비활성화하며 null 예외를 반복하지 않는다.
 8. 카드 수에 임의의 게임 규칙 상한을 넣지 않는다. 대량 카드 성능 보장이나 최적화는 이번 범위 밖이다.
@@ -74,12 +74,12 @@ public bool CanRemove { get; }
 public bool CanClear { get; }
 public void Add();
 public void Select(int index);
-public void RemoveSelected();
+public void RemoveLast();
 public void Clear();
 ```
 
 State는 비어 있지 않은 samples 사본을 보관한다. Add는 cursor 위치의 표현을 추가하고 순환한다.
-Select는 범위 밖 입력을 -1로 정규화한다. RemoveSelected는 CanRemove일 때만 RemoveAt 후 -1로 초기화한다.
+Select는 범위 밖 입력을 -1로 정규화한다. RemoveLast는 목록이 비어 있지 않을 때 RemoveAt(Count - 1)을 수행하고 선택 인덱스가 새 Count 이상이면 -1로 초기화한다.
 Clear는 목록을 비우고 selected=-1, cursor=0으로 되돌린다. 외부에 가변 List를 노출하지 않는다.
 
 Source의 직렬화 필드는 private string[] _cardIds와 private CardArtCatalog _artCatalog다.
@@ -132,14 +132,14 @@ var state = new HandFanSandboxState(new[] { a, b });
 state.Add(); state.Add(); state.Add();
 Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { a.Id, b.Id, a.Id }));
 state.Select(2);
-state.RemoveSelected();
+state.RemoveLast();
 Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { a.Id, b.Id }));
 Assert.That(state.SelectedIndex, Is.EqualTo(-1));
 state.Clear(); state.Add();
 Assert.That(state.Cards.Single().Id, Is.EqualTo(a.Id));
 ```
 
-- [x] 추가 검사: 빈 목록 제거/비우기 반복, 가운데 제거 후 순서, 추가 후 기존 선택 유지, 범위 밖 선택 해제, 빈 ID 목록과 누락 ID에서 TryLoad 실패. 각 실패는 목록 불변 또는 빈 출력/오류 메시지로 단언한다.
+- [x] 추가 검사: 빈 목록 제거/비우기 반복, 맨 뒤 제거 후 순서, 추가 후 기존 선택 유지, 범위 밖 선택 해제, 빈 ID 목록과 누락 ID에서 TryLoad 실패. 각 실패는 목록 불변 또는 빈 출력/오류 메시지로 단언한다.
 - [x] 구현 후 Unity EditMode 테스트를 워크트리 대상으로 실행한다. 구체 명령은 아래 공통 검증 절을 사용한다.
 - [x] 관련 파일만 커밋한다. 제목 예: `feat(testing): 핸드 시각 테스트 조작부를 추가한다`.
 
@@ -173,9 +173,9 @@ Unity 장애는 `docs/agents/unity-batch-runs.md`를 따른다. verify.sh 통과
 사용자 Play 체크리스트(수치는 대표 실행 예시):
 
 - 빈 핸드에서 시작 → 추가 1회 → 1장 및 장수 일치.
-- 5장까지 추가 → 가운데 카드 클릭 → 테두리 확인 → 제거 → 나머지 4장 순서와 재배치 확인.
+- 5장까지 추가 → 가운데 카드 클릭 → 테두리 확인 → 1장 제거 → 맨 뒤 카드만 빠진 4장 순서와 재배치 확인.
 - 12장까지 추가 → 간격·각도·축소·호버 관찰 → Game 뷰 폭 변경 후 반응 확인.
-- 선택 상태에서 추가 → 기존 선택 유지. 중복 모양 카드 중 끝 카드 선택/제거 → 선택한 위치만 제거.
+- 선택 상태에서 추가 → 기존 선택 유지. 가운데 카드가 선택되어 있어도 1장 제거 → 맨 뒤 카드만 제거.
 - 전체 비우기 두 번 → 오류 없음 → 다시 추가하면 첫 샘플부터 표시.
 - 씬 재진입/조작부 재활성화 후 추가 한 번에 한 장만 증가. Console의 새 오류 없음.
 
@@ -197,7 +197,7 @@ master 머지는 별도 사용자 승인과 전체 verify 통과 후에만 수�
 - 전체 Unity EditMode: 1005개 통과, 11개 스킵, 실패 0개. 결과: `/private/tmp/handfan-master-final.xml`.
 - 신규 검사는 상태·콘텐츠 8개, 패널 2개, 씬·입력·조정자 7개다. 근거: 위 표의 세 테스트 파일.
 - 저작은 일회성 Editor 스크립트로 수행한 후 저장 에셋만 남겼다. 입력 참조는 기존 `UIInputActions.inputactions`의 영구 서브에셋이다. Input System의 기본 입력 자동 할당이 저장 누락을 가릴 수 있어 `HandFanSandboxSceneTests.Prefab_stores_persistent_input_references_without_default_action_fallback`이 프리팹 에셋 자체를 검사한다.
-- 사용자 확인: 워크트리 프로젝트를 Unity에서 열고 해당 씬에서 Play한다. 상단 버튼으로 장수를 늘리고 카드를 클릭해 선택한 뒤 제거한다. `SandboxControls`의 CardSource 인스펙터에서 테스트 카드 ID 목록을 바꿀 수 있다.
+- 사용자 확인: 워크트리 프로젝트를 Unity에서 열고 해당 씬에서 Play한다. 상단 버튼으로 장수를 늘리고 “1장 제거”로 맨 뒤 카드를 줄인다. `SandboxControls`의 CardSource 인스펙터에서 테스트 카드 ID 목록을 바꿀 수 있다.
 - 사용자 시각 검수와 master 머지는 아직 수행하지 않았다. 시각 확인 전에는 문서를 보관하지 않는다.
 
 최종 독립 리뷰에서 HandFan 내부 카탈로그를 삭제했을 때의 반복 예외 처리를 보완했다.
@@ -216,9 +216,13 @@ Unity 에디터 저작으로 최신 전투 씬의 `HandFanLayoutView` 설정과 
 근거: `Assets/Tests/UnityEditMode/HandFanSandboxSceneTests.cs`의
 `Saved_prefab_wires_the_current_configurable_hand_layout`과
 `Sandbox_cards_use_inspector_arc_settings_after_add_remove_and_clear`.
-새 테스트는 저장 배선뿐 아니라 카드 추가 후 Radius 변경 → 간격 변화 → 선택 제거 → 전체 비우기를 확인한다.
+새 테스트는 저장 배선뿐 아니라 카드 추가 후 Radius 변경 → 간격 변화 → 맨 뒤 제거 → 전체 비우기를 확인한다.
 사용자는 테스트 씬 HandFan의 **Hand Fan Layout View** 인스펙터에서 Radius, Total Angle,
 Baseline Padding, Position Offset, Card Scale을 조절할 수 있다. 옵션 의미는
 [손패 레이아웃 조절](../../agents/hand-layout.md)을 따른다.
 
 최신 기준 재검증: Unity EditMode 1005개 통과·11개 스킵·실패 0개, 헤드리스 785개와 노트북 161개 통과. 위 구현 결과의 로그 경로는 이 최신 실행을 가리킨다. 병렬 실행에서는 기존 BootstrapReportsAnUnknownEnemyPolicy가 공용 임시 폴더 삭제 경합으로 한 번 실패했으며, Unity 종료 후 Tools/verify.sh 순차 실행에서 통과했다(근거: Assets/Core/Tests/EditMode/ContentBootstrapTests.cs의 고정 임시 경로).
+
+### 마지막 카드 제거로 변경 — 2026-09-22
+
+사용자 요청에 따라 버튼 문구를 “1장 제거”로 바꾸고 선택 여부와 무관하게 목록 마지막 카드를 제거한다. 제거 버튼은 핸드가 비었을 때만 비활성화한다. 근거: HandFanSandboxState.RemoveLast, HandFanSandboxTests, HandFanSandboxSceneTests.

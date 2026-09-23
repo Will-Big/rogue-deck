@@ -108,7 +108,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 CardPrefabCatalogTests.Field<Button>(panel, "_removeButton").onClick.Invoke();
                 Assert.That(content.GetComponentsInChildren<CardView>(), Has.Length.EqualTo(4));
                 var state = CardPrefabCatalogTests.Field<HandFanSandboxState>(controller, "_state");
-                Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "quick_cover", "quick_cover", "brace" }));
+                Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "quick_cover", "brace", "quick_cover" }));
                 CardPrefabCatalogTests.Field<Button>(panel, "_clearButton").onClick.Invoke();
                 Assert.That(content.GetComponentsInChildren<CardView>(), Is.Empty);
                 Assert.That(state.Cards, Is.Empty);
@@ -158,6 +158,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.That(root.GetComponentsInChildren<CardView>(), Has.Length.EqualTo(1));
                 var state = CardPrefabCatalogTests.Field<HandFanSandboxState>(controller, "_state");
                 Assert.That(state.Cards.Count, Is.EqualTo(1));
+                Assert.That(CardPrefabCatalogTests.Field<Button>(panel, "_removeButton").interactable, Is.True, "No selection is required to remove the last card.");
                 Assert.That(state.Cards[0].Id, Is.EqualTo("brace"));
                 Assert.That(CardPrefabCatalogTests.Field<TMP_Text>(panel, "_countText").text, Does.Contain("1"));
                 // Click the real card through its bound input rather than calling State.Select.

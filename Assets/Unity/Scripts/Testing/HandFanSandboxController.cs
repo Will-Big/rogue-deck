@@ -60,7 +60,7 @@ namespace FateWeaver.Unity
         }
 
         private void Add() { _state.Add(); RefreshCards(); }
-        private void Remove() { _state.RemoveSelected(); RefreshCards(); }
+        private void Remove() { _state.RemoveLast(); RefreshCards(); }
         private void Clear() { _state.Clear(); RefreshCards(); }
 
         private void OnCardClicked(int index)

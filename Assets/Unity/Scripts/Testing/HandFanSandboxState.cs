@@ -21,7 +21,7 @@ namespace FateWeaver.Unity
 
         public IReadOnlyList<CardPresentation> Cards { get; }
         public int SelectedIndex { get; private set; } = -1;
-        public bool CanRemove => SelectedIndex >= 0 && SelectedIndex < _cards.Count;
+        public bool CanRemove => _cards.Count > 0;
         public bool CanClear => _cards.Count > 0;
 
         public void Add()
@@ -33,11 +33,11 @@ namespace FateWeaver.Unity
         public void Select(int index)
             => SelectedIndex = index >= 0 && index < _cards.Count ? index : -1;
 
-        public void RemoveSelected()
+        public void RemoveLast()
         {
             if (!CanRemove) return;
-            _cards.RemoveAt(SelectedIndex);
-            SelectedIndex = -1;
+            _cards.RemoveAt(_cards.Count - 1);
+            if (SelectedIndex >= _cards.Count) SelectedIndex = -1;
         }
 
         public void Clear()

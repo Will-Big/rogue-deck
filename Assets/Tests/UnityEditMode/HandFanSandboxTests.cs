@@ -20,43 +20,46 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Duplicate_cards_are_removed_by_selected_position_and_clear_restarts_sequence()
+        public void Removing_ignores_selection_and_removes_last_card_only()
         {
             var state = new HandFanSandboxState(Samples());
             state.Add(); state.Add(); state.Add();
-            Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "quick_cover", "brace" }));
-            state.Select(2); state.RemoveSelected();
+            state.Select(1); state.RemoveLast();
             Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "quick_cover" }));
+            Assert.That(state.SelectedIndex, Is.EqualTo(1));
+            state.RemoveLast();
+            Assert.That(state.Cards.Single().Id, Is.EqualTo("brace"));
             Assert.That(state.SelectedIndex, Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void Removing_without_selection_is_available_until_empty_and_clear_restarts_sequence()
+        {
+            var state = new HandFanSandboxState(Samples());
             Assert.That(state.CanRemove, Is.False);
-            state.Clear(); state.Clear(); state.Add();
+            state.Add(); state.Add();
+            Assert.That(state.CanRemove, Is.True);
+            state.RemoveLast();
+            Assert.That(state.Cards.Single().Id, Is.EqualTo("brace"));
+            state.RemoveLast(); state.RemoveLast();
+            Assert.That(state.Cards, Is.Empty);
+            Assert.That(state.CanRemove, Is.False);
+            Assert.That(state.CanClear, Is.False);
+            state.Add(); state.Clear(); state.Clear(); state.Add();
             Assert.That(state.Cards.Single().Id, Is.EqualTo("brace"));
         }
 
         [Test]
-        public void Adding_preserves_selection_and_removing_middle_preserves_remaining_order()
+        public void Adding_preserves_selection_and_invalid_selection_does_not_block_removal()
         {
             var state = new HandFanSandboxState(Samples());
-            state.Add(); state.Add(); state.Select(1); state.Add();
-            Assert.That(state.SelectedIndex, Is.EqualTo(1));
-            Assert.That(state.CanRemove, Is.True);
-            state.RemoveSelected();
-            Assert.That(state.Cards.Select(c => c.Id), Is.EqualTo(new[] { "brace", "brace" }));
-            Assert.That(state.CanClear, Is.True);
-        }
-
-        [Test]
-        public void Invalid_selection_and_empty_operations_are_safe()
-        {
-            var state = new HandFanSandboxState(Samples());
-            state.RemoveSelected(); state.Clear(); state.Clear();
-            Assert.That(state.Cards, Is.Empty);
-            Assert.That(state.CanClear, Is.False);
-            state.Add(); state.Select(0); state.Select(1); state.RemoveSelected();
+            state.Add(); state.Select(0); state.Add();
+            Assert.That(state.SelectedIndex, Is.EqualTo(0));
+            state.Select(2);
             Assert.That(state.SelectedIndex, Is.EqualTo(-1));
+            Assert.That(state.CanRemove, Is.True);
+            state.RemoveLast();
             Assert.That(state.Cards.Count, Is.EqualTo(1));
-            state.Select(-2);
-            Assert.That(state.CanRemove, Is.False);
         }
 
         [Test]
