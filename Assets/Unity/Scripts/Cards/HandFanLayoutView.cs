@@ -13,7 +13,8 @@ namespace FateWeaver.Unity
         [SerializeField] private RectTransform _content;
 
         [Header("Fan Layout")]
-        [SerializeField, Min(0f)] private float _radius = 800f;
+        [Tooltip("Arc radius in card units: the applied card scale multiplies it.")]
+        [SerializeField, Min(0f)] private float _radius = 1250f;
         [SerializeField, Range(0f, 180f)] private float _totalAngle = 32f;
         [SerializeField] private bool _rotateWithArc = true;
         [SerializeField] private bool _invertRotation;
@@ -77,18 +78,19 @@ namespace FateWeaver.Unity
                     .OrderBy(card => card.transform.GetSiblingIndex()).ToArray();
                 var poses = new FanPose[order.Count];
                 var scales = new Vector3[order.Count];
+                float cardScale = _controlCardScale ? Mathf.Max(.01f, _cardScale) : 1f;
+                // The arc is authored in card units, so the fan keeps its shape at any card scale.
+                float arcRadius = _radius * cardScale;
                 var bounds = new Bounds();
                 bool hasBounds = false;
                 for (int i = 0; i < order.Count; i++)
                 {
                     var card = order[i];
                     if (card == null) continue;
-                    poses[i] = ArcHandLayout.PoseFor(i, order.Count, _radius, _totalAngle,
+                    poses[i] = ArcHandLayout.PoseFor(i, order.Count, arcRadius, _totalAngle,
                         _rotateWithArc, _invertRotation, _adaptiveSpread, _cardsForFullSpread,
                         _minAngle, _perItemExtraAngle);
-                    scales[i] = _controlCardScale
-                        ? Vector3.one * Mathf.Max(.01f, _cardScale)
-                        : card.AuthoredScale;
+                    scales[i] = _controlCardScale ? Vector3.one * cardScale : card.AuthoredScale;
                     EncapsulateCard(ref bounds, ref hasBounds, card, poses[i], scales[i]);
                 }
 

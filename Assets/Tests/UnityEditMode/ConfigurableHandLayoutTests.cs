@@ -124,13 +124,14 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Hover_and_held_card_keep_logical_slot_across_relayout()
         {
+            Set("_cardScale", .5f);
+            _layout.Refresh();
             var rect = Rect(1);
             var before = rect.anchoredPosition;
             var hover = _cards[1].GetComponent<HandCardHoverEffect>();
             hover.OnPointerEnter(null);
             _hand.SetHeld(1, true);
             hover.OnPointerExit(null);
-            Set("_cardScale", .5f);
             _layout.Refresh();
             Assert.That(rect.anchoredPosition.x, Is.EqualTo(before.x).Within(.001f));
             Assert.That(rect.localScale.x, Is.EqualTo(.675f).Within(.001f));
@@ -155,6 +156,45 @@ namespace FateWeaver.Tests.UnityEditMode
             Assert.Less(Rect(0).anchoredPosition.x, Rect(4).anchoredPosition.x);
             _cards[0].GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
             Assert.AreEqual(0, _lastClicked);
+        }
+
+        [Test]
+        public void Arc_scales_with_cards()
+        {
+            Set("_controlCardScale", true);
+            Set("_cardScale", .5f);
+            _layout.Refresh();
+            float before = Rect(4).anchoredPosition.x;
+            Set("_cardScale", 1f);
+            _layout.Refresh();
+            Assert.That(Rect(4).anchoredPosition.x, Is.EqualTo(before * 2f).Within(.01f));
+        }
+
+        [Test]
+        public void Hand_is_capped_to_the_hand_area()
+        {
+            Set("_controlCardScale", true);
+            Set("_cardScale", 1.5f);
+            _layout.Refresh();
+            Assert.Less(Rect(0).lossyScale.x, 1.5f);
+            var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_root.transform, _content);
+            Assert.That(bounds.size.y, Is.LessThanOrEqualTo(((RectTransform)_root.transform).rect.height + .01f));
+        }
+
+        [Test]
+        public void Card_scale_reaches_the_screen_until_the_area_caps_it()
+        {
+            Set("_controlCardScale", true);
+            Set("_cardScale", .3f);
+            _layout.Refresh();
+            Assert.That(Rect(0).lossyScale.x, Is.EqualTo(.3f).Within(.001f), "below the cap the knob is 1:1");
+            Set("_cardScale", 1.5f);
+            _layout.Refresh();
+            float capped = Rect(0).lossyScale.x;
+            Set("_cardScale", 3f);
+            _layout.Refresh();
+            Assert.That(Rect(0).lossyScale.x, Is.EqualTo(capped).Within(.001f), "above the cap the area pins the size");
+            Assert.Less(capped, 1.5f);
         }
 
         private RectTransform Rect(int index) => (RectTransform)_cards[index].transform;

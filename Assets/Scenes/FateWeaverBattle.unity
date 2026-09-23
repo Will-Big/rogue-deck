@@ -6292,7 +6292,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandFanLayoutView
   _content: {fileID: 890533497}
-  _radius: 800
+  _radius: 1250
   _totalAngle: 32
   _rotateWithArc: 1
   _invertRotation: 0
