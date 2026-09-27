@@ -1,6 +1,6 @@
 # Fate Weaver 보관 문서 색인
 
-- 개정일: 2026-09-24
+- 개정일: 2026-09-27
 - 상태: `archived`
 
 이 디렉터리의 문서는 완료되었거나 현재 기준에서 대체된 역사 기록이다. 현재 규칙과 활성 계획은
@@ -71,6 +71,8 @@
 - [전투 화면 컴포넌트 분해 (구현 기록 포함)](plans/2026-08-04-battle-screen-decomposition.md)
 - [HandFan 시각 테스트 씬](plans/2026-09-22-handfan-sandbox.md) — 개요는 [HTML](plans/2026-09-22-handfan-sandbox.html). 2026-09-24 머지(`b62696c`). 손패 배치 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §13.
 - [B안 카드 프리팹 적용](plans/2026-09-20-card-b-prefab.md) — 개요는 [HTML](plans/2026-09-20-card-b-prefab.html). 2026-09-21 머지(`a9a4790`), 2026-09-23 머리 행 개정. 카드 앞면 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §6·§11로 옮겼다.
+- [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) — 2026-09-27 보관. Task 1–6 완료, 남은 배치·기호·설명 검수는 B안 적용 계획이 대신 끝냈다. 계약은 현행 프레임 스펙 §6·§11·§13.
+- [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) — 2026-09-27 보관. Task 1(실행 순서 뱃지) 완료, Task 2(손패 미세 높낮이)는 미구현으로 중앙 색인 후속 작업 대기열에 보류 항목으로 옮겼다.
 
 ### 아키텍처 개선 P0
 

@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-09-24
+- 개정일: 2026-09-27
 - 역할: 현재 권위 문서와 활성 계획의 단일 진입점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 권위 문서를 먼저 찾는다.
@@ -40,7 +40,7 @@
 
 | 문서 | 상태 | 권위 범위 | 다음 사용 시점 |
 |---|---|---|---|
-| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `current` | 실행 카드·효과별 위치(카드 축 + 효과 진영)·직접 반응·피해 속성·소비 보상·카드 종료 승패·공통 만료 시점의 권위 문서. 2026-09-18 구현 완료(브랜치 `combat-execution-contract`, master 머지 전). 구현 계획은 보관됨. 다중 적 정책 제외 | 전투 실행·반응·만료 규칙 변경 |
+| [전투 실행·반응·콘텐츠 계약](specs/2026-09-18-combat-execution-contract-design.md) — [HTML 검토](specs/2026-09-18-combat-execution-contract-design.html) | `current` | 실행 카드·효과별 위치(카드 축 + 효과 진영)·직접 반응·피해 속성·소비 보상·카드 종료 승패·공통 만료 시점의 권위 문서. 2026-09-18 구현 완료·master 머지(`9dbbdca`). 구현 계획은 보관됨. 다중 적 정책 제외 | 전투 실행·반응·만료 규칙 변경 |
 
 ### 전투와 파티 규칙
 
@@ -102,8 +102,6 @@ CI(`.github/workflows/verify.yml`)가 같은 것을 커밋·push마다 돌린다
 | 문서 | 상태 | 범위 |
 |---|---|---|
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | P1 단일 원본·프리팹·튜닝, P2 표현 경계, §12 2026-07-25 점검 추가 항목, §13 2026-07-30 상태 이상 논의 추가 항목, §14 2026-09-04 규칙 부채 점검 추가 항목 |
-| [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) | `active` | 실행·개입 프리팹, 구조화 설명, 대상 glyph, 반응형 핸드와 카드 상태 UI |
-| [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) | `active` | 실행 순서 뱃지 검증, 얕은 호 위의 미세 카드 높낮이 설계·구현, 최종 검증과 프레임 계획 보관 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 투영·공유 호버 툴팁 배선은 **선행 없이 재개 가능**(2026-08-28 정정 — 후속 작업 대기열 참고) |
 | [AGENTS.md 경량화](specs/2026-09-09-agents-md-slimming-design.md) — 개요는 [HTML](specs/2026-09-09-agents-md-slimming-design.html) | `current` | 규칙 근거를 `docs/agents/`로 내리고 훅이 위반 순간 `Tools/rule-note.sh`로 그 절을 출력한다. AGENTS.md 286 → 130줄(토큰 52% 감소). 정합성은 `verify.sh --lint`의 R-doc이 지킨다 |
 
@@ -468,6 +466,11 @@ Node 24가 그것을 모듈 경로로 해석해 `MODULE_NOT_FOUND`로 죽는다(
   고정 공유값인 성장량이 `Catalog.GrowthPerTurnOf`(규칙상 `magnitude`)다. 위치는 맞는데 이름이
   서로 바뀌어 있고, 정보 객체 쪽에는 일반화된 `magnitude` 슬롯 없이 상태별 전용 접근자만 있다.
   이 정리는 위의 **수명별 층** 항목과 같은 작업에 속한다 — 따로 하면 두 번 뜯는다.
+
+- [ ] **손패 카드의 미세 높낮이 — 보류, 별도 요청 시 착수.** 얕은 호(`HandFanLayout.PoseFor`) 위에
+  카드마다 작은 표현 전용 높이 차를 얹는 안이다. 카드 프레임 인계 계획(2026-08-04)의 Task 2였으나
+  B안 적용 범위가 아니어서 구현하지 않은 채 그 계획을 2026-09-27에 보관했다. 착수하면 시각 규칙을
+  먼저 정하고(브레인스토밍) 프레임 스펙 §13을 개정한다. 무작위 오프셋·직선 배치·해상도별 표는 쓰지 않는다.
 
 ## 재설계가 필요한 영역
 
