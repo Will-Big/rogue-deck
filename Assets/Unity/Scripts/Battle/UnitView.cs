@@ -56,7 +56,7 @@ namespace FateWeaver.Unity
 
         /// <summary>HP 막대를 현재 표시값에서 target까지 흐르게 한다. 시작값을 인자로 받지 않고
         /// getter에서 읽으므로, 한 턴에 같은 유닛이 여러 번 맞아도 앞 트윈이 끝난 값에서 이어진다.
-        /// 막대가 UnitView의 것이므로 그것이 움직이는 속도도 여기 있다(규칙 8).</summary>
+        /// 막대가 UnitView의 것이므로 그것이 움직이는 속도도 여기 있다.</summary>
         public Tween TweenHpTo(int target)
             => DOTween.To(() => DisplayedHp, value => DisplayedHp = value, target, _hpTweenDuration)
                 .SetEase(Ease.OutQuad)

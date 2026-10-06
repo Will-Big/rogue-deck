@@ -10,7 +10,7 @@ namespace FateWeaver.Unity.Playback
     /// 달라지는 값이 아니라 고정 협력자이고, 그래야 이 계약이 스테이지 타입을 몰라도 된다.
     ///
     /// 구현체는 이벤트 페이로드만 읽고 CombatState를 뒤지지 않는다(규칙 11). 한국어 문자열을 갖지
-    /// 않는다(규칙 10). 연출 시간·강도는 여기가 아니라 뷰 컴포넌트의 [SerializeField]에 있다(규칙 8).</summary>
+    /// 않는다(규칙 10). 연출 시간·강도는 여기가 아니라 뷰 컴포넌트의 [SerializeField]에 있다.</summary>
     public interface IResolutionEventPresenter
     {
         /// <summary>이 연출자가 맡는 이벤트 타입. 레지스트리의 키다.</summary>
