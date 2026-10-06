@@ -33,9 +33,10 @@ Tools/verify.sh
 ## 개별 도구를 직접 부를 때
 
 ```bash
-# 헤드리스 코어 테스트. 이 머신에는 .NET 5 SDK만 있어 타깃 오버라이드가 필수다.
-# 빠뜨리면 NETSDK1045로 실패한다. --filter로 한 테스트만 돌릴 수 있다.
-dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj -p:TargetFramework=net5.0 --nologo
+# 헤드리스 코어 테스트. --filter로 한 테스트만 돌릴 수 있다. 프로젝트 타깃은 net6.0이고
+# RollForward=Major라 6.0 이상 런타임이면 돈다(이 머신은 arm64 .NET 10, 2026-10-07 설치).
+# .NET 5 SDK뿐인 머신에서는 -p:TargetFramework=net5.0을 붙인다 — Tools/verify.sh가 알아서 한다.
+dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj --nologo
 ```
 
 ```bash

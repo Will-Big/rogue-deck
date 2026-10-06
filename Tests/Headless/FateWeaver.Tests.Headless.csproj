@@ -12,6 +12,9 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <!-- 설치된 런타임이 net6.0보다 높아도 그 런타임으로 실행한다. 이 머신에는 arm64용 6.0 런타임이
+         없고(.NET 10만 있다) CI는 6.0으로 돈다 — 둘 다 같은 프로젝트로 돌리기 위한 설정이다. -->
+    <RollForward>Major</RollForward>
     <LangVersion>9</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>

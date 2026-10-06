@@ -52,7 +52,7 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 - 규칙 1·2·3: 런타임 `new GameObject` 금지(프리팹 인스턴스화만), `Resources.Load`·
   `GameObject.Find`·`FindObjectOfType` 금지, 경로 하드코딩 금지.
 - 규칙 4: 인스펙터 노출은 `[SerializeField] private`.
-- 규칙 8: 연출 시간·강도를 코드 상수로 박지 않는다. 전부 `[SerializeField]`로 뺀다.
+- 연출 시간·강도를 코드 상수로 박지 않는다. 전부 `[SerializeField]`로 뺀다.
 - **새 `.cs`·`.prefab`·`.asset`에는 대응 `.meta`를 같은 커밋에 포함한다.** 계획 3.5가 `.meta`
   누락으로 한 번 겪었다(커밋 `de1b781`).
 - DOTween 관례는 [`ExecutionRailView.cs:250-290`](../../../Assets/Unity/Scripts/Battle/ExecutionRailView.cs)을
@@ -229,8 +229,8 @@ public void 턴_경계는_단독_비트다()
   묶이지 않는다.
 - 그릴 것이 없으면 `PlaybackCue.None`을 돌려주고 **예외를 던지지 않는다.** 재생 도중 이벤트 하나
   때문에 턴 전체가 멈추면 안 된다.
-- 연출 시간·강도는 연출자가 아니라 뷰 컴포넌트(`UnitMotionView` 등)의 `[SerializeField]`에 둔다
-  (규칙 8). 연출자는 순수 C# 클래스라 자체 직렬화 필드를 가질 수 없다.
+- 연출 시간·강도는 연출자가 아니라 뷰 컴포넌트(`UnitMotionView` 등)의 `[SerializeField]`에 둔다.
+  연출자는 순수 C# 클래스라 자체 직렬화 필드를 가질 수 없다.
 - `EventPresenterRegistry` — `Register(IResolutionEventPresenter)`,
   `TryResolve(ResolutionEvent, out IResolutionEventPresenter)`. 키는 이벤트의 `Type`이며 중복
   등록은 예외다(규칙 9의 부팅 검증에 해당).
@@ -264,7 +264,7 @@ public void 턴_경계는_단독_비트다()
 - `Tween Lunge(float direction)` — `DOAnchorPosX` 왕복. 규칙 32대로 직접 보간하지 않는다.
 - `Tween HitShake()` — `DOShakeAnchorPos`.
 - `Tween Flash(Color color)` — 초상 `Image`의 `DOColor` 왕복.
-- 강도·시간·거리는 전부 `[SerializeField]`(규칙 8).
+- 강도·시간·거리는 전부 `[SerializeField]`.
 
 `UnitView`는 상태 표시만 유지하되(규칙 30), HP바를 트윈할 수 있도록 현재 비율을 읽고 쓰는
 프로퍼티를 노출한다. 즉시 세팅 API(`SetHp`)는 그대로 둔다 — `RefreshAll()`이 계속 쓴다.

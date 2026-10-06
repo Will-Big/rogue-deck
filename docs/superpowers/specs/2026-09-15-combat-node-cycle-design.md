@@ -301,7 +301,7 @@ repeat n times:
 - `[SerializeField] private`: `BattleScreenController _battle`, `RewardChoiceView _reward`,
   `CombatResultView _result`, `CharacterAsset[] _party`(1단계: 시작 파티 순서), `int _runSeed = 1`,
   `int _fateEnergyPerTurn = 3`·`int _rewardChoices = 3`(1단계 임시 튜닝 — 코드 상수로 박지 않기 위해 인스펙터
-  값으로 두고, 2단계에서 `combat_rules.json`으로 옮긴다, 규칙 8).
+  값으로 두고, 2단계에서 `combat_rules.json`으로 옮긴다).
 - `Start()`: 배선 확인(`_battle`·`_reward`·`_result` null 아님) → `_battle.Initialize(onRestart: NewRun,
   onCombatFinished: OnCombatFinished)` → 콘텐츠 로드(`ContentBootstrap.Load(UnityContentRoot.Path)`, 실패
   시 지금과 같은 메시지 + `Debug.LogError` — 현재 `BattleScreenController.cs:79-91`) → 컨텍스트 조립 →
