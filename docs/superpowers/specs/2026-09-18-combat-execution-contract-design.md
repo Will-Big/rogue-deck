@@ -1,7 +1,7 @@
 # 전투 실행·반응·콘텐츠 계약 재설계
 
 사람 검수용 [HTML 개요](2026-09-18-combat-execution-contract-design.html).
-상태: current — 2026-09-18 사용자 승인, 같은 날 구현 완료(브랜치 `combat-execution-contract`, master 머지 전). 구현 중 사용자
+상태: current — 2026-09-18 사용자 승인, 같은 날 구현 완료·master 머지(`9dbbdca`). 구현 중 사용자
 결정은 §11에 있다(D1·D2·D7·D8·D10·D11).
 
 ## 상세

@@ -1,10 +1,28 @@
 # Card Status Grid and Tooltip Implementation Plan
 
+> **2026-10-06 갱신 — Task 3–5는 선행 없이 바로 재개할 수 있다.** 이 계획이 기다리던 JSON 콘텐츠
+> 리팩터링은 master에 들어갔고, 작업 브랜치 `refactor/card-frame-design`과 그 워크트리
+> (`/Users/ish/Git/rogue-deck-card-frame-design`)는 더 이상 없다. 그래서 아래를 이렇게 읽는다.
+>
+> - **작업 위치:** 새 전용 워크트리에서 한다(AGENTS.md 규칙 15). 본문의 옛 워크트리 경로와
+>   `-projectPath`는 그 워크트리 경로로 바꿔 읽는다.
+> - **Integration Gate는 충족됐다.** 아래 해당 절에 근거를 적었다.
+> - **"카드별 부착 상태 키 계약"은 설계할 필요가 없다(2026-08-28 정정).** 카드에 붙는 상태는 저작
+>   데이터가 아니라 런타임 인스턴스 상태다. `ExecutionCardInstance.Statuses`(`StatusBag`)가 이미 있고,
+>   `StatusScope.CardInstance`로 등록된 상태를 `CardExecutor`가 카드에서 꺼내 쓴다
+>   (`Assets/Core/Combat/CardExecutor.cs:105`~`111`). **카드 JSON에 새 키를 넣지 않는다** — 넣으면
+>   런타임 실상과 저작본이 어긋난다.
+> - **재개 순서:** `ExecutionCardInstance.Statuses`의 키 목록 → `ICardStatusDisplaySource`로 표시 콘텐츠
+>   해석 → `CardStatusPresentation` 조립 → 아이콘·툴팁 배선. `ICardStatusDisplaySource`는 선언만 있고
+>   (`Assets/Unity/Scripts/Cards/CardStatusPresentation.cs:38`) 구현체가 하나도 없으므로 그것을 만드는
+>   일이 첫 작업이다. 표시 콘텐츠의 출처는 상태 JSON(`displayName` 등)과 아이콘 Sprite 카탈로그이며,
+>   SO나 C# 문자열 임시 fallback은 추가하지 않는다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 카드에 직접 붙은 상태를 네 열 고정 그리드로 표시하고, JSON 콘텐츠에서 온 제목·설명을 공유 호버 툴팁으로 보여준다.
 
-**Architecture:** UI 컴포넌트와 프리팹은 표시 준비가 끝난 `CardStatusPresentation`만 소비한다. JSON 중앙 카탈로그와 Unity Sprite 카탈로그의 결합은 `CardStatusPresentationFactory` 한 곳에서 수행하며, 진행 중인 JSON 리팩터링이 합류하기 전에는 이 조립 지점을 임시 SO·enum switch·하드코딩 문자열로 대신하지 않는다. Task 1–2는 현재 브랜치에서 독립 수행할 수 있고, Task 3부터는 JSON 리팩터링이 master에 반영된 뒤 사용자 승인을 받아 현재 브랜치에 동기화한 후 수행한다.
+**Architecture:** UI 컴포넌트와 프리팹은 표시 준비가 끝난 `CardStatusPresentation`만 소비한다. JSON 중앙 카탈로그와 Unity Sprite 카탈로그의 결합은 `CardStatusPresentationFactory` 한 곳에서 수행하며, 진행 중인 JSON 리팩터링이 합류하기 전에는 이 조립 지점을 임시 SO·enum switch·하드코딩 문자열로 대신하지 않는다. Task 1–2는 완료됐고, Task 3부터는 JSON 콘텐츠가 master에 있으므로 새 워크트리에서 바로 수행한다(2026-10-06 갱신).
 
 **Tech Stack:** Unity 6000.5.2f1, C# 9, NUnit 3, uGUI `GridLayoutGroup`/`ContentSizeFitter`, TextMeshPro, JSON 중앙 콘텐츠 카탈로그
 
@@ -232,14 +250,20 @@ git commit -m "refactor(ui): author generic card status prefabs"
 
 ---
 
-### Integration Gate: wait for the JSON content refactor
+### Integration Gate: 충족됨 (2026-10-06 확인)
 
-Do not start Task 3 until all conditions are true:
+원래 조건 넷과 지금 상태다. 넷 다 풀렸으므로 Task 3을 바로 시작한다.
 
-1. the JSON runtime-content refactor is committed to `master`;
-2. the user explicitly approves bringing current `master` into `refactor/card-frame-design`;
-3. `git show master:docs/superpowers/README.md` identifies the current JSON/status catalog authority;
-4. the merged catalog can expose a card-local status key, display name, description and icon key from JSON.
+1. ~~the JSON runtime-content refactor is committed to `master`~~ — 들어갔다. `ContentBootstrap.Load`가
+   상태·카드를 JSON에서 읽는다(`Assets/Core/Authoring/ContentBootstrap.cs:38`).
+2. ~~the user explicitly approves bringing current `master` into `refactor/card-frame-design`~~ — 그
+   브랜치가 없어져 해당 없다. master에서 새 워크트리를 만든다.
+3. ~~`git show master:docs/superpowers/README.md` identifies the current JSON/status catalog authority~~ —
+   권위는 `docs/agents/content-authoring.md`와 `Content/Statuses/*.json`이다.
+4. ~~the merged catalog can expose a card-local status key, display name, description and icon key from
+   JSON~~ — 카드에 붙은 상태 키는 JSON이 아니라 `ExecutionCardInstance.Statuses`에서 얻는다(맨 위 갱신 참고).
+   표시 이름은 상태 JSON의 `displayName`에 있다. **설명 문구와 아이콘 키가 상태 JSON에 있는지는 Task 3을
+   시작할 때 확인한다** — 없으면 그때 저작 위치를 정한다.
 
 If the merged catalog uses different type names, only the `ICardStatusDisplaySource` composition in Task 4 changes; `CardStatusDisplayContent`, `CardStatusPresentation`, both view components and both prefabs remain unchanged.
 

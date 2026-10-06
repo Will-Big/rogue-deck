@@ -5,7 +5,9 @@
 - 문서 유형: `design`
 - 주 도메인: `card-authoring`
 - 상태: `current`
-- 구현 상태: 미착수 (요구·경계·구조 확정)
+- 구현 상태: **§4.5 JSON 런타임 로딩은 구현 완료**(계획 3a~3d·3.5, 2026-08-06) — `ContentBootstrap.Load`가
+  콘텐츠를 읽는다. **카드 변형(§4.1~§4.4·§4.7, 계획 4)은 미착수**이며 계획 문서도 아직 없다.
+  상태 수치에 같은 층 모델을 쓸지는 리팩터링 백로그 §15의 결정에 달려 있다 (2026-10-06 갱신)
 - 관련 권위 문서:
   - `docs/superpowers/specs/2026-06-18-fate-weaver-core-design.md`
   - `docs/superpowers/specs/2026-07-19-open-card-authoring-design.md`

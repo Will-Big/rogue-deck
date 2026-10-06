@@ -1,10 +1,11 @@
 # Fate Weaver — 확장성·하드코딩 후속 리팩토링 백로그
 
 - 작성일: 2026-07-16
-- 개정일: 2026-08-04 — 완료·대체된 항목의 현황을 아래 표로 반영
+- 개정일: 2026-10-06 — 색인에 흩어져 있던 조건 평가·상태 수치 항목을 §10·§13.1·§15로 모았다
+  (2026-08-04: 완료·대체된 항목의 현황을 아래 표로 반영)
 - 문서 유형: `active-roadmap`
 - 주 도메인: `architecture`
-- 상태: `active` — P1-B, P1-C, P2와 §12·§13 항목이 남았다
+- 상태: `active` — P1-B, P1-C, P2와 §12·§13·§14·§15 항목이 남았다
 - 현재 범위에서 분리된 작업: 저작 구조, 효과 기반 카드 성질 합성, 대상 선택 메타데이터, RNG 통합,
   SO 단일 원본화, Unity 프리팹화
 
@@ -23,6 +24,8 @@
 | §8 | P1-C 전투 튜닝 데이터화 | `active` — 운명력(`fateEnergyPerTurn`)·생존자 수별 드로우(`drawByLivingCount`)는 `Content/combat_rules.json`으로, 파티원 최대 HP(`maxHp`)는 `Content/Characters/*.json`으로(생존 충전 `surviveCharges`도 옮겨졌으나 2026-09-18 전투 실행 계약 계획 T0에서 제거) 전투 노드 2단계(2026-09-17)가 옮겼다. 다만 `DeckCombatSession`(`Assets/Core/Simulation/DeckCombatSession.cs:51,66,90`) 생성자의 `fateEnergyPerTurn = 3` 기본값 등 제품 경로 매직 넘버가 남아 있고 `CombatTuning` 순수 모델도 없어, 절의 나머지 완료 조건이 끝나지 않았으므로 현황은 바꾸지 않는다 |
 | §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
 | §12·§13 | 2026-07-25 점검, 2026-07-30 상태 이상 논의 | `active` |
+| §14 | 2026-09-04 규칙 부채 점검 | `active` |
+| §15 | 상태 수치의 수명별 층과 저작값 읽는 통로 | `active` — 착수 전 결정 둘이 필요하다 |
 
 ## 1. 목적
 
@@ -405,6 +408,13 @@ Unity 컨트롤러가 `DeckCombatSession.State`, `Party`, `Enemies`, `CurrentOrd
 `CardType`은 복합 효과 카드에서 열린 조합 축임이 확인되어 P0-B2에서 제거한다. 나머지 항목이 실제로 열린 콘텐츠
 확장 축으로 바뀔 때만 별도 설계를 거쳐 레지스트리화한다.
 
+**조건 평가의 재검토 조건 (2026-09-18, 전투 실행 계약 계획 검토에서 범위 밖으로 뺐다).** 런타임
+`ConditionEvaluator.Evaluate`는 타입 검사 사슬이고(`Assets/Core/Conditions/ConditionEvaluator.cs:10`),
+저작 쪽 `ConditionSpec.ToCondition`의 switch는 유지 의도가 주석으로 적혀 있다
+(`Assets/Core/Authoring/EffectSpec.cs:21`). 새 조건이 늘어 중앙이 자라는 것이 **실제로 문제될 때**
+등록형 전환에 착수하며, 그때 저작 쪽 유지 결정도 다시 본다. 기본 캐릭터 설계(2026-10-06 진행 중)가
+"자신이 전열"·"자신에게 상태가 있다" 같은 새 조건을 요구할 수 있어 이 조건이 곧 찰 수 있다.
+
 ## 11. 작업 분리 원칙
 
 - 각 P0/P1 항목은 별도 brainstorming/spec/implementation plan을 가진다.
@@ -494,9 +504,30 @@ fallback 정책을 복사해 재구현하게 된다.
 **2026-07-30 해소** — `StatusDamageLayer`로 층을 선언하고 `StatusDamageFold`가 배율 층을 모두 접은
 뒤 흡수 층을 적용한다. 걸린 순서와 무관하게 같은 결과가 나온다.
 
-**상태 수명이 저작 시점에 고정된다.** `StatusLifetime`은 적용마다 4종(`Permanent`/`ThisTurn`/
-`Turns`/`UntilConsumed`) 중 하나를 고르는 구조라, "방어를 이 런 동안 영구로", "독을 이번 턴만으로"
-같은 런타임 변경을 표현할 수 없다. 수명은 강도와 마찬가지로 상태별 규칙 파라미터여야 한다.
+**상태 수명이 저작 시점에 고정된다.** `StatusLifetimeKind`는 적용마다 하나를 고르는 구조라
+(`Permanent`/`ThisTurn`/`Turns`/`UntilConsumed`/`PhaseVisits`, `Assets/Core/Status/StatusLifetime.cs:5`),
+"방어를 이 런 동안 영구로", "독을 이번 턴만으로" 같은 런타임 변경을 표현할 수 없다. 수명은 강도와
+마찬가지로 상태별 규칙 파라미터여야 한다.
+
+**2026-09-18 일부 해소 — 만료는 수명에서 분리됐다.** 전투 실행 계약 T6이 공통 만료 정책을 넣었다.
+`StatusInstance`가 `Expiry`(만료 정책)와 `VisitsLeft`(남은 기준 시점 방문 수)를 갖고
+(`Assets/Core/Status/StatusInstance.cs:15`·`18`), 수명 종류에 `PhaseVisits`가 추가됐다 — 방어의
+"다음 턴 준비에 사라진다"가 상태 JSON의 `expiry`로 저작된다(`Content/Statuses/block.json`).
+**남은 것은 둘이다:** 이름 정리와 공유 수치 구조.
+
+*이름이 설계 규칙과 뒤집혀 있다 (2026-08-28 논의).* 사용자가 밝힌 규칙은 이렇다 — 상태이상 **임시
+객체**(캐릭터 또는 카드에 붙는다)는 `count`만 관리하고, **정보 객체**(중앙 공유)가 `magnitude`를
+관리한다. `count`는 남은 턴·충전·스택처럼 전투 중 변하는 수치이고 상태마다 해석이 다르며,
+`magnitude`는 임시 객체들이 참조하는 대체로 고정된 공유값이다. 둘 다 카드·유물이 바꿀 수 있다.
+그 규칙에 비추면 **저작 경계는 고칠 게 없다** — 카드가 적는 `count` 하나는 임시 객체의 초기 `count`이고,
+`magnitude`는 이미 상태 JSON에 있다(`poison.json`의 `growthPerTurn`). "카드 JSON의 `count`를 `turns`와
+`magnitude`로 쪼개자"는 방향은 이 규칙과 어긋나 채택하지 않는다. 고칠 곳은 런타임이다: `StatusInstance`가
+`Count`와 `Magnitude`를 둘 다 들고 있고(`StatusInstance.cs:11`·`12`), 독은 전투 중 변하는 스택이
+`Instance.Magnitude`(규칙상 `count`), 고정 공유값인 성장량이 카탈로그의 `GrowthPerTurnOf`(규칙상
+`magnitude`)다. 위치는 맞는데 이름이 서로 바뀌어 있고, 정보 객체 쪽에는 일반화된 `magnitude` 슬롯 없이
+상태별 전용 접근자만 있다. **이 정리는 §15와 같은 작업이다 — 따로 하면 두 번 뜯는다.**
+
+아래 목표 구조는 2026-07-30 작성 당시의 것이며, 만료 부분은 위 T6 구현이 대신한다.
 
 목표 구조는 인스턴스에 count 하나만 두고(상태마다 의미가 다르다 — 취약은 남은 턴, 방어는 흡수량),
 감쇠를 `{트리거 → 변화량}` 데이터로 옮기는 것이다. 트리거는 최소한 `턴 끝`과 `발동 시` 둘이며 동시에
@@ -522,8 +553,9 @@ fallback 정책을 복사해 재구현하게 된다.
 
 두 항목의 요구와 경계는
 [카드 변형과 런타임 콘텐츠 로딩 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md)에
-확정되어 있다. **콘텐츠 로딩은 계획 3a·3b·3c로 구현이 끝났고 3d(C# 스펙 목록 제거)만 남았다.
-`OwnedCard` 변형은 계획 4로 아직 미착수다.**
+확정되어 있다. **콘텐츠 로딩은 계획 3a~3d와 3.5로 구현이 끝났다(2026-08-06). `OwnedCard` 변형은
+계획 4로 아직 미착수이며 계획 문서도 쓰지 않았다** — 선행은 전부 풀렸다. 범위를 카드에 한정할지는
+§15의 결정 2에 달려 있다.
 
 ### 13.3 P2급 — 중복
 
@@ -621,3 +653,65 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 오해의 폭이 §14.2보다 작아 우선순위는 낮다. 시나리오 카탈로그를 손댈 일이 생길 때 함께 고친다.
 
 **완료 조건.** 이름이 "예제 모음"이 아니라 "카탈로그"임을 말한다.
+
+## 15. 상태 수치의 수명별 층과 저작값 읽는 통로 (2026-08-28 조사, 2026-10-06 색인에서 옮김)
+
+문제가 둘이고 **같은 작업에서 풀린다.** 따로 착수하면 두 번 뜯게 된다. §13.1의 count/magnitude 이름
+정리도 이 작업에 속한다.
+
+### 15.1 수명이 맞는 그릇이 없다
+
+변경에는 살아야 하는 기간이 있다("이번 전투 동안 취약 200%", "이번 런 동안 독 성장량 +2"). 변경을 그
+기간만큼 사는 객체에 담으면 지우는 코드 없이 알아서 사라진다. 지금 상태 수치가 담기는 곳은 기간이
+맞지 않는다.
+
+| 변경이 살아야 할 기간 | 맞는 그릇 | 현재 (2026-10-06 확인) |
+|---|---|---|
+| 이 전투 | `CombatState` | 전투마다 새로 만들어지지만 **자기 수치 표가 없다** — `StatusRules`가 카탈로그 것을 그대로 돌려준다(`Assets/Core/Combat/CombatState.cs:63`) |
+| 이 런 | `RunState` | 전투 노드 흐름이 쓰고 있으나(`CombatNode`·`RunSetup`·`CombatNodeFlow`) **상태 수치를 담는 자리는 없다** |
+| 안 변함 | `GameContent` | 있다. 지금은 전부 여기 쓴다 |
+
+`GameContent`와 그 안의 `StatusContentCatalog`는 `CombatNodeFlow.Start()`에서 한 번 만들어지고
+(`Assets/Unity/Scripts/Battle/CombatNodeFlow.cs:51`), 런을 재시작하거나 다음 노드로 넘어가도 같은
+인스턴스를 쓴다. 그래서 `StatusContentCatalog.Rules`(`Assets/Core/Authoring/Statuses/StatusContentCatalog.cs:43`)에
+쓴 값은 전투 경계를 넘어 남는다.
+
+**가변인 것 자체는 결함이 아니다** — 유물 같은 효과가 수치를 바꾸게 하려는 의도다. 결함은 그 변경이
+**지워질 시점이 없다**는 것이다. 아직 피해가 없는 이유는 프로덕션에서 `Rules.Set`을 부르는 코드가
+하나도 없어서이고, 이 경고는 `CombatState.cs:45` 주석에도 있다. 테스트는 이미 이 누수를 밟아
+`TestContent.Statuses()`가 호출마다 카탈로그를 새로 만든다(`Assets/Core/Tests/EditMode/TestContent.cs:41`).
+`StatusRules`를 읽는 곳은 `CardExecutor.cs:111`과 `DeckCombatSession.cs:240`·`459`다.
+
+**전투용 사본을 뜨는 방식은 안 된다** —
+[카드 변형 설계](../specs/2026-07-30-card-mutation-and-runtime-content-design.md) §4.3이 이미 기각했다
+(전투 중 발생한 런 지속 변경이 사본과 함께 사라진다). 그 설계가 카드에 대해 정해 둔
+`Source + Permanent(런) + Combat(전투) → Effective`가 해법이며, **카드에만 문서화돼 있고 구현은 없다**
+(`CardMutation` 타입이 저장소에 없고 `OwnedCard`는 `Def`+`OwnerId`뿐이다, `Assets/Core/Cards/OwnedCard.cs:7`).
+상태 수치·덱·캐릭터는 문서조차 없다.
+
+### 15.2 저작값 읽는 통로가 상태마다 다르고 중앙에 쌓인다
+
+상태의 런타임 행동(`StatusBehavior`)과 저작 스펙(`StatusSpec`)은 규칙 9대로 갈려 있어, 상태를 추가해도
+클래스 하나와 등록 한 줄이면 된다. 그런데 그 저작값을 **읽는** 쪽은 `StatusContentCatalog`에 상태별
+메서드로 쌓인다.
+
+| 통로 | 담는 것 | 해당 상태 | 가변? |
+|---|---|---|---|
+| `Rules` (`StatusRuleSet`) | `multiplierPercent` | 취약·약화·손상 | 가변 |
+| `GrowthPerTurnOf` (`StatusContentCatalog.cs:65`) | `growthPerTurn` | 독 | 읽기 전용 |
+| `ExecutionOrderDeltaOf` (`StatusContentCatalog.cs:62`) | `executionOrderDelta` | 가속·둔화 | 읽기 전용 |
+| 없음 | — | 방어·전염·독 잠복·독 안정·보상 무효 | — |
+
+파라미터를 가진 상태를 추가할 때마다 메서드가 하나 늘고, 셋 중 하나만 가변이라 "유물이 독 성장량 +1"은
+손댈 통로 자체가 없다. 원인은 방향이다. 행동은 `NewSpec()`으로 자기 스펙 타입을 아는데, 읽을 때
+카탈로그를 거치느라 그 지식이 버려지고 카탈로그가 대신 알게 됐다. **카탈로그가 `StatusKey → StatusSpec`만
+돌려주고 해석은 각 행동이 하면** 중앙이 자라지 않고, 수명별 층을 얹을 자리도 한 곳으로 모인다.
+
+기본 캐릭터 설계(2026-10-06 진행 중)가 요새화·힘 같은 "이번 전투 동안" 상태를 더하려 하므로, 이 절은
+그 구현 전에 다시 본다.
+
+### 15.3 착수 전에 정할 것
+
+1. §4.3의 `Source + Permanent(런) + Combat(전투) → Effective` 모델을 상태 수치·덱·캐릭터에도
+   **그대로 적용**할 것인가, 데이터 종류마다 다른 모양이 필요한가.
+2. 계획 4(카드 변형)의 범위를 카드에 한정할 것인가, 층 전반으로 넓힐 것인가.
