@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-10-06
+- 개정일: 2026-10-07
 - 역할: 현재 기준 문서와 진행 중인 계획을 찾는 출발점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 기준 문서를 먼저 찾는다.
@@ -98,6 +98,7 @@
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
+| [카드·상태 변경과 설명 일치 작업 계획](plans/2026-10-07-card-status-mutation-roadmap.md) — [HTML 검토](plans/2026-10-07-card-status-mutation-roadmap.html) | `active` | 단계 A의 설계 논의부터 진행하는 로드맵. 카드 변경 → 상태 변경 → 이름 중복 정리 순서이며, 상태의 공통·부여자·보유자 적용 범위는 미결정. B~E 구현은 설계 승인과 개별 구현 계획 작성 후 진행 |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | 남은 범위: P1-B 프리팹화, P1-C 튜닝 데이터화, P2 표현 경계, §12~§14 점검 추가 항목, §15 유지 기간별 상태 수치 분리. 항목별 현황은 그 문서 §0 표 |
 | [후속 작업 상세](plans/2026-10-06-follow-up-queue.md) | `active` | 아래 「후속 작업 대기열」 표의 항목별 본문·근거·결정 기록(F1~F14). 다른 문서에 상세가 있는 항목은 표가 직접 가리킨다 |
 | [카드 상태 그리드와 툴팁 구현](plans/2026-08-03-card-status-grid-tooltip.md) | `active` | Task 1–2의 JSON 독립 UI·프리팹은 완료. Task 3–5의 표시 데이터 변환·공유 호버 툴팁 연결은 **선행 작업 없이 재개 가능** — 재개 조건과 순서는 계획 맨 위 갱신(2026-10-06)에 있다 |
@@ -106,8 +107,7 @@
 
 [카드 변형과 런타임 콘텐츠 로딩 설계](specs/2026-07-30-card-mutation-and-runtime-content-design.md)의
 JSON 런타임 로딩은 구현이 끝났다(계획 3a~3d·3.5, 2026-08-06). **남은 것은 계획 4 `CardMutation`
-하나이며 계획 문서는 아직 쓰지 않았다.** 선행 작업은 모두 끝났다. 범위를 카드에 한정할지, 상태 수치까지
-넓힐지는 [백로그 §15](plans/2026-07-16-architecture-refactor-backlog.md)의 결정에 달려 있다.
+하나이며 개별 구현 계획은 아직 쓰지 않았다.** 기존 선행 작업은 끝났고, [카드·상태 변경 로드맵](plans/2026-10-07-card-status-mutation-roadmap.md)에 설계 결정과 실행 순서를 정리했다. 상태 수치까지의 적용 범위는 로드맵 단계 A와 [백로그 §15](plans/2026-07-16-architecture-refactor-backlog.md)를 함께 보고 결정한다.
 
 콘텐츠 원본과 저작 규칙은 [content-authoring.md](../agents/content-authoring.md), 검증 명령은
 [commands.md](../agents/commands.md)를 기준으로 삼는다. 테스트·카드 개수 같은 수치는 여기 적지 않는다 —
