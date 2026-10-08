@@ -98,7 +98,7 @@
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
-| [카드·상태 변경과 count 합산 구조](plans/2026-10-07-card-status-mutation-roadmap.md) — [HTML 설계도](plans/2026-10-07-card-status-mutation-roadmap.html) | `active` | 수정된 구조 후보 검토. 키당 인스턴스 하나·Count 합산, 중앙 정도와 개별 현재 수치의 책임 분리, Count와 무관한 규칙 호버 설명. 부여 기록·부여자 추적·N회 실행은 철회. 범용은 파티 전체·적 제외, UI 배치는 미결정. 단일 Count 이행 → 중앙 규칙·표시 → 카드 변경 → 이름 정리 |
+| [카드·상태 변경과 Stacks 합산 구조](plans/2026-10-07-card-status-mutation-roadmap.md) — [HTML 설계도](plans/2026-10-07-card-status-mutation-roadmap.html) | `active` | 수정된 구조 후보 검토. 키당 인스턴스 하나·Stacks 합산, Count·Magnitude·VisitsLeft 제거, 중앙 정도와 개별 현재 수치의 책임 분리, Stacks와 무관한 규칙 호버 설명. 부여 기록·부여자 추적·N회 실행은 철회. 범용은 파티 전체·적 제외, UI 배치는 미결정. 단일 Stacks와 시점별 감소/제거 이행 → 중앙 규칙·표시 → 카드 변경 → 이름 정리 |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | 남은 범위: P1-B 프리팹화, P1-C 튜닝 데이터화, P2 표현 경계, §12~§14 점검 추가 항목, §15 유지 기간별 상태 수치 분리. 항목별 현황은 그 문서 §0 표 |
 | [후속 작업 상세](plans/2026-10-06-follow-up-queue.md) | `active` | 아래 「후속 작업 대기열」 표의 항목별 본문·근거·결정 기록(F1~F15). 다른 문서에 상세가 있는 항목은 표가 직접 가리킨다 |
 
