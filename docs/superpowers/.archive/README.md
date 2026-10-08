@@ -74,6 +74,7 @@
 - [B안 카드 프리팹 적용](plans/2026-09-20-card-b-prefab.md) — 개요는 [HTML](plans/2026-09-20-card-b-prefab.html). 2026-09-21 머지(`a9a4790`), 2026-09-23 머리 행 개정. 카드 앞면 계약은 현행 `specs/2026-07-31-primitive-card-frame-design.md` §6·§11로 옮겼다.
 - [프리미티브 카드 프레임 구현](plans/2026-07-31-primitive-card-frame.md) — 2026-09-27 보관. Task 1–6 완료, 남은 배치·기호·설명 검수는 B안 적용 계획이 대신 끝냈다. 계약은 현행 프레임 스펙 §6·§11·§13.
 - [카드 프레임 다음 세션 인계](plans/2026-08-04-card-frame-session-handoff.md) — 2026-09-27 보관. Task 1(실행 순서 뱃지) 완료, Task 2(손패 미세 높낮이)는 구현하지 않고 제거했다(2026-09-27 사용자 결정).
+- [카드 상태 그리드와 툴팁 구현 계획](plans/2026-08-03-card-status-grid-tooltip.md) — **미완료 보관.** Task 1–2(JSON 독립 UI·프리팹)만 끝났고 Task 3–5(표시 데이터 변환·공유 호버 툴팁 연결)는 하지 않았다. 2026-10-08에 대기열에서 뺐고(사용자 결정), 재개할 때는 계획을 새로 쓴다. 설계는 현행 `specs/2026-08-03-card-status-grid-tooltip-design.md`.
 
 ### 아키텍처 개선 P0
 
