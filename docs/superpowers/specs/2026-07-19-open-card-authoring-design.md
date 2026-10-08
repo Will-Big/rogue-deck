@@ -28,8 +28,10 @@
 
 사용자와 합의된 두 가지 핵심 결정:
 
-1. **저작 구조는 다형 spec 클래스** (백로그 §4 대안 1). `[SerializeReference]` 기반, 효과별 클래스가
-   자기 파라미터·매핑·검증을 소유한다. 리플렉션 자동 등록, raw string dictionary는 채택하지 않는다.
+1. **저작 구조는 다형 spec 클래스** (백로그 §4 대안 1). 효과별 클래스가 자기 파라미터·매핑·검증을
+   소유한다. 직렬화는 카드 JSON의 `kind` 판별자와 `EffectSpecJsonConverter`를 사용한다(§4.2의 대체 기록).
+   최초 설계의 `[SerializeReference]`·Unity 인스펙터 저작은 폐기됐다. 리플렉션 자동 등록,
+   raw string dictionary는 채택하지 않는다.
 2. **코어 `EffectData`의 ApplyStatus 전용 필드도 이번에 payload로 이관한다.** 저작 층만 열면 새 효과가
    결국 공용 모델을 다시 키우기 때문이다.
 

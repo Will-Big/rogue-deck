@@ -28,7 +28,7 @@
 
 ## Global Constraints
 
-- 작업 위치는 `/Users/ish/Git/rogue-deck-card-frame-design`, 브랜치는 `refactor/card-frame-design`이다. 새 워크트리·브랜치를 만들거나 메인 체크아웃의 브랜치를 전환하지 않는다.
+- 작업은 master에서 만든 새 전용 워크트리에서 한다(맨 위 2026-10-06 갱신, 규칙 15). 본문의 옛 `refactor/card-frame-design` 브랜치·워크트리 경로와 배치 명령의 `-projectPath`는 새 작업 위치로 바꿔 읽는다. 메인 체크아웃의 브랜치는 전환하지 않는다.
 - 권위 설계는 `docs/superpowers/specs/2026-08-03-card-status-grid-tooltip-design.md`다.
 - 카드·상태 규칙과 콘텐츠의 저작 원본은 JSON 하나뿐이다. 임시 ScriptableObject 콘텐츠, C# 표시 문구, `CardStatusIcon`별 switch를 추가하지 않는다.
 - Unity의 `StatusIconCatalog`는 JSON `iconKey`를 Sprite 참조로 바꾸는 표현 에셋이며 규칙·텍스트 콘텐츠 원본이 아니다.

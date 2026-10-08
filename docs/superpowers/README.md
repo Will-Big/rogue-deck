@@ -15,7 +15,7 @@
 | `current` | 현재 규칙 또는 구현 구조를 설명하는 기준 문서 |
 | `active` | 아직 끝나지 않았고 현재 기준으로 실행 가능한 계획 |
 | `needs-redesign` | 필요한 영역이지만 기존 문서를 그대로 실행할 수 없음 |
-| `archived` | 완료되었거나 현재 기준에서 대체된 역사 기록 |
+| `archived` | 완료·대체되어 `.archive/`로 옮긴 기록. 이 색인에는 남기지 않는다 |
 
 현행 문서끼리 충돌하면 날짜가 아니라 이 색인의 `적용 범위`와 문서가 명시한 대체 관계를 따른다.
 현재 결정을 바꾸는 새 문서는 기존 기준 문서와 이 색인을 같은 커밋에서 함께 갱신해야 한다.
@@ -29,7 +29,7 @@
 | [전투 코어 설계](specs/2026-06-18-fate-weaver-core-design.md) | `current` | 순수 C# 코어 경계, 결정론, 이벤트 출력 | 새 규칙·효과·상태·시뮬레이션 구현 |
 | [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 효과·상태·개입 설명 핸들러 확장 | 새 카드 능력의 자동 설명 추가 |
 | [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | 다형 효과 스펙의 매핑·검증·확장 구조(JSON `kind` 판별자와 컨버터) | 새 효과·상태·개입 저작 타입 추가 |
-| [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 대상 요구의 선언·질의·검증 경로 | 새 대상형 개입 액션·대상 종류 추가 |
+| [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 카드 플레이 전 입력 대상 요구의 선언·질의·검증. 실행 효과의 자동 대상 선택은 전투 실행 계약이 우선한다 | 새 대상형 개입 액션·대상 종류 추가 |
 
 ### 전투 실행 재설계
 
@@ -91,8 +91,8 @@
 [`docs/agents/`](../agents/)에 있다: [그래프 조회·재생성·비용](../agents/graphify-usage.md),
 [EditMode 배치 실행과 라이선싱 장애](../agents/unity-batch-runs.md),
 [설계·계획 문서 골격](../agents/design-doc-format.md)(규칙 28·29의 상세 — **새 문서를 쓰기 전에
-읽는다**). 이 문서들은 설계 스펙이 아니라
-**작업 절차**라 위 상태표의 관리 대상이 아니며, 도구에 매이지 않도록 `.claude/` 바깥에 둔다.
+읽는다**). 이 문서들은 **작업 절차**이며 도구에 매이지 않도록 `.claude/` 바깥에 둔다.
+손패 레이아웃 조절처럼 작업의 직접 진입점인 문서는 위 표에도 연결한다.
 
 ## 진행 중인 계획과 로드맵
 
@@ -147,7 +147,4 @@ JSON 런타임 로딩은 구현이 끝났다(계획 3a~3d·3.5, 2026-08-06). **�
 
 ## 문서 수명주기
 
-새 문서의 골격은 [design-doc-format.md](../agents/design-doc-format.md)(규칙 28·29), 추가·완료·보관
-절차와 상태 어휘는 [doc-lifecycle.md](../agents/doc-lifecycle.md)(규칙 20)를 기준으로 삼는다. 요점만 적는다:
-새 스펙·계획을 더하거나 끝낼 때 **같은 커밋에서** 이 색인을 고치고, 끝난 문서는 `.archive/`로 옮긴 뒤
-이 색인에서 그 행을 **지운다.**
+작성 형식은 [design-doc-format.md](../agents/design-doc-format.md)(규칙 28·29), 상태·색인 갱신·보관 절차는 [doc-lifecycle.md](../agents/doc-lifecycle.md)(규칙 20)를 따른다.
