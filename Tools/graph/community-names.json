@@ -2,7 +2,6 @@
   "_설명": "커뮤니티 대표 심볼(최고 연결 노드 중 '.'로 시작하지 않는 첫 라벨) → 사람이 읽을 이름. name_communities.py가 재생성 때마다 이 매핑으로 community_name을 입힌다. 코드가 재편되어 대표 심볼이 바뀌면 매핑 미스가 나고 그 커뮤니티는 심볼 이름 그대로 표시된다 — 그때 여기에 항목을 추가한다. 2026-08-28 큐레이션.",
   "InterventionActionKey": "개입 액션 시스템",
   "FateWeaver.Core.Cards": "코어 네임스페이스 허브",
-  "BattleSceneBuilder": "전투 씬 빌더·UI 키트",
   "CardPresentation": "카드 프리팹·표시",
   "EffectSpec": "효과 저작 스펙",
   "BattleScreenController": "전투 화면 컨트롤러",

@@ -1,7 +1,7 @@
 # Fate Weaver — 확장성·하드코딩 후속 리팩토링 백로그
 
 - 작성일: 2026-07-16
-- 개정일: 2026-10-06 — 색인에 흩어져 있던 조건 평가·상태 수치 항목을 §10·§13.1·§15로 모았다
+- 개정일: 2026-10-13 — 코드 생성 저작 경로 폐기와 JSON 직접 저작 방침을 반영했다
   (2026-08-04: 완료·대체된 항목의 현황을 아래 표로 반영)
 - 문서 유형: `active-roadmap`
 - 주 도메인: `architecture`
@@ -11,7 +11,7 @@
 
 ## 0. 항목별 현황 (2026-08-04)
 
-각 절의 본문은 **작성 당시의 판단을 그대로 둔** 것이다. 현재 유효한지는 이 표로 먼저 확인한다.
+현재 유효한지는 이 표로 먼저 확인한다. §7·§14.1은 2026-10-13의 저작 도구 제거 방침을 반영한다.
 
 | 절 | 항목 | 현황 |
 |---|---|---|
@@ -20,7 +20,7 @@
 | §4.1 | P0-B2 `CardType` 제거 | **완료** — `CardDefinitionDataTests`가 부재를 잠근다 |
 | §5 | P0-C 대상 선택 메타데이터 | **완료** — [대상 선택 메타데이터 설계](../specs/2026-07-28-p0c-targeting-metadata-design.md) |
 | §6 | P1-A SO 단일 원본화 | **대체·완료** — 원본은 SO가 아니라 **JSON**이 됐고, 계획 3d(2026-08-05)가 남은 C# 골든 목록까지 지워 잔여가 없다. 아래 §6 머리말 참고 |
-| §7 | P1-B Unity 프리팹화 | `active` — 단 `CardAsset`·`DeckAsset` 캡슐화 항목은 대상이 사라져 무효 |
+| §7 | P1-B Unity 프리팹화 | `active` — 저장된 프리팹·씬 직접 저작. 남은 런타임 컴포넌트 생성과 상태 아이콘 문자열 참조 점검은 §7·§14.1 |
 | §8 | P1-C 전투 튜닝 데이터화 | `active` — 운명력(`fateEnergyPerTurn`)·생존자 수별 드로우(`drawByLivingCount`)는 `Content/combat_rules.json`으로, 파티원 최대 HP(`maxHp`)는 `Content/Characters/*.json`으로(생존 충전 `surviveCharges`도 옮겨졌으나 2026-09-18 전투 실행 계약 계획 T0에서 제거) 전투 노드 2단계(2026-09-17)가 옮겼다. 다만 `DeckCombatSession`(`Assets/Core/Simulation/DeckCombatSession.cs:51,66,90`) 생성자의 `fateEnergyPerTurn = 3` 기본값 등 제품 경로 매직 넘버가 남아 있고 `CombatTuning` 순수 모델도 없어, 절의 나머지 완료 조건이 끝나지 않았으므로 현황은 바꾸지 않는다 |
 | §9 | P2 표현 경계 정리 | `active` — 전투 화면 분해가 일부 선행됐다 |
 | §12·§13 | 2026-07-25 점검, 2026-07-30 상태 이상 논의 | `active` |
@@ -106,10 +106,10 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 ### 목표 구조
 
 - 새 효과 저작 타입은 기존 enum/switch를 수정하지 않고 추가
-- Unity 저작 데이터와 순수 C# export가 같은 스키마를 사용
+- 콘텐츠 JSON과 순수 C# 스펙이 같은 로딩 계약을 사용
 - 효과별 파라미터는 이름과 타입이 보존되며 핸들러가 자기 파라미터를 검증
-- 생성 C# 또는 다른 헤드리스 export는 SO에서만 생성
-- 잘못된 키·필드·파라미터는 에디터/부팅 검증에서 실패
+- 카드·콘텐츠는 AI 세션에서 JSON을 직접 저작한다([콘텐츠 저작 규칙](../../agents/content-authoring.md))
+- 잘못된 키·필드·파라미터는 JSON 로더·부팅 검증에서 실패
 - 조건은 설계대로 닫힌 조합형을 유지하되 효과/상태/개입 액션은 열린 확장으로 유지
 
 ### 설계 시 비교할 대안
@@ -124,8 +124,8 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 
 - 샘플 신규 효과를 추가할 때 중앙 enum/mapper 수정 없음
 - 신규 효과의 실행·설명·저작·검증 경로가 클래스/등록 단위로 국소화됨
-- 기존 시작덱·적덱·파티 검증 카드의 export 등가성 유지
-- 생성 파일과 런타임 SO가 동일 `CardDefinition`을 생성
+- 기존 시작덱·적덱·파티 검증 카드의 JSON 로딩·행동 회귀 유지
+- 헤드리스와 Unity가 같은 JSON 콘텐츠를 소비
 
 ## 4.1 P0-B2 — `CardType` 제거와 효과 기반 카드 성질 합성
 
@@ -159,13 +159,13 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 - P1-A SO 단일 원본화와 섞지 않고 독립된 스키마 마이그레이션으로 수행
 - 현재 카드 정의와 golden 서명에서 `CardType`만 제거한 기준선을 먼저 고정
 - 기존 반격·엄호·다음 피해 강화의 행동 의도는 유지하되 판정 근거만 효과 구성으로 변경
-- SO의 직렬화된 `Type` 필드와 `GeneratedCards.cs`를 함께 갱신하고 재생성 diff를 검증
+- 콘텐츠 JSON에 폐기된 `Type` 필드를 되살리지 않고 로더·행동 회귀를 검증
 - 새 외부 패키지, 리플렉션 자동 등록, raw string 효과 판정은 도입하지 않음
 
 ### 완료 조건
 
 - 제품·저작·생성·테스트 코드에서 `CardType` 참조가 없음
-- `CardAsset`과 생성된 `CardSpec`에 `Type` 필드가 없고 SO 재생성 후 diff가 없음
+- 카드 스펙과 JSON에 `Type` 필드가 없고 콘텐츠 로딩 회귀가 통과
 - `Damage`만 가진 카드와 `Damage + Block` 복합 카드가 모두 피해 카드 조건을 만족
 - `Block`만 가진 카드는 피해 카드 조건을 만족하지 않음
 - 이전/인접 카드 조건과 다음 피해 카드 강화가 타입 대신 효과 구성으로 동작하는 헤드리스 회귀 테스트 통과
@@ -223,139 +223,29 @@ RNG 통합은 다른 작업과 독립적이지만 결정론 불변식 때문에 
 > `sly_jab.json`·`crude_guard.json`으로 옮겼다. `WardenDeck`은 이 전환의 대상이 아니다 —
 > 2026-08-31에 간수(Warden) 적 자체가 삭제되며 함께 없어졌다(커밋 `68acdda`). 남은 잔여가 없다.
 
-### 문제
-
-현재는 코드 정의로 SO를 seed하고, SO에서 다시 C#을 생성하며, 일부 적 카드 규칙은 코드가 원본이다. 카드 이름과
-아트는 별도의 ID switch/`Resources.Load` fallback에도 중복되어 있다.
-
-### 목표 구조
-
-- 제품 카드·적·덱·캐릭터 데이터의 진실의 원천은 SO
-- 헤드리스 시뮬레이션은 SO에서 생성된 순수 export만 소비
-- `StarterDeck`, `GoblinDeck`, `WardenDeck`, 파티 검증 데이터의 제품용 코드 상수 제거 또는 테스트 fixture로 격리
-- 카드 표시 이름과 아트는 `CardAsset` 참조에서 공급
-- ID→이름/경로 switch와 magic resource path 제거
-- 생성물에 원본 asset ID/hash를 기록해 stale export 검증
-
-### 선행 조건
-
-- P0-B 열린 저작 구조 완료
-- P0-B2 효과 기반 카드 성질 합성 완료
-- P0-C 대상 선택 메타데이터와 입력 흐름 일반화 완료
-- 설명 레지스트리와 콘텐츠 등록 검증 완료
-
-### 완료 조건
-
-- 제품 카드 수치 변경은 SO 한 곳만 수정
-- export 미생성/불일치가 CI 또는 에디터 검증에서 실패
-- 런타임 제품 경로에서 코드 카드 카탈로그 fallback 없음
-- `PlaytestCardArt`와 카드 ID 기반 `PlaytestKoreanText.CardName` 제거 또는 fixture 전용 격리
+현재 콘텐츠 원본과 AI 세션의 JSON 직접 저작 절차는
+[콘텐츠 저작 규칙](../../agents/content-authoring.md)을 따른다. SO에서 규칙 데이터를 내보내거나
+C# 카드 카탈로그를 생성하는 경로를 되살리지 않는다.
 
 ## 7. P1-B — Unity 프리팹·직렬화 참조 구조로 전환
 
-### 문제
+### 현재 저작 방침
 
-`BattleUiKit`, `UnitView`, `RailCardView`, `PileView`, `ExecutionRailView`가 런타임에 GameObject와 컴포넌트를
-조립한다. 폰트와 아이콘은 `Resources.Load` 경로에 의존한다.
+씬·프리팹은 저장된 에셋을 직접 수정하고 참조를 배선한다(AGENTS.md 규칙 17).
+전투 화면을 코드로 다시 생성하는 메뉴·빌더·뷰 생성 훅은 사용하지 않는다.
 
-> **2026-08-04 정정:** 원문에 있던 "`CardAsset`/`DeckAsset`은 public 직렬화 필드를 사용한다"는
-> 더 이상 성립하지 않는다 — 두 타입 모두 계획 3b가 삭제했다. 남은 ScriptableObject는
-> `CardPrefabCatalog`·`CardArtCatalog`·`CharacterAsset` 셋이며 전부 표현 자원 전용이다.
+### 남은 점검
 
-### 목표 구조
-
-- 재사용 UI 요소를 prefab asset으로 저장
-- 컨트롤러는 `[SerializeField] private` prefab/reference를 인스펙터에서 주입받음
-- 런타임은 prefab 인스턴스 생성과 데이터 바인딩만 수행
-- 폰트, 아이콘, 아트는 직렬화된 asset reference로 공급
-- 에디터 builder는 필요하면 prefab/scene을 생성하는 마이그레이션 도구로만 유지
-- ~~`CardAsset`, `DeckAsset` 필드를 `[SerializeField] private` + 읽기 전용 프로퍼티로 캡슐화~~
-  **무효** — 두 타입이 사라졌다 (계획 3b)
-- ~~사용되지 않는 `CardAsset.Description` 제거~~ **무효** — 같은 이유
-
-### 선행 조건
-
-- ~~P1-A SO 단일 원본화의 asset ownership 확정~~ **해소됨** — 콘텐츠 원본이 JSON으로 확정되어
-  (계획 3b·3c) SO의 소유권 문제 자체가 없어졌다. P1-B는 이제 독립적으로 착수할 수 있다.
+- `ExecutionRailView`는 배치 미리보기 인스턴스에 `CanvasGroup`을 런타임에 추가한다
+  (`Assets/Unity/Scripts/Battle/ExecutionRailView.cs:355`). 필요한 컴포넌트를 프리팹에 저장하는 경계를 검토한다.
+- 상태 아이콘의 문자열 Resources 참조는 §14.1에서 다룬다.
 
 ### 완료 조건
 
-- 제품 런타임 경로에 `new GameObject`, `AddComponent`, 문자열 `Resources.Load` 없음
-- 주요 UI prefab 누락 시 명확한 부팅/검증 오류
-- 기존 전투 화면의 카드·유닛·레일·더미 UI Play 검증 통과
-- Unity 직렬화 마이그레이션에서 기존 asset 데이터 보존
-
-### 2026-08-04 실측과 착수 결정
-
-에셋 폴더 재정리를 검토하다 P1-B가 그 **선행 조건**임이 드러났다. `Unity/Resources/`가 폴더 이동을
-막고 있고, 그 폴더가 존재하는 이유가 코드 조립 UI이기 때문이다.
-
-**남은 코드 조립 뷰는 셋뿐이다.** 카드 프레임 작업이 카드·유닛·툴팁·설명줄을 이미 프리팹으로 옮겼다.
-
-```
-ExecutionRailView   PileView   TargetingArrowView   (+ 이들이 쓰는 BattleUiKit)
-```
-
-**`Unity/Resources/`를 붙잡는 것:**
-
-| 항목 | 잠금 요인 | 해소 방법 |
-|---|---|---|
-| `Fonts/KoreanTMP.asset` | `Resources.Load("Fonts/KoreanTMP")` — `BattleUiKit.cs:19` | `BattleUiKit` 제거로 소멸. 프리팹·씬 7곳은 이미 GUID 참조라 무영향 |
-| `Status/icon_lock.png` | `Resources.Load("Status/icon_lock")` — `PlaytestCardArt` | `CardView`·`RailCardView`에 `[SerializeField] private Sprite`로. `PlaytestCardArt` 제거 |
-| `Cards/goblins/*.png` | 없음 — `CardArt.asset`이 GUID 참조 | 지금도 이동 가능 |
-| `Cards/Player/*.png` | 없음. **참조처가 하나도 없다 — 고아 자산** | 삭제 검토 (플레이어 카드는 색상 틴트만 쓴다) |
-| `UIInputActions.inputactions` | `BattleSceneBuilder.cs:22`의 하드코딩 에디터 경로 | 파일 이동 시 상수 함께 갱신 |
-
-**폰트 처리 방식은 "프리팹화"로 결정했다.** 검토한 대안은 셋이었다 — (A) UI 테마 SO를 부팅 시
-정적 주입, (B) 팩토리 메서드 인자로 전달, (D) `TMP Settings`의 프로젝트 기본 폰트를 `KoreanTMP`로
-변경. A·B·D는 모두 코드 조립 UI를 **존치한 채** 폰트만 우회하는 중간 상태다. 프리팹화하면
-폰트가 프리팹에 직렬화되어 주입 문제 자체가 소멸하므로 중간 상태를 거치지 않는다.
-
-참고 실측: `LiberationSans`(현 TMP 기본값)를 참조하는 프리팹·씬은 **0개**, `KoreanTMP`는 **7개**다.
-이 프로젝트에서 의도적으로 다른 폰트를 쓰는 곳은 없다.
-
-**후속 작업(에셋 폴더 재정리)의 승인된 목표 구조.** P1-B가 끝나면 이 배치로 옮긴다. 유형별 축이며
-`Assets/Core` ↔ `Assets/Unity` 최상위 분리는 asmdef·규칙 6이 강제하므로 유지한다.
-
-```text
-Assets/Unity/
-  Scripts/
-    Battle/    BattleScreenController, BattlePresenter, BattleUnitsView,
-               BattlePilesView, BattleHudView
-    Cards/     CardView, CardStatusIconView, HandFanView, RailCardView,
-               TargetGlyphView …
-    Content/   CardArtCatalog, CardPrefabCatalog, CharacterAsset, UnityContentRoot
-    Text/      PlaytestKoreanText
-    Editor/    (기존 그대로)
-  Prefabs/     (기존 그대로)
-  Art/         Cards/ ← Resources/Cards,  Enemies/ (기존),  Icons/ ← Resources/Status
-  Fonts/       Pretendard ttf + KoreanTMP.asset
-  Data/        CardArt.asset, member_a/b.asset   ← 기존 CardSO/·CharacterSO/ 대체
-  Input/       UIInputActions.inputactions
-```
-
-`Unity/CardSO/`·`Unity/CharacterSO/`의 `~SO` 접미사는 SO 카드 파이프라인 시절의 이름이며 `Data/`로
-합친다. 폴더 이동은 `.meta`가 함께 움직이면 GUID가 보존되어 씬·프리팹 참조가 깨지지 않는다.
-
-**2026-08-05 진행 결과 — 1단계(폴더 재정리) 완료.** 위 목표 구조대로 스크립트·데이터 에셋·카드
-아트·입력 에셋을 옮겼다(계획: `docs/superpowers/.archive/plans/2026-08-05-asset-folder-reorg.md`).
-**단 `Editor/`는 예외다.** 위 스케치는 `Scripts/Editor/`로 `Scripts/` 아래 중첩했지만, 실제 구현은
-`Assets/Unity/Editor/`를 루트에 그대로 두었다 — 그 폴더는 자체 `.asmdef`
-(`FateWeaver.Unity.Editor.asmdef`)를 가지고 있고, Unity는 이름이 `Editor`인 폴더를 트리의 어느
-깊이에 있든 특별 취급(에디터 전용 컴파일)하므로 중첩해도 실질적 이익이 없다. 스케치 당시엔 이 점을
-반영하지 못했고, 실측(2026-08-05)에서야 as-built 배치가 스케치와 다르다는 것이 드러났다. 위 목표
-구조 블록은 최초 스케치 그대로 남기고, 여기서만 실제 배치와의 차이를 기록한다.
-
-`Unity/Resources/`는 아직 완전히 비지 않았다 — `Fonts/KoreanTMP.asset`과 `Status/icon_lock.png`
-두 파일만 남아 있으며, 이 표의 잠금 요인대로 `BattleUiKit`(`Resources.Load("Fonts/KoreanTMP")`)과
-`PlaytestCardArt`(`Resources.Load("Status/icon_lock")`)가 아직 코드 조립 방식으로 참조하고 있기
-때문이다. P1-B 프리팹화가 이 두 호출자를 없애면 `Unity/Resources/` 폴더 자체가 사라지고, 남은
-두 파일은 목표대로 `Fonts/KoreanTMP.asset` → `Unity/Fonts/`, `Status/icon_lock.png` →
-`Unity/Art/Icons/`로 옮긴다.
-
-**작업 분리와 순서.** 프리팹화는 레이아웃·크기를 눈으로 맞추는 저작이라 규칙 17상 사용자 몫이 크고,
-폴더 이동은 기계적이라 성격이 다르다. 두 계획으로 나눈다. 사용자 결정(2026-08-04)에 따라 순서는
-**계획 3d → P1-B 프리팹화 → 폴더 재정리**다. 3d는 순수 코어라 어느 쪽과도 의존이 없다.
+- 제품 런타임 경로에 UI 조립 목적의 `new GameObject`, `AddComponent`, 문자열 `Resources.Load`가 없다.
+- 주요 UI 프리팹 누락 시 명확한 부팅·검증 오류를 낸다.
+- 기존 전투 화면의 카드·유닛·레일·더미 UI는 사용자 Play 확인을 거친다.
+- 저장된 에셋의 GUID·직렬화 참조를 보존하고 Unity 배치 EditMode로 검증한다.
 
 ## 8. P1-C — 전투 튜닝 데이터화
 
@@ -597,36 +487,20 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 
 ## 14. 2026-09-04 규칙 부채 점검에서 추가된 항목
 
-`Tools/verify.sh`의 규칙 검사를 도입하면서 드러난 것들이다. 검사가 잡아 허용목록
-(`Tools/lint-allow.txt`)에 사유와 함께 적힌 항목이 여기 대응한다 — **그 두 줄이 사라지는 것이 이 절의
-완료 조건이다.**
+`Tools/verify.sh`의 규칙 검사를 도입하면서 드러난 항목이다. 알려진 예외는
+`Tools/lint-allow.txt`에 사유와 함께 적는다.
 
-### 14.1 P1급 — 표현 자원을 문자열 경로로 찾는다
+### 14.1 P1급 — 상태 아이콘을 문자열 경로로 찾는다
 
-**문제.** 두 곳이 규칙 3을 어긴다. `BattleUiKit.KoreanFont()`가 한글 폰트를
-`Resources.Load<TMP_FontAsset>("Fonts/KoreanTMP")`로, `CardStatusIconSprites`가 상태 아이콘을
-`Resources.Load`로 찾는다. 문자열이라 컴파일러도 헤드리스 테스트도 검사하지 못하고, 파일을 옮기거나
-이름을 바꾸면 예외 없이 `null`이 돌아온다. 폰트가 빠지면 TMP 기본 폰트로 떨어져 한글이 네모로 나오고,
-아이콘이 빠지면 그냥 보이지 않는다. **사람이 화면을 봐야만 안다.**
+`CardStatusIconSprites`는 `Status/icon_lock` 문자열을 저장하고 `Resources.LoadAll`·`Resources.Load`로
+아이콘을 읽는다(`Assets/Unity/Scripts/Cards/CardStatusIconSprites.cs:12,42,49`). 폰트 문자열 로딩을
+위한 예외는 생성 도구 제거와 함께 삭제한다(`Tools/lint-allow.txt`).
 
-인스펙터 참조(GUID)로 바꾸면 해소되지만 둘 다 정적 클래스이고 전투 UI가 프리팹 없이 코드로 지어져
-참조를 둘 자리가 없다. 구조 문제이지 한 줄 고칠 문제가 아니다.
+**목표 구조.** 아이콘을 표현 자원 카탈로그의 GUID 참조로 옮긴다. 이 카탈로그에는 규칙 수치를 담지
+않는다([콘텐츠 저작 규칙](../../agents/content-authoring.md) 「남은 ScriptableObject 셋」).
 
-**중간 조치(2026-09-04 완료).** `Tools/verify.sh`에 `check_resource_paths`를 넣어, 코드가 문자열로
-부르는 Resources 경로에 실제 파일이 있는지 커밋 훅과 CI가 검사한다. 문자열과 파일이 어긋나는 사고는
-막지만 구조는 그대로다. 경로를 변수로 조립하는 호출은 여전히 잡지 못한다.
-
-**목표 구조.** 표현 자원을 든 ScriptableObject로 옮겨 GUID 참조가 되게 한다. `CardArtCatalog`가 이미
-그 모양이므로 따라 할 본보기가 저장소 안에 있다(규칙 5의 "표현 자원 전용" 경계 안이다).
-
-- 아이콘: `CardStatusIconSprites`의 `enum → 경로 → Resources` 사슬을 아이콘 카탈로그로 교체
-- 폰트: 폰트를 든 SO(`UiTheme` 등)를 씬에서 주입. `BattleUiKit`이 문자열을 모르게 한다
-
-**언제.** lock 아이콘을 폐기하고 새 아이콘을 넣을 때 함께 한다. **등록된 아이콘이 하나뿐인 지금이
-가장 싸고**, 아이콘이 늘어난 뒤에는 그만큼 비싸진다. 폰트도 같은 자리를 열게 되므로 함께 처리한다.
-
-**완료 조건.** `Tools/lint-allow.txt`의 R3 두 줄이 사라진다. `Assets/Unity`에 `Resources.Load` 호출이
-남지 않는다.
+**완료 조건.** `Tools/lint-allow.txt`의 상태 아이콘 R3 예외가 사라지고 제품 Unity 경로에
+문자열 `Resources.Load` 호출이 남지 않는다.
 
 ### 14.2 P2급 — playtest 시절 이름이 실 코드에 남아 있다
 

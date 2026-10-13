@@ -38,7 +38,7 @@ namespace FateWeaver.Tests.UnityEditMode
         private RewardChoiceView BoundReward(out BattlePresenter presenter)
         {
             var parent = Canvas();
-            var view = RewardChoiceView.EditorCreate(parent);
+            var view = AuthoredBattleUi.Instantiate<RewardChoiceView>(parent);
             presenter = new GameObject("Presenter").AddComponent<BattlePresenter>();
             presenter.transform.SetParent(parent, false);
             presenter.Initialize(id => id, KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses()));
@@ -75,7 +75,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Reward_view_authors_three_slots_and_both_buttons()
         {
-            var view = RewardChoiceView.EditorCreate(Canvas());
+            var view = AuthoredBattleUi.Instantiate<RewardChoiceView>(Canvas());
 
             Assert.AreEqual(3, RewardChoiceView.SlotCount);
             Assert.AreEqual(3, CardPrefabCatalogTests.Field<RectTransform[]>(view, "_slots").Count(s => s != null));
@@ -150,7 +150,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Result_view_shows_defeat_and_reports_restart()
         {
-            var view = CombatResultView.EditorCreate(Canvas());
+            var view = AuthoredBattleUi.Instantiate<CombatResultView>(Canvas());
             bool restarted = false;
 
             Assert.IsTrue(view.IsBound);

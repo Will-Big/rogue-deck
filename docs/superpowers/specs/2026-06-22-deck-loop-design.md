@@ -175,7 +175,7 @@ X만큼 피해를 주고 독 수치를 1 증가시키는 상태다.
 ## 9. 단계(phasing)
 
 - **Phase 1 (이번 구현)**: 코어 덱 루프(순수 C#) + 카드 정의 확장 + 조건부 ApplyStatus + 시작덱 데이터 + `DeckCombatSession` + 결정적 적 의도 스크립트 + 헤드리스 테스트. **Unity 미변경.**
-- **Phase 2**: Unity 덱/손패 UI — 손패·운명력·덱/버림 더미·미래 영역 표시, 카드 플레이/배치. 기존 `CardView`/`CardPresentation`/아트·설명/에디터 빌더 재사용, 컨트롤러는 `DeckCombatSession` 위로 리워크.
+- **Phase 2**: Unity 덱/손패 UI — 손패·운명력·덱/버림 더미·미래 영역 표시, 카드 플레이/배치. 기존 `CardView`/`CardPresentation`/아트·설명을 재사용하고 저장된 씬·프리팹 참조를 직접 배선한다([콘텐츠 저작 규칙](../../agents/content-authoring.md), [AGENTS.md 규칙 17](../../../AGENTS.md)). 컨트롤러는 `DeckCombatSession` 위로 리워크.
 - **Phase 3**: 보상 카드 풀 확장(운명·행동) + 새 조건(`LastToTrigger`/`TargetHasStatus`) + 적 의도/조우 콘텐츠.
 
 ## 10. 미해결 / 기본값 (구현 중 조정 가능)
@@ -186,5 +186,5 @@ X만큼 피해를 주고 독 수치를 1 증가시키는 상태다.
 
 ## 11. 파킹 메모
 
-직전 uGUI 작업(CardView/컨트롤러/에디터 빌더/TMP 폰트)은 **미커밋 상태로 작업 트리에 보존**. 기반 조각
-(CardView/CardPresentation/아트·설명/EditMode 테스트)은 Phase 2에서 재사용하고, 컨트롤러·씬은 덱 UI로 리워크한다.
+이 절은 최초 설계 당시의 파킹 메모였다. 현재 씬·프리팹은 저장소에 보관된 에셋을 직접 수정하며,
+전투 화면을 코드로 재생성하는 빌더를 유지하거나 다시 실행하지 않는다([AGENTS.md 규칙 17](../../../AGENTS.md)).

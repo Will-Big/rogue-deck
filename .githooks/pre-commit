@@ -98,10 +98,6 @@ case "$STAGED" in
   *Assets/Core/*.cs*) run "헤드리스 코어 테스트" Tools/verify.sh --quick ;;
 esac
 
-case "$STAGED" in
-  *Tools/card-idea-notebook/*) run "노트북 테스트" node --test Tools/card-idea-notebook/*.test.mjs ;;
-esac
-
 # 규칙 30 — 조정자가 커진 것을 [SerializeField] 개수로 알린다. **경고이고 막지 않는다.**
 #
 # **스테이지된 파일만 본다.** 전체 검사로 만들면 지금 걸리는 네 파일(CardView 19·RailCardView 15·
@@ -113,7 +109,7 @@ while IFS= read -r f; do
   case "$f" in Assets/Unity/*.cs) ;; *) continue ;; esac
   [ -f "$f" ] || continue
   n="$("$GREP" -o '\[SerializeField\]' "$f" | wc -l | tr -d ' ')"
-  [ "$n" -gt "$SF_LIMIT" ] && SF_OVER="$SF_OVER    $f ([SerializeField] $n개)"$'\n'
+  [ "$n" -gt "$SF_LIMIT" ] && SF_OVER="$SF_OVER    $f ([SerializeField] ${n}개)"$'\n'
 done <<EOF
 $STAGED
 EOF

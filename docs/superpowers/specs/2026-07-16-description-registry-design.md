@@ -219,8 +219,11 @@ public interface IInterventionDescriptionHandler
 - 모든 개입 액션 키에 실행 핸들러와 설명 핸들러가 등록됐는가
 - 카드 카테고리와 `Effects`/`InterventionAction` 조합이 유효한가
 
-현재 범위에서는 설명 카탈로그의 검증 API와 기본 콘텐츠 회귀 테스트를 우선 구현한다. 전체 SO 로딩 부팅
-파이프라인 통합은 후속 저작 구조/SO 단일 원본화 작업에서 완성한다.
+콘텐츠 부팅 진입점은 JSON을 읽는 `ContentBootstrap.Load`다. 카드 로더는 `AuthoringValidator`로
+스펙을 검증하며, 설명 카탈로그는 로드된 콘텐츠를 사용한다. SO 로딩·생성 경로를 추가하지 않는다
+([ContentBootstrap.cs](../../../Assets/Core/Authoring/ContentBootstrap.cs),
+[CardContentLoader.cs](../../../Assets/Core/Authoring/CardContentLoader.cs),
+[콘텐츠 저작 규칙](../../agents/content-authoring.md)).
 
 ## 11. 테스트 전략
 

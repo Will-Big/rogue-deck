@@ -163,8 +163,8 @@ Unity 컨트롤러에서 `EffectKeys`·`InterventionActionKeys` 직접 비교는
 | 관련 테스트 | 위 표면을 리플렉션으로 강제 실행하던 테스트(`BattleScreenUnitIdentityTests`의 대상 선택부, `CardSelectionControllerTests`의 유닛 종류 사용부) 삭제·조정 |
 
 `UnitView` 프리팹이 삭제되는 직렬화 필드를 참조하면 Unity가 missing reference로 보고할 수 있다.
-프리팹·씬 저작은 이 워크트리 범위 밖이므로(저장소 규칙 17), 병합 후 사용자 확인 항목으로
-전달한다. EditMode의 `EditorCreate` 경로가 해당 필드를 코드로 만들면 함께 정리한다.
+저장된 프리팹·씬의 직렬화 참조는 AI가 직접 정리하고 배치 EditMode로 검증한다.
+Play와 화면 확인은 사용자에게 맡긴다(저장소 규칙 17).
 
 ## 4. 범위 밖 (의도적 보류)
 

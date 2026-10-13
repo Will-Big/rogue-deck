@@ -35,14 +35,5 @@ namespace FateWeaver.Unity.Playback
                 new RailCardHighlightPresenter(_rail, typeof(FateWeaver.Core.Events.CardCancelled)));
             _director.Initialize(registry);
         }
-
-        /// <summary>씬 저작용 배선 훅(BattleSceneBuilder가 부른다).</summary>
-        public void EditorBind(
-            BattleStage stage, TurnPlaybackDirector director, ExecutionRailView rail)
-        {
-            _stage = stage;
-            _director = director;
-            _rail = rail;
-        }
     }
 }

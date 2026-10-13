@@ -19,7 +19,7 @@ namespace FateWeaver.Core.Authoring
         public Func<EffectSpec> Create { get; }
     }
 
-    /// <summary>Explicit list of authorable effect specs. The Unity drawer's dropdown and the boot
+    /// <summary>Explicit list of JSON effect spec types. The JSON converter and boot
     /// validation cross-check both read this — registering here is the one step besides writing the
     /// spec/handler classes (AGENTS.md rule 9: 핸들러 1개 + 키 등록).</summary>
     public static class EffectSpecCatalog

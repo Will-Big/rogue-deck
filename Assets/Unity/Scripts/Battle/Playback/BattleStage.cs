@@ -53,7 +53,7 @@ namespace FateWeaver.Unity.Playback
             return number;
         }
 
-        /// <summary>씬 저작용 배선 훅(BattleSceneBuilder가 부른다).</summary>
+        /// <summary>재생 무대의 뷰 의존성을 배선한다.</summary>
         public void EditorBind(
             BattleUnitsView units, FloatingNumberView numberPrefab, RectTransform numberLayer)
         {

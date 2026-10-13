@@ -91,53 +91,6 @@ namespace FateWeaver.Unity
             }
         }
 
-        /// <summary>Editor-time construction (called by BattleSceneBuilder); the built children and
-        /// references serialize into the scene.</summary>
-        public void EditorBuild(
-            CardPrefabCatalog catalog,
-            RailCardView cardPrefab,
-            RectTransform previewLayer)
-        {
-            _cardPrefabs = catalog;
-            _cardPrefab = cardPrefab;
-            _previewLayer = previewLayer;
-
-            var rect = (RectTransform)transform;
-            _scrollRect = gameObject.AddComponent<ScrollRect>();
-
-            var viewport = BattleUiKit.Rect(rect, "Viewport");
-            BattleUiKit.Stretch(viewport);
-            viewport.gameObject.AddComponent<RectMask2D>();
-            _backdrop = viewport.gameObject.AddComponent<Image>();
-            _backdrop.color = BackdropColor;
-
-            var content = BattleUiKit.Rect(viewport, "Content");
-            content.anchorMin = new Vector2(0f, 0f);
-            content.anchorMax = new Vector2(0f, 1f);
-            content.pivot = new Vector2(0f, 0.5f);
-            content.offsetMin = Vector2.zero;
-            content.offsetMax = Vector2.zero;
-            var layout = content.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 12f;
-            layout.padding = new RectOffset(16, 16, 10, 10);
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-            var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            _scrollRect.viewport = viewport;
-            _scrollRect.content = content;
-            _scrollRect.horizontal = true;
-            _scrollRect.vertical = false;
-            _scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            _scrollRect.scrollSensitivity = 30f;
-
-            _content = content;
-        }
-
         public void SetCards(IReadOnlyList<CardPresentation> cards, Action<int> onClick)
         {
             ClearPlacementPreview();

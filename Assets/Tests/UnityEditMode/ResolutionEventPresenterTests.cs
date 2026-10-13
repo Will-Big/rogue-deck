@@ -31,8 +31,8 @@ namespace FateWeaver.Tests.UnityEditMode
             var numberLayer = ChildRect("NumberLayer");
             var prefabRoot = ChildRect("PrefabRoot");
 
-            var unitPrefab = UnitView.EditorCreate(prefabRoot, new Vector2(180f, 250f));
-            var numberPrefab = FloatingNumberView.EditorCreate(prefabRoot, new Vector2(120f, 48f));
+            var unitPrefab = AuthoredBattleUi.Instantiate<UnitView>(prefabRoot);
+            var numberPrefab = AuthoredBattleUi.Instantiate<FloatingNumberView>(prefabRoot);
 
             _session = new DeckCombatSession(
                 UnityTestContent.Statuses(),

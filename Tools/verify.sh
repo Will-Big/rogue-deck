@@ -4,7 +4,7 @@
 # 에이전트와 사람이 같은 명령 하나로 "지금 상태가 통과인가"를 얻는다.
 # Unity 에디터 없이 도는 것만 넣는다 — Unity EditMode 배치는 AGENTS.md 「명령」 절 참고.
 #
-#   Tools/verify.sh            규칙 검사 + 헤드리스 테스트 + 노트북 테스트
+#   Tools/verify.sh            규칙 검사 + 헤드리스 테스트
 #   Tools/verify.sh --quick    헤드리스 테스트만 (약 10초)
 #   Tools/verify.sh --lint     규칙 검사만 (1초 미만)
 
@@ -37,17 +37,6 @@ run_headless() {
     ok "헤드리스 테스트"
   else
     fail "헤드리스 테스트"
-  fi
-}
-
-# ------------------------------------------------------------------ 노트북 테스트
-run_notebook() {
-  step "카드 저작 노트북 테스트 (node)"
-  # 글로브가 필수다. 디렉터리를 주면 Node가 모듈 경로로 해석해 MODULE_NOT_FOUND로 죽는다.
-  if node --test Tools/card-idea-notebook/*.test.mjs; then
-    ok "노트북 테스트"
-  else
-    fail "노트북 테스트"
   fi
 }
 
@@ -251,7 +240,7 @@ run_lint() {
 case "$MODE" in
   --quick) run_headless ;;
   --lint)  run_lint ;;
-  full|"") run_lint; run_headless; run_notebook ;;
+  full|"") run_lint; run_headless ;;
   *) echo "사용법: Tools/verify.sh [--quick|--lint]" >&2; exit 2 ;;
 esac
 

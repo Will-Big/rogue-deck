@@ -18,13 +18,13 @@ Tools/setup-dev.sh
 Tools/verify.sh
 ```
 
-규칙 검사 + 헤드리스 코어 테스트 + 카드 저작 노트북 테스트를 순서대로 돌고, 실패하면 0이 아닌
+규칙 검사 + 헤드리스 코어 테스트를 순서대로 돌고, 실패하면 0이 아닌
 코드로 끝난다. **Unity 에디터는 필요 없다.**
 
 | 명령 | 무엇을 하나 | 걸리는 시간 |
 |---|---|---|
 | `Tools/setup-dev.sh` | 공유 git 훅 활성화 + 도구 확인 (최초 1회) | 약 2초 |
-| `Tools/verify.sh` | 규칙 검사 + 헤드리스 + 노트북 전부 | 약 10초 |
+| `Tools/verify.sh` | 규칙 검사 + 헤드리스 전부 | 약 10초 |
 | `Tools/verify.sh --quick` | 헤드리스 코어 테스트만 | 약 10초 |
 | `Tools/verify.sh --lint` | 기계 검사만 (규칙 3·4·5·6·7 + R-doc) | 1초 미만 |
 | `Tools/rule-note.sh <번호>` | 규칙 하나의 근거 절을 문서에서 꺼낸다 | 즉시 |
@@ -37,11 +37,6 @@ Tools/verify.sh
 # RollForward=Major라 6.0 이상 런타임이면 돈다(이 머신은 arm64 .NET 10, 2026-10-07 설치).
 # .NET 5 SDK뿐인 머신에서는 -p:TargetFramework=net5.0을 붙인다 — Tools/verify.sh가 알아서 한다.
 dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj --nologo
-```
-
-```bash
-# 카드 저작 노트북 테스트. 글로브가 필수다 — 디렉터리를 주면 Node가 모듈 경로로 해석해 죽는다.
-node --test "Tools/card-idea-notebook/"*.test.mjs
 ```
 
 ## 밸런스 변경은 Compare로 본다 (규칙 12)

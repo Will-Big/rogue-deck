@@ -103,7 +103,7 @@ Tools/**/obj/
 #
 # 생성 아틀라스 Assets/Unity/Resources/Fonts/KoreanTMP.asset과 원본 Pretendard TTF(OFL)
 # Assets/Unity/Fonts/ 둘 다 추적한다. 저장소에 있어야 새 클론이 폰트 생성 없이 바로 돌고,
-# BattleUiKit이 찾는 "Fonts/KoreanTMP"가 항상 존재한다.
+# 씬·프리팹의 직렬화된 폰트 참조가 항상 해소된다.
 #
 # 여기 있던 무시 규칙 /Assets/FateWeaver/Unity/Resources/Fonts/ 는 지웠다. 폴더 재구성 뒤
 # 그 경로는 존재하지 않아 아무것도 무시하지 못했고(git check-ignore로 확인), "머신 로컬이라

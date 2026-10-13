@@ -64,26 +64,5 @@ namespace FateWeaver.Unity
                 DestroyImmediate(gameObject);
             }
         }
-
-        /// <summary>프리팹 저작용 훅. BattleSceneBuilder가 부른다(UnitView.EditorCreate와 같은 관례).</summary>
-        public static FloatingNumberView EditorCreate(RectTransform parent, Vector2 size)
-        {
-            var root = BattleUiKit.Rect(parent, "FloatingNumber");
-            root.sizeDelta = size;
-
-            var view = root.gameObject.AddComponent<FloatingNumberView>();
-            var group = root.gameObject.AddComponent<CanvasGroup>();
-            group.blocksRaycasts = false;
-            group.interactable = false;
-
-            var label = BattleUiKit.Text(root, "Label", 30f, TextAlignmentOptions.Center);
-            BattleUiKit.Stretch(label.rectTransform);
-            label.raycastTarget = false;
-            label.fontStyle = FontStyles.Bold;
-
-            view._label = label;
-            view._group = group;
-            return view;
-        }
     }
 }

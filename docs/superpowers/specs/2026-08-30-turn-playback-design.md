@@ -55,7 +55,7 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 - 연출 시간·강도를 코드 상수로 박지 않는다. 전부 `[SerializeField]`로 뺀다.
 - **새 `.cs`·`.prefab`·`.asset`에는 대응 `.meta`를 같은 커밋에 포함한다.** 계획 3.5가 `.meta`
   누락으로 한 번 겪었다(커밋 `de1b781`).
-- DOTween 관례는 [`ExecutionRailView.cs:250-290`](../../../Assets/Unity/Scripts/Battle/ExecutionRailView.cs)을
+- DOTween 관례는 [`ExecutionRailView.cs`](../../../Assets/Unity/Scripts/Battle/ExecutionRailView.cs)을
   따른다 — `SetUpdate(true)`(unscaled), `SetLink(gameObject, LinkBehaviour.KillOnDestroy)`,
   `OnComplete`/`OnKill` 양쪽에서 완료 콜백을 부르되 `completionSent` 플래그로 중복을 막는다.
 - 커밋 메시지: 규칙 27(`타입(범위): 한국어 현재형 제목`).
@@ -82,7 +82,6 @@ NUnit 3, Unity Test Framework 1.7.0 EditMode
 | `Assets/Unity/Scripts/Battle/BattleUnitsView.cs` | `BattleStage`에 id→뷰 사전과 최대 HP 제공 |
 | `Assets/Unity/Scripts/Battle/BattleHudView.cs` | 스킵·배속 컨트롤 추가 |
 | `Assets/Unity/Scripts/Battle/BattleScreenController.cs` | `_playback` 1개 추가, `OnTurnButton`을 재생 대기로 |
-| `Assets/Unity/Editor/BattleSceneBuilder.cs` | 재생 계층 배선 + 씬 재생성 |
 | `Assets/Scenes/FateWeaverBattle.unity` | 위 배선의 결과 |
 
 테스트: `Assets/Core/Tests/EditMode/TimelineBeatPlannerTests.cs`(헤드리스),
@@ -343,13 +342,12 @@ public void 턴_경계는_단독_비트다()
 - `_selection`은 재생 중 진입할 수 없어야 한다. `OnHandClicked`·`OnZoneClicked`에
   `_playback.IsPlaying` 가드를 더한다.
 - `BattleHudView`에 스킵 버튼과 배속 토글을 더한다. 라벨·배치는 사용자 체크포인트(규칙 17).
-- `BattleSceneBuilder`가 `TurnPlaybackDirector`·`BattleStage`를 관리자 객체로 만들고
-  `SerializedObject`로 배선한다(기존 관례, `BattleSceneBuilder.cs:112`). 씬을 재생성한다.
+- 저장된 씬에 `TurnPlaybackDirector`·`BattleStage` 관리자 객체와 직렬화 참조를 직접 배선한다(규칙 17).
 - `[SerializeField]`는 `_playback` 하나만 는다(8 → 9). 입력 핸들러 분리는 **이번 범위 밖**이다
   (2026-08-30 사용자 결정).
 
 - [x] **Step 1: 컨트롤러·HUD 수정**
-- [x] **Step 2: `BattleSceneBuilder` 수정 후 씬 재생성**
+- [x] **Step 2: 저장된 씬에 재생 계층 참조 배선**
 - [x] **Step 3: EditMode 회귀 확인 후 `git status`로 의도한 변경만 스테이징**(규칙 17 — 폰트 아틀라스
       같은 Play 부산물을 섞지 않는다)
 - [x] **Step 4: 커밋** — `feat(ui): 턴 해석 결과를 재생으로 보여준다`

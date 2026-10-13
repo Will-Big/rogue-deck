@@ -22,7 +22,7 @@ namespace FateWeaver.Tests.UnityEditMode
             try
             {
                 ((RectTransform)overlay.transform).sizeDelta = new Vector2(1280f, 720f);
-                var arrow = TargetingArrowView.EditorCreate((RectTransform)overlay.transform);
+                var arrow = AuthoredBattleUi.Instantiate<TargetingArrowView>((RectTransform)overlay.transform);
                 arrow.Show(new Vector2(100f, 100f), new Vector2(300f, 100f));
                 arrow.Track(new Vector2(150f, 100f), new Vector2(350f, 100f));
 
@@ -49,8 +49,7 @@ namespace FateWeaver.Tests.UnityEditMode
                     .GetValue(rail);
                 for (int i = 0; i < 3; i++)
                 {
-                    views.Add(RailCardView.EditorCreate(
-                        (RectTransform)root.transform, new Vector2(96f, 132f)));
+                    views.Add(AuthoredBattleUi.Instantiate<RailCardView>((RectTransform)root.transform));
                 }
 
                 var candidates = new[]

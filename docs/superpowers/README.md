@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-10-08
+- 개정일: 2026-10-13
 - 역할: 현재 기준 문서와 진행 중인 계획을 찾는 출발점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 기준 문서를 먼저 찾는다.
@@ -57,7 +57,8 @@
 카드 디자인을 새 세션에서 이어갈 때는
 [캐릭터 및 카드풀 설계 규칙](specs/2026-07-20-character-card-pools-design.md)부터 읽는다.
 기본 캐릭터 다섯 명의 설계는 진행 중이며, 검수된 상태·효과 후보와 그동안 정한 원칙은 참고 메모
-[상태·효과 후보](<../../Tools/card-idea-notebook/상태·효과 후보.md>)에 모아 둔다(2026-10-08 갱신). 이 메모는 기준 문서가 아니다.
+[상태·효과 후보](<../card-design/상태·효과 후보.md>)에 모아 둔다(2026-10-08 갱신). 이 메모는 기준 문서가 아니다. [적 타입 A 초안](<../card-design/적 타입 A.md>)도 같은 폴더에 보관한다.
+카드·콘텐츠는 [AI 세션의 JSON 직접 저작 절차](../agents/content-authoring.md)를 따른다.
 
 ### UX와 표현
 
@@ -71,7 +72,6 @@
 | [위치 대상과 카드 텍스트](specs/2026-07-27-position-targeting-card-text-design.md) | `current` | 다섯 위치 범위와 자신, 대상 칸과 진영별 본문 표기. 대상을 고르는 시점은 전투 실행 계약이 대체했다 | 카드 대상·설명·프레임 설계 |
 | [프리미티브 카드 프레임과 구조화 설명](specs/2026-07-31-primitive-card-frame-design.md) | `current` | 실행·개입 카드 폼팩터, 대상 glyph, 진영별 구조화 설명, 반응형 핸드 | 카드 프레임·대상·설명 표현 변경 |
 | [카드 상태 그리드와 호버 툴팁](specs/2026-08-03-card-status-grid-tooltip-design.md) | `current` | 카드에 직접 붙은 상태의 4열 그리드, 표시 데이터 경계, 호버 설명 | 카드 상태 아이콘·툴팁 구현·변경 |
-| [카드 저작 노트북 JSON 전환](specs/2026-08-05-card-authoring-json-notebook-design.md) | `current` | 저작 원본을 Markdown에서 콘텐츠 JSON으로, 구조화 효과 편집기, 저장소 직접 읽기·쓰기, 풀 편성, 생성 스키마. **계획 A~D 완료** | 카드 저작 도구 구현·변경 |
 
 ### 문서 관리
 
@@ -86,7 +86,7 @@
 | [graphify 카드 그래프 통합](specs/2026-08-28-graphify-card-graph-design.md) | `current` | 카드·상태 JSON의 그래프 편입, 재생성 단일 명령, 카드·아키텍처 시각화 | 그래프 도구 확장(새 그래프 가지치기 규칙, 새 뷰) |
 
 검증과 실행 명령은 문서가 아니라 [`AGENTS.md`](../../AGENTS.md)의 「명령」 절을 기준으로 삼는다 —
-`Tools/verify.sh` 하나가 규칙 검사·헤드리스·노트북을 돌린다. `.githooks/pre-commit`은 커밋에 든 경로에 따라
+`Tools/verify.sh` 하나가 규칙 검사·헤드리스를 돌린다. `.githooks/pre-commit`은 커밋에 든 경로에 따라
 그 일부만 돌리고, CI(`.github/workflows/verify.yml`)는 master push·PR·수동 실행에서 전체를 돌린다. 상황별 절차는
 [`docs/agents/`](../agents/)에 있다: [그래프 조회·재생성·비용](../agents/graphify-usage.md),
 [EditMode 배치 실행과 라이선싱 장애](../agents/unity-batch-runs.md),
@@ -121,7 +121,7 @@ JSON 런타임 로딩은 구현이 끝났다(계획 3a~3d·3.5, 2026-08-06). **�
 | # | 항목 | 분류 | 상세 |
 |---|---|---|---|
 | F6 | 턴 연출 재생: 방어 수치 등 효과가 실행 즉시 보이지 않는다 | 바로 가능 | [상세 F6](plans/2026-10-06-follow-up-queue.md) |
-| F3 | 보상용 캐릭터 풀의 임시 데이터 교체 — 기본 캐릭터 다섯 명 설계 중(중심 컨셉 "HP를 잃는 것", 혈주·광전사 풀 검수 중). 연계 작업 F15 | 진행 중 | [상세 F3](plans/2026-10-06-follow-up-queue.md), [후보 메모](<../../Tools/card-idea-notebook/상태·효과 후보.md>) |
+| F3 | 보상용 캐릭터 풀의 임시 데이터 교체 — 기본 캐릭터 다섯 명 설계 중(중심 컨셉 "HP를 잃는 것", 혈주·광전사 풀 검수 중). 연계 작업 F15 | 진행 중 | [상세 F3](plans/2026-10-06-follow-up-queue.md), [후보 메모](<../card-design/상태·효과 후보.md>) |
 | F10-1 | 카드·상태 변경 큰 계획 1 — 상태 수치와 수명 처리 통일. 인스턴스 수치를 `Stacks` 하나로 합치고 같은 상태는 합산한다. 지금은 단계 1.1(저장 위치와 해석 책임) 설계 검토 중 | 진행 중 | [주 목표와 단계별 계획](plans/2026-10-07-card-status-mutation-roadmap.md) 큰 계획 1, [단계 1.1](plans/2026-10-08-status-stacks-step-1.md). 배경은 [백로그 §13.1·§15](plans/2026-07-16-architecture-refactor-backlog.md) |
 | F15 | 키워드·상태가 요구할 이음매(본체에 필요한 능력의 종류)를 예측해 본체에 미리 구현한다 — F3 연계. 새 상태는 F10-1의 `Stacks` 구조 위에 얹으므로 그 뒤에 착수한다. "카드의 수치를 바꾼다" 이음매는 F10-3과 같은 영역이다 | 요구사항 | [상세 F15](plans/2026-10-06-follow-up-queue.md) |
 | F10-2 | 카드·상태 변경 큰 계획 2 — 중앙 상태 규칙(정도·성장량·배율)을 런/전투 기간과 파티/개인 범위에 맞게 변경하고, 바뀐 규칙을 설명에 반영한다. 미래 단계는 개요뿐이다 | 조건부 (F10-1 뒤) | [주 목표와 단계별 계획](plans/2026-10-07-card-status-mutation-roadmap.md) 큰 계획 2. 배경은 [백로그 §15](plans/2026-07-16-architecture-refactor-backlog.md) |

@@ -335,8 +335,7 @@ repeat n times:
 - `ShowNextButton(Action onNext)`: 슬롯·건너뛰기 비활성, 다음 버튼 표시. `Hide()`.
 - 소유자 이름은 `CombatNodeFlow`가 `_run.Party`의 `RunMember.Name`으로 조회하는 함수를 넘긴다.
   **`BattleScreenController`는 보상 표시에 관여하지 않는다.**
-- 버튼 문구(`선택`·`건너뛰기`·`다음 전투`)는 **프리팹 TMP 텍스트**다. 기존 관례대로 뷰의 `EditorCreate`가
-  에디터 저작 시점에 굽고(`FloatingNumberView.EditorCreate`·`BattleSceneBuilder.MakeButton`과 같다), **런타임
+- 버튼 문구(`선택`·`건너뛰기`·`다음 전투`)는 저장된 **프리팹 TMP 텍스트**로 직접 저작한다. **런타임
   C#에는 새 한글 문자열이 없다.** 슬롯마다 카드 아래에 `선택` 버튼을 둔다 — 카드 프리팹이 클릭을 먹을 수 있어
   카드 자체를 버튼으로 쓰지 않는다.
 
@@ -345,11 +344,9 @@ repeat n times:
 - `[SerializeField] private`: `Button _restartButton`. 문구(`패배`·`처음부터`)는 프리팹 텍스트.
 - `ShowDefeat(Action onRestart)`, `Hide()`.
 
-**`BattleSceneBuilder`** (수정, `Assets/Unity/Editor/BattleSceneBuilder.cs`)
-- 두 패널 프리팹을 overlay 아래에 인스턴스화하고 기본 비활성. `CombatNodeFlow` 관리자 객체를 만들고
-  참조를 배선한다. 컨트롤러의 `_party` 배선(`BattleSceneBuilder.cs:224`)을 flow로 옮긴다. presenter의
-  `_party`(`:236-240`, 파티원 색)는 그대로 둔다.
-- 씬 `Assets/Scenes/FateWeaverBattle.unity` 재생성.
+**저장된 씬 배선** (`Assets/Scenes/FateWeaverBattle.unity`)
+- 두 패널 프리팹을 overlay 아래에 배치하고 기본 비활성으로 저장한다. `CombatNodeFlow` 관리자 객체의
+  참조를 직접 배선한다. 컨트롤러의 파티 참조를 flow로 옮기고 presenter의 파티원 색 참조는 유지한다(규칙 17).
 
 **Unity EditMode 테스트** (`Assets/Tests/UnityEditMode/`)
 - 두 패널 프리팹 계약: 슬롯·라벨·버튼 배열 길이 3, 참조 non-null.
@@ -438,8 +435,8 @@ public sealed class EnemyPolicyRegistry
 | `crude_guard` | 조잡한 방어 | 4 | 0 | apply_status block 3, 대상 `Self` |
 | `sly_jab` | 약삭빠른 찌르기 | 3 | 0 | damage 3, `condition: { kind: NoPrecedingPlayerCard, successEffectValue: 6 }` |
 
-- **손으로 쓰지 않는다.** 카드 왕복 바이트 테스트(`CardContentJsonTests.cs:236`, 노트북 `index.test.mjs:192`)가 키
-  순서·생략을 잠그므로 `CardSpec`을 만들어 `ContentJson` 직렬화기로 산출한다.
+- **AI 세션에서 JSON을 직접 저작한다.** 기존 카드와 스펙의 키 순서·생략 규칙을 확인하고
+  콘텐츠 로더·직렬화 테스트로 검증한다([콘텐츠 저작 규칙](../../agents/content-authoring.md)).
 - (2026-09-18: `StatusApplyTarget`은 [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 제거됐다 — 아래는 작성 당시 기준) `StatusApplyTarget.Self`는 enum 값 0이라(`ApplyStatusHandler.cs:12`) `ContentJson`이 기본값으로 생략한다
   (`ContentJson.cs:37`). 산출 파일에 `"target"`이 없는 것이 정상이다.
 - `NoPrecedingPlayerCard`는 `NoPrecedingCardOfSide(Side.Player)`로 매핑된다(`EffectSpec.cs:44-45`).
@@ -591,8 +588,8 @@ IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다
 **`PlaytestKoreanText`** (`Assets/Unity/Scripts/Text/PlaytestKoreanText.cs`)
 - `EnemyName`(`:46-50`) 삭제. `CardName`의 고블린 카드 3건(`:33-35`)은 JSON `name`과 같으므로 삭제.
 
-**씬** — `BattleSceneBuilder`로 `Assets/Scenes/FateWeaverBattle.unity`를 재생성한다. 지운 필드의 직렬화 값
-(`FateWeaverBattle.unity:2198-2199`)이 남지 않아야 한다. 배치 실행은 `docs/agents/unity-batch-runs.md`.
+**씬** — 저장된 `Assets/Scenes/FateWeaverBattle.unity`를 직접 수정해 참조를 배선하고 제거한 필드의
+직렬화 값을 정리한다(규칙 17). 배치 실행은 `docs/agents/unity-batch-runs.md`.
 
 **Unity EditMode 테스트** — `BattleStageTests`·`BattleUnitsViewIdentityTests`·`ResolutionEventPresenterTests`가
 `new PartyTuning { DefaultMemberMaxHp, SurviveChargesPerCombat, … }`를 직접 만든다. 로드아웃 인자로 옮긴다.
@@ -605,12 +602,12 @@ IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다
 |---|---|---|
 | 1 | **골든 캡처** `GoblinParityTests`: `GoblinEncounterSource`·`PartyTuning.Prototype`·저장소 캐릭터 둘로 런 시드 고정, 노드 0에서 `CombatNode.Begin`, 고정 입력 시퀀스로 전투가 끝날 때까지 진행(입력 규칙은 계획에서 정하되, 승패가 나고 운명력을 쓰는 카드가 한 장 이상 배치되게 한다). 서명은 `CombatRngDeterminismTests.RunSignature`(`:18-41`)와 같은 형식(턴별 손패 id + 해석 이벤트 `ToString`). 서명 문자열의 SHA-256을 **상수**로 박고 실패 시 서명 전문을 출력해 비교한다 | 새 테스트 통과 |
 | 2 | 어셈블리 이동(2.1). 동작 변경 없음 | 전체 통과 |
-| 3 | 적 카드 JSON 3장(2.3①). `ContentBootstrapTests.cs:20`의 26 → 29, `StructuredCardDescriptionTests.cs:106-110`의 `GoblinDeck.AllCards()` 이어 붙이기 제거 | 카드 왕복·노트북 테스트 |
+| 3 | 적 카드 JSON 3장(2.3①). `ContentBootstrapTests.cs:20`의 26 → 29, `StructuredCardDescriptionTests.cs:106-110`의 `GoblinDeck.AllCards()` 이어 붙이기 제거 | 카드 콘텐츠 로더·직렬화 테스트 |
 | 4 | 정책 레지스트리·적 로더·`Enemies/goblin.json`(2.2, 2.3②) | 로더 테스트 |
 | 5 | 편성 로더·`Battles/goblin_single.json`·부팅 연결·`ContentEncounterSource`(2.3③, 2.4, 2.5). **동등성 테스트의 공급자를 `ContentEncounterSource`로 바꾼다** | 골든과 동일 |
 | 6 | 캐릭터 스탯·멤버별 생존 충전·`RunSetup` 인자 정리(2.3④, 2.5). `DeckPoolCharacterLoaderTests`의 인라인 캐릭터 JSON에 새 키 추가 | 골든과 동일 |
 | 7 | `combat_rules.json`·`CombatRules`·`CombatNodeContext` 생성자(2.3⑤, 2.5). 동등성 테스트가 `content.CombatRules`를 쓰게 한다 | 골든과 동일 |
-| 8 | Unity 변경·씬 재생성·Unity EditMode 테스트(2.6) | 배치 EditMode 통과 |
+| 8 | Unity 변경·저장된 씬 참조 배선·Unity EditMode 테스트(2.6) | 배치 EditMode 통과 |
 | 9 | 삭제와 테스트 이전(2.8)·문서 갱신(2.10) | `Tools/verify.sh` 전체 |
 
 골든은 9단계 뒤에도 남는다 — C# 원본이 사라진 뒤에도 JSON 경로가 그 서명과 계속 비교된다.
@@ -645,8 +642,7 @@ IEncounterSource encounters, IRewardCandidateSource rewardCandidates)`가 된다
 - `ContentEncounterSource`: 같은 노드 시드 = 같은 편성. 편성 후보 둘인 합성 콘텐츠에서 노드 순번에 따라 달라짐.
   `Pick` 두 번이 서로 다른 정책 인스턴스를 돌려줌. 전투 안 id가 `goblin#0`, `SpecId`가 `goblin`.
 - 멤버별 생존 충전: 충전 0인 멤버와 1인 멤버가 한 세션에서 따로 동작한다.
-- `GoblinParityTests` 통과. 카드 왕복 바이트 테스트·노트북 테스트(`node --test "Tools/card-idea-notebook/*.test.mjs"`) 통과.
-  노트북의 카드 수 단언(`index.test.mjs:192`, `>= 26`)은 그대로 통과한다.
+- `GoblinParityTests`와 카드 콘텐츠 로더·직렬화 테스트 통과.
 
 #### 2.10 문서 갱신 (9단계 커밋에 포함)
 

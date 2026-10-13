@@ -126,58 +126,11 @@ namespace FateWeaver.Unity
             return true;
         }
 
-        /// <summary>씬 빌더가 인스턴스에 씬 참조를 채울 때 쓴다.</summary>
+        /// <summary>보상 뷰의 카드 표현 의존성을 배선한다.</summary>
         public void EditorBind(CardPrefabCatalog cards, BattlePresenter presenter)
         {
             _cards = cards;
             _presenter = presenter;
-        }
-
-        /// <summary>프리팹 저작용 훅. BattleSceneBuilder가 부른다(FloatingNumberView.EditorCreate와 같은 관례).
-        /// 위치·크기·색은 사용자가 조정한다(규칙 17).</summary>
-        public static RewardChoiceView EditorCreate(RectTransform parent)
-        {
-            var root = BattleUiKit.Rect(parent, "RewardChoiceView");
-            BattleUiKit.Stretch(root);
-            var dim = BattleUiKit.Image(root, "Dim", new Color(0f, 0f, 0f, 0.7f));
-            BattleUiKit.Stretch(dim.rectTransform);
-
-            var title = BattleUiKit.Text(root, "Title", 32f, TextAlignmentOptions.Center);
-            title.text = "보상";
-            Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(400f, 50f));
-
-            var view = root.gameObject.AddComponent<RewardChoiceView>();
-            for (int i = 0; i < SlotCount; i++)
-            {
-                var x = (i - 1) * 260f;
-                var slot = BattleUiKit.Rect(root, "Slot" + i);
-                Place(slot, new Vector2(0.5f, 0.5f), new Vector2(x, 40f), new Vector2(220f, 300f));
-                view._slots[i] = slot;
-
-                var owner = BattleUiKit.Text(root, "Owner" + i, 18f, TextAlignmentOptions.Center);
-                Place(owner.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(x, -130f), new Vector2(220f, 30f));
-                view._ownerLabels[i] = owner;
-
-                var select = BattleUiKit.LabeledButton(root, "Select" + i, "선택", 20f);
-                Place((RectTransform)select.transform, new Vector2(0.5f, 0.5f), new Vector2(x, -175f), new Vector2(140f, 44f));
-                view._slotButtons[i] = select;
-            }
-
-            view._skipButton = BattleUiKit.LabeledButton(root, "SkipButton", "건너뛰기", 20f);
-            Place((RectTransform)view._skipButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 70f), new Vector2(180f, 48f));
-            view._nextButton = BattleUiKit.LabeledButton(root, "NextButton", "다음 전투", 20f);
-            Place((RectTransform)view._nextButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 70f), new Vector2(180f, 48f));
-            view._nextButton.gameObject.SetActive(false);
-
-            root.gameObject.SetActive(false);
-            return view;
-        }
-
-        private static void Place(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
-        {
-            rect.anchorMin = rect.anchorMax = anchor;
-            rect.anchoredPosition = position;
-            rect.sizeDelta = size;
         }
     }
 }

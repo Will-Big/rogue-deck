@@ -38,14 +38,6 @@ namespace FateWeaver.Unity
 
         public bool IsBound => _body != null && _bodyImage != null;
 
-        /// <summary>프리팹 저작용 배선 훅. UnitView.EditorCreate가 부른다
-        /// (ExecutionRailView.EditorBuild와 같은 관례).</summary>
-        public void EditorBind(Image body)
-        {
-            _bodyImage = body;
-            _body = body != null ? body.rectTransform : null;
-        }
-
         /// <summary>앞으로 내질렀다 돌아온다. direction은 -1(왼쪽)~+1(오른쪽)이며, 시전자가 어느
         /// 쪽을 향하는지는 연출자가 정한다.</summary>
         public Tween Lunge(float direction)

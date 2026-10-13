@@ -46,16 +46,12 @@ namespace FateWeaver.Tests.UnityEditMode
                 },
                 _ => { },
                 (_, __) => { });
-            _rail = Child("Rail", typeof(RectTransform)).AddComponent<ExecutionRailView>();
             var dim = Child("Dim");
             _confirmButton = Child("Confirm").AddComponent<Button>();
             _overlay = (RectTransform)Child("Overlay", typeof(RectTransform)).transform;
-            var railPrefab = RailCardView.EditorCreate(
-                (RectTransform)Child("RailPrefabRoot", typeof(RectTransform)).transform,
-                new Vector2(96f, 132f));
-            _rail.EditorBuild(null, railPrefab, _overlay);
+            _rail = AuthoredBattleUi.InstantiateRail(_root.transform, _overlay);
             _rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
-            _arrow = TargetingArrowView.EditorCreate(_overlay);
+            _arrow = AuthoredBattleUi.Instantiate<TargetingArrowView>(_overlay);
             _controller = _root.AddComponent<CardSelectionController>();
 
             SetField(_controller, "_hand", _hand);

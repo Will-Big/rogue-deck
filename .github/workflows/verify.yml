@@ -22,9 +22,5 @@ jobs:
           # Tools/verify.sh가 알아서 net5.0으로 내려간다.
           dotnet-version: '6.0.x'
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: 규칙 검사 + 헤드리스 테스트 + 노트북 테스트
+      - name: 규칙 검사 + 헤드리스 테스트
         run: Tools/verify.sh

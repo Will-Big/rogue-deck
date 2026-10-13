@@ -29,7 +29,6 @@ have() {
   fi
 }
 have dotnet "dotnet --version" ".NET SDK — 헤드리스 코어 테스트에 필요 (5.0 이상이면 된다)"
-have node "node --version" "Node — 카드 저작 노트북 테스트에 필요 (24 권장)"
 have git "git --version" ""
 
 echo
@@ -43,7 +42,7 @@ STATUS=$?
 
 echo
 echo "== 다음"
-echo "   Tools/verify.sh          규칙 검사 + 헤드리스 + 노트북 (약 10초)"
+echo "   Tools/verify.sh          규칙 검사 + 헤드리스 (약 10초)"
 echo "   AGENTS.md                반드시 지켜야 하는 규칙과 명령"
 echo "   docs/superpowers/README.md  설계·계획 문서 색인"
 [ "$MISSING" -eq 0 ] || echo

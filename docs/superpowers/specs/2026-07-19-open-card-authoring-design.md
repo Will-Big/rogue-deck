@@ -16,7 +16,7 @@
 열린 구조(`EffectKey` + 핸들러 레지스트리)이므로, 병목인 저작 층(`EffectKind` 등 enum 5종 +
 `CardSpecMapper` 중앙 switch)과 공용 모델(`EffectData`의 ApplyStatus 전용 필드)을 같은 원칙으로 정리한다.
 
-## 2. 현황 (문제)
+## 2. 최초 설계 당시의 문제 (해결된 배경)
 
 - `EffectSpec`은 평면 struct: 모든 효과가 10개 필드를 공유하고, 인스펙터에 무관한 필드가 전부 노출된다.
 - `EffectKind`, `StatusKindRef`, `InterventionKind` enum이 닫힌 집합을 강제한다.
@@ -78,15 +78,15 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 `CardSpecMapper`는 효과 switch가 사라지고, 카드 수준 조립(Execution/Intervention 분기 + 공통 필드)만
 남는다. `CardSpec.Effects`는 `EffectSpec[]`(다형)이 된다.
 
-### 4.2 Unity 층
+### 4.2 AI 세션의 JSON 저작
 
-- ~~`CardAsset.Effects`를 `[SerializeReference] EffectSpec[]`로 전환한다.~~ **대체됨
-  (계획 3b)** — 효과는 이제 카드 JSON의 `effects[]` 배열이고, 다형성은 `"kind"` 판별자와
-  `EffectSpecJsonConverter`가 처리한다. Unity 인스펙터 저작 경로 자체가 없어졌다.
-- 에디터 전용 **서브클래스 선택 드로어 1개**를 추가한다: Effects 리스트의 + / 타입 변경 시 등록된
-  spec 타입 목록(한글 표시명)을 드롭다운으로 제공하고, 선택된 타입의 필드만 그린다.
-- 드롭다운 후보는 리플렉션 스캔이 아니라 **명시적 spec 타입 등록 목록**에서 온다(사전 승인 없는
-  리플렉션 자동 등록 금지 원칙). 등록 목록은 부팅 검증에서 코어 레지스트리와 대조한다.
+카드·콘텐츠는 AI 세션에서 JSON을 직접 수정한다. 인스펙터 드로어·SO 저작 경로는 사용하지 않는다
+([콘텐츠 저작 규칙](../../agents/content-authoring.md)).
+
+효과의 `kind` 판별자는 `EffectSpecJsonConverter`가 명시적 `EffectSpecCatalog` 등록 목록으로 해석한다.
+새 효과는 스펙·핸들러와 명시적 등록을 추가하고 콘텐츠 로더·레지스트리 검증을 헤드리스 테스트로 확인한다
+([EffectSpecJsonConverter.cs](../../../Assets/Core/Authoring/Json/EffectSpecJsonConverter.cs),
+[EffectSpecCatalog.cs](../../../Assets/Core/Authoring/EffectSpecCatalog.cs)). 리플렉션 자동 등록은 하지 않는다.
 
 ### 4.3 코어 — EffectData payload
 
@@ -103,21 +103,23 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 - **핸들러가 자기 payload를 검증한다**: 콘텐츠 검증(부팅/테스트)이 카드의 효과마다 핸들러를 resolve해
   payload 타입·필수 값 검사를 위임한다. 기존 `DescriptionCatalogValidator` 패턴을 따른다.
 
-### 4.4 코드 생성
+### 4.4 JSON 로딩
 
-- `CardCodeGenerator`가 다형 리터럴을 생성한다: `new DamageSpec { Value = 4, Condition = ... }`.
-  Unity SO와 헤드리스 export가 같은 스키마(같은 클래스)를 사용한다는 원칙은 그대로다.
-- ~~손저작 spec(`StarterDeckSpecs`, `PartyPrototypeDeckSpecs`)도 새 모델로 이전한다.~~
-  **무효 (계획 3d, 2026-08-05)** — 손저작 spec 자체가 사라졌다. 카드 저작의 원본은
-  `Content/Cards/*.json`이다.
+SO에서 C# 리터럴을 생성하는 경로는 폐기됐다. 콘텐츠 JSON을 `ContentBootstrap.Load`로 읽고,
+카드 로더가 스펙을 검증한 뒤 코어 정의로 변환한다. 헤드리스와 Unity는 같은 JSON을 소비한다
+([ContentBootstrap.cs](../../../Assets/Core/Authoring/ContentBootstrap.cs),
+[CardContentLoader.cs](../../../Assets/Core/Authoring/CardContentLoader.cs)).
 
 ### 4.5 검증 흐름
 
 | 시점 | 검사 | 실패 시 |
 |---|---|---|
-| ~~에디터 (CardAsset 인스펙터/저장)~~ **없어짐 (계획 3b)** | spec.Validate — 키 등록 여부, 파라미터 값 | ~~인스펙터 에러 표시~~ |
-| ~~코드 생성 시~~ **없어짐 (계획 3b)** | 전체 카드 walk + Validate | ~~생성 중단, 에러 로그~~ |
-| 부팅/헤드리스 테스트 | spec 타입 등록 목록 ↔ 코어 레지스트리 대조, payload 타입 검사 | 예외 (부팅 실패) |
+| JSON 역직렬화 | `kind` 판별자와 명시적 스펙 타입 등록 | 콘텐츠 로드 실패 |
+| 부팅·헤드리스 테스트 | `AuthoringValidator`의 카드·효과·개입 파라미터 검증과 등록 대조 | 오류 목록, 부팅 실패 |
+
+근거: [EffectSpecJsonConverter.cs](../../../Assets/Core/Authoring/Json/EffectSpecJsonConverter.cs),
+[CardContentLoader.cs](../../../Assets/Core/Authoring/CardContentLoader.cs),
+[AuthoringValidator.cs](../../../Assets/Core/Authoring/AuthoringValidator.cs). 검증 명령은 `Tools/verify.sh`다.
 
 ### 4.6 샘플 신규 효과 (완료 기준 증명)
 
@@ -125,31 +127,27 @@ Selector(`TargetSelectorRef`)는 코어가 실제로 `TargetSelector`를 읽는 
 실행·설명·저작·검증 경로가 전부 동작함을 헤드리스 테스트로 보인다. 중앙 enum/mapper 파일은 diff에
 나타나지 않아야 한다. 제품 카드에는 사용하지 않는다.
 
-## 5. 마이그레이션·등가성 전략 (백로그 §11)
+## 5. 완료된 마이그레이션과 현재 확장 절차
 
-1. **구조 변경 전에 등가 스냅샷 테스트를 먼저 확보한다**: 현재 `CardSpecMapper` 경로로 만든 전체
-   콘텐츠(시작덱·적덱·파티 검증덱)의 `CardDefinition`을 서명(문자열 스냅샷)으로 고정.
-2. 새 모델로 전환 후 같은 서명이 나오는지 검증 (기존 `StarterDeckSpecEquivalenceTests` 확장).
-3. Unity 자산: struct→`[SerializeReference]` 직렬화 단절은 `Seed Starter/Enemy Card Assets` 재실행으로
-   해소한다 (Art 보존 로직 기존 존재). 헤드리스 검증과 사용자 Play 검증을 분리해 기록한다.
-4. 이번 변경에 다른 대규모 마이그레이션(SO 단일 원본화 등)을 섞지 않는다. P1-A는 이 저작 모델 확정
-   후 별도 진행.
+최초 다형 스펙 전환과 후속 JSON 전환은 완료된 작업이다. SO 시딩·코드 생성 메뉴를 재실행하지 않는다.
+새 효과를 확장할 때는 기존 스펙·컨버터·레지스트리 계약을 읽고 테스트로 실행·설명·저작·검증 경로를
+확인한다. 카드 자체는 JSON으로 직접 저작한다([콘텐츠 저작 규칙](../../agents/content-authoring.md)).
 
 ## 6. 테스트 전략
 
-- 기존 260개 헤드리스 테스트 전부 통과 유지 (P0-A 결정론 테스트 포함).
+- 전체 헤드리스 테스트 통과 유지 (결정론 테스트 포함).
 - 등가 스냅샷: 마이그레이션 전후 전체 콘텐츠 `CardDefinition` 동일.
 - 샘플 신규 효과: 추가 절차 데모 + 실행/설명/검증 경로 테스트.
 - 검증 실패 케이스: 미등록 상태 키, 미등록 효과 spec, payload 타입 불일치가 검증에서 실패하는지.
-- Unity 드로어는 헤드리스로 검증 불가 → 에디터 수동 확인 항목으로 분리.
+- JSON의 컨버터·로더 실패 계약은 헤드리스로 검증한다. 표시 결과는 사용자 Play로 확인한다.
 
 ## 7. 완료 조건 (백로그 §4 대응)
 
 - [ ] 샘플 신규 효과 추가 시 중앙 enum/mapper 수정 없음 (테스트로 증명)
 - [ ] 신규 효과의 실행·설명·저작·검증 경로가 클래스/등록 단위로 국소화
-- [ ] 기존 시작덱·적덱·파티 검증 카드의 export 등가성 유지 (스냅샷 테스트)
-- [ ] 생성 파일과 런타임 SO가 동일 `CardDefinition` 생성
-- [ ] 잘못된 키·필드·파라미터가 에디터/부팅 검증에서 실패
+- [ ] JSON 콘텐츠의 로딩·직렬화와 전투 행동 회귀 유지
+- [ ] 헤드리스와 Unity가 같은 콘텐츠 JSON을 소비
+- [ ] 잘못된 키·필드·파라미터가 콘텐츠 로더·부팅 검증에서 실패
 
 ## 8. 범위 밖
 

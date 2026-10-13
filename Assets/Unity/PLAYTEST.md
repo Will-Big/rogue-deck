@@ -1,37 +1,37 @@
 # Fate Weaver Unity Playtest (uGUI)
 
-## 최초 1회 세팅
+## 준비와 콘텐츠 저작
 
-1. `Window ▸ TextMeshPro ▸ Import TMP Essential Resources`.
-2. `Fate Weaver ▸ Create Korean TMP Font` — `Resources/Fonts/KoreanTMP.asset` 생성.
-   - 소스 폰트는 리포에 커밋된 **Pretendard**(`Assets/Unity/Fonts/Pretendard-Regular.ttf`, OFL)라
-     OS 상관없이(macOS/Windows/Linux) 동작한다. 생성 애셋은 씬이 참조하는 guid에 자동으로 핀되어 별도 배선이 필요 없다.
-   - 실패 시 수동 대체: `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 위 Pretendard TTF를 Source로,
-     Atlas Population Mode = **Dynamic**으로 생성해 `Assets/Unity/Resources/Fonts/KoreanTMP.asset`로 저장.
+저장된 [`Assets/Scenes/FateWeaverBattle.unity`](../Scenes/FateWeaverBattle.unity)를 직접 연다.
+전투 화면 생성 메뉴를 실행하는 단계는 없다. 씬·프리팹은 저장된 에셋을 직접 수정하고 참조를 배선한다
+([AGENTS.md 규칙 17](../../AGENTS.md)).
 
-> `Resources/Fonts/`(생성된 동적 아틀라스)만 gitignore 대상이다. Pretendard TTF는 커밋되어 있으니
-> 머신마다 2번만 다시 실행하면 된다.
+카드·콘텐츠는 AI 세션에서 `Assets/StreamingAssets/Content/`의 JSON을 직접 수정한다.
+인스펙터 카드 저작과 별도 카드 편집 도구는 사용하지 않는다. 변경 후 `Tools/verify.sh`로 검증한다
+([콘텐츠 저작 절차](../../docs/agents/content-authoring.md)).
 
-카드·시작 덱·시작 카드 풀은 더 이상 SO 시딩 메뉴로 생성하지 않는다. 콘텐츠 원본이 JSON으로
-확정된 뒤(계획 3b·3d) `ContentBootstrap`(`Assets/Core/Authoring/ContentBootstrap.cs`)이 부팅 시
-JSON을 직접 읽어 로드하므로 별도 세팅 단계가 없다.
+### 폰트는 문자 구성이 바뀔 때만 재생성한다
+
+[`KoreanTMP.asset`](Resources/Fonts/KoreanTMP.asset)과 원본
+[`Pretendard-Regular.ttf`](Fonts/Pretendard-Regular.ttf)는 커밋된 파일이다. 새 클론에서 폰트 생성은
+필요하지 않으며 생성 아틀라스도 gitignore 대상이 아니다([.gitignore 「Korean TMP font」](../../.gitignore)).
+
+게임에 표시하는 문자 구성이 바뀌어 폰트 갱신이 필요할 때만 `Fate Weaver ▸ Create Korean TMP Font`를
+실행한다. 생성기는 `Assets/Unity/Resources/Fonts/KoreanTMP.asset`를 만들고 기존 씬 참조 GUID를 보존한다
+([KoreanTmpFontCreator.cs](Editor/KoreanTmpFontCreator.cs)).
+
+실패 시 수동 대체는 `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 위 Pretendard TTF를 Source로,
+Atlas Population Mode를 **Dynamic**으로 선택해 같은 경로에 저장한다. 기존 GUID·씬 참조를 보존하고
+추가한 문자가 화면에서 올바르게 나오는지 확인한다.
 
 ## 실행
 
-1. `Assets/Scenes/FateWeaverPlaytest.unity`를 열고 Play.
-2. 손패의 실행 카드를 클릭하면 운명력을 지불하고 미래 영역에 직접 배치된다.
-3. 손패의 개입 카드를 클릭한 뒤 미래 영역의 대상 카드를 선택하면 실행 순서 변경/교환 같은 개입이 적용된다.
-4. `턴 실행` → `다음 턴`으로 진행(HP·상태 이월). 승패가 나면 종료.
-
-### 전투 화면 (시각 개편 1–2단계)
-
-1. `Fate Weaver ▸ Build Battle Scene`으로 `Assets/Scenes/FateWeaverBattle.unity`를 생성(재실행 시 덮어씀)하고 Play.
+1. `Assets/Scenes/FateWeaverBattle.unity`를 열고 Play.
 2. 구도: 유닛 무대(유닛별 HP 바) / 스크롤 실행 레일(미니 카드, 호버 시 전체 카드) / 곡선 손패 /
    덱 버튼 3종(좌하 뽑을 덱 · 우하 버린 덱 · 우상 전체 덱) / 좌측 운명력 / 우측 턴 버튼.
 3. 카드 입력은 호버 = 확대 보기, 첫 클릭 = 선택이다. 실행 카드는 손패 호버로 보이는 레일 실루엣을
    클릭해 배치하고, 단일 개입은 레일 대상을 클릭하며, 교환은 서로 다른 대상 2개 선택 후 우하단 `확인`을
    누른다. 빈 곳 또는 딤 클릭은 비용 없이 취소한다.
-   구현 계획: `docs/superpowers/plans/2026-07-10-battle-screen-skeleton.md`.
 
 ### 통합 대상 선택 체크리스트
 
@@ -63,13 +63,16 @@ JSON을 직접 읽어 로드하므로 별도 세팅 단계가 없다.
 
 ## 범위 / 검증
 
-- 카드 위젯은 `CardView`(프리팹) + `CardPresentation`(뷰모델) + `PlaytestCardArt`/`PlaytestKoreanText`(룩업).
-- 덱 전투 진행 로직은 `DeckCombatSession`(순수 C#)이며 헤드리스 테스트로 검증된다.
-- 컨트롤러/프리팹/에디터 빌더는 헤드리스 컴파일 대상이 아니므로 Unity Play에서만 검증된다.
-- `PlaytestCardArt.ResolveStatusIconResourcePath` / `PlaytestKoreanText.CardName`은
-  `FateWeaver.Tests.UnityEditMode` EditMode 테스트로 가드된다(Unity Test Runner에서 실행).
-- 카드 설명은 `DescriptionComposer` + `KoreanDescriptionVocabulary`(순수 C#)가 카드의 효과 데이터에서
-  조립하며, `FateWeaver.Tests.EditMode`의 `DescriptionComposerTests`(헤드리스)로 가드된다.
+- 카드 위젯은 프리팹 `CardView`와 뷰모델 `CardPresentation`을 사용한다. 아트는 표현 자원 카탈로그로
+  배선한다([CardPresentation.cs](Scripts/Cards/CardPresentation.cs), [콘텐츠 저작 경계](../../docs/agents/content-authoring.md)).
+- 덱 전투 진행과 설명 조립은 순수 C# 헤드리스 테스트로 검증한다. 설명은 `DescriptionComposer`와
+  `KoreanDescriptionCatalog`가 효과 데이터에서 조립한다
+  ([DescriptionComposer.cs](../Core/Simulation/Descriptions/DescriptionComposer.cs)).
+- 컨트롤러·프리팹·씬 참조는 Unity 배치 EditMode로 검증하고, 조작감·레이아웃·연출은 Play로 확인한다
+  ([배치 실행 절차](../../docs/agents/unity-batch-runs.md)).
+- 상태 아이콘 경로와 남은 카드 이름 룩업은 Unity EditMode 테스트로 검증한다
+  ([CardStatusIconSpritesTests.cs](../Tests/UnityEditMode/CardStatusIconSpritesTests.cs),
+  [PlaytestKoreanTextTests.cs](../Tests/UnityEditMode/PlaytestKoreanTextTests.cs)).
 
 ## 전투 노드 한 사이클 (2026-09-15)
 

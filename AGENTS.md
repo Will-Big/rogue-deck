@@ -12,7 +12,7 @@
 ## 명령
 
 처음 한 번 `Tools/setup-dev.sh`로 공유 git 훅을 켠다. 검증은 `Tools/verify.sh` 하나다 — 규칙 검사 +
-헤드리스 코어 테스트 + 노트북 테스트를 돌고 실패하면 0이 아닌 코드로 끝난다. **Unity 에디터는
+헤드리스 코어 테스트를 돌고 실패하면 0이 아닌 코드로 끝난다. **Unity 에디터는
 필요 없다.** `--lint`는 기계 검사만(1초 미만), `--quick`은 헤드리스만(약 10초).
 
 게이트는 셋이다: `.githooks/`(커밋 시점, 도구 무관) · CI(push·PR마다, **우회 불가능한 실질 게이트**) ·
@@ -25,7 +25,7 @@ Claude Code 훅(더 이른 시점의 미러). 개별 명령·시간·함정은 [
 3. **런타임 문자열 탐색을 금지한다.** `GameObject.Find`, `FindObjectOfType`, 태그·레이어 이름 문자열 비교, `Resources.Load("magic/string")` 모두 사용하지 않는다.
 4. **`public` 필드 대신 `[SerializeField] private`을 쓴다.** 예외는 값만 담고 로직이 없는 **중첩
    `[Serializable]` DTO**뿐이다(`CardArtCatalog.Entry`). DTO가 규칙 판단이나 상태 변경을 하면 예외가 아니다.
-5. **콘텐츠는 코드가 아니라 JSON으로 저작한다.** 원본은 `Assets/StreamingAssets/Content/`이고
+5. **카드·콘텐츠는 AI 세션에서 JSON을 직접 수정해 저작한다.** 인스펙터 카드 저작과 별도 카드 편집 도구는 사용하지 않는다. 원본은 `Assets/StreamingAssets/Content/`이고
    부팅 시 `ContentBootstrap.Load`가 읽는다. **SO 카드 저작 파이프라인은 없다** — 남은
    ScriptableObject 셋은 표현 자원 전용이다. [`content-authoring.md`](docs/agents/content-authoring.md)
 

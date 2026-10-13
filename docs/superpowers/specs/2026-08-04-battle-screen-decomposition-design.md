@@ -37,7 +37,7 @@
 
 - `BattleScreenController`의 책임을 컴포넌트 넷으로 분배
 - 기존 `CardSelectionController`가 선택 취소 입력(클릭 캐처 둘)을 흡수
-- `BattleSceneBuilder`가 새 컴포넌트를 생성·배선하도록 갱신하고 씬 재생성
+- 저장된 씬·프리팹에 새 컴포넌트 참조를 직접 배선한다(규칙 17)
 
 ### 3.2 제외
 
@@ -125,8 +125,7 @@ public sealed class BattlePresenter : MonoBehaviour
 
 카드 아트가 실제 리소스로 바뀔 예정이지만 **지금 추상화하지 않는다.** 근거 둘:
 
-**교체 비용이 작다.** `CardArtCatalog`를 구체 타입으로 아는 프로덕션 코드는 3줄이고, 분해 후에는
-`BattlePresenter`와 `BattleSceneBuilder` 두 파일에 모인다. 그리고 **차단막이 이미 있다** —
+아트 참조는 씬·프리팹에 직렬화해 배선한다. **표시 경계** —
 `CardPresentation`이 `Func<string, Sprite>`를 받으므로 그 아래(`CardPresentation`·`CardView`·
 `RailCardView`)는 출처 타입을 모른다.
 
@@ -210,8 +209,7 @@ private void RefreshSelections()
 
 - **Unity EditMode:** `BattlePresenter` 단위 테스트 신설(소유자 분기 3종, 아트 없음 경로),
   기존 `CardPresentationTests`·`CardSelectionControllerTests` 유지
-- **씬 재생성:** `BattleSceneBuilder`가 새 컴포넌트를 만들고 배선하도록 갱신한 뒤 재생성하고,
-  배치 EditMode 전체를 돌린다. 규칙 17 개정으로 이 저작은 AI가 직접 한다
+- **씬 배선:** 저장된 씬·프리팹을 AI가 직접 수정해 컴포넌트 참조를 배선하고 배치 EditMode 전체를 돌린다(규칙 17)
 - **Play:** 조작감은 눈으로 봐야 하므로 사용자가 확인한다 — 손패 클릭 → 배치, 개입 카드 대상 선택,
   턴 실행, 선택 취소(빈 곳 클릭)
 

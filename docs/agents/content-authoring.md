@@ -39,14 +39,16 @@ Assets/StreamingAssets/Content/<종류>/*.json
 **표현 자원 전용이며 규칙 수치를 담지 않는다.** id → Sprite, id → Prefab 같은 매핑만 든다.
 그 경계를 넘는 순간 — 피해량·비용·확률 같은 것이 SO로 들어가는 순간 — 규칙 5 위반이다.
 
-## 저작 도구
+## AI 세션에서 JSON을 직접 저작한다
 
-카드 저작은 `Tools/card-idea-notebook/`의 노트북으로 한다. 저장소의 콘텐츠 JSON을 직접 읽고
-쓴다. 테스트는 글로브가 필수다:
+카드·콘텐츠의 추가와 수정은 AI 세션에서 `Assets/StreamingAssets/Content/`의 JSON을 직접 편집한다.
+인스펙터 카드 저작이나 별도 카드 편집 도구를 만들거나 사용하지 않는다.
 
-```bash
-node --test "Tools/card-idea-notebook/"*.test.mjs
-```
+1. 기존 JSON과 해당 코어 스펙·로더를 읽어 필드·`kind`·참조 id를 확인한다.
+2. 요청한 카드·상태·풀·덱·캐릭터·적·편성 JSON을 직접 수정한다.
+3. `Tools/verify.sh`로 로더·직렬화·헤드리스 회귀를 검증한다. 밸런스 변경은 규칙 12의 Compare도 확인한다.
+
+초안과 검수 메모는 [`docs/card-design/`](../card-design/)에 보관한다. 메모를 런타임 원본으로 쓰지 않는다.
 
 ## 풀과 덱은 로더 모양만 같다
 

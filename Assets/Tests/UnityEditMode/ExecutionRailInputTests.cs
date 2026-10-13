@@ -32,9 +32,8 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = new GameObject("Overlay", typeof(RectTransform));
             try
             {
-                var rail = root.AddComponent<ExecutionRailView>();
-                rail.EditorBuild(null, null, (RectTransform)overlay.transform);
-                var scroll = root.GetComponent<ScrollRect>();
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, (RectTransform)overlay.transform);
+                var scroll = rail.GetComponent<ScrollRect>();
 
                 rail.SetInputEnabled(false);
 
@@ -78,7 +77,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var root = new GameObject("Root", typeof(RectTransform));
             try
             {
-                var view = RailCardView.EditorCreate((RectTransform)root.transform, new Vector2(96f, 132f));
+                var view = AuthoredBattleUi.Instantiate<RailCardView>((RectTransform)root.transform);
                 var card = new CardPresentation(
                     "test", "test", 1, 0, Side.Enemy, EmptyDescriptionLayout(), null, false);
                 int hoverCalls = 0;
@@ -103,13 +102,11 @@ namespace FateWeaver.Tests.UnityEditMode
             try
             {
                 var hand = Child<HandFanView>(root.transform, "Hand");
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
                 var overlay = ChildRect(root.transform, "Overlay");
-                rail.EditorBuild(null, RailCardView.EditorCreate(
-                    ChildRect(root.transform, "RailCardPrefabRoot"), new Vector2(96f, 132f)), overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 var confirmButton = Child<Button>(root.transform, "Confirm");
                 var dim = ChildRect(root.transform, "Dim").gameObject;
-                var arrow = TargetingArrowView.EditorCreate(overlay);
+                var arrow = AuthoredBattleUi.Instantiate<TargetingArrowView>(overlay);
                 var selection = root.AddComponent<CardSelectionController>();
                 SetField(selection, "_hand", hand);
                 SetField(selection, "_rail", rail);
@@ -159,10 +156,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var prefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(null, prefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 var existing = Card("existing", order: 4, side: Side.Enemy);
                 var candidate = Card("candidate", order: 3, side: Side.Player);
                 rail.SetCards(new[] { existing, existing }, _ => { });
@@ -192,10 +186,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var prefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(null, prefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 var candidate = Card("candidate", 3, Side.Player);
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(candidate, 0);
@@ -225,10 +216,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var prefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(null, prefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 int clicks = 0;
@@ -263,10 +251,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var prefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(null, prefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 rail.ArmPlacementPreview(() => { });
@@ -323,10 +308,7 @@ namespace FateWeaver.Tests.UnityEditMode
             var overlay = ChildRect(root.transform, "Overlay");
             try
             {
-                var prefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(null, prefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay);
                 rail.SetCards(Array.Empty<CardPresentation>(), _ => { });
                 rail.ShowPlacementHover(Card("candidate", 3, Side.Player), 0);
                 rail.ArmPlacementPreview(() => { });
@@ -402,10 +384,7 @@ namespace FateWeaver.Tests.UnityEditMode
             try
             {
                 var catalog = CardPrefabCatalogTests.LoadCatalog();
-                var miniPrefab = RailCardView.EditorCreate(
-                    ChildRect(root.transform, "PrefabRoot"), new Vector2(96f, 132f));
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(catalog, miniPrefab, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay, catalog);
                 rail.SetCards(
                     new[]
                     {
@@ -444,10 +423,9 @@ namespace FateWeaver.Tests.UnityEditMode
                 var overlay = ChildRect(root.transform, "Overlay");
                 overlay.sizeDelta = new Vector2(960, 720);
                 var catalog = CardPrefabCatalogTests.LoadCatalog();
-                var mini = RailCardView.EditorCreate(ChildRect(root.transform, "Mini"), new Vector2(96, 132));
+                var mini = AuthoredBattleUi.Instantiate<RailCardView>(ChildRect(root.transform, "Mini"));
                 mini.transform.position = new Vector3(x, y, 0);
-                var rail = Child<ExecutionRailView>(root.transform, "Rail");
-                rail.EditorBuild(catalog, mini, overlay);
+                var rail = AuthoredBattleUi.InstantiateRail(root.transform, overlay, catalog);
                 typeof(ExecutionRailView).GetMethod("OnHover", BindingFlags.Instance | BindingFlags.NonPublic)
                     .Invoke(rail, new object[] { mini, Card("preview", 3, Side.Player), true });
                 var detail = Field<CardView>(rail, "_preview");

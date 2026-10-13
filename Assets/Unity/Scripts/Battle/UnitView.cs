@@ -25,10 +25,6 @@ namespace FateWeaver.Unity
         [Tooltip("쓰러진 유닛의 초상 색.")]
         [SerializeField] private Color _deadTint = new Color(0.35f, 0.35f, 0.35f, 0.5f);
 
-        /// <summary>HP 막대의 색. EditorCreate가 프리팹에 굽는 값이라 실물 조절은 프리팹의
-        /// HpFill 이미지에서 한다.</summary>
-        private static readonly Color HpColor = new Color(0.35f, 0.75f, 0.5f, 1f);
-
         private Color _aliveTint = Color.white;
         private int _maxHp;
         private int _currentHp;
@@ -94,49 +90,6 @@ namespace FateWeaver.Unity
             }
 
             _statusText.text = string.Join(" · ", parts);
-        }
-
-        /// <summary>Editor-only prefab authoring hook used by BattleSceneBuilder.</summary>
-        public static UnitView EditorCreate(RectTransform parent, Vector2 size)
-        {
-            var root = BattleUiKit.Rect(parent, "Unit");
-            root.sizeDelta = size;
-            var layout = root.gameObject.AddComponent<LayoutElement>();
-            layout.preferredWidth = size.x;
-            layout.preferredHeight = size.y;
-
-            var view = root.gameObject.AddComponent<UnitView>();
-
-            var portrait = BattleUiKit.Image(root, "Portrait", Color.white);
-            BattleUiKit.Anchor(portrait.rectTransform, 0f, 0.28f, 1f, 1f);
-            portrait.raycastTarget = false;
-
-            var hpBack = BattleUiKit.Image(root, "HpBack", new Color(0f, 0f, 0f, 0.55f));
-            BattleUiKit.Anchor(hpBack.rectTransform, 0.05f, 0.16f, 0.95f, 0.26f);
-            hpBack.raycastTarget = false;
-
-            var hpFill = BattleUiKit.Image(hpBack.rectTransform, "HpFill", HpColor);
-            BattleUiKit.Stretch(hpFill.rectTransform);
-            hpFill.raycastTarget = false;
-
-            var hpText = BattleUiKit.Text(hpBack.rectTransform, "HpText", 14f, TextAlignmentOptions.Center);
-            BattleUiKit.Stretch(hpText.rectTransform);
-
-            var nameText = BattleUiKit.Text(root, "Name", 16f, TextAlignmentOptions.Center);
-            BattleUiKit.Anchor(nameText.rectTransform, 0f, 0f, 1f, 0.10f);
-
-            var statusText = BattleUiKit.Text(root, "Statuses", 13f, TextAlignmentOptions.Center);
-            BattleUiKit.Anchor(statusText.rectTransform, 0f, 0.10f, 1f, 0.16f);
-
-            view._portrait = portrait;
-            view._hpFill = hpFill.rectTransform;
-            view._hpText = hpText;
-            view._nameText = nameText;
-            view._statusText = statusText;
-
-            // 몸짓은 루트가 아니라 초상에 건다 — 루트는 UnitRow의 레이아웃 그룹이 통제한다.
-            root.gameObject.AddComponent<UnitMotionView>().EditorBind(portrait);
-            return view;
         }
     }
 }

@@ -191,8 +191,8 @@ HP 28과 `crude_guard`의 방어 3은 유지한다. 방어 3은 `flank_jab`(3)�
 - **`party_prototype` 덱을 전제한 테스트 셋.** `PartyPrototypeDataTests`,
   `DeckPoolCharacterContentTests`(픽스처 6장을 그대로 적어 둔다), `RunSetupTests`(`fixture_attack` 2장을
   단언한다)를 새 `striker` 덱으로 옮긴다. 테스트 이름에 남은 `PartyPrototype`도 함께 바꾼다.
-- **노트북 왕복 테스트.** 새 카드 JSON은 저작 도구의 바이트 왕복 대상이므로 키 순서·생략 규칙을 기존
-  카드와 똑같이 맞춘다.
+- **콘텐츠 JSON 회귀.** AI 세션에서 새 카드 JSON을 직접 저작하고, 기존 콘텐츠 로더·직렬화 테스트로 검증한다
+  ([콘텐츠 저작 규칙](../../agents/content-authoring.md)).
 - **색인 수치.** 카드 JSON **29 → 35장**(플레이어 5종 + 적 `runt_jab` 1종), 덱 JSON은 2개 유지(이름만
   교체), 적 JSON 1 → 2. 색인 본문의 "카드 JSON 26"은 계획 D 시점(2026-08-28) 수치라 이미 낡았다 —
   2026-09-20 실측이 29다(`ls Assets/StreamingAssets/Content/Cards/*.json | wc -l`, `ContentBootstrapTests`의
@@ -202,7 +202,7 @@ HP 28과 `crude_guard`의 방어 3은 유지한다. 방어 3은 `flank_jab`(3)�
 
 ### 검증 절차
 
-1. `Tools/verify.sh` — 규칙 검사와 헤드리스, 노트북.
+1. `Tools/verify.sh` — 규칙 검사와 헤드리스.
 2. **턴 수는 스크립트 플레이 하네스로 잰다.** `Compare`(무조작 vs 조작)는 개입 카드의 효과를 보는
    도구라 "몇 턴에 끝나는가"를 재지 못한다. 그래서 헤드리스 테스트에 **탐욕 스크립트**(매 턴 손패에서
    낼 수 있는 실행 카드를 비용 큰 것부터 에너지가 다할 때까지 낸다)를 두고 승리까지의 턴 수를 센다.

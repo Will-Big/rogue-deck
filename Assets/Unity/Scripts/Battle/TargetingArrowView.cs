@@ -9,34 +9,6 @@ namespace FateWeaver.Unity
         [SerializeField] private RectTransform _shaft;
         [SerializeField] private RectTransform _head;
 
-        private static readonly Color ArrowColor = new Color(0.95f, 0.72f, 0.25f, 0.9f);
-        /// <summary>Editor-scene construction hook used only by BattleSceneBuilder.</summary>
-        public static TargetingArrowView EditorCreate(RectTransform overlay)
-        {
-            var root = BattleUiKit.Rect(overlay, "TargetingArrow");
-            BattleUiKit.Stretch(root);
-            var view = root.gameObject.AddComponent<TargetingArrowView>();
-            view._root = root;
-
-            var shaft = BattleUiKit.Image(root, "Shaft", ArrowColor);
-            var shaftRect = shaft.rectTransform;
-            shaftRect.anchorMin = shaftRect.anchorMax = new Vector2(0.5f, 0.5f);
-            shaftRect.pivot = new Vector2(0f, 0.5f);
-            shaftRect.sizeDelta = new Vector2(0f, 6f);
-            shaft.raycastTarget = false;
-            view._shaft = shaftRect;
-
-            var head = BattleUiKit.Image(root, "Head", ArrowColor);
-            var headRect = head.rectTransform;
-            headRect.anchorMin = headRect.anchorMax = new Vector2(0.5f, 0.5f);
-            headRect.sizeDelta = new Vector2(18f, 18f);
-            head.raycastTarget = false;
-            view._head = headRect;
-
-            root.gameObject.SetActive(false);
-            return view;
-        }
-
         public void Show(Vector2 startScreen, Vector2 currentScreen)
         {
             gameObject.SetActive(true);

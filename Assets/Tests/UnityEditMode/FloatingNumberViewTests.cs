@@ -41,8 +41,7 @@ namespace FateWeaver.Tests.UnityEditMode
 
         private string TextAfterPlaying(int delta)
         {
-            var view = FloatingNumberView.EditorCreate(
-                (RectTransform)_root.transform, new Vector2(120f, 48f));
+            var view = AuthoredBattleUi.Instantiate<FloatingNumberView>((RectTransform)_root.transform);
             var label = view.GetComponentInChildren<TMP_Text>();
 
             var tween = view.Play(delta);
