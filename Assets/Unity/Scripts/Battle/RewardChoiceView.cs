@@ -24,6 +24,14 @@ namespace FateWeaver.Unity
         [SerializeField] private CardPrefabCatalog _cards;
         [SerializeField] private BattlePresenter _presenter;
 
+        private IReadOnlyList<RewardCandidate> _shown;
+        private void OnEnable() { if (_presenter != null && _presenter.Localization != null) _presenter.Localization.Changed += RefreshLanguage; }
+        private void OnDisable() { if (_presenter != null && _presenter.Localization != null) _presenter.Localization.Changed -= RefreshLanguage; }
+        private void RefreshLanguage()
+        {
+            if (_shown == null || _presenter.Localization == null) return;
+            for (var i = 0; i < SlotCount; i++) _ownerLabels[i].text = i < _shown.Count ? _presenter.Localization.Name("character." + _shown[i].OwnerId + ".name") : string.Empty;
+        }
         private readonly List<CardView> _spawned = new List<CardView>();
 
         public bool IsBound
@@ -36,6 +44,7 @@ namespace FateWeaver.Unity
             Action<int> onChoose,
             Action onSkip)
         {
+            _shown = candidates;
             ClearSpawned();
             gameObject.SetActive(true);
             for (int i = 0; i < SlotCount; i++)
@@ -60,6 +69,7 @@ namespace FateWeaver.Unity
                 _slotButtons[i].onClick.AddListener(() => onChoose(index));
             }
 
+            RefreshLanguage();
             _skipButton.onClick.RemoveAllListeners();
             _skipButton.onClick.AddListener(() => onSkip());
             _skipButton.gameObject.SetActive(true);

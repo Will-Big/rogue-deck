@@ -1,0 +1,188 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: FW_Descriptions Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: FW_Descriptions
+  m_TableCollectionNameGuidString: 8783043ea558b41c59b35d2b8f7d9208
+  m_Entries:
+  - m_Id: 300933120
+    m_Key: text.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933121
+    m_Key: sentence
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933122
+    m_Key: sentence.conditional
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933123
+    m_Key: effect.damage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933124
+    m_Key: damage.traits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933125
+    m_Key: list.comma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933126
+    m_Key: list.sentences
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933127
+    m_Key: effect.apply_status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933128
+    m_Key: effect.apply_status.Turns
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933129
+    m_Key: effect.apply_status.UntilConsumed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933130
+    m_Key: effect.nullify_reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933131
+    m_Key: effect.damage_bonus
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933132
+    m_Key: effect.move.stay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933133
+    m_Key: effect.move.forward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933134
+    m_Key: effect.move.backward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933135
+    m_Key: effect.consume_status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933136
+    m_Key: effect.consume_status.up_to
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933137
+    m_Key: effect.trigger_status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933138
+    m_Key: effect.next_turn_fate
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933139
+    m_Key: effect.scaled
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933140
+    m_Key: condition.consumed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933141
+    m_Key: condition.consumed_min
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933142
+    m_Key: effect.required
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933143
+    m_Key: condition.first
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933144
+    m_Key: condition.within
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933145
+    m_Key: condition.before_enemy_damage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933146
+    m_Key: condition.no_preceding
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933147
+    m_Key: condition.no_following
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933148
+    m_Key: condition.adjacent.previous
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933149
+    m_Key: condition.adjacent.next
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933150
+    m_Key: condition.previous
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933151
+    m_Key: condition.all
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933152
+    m_Key: side.player
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127424
+    m_Key: side.enemy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127425
+    m_Key: kind.card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127426
+    m_Key: kind.damage_card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127427
+    m_Key: kind.effect_card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127428
+    m_Key: intervention.change_order
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127429
+    m_Key: intervention.swap_order
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127430
+    m_Key: intervention.lock
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3699417121241432092
+  references:
+    version: 2
+    RefIds:
+    - rid: 3699417121241432092
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1791864808926

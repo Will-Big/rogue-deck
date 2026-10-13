@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 5153833348499759951}
   - component: {fileID: 7594718151649125525}
   - component: {fileID: 7597662328242712152}
+  - component: {fileID: 8158693588807832152}
   m_Layer: 0
   m_Name: Order
   m_TagString: Untagged
@@ -288,6 +289,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8158693588807832152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871082751214381347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 7597662328242712152}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1723626754244660257
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,6 +738,7 @@ GameObject:
   - component: {fileID: 2094850264980700677}
   - component: {fileID: 6772892898682799563}
   - component: {fileID: 8170918250631284836}
+  - component: {fileID: 5742015362428583900}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -842,6 +865,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &5742015362428583900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3165856682906623477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 8170918250631284836}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &3723927960224987592
 GameObject:
   m_ObjectHideFlags: 0

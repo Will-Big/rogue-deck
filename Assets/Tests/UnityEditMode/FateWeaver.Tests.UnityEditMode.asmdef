@@ -9,7 +9,12 @@
         "FateWeaver.Unity",
         "FateWeaver.Unity.Editor",
         "Unity.TextMeshPro",
-        "DOTween.Modules"
+        "DOTween.Modules",
+        "Unity.Localization",
+        "Unity.Localization.Editor",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

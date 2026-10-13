@@ -1204,6 +1204,8 @@ GameObject:
   - component: {fileID: 7855616529169170782}
   - component: {fileID: 6341419399198943437}
   - component: {fileID: 3370115086924510055}
+  - component: {fileID: 5838422502753871183}
+  - component: {fileID: 6716711022183662227}
   m_Layer: 0
   m_Name: CardType
   m_TagString: Untagged
@@ -1330,6 +1332,67 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &5838422502753871183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3743747732575076019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 3370115086924510055}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+--- !u!114 &6716711022183662227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3743747732575076019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.execution
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3370115086924510055}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &4472205689047385282
 GameObject:
   m_ObjectHideFlags: 0
@@ -1459,6 +1522,7 @@ GameObject:
   - component: {fileID: 7073384313167400280}
   - component: {fileID: 924496051591240796}
   - component: {fileID: 1185163567138981799}
+  - component: {fileID: 7574741136374043780}
   m_Layer: 0
   m_Name: ExecutionOrder
   m_TagString: Untagged
@@ -1607,6 +1671,27 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &7574741136374043780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5429144356692151399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 924496051591240796}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &5442685336496506319
 GameObject:
   m_ObjectHideFlags: 0
@@ -1656,6 +1741,7 @@ GameObject:
   - component: {fileID: 4727508752933855916}
   - component: {fileID: 5209425431898089335}
   - component: {fileID: 8812318995408540104}
+  - component: {fileID: 8161133595176966705}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -1782,6 +1868,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8161133595176966705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5610030213061185028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 8812318995408540104}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &5919003312859038567
 GameObject:
   m_ObjectHideFlags: 0
@@ -2049,6 +2156,7 @@ GameObject:
   - component: {fileID: 7636811639768102927}
   - component: {fileID: 4745278057498446098}
   - component: {fileID: 4851201640142574613}
+  - component: {fileID: 7042257918945454475}
   m_Layer: 0
   m_Name: Name
   m_TagString: Untagged
@@ -2195,6 +2303,27 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &7042257918945454475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7809003257243178663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 4745278057498446098}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &7983143068167260709
 GameObject:
   m_ObjectHideFlags: 0
@@ -2358,6 +2487,7 @@ GameObject:
   - component: {fileID: 3541498310885556356}
   - component: {fileID: 7116304083570510391}
   - component: {fileID: 2897489585936660495}
+  - component: {fileID: 7539361498790466000}
   m_Layer: 0
   m_Name: EnergyCost
   m_TagString: Untagged
@@ -2506,6 +2636,27 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &7539361498790466000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8862493046780960062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 7116304083570510391}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &9145218196501635394
 GameObject:
   m_ObjectHideFlags: 0
@@ -2523,6 +2674,7 @@ GameObject:
   - component: {fileID: 2197522753874795815}
   - component: {fileID: 6842761712870995986}
   - component: {fileID: 8287492812277349650}
+  - component: {fileID: 3632443039257502392}
   m_Layer: 0
   m_Name: ExecutionCardView
   m_TagString: Untagged
@@ -2715,7 +2867,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4eb6a60f5a25b38dc4cb68adcf34dece, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.HandCardHoverEffect
   _restLine: {fileID: 2753429300905984503}
 --- !u!225 &8287492812277349650
@@ -2730,3 +2882,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &3632443039257502392
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9145218196501635394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 423cc6497aa4b4975b7651e65a5a5790, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.CardLocalizationView
+  _view: {fileID: 2197522753874795815}
+  _tooltipPrefab: {fileID: 6952579907546028502, guid: 6f7747f4eb5854860b444e8b123c27b0, type: 3}
+  _lockIcon: {fileID: 5823864878968483570}

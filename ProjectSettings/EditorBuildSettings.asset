@@ -12,4 +12,6 @@ EditorBuildSettings:
     path: Assets/Scenes/FateWeaverBattle.unity
     guid: d82791dc8c20a4e40abd817fb641f944
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 0e7a7188c5537474aa16ac9076e4d366, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+    com.unity.localization.settings: {fileID: 11400000, guid: 674f5399d9bfb40b2a737800a3c3172b, type: 2}

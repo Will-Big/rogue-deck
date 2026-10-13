@@ -1,6 +1,6 @@
 # 한국어·영어 현지화 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 사람 검토용 개요: [HTML](2026-10-13-localization.html)
 
@@ -10,7 +10,7 @@
 
 **Tech Stack:** C# 9, NUnit 헤드리스, Unity 6000.5.2f1, Unity Localization·필수 Addressables 의존, UTF-8 CSV.
 
-**Spec:** [승인 설계 상세](../specs/2026-10-13-localization-design.md), 2026-10-13 사용자 승인 및 직접 작업 시작 지시. 실행 방식: 현재 세션에서 직접 구현.
+**Spec:** [승인 설계 상세](../../specs/2026-10-13-localization-design.md), 2026-10-13 사용자 승인 및 직접 작업 시작 지시. 실행 방식: 현재 세션에서 직접 구현.
 
 ## 상세
 
@@ -60,10 +60,10 @@ Files: `Packages/manifest.json`, `packages-lock.json`(Client API 생성), 새 `A
 
 Interfaces: `LocalizationCsvImporter.ImportAll()`는 공식 CSV Import API로 테이블을 동기화한다. `LocalizationCsvValidator.Validate()`는 중복·누락·placeholder 계약·JSON 이름 일치 오류 목록을 반환한다. 에디터 설정에는 원본 CSV와 테이블을 연결하고 재가져오기 시 Id·GUID를 유지한다.
 
-- [ ] `Csv_round_trip_preserves_multiline_and_ids`, `Deleted_keys_are_removed`, `Missing_translation_or_argument_contract_fails` 테스트를 먼저 작성한다.
-- [ ] Unity registry 호환 버전 확인 후 `UnityEditor.PackageManager.Client`로 Localization을 설치한다. 설치 콜백·domain reload·lock 파일을 확인한다.
-- [ ] 기존 전투·보상·결과 문구를 수집해 ko/en 원본 CSV를 작성한다. 공식 Import와 요청 계약에 따른 Smart 플래그 설정을 구현한다.
-- [ ] 실제 Unity EditMode 필터 `LocalizationCsvTests`에서 CSV 왕복·재실행·누락 검증 후 커밋한다.
+- [x] `Csv_round_trip_preserves_multiline_and_ids`, `Deleted_keys_are_removed`, `Missing_translation_or_argument_contract_fails` 테스트를 먼저 작성한다.
+- [x] Unity registry 호환 버전 확인 후 `UnityEditor.PackageManager.Client`로 Localization을 설치한다. 설치 콜백·domain reload·lock 파일을 확인한다.
+- [x] 기존 전투·보상·결과 문구를 수집해 ko/en 원본 CSV를 작성한다. 공식 Import와 요청 계약에 따른 Smart 플래그 설정을 구현한다.
+- [x] 실제 Unity EditMode 필터 `LocalizationCsvTests`에서 CSV 왕복·재실행·누락 검증 후 커밋한다.
 
 ### Task 4: Unity 문장 렌더·locale 수명
 
@@ -71,10 +71,10 @@ Files: 새 `Assets/Unity/Scripts/Text/UnityLocalizedTextRenderer.cs`, `Localizat
 
 Interfaces: `UnityLocalizedTextRenderer.RenderAsync(LocalizedTextRequest, Locale)`와 `RenderAsync(LocalizedCardDescription, Locale)`는 각각 string·CardDescriptionLayout을 반환한다. `LocalizationBindings`는 테이블 역할을 직렬화 TableReference와 연결한다. 언어 선택은 LocalizationSettings.SelectedLocale만 변경하고 저장한다.
 
-- [ ] 동일 의미 요청을 CSV 단축형·서술형 두 테스트 템플릿으로 렌더링해 서로 다른 문장을 얻는 테스트를 먼저 작성한다. 제품에는 형식 선택 옵션을 만들지 않는다.
-- [ ] 중첩 상태명, 조건·복수형·목록, 초기화, fallback, 지원하지 않는 저장 locale과 뒤늦게 완료된 이전 렌더 결과를 테스트한다.
-- [ ] 공식 Smart Strings를 호출해 locale 고정 렌더를 구현한다. 전투 상태·RNG를 건드리지 않는다.
-- [ ] `LocalizedDescriptionRendererTests` Unity EditMode 통과 후 커밋한다.
+- [x] 동일 의미 요청을 CSV 단축형·서술형 두 테스트 템플릿으로 렌더링해 서로 다른 문장을 얻는 테스트를 먼저 작성한다. 제품에는 형식 선택 옵션을 만들지 않는다.
+- [x] 중첩 상태명, 조건·복수형·목록, 초기화, fallback, 지원하지 않는 저장 locale과 뒤늦게 완료된 이전 렌더 결과를 테스트한다.
+- [x] 공식 Smart Strings를 호출해 locale 고정 렌더를 구현한다. 전투 상태·RNG를 건드리지 않는다.
+- [x] `LocalizedDescriptionRendererTests` Unity EditMode 통과 후 커밋한다.
 
 ### Task 5: 실제 표시 경로 전환
 
@@ -82,17 +82,26 @@ Files: `CardPresentation.cs`, `BattlePresenter.cs`, `BattleScreenController.cs`(
 
 Interfaces: 카드·안내 문구의 원본 요청을 표시 바인딩이 보관하고 locale 변경 때 렌더링을 다시 요청한다. 기존 UI는 완성 CardDescriptionLayout을 받는다. 정적 라벨은 LocalizeStringEvent, 폰트는 Asset Tables로 배선한다.
 
-- [ ] 언어 변경 전후 손패·레일·적/파티 이름·상태·HUD·보상·결과·열린 툴팁·더미 표시 갱신과 세션·RNG 불변 테스트를 먼저 작성한다.
-- [ ] 기존 controller에는 호출·배선만 추가한다. 필요한 표시 변환은 전용 컴포넌트에서 처리한다.
-- [ ] 기존 한국어 전용 UI 경로를 제거하고 테스트·개발 로그의 사용처를 새 계약에 맞춘다. 테스트 전용 화면의 영어 번역은 범위 밖이다.
-- [ ] 실제 사용 중 프리팹·씬의 고정 문구를 배선하고 사용자의 글꼴 변경은 복사하지 않는다.
-- [ ] 전체 verify·Unity EditMode·Addressables 빌드 후 커밋한다.
+- [x] 언어 변경 전후 손패·레일·적/파티 이름·상태·HUD·보상·결과·열린 툴팁·더미 표시 갱신과 세션·RNG 불변 테스트를 먼저 작성한다.
+- [x] 기존 controller에는 호출·배선만 추가한다. 필요한 표시 변환은 전용 컴포넌트에서 처리한다.
+- [x] 기존 한국어 전용 UI 경로를 제거하고 테스트·개발 로그의 사용처를 새 계약에 맞춘다. 테스트 전용 화면의 영어 번역은 범위 밖이다.
+- [x] 실제 사용 중 프리팹·씬의 고정 문구를 배선하고 사용자의 글꼴 변경은 복사하지 않는다.
+- [x] 전체 verify·Unity EditMode·Addressables 빌드 후 커밋한다.
 
 ### Task 6: 검토·인계
 
 Files: 현행 설명 설계와 색인, 승인 설계 상태, 본 계획 체크박스.
 
-- [ ] 전체 diff를 설계의 각 완료 조건과 비교하여 검토한다. 오류가 발견되면 회귀 테스트 후 수정한다.
-- [ ] `Tools/verify.sh`와 Unity EditMode XML의 total/passed/failed 및 Addressables 빌드를 확인한다.
-- [ ] 실제 ko/en 화면의 Play 검수 항목과 한계를 사용자에게 전달한다. UI 시각 승인을 대신 주장하지 않는다.
-- [ ] 완료 계획은 규칙 20에 따라 보관하며 색인을 같은 커밋에서 갱신한다. master는 사용자 머지 승인 전까지 그대로 둔다.
+- [x] 전체 diff를 설계의 각 완료 조건과 비교하여 검토한다. 오류가 발견되면 회귀 테스트 후 수정한다.
+- [x] `Tools/verify.sh`와 Unity EditMode XML의 total/passed/failed 및 Addressables 빌드를 확인한다.
+- [x] 실제 ko/en 화면의 Play 검수 항목과 한계를 사용자에게 전달한다. UI 시각 승인을 대신 주장하지 않는다.
+- [x] 완료 계획은 규칙 20에 따라 보관하며 색인을 같은 커밋에서 갱신한다. master는 사용자 머지 승인 전까지 그대로 둔다.
+
+### 완료 기록 — 2026-10-13
+
+- 제품 설명 핸들러는 기존 클래스의 `Request` 메서드를 사용한다. `Describe`는 헤드리스 진단·샌드박스 호환에 유지했다. 실제 전투 표시 경로는 `BattlePresenter.For` → `CardPresentation.FromLocalized`다.
+- 전용 워크트리 `codex/localization`에서 구현했고 master 머지는 수행하지 않았다.
+- `Tools/verify.sh`: 802 통과, 0 실패. Unity EditMode: 1,050 통과, 14 기존 건너뜀, 0 실패. Unity PlayMode: 5 통과, 0 실패.
+- 최종 결과 근거: `/tmp/fate-localization-core-final.log`, `/tmp/fate-localization-edit-final.xml`, `/tmp/fate-localization-play-final.xml`, `/tmp/fate-localization-build-final.log`.
+- Addressables 콘텐츠 빌드 성공. 사용자 Play에서 줄바꿈·넘침·언어 버튼 배치를 별도로 확인한다.
+- 회귀 수정: 적 소유자 이름 제외, 전체 요청 트리의 단일 언어 fallback, 같은 숫자 CSV ID의 중복 검사, 조건 성공 분기의 소비 요건 보존, 재생 중 표시 수치 스냅샷, 동적 라벨의 정적 이벤트 중복 제거.

@@ -19,6 +19,12 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _button;
         [SerializeField] private Button _closeButton;
 
+        [SerializeField] private GameLocalization _localization;
+        [SerializeField] private string _titleKey;
+        private int _count;
+        private void OnEnable() { if (_localization != null) _localization.Changed += RefreshLanguage; }
+        private void OnDisable() { if (_localization != null) _localization.Changed -= RefreshLanguage; }
+        private void RefreshLanguage() => SetCount(_count);
         private Func<IReadOnlyList<CardPresentation>> _cards;
         private readonly List<CardView> _spawned = new List<CardView>();
 
@@ -35,7 +41,8 @@ namespace FateWeaver.Unity
 
         public void SetCount(int count)
         {
-            _labelText.text = _title + "\n" + count;
+            _count = count;
+            _labelText.text = _localization != null ? _localization.UI("ui.pile.count", ("title", GameLocalization.Request(_titleKey)), ("amount", count)) : _title + "\n" + count;
         }
 
         public void SetInputEnabled(bool value)

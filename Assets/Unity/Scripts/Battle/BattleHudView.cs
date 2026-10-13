@@ -1,4 +1,5 @@
 using TMPro;
+using FateWeaver.Simulation.Descriptions;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -23,7 +24,24 @@ namespace FateWeaver.Unity
         [Tooltip("배속 버튼이 돌아가며 고르는 값들.")]
         [SerializeField] private float[] _speedSteps = { 1f, 2f, 4f };
 
+        [SerializeField] private GameLocalization _localization;
+        private LocalizedTextRequest _message;
+        private int _energy;
+        private bool _resolved;
         private int _speedIndex;
+        private void OnEnable() { if (_localization != null) _localization.Changed += RefreshLanguage; }
+        private void OnDisable() { if (_localization != null) _localization.Changed -= RefreshLanguage; }
+        private void RefreshLanguage()
+        {
+            Refresh(_energy, _resolved);
+            RefreshSpeedLabel();
+            if (_message != null) _messageText.text = _localization.Render(_message);
+        }
+        public void SetMessage(LocalizedTextRequest message)
+        {
+            _message = message;
+            _messageText.text = _localization != null ? _localization.Render(message) : message.Key;
+        }
 
         public bool IsBound => _energyText != null && _messageText != null
             && _turnButton != null && _turnButtonLabel != null && _resetButton != null
@@ -51,14 +69,15 @@ namespace FateWeaver.Unity
         /// <summary>스킵은 재생 중에만 누를 수 있다.</summary>
         public void SetSkipEnabled(bool enabled) => _skipButton.interactable = enabled;
 
-        private void RefreshSpeedLabel() => _speedButtonLabel.text = Speed + "배";
+        private void RefreshSpeedLabel() => _speedButtonLabel.text = _localization != null ? _localization.UI("ui.speed", ("amount", (decimal)Speed)) : Speed + "배";
 
-        public void SetMessage(string message) => _messageText.text = message;
+        public void SetMessage(string message) { _message = null; _messageText.text = message; }
 
         public void Refresh(int fateEnergy, bool turnResolved)
         {
-            _energyText.text = "운명력 " + fateEnergy;
-            _turnButtonLabel.text = turnResolved ? "다음 턴" : "턴 실행";
+            _energy = fateEnergy; _resolved = turnResolved;
+            _energyText.text = _localization != null ? _localization.UI("ui.energy", ("amount", fateEnergy)) : "운명력 " + fateEnergy;
+            _turnButtonLabel.text = _localization != null ? _localization.UI(turnResolved ? "ui.turn.next" : "ui.turn.execute") : turnResolved ? "다음 턴" : "턴 실행";
         }
 
         public void SetInputEnabled(bool resetEnabled, bool turnEnabled)

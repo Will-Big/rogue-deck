@@ -37,7 +37,7 @@ namespace FateWeaver.Simulation.Descriptions
                     {
                         var fragment = handler(effect, value, context) ?? throw new InvalidOperationException("Empty description request.");
                         var body = effect.Scaling == null ? fragment.Text : Text("effect.scaled", ("body", fragment.Text), ("amount", effect.Scaling.PerConsumed));
-                        if (condition == null && effect.Requirement != null)
+                        if (effect.Requirement != null)
                         {
                             var req = effect.Requirement.MinimumConsumed <= 1 ? Text("condition.consumed") : Text("condition.consumed_min", ("amount", effect.Requirement.MinimumConsumed));
                             body = Text("effect.required", ("condition", req), ("body", body));

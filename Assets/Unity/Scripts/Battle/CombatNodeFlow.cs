@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using FateWeaver.Core;
 using FateWeaver.Core.Authoring;
@@ -26,26 +27,33 @@ namespace FateWeaver.Unity
         private RunState _run;
         private CombatNode _node;
 
-        private void Start()
+        [SerializeField] private GameLocalization _localization;
+
+        private IEnumerator Start()
         {
+            if (_localization != null)
+            {
+                yield return new WaitUntil(() => _localization.Initialization.IsCompleted && (_localization.Renderer != null || _localization.Initialization.IsFaulted));
+                if (_localization.Initialization.IsFaulted) { Debug.LogException(_localization.Initialization.Exception); yield break; }
+            }
             if (_battle == null || _reward == null || _result == null)
             {
                 Debug.LogError("전투 노드 흐름 배선이 비어 있습니다.");
-                return;
+                yield break;
             }
 
             if (!_battle.Initialize(NewRun, OnCombatFinished))
             {
-                return;
+                yield break;
             }
 
             var loaded = ContentBootstrap.Load(UnityContentRoot.Path);
             if (!loaded.Succeeded)
             {
                 var reasons = string.Join("\n", loaded.Errors);
-                _battle.ShowMessage("콘텐츠 로드 실패:\n" + reasons);
+                _battle.ShowMessage(GameLocalization.Request("message.content_error", ("reason", reasons)));
                 Debug.LogError("콘텐츠 로드 실패:\n" + reasons);
-                return;
+                yield break;
             }
 
             _content = loaded.Content;
@@ -66,7 +74,7 @@ namespace FateWeaver.Unity
 
             if (_party == null || _party.Length == 0 || _party.Any(member => member == null))
             {
-                _battle.ShowMessage("파티 CharacterAsset이 연결되지 않았습니다.");
+                _battle.ShowMessage(GameLocalization.Request("message.party_missing"));
                 return;
             }
 

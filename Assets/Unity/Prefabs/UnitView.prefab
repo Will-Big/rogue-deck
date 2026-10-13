@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5744794089236336417}
   - component: {fileID: 9194454489940444350}
   - component: {fileID: 8323195994224078078}
+  - component: {fileID: 4782984806096059040}
   m_Layer: 0
   m_Name: Statuses
   m_TagString: Untagged
@@ -137,6 +138,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4782984806096059040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473779278162160530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 8323195994224078078}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1904003760807452166
 GameObject:
   m_ObjectHideFlags: 0
@@ -148,6 +170,7 @@ GameObject:
   - component: {fileID: 6512300988743352091}
   - component: {fileID: 1866544718651981340}
   - component: {fileID: 1774568412740533433}
+  - component: {fileID: 1492512767646411814}
   m_Layer: 0
   m_Name: HpText
   m_TagString: Untagged
@@ -274,6 +297,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1492512767646411814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904003760807452166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1774568412740533433}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &2064800226819569739
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,6 +329,7 @@ GameObject:
   - component: {fileID: 5746881942983612696}
   - component: {fileID: 7531652165440510790}
   - component: {fileID: 3697894110122556850}
+  - component: {fileID: 3499416060999901788}
   m_Layer: 0
   m_Name: Name
   m_TagString: Untagged
@@ -411,6 +456,27 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &3499416060999901788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064800226819569739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 3697894110122556850}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &3214666122099956433
 GameObject:
   m_ObjectHideFlags: 0

@@ -402,6 +402,8 @@ GameObject:
   - component: {fileID: 123340091}
   - component: {fileID: 123340093}
   - component: {fileID: 123340092}
+  - component: {fileID: 123340095}
+  - component: {fileID: 123340094}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -528,6 +530,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 123340090}
   m_CullTransparentMesh: 1
+--- !u!114 &123340094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123340090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.pile.draw
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 123340092}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &123340095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123340090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 123340092}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1001 &178394482
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -770,6 +833,7 @@ RectTransform:
   - {fileID: 419006653}
   - {fileID: 1974148471}
   - {fileID: 1160575979}
+  - {fileID: 830647081}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1078,6 +1142,8 @@ GameObject:
   - component: {fileID: 384440743}
   - component: {fileID: 384440745}
   - component: {fileID: 384440744}
+  - component: {fileID: 384440747}
+  - component: {fileID: 384440746}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -1204,6 +1270,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 384440742}
   m_CullTransparentMesh: 1
+--- !u!114 &384440746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 384440742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.reset
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 384440744}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &384440747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 384440742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 384440744}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &419006652
 GameObject:
   m_ObjectHideFlags: 0
@@ -1443,6 +1570,8 @@ GameObject:
   - component: {fileID: 574569723}
   - component: {fileID: 574569725}
   - component: {fileID: 574569724}
+  - component: {fileID: 574569727}
+  - component: {fileID: 574569726}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -1569,6 +1698,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 574569722}
   m_CullTransparentMesh: 1
+--- !u!114 &574569726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 574569722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.pile.discard
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 574569724}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &574569727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 574569722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 574569724}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &588011362
 GameObject:
   m_ObjectHideFlags: 0
@@ -1580,6 +1770,8 @@ GameObject:
   - component: {fileID: 588011363}
   - component: {fileID: 588011365}
   - component: {fileID: 588011364}
+  - component: {fileID: 588011367}
+  - component: {fileID: 588011366}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -1706,6 +1898,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 588011362}
   m_CullTransparentMesh: 1
+--- !u!114 &588011366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 588011362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.skip
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 588011364}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &588011367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 588011362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 588011364}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &589002150
 GameObject:
   m_ObjectHideFlags: 0
@@ -2074,6 +2327,8 @@ MonoBehaviour:
   _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
   _button: {fileID: 733103091}
   _closeButton: {fileID: 1400677733}
+  _localization: {fileID: 1327181922}
+  _titleKey: ui.pile.discard
 --- !u!1001 &757435673
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2240,6 +2495,108 @@ MonoBehaviour:
   _unitPrefab: {fileID: 5043400901355706048, guid: c042983b843e245fbb0e26f9ea48eec9, type: 3}
   _playerUnitsRow: {fileID: 1465215351}
   _enemyUnitsRow: {fileID: 591744662}
+--- !u!1001 &830647080
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 264365987}
+    m_Modifications:
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_Pivot.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 230
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 42
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -24
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -18
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624043371929858589, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+      propertyPath: m_Name
+      value: LanguageSelection
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+--- !u!224 &830647081 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 355365195853972805, guid: bce6a97a3bb0d4b7aa1a1e2e43df7882, type: 3}
+  m_PrefabInstance: {fileID: 830647080}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &859086064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2431,6 +2788,8 @@ MonoBehaviour:
   _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
   _button: {fileID: 952635129}
   _closeButton: {fileID: 1376015499}
+  _localization: {fileID: 1327181922}
+  _titleKey: ui.pile.all
 --- !u!1 &972920323
 GameObject:
   m_ObjectHideFlags: 0
@@ -2442,6 +2801,8 @@ GameObject:
   - component: {fileID: 972920324}
   - component: {fileID: 972920326}
   - component: {fileID: 972920325}
+  - component: {fileID: 972920328}
+  - component: {fileID: 972920327}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -2568,6 +2929,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 972920323}
   m_CullTransparentMesh: 1
+--- !u!114 &972920327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972920323}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.pile.all
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 972920325}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &972920328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972920323}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 972920325}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1023361399
 GameObject:
   m_ObjectHideFlags: 0
@@ -2579,6 +3001,7 @@ GameObject:
   - component: {fileID: 1023361400}
   - component: {fileID: 1023361402}
   - component: {fileID: 1023361401}
+  - component: {fileID: 1023361403}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -2705,6 +3128,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1023361399}
   m_CullTransparentMesh: 1
+--- !u!114 &1023361403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1023361399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1023361401}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1036167629
 GameObject:
   m_ObjectHideFlags: 0
@@ -3341,6 +3785,7 @@ GameObject:
   - component: {fileID: 1210927242}
   - component: {fileID: 1210927244}
   - component: {fileID: 1210927243}
+  - component: {fileID: 1210927245}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -3467,6 +3912,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1210927241}
   m_CullTransparentMesh: 1
+--- !u!114 &1210927245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1210927241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1210927243}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1228062054
 GameObject:
   m_ObjectHideFlags: 0
@@ -3729,6 +4195,74 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1327181921
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6340563780885655295, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9056321852091776359, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+      propertyPath: m_Name
+      value: GameLocalization
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+--- !u!114 &1327181922 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3631957670052610028, guid: ea5b63bc1ea24440784f3d0ab9a0bd15, type: 3}
+  m_PrefabInstance: {fileID: 1327181921}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebb10b8aaf767497ea352d286e5e4290, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.GameLocalization
 --- !u!1 &1349775320
 GameObject:
   m_ObjectHideFlags: 0
@@ -4720,6 +5254,7 @@ MonoBehaviour:
   _party:
   - {fileID: 11400000, guid: 2f8020d6e2fed45fd88fa053d0651b68, type: 2}
   - {fileID: 11400000, guid: b502976aabb6d4945bbcd4fe69d9719b, type: 2}
+  _localization: {fileID: 1327181922}
 --- !u!4 &1559819300
 Transform:
   m_ObjectHideFlags: 0
@@ -4873,6 +5408,7 @@ GameObject:
   - component: {fileID: 1632100623}
   - component: {fileID: 1632100625}
   - component: {fileID: 1632100624}
+  - component: {fileID: 1632100627}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -4999,6 +5535,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1632100622}
   m_CullTransparentMesh: 1
+--- !u!114 &1632100627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632100622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1632100624}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1673588383
 GameObject:
   m_ObjectHideFlags: 0
@@ -5137,6 +5694,7 @@ GameObject:
   - component: {fileID: 1767748039}
   - component: {fileID: 1767748041}
   - component: {fileID: 1767748040}
+  - component: {fileID: 1767748042}
   m_Layer: 0
   m_Name: Energy
   m_TagString: Untagged
@@ -5263,6 +5821,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1767748038}
   m_CullTransparentMesh: 1
+--- !u!114 &1767748042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1767748038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1767748040}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1809113202
 GameObject:
   m_ObjectHideFlags: 0
@@ -5274,6 +5853,7 @@ GameObject:
   - component: {fileID: 1809113203}
   - component: {fileID: 1809113205}
   - component: {fileID: 1809113204}
+  - component: {fileID: 1809113207}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -5400,6 +5980,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1809113202}
   m_CullTransparentMesh: 1
+--- !u!114 &1809113207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809113202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1809113204}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1812592571
 GameObject:
   m_ObjectHideFlags: 0
@@ -5511,6 +6112,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2f8020d6e2fed45fd88fa053d0651b68, type: 2}
   - {fileID: 11400000, guid: b502976aabb6d4945bbcd4fe69d9719b, type: 2}
   _runSeed: 1
+  _localization: {fileID: 1327181922}
 --- !u!4 &1865981032
 Transform:
   m_ObjectHideFlags: 0
@@ -5717,6 +6319,8 @@ GameObject:
   - component: {fileID: 1952910240}
   - component: {fileID: 1952910242}
   - component: {fileID: 1952910241}
+  - component: {fileID: 1952910244}
+  - component: {fileID: 1952910243}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -5843,6 +6447,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1952910239}
   m_CullTransparentMesh: 1
+--- !u!114 &1952910243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1952910239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.confirm
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1952910241}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &1952910244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1952910239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1952910241}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1974148470
 GameObject:
   m_ObjectHideFlags: 0
@@ -5854,6 +6519,7 @@ GameObject:
   - component: {fileID: 1974148471}
   - component: {fileID: 1974148473}
   - component: {fileID: 1974148472}
+  - component: {fileID: 1974148474}
   m_Layer: 0
   m_Name: Message
   m_TagString: Untagged
@@ -5980,6 +6646,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1974148470}
   m_CullTransparentMesh: 1
+--- !u!114 &1974148474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974148470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1974148472}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &1994096739
 GameObject:
   m_ObjectHideFlags: 0
@@ -5991,6 +6678,7 @@ GameObject:
   - component: {fileID: 1994096740}
   - component: {fileID: 1994096742}
   - component: {fileID: 1994096741}
+  - component: {fileID: 1994096744}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -6117,6 +6805,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1994096739}
   m_CullTransparentMesh: 1
+--- !u!114 &1994096744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994096739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 1994096741}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
 --- !u!1 &2011855046
 GameObject:
   m_ObjectHideFlags: 0
@@ -6406,6 +7115,8 @@ MonoBehaviour:
   _cardPrefabs: {fileID: 11400000, guid: 37dbccbecc5ac437085df0e532ac58d7, type: 2}
   _button: {fileID: 2075203871}
   _closeButton: {fileID: 100455315}
+  _localization: {fileID: 1327181922}
+  _titleKey: ui.pile.draw
 --- !u!114 &2083746078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6476,6 +7187,7 @@ MonoBehaviour:
   - 1
   - 2
   - 4
+  _localization: {fileID: 1327181922}
 --- !u!114 &2112603826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6500,3 +7212,4 @@ SceneRoots:
   - {fileID: 1261897428}
   - {fileID: 271851715}
   - {fileID: 1865981032}
+  - {fileID: 1327181921}

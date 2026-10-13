@@ -1,0 +1,196 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: FW_UI Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: FW_UI
+  m_TableCollectionNameGuidString: 282e651cf39b14473b688d27faf0eb29
+  m_Entries:
+  - m_Id: 300933120
+    m_Key: ui.turn.execute
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933121
+    m_Key: ui.turn.next
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933122
+    m_Key: ui.reset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933123
+    m_Key: ui.skip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933124
+    m_Key: ui.speed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933125
+    m_Key: ui.energy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933126
+    m_Key: ui.pile.draw
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933127
+    m_Key: ui.pile.discard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933128
+    m_Key: ui.pile.all
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933129
+    m_Key: ui.pile.count
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933130
+    m_Key: ui.confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933131
+    m_Key: ui.reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933132
+    m_Key: ui.choose
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933133
+    m_Key: ui.reward.skip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933134
+    m_Key: ui.battle.next
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933135
+    m_Key: ui.defeat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933136
+    m_Key: ui.restart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933137
+    m_Key: ui.execution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933138
+    m_Key: ui.intervention
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933139
+    m_Key: message.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933140
+    m_Key: message.resolved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933141
+    m_Key: message.no_energy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933142
+    m_Key: message.no_placement
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933143
+    m_Key: message.place
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933144
+    m_Key: message.invalid_intervention
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933145
+    m_Key: message.not_enough_targets
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933146
+    m_Key: message.choose_targets
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933147
+    m_Key: message.card_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933148
+    m_Key: message.no_direct_target
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933149
+    m_Key: message.placed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933150
+    m_Key: message.cannot_place
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933151
+    m_Key: message.invalid_targets
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933152
+    m_Key: message.intervention_applied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933153
+    m_Key: message.turn_ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933154
+    m_Key: message.playing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933155
+    m_Key: message.complete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933156
+    m_Key: message.outcome
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933157
+    m_Key: outcome.Win
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933158
+    m_Key: outcome.Lose
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933159
+    m_Key: outcome.None
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933160
+    m_Key: message.content_error
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933161
+    m_Key: message.party_missing
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3699417121241432093
+  references:
+    version: 2
+    RefIds:
+    - rid: 3699417121241432093
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1791864809193

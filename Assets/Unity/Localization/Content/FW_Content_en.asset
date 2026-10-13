@@ -1,0 +1,275 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: FW_Content_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 582c00b4aa8714c4dbe74c573b21b81e, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 1223680000
+    m_Localized: Brace
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1244651520
+    m_Localized: Breather
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845824
+    m_Localized: Cleave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845825
+    m_Localized: Condensed Burst
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845826
+    m_Localized: Crossover
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845827
+    m_Localized: Crude Guard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845828
+    m_Localized: Delay
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845829
+    m_Localized: Delayed Strike
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845830
+    m_Localized: Distill
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845831
+    m_Localized: Early Guard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845832
+    m_Localized: Early Onset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845833
+    m_Localized: '[Test] All Block'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845834
+    m_Localized: '[Test] Attack'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845835
+    m_Localized: '[Test] Formation Move'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845836
+    m_Localized: '[Test] Selected Block'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845837
+    m_Localized: Flank Jab
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845838
+    m_Localized: Foresight
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845839
+    m_Localized: Jab
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845840
+    m_Localized: Hasten
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845841
+    m_Localized: Heavy Swing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845842
+    m_Localized: Last Drop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845843
+    m_Localized: Parry Strike
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845844
+    m_Localized: Posthumous Spread
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845845
+    m_Localized: Probing Strike
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845846
+    m_Localized: Quick Cover
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845847
+    m_Localized: Riposte
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845848
+    m_Localized: Clumsy Jab
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845849
+    m_Localized: Shield Bash
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845850
+    m_Localized: Sly Jab
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845851
+    m_Localized: Spore Veil
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845852
+    m_Localized: Spread Culture
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845853
+    m_Localized: Stable Culture
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845854
+    m_Localized: Toxic Reclaim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845855
+    m_Localized: Vanguard Slash
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845856
+    m_Localized: Venom Thrust
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845857
+    m_Localized: Block
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845858
+    m_Localized: Contagion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845859
+    m_Localized: Damaged
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845860
+    m_Localized: Haste
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845861
+    m_Localized: Poison
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845862
+    m_Localized: Dormant Poison
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845863
+    m_Localized: Stable Poison
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845864
+    m_Localized: Reward Nullified
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845865
+    m_Localized: Slow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845866
+    m_Localized: Vulnerable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845867
+    m_Localized: Weak
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845868
+    m_Localized: Party Member A
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845869
+    m_Localized: Party Member B
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845870
+    m_Localized: Goblin
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845871
+    m_Localized: Goblin Runt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845872
+    m_Localized: Piercing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845873
+    m_Localized: Ignores multipliers
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845874
+    m_Localized: Party
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845875
+    m_Localized: Locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845876
+    m_Localized: This card cannot have its execution order changed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845877
+    m_Localized: Damage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845878
+    m_Localized: Apply Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845879
+    m_Localized: Move Formation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845880
+    m_Localized: Consume Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845881
+    m_Localized: Trigger Status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845882
+    m_Localized: Grant Next Turn Fate
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845883
+    m_Localized: Nullify Next Player Condition Reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1253040128
+    m_Localized: Grant Next Player Damage Card Bonus
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

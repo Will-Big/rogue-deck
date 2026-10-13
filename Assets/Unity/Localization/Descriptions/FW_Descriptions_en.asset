@@ -1,0 +1,242 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: FW_Descriptions_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 8783043ea558b41c59b35d2b8f7d9208, type: 2}
+  m_Metadata:
+    m_Items:
+    - rid: 3699417121241432094
+  m_TableData:
+  - m_Id: 300933121
+    m_Localized: '{body}.'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933122
+    m_Localized: If {condition}, {body}.
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933123
+    m_Localized: Deal {amount} damage{traits}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933124
+    m_Localized: ' ({traits})'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933125
+    m_Localized: '{first}, {next}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933126
+    m_Localized: '{first} {next}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933127
+    m_Localized: Apply {amount} {status}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933128
+    m_Localized: Apply {status} for {amount:plural:1 turn|{} turns}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933129
+    m_Localized: Apply {status} for {amount:plural:1 use|{} uses}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933130
+    m_Localized: Nullify the next player condition reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933131
+    m_Localized: The next player damage card deals +{amount} damage
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933132
+    m_Localized: Keep formation position
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933133
+    m_Localized: Move forward {amount:plural:1 position|{} positions}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933134
+    m_Localized: Move back {amount:plural:1 position|{} positions}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933135
+    m_Localized: Consume {amount} {status}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933136
+    m_Localized: Consume up to {amount} {status}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933137
+    m_Localized: Trigger {status} immediately (does not trigger at the end of this
+      turn)
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933138
+    m_Localized: Gain {amount} Fate next turn
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933139
+    m_Localized: '{body} ({amount:+0;-0;0} per stack consumed)'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933140
+    m_Localized: If any stacks were consumed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933141
+    m_Localized: If at least {amount} stacks were consumed
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933142
+    m_Localized: '{condition}, {body}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933143
+    m_Localized: this triggers first
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933144
+    m_Localized: this triggers within the first {n} cards
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933145
+    m_Localized: this triggers before the next enemy damage card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933146
+    m_Localized: no {side} cards are placed before this
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933147
+    m_Localized: no {side} cards are placed after this
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933148
+    m_Localized: the card immediately before this is a {side} {kind}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933149
+    m_Localized: the card immediately after this is a {side} {kind}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933150
+    m_Localized: the last executed card was a {side} {kind}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933151
+    m_Localized: '{first} and {next}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 300933152
+    m_Localized: player
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127424
+    m_Localized: enemy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127425
+    m_Localized: card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127426
+    m_Localized: damage card
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127427
+    m_Localized: '{effect} effect card'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 305127428
+    m_Localized: Change one card's execution order by {amount:+0;-0;0}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432094
+  - m_Id: 305127429
+    m_Localized: Swap the execution order of two cards
+    m_Metadata:
+      m_Items: []
+  - m_Id: 305127430
+    m_Localized: Lock one card
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3699417121241432094
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 300933121
+        - id: 300933122
+        - id: 300933123
+        - id: 300933124
+        - id: 300933125
+        - id: 300933126
+        - id: 300933127
+        - id: 300933128
+        - id: 300933129
+        - id: 300933131
+        - id: 300933133
+        - id: 300933134
+        - id: 300933135
+        - id: 300933136
+        - id: 300933137
+        - id: 300933138
+        - id: 300933139
+        - id: 300933141
+        - id: 300933142
+        - id: 300933144
+        - id: 300933146
+        - id: 300933147
+        - id: 300933148
+        - id: 300933149
+        - id: 300933150
+        - id: 300933151
+        - id: 305127427
+        - id: 305127428

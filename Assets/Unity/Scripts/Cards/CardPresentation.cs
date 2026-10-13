@@ -28,6 +28,9 @@ namespace FateWeaver.Unity
         /// <summary>배치된 카드 인스턴스의 식별자. 손패·더미 카드처럼 인스턴스가 없으면 -1이다.
         /// 재생 계층이 CardResolved.InstanceId로 레일의 어느 카드인지 찾는 데 쓴다.</summary>
         public int InstanceId { get; }
+        public GameLocalization TextSource { get; }
+        public LocalizedCardDescription DescriptionRequest { get; }
+        public string OwnerId { get; }
 
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
@@ -37,8 +40,14 @@ namespace FateWeaver.Unity
             string ownerDisplayName = null,
             Color ownerColor = default,
             bool isPartyOwned = false,
-            int instanceId = -1)
+            int instanceId = -1,
+            GameLocalization textSource = null,
+            LocalizedCardDescription descriptionRequest = null,
+            string ownerId = null)
         {
+            TextSource = textSource;
+            DescriptionRequest = descriptionRequest;
+            OwnerId = ownerId;
             InstanceId = instanceId;
             Id = id;
             DisplayName = displayName;
@@ -70,7 +79,7 @@ namespace FateWeaver.Unity
                 OwnerDisplayName,
                 OwnerColor,
                 IsPartyOwned,
-                InstanceId);
+                InstanceId, TextSource, DescriptionRequest, OwnerId);
 
         /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
         /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
@@ -123,6 +132,28 @@ namespace FateWeaver.Unity
                 ownerDisplayName,
                 ownerColor,
                 isPartyOwned);
+        }
+
+        public CardPresentation Relocalized()
+        {
+            if (TextSource == null || DescriptionRequest == null) return this;
+            var owner = Side == Side.Enemy ? null : IsPartyOwned ? TextSource.Name("party.name")
+                : OwnerId == null ? OwnerDisplayName : TextSource.Name("character." + OwnerId + ".name");
+            return new CardPresentation(Id, TextSource.Name("card." + Id + ".name"), ExecutionOrder,
+                EnergyCost, Side, TextSource.Renderer.Render(DescriptionRequest), Art, IsLocked,
+                StatusIcons, Category, owner, OwnerColor, IsPartyOwned, InstanceId,
+                TextSource, DescriptionRequest, OwnerId);
+        }
+        public static CardPresentation FromLocalized(CardDefinition definition, DescriptionRequestCatalog catalog,
+            GameLocalization text, Sprite art, int order, bool locked, string ownerId,
+            Color ownerColor, bool partyOwned, int instanceId = -1)
+        {
+            var request = DescriptionComposer.Compose(definition, catalog);
+            return new CardPresentation(definition.Id, text.Name("card." + definition.Id + ".name"),
+                order, definition.EnergyCost, definition.Side, text.Renderer.Render(request), art, locked,
+                locked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>(), definition.Category,
+                definition.Side == Side.Enemy ? null : partyOwned ? text.Name("party.name") : ownerId == null ? null : text.Name("character." + ownerId + ".name"),
+                ownerColor, partyOwned, instanceId, text, request, ownerId);
         }
 
         // 카드 앞면 아트는 주입된 resolver(CardArtCatalog)에서만 온다. id→경로 폴백은 없다.

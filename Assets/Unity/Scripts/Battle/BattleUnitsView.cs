@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Status;
 using UnityEngine;
+using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Unity
 {
@@ -56,7 +57,8 @@ namespace FateWeaver.Unity
             CombatState state,
             Func<string, Color> colorFor,
             Func<string, string> enemyNameFor,
-            Func<StatusKey, string> statusNameFor)
+            Func<StatusKey, string> statusNameFor,
+            GameLocalization localization = null)
         {
             _statusNameFor = statusNameFor;
             foreach (Transform child in _playerUnitsRow) Destroy(child.gameObject);
@@ -70,6 +72,7 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_unitPrefab, _playerUnitsRow);
                 view.Bind(member.Name, colorFor(member.Id));
+                view.Localize(localization, DescriptionRequests.Name("character." + member.Id + ".name"));
                 _partyUnits.Add(member.Id, view);
                 _maxHp[member.Id] = member.MaxHp;
             }
@@ -78,6 +81,7 @@ namespace FateWeaver.Unity
             {
                 var view = Instantiate(_unitPrefab, _enemyUnitsRow);
                 view.Bind(enemyNameFor(enemy.Id), EnemyUnitTint);
+                view.Localize(localization, DescriptionRequests.Name("enemy." + enemy.SpecId + ".name"));
                 _enemyUnits.Add(enemy.Id, view);
                 _enemyMaxHp.Add(enemy.Id, enemy.Hp);
                 _maxHp[enemy.Id] = enemy.Hp;

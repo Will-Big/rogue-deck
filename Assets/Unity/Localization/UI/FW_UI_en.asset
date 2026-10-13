@@ -1,0 +1,219 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: FW_UI_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 282e651cf39b14473b688d27faf0eb29, type: 2}
+  m_Metadata:
+    m_Items:
+    - rid: 3699417121241432096
+  m_TableData:
+  - m_Id: 300933120
+    m_Localized: Resolve Turn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933121
+    m_Localized: Next Turn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933122
+    m_Localized: Restart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933123
+    m_Localized: Skip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933124
+    m_Localized: "{amount}\xD7"
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933125
+    m_Localized: Fate {amount}
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933126
+    m_Localized: Draw Pile
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933127
+    m_Localized: Discard Pile
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933128
+    m_Localized: Full Deck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933129
+    m_Localized: '{title}
+
+      {amount}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933130
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933131
+    m_Localized: Reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933132
+    m_Localized: Choose
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933133
+    m_Localized: Skip Reward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933134
+    m_Localized: Next Battle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933135
+    m_Localized: Defeat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933136
+    m_Localized: Start Over
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933137
+    m_Localized: Execution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933138
+    m_Localized: Intervention
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933139
+    m_Localized: Battle started.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933140
+    m_Localized: The turn is resolved. Press Next Turn.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933141
+    m_Localized: Not enough Fate.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933142
+    m_Localized: Cannot place the card on the execution rail.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933143
+    m_Localized: "{card} \u2014 click the rail silhouette to place it."
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933144
+    m_Localized: This intervention card cannot be used.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933145
+    m_Localized: Not enough target cards on the execution rail.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933146
+    m_Localized: "{card} \u2014 select {amount:plural:1 target|{} targets}."
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933147
+    m_Localized: The selected card is no longer available.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933148
+    m_Localized: Execution cards do not select targets directly.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933149
+    m_Localized: '{card} placed.'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933150
+    m_Localized: Fate or turn state prevents placing this card.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933151
+    m_Localized: Target, Fate, or lock rules prevent this action.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933152
+    m_Localized: Intervention applied.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933153
+    m_Localized: Turn {amount} ready.
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933154
+    m_Localized: "Playing turn resolution\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933155
+    m_Localized: Turn resolution complete.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933156
+    m_Localized: 'Battle result: {outcome}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933157
+    m_Localized: Victory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933158
+    m_Localized: Defeat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933159
+    m_Localized: In progress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 300933160
+    m_Localized: 'Content could not be loaded:
+
+      {reason}'
+    m_Metadata:
+      m_Items:
+      - rid: 3699417121241432096
+  - m_Id: 300933161
+    m_Localized: Party character assets are not assigned.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3699417121241432096
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 
+        m_SharedEntries:
+        - id: 300933124
+        - id: 300933125
+        - id: 300933129
+        - id: 300933143
+        - id: 300933146
+        - id: 300933149
+        - id: 300933153
+        - id: 300933156
+        - id: 300933160

@@ -6,7 +6,9 @@
         "FateWeaver.Core",
         "FateWeaver.Simulation",
         "FateWeaver.Unity",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.Localization",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

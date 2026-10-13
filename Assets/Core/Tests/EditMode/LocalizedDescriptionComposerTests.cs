@@ -88,6 +88,22 @@ namespace FateWeaver.Tests.EditMode
             Assert.AreEqual(3, ((LocalizedTextRequest)request.Arguments["next"]).Arguments["n"]);
             Assert.Throws<ArgumentException>(() => ConditionDescriptionRequests.Create(new UnknownCondition()));
         }
+        [Test]
+        public void Success_branch_preserves_consumption_requirement_too()
+        {
+            var consume = TestContent.Cards().Get("toxic_reclaim").Effects[0];
+            var damage = new EffectData(EffectKeys.Damage, 3)
+            { Id = "damage", TargetFaction = CardTargetFaction.Enemy, SuccessEffectValue = 9,
+              Requirement = new EffectResultRequirement(consume.Id, 2) };
+            var card = new CardDefinition("both", "both", Side.Player, 0, new[] { consume, damage })
+            { EnemyTarget = CardTargetRange.FrontOne, StartCondition = new FateWeaver.Core.Conditions.FirstToTrigger() };
+            var doc = DescriptionComposer.Compose(card, DescriptionRequestCatalog.CreateDefault(TestContent.Statuses()));
+            var success = doc.Lines.SelectMany(l => l.Sentences).Single(s => s.Key == "sentence.conditional");
+            var required = Body(success);
+            Assert.AreEqual("effect.required", required.Key);
+            Assert.AreEqual(2, ((LocalizedTextRequest)required.Arguments["condition"]).Arguments["amount"]);
+            Assert.AreEqual(9, ((LocalizedTextRequest)required.Arguments["body"]).Arguments["amount"]);
+        }
         private sealed record UnknownCondition : FateWeaver.Core.Conditions.Condition;
 
         private static LocalizedCardDescription Compose(string id) => DescriptionComposer.Compose(

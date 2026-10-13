@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0092ae7ac95ee441e869d30624899345, type: 3}
+  m_Name: Bindings
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizationBindings
+  _content:
+    m_TableCollectionName: GUID:582c00b4aa8714c4dbe74c573b21b81e
+  _descriptions:
+    m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+  _ui:
+    m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29

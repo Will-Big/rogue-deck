@@ -147,3 +147,10 @@
 
 - [전투 노드 한 사이클 1단계 구현 계획](plans/2026-09-15-combat-node-stage1.md) — 개요는 [HTML](plans/2026-09-15-combat-node-stage1.html). 2026-09-15 완료·머지. 설계는 현행 `specs/2026-09-15-combat-node-cycle-design.md`(2단계 남음).
 - [전투 노드 2단계 구현 계획](plans/2026-09-17-combat-node-stage2.md) — 개요는 [HTML](plans/2026-09-17-combat-node-stage2.html). 2026-09-17 구현 완료, 2026-09-18 머지(`187fff2`). 설계는 현행 `specs/2026-09-15-combat-node-cycle-design.md`.
+
+
+## 2026-10-13 현지화 구현
+
+| 문서 | 보관 사유 |
+|---|---|
+| [한국어·영어 현지화 구현 계획](plans/2026-10-13-localization.md) · [HTML](plans/2026-10-13-localization.html) | 구현·자동 검증 완료. 현행 기준은 specs/2026-10-13-localization-design.md와 docs/agents/localization.md |

@@ -1,0 +1,280 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: FW_Content Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: FW_Content
+  m_TableCollectionNameGuidString: 582c00b4aa8714c4dbe74c573b21b81e
+  m_Entries:
+  - m_Id: 1223680000
+    m_Key: card.brace.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1244651520
+    m_Key: card.breather.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845824
+    m_Key: card.cleave.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845825
+    m_Key: card.condensed_burst.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845826
+    m_Key: card.crossover.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845827
+    m_Key: card.crude_guard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845828
+    m_Key: card.delay.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845829
+    m_Key: card.delayed_strike.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845830
+    m_Key: card.distill.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845831
+    m_Key: card.early_guard.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845832
+    m_Key: card.early_onset.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845833
+    m_Key: card.fixture_all_block.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845834
+    m_Key: card.fixture_attack.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845835
+    m_Key: card.fixture_move_forward.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845836
+    m_Key: card.fixture_selected_block.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845837
+    m_Key: card.flank_jab.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845838
+    m_Key: card.foresight.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845839
+    m_Key: card.goblin_jab.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845840
+    m_Key: card.hasten.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845841
+    m_Key: card.heavy_swing.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845842
+    m_Key: card.last_drop.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845843
+    m_Key: card.parry_strike.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845844
+    m_Key: card.posthumous_spread.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845845
+    m_Key: card.probing_strike.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845846
+    m_Key: card.quick_cover.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845847
+    m_Key: card.riposte.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845848
+    m_Key: card.runt_jab.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845849
+    m_Key: card.shield_bash.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845850
+    m_Key: card.sly_jab.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845851
+    m_Key: card.spore_veil.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845852
+    m_Key: card.spread_culture.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845853
+    m_Key: card.stable_culture.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845854
+    m_Key: card.toxic_reclaim.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845855
+    m_Key: card.vanguard_slash.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845856
+    m_Key: card.venom_thrust.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845857
+    m_Key: status.block.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845858
+    m_Key: status.contagion.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845859
+    m_Key: status.damaged.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845860
+    m_Key: status.haste.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845861
+    m_Key: status.poison.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845862
+    m_Key: status.poison_dormant.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845863
+    m_Key: status.poison_stasis.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845864
+    m_Key: status.reward_nullified.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845865
+    m_Key: status.slow.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845866
+    m_Key: status.vulnerable.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845867
+    m_Key: status.weak.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845868
+    m_Key: character.member_a.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845869
+    m_Key: character.member_b.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845870
+    m_Key: enemy.goblin.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845871
+    m_Key: enemy.goblin_runt.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845872
+    m_Key: damage_trait.Piercing.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845873
+    m_Key: damage_trait.IgnoresMultipliers.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845874
+    m_Key: party.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845875
+    m_Key: card_status.lock.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845876
+    m_Key: card_status.lock.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845877
+    m_Key: effect.damage.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845878
+    m_Key: effect.apply_status.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845879
+    m_Key: effect.move_formation.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845880
+    m_Key: effect.consume_status.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845881
+    m_Key: effect.trigger_status.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845882
+    m_Key: effect.grant_next_turn_fate.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1248845883
+    m_Key: effect.nullify_next_player_condition_reward.name
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1253040128
+    m_Key: effect.grant_next_player_damage_card_bonus.name
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 3699417121241432088
+  references:
+    version: 2
+    RefIds:
+    - rid: 3699417121241432088
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1791864808425

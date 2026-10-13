@@ -20,6 +20,12 @@ namespace FateWeaver.Unity
 
         private Func<string, string> _ownerName;
         private KoreanDescriptionCatalog _korean;
+        private DescriptionRequestCatalog _requests;
+        [SerializeField] private GameLocalization _localization;
+        public GameLocalization Localization => _localization;
+        public string CardName(string id, string fallback) => _localization != null ? _localization.Name("card." + id + ".name") : fallback;
+        public string EnemyName(string id, string fallback) => _localization != null ? _localization.Name("enemy." + id + ".name") : fallback;
+        public string StatusName(FateWeaver.Core.Status.StatusKey key) => _localization != null ? _localization.Name("status." + key.Id + ".name") : _korean.Statuses.Resolve(key);
 
         /// <summary>세션의 파티에서 표시명을 읽는 델리게이트와, 부팅 콘텐츠로 만든 설명 카탈로그를
         /// 주입한다. 카드 본문의 상태 이름이 전투 규칙과 같은 JSON에서 오게 하는 지점이다.</summary>
@@ -27,18 +33,25 @@ namespace FateWeaver.Unity
         {
             _ownerName = ownerName;
             _korean = korean;
+            _requests = DescriptionRequestCatalog.CreateDefault(korean.StatusContent);
         }
 
         public CardPresentation For(OwnedCard card)
         {
             Resolve(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.FromDefinition(card.Def, _korean, ArtFor, name, color, isPartyOwned);
+            return _localization != null
+                ? CardPresentation.FromLocalized(card.Def, _requests, _localization, ArtFor(card.Def.Id),
+                    card.Def.BaseExecutionOrder, false, card.OwnerId, color, isPartyOwned)
+                : CardPresentation.FromDefinition(card.Def, _korean, ArtFor, name, color, isPartyOwned);
         }
 
         public CardPresentation For(ExecutionCardInstance card)
         {
             Resolve(card.OwnerId, card.Def.Side, out var name, out var color, out var isPartyOwned);
-            return CardPresentation.From(card, _korean, ArtFor, name, color, isPartyOwned);
+            return _localization != null
+                ? CardPresentation.FromLocalized(card.Def, _requests, _localization, ArtFor(card.Def.Id),
+                    card.ExecutionOrder, card.IsLocked, card.OwnerId, color, isPartyOwned, card.InstanceId)
+                : CardPresentation.From(card, _korean, ArtFor, name, color, isPartyOwned);
         }
 
         /// <summary>유닛 틴트. 카드 표현과 폴백이 다르다 — 원본 SpawnUnits는 캐릭터를 못 찾으면
