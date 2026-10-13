@@ -37,11 +37,11 @@ Files: 새 `Assets/Core/Simulation/Descriptions/LocalizedTextRequest.cs`, `Local
 
 Interfaces: `TranslationTable`(Content/Descriptions/UI); `LocalizedTextRequest(TranslationTable table, string key, IReadOnlyDictionary<string, object> arguments = null)`, `Table`, `Key`, `Arguments`. 인수 값은 string/int/long/decimal/중첩 LocalizedTextRequest로 제한한다. `LocalizedDescriptionLine(CardTargetKey? target, IReadOnlyList<LocalizedTextRequest> sentences)`와 `LocalizedCardDescription(IReadOnlyList<CardTargetKey> targetEntries, IReadOnlyList<LocalizedDescriptionLine> lines)`는 입력을 복사한다.
 
-- [ ] 테스트: `Requests_preserve_semantics_without_sentence_copy`에서 상태명 중첩 요청·amount=1이 그대로 보존되고 완성 문장이 포함되지 않는지 확인한다.
-- [ ] 테스트: `Requests_snapshot_arguments`, `Requests_reject_invalid_contracts`, `Documents_snapshot_lines_and_targets`로 외부 컬렉션 변경·키 누락·빈 인수명·null 값·임의 가변 객체를 검사한다.
-- [ ] `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj --filter LocalizedTextRequestTests --nologo` 실행: 미구현 타입 때문에 실패 확인.
-- [ ] 위 계약을 순수 C# 불변 값으로 구현한다. 문자열 포매터·locale 상태는 추가하지 않는다.
-- [ ] 같은 필터와 `Tools/verify.sh` 통과 후 한국어 메시지로 커밋한다.
+- [x] 테스트: `Requests_preserve_semantics_without_sentence_copy`에서 상태명 중첩 요청·amount=1이 그대로 보존되고 완성 문장이 포함되지 않는지 확인한다.
+- [x] 테스트: `Requests_snapshot_arguments`, `Requests_reject_invalid_contracts`, `Documents_snapshot_lines_and_targets`로 외부 컬렉션 변경·키 누락·빈 인수명·null 값·임의 가변 객체를 검사한다.
+- [x] `dotnet test Tests/Headless/FateWeaver.Tests.Headless.csproj --filter LocalizedTextRequestTests --nologo` 실행: 미구현 타입 때문에 실패 확인.
+- [x] 위 계약을 순수 C# 불변 값으로 구현한다. 문자열 포매터·locale 상태는 추가하지 않는다.
+- [x] 같은 필터와 `Tools/verify.sh` 통과 후 한국어 메시지로 커밋한다.
 
 ### Task 2: 효과에서 언어 중립 설명 문서 생성
 
