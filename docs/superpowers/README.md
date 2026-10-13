@@ -96,9 +96,9 @@
 
 ## 진행 중인 계획과 로드맵
 
-승인 대기 제안: [한국어·영어 현지화 전환 개요](specs/2026-10-13-localization-design.html) ·
-[상세](specs/2026-10-13-localization-design.md). CSV 원본·Unity Localization·언어 중립 설명 요청의
-구조 검토용이며 아직 실행 근거가 아니다. 기존 카드 설명 레지스트리 설계는 승인·구현 전까지 현행이다.
+진행 중: [한국어·영어 현지화 계획](plans/2026-10-13-localization.md) · [계획 개요](plans/2026-10-13-localization.html).
+2026-10-13 사용자가 [설계 개요](specs/2026-10-13-localization-design.html)를 승인하고 워크트리 구현을 지시했다.
+기존 설명 구조는 실제 표시 경로 전환 완료 전까지 현행이다.
 
 | 문서 | 상태 | 범위 |
 |---|---|---|
