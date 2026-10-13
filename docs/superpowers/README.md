@@ -96,6 +96,10 @@
 
 ## 진행 중인 계획과 로드맵
 
+승인 대기 제안: [한국어·영어 현지화 전환 개요](specs/2026-10-13-localization-design.html) ·
+[상세](specs/2026-10-13-localization-design.md). CSV 원본·Unity Localization·언어 중립 설명 요청의
+구조 검토용이며 아직 실행 근거가 아니다. 기존 카드 설명 레지스트리 설계는 승인·구현 전까지 현행이다.
+
 | 문서 | 상태 | 범위 |
 |---|---|---|
 | [카드·상태 변경 — 주 목표와 단계별 계획](plans/2026-10-07-card-status-mutation-roadmap.md) — [HTML 계획표](plans/2026-10-07-card-status-mutation-roadmap.html) | `active` | 상태 수치 통일 → 중앙 규칙 변경·설명 → 카드 변경. 미래 단계는 개요만 유지 |
