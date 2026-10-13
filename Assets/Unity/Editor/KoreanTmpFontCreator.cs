@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEditor;
@@ -14,11 +15,12 @@ namespace FateWeaver.Unity.Editor
     /// set changes. The asset is pinned to <see cref="PinnedGuid"/> — the guid the battle scene already
     /// references — so its labels resolve without any manual rewiring.
     ///
-    /// Every Hangul glyph used anywhere in the FateWeaver C# sources is <b>pre-baked</b> into the atlas
-    /// at generation time. Labels whose text is assigned at runtime (State/Message/Timeline/Piles) would
-    /// otherwise show as boxes: a dynamic atlas that is saved as a sub-asset comes back non-readable, so
-    /// glyphs the editor never rendered can't be blitted in at runtime. Baking the full in-game character
-    /// set up front removes that dependency entirely.</summary>
+    /// The atlas is <b>pre-baked and then frozen to Static</b>. It holds the 2,350 KS X 1001 Hangul
+    /// syllables plus every Hangul glyph found in the FateWeaver C# sources and content JSON. A dynamic
+    /// atlas kept adding glyphs whenever the editor first rendered a new character and rewrote this
+    /// committed asset each time (2026-10-13: one glyph left the file modified in the main checkout);
+    /// it also comes back non-readable once saved as a sub-asset, so those glyphs could not be added in
+    /// a player anyway. Static means a missing glyph shows as a box until this is re-run.</summary>
     public static class KoreanTmpFontCreator
     {
         private const string SourceTtfAssetPath = "Assets/Unity/Fonts/Pretendard-Regular.ttf";
@@ -27,13 +29,19 @@ namespace FateWeaver.Unity.Editor
         private const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
 
         // Roots scanned for Hangul so the atlas covers every string the game can display (card / enemy /
-        // scenario names, description vocabulary, and the controller's runtime status text).
-        private static readonly string[] ScanRoots =
+        // scenario names, description vocabulary, and the controller's runtime status text). Content
+        // JSON is scanned too: card and status text is authored there, not in C#.
+        private static readonly (string Root, string Pattern)[] ScanRoots =
         {
-            "Assets/Core",
-            "Assets/Unity",
-            "Assets/Tests"
+            ("Assets/Core", "*.cs"),
+            ("Assets/Unity", "*.cs"),
+            ("Assets/Tests", "*.cs"),
+            ("Assets/StreamingAssets/Content", "*.json")
         };
+
+        // KS X 1001 lays its Hangul out gap-free in EUC-KR: lead bytes 0xB0-0xC8, trail bytes 0xA1-0xFE.
+        private const int EucKrCodePage = 51949;
+        private const int KsX1001HangulCount = 2350;
 
         // Scenes reference this guid for every TMP label. Pinning the generated asset to it makes them
         // render Pretendard directly. (The two playtest scenes this once named are both long gone; the
@@ -48,6 +56,13 @@ namespace FateWeaver.Unity.Editor
             {
                 Debug.LogError("Source font not found: " + SourceTtfAssetPath
                     + ". Ensure the Pretendard TTF is present (see PLAYTEST.md).");
+                return;
+            }
+
+            // Collect before touching the asset, so a failure here leaves the committed one intact.
+            var unicodes = CollectCharacters();
+            if (unicodes == null)
+            {
                 return;
             }
 
@@ -96,7 +111,7 @@ namespace FateWeaver.Unity.Editor
                 AssetDatabase.AddObjectToAsset(fontAsset.atlasTexture, fontAsset);
             }
 
-            PrebakeCharacters(fontAsset);
+            PrebakeCharacters(fontAsset, unicodes);
 
             // Baking can spill into extra atlas textures — persist any that TryAddCharacters created.
             foreach (var atlas in fontAsset.atlasTextures)
@@ -106,6 +121,9 @@ namespace FateWeaver.Unity.Editor
                     AssetDatabase.AddObjectToAsset(atlas, fontAsset);
                 }
             }
+
+            // Freeze only after baking — TryAddCharacters fills a dynamic atlas only.
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.Static;
 
             EditorUtility.SetDirty(fontAsset);
             foreach (var atlas in fontAsset.atlasTextures)
@@ -124,12 +142,11 @@ namespace FateWeaver.Unity.Editor
                 + fontAsset.atlasTextures.Length + " atlas texture(s)).");
         }
 
-        // Renders every character the game uses into the atlas now, so no glyph has to be added at
-        // runtime. Covers printable ASCII, the punctuation used in status strings, and all Hangul found
-        // in the project's C# sources.
-        private static void PrebakeCharacters(TMP_FontAsset fontAsset)
+        // Renders every character the game can show into the atlas now, because the frozen atlas takes
+        // none later. Covers printable ASCII, the punctuation used in status strings, the KS X 1001
+        // Hangul set, and all Hangul found in the project's C# sources and content JSON.
+        private static void PrebakeCharacters(TMP_FontAsset fontAsset, List<uint> unicodes)
         {
-            var unicodes = CollectCharacters();
             fontAsset.TryAddCharacters(unicodes.ToArray(), out uint[] missing);
             int missingCount = missing?.Length ?? 0;
             if (missingCount > 0)
@@ -146,14 +163,19 @@ namespace FateWeaver.Unity.Editor
             for (uint c = 0x20; c <= 0x7E; c++) set.Add(c);          // printable ASCII
             foreach (var c in "·—–…×○●□■◆★☆↑↓←→∞") set.Add(c);      // symbols seen in status/timeline text
 
-            foreach (var root in ScanRoots)
+            if (!AddKsX1001Hangul(set))
+            {
+                return null;
+            }
+
+            foreach (var (root, pattern) in ScanRoots)
             {
                 if (!Directory.Exists(root))
                 {
                     continue;
                 }
 
-                foreach (var file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+                foreach (var file in Directory.GetFiles(root, pattern, SearchOption.AllDirectories))
                 {
                     foreach (var c in File.ReadAllText(file))
                     {
@@ -163,6 +185,46 @@ namespace FateWeaver.Unity.Editor
             }
 
             return new List<uint>(set);
+        }
+
+        private static bool AddKsX1001Hangul(HashSet<uint> set)
+        {
+            Encoding eucKr;
+            try
+            {
+                eucKr = Encoding.GetEncoding(EucKrCodePage);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("KoreanTMP: EUC-KR encoding unavailable, cannot enumerate KS X 1001: " + e.Message);
+                return false;
+            }
+
+            int added = 0;
+            var pair = new byte[2];
+            for (int lead = 0xB0; lead <= 0xC8; lead++)
+            {
+                for (int trail = 0xA1; trail <= 0xFE; trail++)
+                {
+                    pair[0] = (byte)lead;
+                    pair[1] = (byte)trail;
+                    var decoded = eucKr.GetString(pair);
+                    if (decoded.Length == 1 && IsHangul(decoded[0]))
+                    {
+                        set.Add(decoded[0]);
+                        added++;
+                    }
+                }
+            }
+
+            if (added != KsX1001HangulCount)
+            {
+                Debug.LogError("KoreanTMP: expected " + KsX1001HangulCount
+                    + " KS X 1001 Hangul syllables but decoded " + added + ".");
+                return false;
+            }
+
+            return true;
         }
 
         private static bool IsHangul(char c)
