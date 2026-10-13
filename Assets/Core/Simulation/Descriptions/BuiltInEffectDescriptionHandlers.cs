@@ -6,6 +6,19 @@ namespace FateWeaver.Simulation.Descriptions
 {
     public sealed class DamageDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            var traits = (effect.Payload as DamagePayload)?.Traits;
+            var names = DescriptionRequests.Empty;
+            if (traits != null) foreach (var trait in traits.All)
+            {
+                var name = DescriptionRequests.Name("damage_trait." + trait.ToString() + ".name");
+                names = names.Key == "text.empty" ? name : DescriptionRequests.Text("list.comma", ("first", names), ("next", name));
+            }
+            var suffix = names.Key == "text.empty" ? names : DescriptionRequests.Text("damage.traits", ("traits", names));
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text("effect.damage", ("amount", value), ("traits", suffix)));
+        }
+
         public EffectKey Key => EffectKeys.Damage;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -16,6 +29,15 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class ApplyStatusDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            if (!(effect.Payload is ApplyStatusPayload payload)) throw new ArgumentException("Apply-status payload required.");
+            var status = DescriptionRequests.Name("status." + payload.Key.Id + ".name");
+            var duration = context.StatusContent.CountIsDuration(payload.Key);
+            var key = duration ? "effect.apply_status." + context.StatusContent.LifetimeOf(payload.Key).ToString() : "effect.apply_status";
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text(key, ("status", status), ("amount", value)));
+        }
+
         public EffectKey Key => EffectKeys.ApplyStatus;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -50,6 +72,11 @@ namespace FateWeaver.Simulation.Descriptions
     public sealed class NullifyNextPlayerConditionRewardDescriptionHandler
         : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            return new EffectDescriptionRequest(null, DescriptionRequests.Text("effect.nullify_reward"));
+        }
+
         public EffectKey Key => EffectKeys.NullifyNextPlayerConditionReward;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -59,6 +86,11 @@ namespace FateWeaver.Simulation.Descriptions
     public sealed class GrantNextPlayerDamageCardBonusDescriptionHandler
         : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            return new EffectDescriptionRequest(null, DescriptionRequests.Text("effect.damage_bonus", ("amount", value)));
+        }
+
         public EffectKey Key => EffectKeys.GrantNextPlayerDamageCardBonus;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -67,6 +99,11 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class MoveFormationDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), value == 0 ? DescriptionRequests.Text("effect.move.stay") : DescriptionRequests.Text(value < 0 ? "effect.move.forward" : "effect.move.backward", ("amount", value < 0 ? -(long)value : (long)value)));
+        }
+
         public EffectKey Key => EffectKeys.MoveFormation;
 
         public EffectDescriptionFragment Describe(
@@ -87,6 +124,12 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class ConsumeStatusDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            if (!(effect.Payload is ConsumeStatusPayload payload)) throw new ArgumentException("Consume-status payload required.");
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text(payload.Mode == ConsumptionMode.UpTo ? "effect.consume_status.up_to" : "effect.consume_status", ("status", DescriptionRequests.Name("status." + payload.Key.Id + ".name")), ("amount", payload.Amount)));
+        }
+
         public EffectKey Key => EffectKeys.ConsumeStatus;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -106,6 +149,12 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class TriggerStatusDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            if (!(effect.Payload is TriggerStatusPayload payload)) throw new ArgumentException("Trigger-status payload required.");
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text("effect.trigger_status", ("status", DescriptionRequests.Name("status." + payload.Key.Id + ".name"))));
+        }
+
         public EffectKey Key => EffectKeys.TriggerStatus;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
@@ -122,6 +171,11 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class GrantNextTurnFateDescriptionHandler : IEffectDescriptionHandler
     {
+        public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
+        {
+            return new EffectDescriptionRequest(null, DescriptionRequests.Text("effect.next_turn_fate", ("amount", value)));
+        }
+
         public EffectKey Key => EffectKeys.GrantNextTurnFate;
 
         public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)

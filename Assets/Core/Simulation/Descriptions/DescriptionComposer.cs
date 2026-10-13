@@ -7,7 +7,7 @@ using FateWeaver.Core.Cards;
 namespace FateWeaver.Simulation.Descriptions
 {
     /// <summary>Builds immutable card-description layouts from registered effect handlers.</summary>
-    public static class DescriptionComposer
+    public static partial class DescriptionComposer
     {
         public static string Describe(CardDefinition def, KoreanDescriptionCatalog catalog)
             => Compose(def, catalog).PlainText;

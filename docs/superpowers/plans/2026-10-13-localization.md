@@ -49,10 +49,10 @@ Files: `DescriptionContracts.cs`, `DescriptionComposer.cs`, `KoreanDescriptionCa
 
 Interfaces: 최종 계약은 `IEffectDescriptionHandler.Describe(...)`가 target·LocalizedTextRequest를 반환, `IInterventionDescriptionHandler.Describe(...)`는 LocalizedTextRequest 반환, `DescriptionComposer.Compose(CardDefinition, DescriptionRequestCatalog)`는 LocalizedCardDescription 반환. 기존 문자열 경로는 단계별 호환 후 Task 5에서 제거한다. `DescriptionRequestCatalog.CreateDefault(StatusContentCatalog)`는 기존 등록 효과·개입 키를 모두 등록한다.
 
-- [ ] 테스트를 먼저 작성: `Venom_thrust_keeps_damage_and_status_as_requests`는 enemy FrontOne, 피해 amount=2, status.poison.name/amount=1을 검사한다. `Toxic_reclaim_preserves_consumption_requirement`는 UpTo 소비량·요구량·대상 두 줄을 검사한다.
-- [ ] 기본·성공 수치·SkipOnBasic·AllOf·피해 속성·상태 수명·대형 이동·개입·변형 수치 및 모든 콘텐츠 요청을 검증하고 미등록 조건은 실패시킨다.
-- [ ] 새 테스트 실패 확인 후 각 기존 핸들러에 의미 요청 생성을 이행한다. 문자열의 문장 순서·마침표는 CSV용 문장 래퍼 요청으로 옮긴다.
-- [ ] 필터 `LocalizedDescriptionComposerTests`와 전체 verify 통과 후 커밋한다.
+- [x] 테스트를 먼저 작성: `Venom_thrust_keeps_damage_and_status_as_requests`는 enemy FrontOne, 피해 amount=2, status.poison.name/amount=1을 검사한다. `Toxic_reclaim_preserves_consumption_requirement`는 UpTo 소비량·요구량·대상 두 줄을 검사한다.
+- [x] 기본·성공 수치·SkipOnBasic·AllOf·피해 속성·상태 수명·대형 이동·개입·변형 수치 및 모든 콘텐츠 요청을 검증하고 미등록 조건은 실패시킨다.
+- [x] 새 테스트 실패 확인 후 각 기존 핸들러에 의미 요청 생성을 이행한다. 문자열의 문장 순서·마침표는 CSV용 문장 래퍼 요청으로 옮긴다.
+- [x] 필터 `LocalizedDescriptionComposerTests`와 전체 verify 통과 후 커밋한다.
 
 ### Task 3: 공식 패키지·CSV 저작 파이프라인
 

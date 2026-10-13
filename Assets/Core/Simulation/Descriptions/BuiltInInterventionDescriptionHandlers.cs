@@ -5,6 +5,9 @@ namespace FateWeaver.Simulation.Descriptions
     public sealed class ChangeExecutionOrderDescriptionHandler
         : IInterventionDescriptionHandler
     {
+        public LocalizedTextRequest Request(InterventionActionData action)
+        { var delta = (action.Payload as ChangeExecutionOrderPayload)?.Delta ?? 0; return DescriptionRequests.Text("intervention.change_order", ("amount", delta)); }
+
         public InterventionActionKey Key => InterventionActionKeys.ChangeExecutionOrder;
         public string DisplayName => "실행 순서 변경";
 
@@ -18,6 +21,9 @@ namespace FateWeaver.Simulation.Descriptions
     public sealed class SwapExecutionOrderDescriptionHandler
         : IInterventionDescriptionHandler
     {
+        public LocalizedTextRequest Request(InterventionActionData action)
+        { return DescriptionRequests.Text("intervention.swap_order"); }
+
         public InterventionActionKey Key => InterventionActionKeys.SwapExecutionOrder;
         public string DisplayName => "실행 순서 교환";
 
@@ -27,6 +33,9 @@ namespace FateWeaver.Simulation.Descriptions
 
     public sealed class LockDescriptionHandler : IInterventionDescriptionHandler
     {
+        public LocalizedTextRequest Request(InterventionActionData action)
+        { return DescriptionRequests.Text("intervention.lock"); }
+
         public InterventionActionKey Key => InterventionActionKeys.Lock;
         public string DisplayName => "고정";
 
