@@ -25,8 +25,10 @@ AGENTS.md 규칙 17이 씬을 건드린 뒤 `-batchmode` EditMode 회귀 확인�
   `result=`/`total=`/`passed=`/`failed=`/`skipped=` 속성을 직접 확인한다.
 - `-projectPath`는 **항상 작업 중인 워크트리**를 가리킨다. 메인 체크아웃
   (`/Users/ish/Git/rogue-deck`)은 사용자와 에디터 전용이다(규칙 15).
-- 실행이 끝나면 `git status`로 의도한 변경만 스테이징한다. Play·배치는 폰트 아틀라스 같은 런타임
-  부산물을 남기고 그것은 소스 변경이 아니다(2026-08-03 `KoreanTMP.asset` 121줄로 실증).
+- 실행이 끝나면 `git status`로 의도한 변경만 스테이징한다. Play·배치는 런타임 부산물을 남길 수
+  있고 그것은 소스 변경이 아니다. 2026-08-03에는 동적 아틀라스였던 `KoreanTMP.asset`이 121줄
+  바뀌었다 — 2026-10-13에 정적으로 고정해(`a2822da`) 이 파일은 더는 바뀌지 않는다. 다시 굽는
+  실행은 `TMP Settings.asset`을 건드리므로 그 변경은 되돌린다.
 - Unity가 필요 없는 코어 로직은 `Tools/verify.sh`가 10초 안에 답한다. 배치는 씬·프리팹·에셋을
   건드렸을 때만 돌린다.
 
