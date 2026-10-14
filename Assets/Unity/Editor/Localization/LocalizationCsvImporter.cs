@@ -75,12 +75,20 @@ namespace FateWeaver.Unity.Editor
                 LocalizationEditorSettings.AddLocale(locale);
             }
             var active = LocalizationEditorSettings.ActiveLocalizationSettings;
-            active.GetStartupLocaleSelectors().Clear();
-            active.GetStartupLocaleSelectors().Add(new PlayerPrefLocaleSelector { PlayerPreferenceKey = "fateweaver.locale" });
-            active.GetStartupLocaleSelectors().Add(new SystemLocaleSelector());
-            active.GetStartupLocaleSelectors().Add(new SpecificLocaleSelector { LocaleId = "ko" });
+            var selectors = active.GetStartupLocaleSelectors();
+            // Rewriting identical selectors only churns their serialized reference ids.
+            if (HasStartupSelectors(selectors)) return;
+            selectors.Clear();
+            selectors.Add(new PlayerPrefLocaleSelector { PlayerPreferenceKey = "fateweaver.locale" });
+            selectors.Add(new SystemLocaleSelector());
+            selectors.Add(new SpecificLocaleSelector { LocaleId = "ko" });
             EditorUtility.SetDirty(active);
         }
+        private static bool HasStartupSelectors(IList<IStartupLocaleSelector> selectors)
+            => selectors.Count == 3
+                && selectors[0] is PlayerPrefLocaleSelector prefs && prefs.PlayerPreferenceKey == "fateweaver.locale"
+                && selectors[1] is SystemLocaleSelector
+                && selectors[2] is SpecificLocaleSelector specific && specific.LocaleId.Code == "ko";
         public static void ImportBatch()
         {
             try { ImportAll(); var errors = LocalizationCsvValidator.Validate(); if (errors.Count > 0) throw new InvalidDataException(string.Join("\n", errors)); AssetDatabase.SaveAssets(); EditorApplication.Exit(0); }
