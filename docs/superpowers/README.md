@@ -64,7 +64,7 @@
 
 | 문서 | 상태 | 적용 범위 | 다음 사용 시점 |
 |---|---|---|---|
-| [한국어·영어 현지화](specs/2026-10-13-localization-design.md) — [HTML](specs/2026-10-13-localization-design.html), [CSV 저작 절차](../agents/localization.md) | `current` | 언어 중립 설명 요청, CSV 원본·Unity Smart Strings, 언어 선택·폰트·표시 갱신. 자동 검증 완료, 사용자 화면 검수·master 머지 대기 | 번역 문구·설명 표현 변경, 지원 언어 추가 |
+| [한국어·영어 현지화](specs/2026-10-13-localization-design.md) — [HTML](specs/2026-10-13-localization-design.html), [CSV 저작 절차](../agents/localization.md) | `current` | 언어 중립 설명 요청, CSV 원본·Unity Smart Strings, 언어 선택·폰트·표시 갱신. 자동 검증 완료, master 머지 완료(`a6da173`), 사용자 화면 검수 대기 | 번역 문구·설명 표현 변경, 지원 언어 추가 |
 | [손패 레이아웃 조절](../agents/hand-layout.md) | `current` | 손패 원호·장수별 펼침·크기와 독립된 위치 이동·음수 여백을 지원하는 하단 정렬·DOTween 전환의 인스펙터 사용법과 책임 경계 | 손패 배치 튜닝·유지보수 |
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
 | [전투 화면 컴포넌트 분해](specs/2026-08-04-battle-screen-decomposition-design.md) | `current` | 전투 화면 Unity 컴포넌트의 경계와 책임 분배 | 전투 화면에 컴포넌트·표현 추가, 캐릭터 아트 도입 |
