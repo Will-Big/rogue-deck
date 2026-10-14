@@ -155,7 +155,7 @@ unity command                     # 이 에디터가 노출하는 커맨드 목�
 
 ```bash
 unity self-update                  # CLI 본체 겸 MCP 서버
-claude plugin update unity         # 스킬
+claude plugin update unity@unity-agent-plugin   # 스킬. 짧은 이름 unity는 "not found"로 실패한다
 ```
 
 Pipeline 패키지는 따로 올린다. `manifest.json`이 바뀌므로 워크트리에서 하고 커밋한다.
