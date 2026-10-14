@@ -63,6 +63,7 @@ namespace FateWeaver.Unity
 
         public void Bind(CardPresentation data, Action onClick)
         {
+            data = data.Relocalized();
             if (data.Category != _prefabCategory)
             {
                 throw new InvalidOperationException(
@@ -89,6 +90,14 @@ namespace FateWeaver.Unity
             BindBackFace(data);
             BindButton(onClick);
             SetSelection(SelectionKind.None);
+            GetComponent<CardLocalizationView>()?.Bind(data);
+        }
+
+        public void RefreshLocalizedText(CardPresentation data)
+        {
+            _nameText.text = data.DisplayName;
+            BindDescriptionLines(data);
+            RefreshOwnerChip(data);
         }
 
         public void SetInteractable(bool value)

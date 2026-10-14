@@ -28,6 +28,9 @@ namespace FateWeaver.Unity
         /// <summary>배치된 카드 인스턴스의 식별자. 손패·더미 카드처럼 인스턴스가 없으면 -1이다.
         /// 재생 계층이 CardResolved.InstanceId로 레일의 어느 카드인지 찾는 데 쓴다.</summary>
         public int InstanceId { get; }
+        public GameLocalization TextSource { get; }
+        public LocalizedCardDescription DescriptionRequest { get; }
+        public string OwnerId { get; }
 
         public CardPresentation(
             string id, string displayName, int executionOrder, int energyCost, Side side,
@@ -37,8 +40,14 @@ namespace FateWeaver.Unity
             string ownerDisplayName = null,
             Color ownerColor = default,
             bool isPartyOwned = false,
-            int instanceId = -1)
+            int instanceId = -1,
+            GameLocalization textSource = null,
+            LocalizedCardDescription descriptionRequest = null,
+            string ownerId = null)
         {
+            TextSource = textSource;
+            DescriptionRequest = descriptionRequest;
+            OwnerId = ownerId;
             InstanceId = instanceId;
             Id = id;
             DisplayName = displayName;
@@ -70,66 +79,28 @@ namespace FateWeaver.Unity
                 OwnerDisplayName,
                 OwnerColor,
                 IsPartyOwned,
-                InstanceId);
+                InstanceId, TextSource, DescriptionRequest, OwnerId);
 
-        /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
-        /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
-        public static CardPresentation From(
-            ExecutionCardInstance card,
-            KoreanDescriptionCatalog korean,
-            Func<string, Sprite> art = null,
-            string ownerDisplayName = null,
-            Color ownerColor = default,
-            bool isPartyOwned = false)
+        public CardPresentation Relocalized()
         {
-            var def = card.Def;
-            return new CardPresentation(
-                def.Id,
-                PlaytestKoreanText.CardName(def.Id, def.Name),
-                card.ExecutionOrder,
-                def.EnergyCost,
-                def.Side,
-                DescriptionComposer.Compose(def, korean),
-                ResolveArt(def.Id, art),
-                card.IsLocked,
-                StatusIconsFor(card),
-                def.Category,
-                ownerDisplayName,
-                ownerColor,
-                isPartyOwned,
-                card.InstanceId);
+            if (TextSource == null || DescriptionRequest == null) return this;
+            var owner = Side == Side.Enemy ? null : IsPartyOwned ? TextSource.Name("party.name")
+                : OwnerId == null ? OwnerDisplayName : TextSource.Name("character." + OwnerId + ".name");
+            return new CardPresentation(Id, TextSource.Name("card." + Id + ".name"), ExecutionOrder,
+                EnergyCost, Side, TextSource.Renderer.Render(DescriptionRequest), Art, IsLocked,
+                StatusIcons, Category, owner, OwnerColor, IsPartyOwned, InstanceId,
+                TextSource, DescriptionRequest, OwnerId);
         }
-
-        /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
-        public static CardPresentation FromDefinition(
-            CardDefinition def,
-            KoreanDescriptionCatalog korean,
-            Func<string, Sprite> art = null,
-            string ownerDisplayName = null,
-            Color ownerColor = default,
-            bool isPartyOwned = false)
+        public static CardPresentation FromLocalized(CardDefinition definition, DescriptionRequestCatalog catalog,
+            GameLocalization text, Sprite art, int order, bool locked, string ownerId,
+            Color ownerColor, bool partyOwned, int instanceId = -1)
         {
-            return new CardPresentation(
-                def.Id,
-                PlaytestKoreanText.CardName(def.Id, def.Name),
-                def.BaseExecutionOrder,
-                def.EnergyCost,
-                def.Side,
-                DescriptionComposer.Compose(def, korean),
-                ResolveArt(def.Id, art),
-                false,
-                Array.Empty<CardStatusIcon>(),
-                def.Category,
-                ownerDisplayName,
-                ownerColor,
-                isPartyOwned);
+            var request = DescriptionComposer.Compose(definition, catalog);
+            return new CardPresentation(definition.Id, text.Name("card." + definition.Id + ".name"),
+                order, definition.EnergyCost, definition.Side, text.Renderer.Render(request), art, locked,
+                locked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>(), definition.Category,
+                definition.Side == Side.Enemy ? null : partyOwned ? text.Name("party.name") : ownerId == null ? null : text.Name("character." + ownerId + ".name"),
+                ownerColor, partyOwned, instanceId, text, request, ownerId);
         }
-
-        // 카드 앞면 아트는 주입된 resolver(CardArtCatalog)에서만 온다. id→경로 폴백은 없다.
-        private static Sprite ResolveArt(string id, Func<string, Sprite> art)
-            => art != null ? art(id) : null;
-
-        private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ExecutionCardInstance card)
-            => card.IsLocked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>();
     }
 }

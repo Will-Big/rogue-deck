@@ -11,12 +11,23 @@ namespace FateWeaver.Tests.UnityEditMode
 {
     public class HandFanSandboxTests
     {
+        private GameObject _textHost;
+
+        [TearDown]
+        public void DestroyLocalization() { if (_textHost != null) Object.DestroyImmediate(_textHost); }
+
         private CardPresentation[] Samples()
         {
             var content = UnityTestContent.Content();
-            var korean = KoreanDescriptionCatalog.CreateDefault(content.Statuses);
+            var requests = DescriptionRequestCatalog.CreateDefault(content.Statuses);
+            _textHost = new GameObject("SandboxSamplesLocalization");
+            var text = UnityTestLocalization.AddTo(_textHost);
             return new[] { "brace", "quick_cover" }.Select(id =>
-                CardPresentation.FromDefinition(content.Cards.Get(id), korean)).ToArray();
+            {
+                var def = content.Cards.Get(id);
+                return CardPresentation.FromLocalized(def, requests, text, null, def.BaseExecutionOrder,
+                    false, null, default, false);
+            }).ToArray();
         }
 
         [Test]
@@ -84,6 +95,7 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 var source = root.AddComponent<HandFanSandboxCardSource>();
                 var serialized = new SerializedObject(source);
+                serialized.FindProperty("_localization").objectReferenceValue = UnityTestLocalization.AddTo(root);
                 var ids = serialized.FindProperty("_cardIds");
                 ids.arraySize = first == null ? 0 : 2;
                 if (first != null)

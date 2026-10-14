@@ -6,6 +6,7 @@ using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
+using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests
 {
@@ -203,11 +204,19 @@ namespace FateWeaver.Tests
         public void Card_description_names_the_damage_traits()
         {
             var def = CardSpecMapper.ToDefinition(FateWeaver.Core.Authoring.Json.ContentJson.Read<CardSpec>(PiercingStrikeJson));
-            var catalog = FateWeaver.Simulation.Descriptions.KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+            var catalog = DescriptionRequestCatalog.CreateDefault(TestContent.Statuses());
 
-            StringAssert.Contains(
-                "피해 4 (관통, 배율 무시)",
-                FateWeaver.Simulation.Descriptions.DescriptionComposer.Describe(def, catalog));
+            // 문장은 번역 템플릿 몫이다 — 코어는 피해 요청에 속성 이름 요청을 저작 순서대로 싣는다.
+            var doc = DescriptionComposer.Compose(def, catalog);
+            var damage = (LocalizedTextRequest)doc.Lines[0].Sentences[0].Arguments["body"];
+            Assert.AreEqual("effect.damage", damage.Key);
+            Assert.AreEqual(4, damage.Arguments["amount"]);
+            var suffix = (LocalizedTextRequest)damage.Arguments["traits"];
+            Assert.AreEqual("damage.traits", suffix.Key);
+            var list = (LocalizedTextRequest)suffix.Arguments["traits"];
+            Assert.AreEqual("list.comma", list.Key);
+            Assert.AreEqual("damage_trait.Piercing.name", ((LocalizedTextRequest)list.Arguments["first"]).Key);
+            Assert.AreEqual("damage_trait.IgnoresMultipliers.name", ((LocalizedTextRequest)list.Arguments["next"]).Key);
         }
     }
 }

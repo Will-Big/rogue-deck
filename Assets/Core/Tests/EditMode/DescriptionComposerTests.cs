@@ -1,29 +1,27 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
-using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Conditions;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Intervention;
 using FateWeaver.Core.Status;
-using FateWeaver.Simulation;
 using FateWeaver.Simulation.Descriptions;
 
 namespace FateWeaver.Tests.EditMode
 {
+    /// <summary>컴포저가 카드 데이터를 어떤 번역 요청으로 바꾸는지 잠근다. 최종 문장은 번역 템플릿
+    /// (Localization/Csv) 몫이라 헤드리스에서 렌더할 수 없으므로, 요청 키·인자·줄 구조만 단언한다.
+    /// 기대값은 <see cref="Render"/>가 편 "키(인자=값,…)" 꼴이다(인자는 이름순).</summary>
     public class DescriptionComposerTests
     {
-        private sealed class EmptyEffectDescriptionHandler : IEffectDescriptionHandler
-        {
-            public EffectKey Key => EffectKeys.Damage;
+        private static readonly DescriptionRequestCatalog Catalog =
+            DescriptionRequestCatalog.CreateDefault(TestContent.Statuses());
 
-            public EffectDescriptionFragment Describe(EffectData effect, int value, DescriptionContext context)
-                => new EffectDescriptionFragment(null, string.Empty);
-        }
-
-        private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+        private const string EnemyFront = "Enemy/FrontOne";
+        private const string AllySelf = "Ally/Self";
+        private const string NoTarget = "-";
 
         /// <summary>플레이어 실행 카드. 아군 효과는 자신, 적 효과는 적 전열 하나를 고른다.</summary>
         private static CardDefinition Execution(string id, params EffectData[] effects)
@@ -37,18 +35,47 @@ namespace FateWeaver.Tests.EditMode
         private static EffectData Hit(int value)
             => new EffectData(EffectKeys.Damage, value) { TargetFaction = CardTargetFaction.Enemy };
 
+        private static string Damage(int amount) => "effect.damage(amount=" + amount + ",traits=text.empty)";
+
+        private static string Block(int amount) => "effect.apply_status(amount=" + amount + ",status=status.block.name)";
+
+        private static string Plain(string body) => "sentence(body=" + body + ")";
+
+        private static string When(string condition, string body)
+            => "sentence.conditional(body=" + body + ",condition=" + condition + ")";
+
+        private static string Line(string target, params string[] sentences)
+            => target + ": " + string.Join(" | ", sentences);
+
+        /// <summary>카드 설명을 "대상: 문장 | 문장" 줄 목록으로 편다.</summary>
+        private static string[] Render(CardDefinition card)
+            => Render(DescriptionComposer.Compose(card, Catalog));
+
+        private static string[] Render(LocalizedCardDescription doc)
+            => doc.Lines.Select(line => Line(
+                line.Target.HasValue ? line.Target.Value.Faction + "/" + line.Target.Value.Range : NoTarget,
+                line.Sentences.Select(Render).ToArray())).ToArray();
+
+        private static string Render(LocalizedTextRequest request)
+            => request.Arguments.Count == 0
+                ? request.Key
+                : request.Key + "(" + string.Join(",", request.Arguments
+                    .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                    .Select(pair => pair.Key + "=" + (pair.Value is LocalizedTextRequest nested ? Render(nested) : pair.Value)))
+                  + ")";
+
         [Test]
         public void Single_damage_effect_is_one_sentence()
         {
             var card = Execution("slash", Hit(4));
-            Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(new[] { Line(EnemyFront, Plain(Damage(4))) }, Render(card));
         }
 
         [Test]
-        public void Target_range_prefixes_the_effect_fragment_through_the_vocabulary()
+        public void Target_range_becomes_the_line_target()
         {
             var card = Execution("aimed_slash", Hit(4)) with { EnemyTarget = CardTargetRange.BackOne };
-            Assert.AreEqual("[◆] 피해 4.", DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(new[] { Line("Enemy/BackOne", Plain(Damage(4))) }, Render(card));
         }
 
         [Test]
@@ -57,17 +84,20 @@ namespace FateWeaver.Tests.EditMode
             var card = Execution("quick_cut",
                 Hit(2) with { SuccessEffectValue = 8 })
                 with { StartCondition = new FirstToTrigger() };
-            Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.", DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(
+                new[] { Line(EnemyFront, Plain(Damage(2)), When("condition.first", Damage(8))) },
+                Render(card));
         }
 
         [Test]
-        public void Multiple_effects_join_with_a_space()
+        public void Effects_with_different_targets_split_into_lines()
         {
             var card = Execution("wrist_cut",
                 Hit(3),
                 new EffectData(EffectKeys.NullifyNextPlayerConditionReward, 0));
-            Assert.AreEqual("[◆] 피해 3.\n다음 플레이어 조건 보상을 무효화.",
-                DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(
+                new[] { Line(EnemyFront, Plain(Damage(3))), Line(NoTarget, Plain("effect.nullify_reward")) },
+                Render(card));
         }
 
         [Test]
@@ -75,7 +105,7 @@ namespace FateWeaver.Tests.EditMode
         {
             var card = Execution("guard",
                 EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 4));
-            Assert.AreEqual("[◆] 방어 4.", DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(new[] { Line(AllySelf, Plain(Block(4))) }, Render(card));
         }
 
         [Test]
@@ -85,39 +115,66 @@ namespace FateWeaver.Tests.EditMode
                 EffectData.ApplyStatus(StatusKeys.Block, CardTargetFaction.Ally, 2)
                     with { SuccessEffectValue = 7 })
                 with { StartCondition = new AdjacentCardHasEffect(AdjacentDirection.Next, Side.Enemy, EffectKeys.Damage) };
-            Assert.AreEqual(
-                "[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
-                DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    Line(AllySelf, Plain(Block(2)),
+                        When("condition.adjacent.next(kind=kind.damage_card,side=side.enemy)", Block(7)))
+                },
+                Render(card));
         }
 
         [Test]
-        public void Grant_next_damage_card_bonus_renders_its_amount()
+        public void Grant_next_damage_card_bonus_carries_its_amount()
         {
             var card = Execution("mark", new EffectData(EffectKeys.GrantNextPlayerDamageCardBonus, 6));
-            Assert.AreEqual("다음 플레이어 피해 카드가 주는 피해 +6.",
-                DescriptionComposer.Describe(card, Korean));
+            var doc = DescriptionComposer.Compose(card, Catalog);
+            CollectionAssert.AreEqual(new[] { Line(NoTarget, Plain("effect.damage_bonus(amount=6)")) }, Render(doc));
+            CollectionAssert.IsEmpty(doc.TargetEntries);
         }
 
         [Test]
         public void Intervention_card_renders_the_intervention_action_and_ignores_effects()
         {
             var card = new CardDefinition("pull_forward", "pull", Side.Player, 0,
-                new EffectData[0])
+                new[] { Hit(9) })
             {
                 Category = CardCategory.Intervention,
                 InterventionAction = new InterventionActionData(
                     InterventionActionKeys.ChangeExecutionOrder, 1,
                     new ChangeExecutionOrderPayload(Delta: -2, TargetSide: null))
             };
-            Assert.AreEqual("한 카드의 실행 순서 -2.",
-                DescriptionComposer.Describe(card, Korean));
+            var doc = DescriptionComposer.Compose(card, Catalog);
+            CollectionAssert.AreEqual(
+                new[] { Line(NoTarget, Plain("intervention.change_order(amount=-2)")) },
+                Render(doc));
+            CollectionAssert.IsEmpty(doc.TargetEntries);
         }
 
         [Test]
-        public void Card_with_no_effects_or_intervention_renders_empty()
+        public void Card_with_no_effects_or_intervention_has_no_lines()
         {
-            var card = Execution("flavor_only");
-            Assert.AreEqual(string.Empty, DescriptionComposer.Describe(card, Korean));
+            var doc = DescriptionComposer.Compose(Execution("flavor_only"), Catalog);
+            CollectionAssert.IsEmpty(doc.Lines);
+            CollectionAssert.IsEmpty(doc.TargetEntries);
+        }
+
+        [Test]
+        public void Null_card_or_catalog_fails_fast()
+        {
+            Assert.Throws<ArgumentNullException>(() => DescriptionComposer.Compose(null, Catalog));
+            Assert.Throws<ArgumentNullException>(() => DescriptionComposer.Compose(Execution("x", Hit(1)), null));
+        }
+
+        [Test]
+        public void Intervention_card_without_action_fails_fast()
+        {
+            var card = new CardDefinition("no_action", "no_action", Side.Player, 0, new EffectData[0])
+            {
+                Category = CardCategory.Intervention
+            };
+
+            Assert.Throws<ArgumentException>(() => DescriptionComposer.Compose(card, Catalog));
         }
 
         [Test]
@@ -134,7 +191,16 @@ namespace FateWeaver.Tests.EditMode
             };
 
             Assert.Throws<ArgumentException>(() =>
-                DescriptionComposer.Describe(card, Korean));
+                DescriptionComposer.Compose(card, Catalog));
+        }
+
+        [Test]
+        public void Execution_card_with_null_effect_entry_fails_fast()
+        {
+            var card = Execution("null_entry", Hit(1), null);
+
+            Assert.Throws<ArgumentException>(() =>
+                DescriptionComposer.Compose(card, Catalog));
         }
 
         [Test]
@@ -149,7 +215,7 @@ namespace FateWeaver.Tests.EditMode
             };
 
             Assert.Throws<ArgumentException>(() =>
-                DescriptionComposer.Describe(card, Korean));
+                DescriptionComposer.Compose(card, Catalog));
         }
 
         [Test]
@@ -161,13 +227,13 @@ namespace FateWeaver.Tests.EditMode
             };
 
             Assert.Throws<ArgumentException>(() =>
-                DescriptionComposer.Describe(card, Korean));
+                DescriptionComposer.Compose(card, Catalog));
         }
 
-        [TestCase(-2, "[◆] 대형 전방으로 2칸 이동.")]
-        [TestCase(2, "[◆] 대형 후방으로 2칸 이동.")]
-        [TestCase(0, "[◆] 대형 위치 유지.")]
-        public void Korean_formation_movement_uses_signed_direction(
+        [TestCase(-2, "effect.move.forward(amount=2)")]
+        [TestCase(2, "effect.move.backward(amount=2)")]
+        [TestCase(0, "effect.move.stay")]
+        public void Formation_movement_uses_signed_direction(
             int distance,
             string expected)
         {
@@ -175,7 +241,7 @@ namespace FateWeaver.Tests.EditMode
                 "move",
                 new EffectData(EffectKeys.MoveFormation, distance) { TargetFaction = CardTargetFaction.Ally });
 
-            Assert.AreEqual(expected, DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(new[] { Line(AllySelf, Plain(expected)) }, Render(card));
         }
 
         [Test]
@@ -186,23 +252,30 @@ namespace FateWeaver.Tests.EditMode
                 new EffectData(new EffectKey("unknown_effect"), 1));
 
             Assert.Throws<KeyNotFoundException>(() =>
-                DescriptionComposer.Describe(card, Korean));
+                DescriptionComposer.Compose(card, Catalog));
         }
 
         [Test]
-        public void Empty_handler_fragment_fails_fast()
+        public void Unknown_intervention_action_fails_fast()
         {
-            var effects = new EffectDescriptionRegistry();
-            effects.Register(new EmptyEffectDescriptionHandler());
-            var catalog = new KoreanDescriptionCatalog(
-                effects,
-                new InterventionDescriptionRegistry(),
-                new StatusDescriptionRegistry(),
-                new KoreanDescriptionGrammar(),
-                TestContent.Statuses());
+            var card = new CardDefinition("unknown_action", "unknown_action", Side.Player, 0, new EffectData[0])
+            {
+                Category = CardCategory.Intervention,
+                InterventionAction = new InterventionActionData(new InterventionActionKey("unknown_action"), 1, null)
+            };
+
+            Assert.Throws<KeyNotFoundException>(() =>
+                DescriptionComposer.Compose(card, Catalog));
+        }
+
+        [Test]
+        public void Empty_handler_request_fails_fast()
+        {
+            var catalog = new DescriptionRequestCatalog(TestContent.Statuses());
+            catalog.Effects.Register(EffectKeys.Damage, (effect, value, context) => null);
 
             Assert.Throws<InvalidOperationException>(() =>
-                DescriptionComposer.Describe(
+                DescriptionComposer.Compose(
                     Execution("empty", Hit(1)),
                     catalog));
         }
@@ -215,102 +288,110 @@ namespace FateWeaver.Tests.EditMode
                 new EffectData(EffectKeys.ApplyStatus, 1));
 
             Assert.Throws<ArgumentException>(() =>
-                DescriptionComposer.Describe(card, Korean));
+                DescriptionComposer.Compose(card, Catalog));
         }
 
         [Test]
-        public void Korean_slash() =>
-            Assert.AreEqual("[◆] 피해 4.",
-                DescriptionComposer.Describe(CardFixtures.Damage("slash_fx", damage: 4), Korean));
+        public void Fixture_slash() =>
+            CollectionAssert.AreEqual(new[] { Line(EnemyFront, Plain(Damage(4))) },
+                Render(CardFixtures.Damage("slash_fx", damage: 4)));
 
         [Test]
-        public void Korean_guard() =>
-            Assert.AreEqual("[◆] 방어 4.",
-                DescriptionComposer.Describe(CardFixtures.Block("guard_fx", magnitude: 4), Korean));
+        public void Fixture_guard() =>
+            CollectionAssert.AreEqual(new[] { Line(AllySelf, Plain(Block(4))) },
+                Render(CardFixtures.Block("guard_fx", magnitude: 4)));
 
         [Test]
-        public void Korean_quick_cut() =>
-            Assert.AreEqual("[◆] 피해 2. 첫 발동이면 피해 8.",
-                DescriptionComposer.Describe(
-                    CardFixtures.DamageOnFirstTrigger("quick_fx", baseDamage: 2, whenFirst: 8), Korean));
+        public void Fixture_quick_cut() =>
+            CollectionAssert.AreEqual(
+                new[] { Line(EnemyFront, Plain(Damage(2)), When("condition.first", Damage(8))) },
+                Render(CardFixtures.DamageOnFirstTrigger("quick_fx", baseDamage: 2, whenFirst: 8)));
 
         [Test]
-        public void Korean_counter_stance() =>
-            Assert.AreEqual("[◆] 피해 4. 직전에 실행된 카드가 적 피해 카드이면 피해 9.",
-                DescriptionComposer.Describe(
-                    CardFixtures.DamageAfterEnemyDamage("counter_fx", baseDamage: 4, whenAfter: 9), Korean));
+        public void Fixture_counter_stance() =>
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    Line(EnemyFront, Plain(Damage(4)),
+                        When("condition.previous(kind=kind.damage_card,side=side.enemy)", Damage(9)))
+                },
+                Render(CardFixtures.DamageAfterEnemyDamage("counter_fx", baseDamage: 4, whenAfter: 9)));
 
         [Test]
-        public void Korean_cover() =>
-            Assert.AreEqual("[◆] 방어 2. 바로 뒤가 적 피해 카드이면 방어 7.",
-                DescriptionComposer.Describe(
-                    CardFixtures.BlockBeforeEnemyDamage("cover_fx", baseMagnitude: 2, whenBefore: 7), Korean));
+        public void Fixture_cover() =>
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    Line(AllySelf, Plain(Block(2)),
+                        When("condition.adjacent.next(kind=kind.damage_card,side=side.enemy)", Block(7)))
+                },
+                Render(CardFixtures.BlockBeforeEnemyDamage("cover_fx", baseMagnitude: 2, whenBefore: 7)));
+
+        [TestCase(-1)]
+        [TestCase(1)]
+        public void Fixture_change_execution_order_keeps_signed_delta(int delta) =>
+            CollectionAssert.AreEqual(
+                new[] { Line(NoTarget, Plain("intervention.change_order(amount=" + delta + ")")) },
+                Render(CardFixtures.ChangeExecutionOrder("order_fx", delta: delta)));
 
         [Test]
-        public void Korean_pull_forward() =>
-            Assert.AreEqual("한 카드의 실행 순서 -1.",
-                DescriptionComposer.Describe(
-                    CardFixtures.ChangeExecutionOrder("pull_fx", delta: -1), Korean));
+        public void Fixture_swap_positions() =>
+            CollectionAssert.AreEqual(
+                new[] { Line(NoTarget, Plain("intervention.swap_order")) },
+                Render(CardFixtures.SwapExecutionOrder("swap_fx")));
 
         [Test]
-        public void Korean_push_back() =>
-            Assert.AreEqual("한 카드의 실행 순서 +1.",
-                DescriptionComposer.Describe(
-                    CardFixtures.ChangeExecutionOrder("push_fx", delta: 1), Korean));
+        public void Content_goblin_jab() =>
+            CollectionAssert.AreEqual(new[] { Line("Ally/FrontOne", Plain(Damage(5))) },
+                Render(TestContent.Cards().Get("goblin_jab")));
 
         [Test]
-        public void Korean_swap_positions() =>
-            Assert.AreEqual("두 카드의 실행 순서를 교환.",
-                DescriptionComposer.Describe(CardFixtures.SwapExecutionOrder("swap_fx"), Korean));
+        public void Content_crude_guard() =>
+            CollectionAssert.AreEqual(
+                new[] { Line("Enemy/Self", Plain(Block(3))) },
+                Render(TestContent.Cards().Get("crude_guard")));
 
         [Test]
-        public void Korean_goblin_jab() =>
-            Assert.AreEqual("[◆] 피해 5.",
-                DescriptionComposer.Describe(TestContent.Cards().Get("goblin_jab"), Korean));
+        public void Content_sly_jab() =>
+            CollectionAssert.AreEqual(
+                new[] { Line("Ally/FrontOne", Plain(Damage(3)), When("condition.no_preceding(side=side.player)", Damage(6))) },
+                Render(TestContent.Cards().Get("sly_jab")));
 
         [Test]
-        public void Korean_crude_guard() =>
-            Assert.AreEqual("[◆] 방어 3.",
-                DescriptionComposer.Describe(TestContent.Cards().Get("crude_guard"), Korean));
-
-        [Test]
-        public void Korean_sly_jab() =>
-            Assert.AreEqual("[◆] 피해 3. 앞에 배치된 플레이어 카드가 없으면 피해 6.",
-                DescriptionComposer.Describe(TestContent.Cards().Get("sly_jab"), Korean));
-
-        [Test]
-        public void Korean_no_following_enemy_card_condition() =>
-            Assert.AreEqual("[◆] 피해 2. 뒤에 배치된 적 카드가 없으면 피해 7.",
-                DescriptionComposer.Describe(
+        public void No_following_enemy_card_condition() =>
+            CollectionAssert.AreEqual(
+                new[] { Line(EnemyFront, Plain(Damage(2)), When("condition.no_following(side=side.enemy)", Damage(7))) },
+                Render(
                     Execution("warden_smash",
                         Hit(2) with { SuccessEffectValue = 7 })
-                        with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) },
-                    Korean));
+                        with { StartCondition = new NoFollowingCardOfSide(Side.Enemy) }));
 
         [Test]
-        public void Korean_number_token_follows_data()
+        public void Number_argument_follows_data()
         {
             var tuned = new CardDefinition("slash", "베기", Side.Player, 4,
                 new[] { new EffectData(EffectKeys.Damage, 99) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne, Category = CardCategory.Execution };
-            Assert.AreEqual("[◆] 피해 99.", DescriptionComposer.Describe(tuned, Korean));
+            CollectionAssert.AreEqual(new[] { Line(EnemyFront, Plain(Damage(99))) }, Render(tuned));
         }
 
         [Test]
-        public void Korean_slow_status_shows_turn_suffix()
+        public void Duration_status_selects_the_lifetime_template()
         {
-            // Task 4: slow is Turns-kind in the catalog, so the card gives only a duration (2 turns) —
+            // slow is Turns-kind in the catalog, so the card gives only a duration (2 turns) —
             // its executionOrder strength is the status's own, not a card-authored number, so card text
-            // no longer restates it (규칙 10; 취약의 배율이 카드 텍스트에 없는 것과 같다).
+            // does not restate it (규칙 10; 취약의 배율이 카드 텍스트에 없는 것과 같다).
             var card = new CardDefinition("slow_hex", "둔화 저주", Side.Player, 5,
                 new[]
                 {
                     EffectData.ApplyStatus(StatusKeys.Slow, CardTargetFaction.Enemy, count: 2)
                 }) { EnemyTarget = CardTargetRange.FrontOne, Category = CardCategory.Execution };
-            Assert.AreEqual("[◆] 둔화 (2턴).", DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(
+                new[] { Line(EnemyFront, Plain("effect.apply_status.Turns(amount=2,status=status.slow.name)")) },
+                Render(card));
         }
 
         [Test]
-        public void Korean_allof_condition_joins_naturally()
+        public void All_of_condition_nests_its_children()
         {
             // A single conditional effect (base 1, 6 on success when prev is a player card AND within the 3rd slot).
             var card = new CardDefinition("chain", "연쇄 베기", Side.Player, 5,
@@ -327,8 +408,14 @@ namespace FateWeaver.Tests.EditMode
                     new WithinNth(3)
                 })
             };
-            Assert.AreEqual("[◆] 피해 1. 직전에 실행된 카드가 플레이어 카드이고 3번째 안이면 피해 6.",
-                DescriptionComposer.Describe(card, Korean));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    Line(EnemyFront, Plain(Damage(1)), When(
+                        "condition.all(first=condition.previous(kind=kind.card,side=side.player),next=condition.within(n=3))",
+                        Damage(6)))
+                },
+                Render(card));
         }
     }
 }

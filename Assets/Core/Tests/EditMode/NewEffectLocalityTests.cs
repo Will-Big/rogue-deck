@@ -42,12 +42,12 @@ namespace FateWeaver.Tests
             protected override EffectData Build() => new EffectData(Key, Value);
         }
 
-        private sealed class HealDescriptionHandler : IEffectDescriptionHandler
+        private sealed class HealDescriptionHandler
         {
-            public EffectKey Key => HealKey;
-
-            public EffectDescriptionFragment Describe(EffectData effect, int effectValue, DescriptionContext context)
-                => new EffectDescriptionFragment(context.SelfTarget(), "치유 " + effectValue);
+            public EffectDescriptionRequest Request(EffectData effect, int effectValue, DescriptionRequestContext context)
+                => new EffectDescriptionRequest(
+                    context.Card.TargetOf(effect),
+                    DescriptionRequests.Text("effect.heal", ("amount", effectValue)));
         }
 
         [Test]
@@ -72,17 +72,21 @@ namespace FateWeaver.Tests
         [Test]
         public void Heal_description_resolves_from_extended_registry()
         {
-            var registry = new EffectDescriptionRegistry();
-            registry.Register(new HealDescriptionHandler());
+            var catalog = DescriptionRequestCatalog.CreateDefault(TestContent.Statuses());
+            catalog.Effects.Register(HealKey, new HealDescriptionHandler().Request);
             var card = new CardDefinition("heal_touch", "치유의 손길", Side.Player, 1,
-                new[] { new EffectData(HealKey, 5) });
-            var context = new DescriptionContext(
-                new KoreanDescriptionGrammar(),
-                new StatusDescriptionRegistry(),
-                TestContent.Statuses(),
-                card);
-            Assert.AreEqual("치유 5",
-                registry.Resolve(HealKey).Describe(new EffectData(HealKey, 5), 5, context).Text);
+                new[] { new EffectData(HealKey, 5) { TargetFaction = CardTargetFaction.Ally } })
+            {
+                AllyTarget = CardTargetRange.Self
+            };
+
+            var doc = DescriptionComposer.Compose(card, catalog);
+
+            Assert.AreEqual(1, doc.Lines.Count);
+            Assert.AreEqual(new CardTargetKey(CardTargetFaction.Ally, CardTargetRange.Self), doc.Lines[0].Target);
+            var body = (LocalizedTextRequest)doc.Lines[0].Sentences[0].Arguments["body"];
+            Assert.AreEqual("effect.heal", body.Key);
+            Assert.AreEqual(5, body.Arguments["amount"]);
         }
 
         // --- Execution-path proof: a Heal card resolved through the real TurnResolver restores an

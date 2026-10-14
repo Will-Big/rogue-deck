@@ -70,7 +70,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Descriptions_resolve_for_all_new_effect_keys()
         {
-            var catalog = FateWeaver.Simulation.Descriptions.KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+            var catalog = FateWeaver.Simulation.Descriptions.DescriptionRequestCatalog.CreateDefault(TestContent.Statuses());
             Assert.IsNotNull(catalog.Effects.Resolve(EffectKeys.ConsumeStatus));
             Assert.IsNotNull(catalog.Effects.Resolve(EffectKeys.TriggerStatus));
             Assert.IsNotNull(catalog.Effects.Resolve(EffectKeys.GrantNextTurnFate));

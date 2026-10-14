@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace FateWeaver.Unity
@@ -11,17 +12,18 @@ namespace FateWeaver.Unity
         private HandFanSandboxState _state;
         private bool _subscribed;
 
-        private void Start()
+        private IEnumerator Start()
         {
             if (_source == null || _panel == null || !_panel.IsBound || _hand == null)
             {
                 Fail("HandFan 테스트 씬의 필수 참조가 누락되었습니다.");
-                return;
+                yield break;
             }
+            while (_source.IsLoadingText) yield return null;
             if (!_source.TryLoad(out var samples, out var error))
             {
                 Fail(error);
-                return;
+                yield break;
             }
             _state = new HandFanSandboxState(samples);
             Subscribe();

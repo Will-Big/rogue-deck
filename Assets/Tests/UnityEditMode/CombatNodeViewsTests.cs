@@ -41,7 +41,10 @@ namespace FateWeaver.Tests.UnityEditMode
             var view = AuthoredBattleUi.Instantiate<RewardChoiceView>(parent);
             presenter = new GameObject("Presenter").AddComponent<BattlePresenter>();
             presenter.transform.SetParent(parent, false);
-            presenter.Initialize(id => id, KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses()));
+            var presenterSo = new SerializedObject(presenter);
+            presenterSo.FindProperty("_localization").objectReferenceValue = UnityTestLocalization.AddTo(presenter.gameObject);
+            presenterSo.ApplyModifiedPropertiesWithoutUndo();
+            presenter.Initialize(UnityTestContent.Statuses());
             var cards = AssetDatabase.LoadAssetAtPath<CardPrefabCatalog>(CardPrefabCatalogTests.CatalogPath);
             view.EditorBind(cards, presenter);
             return view;

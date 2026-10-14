@@ -42,6 +42,14 @@ namespace FateWeaver.Unity
         /// <summary>아웃라인이 꺼진 상태. 투명은 튜닝 값이 아니라 "없음"의 표현이라 상수로 둔다.</summary>
         private static readonly Color OutlineNone = new Color(0f, 0f, 0f, 0f);
 
+        private CardPresentation _textSource;
+        private GameLocalization _localization;
+        private void RefreshLanguage()
+        {
+            var data = _textSource.Relocalized();
+            if (_ownerChipText != null && !string.IsNullOrEmpty(data.OwnerDisplayName)) _ownerChipText.text = data.OwnerDisplayName;
+        }
+        private void OnDestroy() { if (_localization != null) _localization.Changed -= RefreshLanguage; }
         private Action<bool> _onHover;
         private bool _inputEnabled = true;
 
@@ -51,6 +59,9 @@ namespace FateWeaver.Unity
 
         public void Bind(CardPresentation data, Action onClick, Action<bool> onHover)
         {
+            if (_localization != null) _localization.Changed -= RefreshLanguage;
+            data = data.Relocalized(); _textSource = data; _localization = data.TextSource;
+            if (_localization != null) _localization.Changed += RefreshLanguage;
             _onHover = onHover;
             InstanceId = data.InstanceId;
             SetExecuting(false);

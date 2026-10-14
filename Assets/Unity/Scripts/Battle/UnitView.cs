@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using FateWeaver.Simulation.Descriptions;
 using DG.Tweening;
 using FateWeaver.Core.Status;
 using TMPro;
@@ -28,6 +30,23 @@ namespace FateWeaver.Unity
         private Color _aliveTint = Color.white;
         private int _maxHp;
         private int _currentHp;
+
+        private GameLocalization _localization;
+        private LocalizedTextRequest _nameRequest;
+        private readonly List<(StatusKey Key, int Value)> _lastStatuses = new List<(StatusKey, int)>();
+        private Func<StatusKey, string> _lastNames;
+        public void Localize(GameLocalization localization, LocalizedTextRequest name)
+        {
+            if (_localization != null) _localization.Changed -= RefreshLanguage;
+            _localization = localization; _nameRequest = name;
+            if (_localization != null) { _localization.Changed += RefreshLanguage; RefreshLanguage(); }
+        }
+        private void OnDestroy() { if (_localization != null) _localization.Changed -= RefreshLanguage; }
+        private void RefreshLanguage()
+        {
+            _nameText.text = _localization.Render(_nameRequest);
+            if (_lastNames != null) RenderStatuses();
+        }
 
         public void Bind(string displayName, Color portraitTint)
         {
@@ -78,17 +97,17 @@ namespace FateWeaver.Unity
                 return;
             }
 
-            var parts = new List<string>();
-            if (statuses != null)
-            {
-                foreach (var status in statuses)
-                {
-                    int value = status.Magnitude > 0 ? status.Magnitude : status.Count;
-                    var name = nameFor(status.Key);
-                    parts.Add(value > 0 ? name + "(" + value + ")" : name);
-                }
-            }
-
+            _lastNames = nameFor;
+            _lastStatuses.Clear();
+            if (statuses != null) foreach (var status in statuses)
+                _lastStatuses.Add((status.Key, status.Magnitude > 0 ? status.Magnitude : status.Count));
+            RenderStatuses();
+        }
+        private void RenderStatuses()
+        {
+            if (_statusText == null || _lastNames == null) return;
+            var parts = _lastStatuses.Select(status => status.Value > 0
+                ? _lastNames(status.Key) + "(" + status.Value + ")" : _lastNames(status.Key));
             _statusText.text = string.Join(" · ", parts);
         }
     }

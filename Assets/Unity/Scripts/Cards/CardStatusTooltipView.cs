@@ -48,6 +48,13 @@ namespace FateWeaver.Unity
             gameObject.SetActive(true);
         }
 
+        public void RefreshText(CardStatusIconView owner, string title, string description)
+        {
+            if (owner != _owner || !gameObject.activeSelf) return;
+            _titleText.text = title;
+            _descriptionText.text = description;
+        }
+
         public void Hide(CardStatusIconView owner)
         {
             if (owner == null || owner != _owner)

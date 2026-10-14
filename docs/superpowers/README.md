@@ -27,7 +27,7 @@
 | 문서 | 상태 | 적용 범위 | 다음 사용 시점 |
 |---|---|---|---|
 | [전투 코어 설계](specs/2026-06-18-fate-weaver-core-design.md) | `current` | 순수 C# 코어 경계, 결정론, 이벤트 출력 | 새 규칙·효과·상태·시뮬레이션 구현 |
-| [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 효과·상태·개입 설명 핸들러 확장 | 새 카드 능력의 자동 설명 추가 |
+| [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 한국어 진단·샌드박스 호환용 설명 레지스트리. 제품의 다국어 문장 생성은 현지화 설계가 대체한다 | 진단용 설명 확장; 제품 설명은 현지화 설계를 사용 |
 | [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | 다형 효과 스펙의 매핑·검증·확장 구조(JSON `kind` 판별자와 컨버터) | 새 효과·상태·개입 저작 타입 추가 |
 | [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 카드 플레이 전 입력 대상 요구의 선언·질의·검증. 실행 효과의 자동 대상 선택은 전투 실행 계약이 우선한다 | 새 대상형 개입 액션·대상 종류 추가 |
 
@@ -64,6 +64,7 @@
 
 | 문서 | 상태 | 적용 범위 | 다음 사용 시점 |
 |---|---|---|---|
+| [한국어·영어 현지화](specs/2026-10-13-localization-design.md) — [HTML](specs/2026-10-13-localization-design.html), [CSV 저작 절차](../agents/localization.md) | `current` | 언어 중립 설명 요청, CSV 원본·Unity Smart Strings, 언어 선택·폰트·표시 갱신. 자동 검증 완료, 사용자 화면 검수·master 머지 대기 | 번역 문구·설명 표현 변경, 지원 언어 추가 |
 | [손패 레이아웃 조절](../agents/hand-layout.md) | `current` | 손패 원호·장수별 펼침·크기와 독립된 위치 이동·음수 여백을 지원하는 하단 정렬·DOTween 전환의 인스펙터 사용법과 책임 경계 | 손패 배치 튜닝·유지보수 |
 | [전투 화면 시각 설계](specs/2026-07-10-battle-scene-visual-design.md) | `current` | 전투 화면의 상위 구도와 표현 방향 | 전투 화면 구조·연출 변경 |
 | [전투 화면 컴포넌트 분해](specs/2026-08-04-battle-screen-decomposition-design.md) | `current` | 전투 화면 Unity 컴포넌트의 경계와 책임 분배 | 전투 화면에 컴포넌트·표현 추가, 캐릭터 아트 도입 |
@@ -95,10 +96,6 @@
 손패 레이아웃 조절처럼 작업의 직접 진입점인 문서는 위 표에도 연결한다.
 
 ## 진행 중인 계획과 로드맵
-
-승인 대기 제안: [한국어·영어 현지화 전환 개요](specs/2026-10-13-localization-design.html) ·
-[상세](specs/2026-10-13-localization-design.md). CSV 원본·Unity Localization·언어 중립 설명 요청의
-구조 검토용이며 아직 실행 근거가 아니다. 기존 카드 설명 레지스트리 설계는 승인·구현 전까지 현행이다.
 
 | 문서 | 상태 | 범위 |
 |---|---|---|

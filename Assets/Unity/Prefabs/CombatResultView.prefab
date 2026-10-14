@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 9007292183939357714}
   - component: {fileID: 7055617795036329612}
   - component: {fileID: 7479200794381606553}
+  - component: {fileID: 1810335897555988827}
+  - component: {fileID: 8712362612134964886}
   m_Layer: 0
   m_Name: Title
   m_TagString: Untagged
@@ -137,6 +139,67 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1810335897555988827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348123975470536351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 7479200794381606553}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+--- !u!114 &8712362612134964886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348123975470536351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.defeat
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7479200794381606553}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &4133776461775965250
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,6 +263,8 @@ GameObject:
   - component: {fileID: 3442699217103609579}
   - component: {fileID: 7259292166664474470}
   - component: {fileID: 4211996988577389522}
+  - component: {fileID: 6854456583260284387}
+  - component: {fileID: 1258864278502635651}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -326,6 +391,67 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6854456583260284387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4253674628505670505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 845cdc98885ac4999b7c34228e8674b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.LocalizedFontBinding
+  _text: {fileID: 4211996988577389522}
+  _font:
+    m_TableReference:
+      m_TableCollectionName: GUID:5d7ef71a0f79b40aba925bca8a0d277f
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: font.main
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+--- !u!114 &1258864278502635651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4253674628505670505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:282e651cf39b14473b688d27faf0eb29
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: ui.restart
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 4211996988577389522}
+        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
+        m_MethodName: set_text
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &4336129019014011236
 GameObject:
   m_ObjectHideFlags: 0

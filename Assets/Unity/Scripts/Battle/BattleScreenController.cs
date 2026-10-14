@@ -32,9 +32,6 @@ namespace FateWeaver.Unity
         /// <summary>전투 화면에 바인딩된 콘텐츠. 소유는 CombatNodeFlow다.</summary>
         private GameContent _content;
 
-        /// <summary>타임라인을 한국어 문장으로 풀 때 쓰는 카탈로그. 세션과 함께 1회 만들어 재사용한다.</summary>
-        private KoreanDescriptionCatalog _korean;
-
         private Action _onCombatFinished;
 
         /// <summary>CombatNodeFlow가 한 번 부른다. 배선이 비었으면 false — 그때는 콘솔로만 보고한다
@@ -55,8 +52,6 @@ namespace FateWeaver.Unity
             return true;
         }
 
-        public void ShowMessage(string message) => SetMessage(message);
-
         private bool IsWired()
             => _presenter != null
                 && _units != null && _units.IsBound
@@ -71,31 +66,31 @@ namespace FateWeaver.Unity
             _selection.CancelSelection();
             _session = session;
             _content = content;
-            _korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
-            _presenter.Initialize(OwnerNameOf, _korean);
+            _presenter.Initialize(_content.Statuses);
             _units.Spawn(
                 _session.State,
                 _presenter.OwnerColor,
                 EnemyNameOf,
-                key => _content.Statuses.DisplayNameOf(key));
+                _presenter.StatusName,
+                _presenter.Localization);
             _piles.Bind(
                 () => Presentations(_session.DrawPile)
                     .OrderBy(presentation => presentation.DisplayName, StringComparer.Ordinal)
                     .ToList(),
                 () => Presentations(_session.DiscardPile),
                 () => Presentations(_session.AllDeckCards));
-            SetMessage("전투 시작.");
+            SetMessage(GameLocalization.Request("message.start"));
             RefreshAll();
         }
 
-        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)로 적 JSON의 displayName을 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
+        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)의 번역 키로 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
         private string EnemyNameOf(string combatId)
         {
             foreach (var enemy in _session.State.Enemies)
             {
                 if (enemy.Id == combatId)
                 {
-                    return _content.Enemies.Get(enemy.SpecId).DisplayName;
+                    return _presenter.EnemyName(enemy.SpecId);
                 }
             }
 
@@ -104,20 +99,6 @@ namespace FateWeaver.Unity
 
         private IReadOnlyList<CardPresentation> Presentations(IReadOnlyList<OwnedCard> cards)
             => cards.Select(card => _presenter.For(card)).ToList();
-
-        /// <summary>표시명은 콘텐츠에서 왔고 세션이 들고 있다.</summary>
-        private string OwnerNameOf(string ownerId)
-        {
-            foreach (var member in _session.State.Party)
-            {
-                if (member.Id == ownerId)
-                {
-                    return member.Name;
-                }
-            }
-
-            return null;
-        }
 
         private void OnHandClicked(int handIndex)
         {
@@ -129,7 +110,7 @@ namespace FateWeaver.Unity
 
             if (_session.CurrentTurnResolved)
             {
-                SetMessage("이미 턴을 해석했습니다. '다음 턴'을 누르세요.");
+                SetMessage(GameLocalization.Request("message.resolved"));
                 return;
             }
 
@@ -137,16 +118,16 @@ namespace FateWeaver.Unity
             var def = card.Def;
             if (def.EnergyCost > _session.FateEnergy)
             {
-                SetMessage("운명력이 부족합니다.");
+                SetMessage(GameLocalization.Request("message.no_energy"));
                 return;
             }
 
-            var name = PlaytestKoreanText.CardName(def.Id, def.Name);
+            var name = DescriptionRequests.Name("card." + def.Id + ".name");
             if (def.Category == CardCategory.Execution)
             {
                 if (!_session.TryPreviewExecutionPlacement(handIndex, out var placement))
                 {
-                    SetMessage("카드를 실행 순서에 배치할 수 없습니다.");
+                    SetMessage(GameLocalization.Request("message.no_placement"));
                     return;
                 }
 
@@ -154,27 +135,27 @@ namespace FateWeaver.Unity
                     .WithExecutionOrder(placement.ExecutionOrder);
                 _selection.BeginPlacement(
                     handIndex, presentation, placement.InsertionIndex);
-                SetMessage(name + " — 레일 실루엣을 클릭해 배치하세요.");
+                SetMessage(GameLocalization.Request("message.place", ("card", name)));
             }
             else
             {
                 var req = _session.DescribeTargeting(handIndex);
                 if (req.Kind != TargetKind.RailCard)
                 {
-                    SetMessage("사용할 수 없는 조작 카드입니다.");
+                    SetMessage(GameLocalization.Request("message.invalid_intervention"));
                     return;
                 }
 
                 var targets = CurrentValidTargets(SelectionTargetKind.ExecutionCard);
                 if (targets.Count < req.Count)
                 {
-                    SetMessage("대상으로 삼을 카드가 실행 순서에 부족합니다.");
+                    SetMessage(GameLocalization.Request("message.not_enough_targets"));
                     return;
                 }
 
                 _selection.BeginTargetSelection(
                     handIndex, SelectionTargetKind.ExecutionCard, req.Count, targets);
-                SetMessage(name + " — 대상 " + req.Count + "개를 선택하세요.");
+                SetMessage(GameLocalization.Request("message.choose_targets", ("card", name), ("amount", req.Count)));
             }
 
             RefreshSelections();
@@ -232,7 +213,7 @@ namespace FateWeaver.Unity
         {
             if (_session == null || result.HandIndex < 0 || result.HandIndex >= _session.Hand.Count)
             {
-                SetMessage("선택한 카드를 더 이상 사용할 수 없습니다.");
+                SetMessage(GameLocalization.Request("message.card_unavailable"));
                 return false;
             }
 
@@ -241,14 +222,14 @@ namespace FateWeaver.Unity
             {
                 if (result.Targets.Count != 0)
                 {
-                    SetMessage("실행 카드는 직접 대상을 선택하지 않습니다.");
+                    SetMessage(GameLocalization.Request("message.no_direct_target"));
                     return false;
                 }
 
                 bool played = _session.PlayExecutionCard(result.HandIndex);
                 SetMessage(played
-                    ? PlaytestKoreanText.CardName(def.Id, def.Name) + " 배치."
-                    : "운명력 또는 턴 상태로 카드를 배치할 수 없습니다.");
+                    ? GameLocalization.Request("message.placed", ("card", DescriptionRequests.Name("card." + def.Id + ".name")))
+                    : GameLocalization.Request("message.cannot_place"));
                 return played;
             }
 
@@ -257,7 +238,7 @@ namespace FateWeaver.Unity
                 || result.Targets.Count != req.Count
                 || result.Targets.Any(target => target.Kind != SelectionTargetKind.ExecutionCard))
             {
-                SetMessage("대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+                SetMessage(GameLocalization.Request("message.invalid_targets"));
                 return false;
             }
 
@@ -265,8 +246,8 @@ namespace FateWeaver.Unity
             bool interventionPlayed = _session.PlayInterventionCard(
                 result.HandIndex, result.Targets[0].Index, secondaryTarget);
             SetMessage(interventionPlayed
-                ? "개입 카드 적용."
-                : "대상/운명력/잠금 규칙으로 적용할 수 없습니다.");
+                ? GameLocalization.Request("message.intervention_applied")
+                : GameLocalization.Request("message.invalid_targets"));
             return interventionPlayed;
         }
 
@@ -286,7 +267,7 @@ namespace FateWeaver.Unity
 
             if (_session.BeginNextTurn())
             {
-                SetMessage((_session.TurnIndex + 1) + "턴 준비 완료.");
+                SetMessage(GameLocalization.Request("message.turn_ready", ("amount", _session.TurnIndex + 1)));
             }
 
             RefreshAll();
@@ -300,10 +281,10 @@ namespace FateWeaver.Unity
             _session.ResolveTurn();
             foreach (var evt in _session.LastTimeline)
             {
-                Debug.Log(TimelineTextFormatter.FormatEvent(evt, _korean));
+                Debug.Log(TimelineTextFormatter.FormatEvent(evt, _content.Statuses));
             }
 
-            SetMessage("턴 해석 재생 중…");
+            SetMessage(GameLocalization.Request("message.playing"));
             _playback.Play(_session.LastTimeline, OnPlaybackComplete);
             RefreshSelections();
         }
@@ -311,8 +292,8 @@ namespace FateWeaver.Unity
         private void OnPlaybackComplete()
         {
             SetMessage(_session.IsComplete
-                ? "전투 결과: " + PlaytestKoreanText.OutcomeName(_session.Outcome)
-                : "턴 해석 완료.");
+                ? GameLocalization.Request("message.outcome", ("outcome", GameLocalization.Request("outcome." + _session.Outcome)))
+                : GameLocalization.Request("message.complete"));
             RefreshAll();
             if (_session.IsComplete)
             {
@@ -362,6 +343,7 @@ namespace FateWeaver.Unity
             _hud.SetSkipEnabled(_playback.IsPlaying);
         }
 
-        private void SetMessage(string message) => _hud.SetMessage(message);
+        private void SetMessage(LocalizedTextRequest message) => _hud.SetMessage(message);
+        public void ShowMessage(LocalizedTextRequest message) => _hud.SetMessage(message);
     }
 }

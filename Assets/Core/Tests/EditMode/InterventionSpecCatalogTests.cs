@@ -30,12 +30,12 @@ namespace FateWeaver.Tests
         [Test]
         public void Every_authored_spec_has_a_registered_description_handler()
         {
-            var catalog = KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+            var catalog = DescriptionRequestCatalog.CreateDefault(TestContent.Statuses());
 
             foreach (var info in InterventionSpecCatalog.All())
             {
-                Assert.IsTrue(
-                    catalog.Interventions.Contains(info.Create().Key),
+                Assert.DoesNotThrow(
+                    () => catalog.Interventions.Resolve(info.Create().Key),
                     "저작 명부의 '" + info.DisplayName + "'에 설명 핸들러가 없다.");
             }
         }

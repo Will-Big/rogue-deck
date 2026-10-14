@@ -11,7 +11,6 @@ namespace FateWeaver.Unity
     /// the popup always reflects the current session state.</summary>
     public sealed class PileView : MonoBehaviour
     {
-        [SerializeField] private string _title;
         [SerializeField] private TMP_Text _labelText;
         [SerializeField] private GameObject _popup;
         [SerializeField] private RectTransform _popupContent;
@@ -19,6 +18,12 @@ namespace FateWeaver.Unity
         [SerializeField] private Button _button;
         [SerializeField] private Button _closeButton;
 
+        [SerializeField] private GameLocalization _localization;
+        [SerializeField] private string _titleKey;
+        private int _count;
+        private void OnEnable() { if (_localization != null) _localization.Changed += RefreshLanguage; }
+        private void OnDisable() { if (_localization != null) _localization.Changed -= RefreshLanguage; }
+        private void RefreshLanguage() => SetCount(_count);
         private Func<IReadOnlyList<CardPresentation>> _cards;
         private readonly List<CardView> _spawned = new List<CardView>();
 
@@ -35,7 +40,9 @@ namespace FateWeaver.Unity
 
         public void SetCount(int count)
         {
-            _labelText.text = _title + "\n" + count;
+            _count = count;
+            if (_localization == null) throw new InvalidOperationException("PileView requires an authored GameLocalization.");
+            _labelText.text = _localization.UI("ui.pile.count", ("title", GameLocalization.Request(_titleKey)), ("amount", count));
         }
 
         public void SetInputEnabled(bool value)

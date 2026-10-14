@@ -1,6 +1,5 @@
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
-using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using NUnit.Framework;
 using UnityEngine;
@@ -8,7 +7,7 @@ using UnityEngine;
 namespace FateWeaver.Tests.UnityEditMode
 {
     /// <summary>표현 변환이 소유자 분기 셋(적 / 파티 공용 / 개별 캐릭터)을 옳게 가르는지 잠근다.
-    /// 이름 조회가 델리게이트라 세션 없이 전 분기를 돌린다.</summary>
+    /// 이름은 실제 번역 표에서 오므로 세션 없이 전 분기를 돌린다.</summary>
     public class BattlePresenterTests
     {
         private const string MemberId = "member_a";
@@ -44,11 +43,10 @@ namespace FateWeaver.Tests.UnityEditMode
             var party = presenterSo.FindProperty("_party");
             party.arraySize = 1;
             party.GetArrayElementAtIndex(0).objectReferenceValue = _member;
+            presenterSo.FindProperty("_localization").objectReferenceValue = UnityTestLocalization.AddTo(_go);
             presenterSo.ApplyModifiedPropertiesWithoutUndo();
 
-            _presenter.Initialize(
-                id => id == MemberId ? "파티원 A" : null,
-                KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses()));
+            _presenter.Initialize(UnityTestContent.Statuses());
         }
 
         [TearDown]
@@ -70,14 +68,24 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void MissingOwnerDoesNotInventADisplayName()
+        public void UnownedPlayerCardUsesThePartyLabel()
         {
             var card = new OwnedCard(PlayerCard(), null);
 
             var presentation = _presenter.For(card);
 
             Assert.IsTrue(presentation.IsPartyOwned);
-            Assert.IsNull(presentation.OwnerDisplayName);
+            Assert.AreEqual("파티", presentation.OwnerDisplayName);
+        }
+
+        [Test]
+        public void MissingLocalizationFailsInsteadOfShowingFallbackText()
+        {
+            var presenterSo = new UnityEditor.SerializedObject(_presenter);
+            presenterSo.FindProperty("_localization").objectReferenceValue = null;
+            presenterSo.ApplyModifiedPropertiesWithoutUndo();
+
+            Assert.Throws<System.InvalidOperationException>(() => _presenter.For(new OwnedCard(PlayerCard(), null)));
         }
 
         [Test]
