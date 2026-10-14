@@ -68,6 +68,7 @@ namespace FateWeaver.Unity.Editor
         public static void Author()
         {
             DynamicLabels.Clear();
+            LocalizationSettingsBaseline.Ensure();
             LocalizationCsvImporter.ImportAll();
             var root = LocalizationCsvImporter.AssetRoot;
             var bindings = AssetDatabase.LoadAssetAtPath<LocalizationBindings>(root + "/Bindings.asset");
