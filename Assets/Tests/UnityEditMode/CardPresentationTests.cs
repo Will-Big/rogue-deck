@@ -6,16 +6,31 @@ using FateWeaver.Core.Effects;
 using FateWeaver.Simulation.Descriptions;
 using FateWeaver.Unity;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace FateWeaver.Tests.UnityEditMode
 {
     public class CardPresentationTests
     {
-        private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses());
+        private static readonly DescriptionRequestCatalog Requests =
+            DescriptionRequestCatalog.CreateDefault(UnityTestContent.Statuses());
 
+        private GameObject _host;
+        private GameLocalization _text;
+
+        [SetUp]
+        public void CreateLocalization()
+        {
+            _host = new GameObject("CardPresentationTestsLocalization");
+            _text = UnityTestLocalization.AddTo(_host);
+        }
+
+        [TearDown]
+        public void DestroyLocalization() => Object.DestroyImmediate(_host);
+
+        // Card ids must have translated names because FromLocalized reads card.<id>.name.
         private static CardDefinition EnemyCard() => new CardDefinition(
-            "locked_jab", "잠긴 일격", Side.Enemy, 5,
+            "goblin_jab", "찌르기", Side.Enemy, 5,
             new[] { new EffectData(EffectKeys.Damage, 1) { TargetFaction = CardTargetFaction.Ally } })
             { AllyTarget = CardTargetRange.FrontOne, EnergyCost = 0, Category = CardCategory.Execution };
 
@@ -34,7 +49,7 @@ namespace FateWeaver.Tests.UnityEditMode
         {
             var instance = new ExecutionCardInstance(EnemyCard()) { IsLocked = true };
 
-            var presentation = CardPresentation.From(instance, Korean);
+            var presentation = Localized(instance.Def, instance.ExecutionOrder, instance.IsLocked);
 
             CollectionAssert.AreEqual(new[] { CardStatusIcon.Lock }, presentation.StatusIcons.ToArray());
         }
@@ -42,7 +57,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Unlocked_hand_card_has_no_status_icons()
         {
-            var presentation = CardPresentation.FromDefinition(EnemyCard(), Korean);
+            var presentation = Localized(EnemyCard());
 
             Assert.AreEqual(0, presentation.StatusIcons.Count);
         }
@@ -51,15 +66,14 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Hand_and_rail_presentations_preserve_the_same_owner_metadata()
         {
             var definition = new CardDefinition(
-                "owned_guard", "소유 방어", Side.Player, 5,
+                "brace", "버티기", Side.Player, 5,
                 new[] { new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
             var instance = new ExecutionCardInstance(definition);
             var ownerColor = new Color(0.35f, 0.65f, 0.95f, 1f);
 
-            var hand = CardPresentation.FromDefinition(
-                definition, Korean, null, "파티원 A", ownerColor, false);
-            var rail = CardPresentation.From(
-                instance, Korean, null, "파티원 A", ownerColor, false);
+            var hand = Localized(definition, ownerId: "member_a", ownerColor: ownerColor);
+            var rail = Localized(instance.Def, instance.ExecutionOrder, instance.IsLocked,
+                "member_a", ownerColor, instanceId: instance.InstanceId);
 
             Assert.AreEqual("파티원 A", hand.OwnerDisplayName);
             Assert.AreEqual(ownerColor, hand.OwnerColor);
@@ -73,11 +87,10 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Party_owned_presentation_uses_localized_party_owner_name()
         {
             var definition = new CardDefinition(
-                "party_guard", "공용 방어", Side.Player, 5,
+                "brace", "버티기", Side.Player, 5,
                 new[] { new EffectData(EffectKeys.Damage, 0) { TargetFaction = CardTargetFaction.Enemy } }) { EnemyTarget = CardTargetRange.FrontOne };
 
-            var presentation = CardPresentation.FromDefinition(
-                definition, Korean, null, PlaytestKoreanText.PartyOwnerName(), Color.white, true);
+            var presentation = Localized(definition, ownerColor: Color.white, partyOwned: true);
 
             Assert.AreEqual("파티", presentation.OwnerDisplayName);
             Assert.IsTrue(presentation.IsPartyOwned);
@@ -86,7 +99,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void With_execution_order_changes_only_order()
         {
-            var descriptionLayout = DescriptionComposer.Compose(EnemyCard(), Korean);
+            var descriptionLayout = Localized(EnemyCard()).DescriptionLayout;
             var original = new CardPresentation(
                 "id", "name", 5, 2, Side.Player, descriptionLayout, null, false,
                 new[] { CardStatusIcon.Lock }, CardCategory.Execution,
@@ -111,10 +124,7 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Formation_card_uses_the_registered_dynamic_description()
         {
-            var presentation = CardPresentation.FromDefinition(
-                UnityTestContent.Cards().Get("fixture_move_forward"),
-                Korean,
-                id => null);
+            var presentation = Localized(UnityTestContent.Cards().Get("fixture_move_forward"));
 
             Assert.AreEqual(
                 "[◆] 대형 전방으로 1칸 이동.",
@@ -125,7 +135,7 @@ namespace FateWeaver.Tests.UnityEditMode
         public void Toxic_reclaim_presentation_keeps_structured_targets_and_lines()
         {
             var definition = UnityTestContent.Cards().Get("toxic_reclaim");
-            var presentation = CardPresentation.FromDefinition(definition, Korean);
+            var presentation = Localized(definition);
 
             Assert.AreEqual(2, presentation.DescriptionLayout.TargetEntries.Count);
             Assert.AreEqual(2, presentation.DescriptionLayout.Lines.Count);
@@ -135,11 +145,15 @@ namespace FateWeaver.Tests.UnityEditMode
         [Test]
         public void Intervention_presentation_has_no_unit_target_entries()
         {
-            var presentation = CardPresentation.FromDefinition(
-                UnityCardFixtures.ChangeExecutionOrder("pull_fx", delta: -1), Korean);
+            var presentation = Localized(UnityCardFixtures.ChangeExecutionOrder("hasten", delta: -1));
 
             Assert.AreEqual(CardCategory.Intervention, presentation.Category);
             Assert.AreEqual(0, presentation.DescriptionLayout.TargetEntries.Count);
         }
+
+        private CardPresentation Localized(CardDefinition definition, int? order = null, bool locked = false,
+            string ownerId = null, Color ownerColor = default, bool partyOwned = false, int instanceId = -1)
+            => CardPresentation.FromLocalized(definition, Requests, _text, null,
+                order ?? definition.BaseExecutionOrder, locked, ownerId, ownerColor, partyOwned, instanceId);
     }
 }

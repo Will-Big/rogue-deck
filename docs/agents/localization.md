@@ -77,6 +77,14 @@ Addressables를 헤드리스로 빌드할 때는 같은 에디터 실행 파일�
 
 ## 진단과 호환 범위
 
-기존 `KoreanDescriptionCatalog`·`Describe` API는 헤드리스 진단·개발 로그·테스트 전용
-샌드박스의 호환용으로 남아 있다. 실제 전투 화면은 `BattlePresenter`의 `FromLocalized` 경로를 쓴다.
-테스트 전용 화면과 콘솔 로그의 영문 번역은 이번 범위에서 제외한다.
+한국어 문장을 코드에서 조립하던 옛 경로(`KoreanDescriptionCatalog`·`Describe`·`PlaytestKoreanText`)는
+2026-10-14에 제거했다. 카드 표시는 전투 화면·HandFan 샌드박스 모두 `CardPresentation.FromLocalized`
+하나이고, `GameLocalization`이 배선되지 않으면 한국어 대체 문구 없이 예외로 알린다.
+
+개발자 콘솔의 턴 로그(`TimelineTextFormatter`)는 한국어 전용으로 남으며 상태 이름을
+`StatusContentCatalog.DisplayNameOf`에서 읽는다. 카드 데이터 사전 검사(`DescriptionCatalogValidator`)는
+`DescriptionRequestCatalog`로 같은 검사를 한다. 콘솔 로그의 영문 번역은 범위 밖이다.
+
+Edit Mode 테스트는 `GameLocalization.Awake`가 돌지 않으므로 `UnityTestLocalization.AddTo`로 에디터의
+실제 표를 동기로 꽂는다. 인스펙터 `LocalizedString`은 선택 로케일이 필요해 `EditModeLocaleSetup`이
+한국어를 고른다.

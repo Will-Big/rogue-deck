@@ -1,5 +1,6 @@
 using System.Linq;
 using NUnit.Framework;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Combat;
 using FateWeaver.Core.Conditions;
@@ -14,8 +15,7 @@ namespace FateWeaver.Tests
     /// 타임라인 하나뿐이다.</summary>
     public class CombatLogTests
     {
-        private static readonly KoreanDescriptionCatalog Korean =
-            KoreanDescriptionCatalog.CreateDefault(TestContent.Statuses());
+        private static readonly StatusContentCatalog StatusContent = TestContent.Statuses();
 
         private static EffectRegistry Effects()
         {
@@ -417,7 +417,7 @@ namespace FateWeaver.Tests
                 new TurnEnded(0, Outcome.Ongoing)
             };
 
-            var text = TimelineTextFormatter.Format(timeline, Korean);
+            var text = TimelineTextFormatter.Format(timeline, StatusContent);
 
             StringAssert.Contains("취약", text);
             StringAssert.Contains("4", text);
@@ -485,7 +485,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(
                 string.Empty,
                 TimelineTextFormatter.Format(
-                    System.Array.Empty<ResolutionEvent>(), Korean));
+                    System.Array.Empty<ResolutionEvent>(), StatusContent));
         }
 
         [Test]
@@ -617,14 +617,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Format_event_renders_one_entry_without_trailing_newline()
         {
-            var text = TimelineTextFormatter.FormatEvent(new TurnStarted(0), Korean);
+            var text = TimelineTextFormatter.FormatEvent(new TurnStarted(0), StatusContent);
             Assert.AreEqual("== 1턴 시작 ==", text);
         }
 
         [Test]
         public void Format_event_says_a_removed_card_left_because_its_owner_died()
         {
-            var text = TimelineTextFormatter.FormatEvent(new CardRemoved(2, "goblin_jab", "goblin"), Korean);
+            var text = TimelineTextFormatter.FormatEvent(new CardRemoved(2, "goblin_jab", "goblin"), StatusContent);
 
             StringAssert.Contains("goblin_jab", text);
             StringAssert.Contains("주인 사망", text);
@@ -634,15 +634,15 @@ namespace FateWeaver.Tests
         public void Format_event_spells_out_hp_change_with_its_source()
         {
             var cardHit = TimelineTextFormatter.FormatEvent(
-                new HpChanged("goblin", 10, 6, HpChangeSource.CardDamage, "jab"), Korean);
+                new HpChanged("goblin", 10, 6, HpChangeSource.CardDamage, "jab"), StatusContent);
             StringAssert.Contains("goblin", cardHit);
             StringAssert.Contains("10", cardHit);
             StringAssert.Contains("6", cardHit);
             StringAssert.Contains("jab", cardHit);
 
             var tick = TimelineTextFormatter.FormatEvent(
-                new HpChanged("goblin", 10, 7, HpChangeSource.StatusTick, "poison"), Korean);
-            StringAssert.Contains(Korean.Statuses.Resolve(StatusKeys.Poison), tick);
+                new HpChanged("goblin", 10, 7, HpChangeSource.StatusTick, "poison"), StatusContent);
+            StringAssert.Contains(StatusContent.DisplayNameOf(StatusKeys.Poison), tick);
         }
 
         [Test]
@@ -659,7 +659,7 @@ namespace FateWeaver.Tests
             foreach (var evt in samples)
             {
                 StringAssert.DoesNotContain("[미처리 이벤트]",
-                    TimelineTextFormatter.FormatEvent(evt, Korean));
+                    TimelineTextFormatter.FormatEvent(evt, StatusContent));
             }
         }
 

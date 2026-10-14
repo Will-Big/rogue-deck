@@ -5,20 +5,6 @@ using FateWeaver.Core.Cards;
 
 namespace FateWeaver.Simulation.Descriptions
 {
-    public sealed class EffectDescriptionFragment
-    {
-        public CardTargetKey? Target { get; }
-        public string Text { get; }
-
-        public EffectDescriptionFragment(CardTargetKey? target, string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-                throw new ArgumentException("Description text is required.", nameof(text));
-            Target = target;
-            Text = text;
-        }
-    }
-
     public sealed class CardDescriptionLine
     {
         public CardTargetKey? Target { get; }

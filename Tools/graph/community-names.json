@@ -39,7 +39,7 @@
   "ConsumeStatusHandler": "상태 소모·발동 핸들러",
   "ScenarioResult": "시나리오 비교 보고",
   "PlacementFlightPath": "카드 배치 비행 연출",
-  "KoreanDescriptionCatalog": "카드 설명 작문기",
+  "DescriptionRequestCatalog": "카드 설명 작문기",
   "PileView": "카드 더미 뷰",
   "IEnemyTurnPolicy": "적 턴 정책",
   "PoolContentCatalog": "풀 콘텐츠 로더",

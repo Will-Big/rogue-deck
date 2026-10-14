@@ -34,6 +34,9 @@ namespace FateWeaver.Tests.UnityPlayMode
                 var localization = Find<GameLocalization>();
                 yield return new WaitUntil(() => localization.Initialization != null && localization.Initialization.IsCompleted);
                 Assert.IsFalse(localization.Initialization.IsFaulted);
+                // Localization may already be initialized from an earlier play session's saved choice.
+                LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.GetLocale("ko");
+                yield return new WaitUntil(() => localization.Name("status.poison.name") == "독");
                 var flow = Find<CombatNodeFlow>(); var battle = Find<BattleScreenController>();
                 yield return new WaitUntil(() => Get<DeckCombatSession>(battle, "_session") != null);
                 var session = Get<DeckCombatSession>(battle, "_session");

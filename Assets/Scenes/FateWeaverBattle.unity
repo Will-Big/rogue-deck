@@ -2320,7 +2320,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 771a331764d7c4f538784c89c655aa13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.PileView
-  _title: "\uBC84\uB9B0 \uB371"
   _labelText: {fileID: 1809113204}
   _popup: {fileID: 1187450511}
   _popupContent: {fileID: 1889976955}
@@ -2781,7 +2780,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 771a331764d7c4f538784c89c655aa13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.PileView
-  _title: "\uC804\uCCB4 \uB371"
   _labelText: {fileID: 1994096741}
   _popup: {fileID: 589002150}
   _popupContent: {fileID: 1397480258}
@@ -7108,7 +7106,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 771a331764d7c4f538784c89c655aa13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FateWeaver.Unity::FateWeaver.Unity.PileView
-  _title: "\uBF51\uC744 \uB371"
   _labelText: {fileID: 1632100624}
   _popup: {fileID: 1673588383}
   _popupContent: {fileID: 12832087}

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using FateWeaver.Unity;
@@ -62,6 +63,7 @@ namespace FateWeaver.Tests.UnityEditMode
                 foreach (var transform in All<Transform>())
                     Assert.That(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(transform.gameObject), Is.Zero);
                 Assert.That(roots.Any(r => PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(r) == PrefabPath), Is.True);
+                foreach (var root in roots) LoadText(root);
                 Assert.That(All<HandFanSandboxCardSource>().Single().TryLoad(out var samples, out var error), Is.True, error);
                 Assert.That(samples.Count, Is.GreaterThan(0));
             }
@@ -228,7 +230,19 @@ namespace FateWeaver.Tests.UnityEditMode
             }
         }
 
+        /// <summary>Edit Mode에서는 Awake·코루틴이 돌지 않는다. Start 전에 현지화 표를 꽂고,
+        /// 코루틴 Start는 끝까지 직접 돌린다.</summary>
         private static void Invoke(Component component, string method)
-            => component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
+        {
+            if (method == "Start") LoadText(component.transform.root.gameObject);
+            var result = component.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
+            if (result is IEnumerator routine) while (routine.MoveNext()) { }
+        }
+
+        private static void LoadText(GameObject root)
+        {
+            foreach (var text in root.GetComponentsInChildren<GameLocalization>(true))
+                if (text.Renderer == null) UnityTestLocalization.Load(text);
+        }
     }
 }

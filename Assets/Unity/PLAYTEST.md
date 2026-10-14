@@ -65,14 +65,14 @@ Atlas Population Mode를 **Dynamic**으로 선택해 같은 경로에 저장한�
 
 - 카드 위젯은 프리팹 `CardView`와 뷰모델 `CardPresentation`을 사용한다. 아트는 표현 자원 카탈로그로
   배선한다([CardPresentation.cs](Scripts/Cards/CardPresentation.cs), [콘텐츠 저작 경계](../../docs/agents/content-authoring.md)).
-- 덱 전투 진행과 설명 조립은 순수 C# 헤드리스 테스트로 검증한다. 설명은 `DescriptionComposer`와
-  `KoreanDescriptionCatalog`가 효과 데이터에서 조립한다
-  ([DescriptionComposer.cs](../Core/Simulation/Descriptions/DescriptionComposer.cs)).
+- 덱 전투 진행과 설명 조립은 순수 C# 헤드리스 테스트로 검증한다. 설명은 `DescriptionComposer`가
+  효과 데이터에서 언어 중립 요청으로 조립하고 Unity 현지화 표가 문장으로 만든다
+  ([DescriptionComposer.Requests.cs](../Core/Simulation/Descriptions/DescriptionComposer.Requests.cs),
+  [현지화 저작](../../docs/agents/localization.md)).
 - 컨트롤러·프리팹·씬 참조는 Unity 배치 EditMode로 검증하고, 조작감·레이아웃·연출은 Play로 확인한다
   ([배치 실행 절차](../../docs/agents/unity-batch-runs.md)).
-- 상태 아이콘 경로와 남은 카드 이름 룩업은 Unity EditMode 테스트로 검증한다
-  ([CardStatusIconSpritesTests.cs](../Tests/UnityEditMode/CardStatusIconSpritesTests.cs),
-  [PlaytestKoreanTextTests.cs](../Tests/UnityEditMode/PlaytestKoreanTextTests.cs)).
+- 상태 아이콘 경로는 Unity EditMode 테스트로 검증한다
+  ([CardStatusIconSpritesTests.cs](../Tests/UnityEditMode/CardStatusIconSpritesTests.cs)).
 
 ## 전투 노드 한 사이클 (2026-09-15)
 

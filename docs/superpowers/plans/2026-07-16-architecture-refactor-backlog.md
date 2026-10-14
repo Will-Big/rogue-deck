@@ -504,6 +504,9 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
 
 ### 14.2 P2급 — playtest 시절 이름이 실 코드에 남아 있다
 
+**2026-10-14 완료.** 마지막 `PlaytestKoreanText`를 지워 `Playtest` 접두 클래스가 없고, 표시 이름의
+원본은 번역 CSV 하나다. 아래는 기록이다.
+
 **문제.** 덱 플레이테스트 씬 시절(`1adfb23`)의 이름이 정식 코드에 그대로 남아, 클래스 이름만 보면
 테스트 도구로 오해된다. 2026-09-04 점검(367개 타입)에서 셋이 나왔고 둘은 닫혔다.
 
@@ -513,8 +516,9 @@ bag에 둘 이상 생기면 층 안의 순서를 규칙으로 정하거나 배�
   테스트(103줄) 말고 부르는 곳이 없었다. 전투 화면은 `DeckCombatSession`, CLI 비교 하니스는
   `ScenarioRunner`·`MultiTurnRunner`를 쓴다. **죽은 코드를 가려 준 것이 잘못된 이름이었다** —
   이름이 "playtest"라 아무도 이상하게 여기지 않았다.
-- `PlaytestKoreanText`가 남았다. `EnemyName`과 고블린 카드 이름 3건은 전투 노드 2단계에서
-  제거했다(적 JSON `displayName`·카드 JSON `name`이 원본이다).
+- ~~`PlaytestKoreanText`~~ **2026-10-14 삭제.** 현지화 전환으로 카드·캐릭터·적 이름의 표시
+  원본이 번역 CSV(`Localization/Csv/Content.csv`)로 옮겨 가 마지막 호출처(옛 카드 표현 팩토리)와
+  함께 지웠다.
 
 `PlaytestKoreanText`는 이름 문제만이 아니다. 카드·적·시나리오의 한글 이름을 `switch`로 코드에 박고
 있는데(`BattleScreenController`·`CardPresentation` 등 7곳에서 호출), 카드 원본은 이미

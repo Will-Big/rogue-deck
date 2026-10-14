@@ -1,17 +1,18 @@
 using System.Collections.Generic;
 using System.Text;
+using FateWeaver.Core.Authoring.Statuses;
 using FateWeaver.Core.Events;
 using FateWeaver.Core.Status;
 
 namespace FateWeaver.Simulation.Descriptions
 {
     /// <summary>타임라인을 사람이 읽는 여러 줄로 바꾼다. 코어의 출력은 타임라인뿐이므로(규칙 11)
-    /// 로그의 원천도 이것 하나다. 상태·카드 이름은 설명 레지스트리에서 가져온다(규칙 10).</summary>
+    /// 로그의 원천도 이것 하나다. 상태 이름은 상태 저작 콘텐츠의 표시명을 쓴다(규칙 10).</summary>
     public static class TimelineTextFormatter
     {
         public static string Format(
             IReadOnlyList<ResolutionEvent> timeline,
-            KoreanDescriptionCatalog catalog)
+            StatusContentCatalog statuses)
         {
             if (timeline == null || timeline.Count == 0)
             {
@@ -21,7 +22,7 @@ namespace FateWeaver.Simulation.Descriptions
             var sb = new StringBuilder();
             foreach (var evt in timeline)
             {
-                AppendEvent(sb, evt, catalog);
+                AppendEvent(sb, evt, statuses);
             }
 
             return sb.ToString();
@@ -29,7 +30,7 @@ namespace FateWeaver.Simulation.Descriptions
 
         /// <summary>이벤트 1건을 로그 1건으로 바꾼다. Unity는 이벤트마다 이것을 호출해
         /// Debug.Log 1건씩 남긴다 (로그 1건 = 이벤트 1건).</summary>
-        public static string FormatEvent(ResolutionEvent evt, KoreanDescriptionCatalog catalog)
+        public static string FormatEvent(ResolutionEvent evt, StatusContentCatalog statuses)
         {
             if (evt == null)
             {
@@ -37,12 +38,12 @@ namespace FateWeaver.Simulation.Descriptions
             }
 
             var sb = new StringBuilder();
-            AppendEvent(sb, evt, catalog);
+            AppendEvent(sb, evt, statuses);
             return sb.ToString().TrimEnd('\r', '\n');
         }
 
         private static void AppendEvent(
-            StringBuilder sb, ResolutionEvent evt, KoreanDescriptionCatalog catalog)
+            StringBuilder sb, ResolutionEvent evt, StatusContentCatalog statuses)
         {
             switch (evt)
             {
@@ -56,7 +57,7 @@ namespace FateWeaver.Simulation.Descriptions
                     foreach (var step in e.DamageSteps)
                     {
                         sb.Append("      ").Append(step.HolderId).Append('의')
-                          .Append(StatusName(catalog, step.StatusId))
+                          .Append(StatusName(statuses, step.StatusId))
                           .Append(": ").Append(step.Before).Append(" → ").AppendLine(step.After.ToString());
                     }
 
@@ -64,7 +65,7 @@ namespace FateWeaver.Simulation.Descriptions
                 case HpChanged e:
                     sb.Append("  ").Append(e.HolderId).Append(" HP ")
                       .Append(e.Before).Append(" → ").Append(e.After)
-                      .Append(" (").Append(HpSourceName(catalog, e)).AppendLine(")");
+                      .Append(" (").Append(HpSourceName(statuses, e)).AppendLine(")");
                     break;
                 case FateEnergyGained e:
                     sb.Append("  다음 턴 운명력 +").Append(e.Amount)
@@ -72,17 +73,17 @@ namespace FateWeaver.Simulation.Descriptions
                     break;
                 case StatusConsumed e:
                     sb.Append("  ").Append(e.HolderId).Append('의')
-                      .Append(StatusName(catalog, e.StatusId))
+                      .Append(StatusName(statuses, e.StatusId))
                       .Append(' ').Append(e.Amount).AppendLine(" 소비");
                     break;
                 case CardBuffGranted e:
                     sb.Append("  카드 ").Append(e.CardId).Append("(#").Append(e.CardInstanceId)
-                      .Append(")에 ").Append(BuffName(catalog, e.BuffId))
+                      .Append(")에 ").Append(BuffName(statuses, e.BuffId))
                       .Append(" +").Append(e.Amount).AppendLine(" 부여");
                     break;
                 case CardBuffConsumed e:
                     sb.Append("  카드 ").Append(e.CardId).Append("(#").Append(e.CardInstanceId)
-                      .Append(")의 ").Append(BuffName(catalog, e.BuffId))
+                      .Append(")의 ").Append(BuffName(statuses, e.BuffId))
                       .Append(' ').Append(e.Amount).AppendLine(" 소모");
                     break;
                 case FormationMoved e:
@@ -98,23 +99,23 @@ namespace FateWeaver.Simulation.Descriptions
                     break;
                 case StatusApplied e:
                     sb.Append("  ").Append(e.HolderId).Append("에게 ")
-                      .Append(StatusName(catalog, e.StatusId))
+                      .Append(StatusName(statuses, e.StatusId))
                       .Append(" 부여 (count=").Append(e.Count)
                       .Append(", 수치=").Append(e.Magnitude)
                       .AppendLine(e.Stacked ? ", 합산)" : ")");
                     break;
                 case StatusExpired e:
                     sb.Append("  ").Append(e.HolderId).Append('의')
-                      .Append(StatusName(catalog, e.StatusId)).AppendLine(" 만료");
+                      .Append(StatusName(statuses, e.StatusId)).AppendLine(" 만료");
                     break;
                 case StatusTicked e:
                     sb.Append("  ").Append(e.HolderId).Append('의')
-                      .Append(StatusName(catalog, e.StatusId))
+                      .Append(StatusName(statuses, e.StatusId))
                       .Append(" 발동 (피해 ").Append(e.Damage)
                       .Append(", 수치 ").Append(e.Magnitude).AppendLine(")");
                     break;
                 case StatusTransferred e:
-                    sb.Append("  ").Append(StatusName(catalog, e.StatusId))
+                    sb.Append("  ").Append(StatusName(statuses, e.StatusId))
                       .Append(' ').Append(e.Magnitude).Append(" 이전: ")
                       .Append(e.FromHolderId).Append(" → ").AppendLine(e.ToHolderId);
                     break;
@@ -134,14 +135,14 @@ namespace FateWeaver.Simulation.Descriptions
             }
         }
 
-        private static string StatusName(KoreanDescriptionCatalog catalog, string statusId)
-            => catalog.Statuses.Resolve(new StatusKey(statusId));
+        private static string StatusName(StatusContentCatalog statuses, string statusId)
+            => statuses.DisplayNameOf(new StatusKey(statusId));
 
-        private static string HpSourceName(KoreanDescriptionCatalog catalog, HpChanged e)
-            => e.Source == HpChangeSource.CardDamage ? e.SourceId : StatusName(catalog, e.SourceId);
+        private static string HpSourceName(StatusContentCatalog statuses, HpChanged e)
+            => e.Source == HpChangeSource.CardDamage ? e.SourceId : StatusName(statuses, e.SourceId);
 
-        /// <summary>버프 이름: 상태 키면 설명 레지스트리, 아니면 카드 버프 상수의 고정 문구.</summary>
-        private static string BuffName(KoreanDescriptionCatalog catalog, string buffId)
-            => buffId == CardBuffIds.DamageBonus ? "피해 보너스" : StatusName(catalog, buffId);
+        /// <summary>버프 이름: 상태 키면 상태 저작 콘텐츠의 표시명, 아니면 카드 버프 상수의 고정 문구.</summary>
+        private static string BuffName(StatusContentCatalog statuses, string buffId)
+            => buffId == CardBuffIds.DamageBonus ? "피해 보너스" : StatusName(statuses, buffId);
     }
 }

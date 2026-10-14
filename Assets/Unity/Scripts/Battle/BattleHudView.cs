@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using FateWeaver.Simulation.Descriptions;
 using UnityEngine;
@@ -37,10 +38,12 @@ namespace FateWeaver.Unity
             RefreshSpeedLabel();
             if (_message != null) _messageText.text = _localization.Render(_message);
         }
+        private GameLocalization Text => _localization != null ? _localization
+            : throw new InvalidOperationException("BattleHudView requires an authored GameLocalization.");
         public void SetMessage(LocalizedTextRequest message)
         {
             _message = message;
-            _messageText.text = _localization != null ? _localization.Render(message) : message.Key;
+            _messageText.text = Text.Render(message);
         }
 
         public bool IsBound => _energyText != null && _messageText != null
@@ -69,15 +72,13 @@ namespace FateWeaver.Unity
         /// <summary>스킵은 재생 중에만 누를 수 있다.</summary>
         public void SetSkipEnabled(bool enabled) => _skipButton.interactable = enabled;
 
-        private void RefreshSpeedLabel() => _speedButtonLabel.text = _localization != null ? _localization.UI("ui.speed", ("amount", (decimal)Speed)) : Speed + "배";
-
-        public void SetMessage(string message) { _message = null; _messageText.text = message; }
+        private void RefreshSpeedLabel() => _speedButtonLabel.text = Text.UI("ui.speed", ("amount", (decimal)Speed));
 
         public void Refresh(int fateEnergy, bool turnResolved)
         {
             _energy = fateEnergy; _resolved = turnResolved;
-            _energyText.text = _localization != null ? _localization.UI("ui.energy", ("amount", fateEnergy)) : "운명력 " + fateEnergy;
-            _turnButtonLabel.text = _localization != null ? _localization.UI(turnResolved ? "ui.turn.next" : "ui.turn.execute") : turnResolved ? "다음 턴" : "턴 실행";
+            _energyText.text = Text.UI("ui.energy", ("amount", fateEnergy));
+            _turnButtonLabel.text = Text.UI(turnResolved ? "ui.turn.next" : "ui.turn.execute");
         }
 
         public void SetInputEnabled(bool resetEnabled, bool turnEnabled)

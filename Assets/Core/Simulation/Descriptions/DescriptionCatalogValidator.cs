@@ -12,7 +12,7 @@ namespace FateWeaver.Simulation.Descriptions
     {
         public static void ValidateDefault(
             IEnumerable<CardDefinition> cards,
-            KoreanDescriptionCatalog descriptions)
+            DescriptionRequestCatalog descriptions)
         {
             Validate(
                 cards,
@@ -24,7 +24,7 @@ namespace FateWeaver.Simulation.Descriptions
 
         public static void Validate(
             IEnumerable<CardDefinition> cards,
-            KoreanDescriptionCatalog descriptions,
+            DescriptionRequestCatalog descriptions,
             EffectRegistry effects,
             StatusRegistry statuses,
             InterventionActionRegistry interventions)
@@ -83,7 +83,7 @@ namespace FateWeaver.Simulation.Descriptions
                     if (effect.Payload is ApplyStatusPayload statusPayload)
                     {
                         statuses.Resolve(statusPayload.Key);
-                        descriptions.Statuses.Resolve(statusPayload.Key);
+                        descriptions.StatusContent.DisplayNameOf(statusPayload.Key);
                     }
                 }
 

@@ -1046,10 +1046,12 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 try
                 {
-                    var korean = KoreanDescriptionCatalog.CreateDefault(UnityTestContent.Statuses());
+                    var requests = DescriptionRequestCatalog.CreateDefault(UnityTestContent.Statuses());
+                    var text = UnityTestLocalization.AddTo(root);
                     foreach (var pair in UnityTestContent.Cards().Cards)
                     {
-                        var presentation = CardPresentation.FromDefinition(pair.Value, korean);
+                        var presentation = CardPresentation.FromLocalized(pair.Value, requests, text, null,
+                            pair.Value.BaseExecutionOrder, false, null, default, false);
                         var view = catalog.Create(presentation, (RectTransform)root.transform);
                         try
                         {

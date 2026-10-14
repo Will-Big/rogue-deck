@@ -32,9 +32,6 @@ namespace FateWeaver.Unity
         /// <summary>전투 화면에 바인딩된 콘텐츠. 소유는 CombatNodeFlow다.</summary>
         private GameContent _content;
 
-        /// <summary>타임라인을 한국어 문장으로 풀 때 쓰는 카탈로그. 세션과 함께 1회 만들어 재사용한다.</summary>
-        private KoreanDescriptionCatalog _korean;
-
         private Action _onCombatFinished;
 
         /// <summary>CombatNodeFlow가 한 번 부른다. 배선이 비었으면 false — 그때는 콘솔로만 보고한다
@@ -55,8 +52,6 @@ namespace FateWeaver.Unity
             return true;
         }
 
-        public void ShowMessage(string message) => SetMessage(message);
-
         private bool IsWired()
             => _presenter != null
                 && _units != null && _units.IsBound
@@ -71,8 +66,7 @@ namespace FateWeaver.Unity
             _selection.CancelSelection();
             _session = session;
             _content = content;
-            _korean = KoreanDescriptionCatalog.CreateDefault(_content.Statuses);
-            _presenter.Initialize(OwnerNameOf, _korean);
+            _presenter.Initialize(_content.Statuses);
             _units.Spawn(
                 _session.State,
                 _presenter.OwnerColor,
@@ -89,14 +83,14 @@ namespace FateWeaver.Unity
             RefreshAll();
         }
 
-        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)로 적 JSON의 displayName을 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
+        /// <summary>적 이름은 전투 안 id가 아니라 정의 id(SpecId)의 번역 키로 찾는다 — 같은 적이 여럿이어도 이름은 같다.</summary>
         private string EnemyNameOf(string combatId)
         {
             foreach (var enemy in _session.State.Enemies)
             {
                 if (enemy.Id == combatId)
                 {
-                    return _presenter.EnemyName(enemy.SpecId, _content.Enemies.Get(enemy.SpecId).DisplayName);
+                    return _presenter.EnemyName(enemy.SpecId);
                 }
             }
 
@@ -105,20 +99,6 @@ namespace FateWeaver.Unity
 
         private IReadOnlyList<CardPresentation> Presentations(IReadOnlyList<OwnedCard> cards)
             => cards.Select(card => _presenter.For(card)).ToList();
-
-        /// <summary>표시명은 콘텐츠에서 왔고 세션이 들고 있다.</summary>
-        private string OwnerNameOf(string ownerId)
-        {
-            foreach (var member in _session.State.Party)
-            {
-                if (member.Id == ownerId)
-                {
-                    return member.Name;
-                }
-            }
-
-            return null;
-        }
 
         private void OnHandClicked(int handIndex)
         {
@@ -301,7 +281,7 @@ namespace FateWeaver.Unity
             _session.ResolveTurn();
             foreach (var evt in _session.LastTimeline)
             {
-                Debug.Log(TimelineTextFormatter.FormatEvent(evt, _korean));
+                Debug.Log(TimelineTextFormatter.FormatEvent(evt, _content.Statuses));
             }
 
             SetMessage(GameLocalization.Request("message.playing"));
@@ -363,7 +343,6 @@ namespace FateWeaver.Unity
             _hud.SetSkipEnabled(_playback.IsPlaying);
         }
 
-        private void SetMessage(string message) => _hud.SetMessage(message);
         private void SetMessage(LocalizedTextRequest message) => _hud.SetMessage(message);
         public void ShowMessage(LocalizedTextRequest message) => _hud.SetMessage(message);
     }

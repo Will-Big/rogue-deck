@@ -81,59 +81,6 @@ namespace FateWeaver.Unity
                 IsPartyOwned,
                 InstanceId, TextSource, DescriptionRequest, OwnerId);
 
-        /// <summary>Zone card (placed instance) — shows its current executionOrder. <paramref name="art"/> resolves
-        /// the sprite by id (CardArtCatalog가 그 역할을 한다).</summary>
-        public static CardPresentation From(
-            ExecutionCardInstance card,
-            KoreanDescriptionCatalog korean,
-            Func<string, Sprite> art = null,
-            string ownerDisplayName = null,
-            Color ownerColor = default,
-            bool isPartyOwned = false)
-        {
-            var def = card.Def;
-            return new CardPresentation(
-                def.Id,
-                PlaytestKoreanText.CardName(def.Id, def.Name),
-                card.ExecutionOrder,
-                def.EnergyCost,
-                def.Side,
-                DescriptionComposer.Compose(def, korean),
-                ResolveArt(def.Id, art),
-                card.IsLocked,
-                StatusIconsFor(card),
-                def.Category,
-                ownerDisplayName,
-                ownerColor,
-                isPartyOwned,
-                card.InstanceId);
-        }
-
-        /// <summary>Hand card (definition) — executionOrder is the base value; cost is the key number.</summary>
-        public static CardPresentation FromDefinition(
-            CardDefinition def,
-            KoreanDescriptionCatalog korean,
-            Func<string, Sprite> art = null,
-            string ownerDisplayName = null,
-            Color ownerColor = default,
-            bool isPartyOwned = false)
-        {
-            return new CardPresentation(
-                def.Id,
-                PlaytestKoreanText.CardName(def.Id, def.Name),
-                def.BaseExecutionOrder,
-                def.EnergyCost,
-                def.Side,
-                DescriptionComposer.Compose(def, korean),
-                ResolveArt(def.Id, art),
-                false,
-                Array.Empty<CardStatusIcon>(),
-                def.Category,
-                ownerDisplayName,
-                ownerColor,
-                isPartyOwned);
-        }
-
         public CardPresentation Relocalized()
         {
             if (TextSource == null || DescriptionRequest == null) return this;
@@ -155,12 +102,5 @@ namespace FateWeaver.Unity
                 definition.Side == Side.Enemy ? null : partyOwned ? text.Name("party.name") : ownerId == null ? null : text.Name("character." + ownerId + ".name"),
                 ownerColor, partyOwned, instanceId, text, request, ownerId);
         }
-
-        // 카드 앞면 아트는 주입된 resolver(CardArtCatalog)에서만 온다. id→경로 폴백은 없다.
-        private static Sprite ResolveArt(string id, Func<string, Sprite> art)
-            => art != null ? art(id) : null;
-
-        private static IReadOnlyList<CardStatusIcon> StatusIconsFor(ExecutionCardInstance card)
-            => card.IsLocked ? new[] { CardStatusIcon.Lock } : Array.Empty<CardStatusIcon>();
     }
 }
