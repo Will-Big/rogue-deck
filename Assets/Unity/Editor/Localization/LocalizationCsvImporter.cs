@@ -50,8 +50,10 @@ namespace FateWeaver.Unity.Editor
                 EditorUtility.SetDirty(collection);
                 LocalizationEditorSettings.EditorEvents.RaiseCollectionModified(typeof(LocalizationCsvImporter), collection);
                 // Persist Unity-assigned Id values to the authoritative CSV.
-                using (var writer = new StreamWriter(Path.Combine(CsvRoot, role + ".csv"), false, new UTF8Encoding(false)))
-                    Csv.Export(writer, collection, Columns());
+                // Csv.Export uses CsvHelper's default configuration, which ends records with CRLF; the committed CSVs are LF.
+                var csv = new StringWriter();
+                Csv.Export(csv, collection, Columns());
+                File.WriteAllText(Path.Combine(CsvRoot, role + ".csv"), csv.ToString().Replace("\r\n", "\n"), new UTF8Encoding(false));
             }
             var semanticErrors = LocalizationCsvValidator.Validate();
             if (semanticErrors.Count > 0) throw new InvalidDataException(string.Join("\n", semanticErrors));
