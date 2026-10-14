@@ -74,9 +74,10 @@ namespace FateWeaver.Unity.Editor
             if (bindings == null) { bindings = ScriptableObject.CreateInstance<LocalizationBindings>(); AssetDatabase.CreateAsset(bindings, root + "/Bindings.asset"); }
             bindings.Configure(Reference("Content"), Reference("Descriptions"), Reference("UI")); EditorUtility.SetDirty(bindings);
             Directory.CreateDirectory(root + "/Fonts"); AssetDatabase.Refresh();
-            var fontPath = root + "/Fonts/Main.asset";
-            if (AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(fontPath) == null && !AssetDatabase.CopyAsset("Assets/Unity/Resources/Fonts/KoreanTMP.asset", fontPath))
-                throw new InvalidOperationException("Could not copy existing font into localization assets.");
+            // One static font for both locales: a copy would be a second atlas to keep baked in sync.
+            var fontPath = KoreanTmpFontCreator.FontAssetPath;
+            if (AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(fontPath) == null)
+                throw new InvalidOperationException("Font not found: " + fontPath + ". Run Fate Weaver/Create Korean TMP Font.");
             var fonts = LocalizationEditorSettings.GetAssetTableCollection("FW_Fonts") ?? LocalizationEditorSettings.CreateAssetTableCollection("FW_Fonts", root + "/Fonts");
             foreach (var table in fonts.AssetTables)
             { table.AddEntry("font.main", AssetDatabase.AssetPathToGUID(fontPath)); EditorUtility.SetDirty(table); }

@@ -2,6 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using TMPro;
 using UnityEngine;
 using FateWeaver.Unity;
 namespace FateWeaver.Tests.UnityEditMode
@@ -33,6 +34,28 @@ namespace FateWeaver.Tests.UnityEditMode
                 var languages = roots.SelectMany(r => r.GetComponentsInChildren<LanguageSelectionView>(true)).Single();
                 foreach (var name in new[] { "_korean", "_english", "_koreanLocale", "_englishLocale" })
                     Assert.IsNotNull(new SerializedObject(languages).FindProperty(name).objectReferenceValue, name);
+            }
+            finally { EditorSceneManager.CloseScene(scene, true); }
+        }
+        // Re-baking the font re-creates its material sub-asset under a new fileID; labels keep the
+        // old one. With one font for every locale nothing swaps the font at runtime to hide it.
+        [Test]
+        public void Text_labels_reference_an_existing_font_material()
+        {
+            var labels = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Unity/Prefabs" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid)))
+                .SelectMany(prefab => prefab.GetComponentsInChildren<TMP_Text>(true)).ToList();
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/FateWeaverBattle.unity", OpenSceneMode.Additive);
+            try
+            {
+                labels.AddRange(scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<TMP_Text>(true)));
+                Assert.IsNotEmpty(labels);
+                foreach (var label in labels)
+                {
+                    var material = new SerializedObject(label).FindProperty("m_sharedMaterial");
+                    Assert.IsNotNull(material.objectReferenceValue,
+                        AssetDatabase.GetAssetPath(label) + " " + label.name + ": missing m_sharedMaterial");
+                }
             }
             finally { EditorSceneManager.CloseScene(scene, true); }
         }

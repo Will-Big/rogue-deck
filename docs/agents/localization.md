@@ -49,9 +49,23 @@ Unity 테이블에서 편집할 경우 공식 Export 결과를 CSV에 반영한 
 저장된다. 저장값이 없거나 지원하지 않으면 시스템 언어, 그다음 한국어를 선택한다.
 근거: `LanguageSelectionView.cs`의 `Choose`, `LocalizationCsvImporter.cs`의 `EnsureSettings`.
 
-폰트는 `FW_Fonts` Asset Table의 `font.main`을 사용한다. 현재 두 locale 모두 기존 글꼴을 복사한
-`Assets/Unity/Localization/Fonts/Main.asset`을 가리킨다. 새 외부 폰트를 추가한 것이 아니다.
-근거: `Assets/Unity/Editor/Localization/LocalizationAuthoring.cs`의 `Author`.
+폰트는 `FW_Fonts` Asset Table의 `font.main`을 사용한다. 두 locale 모두 씬·프리팹 라벨과 같은
+정적 폰트 `Assets/Unity/Fonts/KoreanTMP.asset`을 가리킨다. 사본을 따로 두지 않는다 — 2026-10-14까지
+있던 사본 `Localization/Fonts/Main.asset`은 동적 아틀라스여서 Play·EditMode 테스트 때마다 다시
+쓰였고, 정적 고정(`a2822da`)을 우회했다. Addressables 항목이 되도록 이 에셋은 `Resources/` 밖에 둔다.
+근거: `LocalizationAuthoring.cs`의 `Author`, `KoreanTmpFontCreator.cs`의 `FontAssetPath`.
+
+아틀라스는 ASCII, KS X 1001 한글 완성형 2,350자, 소스·콘텐츠 JSON의 한글, 번역 CSV의 모든 문자를
+미리 굽고 정적으로 고정한다. 정적 아틀라스는 실행 중 글자를 추가하지 않으므로, **CSV에 새 문자를
+쓰면 `Fate Weaver ▸ Create Korean TMP Font`로 다시 굽는다.** 빠진 글자는
+`LocalizationPipelineTests.Locale_fonts_cover_authored_copy_and_have_saved_materials`가 정적 여부와
+함께 잡는다. 다시 굽는 실행은 `TMP Settings.asset`을 건드리므로 그 변경은 되돌린다.
+
+다시 구우면 GUID는 고정되지만 **머티리얼 하위 에셋의 fileID가 바뀐다.** 씬·프리팹 라벨의
+`m_sharedMaterial`은 옛 fileID를 가리킨 채 남으므로 새 값으로 일괄 치환한다.
+`a2822da`가 53곳을 끊어 놓았고, 사본 Main.asset이 옛 fileID를 간직한 채 런타임에 폰트를 바꿔 끼워
+가리고 있었다(PlayMode에서 `TMP_MaterialManager.GetFallbackMaterial`이 `MissingReferenceException`).
+`LocalizationSceneTests.Text_labels_reference_an_existing_font_material`이 잡는다.
 
 ## 검증 명령
 

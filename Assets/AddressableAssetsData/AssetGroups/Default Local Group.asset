@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 86069b63e9bcf4050908ecf193db1e4c
   m_SerializeEntries:
-  - m_GUID: cfe179107dffb410bb2b23ae4124dd30
-    m_Address: Assets/Unity/Localization/Fonts/Main.asset
+  - m_GUID: 008df83b1c9db764c8fd208abe909623
+    m_Address: Assets/Unity/Fonts/KoreanTMP.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

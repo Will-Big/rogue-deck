@@ -192,11 +192,13 @@ namespace FateWeaver.Tests.UnityEditMode
                 Assert.IsFalse(path.Contains("/Resources/"));
                 var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
                 Assert.IsNotNull(font);
+                // A dynamic atlas rewrites the committed asset whenever a new glyph is first drawn.
+                Assert.AreEqual(AtlasPopulationMode.Static, font.atlasPopulationMode, code + ": " + path);
                 Assert.IsTrue(AssetDatabase.LoadAllAssetsAtPath(path).OfType<Material>().Any());
                 var copy = string.Concat(LocalizationEditorSettings.GetStringTableCollections()
                     .SelectMany(c => ((StringTable)c.GetTable(code)).Values.Select(e => e.Value)));
                 copy = new string(copy.Where(c => !char.IsControl(c)).Distinct().ToArray());
-                Assert.IsTrue(font.HasCharacters(copy, out uint[] missing, false, true),
+                Assert.IsTrue(font.HasCharacters(copy, out uint[] missing, false, false),
                     code + " missing glyphs: " + string.Join(",", (missing ?? Array.Empty<uint>()).Select(c => c.ToString("X"))));
             }
         }
