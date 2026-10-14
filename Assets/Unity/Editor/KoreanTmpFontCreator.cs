@@ -10,22 +10,29 @@ namespace FateWeaver.Unity.Editor
 {
     /// <summary>Creates a Korean TMP font asset from the bundled Pretendard TTF
     /// (<see cref="SourceTtfAssetPath"/>, OFL, committed to the repo — works on macOS/Windows/Linux
-    /// with no OS font dependency). The generated <c>Resources/Fonts/KoreanTMP.asset</c> is committed
+    /// with no OS font dependency). The generated <c>Fonts/KoreanTMP.asset</c> is committed
     /// (2026-09-04 decision), so a fresh clone already has it — run this only when the in-game character
     /// set changes. The asset is pinned to <see cref="PinnedGuid"/> — the guid the battle scene already
-    /// references — so its labels resolve without any manual rewiring.
+    /// references — so its labels resolve without any manual rewiring. It is also the only font the
+    /// <c>FW_Fonts</c> Asset Table hands out (<c>font.main</c>, both locales), so it lives outside
+    /// <c>Resources/</c> where Addressables can load it; scenes and TMP Settings hold it by guid.
     ///
     /// The atlas is <b>pre-baked and then frozen to Static</b>. It holds the 2,350 KS X 1001 Hangul
-    /// syllables plus every Hangul glyph found in the FateWeaver C# sources and content JSON. A dynamic
+    /// syllables, every Hangul glyph found in the FateWeaver C# sources and content JSON, and every
+    /// character of the translation CSVs (<see cref="TranslationCsvRoot"/>). A dynamic
     /// atlas kept adding glyphs whenever the editor first rendered a new character and rewrote this
     /// committed asset each time (2026-10-13: one glyph left the file modified in the main checkout);
     /// it also comes back non-readable once saved as a sub-asset, so those glyphs could not be added in
-    /// a player anyway. Static means a missing glyph shows as a box until this is re-run.</summary>
+    /// a player anyway. Static means a missing glyph shows as a box until this is re-run.
+    ///
+    /// Re-running keeps the guid but gives the material sub-asset a new fileID, so every label's
+    /// serialized <c>m_sharedMaterial</c> must be rewritten to it afterwards
+    /// (<c>LocalizationSceneTests.Text_labels_reference_an_existing_font_material</c> fails until then).</summary>
     public static class KoreanTmpFontCreator
     {
         private const string SourceTtfAssetPath = "Assets/Unity/Fonts/Pretendard-Regular.ttf";
-        private const string FontFolder = "Assets/Unity/Resources/Fonts";
-        private const string FontAssetPath = FontFolder + "/KoreanTMP.asset";
+        private const string FontFolder = "Assets/Unity/Fonts";
+        internal const string FontAssetPath = FontFolder + "/KoreanTMP.asset";
         private const string TmpSettingsPath = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
 
         // Roots scanned for Hangul so the atlas covers every string the game can display (card / enemy /
@@ -38,6 +45,10 @@ namespace FateWeaver.Unity.Editor
             ("Assets/Tests", "*.cs"),
             ("Assets/StreamingAssets/Content", "*.json")
         };
+
+        // Translated copy is authored here (outside Assets/). Unlike the roots above, every character
+        // is baked, not just Hangul — English copy can carry punctuation ASCII does not cover.
+        private const string TranslationCsvRoot = "Localization/Csv";
 
         // KS X 1001 lays its Hangul out gap-free in EUC-KR: lead bytes 0xB0-0xC8, trail bytes 0xA1-0xFE.
         private const int EucKrCodePage = 51949;
@@ -144,7 +155,7 @@ namespace FateWeaver.Unity.Editor
 
         // Renders every character the game can show into the atlas now, because the frozen atlas takes
         // none later. Covers printable ASCII, the punctuation used in status strings, the KS X 1001
-        // Hangul set, and all Hangul found in the project's C# sources and content JSON.
+        // Hangul set, all Hangul found in the project's C# sources and content JSON, and the CSV copy.
         private static void PrebakeCharacters(TMP_FontAsset fontAsset, List<uint> unicodes)
         {
             fontAsset.TryAddCharacters(unicodes.ToArray(), out uint[] missing);
@@ -180,6 +191,17 @@ namespace FateWeaver.Unity.Editor
                     foreach (var c in File.ReadAllText(file))
                     {
                         if (IsHangul(c)) set.Add(c);
+                    }
+                }
+            }
+
+            if (Directory.Exists(TranslationCsvRoot))
+            {
+                foreach (var file in Directory.GetFiles(TranslationCsvRoot, "*.csv", SearchOption.AllDirectories))
+                {
+                    foreach (var c in File.ReadAllText(file))
+                    {
+                        if (!char.IsControl(c) && !char.IsSurrogate(c) && c != '\uFEFF') set.Add(c);
                     }
                 }
             }

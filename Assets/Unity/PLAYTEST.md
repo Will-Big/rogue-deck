@@ -12,16 +12,16 @@
 
 ### 폰트는 문자 구성이 바뀔 때만 재생성한다
 
-[`KoreanTMP.asset`](Resources/Fonts/KoreanTMP.asset)과 원본
+[`KoreanTMP.asset`](Fonts/KoreanTMP.asset)과 원본
 [`Pretendard-Regular.ttf`](Fonts/Pretendard-Regular.ttf)는 커밋된 파일이다. 새 클론에서 폰트 생성은
 필요하지 않으며 생성 아틀라스도 gitignore 대상이 아니다([.gitignore 「Korean TMP font」](../../.gitignore)).
 
 게임에 표시하는 문자 구성이 바뀌어 폰트 갱신이 필요할 때만 `Fate Weaver ▸ Create Korean TMP Font`를
-실행한다. 생성기는 `Assets/Unity/Resources/Fonts/KoreanTMP.asset`를 만들고 기존 씬 참조 GUID를 보존한다
+실행한다. 생성기는 `Assets/Unity/Fonts/KoreanTMP.asset`를 만들고 기존 씬 참조 GUID를 보존한다
 ([KoreanTmpFontCreator.cs](Editor/KoreanTmpFontCreator.cs)).
 
 실패 시 수동 대체는 `Window ▸ TextMeshPro ▸ Font Asset Creator`에서 위 Pretendard TTF를 Source로,
-Atlas Population Mode를 **Dynamic**으로 선택해 같은 경로에 저장한다. 기존 GUID·씬 참조를 보존하고
+Atlas Population Mode를 **Dynamic**으로 선택해 문자를 구운 뒤 **Static**으로 바꿔 같은 경로에 저장한다. 기존 GUID·씬 참조를 보존하고
 추가한 문자가 화면에서 올바르게 나오는지 확인한다.
 
 ## 실행

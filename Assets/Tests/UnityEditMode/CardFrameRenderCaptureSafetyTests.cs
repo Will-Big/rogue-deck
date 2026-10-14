@@ -15,7 +15,7 @@ namespace FateWeaver.Tests.UnityEditMode
     public class CardFrameRenderCaptureSafetyTests
     {
         private const string FontPath =
-            "Assets/Unity/Resources/Fonts/KoreanTMP.asset";
+            "Assets/Unity/Fonts/KoreanTMP.asset";
 
         [Test]
         public void Capture_uses_static_nonpersistent_font_clones_without_clearing_source_dirty_state()
