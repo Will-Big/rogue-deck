@@ -18,6 +18,11 @@ Unity에서 배정한 Id를 바꾸지 않는다.
 현재 `sentence` 템플릿이 마침표를 붙이므로 효과 템플릿에 마침표를 중복해서 넣지 않는다.
 문장 마침까지 바꾸고 싶으면 `sentence` 템플릿을 함께 바꾼다. 영어 문구는 별도 열에서 저작한다.
 
+카드 설명 줄 머리말(`◆ 적군 전방 1명`)은 `Descriptions.csv`의 `target.{진영}.{범위}` 12행이다.
+진영·범위를 따로 번역해 잇지 않는다 — 영어는 어순·복수형이 달라(`1 front enemy`, `All allies`) 조합
+단위로 저작한다. `DescriptionLineView` 프리팹의 `_targetLabels`가 인스펙터 `LocalizedString`으로 이 키를
+가리키며, 기호(●◆)와 색만 프리팹에 직접 둔다. 근거: `DescriptionLineView.cs`의 `Bind`.
+
 카드의 효과·수치는 `Assets/StreamingAssets/Content`의 JSON을 계속 수정한다.
 수치를 번역 CSV에 복사하지 않는다. 카드 이름 등 JSON 기본 표시명은 한국어 CSV와 같게 유지한다.
 설명 인수 이름을 번역하거나 삭제하지 않는다. 언어별 어순·복수형 표현은 변경할 수 있다.

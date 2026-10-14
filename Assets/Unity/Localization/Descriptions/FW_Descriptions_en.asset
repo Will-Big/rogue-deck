@@ -204,6 +204,54 @@ MonoBehaviour:
     m_Localized: Lock one card
     m_Metadata:
       m_Items: []
+  - m_Id: 388779855568896
+    m_Localized: Self
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540416
+    m_Localized: 1 front ally
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540417
+    m_Localized: 2 front allies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540418
+    m_Localized: 1 back ally
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540419
+    m_Localized: 2 back allies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540420
+    m_Localized: All allies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540421
+    m_Localized: Enemy itself
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540422
+    m_Localized: 1 front enemy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540423
+    m_Localized: 2 front enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540424
+    m_Localized: 1 back enemy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540425
+    m_Localized: 2 back enemies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388779876540426
+    m_Localized: All enemies
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

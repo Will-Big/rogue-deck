@@ -64,6 +64,11 @@ namespace FateWeaver.Tests.UnityPlayMode
                 var tooltip = Get<CardStatusTooltipView>(icon, "_tooltip");
                 Assert.IsTrue(tooltip.gameObject.activeSelf);
                 Assert.AreEqual("고정", Get<TMP_Text>(tooltip, "_titleText").text);
+                // Rebinding recreates description lines, so read the current heading each time.
+                string Heading() => lockedView.GetComponentsInChildren<DescriptionLineView>()
+                    .Select(line => Get<TMP_Text>(line, "_headingText")).First(text => text.gameObject.activeSelf).text;
+                var koreanHeading = Heading();
+                StringAssert.IsMatch("[가-힣]", koreanHeading);
                 var languages = Find<LanguageSelectionView>();
                 Get<Button>(languages, "_english").onClick.Invoke();
                 yield return new WaitUntil(() => localization.Name("status.poison.name") == "Poison");
@@ -73,6 +78,8 @@ namespace FateWeaver.Tests.UnityPlayMode
                     "Locale change revealed a mutable future status value.");
                 Assert.IsTrue(tooltip.gameObject.activeSelf);
                 Assert.AreEqual("Locked", Get<TMP_Text>(tooltip, "_titleText").text);
+                Assert.AreNotEqual(koreanHeading, Heading());
+                StringAssert.DoesNotMatch("[가-힣]", Heading(), "Target heading stayed Korean in English.");
                 Assert.AreEqual("Party Member A", Get<TMP_Text[]>(reward, "_ownerLabels")[0].text);
                 StringAssert.Contains("\n", Get<TMP_Text>(pile, "_labelText").text);
                 Assert.IsTrue(popup.activeSelf, "Locale change must not close the pile.");
@@ -88,6 +95,7 @@ namespace FateWeaver.Tests.UnityPlayMode
                 Assert.AreEqual("ko", LocalizationSettings.SelectedLocale.Identifier.Code);
                 Assert.AreEqual("ko", PlayerPrefs.GetString(PreferenceKey));
                 Assert.AreEqual(koreanName, cardName.text);
+                Assert.AreEqual(koreanHeading, Heading());
                 var afterLanguageChange = session.State.Rng.Next();
                 typeof(CombatNodeFlow).GetMethod("NewRun", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(flow, null);
                 var fresh = Get<DeckCombatSession>(battle, "_session");

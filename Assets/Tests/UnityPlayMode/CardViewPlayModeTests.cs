@@ -8,6 +8,7 @@ using FateWeaver.Unity;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Localization;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -134,12 +135,19 @@ namespace FateWeaver.Tests.UnityPlayMode
             SetField(lineTemplate, "_headingText", ChildText(lineTemplateObject.transform, "Heading"));
             SetField(lineTemplate, "_separator", ChildRect(lineTemplateObject.transform, "Separator").gameObject);
             SetField(lineTemplate, "_bodyLayout", lineText.gameObject.AddComponent<LayoutElement>());
-            SetField(lineTemplate, "_factionLabels", new[] {
-                new DescriptionLineView.FactionLabel { Faction = CardTargetFaction.Ally, Symbol = "●", Label = "Ally" },
-                new DescriptionLineView.FactionLabel { Faction = CardTargetFaction.Enemy, Symbol = "◆", Label = "Enemy" }
+            SetField(lineTemplate, "_factionSymbols", new[] {
+                new DescriptionLineView.FactionSymbol { Faction = CardTargetFaction.Ally, Symbol = "●" },
+                new DescriptionLineView.FactionSymbol { Faction = CardTargetFaction.Enemy, Symbol = "◆" }
             });
-            SetField(lineTemplate, "_rangeLabels", Enum.GetValues(typeof(CardTargetRange)).Cast<CardTargetRange>()
-                .Select(range => new DescriptionLineView.RangeLabel { Range = range, Label = range.ToString() }).ToArray());
+            SetField(lineTemplate, "_targetLabels", Enum.GetValues(typeof(CardTargetFaction)).Cast<CardTargetFaction>()
+                .SelectMany(faction => Enum.GetValues(typeof(CardTargetRange)).Cast<CardTargetRange>()
+                    .Select(range => new DescriptionLineView.TargetLabel
+                    {
+                        Faction = faction,
+                        Range = range,
+                        Label = new LocalizedString("FW_Descriptions", TargetLabelKey(faction, range))
+                    }))
+                .ToArray());
             SetField(targetTemplate, "_allyMarker", ChildImage(targetTemplateObject.transform, "Ally"));
             SetField(targetTemplate, "_enemyMarker", ChildImage(targetTemplateObject.transform, "Enemy"));
             var strip = targetContent.gameObject.AddComponent<CardTargetStripView>();
@@ -222,6 +230,12 @@ namespace FateWeaver.Tests.UnityPlayMode
             child.transform.SetParent(parent, false);
             return child.GetComponent<TMP_Text>();
         }
+
+        private static string TargetLabelKey(CardTargetFaction faction, CardTargetRange range)
+            => "target." + Snake(faction.ToString()) + "." + Snake(range.ToString());
+
+        private static string Snake(string name)
+            => System.Text.RegularExpressions.Regex.Replace(name, "(?<!^)([A-Z])", "_$1").ToLowerInvariant();
 
         private static void SetField(
             object target,

@@ -211,26 +211,147 @@ MonoBehaviour:
   _bodyLayout: {fileID: 4350789980147197900}
   _allySymbolColor: {r: 0.3647059, g: 0.6784314, b: 0.8862745, a: 1}
   _enemySymbolColor: {r: 0.9098039, g: 0.3647059, b: 0.3647059, a: 1}
-  _factionLabels:
+  _factionSymbols:
   - Faction: 0
     Symbol: "\u25CF"
-    Label: "\uC544\uAD70"
   - Faction: 1
     Symbol: "\u25C6"
-    Label: "\uC801\uAD70"
-  _rangeLabels:
-  - Range: 0
-    Label: "\uC790\uC2E0"
-  - Range: 5
-    Label: "\uBAA8\uB450"
-  - Range: 1
-    Label: "\uC804\uBC29 1\uBA85"
-  - Range: 2
-    Label: "\uC804\uBC29 2\uBA85"
-  - Range: 3
-    Label: "\uD6C4\uBC29 1\uBA85"
-  - Range: 4
-    Label: "\uD6C4\uBC29 2\uBA85"
+  _targetLabels:
+  - Faction: 0
+    Range: 0
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.self
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 0
+    Range: 1
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.front_one
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 0
+    Range: 2
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.front_two
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 0
+    Range: 3
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.back_one
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 0
+    Range: 4
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.back_two
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 0
+    Range: 5
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.ally.all
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 0
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.self
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 1
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.front_one
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 2
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.front_two
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 3
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.back_one
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 4
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.back_two
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  - Faction: 1
+    Range: 5
+    Label:
+      m_TableReference:
+        m_TableCollectionName: GUID:8783043ea558b41c59b35d2b8f7d9208
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: target.enemy.all
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &8036079422727227578
 MonoBehaviour:
   m_ObjectHideFlags: 0

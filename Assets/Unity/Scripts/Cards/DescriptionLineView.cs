@@ -3,6 +3,7 @@ using FateWeaver.Core.Cards;
 using FateWeaver.Simulation.Descriptions;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Localization;
 using UnityEngine.UI;
 
 namespace FateWeaver.Unity
@@ -10,18 +11,19 @@ namespace FateWeaver.Unity
     public sealed class DescriptionLineView : MonoBehaviour
     {
         [Serializable]
-        public sealed class FactionLabel
+        public sealed class FactionSymbol
         {
             public CardTargetFaction Faction;
             public string Symbol;
-            public string Label;
         }
 
+        // One entry per faction and range pair because word order differs between languages.
         [Serializable]
-        public sealed class RangeLabel
+        public sealed class TargetLabel
         {
+            public CardTargetFaction Faction;
             public CardTargetRange Range;
-            public string Label;
+            public LocalizedString Label;
         }
 
         [SerializeField] private TMP_Text _text;
@@ -30,8 +32,8 @@ namespace FateWeaver.Unity
         [SerializeField] private LayoutElement _bodyLayout;
         [SerializeField] private Color _allySymbolColor;
         [SerializeField] private Color _enemySymbolColor;
-        [SerializeField] private FactionLabel[] _factionLabels;
-        [SerializeField] private RangeLabel[] _rangeLabels;
+        [SerializeField] private FactionSymbol[] _factionSymbols;
+        [SerializeField] private TargetLabel[] _targetLabels;
 
         public void Bind(CardDescriptionLine line)
         {
@@ -48,13 +50,13 @@ namespace FateWeaver.Unity
             }
 
             var key = line.Target.Value;
-            var faction = Array.Find(_factionLabels, item => item.Faction == key.Faction);
-            var range = Array.Find(_rangeLabels, item => item.Range == key.Range);
-            if (faction == null || range == null)
+            var faction = Array.Find(_factionSymbols, item => item.Faction == key.Faction);
+            var target = Array.Find(_targetLabels, item => item.Faction == key.Faction && item.Range == key.Range);
+            if (faction == null || target == null)
                 throw new ArgumentOutOfRangeException(nameof(line), key, "Undefined target key.");
             var color = key.Faction == CardTargetFaction.Ally ? _allySymbolColor : _enemySymbolColor;
             _headingText.text = "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">"
-                + faction.Symbol + "</color> " + faction.Label + " " + range.Label;
+                + faction.Symbol + "</color> " + target.Label.GetLocalizedString();
         }
 
         public void SetLayout(bool onlyGroup, bool showSeparator)
@@ -82,21 +84,18 @@ namespace FateWeaver.Unity
 
         private void ValidateLabels()
         {
-            if (_factionLabels == null || _factionLabels.Length != Enum.GetValues(typeof(CardTargetFaction)).Length
-                || _rangeLabels == null || _rangeLabels.Length != Enum.GetValues(typeof(CardTargetRange)).Length)
-                throw new InvalidOperationException("Description labels must contain each faction and range exactly once.");
             foreach (CardTargetFaction faction in Enum.GetValues(typeof(CardTargetFaction)))
             {
-                if (_factionLabels == null || Array.FindAll(_factionLabels,
-                    item => item != null && item.Faction == faction && !string.IsNullOrEmpty(item.Symbol)
-                    && !string.IsNullOrEmpty(item.Label)).Length != 1)
-                    throw new InvalidOperationException("Description faction labels must be complete and unique.");
-            }
-            foreach (CardTargetRange range in Enum.GetValues(typeof(CardTargetRange)))
-            {
-                if (_rangeLabels == null || Array.FindAll(_rangeLabels,
-                    item => item != null && item.Range == range && !string.IsNullOrEmpty(item.Label)).Length != 1)
-                    throw new InvalidOperationException("Description range labels must be complete and unique.");
+                if (_factionSymbols == null || Array.FindAll(_factionSymbols,
+                    item => item != null && item.Faction == faction && !string.IsNullOrEmpty(item.Symbol)).Length != 1)
+                    throw new InvalidOperationException("Description faction symbols must be complete and unique.");
+                foreach (CardTargetRange range in Enum.GetValues(typeof(CardTargetRange)))
+                {
+                    if (_targetLabels == null || Array.FindAll(_targetLabels,
+                        item => item != null && item.Faction == faction && item.Range == range
+                            && item.Label != null && !item.Label.IsEmpty).Length != 1)
+                        throw new InvalidOperationException("Description target labels must be complete and unique.");
+                }
             }
         }
     }

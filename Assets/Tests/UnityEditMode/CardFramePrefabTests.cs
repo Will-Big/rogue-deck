@@ -8,7 +8,9 @@ using FateWeaver.Unity;
 using NUnit.Framework;
 using TMPro;
 using UnityEditor;
+using UnityEditor.Localization;
 using UnityEngine;
+using UnityEngine.Localization.Tables;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -234,6 +236,7 @@ namespace FateWeaver.Tests.UnityEditMode
             {
                 line.Bind(new CardDescriptionLine(new CardTargetKey(faction, CardTargetRange.Self), "방어 2."));
                 Assert.AreEqual("방어 2.", CardPrefabCatalogTests.Field<TMP_Text>(line, "_text").text);
+                // EditModeLocaleSetup selects Korean; LocalizationPlayModeTests covers switching languages.
                 string label = faction == CardTargetFaction.Ally ? "●</color> 아군" : "◆</color> 적군";
                 Assert.AreEqual("<color=" + expectedHex + ">" + label + " 자신",
                     CardPrefabCatalogTests.Field<TMP_Text>(line, "_headingText").text);
@@ -256,13 +259,33 @@ namespace FateWeaver.Tests.UnityEditMode
         }
 
         [Test]
-        public void Description_line_rejects_missing_or_duplicate_range_labels()
+        public void Description_line_target_labels_are_translated_for_every_target()
+        {
+            var line = Load<DescriptionLineView>(CardPrefabCatalogTests.DescriptionLinePath);
+            var labels = CardPrefabCatalogTests.Field<DescriptionLineView.TargetLabel[]>(line, "_targetLabels");
+            var collection = LocalizationEditorSettings.GetStringTableCollection("FW_Descriptions");
+            foreach (CardTargetFaction faction in Enum.GetValues(typeof(CardTargetFaction)))
+            foreach (CardTargetRange range in Enum.GetValues(typeof(CardTargetRange)))
+            {
+                var label = labels.Single(item => item.Faction == faction && item.Range == range).Label;
+                Assert.AreEqual(collection.SharedData.TableCollectionNameGuid, label.TableReference.TableCollectionNameGuid,
+                    faction + "/" + range);
+                var entry = collection.SharedData.GetEntryFromReference(label.TableEntryReference);
+                Assert.IsNotNull(entry, faction + "/" + range);
+                foreach (var code in new[] { "ko", "en" })
+                    Assert.IsNotEmpty(((StringTable)collection.GetTable(code)).GetEntry(entry.Id)?.Value,
+                        code + ": " + entry.Key);
+            }
+        }
+
+        [Test]
+        public void Description_line_rejects_missing_or_duplicate_target_labels()
         {
             var line = InstantiateDescriptionLine();
             try
             {
-                var field = typeof(DescriptionLineView).GetField("_rangeLabels", BindingFlags.NonPublic | BindingFlags.Instance);
-                var labels = CardPrefabCatalogTests.Field<DescriptionLineView.RangeLabel[]>(line, "_rangeLabels");
+                var field = typeof(DescriptionLineView).GetField("_targetLabels", BindingFlags.NonPublic | BindingFlags.Instance);
+                var labels = CardPrefabCatalogTests.Field<DescriptionLineView.TargetLabel[]>(line, "_targetLabels");
                 field.SetValue(line, labels.Take(1).ToArray());
                 Assert.Throws<InvalidOperationException>(() => line.Bind(new CardDescriptionLine(null, "피해 8.")));
                 field.SetValue(line, labels.Concat(new[] { labels[0] }).ToArray());
