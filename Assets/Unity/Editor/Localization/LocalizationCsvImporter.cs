@@ -8,8 +8,6 @@ using UnityEditor.Localization;
 using UnityEditor.Localization.Plugins.CSV;
 using UnityEditor.Localization.Plugins.CSV.Columns;
 using UnityEngine;
-using UnityEngine.Localization;
-using UnityEngine.Localization.Settings;
 using UnityEngine.Localization.Tables;
 namespace FateWeaver.Unity.Editor
 {
@@ -33,7 +31,7 @@ namespace FateWeaver.Unity.Editor
                     errors.AddRange(LocalizationCsvValidator.ValidateCsv(reader));
             }
             if (errors.Count > 0) throw new InvalidDataException(string.Join("\n", errors));
-            EnsureSettings();
+            RequireLocales();
             foreach (var role in new[] { "Content", "Descriptions", "UI" })
             {
                 var name = "FW_" + role;
@@ -59,42 +57,14 @@ namespace FateWeaver.Unity.Editor
             if (semanticErrors.Count > 0) throw new InvalidDataException(string.Join("\n", semanticErrors));
             AssetDatabase.SaveAssets();
         }
-        private static void EnsureSettings()
+        // Each locale column imports into that locale's table, so the locales must already exist.
+        private static void RequireLocales()
         {
-            Directory.CreateDirectory(AssetRoot);
-            AssetDatabase.Refresh();
-            if (LocalizationEditorSettings.ActiveLocalizationSettings == null)
-            {
-                var settings = ScriptableObject.CreateInstance<LocalizationSettings>();
-                AssetDatabase.CreateAsset(settings, AssetRoot + "/LocalizationSettings.asset");
-                LocalizationEditorSettings.ActiveLocalizationSettings = settings;
-            }
-            foreach (var code in new[] { "ko", "en" })
-            {
-                if (LocalizationEditorSettings.GetLocales().Any(l => l.Identifier.Code == code)) continue;
-                var locale = Locale.CreateLocale(code);
-                AssetDatabase.CreateAsset(locale, AssetRoot + "/" + code + ".asset");
-                LocalizationEditorSettings.AddLocale(locale);
-            }
-            var active = LocalizationEditorSettings.ActiveLocalizationSettings;
-            var selectors = active.GetStartupLocaleSelectors();
-            // Rewriting identical selectors only churns their serialized reference ids.
-            if (HasStartupSelectors(selectors)) return;
-            selectors.Clear();
-            selectors.Add(new PlayerPrefLocaleSelector { PlayerPreferenceKey = "fateweaver.locale" });
-            selectors.Add(new SystemLocaleSelector());
-            selectors.Add(new SpecificLocaleSelector { LocaleId = "ko" });
-            EditorUtility.SetDirty(active);
-        }
-        private static bool HasStartupSelectors(IList<IStartupLocaleSelector> selectors)
-            => selectors.Count == 3
-                && selectors[0] is PlayerPrefLocaleSelector prefs && prefs.PlayerPreferenceKey == "fateweaver.locale"
-                && selectors[1] is SystemLocaleSelector
-                && selectors[2] is SpecificLocaleSelector specific && specific.LocaleId.Code == "ko";
-        public static void ImportBatch()
-        {
-            try { ImportAll(); var errors = LocalizationCsvValidator.Validate(); if (errors.Count > 0) throw new InvalidDataException(string.Join("\n", errors)); AssetDatabase.SaveAssets(); EditorApplication.Exit(0); }
-            catch (Exception ex) { Debug.LogException(ex); EditorApplication.Exit(1); }
+            var missing = Columns().OfType<LocaleColumns>().Select(c => c.LocaleIdentifier.Code)
+                .Where(code => LocalizationEditorSettings.GetLocales().All(l => l.Identifier.Code != code)).ToArray();
+            if (missing.Length > 0)
+                throw new InvalidOperationException("Missing locales: " + string.Join(", ", missing)
+                    + "; run Fate Weaver/Localization/Author Resources and Battle UI.");
         }
     }
 }

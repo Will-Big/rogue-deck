@@ -47,7 +47,8 @@ Unity 테이블에서 편집할 경우 공식 Export 결과를 CSV에 반영한 
 
 전투 화면의 한국어/English 버튼으로 언어를 선택한다. 선택은 `fateweaver.locale` PlayerPrefs에
 저장된다. 저장값이 없거나 지원하지 않으면 시스템 언어, 그다음 한국어를 선택한다.
-근거: `LanguageSelectionView.cs`의 `Choose`, `LocalizationCsvImporter.cs`의 `EnsureSettings`.
+근거: `LanguageSelectionView.cs`의 `Choose`, `LocalizationSettingsBaseline.cs`의 `Ensure`.
+이 설정은 `Author`가 CSV 가져오기 전에 맞추며, 가져오기는 ko·en Locale이 있는지만 확인한다.
 
 폰트는 `FW_Fonts` Asset Table의 `font.main`을 사용한다. 두 locale 모두 씬·프리팹 라벨과 같은
 정적 폰트 `Assets/Unity/Fonts/KoreanTMP.asset`을 가리킨다. 사본을 따로 두지 않는다 — 2026-10-14까지

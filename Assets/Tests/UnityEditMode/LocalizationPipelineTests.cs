@@ -54,6 +54,15 @@ namespace FateWeaver.Tests.UnityEditMode
                 StringAssert.DoesNotContain("\r", File.ReadAllText(Path.Combine(LocalizationCsvImporter.CsvRoot, role + ".csv")), role);
         }
         [Test]
+        public void Committed_settings_already_match_the_project_baseline()
+        {
+            var selectors = LocalizationEditorSettings.ActiveLocalizationSettings.GetStartupLocaleSelectors();
+            var before = selectors.ToArray();
+            LocalizationSettingsBaseline.Ensure();
+            // Same instances: Ensure found the baseline in place and rewrote nothing.
+            CollectionAssert.AreEqual(before, selectors);
+        }
+        [Test]
         public void Missing_translation_or_argument_contract_fails()
         {
             var errors = LocalizationCsvValidator.ValidateCsv(new StringReader("Key,Id,Shared Comments,Korean(ko),English(en)\nx,1,,{amount},\n"));
