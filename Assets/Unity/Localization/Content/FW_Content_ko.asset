@@ -240,35 +240,35 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1248845877
-    m_Localized: damage
+    m_Localized: "\uD53C\uD574"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845878
-    m_Localized: apply_status
+    m_Localized: "\uC0C1\uD0DC \uBD80\uC5EC"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845879
-    m_Localized: move_formation
+    m_Localized: "\uB300\uD615 \uC774\uB3D9"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845880
-    m_Localized: consume_status
+    m_Localized: "\uC0C1\uD0DC \uC18C\uBE44"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845881
-    m_Localized: trigger_status
+    m_Localized: "\uC0C1\uD0DC \uC989\uC2DC \uBC1C\uB3D9"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845882
-    m_Localized: grant_next_turn_fate
+    m_Localized: "\uB2E4\uC74C \uD134 \uC6B4\uBA85\uB825"
     m_Metadata:
       m_Items: []
   - m_Id: 1248845883
-    m_Localized: nullify_next_player_condition_reward
+    m_Localized: "\uB2E4\uC74C \uBCF4\uC0C1 \uBB34\uD6A8\uD654"
     m_Metadata:
       m_Items: []
   - m_Id: 1253040128
-    m_Localized: grant_next_player_damage_card_bonus
+    m_Localized: "\uB2E4\uC74C \uD53C\uD574 \uCE74\uB4DC \uAC15\uD654"
     m_Metadata:
       m_Items: []
   references:

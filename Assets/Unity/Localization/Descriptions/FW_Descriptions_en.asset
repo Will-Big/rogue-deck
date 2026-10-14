@@ -25,7 +25,7 @@ MonoBehaviour:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933122
-    m_Localized: If {condition}, {body}.
+    m_Localized: '{body} if {condition}.'
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094
@@ -114,16 +114,16 @@ MonoBehaviour:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933140
-    m_Localized: If any stacks were consumed
+    m_Localized: if any stacks were consumed
     m_Metadata:
       m_Items: []
   - m_Id: 300933141
-    m_Localized: If at least {amount} stacks were consumed
+    m_Localized: if at least {amount} stacks were consumed
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933142
-    m_Localized: '{condition}, {body}'
+    m_Localized: '{body} {condition}'
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094
@@ -151,17 +151,20 @@ MonoBehaviour:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933148
-    m_Localized: the card immediately before this is a {side} {kind}
+    m_Localized: the card immediately before this is {side:choose(enemy|player):an|a}
+      {side} {kind}
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933149
-    m_Localized: the card immediately after this is a {side} {kind}
+    m_Localized: the card immediately after this is {side:choose(enemy|player):an|a}
+      {side} {kind}
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094
   - m_Id: 300933150
-    m_Localized: the last executed card was a {side} {kind}
+    m_Localized: the last executed card was {side:choose(enemy|player):an|a} {side}
+      {kind}
     m_Metadata:
       m_Items:
       - rid: 3699417121241432094

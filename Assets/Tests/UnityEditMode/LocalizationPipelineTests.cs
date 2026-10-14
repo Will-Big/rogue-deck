@@ -129,6 +129,48 @@ namespace FateWeaver.Tests.UnityEditMode
             finally { entry.Value = original; }
         }
 
+        [TestCase("side.enemy", "the last executed card was an enemy damage card")]
+        [TestCase("side.player", "the last executed card was a player damage card")]
+        public void English_side_conditions_choose_the_article_from_the_side(string side, string expected)
+        {
+            var renderer = TestRenderer("en");
+            Assert.AreEqual(expected, renderer.Render(DescriptionRequests.Text("condition.previous",
+                ("side", DescriptionRequests.Text(side)), ("kind", DescriptionRequests.Text("kind.damage_card")))));
+        }
+
+        [Test]
+        public void English_conditions_follow_the_body_so_the_body_keeps_its_sentence_case()
+        {
+            var content = UnityTestContent.Content();
+            var requests = DescriptionRequestCatalog.CreateDefault(content.Statuses);
+            var renderer = TestRenderer("en");
+            StringAssert.Contains("Deal 7 damage if the last executed card was an enemy damage card.",
+                renderer.Render(DescriptionComposer.Compose(content.Cards.Get("riposte"), requests)).PlainText);
+            StringAssert.Contains("Gain 1 Fate next turn if any stacks were consumed.",
+                renderer.Render(DescriptionComposer.Compose(content.Cards.Get("distill"), requests)).PlainText);
+        }
+
+        [Test]
+        public void Korean_effect_names_are_display_names_not_raw_effect_ids()
+        {
+            var content = LocalizationEditorSettings.GetStringTableCollection("FW_Content");
+            var ko = (StringTable)content.GetTable("ko");
+            var effectNames = content.SharedData.Entries.Where(e => e.Key.StartsWith("effect.") && e.Key.EndsWith(".name")).ToArray();
+            Assert.IsNotEmpty(effectNames);
+            foreach (var entry in effectNames)
+                StringAssert.DoesNotMatch("[A-Za-z_]", ko.GetEntry(entry.Id).Value, entry.Key);
+            Assert.AreEqual("상태 부여 효과 카드", TestRenderer("ko").Render(DescriptionRequests.Text("kind.effect_card",
+                ("effect", DescriptionRequests.Name("effect.apply_status.name")))));
+        }
+
+        private static UnityLocalizedTextRenderer TestRenderer(string code)
+        {
+            var tables = new Dictionary<TranslationTable, StringTable>();
+            foreach (TranslationTable role in Enum.GetValues(typeof(TranslationTable)))
+                tables[role] = LocalizationEditorSettings.GetStringTableCollection("FW_" + role).GetTable(code) as StringTable;
+            return new UnityLocalizedTextRenderer(tables);
+        }
+
         [Test]
         public void Numeric_plural_and_signed_values_use_actual_smart_format()
         {
