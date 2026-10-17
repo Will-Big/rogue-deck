@@ -10,7 +10,7 @@ namespace FateWeaver.Tests
             "{ \"id\": \"slash\", \"name\": \"베기\", \"side\": \"Player\","
             + " \"category\": \"Execution\", \"energyCost\": 1, \"baseExecutionOrder\": 4,"
             + " \"targets\": { \"enemy\": \"FrontOne\" },"
-            + " \"effects\": [ { \"kind\": \"damage\", \"id\": \"e0\", \"targetFaction\": \"Enemy\", \"value\": 5 } ] }";
+            + " \"effects\": [ { \"key\": \"damage\", \"id\": \"e0\", \"targetFaction\": \"Enemy\", \"effectValue\": 5 } ] }";
 
         private static CardContentLoadResult Load(params CardContentSource[] sources)
             => CardContentLoader.Load(sources, AuthoringContext.Default());
@@ -40,13 +40,13 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void ReportsAnUnknownEffectKindInsteadOfSkippingIt()
+        public void ReportsAnUnknownEffectKeyInsteadOfSkippingIt()
         {
             var result = Load(new CardContentSource(
                 "typo.json",
                 "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\","
                 + " \"category\": \"Execution\","
-                + " \"effects\": [ { \"kind\": \"dmage\", \"value\": 5 } ] }"));
+                + " \"effects\": [ { \"key\": \"dmage\", \"effectValue\": 5 } ] }"));
 
             Assert.IsFalse(result.Succeeded);
             StringAssert.Contains("typo.json", result.Errors[0]);
@@ -82,8 +82,8 @@ namespace FateWeaver.Tests
                 "badstatus.json",
                 "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\","
                 + " \"category\": \"Execution\", \"targets\": { \"enemy\": \"FrontOne\" }, \"effects\": ["
-                + " { \"kind\": \"apply_status\", \"id\": \"e0\", \"targetFaction\": \"Enemy\","
-                + " \"status\": \"no_such_status\", \"count\": 1 } ] }"));
+                + " { \"key\": \"apply_status\", \"id\": \"e0\", \"targetFaction\": \"Enemy\","
+                + " \"effectValue\": 1, \"payload\": { \"key\": \"no_such_status\" } } ] }"));
 
             Assert.IsFalse(result.Succeeded);
             StringAssert.Contains("no_such_status", result.Errors[0]);
@@ -124,7 +124,7 @@ namespace FateWeaver.Tests
                 "badkey.json",
                 "{ \"id\": \"x\", \"name\": \"x\", \"side\": \"Player\","
                 + " \"category\": \"Execution\", \"effects\": ["
-                + " { \"kind\": \"apply_status\", \"status\": 5, \"value\": 1 } ] }"));
+                + " { \"key\": \"apply_status\", \"effectValue\": 1, \"payload\": { \"key\": 5 } } ] }"));
 
             Assert.IsFalse(result.Succeeded);
             StringAssert.Contains("badkey.json", result.Errors[0]);

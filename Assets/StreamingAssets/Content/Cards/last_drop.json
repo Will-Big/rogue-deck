@@ -13,12 +13,14 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1,
-      "successEffectValue": 2
+      "effectValue": 1,
+      "successEffectValue": 2,
+      "payload": {
+        "key": "poison"
+      }
     }
   ],
   "grade": "Common",

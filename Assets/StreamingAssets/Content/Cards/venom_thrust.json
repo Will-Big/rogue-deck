@@ -10,17 +10,19 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 2
+      "effectValue": 2
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     }
   ],
   "grade": "Common",

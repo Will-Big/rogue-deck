@@ -10,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 7
+      "effectValue": 7
     }
   ],
   "grade": "Common",

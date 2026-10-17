@@ -11,29 +11,35 @@
   },
   "effects": [
     {
-      "kind": "consume_status",
+      "key": "consume_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "amount": 1,
-      "mode": "UpTo"
+      "effectValue": 1,
+      "payload": {
+        "key": "poison",
+        "mode": "UpTo"
+      }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e2",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 3,
-      "requires": {
+      "effectValue": 3,
+      "requirement": {
         "sourceEffectId": "e0",
         "minimumConsumed": 1
+      },
+      "payload": {
+        "key": "block"
       }
     }
   ],

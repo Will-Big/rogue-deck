@@ -72,7 +72,7 @@ namespace FateWeaver.Core.Authoring
     /// (AGENTS.md 규칙 9). EffectSpecCatalog에 명시적으로 등록한다.
     ///
     /// 공통 필드(전투 실행 계약 스펙 §4): 카드 안에서 유일한 id, 대상 효과의 진영(카드의 위치 규칙 중 어느
-    /// 축을 쓰는가), 카드 시작 조건에 따른 성공 수치·생략, 앞 효과 결과 참조(requires·scaleBy).
+    /// 축을 쓰는가), 카드 시작 조건에 따른 성공 수치·생략, 앞 효과 결과 참조(requirement·scaling).
     /// 기반 필드의 Order는 CardSpec과 같은 이유로 명시한다 — 파생 필드(무순서)보다 id·진영이 앞에,
     /// 조건·참조가 뒤에 오게 고정한다.</summary>
     public abstract class EffectSpec
@@ -90,10 +90,10 @@ namespace FateWeaver.Core.Authoring
         public bool SkipOnBasic;
 
         [JsonProperty(Order = 52)]
-        public EffectRequirementSpec Requires;
+        public EffectRequirementSpec Requirement;
 
         [JsonProperty(Order = 53)]
-        public EffectScalingSpec ScaleBy;
+        public EffectScalingSpec Scaling;
 
         [JsonIgnore]
         public abstract EffectKey Key { get; }
@@ -102,7 +102,7 @@ namespace FateWeaver.Core.Authoring
         [JsonIgnore]
         public virtual bool IsTargeted => false;
 
-        /// <summary>이 효과가 실제 소비량을 결과로 내는가. requires·scaleBy는 이런 효과만 가리킬 수 있다.</summary>
+        /// <summary>이 효과가 실제 소비량을 결과로 내는가. requirement·scaling은 이런 효과만 가리킬 수 있다.</summary>
         [JsonIgnore]
         public virtual bool ProducesConsumption => false;
 
@@ -115,12 +115,12 @@ namespace FateWeaver.Core.Authoring
                 TargetFaction = IsTargeted ? TargetFaction : null,
                 SuccessEffectValue = SuccessEffectValue,
                 SkipOnBasic = SkipOnBasic,
-                Requirement = Requires == null
+                Requirement = Requirement == null
                     ? null
-                    : new EffectResultRequirement(Requires.SourceEffectId, Requires.MinimumConsumed),
-                Scaling = ScaleBy == null
+                    : new EffectResultRequirement(Requirement.SourceEffectId, Requirement.MinimumConsumed),
+                Scaling = Scaling == null
                     ? null
-                    : new EffectResultScaling(ScaleBy.SourceEffectId, ScaleBy.PerConsumed)
+                    : new EffectResultScaling(Scaling.SourceEffectId, Scaling.PerConsumed)
             };
 
         protected abstract EffectData Build();

@@ -104,17 +104,17 @@ namespace FateWeaver.Core.Authoring
 
                 ValidateTarget(spec, effect, at, usedFactions, errors);
                 ValidateConditionFields(spec, effect, at, errors);
-                ValidateReference(effects, indexById, i, "requires", effect.Requires?.SourceEffectId, at, errors);
-                ValidateReference(effects, indexById, i, "scaleBy", effect.ScaleBy?.SourceEffectId, at, errors);
+                ValidateReference(effects, indexById, i, "requirement", effect.Requirement?.SourceEffectId, at, errors);
+                ValidateReference(effects, indexById, i, "scaling", effect.Scaling?.SourceEffectId, at, errors);
 
-                if (effect.Requires != null && effect.Requires.MinimumConsumed < 1)
+                if (effect.Requirement != null && effect.Requirement.MinimumConsumed < 1)
                 {
-                    errors.Add(at + "requires.minimumConsumed must be at least 1.");
+                    errors.Add(at + "requirement.minimumConsumed must be at least 1.");
                 }
 
-                if (effect.ScaleBy != null && effect.ScaleBy.PerConsumed == 0)
+                if (effect.Scaling != null && effect.Scaling.PerConsumed == 0)
                 {
-                    errors.Add(at + "scaleBy.perConsumed must not be 0.");
+                    errors.Add(at + "scaling.perConsumed must not be 0.");
                 }
             }
 

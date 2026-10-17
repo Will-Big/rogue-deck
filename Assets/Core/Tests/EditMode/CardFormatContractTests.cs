@@ -23,10 +23,10 @@ namespace FateWeaver.Tests
   ""baseExecutionOrder"": 5,
   ""targets"": { ""enemy"": ""FrontOne"" },
   ""effects"": [
-    { ""kind"": ""consume_status"", ""id"": ""pay"", ""targetFaction"": ""Enemy"",
-      ""status"": ""poison"", ""amount"": 1, ""mode"": ""Exact"" },
-    { ""kind"": ""grant_next_turn_fate"", ""id"": ""reward"", ""value"": 1,
-      ""requires"": { ""sourceEffectId"": ""pay"", ""minimumConsumed"": 1 } }
+    { ""key"": ""consume_status"", ""id"": ""pay"", ""targetFaction"": ""Enemy"", ""effectValue"": 1,
+      ""payload"": { ""key"": ""poison"", ""mode"": ""Exact"" } },
+    { ""key"": ""grant_next_turn_fate"", ""id"": ""reward"", ""effectValue"": 1,
+      ""requirement"": { ""sourceEffectId"": ""pay"", ""minimumConsumed"": 1 } }
   ]
 }";
 
@@ -68,14 +68,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Rejects_a_reference_to_a_missing_effect()
             => AssertRejected(
-                Mutate(card => Effect(card, 1)["requires"]["sourceEffectId"] = "missing"),
-                "effects[1] (id 'reward'): requires refers to 'missing', which is not an earlier effect");
+                Mutate(card => Effect(card, 1)["requirement"]["sourceEffectId"] = "missing"),
+                "effects[1] (id 'reward'): requirement refers to 'missing', which is not an earlier effect");
 
         [Test]
         public void Rejects_a_self_reference()
             => AssertRejected(
-                Mutate(card => Effect(card, 1)["requires"]["sourceEffectId"] = "reward"),
-                "effects[1] (id 'reward'): requires refers to itself");
+                Mutate(card => Effect(card, 1)["requirement"]["sourceEffectId"] = "reward"),
+                "effects[1] (id 'reward'): requirement refers to itself");
 
         [Test]
         public void Rejects_a_reference_to_an_effect_that_consumes_nothing()
@@ -83,10 +83,10 @@ namespace FateWeaver.Tests
                 Mutate(card =>
                 {
                     ((JArray)card["effects"]).Insert(0, JObject.Parse(
-                        @"{ ""kind"": ""damage"", ""id"": ""hit"", ""targetFaction"": ""Enemy"", ""value"": 1 }"));
-                    Effect(card, 2)["requires"]["sourceEffectId"] = "hit";
+                        @"{ ""key"": ""damage"", ""id"": ""hit"", ""targetFaction"": ""Enemy"", ""effectValue"": 1 }"));
+                    Effect(card, 2)["requirement"]["sourceEffectId"] = "hit";
                 }),
-                "requires refers to 'hit' (damage), which produces no consumed amount");
+                "requirement refers to 'hit' (damage), which produces no consumed amount");
 
         [Test]
         public void Rejects_a_reference_to_a_later_effect()
@@ -98,7 +98,7 @@ namespace FateWeaver.Tests
                     effects.RemoveAt(1);
                     effects.Insert(0, reward);
                 }),
-                "effects[0] (id 'reward'): requires refers to 'pay', which is not an earlier effect");
+                "effects[0] (id 'reward'): requirement refers to 'pay', which is not an earlier effect");
 
         [Test]
         public void Rejects_a_duplicate_effect_id()

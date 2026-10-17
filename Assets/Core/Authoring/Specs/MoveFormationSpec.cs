@@ -1,19 +1,21 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
+using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
-    /// <summary>Moves the formation by <see cref="Value"/> (negative = forward). 대상은 카드 쪽 진영의 Self다.</summary>
+    /// <summary>대형을 EffectValue만큼 옮긴다(음수 = 앞으로). 대상은 카드 쪽 진영의 Self다.</summary>
     public sealed class MoveFormationSpec : EffectSpec
     {
-        public int Value;
+        [JsonProperty(Order = -18)]
+        public int EffectValue;
 
         public override EffectKey Key => EffectKeys.MoveFormation;
 
         public override bool IsTargeted => true;
 
-        protected override EffectData Build() => new EffectData(Key, Value);
+        protected override EffectData Build() => new EffectData(Key, EffectValue);
 
         public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
         {

@@ -10,17 +10,21 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 2
+      "effectValue": 2,
+      "payload": {
+        "key": "poison"
+      }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Enemy",
-      "status": "poison_stasis"
+      "payload": {
+        "key": "poison_stasis"
+      }
     }
   ],
   "grade": "Common",

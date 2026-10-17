@@ -13,10 +13,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 3,
+      "effectValue": 3,
       "successEffectValue": 7
     }
   ],

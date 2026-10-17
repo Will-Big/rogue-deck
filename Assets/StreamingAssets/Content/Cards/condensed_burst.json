@@ -10,29 +10,33 @@
   },
   "effects": [
     {
-      "kind": "consume_status",
+      "key": "consume_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "amount": 3,
-      "mode": "UpTo"
+      "effectValue": 3,
+      "payload": {
+        "key": "poison",
+        "mode": "UpTo"
+      }
     },
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e1",
       "targetFaction": "Enemy",
-      "value": 2,
-      "scaleBy": {
+      "effectValue": 2,
+      "scaling": {
         "sourceEffectId": "e0",
         "perConsumed": 2
       }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e2",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     }
   ],
   "grade": "Common",

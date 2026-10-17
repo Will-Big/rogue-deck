@@ -11,17 +11,19 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 4
+      "effectValue": 4
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "block"
+      }
     }
   ],
   "grade": "Common",

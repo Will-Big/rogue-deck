@@ -11,18 +11,22 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 2
+      "effectValue": 2,
+      "payload": {
+        "key": "block"
+      }
     }
   ],
   "grade": "Common",

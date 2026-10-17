@@ -21,7 +21,7 @@ namespace FateWeaver.Tests
         {
             var errors = AuthoringValidator.Validate(
                 new[] { Execution(new ApplyStatusSpec {
-                    Status = new StatusKeyRef { Id = "no_such_status" }, Count = 1 }) },
+                    Payload = new ApplyStatusPayloadSpec { Key = new StatusKeyRef { Id = "no_such_status" } }, EffectValue = 1 }) },
                 AuthoringContext.Default());
             Assert.IsTrue(errors.Any(e => e.Contains("no_such_status")));
         }
@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         public void Empty_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(
-                new[] { Execution(new ApplyStatusSpec { Count = 1 }) },
+                new[] { Execution(new ApplyStatusSpec { EffectValue = 1 }) },
                 AuthoringContext.Default());
             Assert.IsNotEmpty(errors);
         }
@@ -64,7 +64,7 @@ namespace FateWeaver.Tests
                 Category = CardCategory.Execution,
                 Effects = new EffectSpec[]
                 {
-                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 1 }
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 1 }
                 }
             };
 

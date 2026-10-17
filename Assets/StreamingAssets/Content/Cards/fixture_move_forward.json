@@ -10,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "move_formation",
+      "key": "move_formation",
       "id": "e0",
       "targetFaction": "Ally",
-      "value": -1
+      "effectValue": -1
     }
   ],
   "tags": []
