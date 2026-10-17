@@ -5,8 +5,10 @@
   "category": "Intervention",
   "energyCost": 1,
   "intervention": {
-    "kind": "swap_execution_order",
-    "requireAdjacent": true
+    "key": "swap_execution_order",
+    "payload": {
+      "requireAdjacent": true
+    }
   },
   "grade": "Common",
   "tags": [

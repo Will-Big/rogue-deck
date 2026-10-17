@@ -183,16 +183,19 @@ namespace FateWeaver.Tests
                 EnergyCost = 1,
                 Intervention = new SwapExecutionOrderSpec
                 {
-                    TargetSide = InterventionTargetSideRef.Player,
-                    RequireAdjacent = true
+                    Payload = new SwapExecutionOrderPayloadSpec
+                    {
+                        TargetSide = InterventionTargetSideRef.Player,
+                        RequireAdjacent = true
+                    }
                 }
             };
 
             var restored = (InterventionCardSpec)ContentJson.Read<CardSpec>(ContentJson.Write(original));
             var swap = (SwapExecutionOrderSpec)restored.Intervention;
 
-            Assert.AreEqual(InterventionTargetSideRef.Player, swap.TargetSide);
-            Assert.IsTrue(swap.RequireAdjacent);
+            Assert.AreEqual(InterventionTargetSideRef.Player, swap.Payload.TargetSide);
+            Assert.IsTrue(swap.Payload.RequireAdjacent);
         }
 
         [Test]
@@ -249,16 +252,16 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Intervention_kind_picks_the_concrete_intervention_spec()
+        public void Intervention_key_picks_the_concrete_intervention_spec()
         {
             var spec = (InterventionCardSpec)ContentJson.Read<CardSpec>(
                 "{\"id\":\"d\",\"name\":\"d\",\"side\":\"Player\",\"category\":\"Intervention\","
-                + "\"energyCost\":1,\"intervention\":{\"kind\":\"change_execution_order\","
-                + "\"delta\":1,\"targetSide\":\"Enemy\"}}");
+                + "\"energyCost\":1,\"intervention\":{\"key\":\"change_execution_order\","
+                + "\"payload\":{\"delta\":1,\"targetSide\":\"Enemy\"}}}");
 
             var change = (ChangeExecutionOrderSpec)spec.Intervention;
-            Assert.AreEqual(1, change.Delta);
-            Assert.AreEqual(InterventionTargetSideRef.Enemy, change.TargetSide);
+            Assert.AreEqual(1, change.Payload.Delta);
+            Assert.AreEqual(InterventionTargetSideRef.Enemy, change.Payload.TargetSide);
         }
 
         [Test]
@@ -266,8 +269,8 @@ namespace FateWeaver.Tests
         {
             Assert.Throws<JsonSerializationException>(() => ContentJson.Read<CardSpec>(
                 "{\"id\":\"c\",\"name\":\"c\",\"side\":\"Player\",\"category\":\"Intervention\","
-                + "\"energyCost\":1,\"intervention\":{\"kind\":\"swap_execution_order\","
-                + "\"delta\":1}}"));
+                + "\"energyCost\":1,\"intervention\":{\"key\":\"swap_execution_order\","
+                + "\"payload\":{\"delta\":1}}}"));
         }
 
         [Test]

@@ -7,32 +7,32 @@ namespace FateWeaver.Core.Authoring.Json
 {
     /// <summary>InterventionSpec의 다형 (역)직렬화. 판별자는 스펙이 이미 갖고 있는
     /// InterventionActionKey.Id이고 타입 표는 InterventionSpecCatalog에서 만든다 — 리플렉션 스캔
-    /// 없음(AGENTS.md 규칙 9). EffectSpecJsonConverter와 같은 형태다.</summary>
+    /// 없음(AGENTS.md 규칙 9). EffectSpecJsonConverter와 같은 형태다. JSON 이름은 key다(효과 JSON 설계 P2).</summary>
     public sealed class InterventionSpecJsonConverter : JsonConverter<InterventionSpec>
     {
-        public const string KindProperty = "kind";
+        public const string KeyProperty = "key";
 
-        private static readonly Dictionary<string, Func<InterventionSpec>> FactoryByKind = BuildFactories();
-        private static readonly Dictionary<Type, string> KindByType = BuildKinds();
+        private static readonly Dictionary<string, Func<InterventionSpec>> FactoryByKey = BuildFactories();
+        private static readonly Dictionary<Type, string> KeyByType = BuildKeys();
 
         public override InterventionSpec ReadJson(
             JsonReader reader, Type objectType, InterventionSpec existingValue,
             bool hasExistingValue, JsonSerializer serializer)
         {
             var entry = JObject.Load(reader);
-            var kind = (string)entry[KindProperty];
-            if (string.IsNullOrEmpty(kind))
+            var key = (string)entry[KeyProperty];
+            if (string.IsNullOrEmpty(key))
             {
                 throw new JsonSerializationException(
-                    "Intervention entry requires a '" + KindProperty + "' property.");
+                    "Intervention entry requires a '" + KeyProperty + "' property.");
             }
 
-            if (!FactoryByKind.TryGetValue(kind, out var create))
+            if (!FactoryByKey.TryGetValue(key, out var create))
             {
-                throw new JsonSerializationException("Unknown intervention kind '" + kind + "'.");
+                throw new JsonSerializationException("Unknown intervention key '" + key + "'.");
             }
 
-            entry.Remove(KindProperty);
+            entry.Remove(KeyProperty);
             var spec = create();
             using (var subReader = entry.CreateReader())
             {
@@ -44,7 +44,7 @@ namespace FateWeaver.Core.Authoring.Json
 
         public override void WriteJson(JsonWriter writer, InterventionSpec value, JsonSerializer serializer)
         {
-            if (!KindByType.TryGetValue(value.GetType(), out var kind))
+            if (!KeyByType.TryGetValue(value.GetType(), out var key))
             {
                 throw new JsonSerializationException(
                     "Intervention spec type '" + value.GetType().Name
@@ -52,7 +52,7 @@ namespace FateWeaver.Core.Authoring.Json
             }
 
             var entry = JObject.FromObject(value, ContentJson.Plain);
-            entry.AddFirst(new JProperty(KindProperty, kind));
+            entry.AddFirst(new JProperty(KeyProperty, key));
             entry.WriteTo(writer);
         }
 
@@ -61,20 +61,20 @@ namespace FateWeaver.Core.Authoring.Json
             var table = new Dictionary<string, Func<InterventionSpec>>();
             foreach (var info in InterventionSpecCatalog.All())
             {
-                var kind = info.Create().Key.Id;
-                if (table.ContainsKey(kind))
+                var key = info.Create().Key.Id;
+                if (table.ContainsKey(key))
                 {
                     throw new InvalidOperationException(
-                        "Duplicate intervention spec kind '" + kind + "' in InterventionSpecCatalog.");
+                        "Duplicate intervention spec key '" + key + "' in InterventionSpecCatalog.");
                 }
 
-                table.Add(kind, info.Create);
+                table.Add(key, info.Create);
             }
 
             return table;
         }
 
-        private static Dictionary<Type, string> BuildKinds()
+        private static Dictionary<Type, string> BuildKeys()
         {
             var table = new Dictionary<Type, string>();
             foreach (var info in InterventionSpecCatalog.All())

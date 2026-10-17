@@ -53,8 +53,11 @@ namespace FateWeaver.Tests
         {
             var spec = new ChangeExecutionOrderSpec
             {
-                Delta = -2,
-                TargetSide = InterventionTargetSideRef.Player
+                Payload = new ChangeExecutionOrderPayloadSpec
+                {
+                    Delta = -2,
+                    TargetSide = InterventionTargetSideRef.Player
+                }
             };
 
             var payload = (ChangeExecutionOrderPayload)spec.ToPayload();
@@ -66,7 +69,7 @@ namespace FateWeaver.Tests
         [Test]
         public void Swap_execution_order_spec_builds_its_payload()
         {
-            var spec = new SwapExecutionOrderSpec { RequireAdjacent = true };
+            var spec = new SwapExecutionOrderSpec { Payload = new SwapExecutionOrderPayloadSpec { RequireAdjacent = true } };
 
             var payload = (SwapExecutionOrderPayload)spec.ToPayload();
 

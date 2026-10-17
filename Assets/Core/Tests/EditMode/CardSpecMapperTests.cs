@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
             {
                 Id = "pull_forward", Name = "앞당김", Side = Side.Player,
                 Category = CardCategory.Intervention, EnergyCost = 1,
-                Intervention = new ChangeExecutionOrderSpec { Delta = -2 }
+                Intervention = new ChangeExecutionOrderSpec { Payload = new ChangeExecutionOrderPayloadSpec { Delta = -2 } }
             });
 
             Assert.AreEqual(CardCategory.Intervention, def.Category);
