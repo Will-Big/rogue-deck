@@ -113,14 +113,6 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void CardFormatIsWrittenFirst()
-        {
-            var json = ContentJson.Write(new ExecutionCardSpec { Id = "x", Name = "x" });
-
-            StringAssert.StartsWith("{\n  \"cardFormat\": 2,", json.Replace("\r\n", "\n"));
-        }
-
-        [Test]
         public void RejectsUnknownEffectKindByName()
         {
             var ex = Assert.Throws<JsonSerializationException>(
@@ -300,7 +292,7 @@ namespace FateWeaver.Tests
             => json.Replace("\r\n", "\n").TrimEnd();
 
         // V22(게임 쪽): 저장소 카드 전부가 새 형식으로 읽고-쓰고-다시 읽어도 같은 정규 직렬화를 낸다. 의미 보존은 이것만으로
-        // 대신하지 않는다 — 로딩 검증·구형 변환 테스트가 따로 있다.
+        // 대신하지 않는다 — 로딩 검증 테스트가 따로 있다.
         [Test]
         public void Every_card_preserves_its_canonical_serialized_definition()
         {
@@ -314,7 +306,6 @@ namespace FateWeaver.Tests
                 Assert.IsTrue(Newtonsoft.Json.Linq.JToken.DeepEquals(
                     Newtonsoft.Json.Linq.JToken.Parse(canonical),
                     Newtonsoft.Json.Linq.JToken.Parse(ContentJson.Write(second))), path);
-                Assert.AreEqual(2, (int)Newtonsoft.Json.Linq.JObject.Parse(canonical)["cardFormat"], path);
             }
         }
     }

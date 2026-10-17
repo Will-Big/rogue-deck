@@ -28,11 +28,6 @@ namespace FateWeaver.Core.Authoring
                     errors.Add("Card spec requires an id.");
                 }
 
-                if (spec.CardFormat != CardSpec.CurrentFormat)
-                {
-                    errors.Add(Card(spec) + "cardFormat must be " + CardSpec.CurrentFormat + ".");
-                }
-
                 if (spec is InterventionCardSpec intervention)
                 {
                     ValidateIntervention(intervention, context, errors);

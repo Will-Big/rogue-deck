@@ -132,7 +132,6 @@ namespace FateWeaver.Tests
         // --- 카드 피해의 속성 -------------------------------------------------------------------
 
         private const string PiercingStrikeJson = @"{
-  ""cardFormat"": 2,
   ""id"": ""piercing_fixture"",
   ""name"": ""관통 검증"",
   ""side"": ""Player"",
