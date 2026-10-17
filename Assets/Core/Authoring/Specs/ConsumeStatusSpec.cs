@@ -25,7 +25,7 @@ namespace FateWeaver.Core.Authoring
         public override bool ProducesConsumption => true;
 
         protected override EffectData Build()
-            => new EffectData(Key, 0) { Payload = new ConsumeStatusPayload(Status.ToKey(), Amount, Mode) };
+            => new EffectData(Key, Amount) { Payload = new ConsumeStatusPayload(Status.ToKey(), Mode) };
 
         public override IEnumerable<string> Validate(AuthoringContext context)
         {

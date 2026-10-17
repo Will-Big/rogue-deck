@@ -26,7 +26,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(EffectKeys.ConsumeStatus, effect.Key);
             var payload = (ConsumeStatusPayload)effect.Payload;
             Assert.AreEqual(StatusKeys.Poison, payload.Key);
-            Assert.AreEqual(3, payload.Amount);
+            Assert.AreEqual(3, effect.EffectValue);
             Assert.AreEqual(ConsumptionMode.UpTo, payload.Mode);
             Assert.AreEqual(CardTargetFaction.Enemy, effect.TargetFaction);
             Assert.IsEmpty(spec.Validate(AuthoringContext.Default()).ToList());

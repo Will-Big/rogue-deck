@@ -235,7 +235,7 @@ namespace FateWeaver.Tests
             });
 
             var consume = (ConsumeStatusPayload)def.Effects[0].Payload;
-            Assert.AreEqual(3, consume.Amount);
+            Assert.AreEqual(3, def.Effects[0].EffectValue);
             Assert.AreEqual(ConsumptionMode.Exact, consume.Mode);
             Assert.AreEqual(new EffectResultScaling("pay", 2), def.Effects[1].Scaling);
             Assert.AreEqual(new EffectResultRequirement("pay", 1), def.Effects[2].Requirement);

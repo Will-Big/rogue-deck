@@ -43,11 +43,11 @@ namespace FateWeaver.Tests
         }
 
         private static EffectData Consume(string id, int amount, ConsumptionMode mode)
-            => new EffectData(EffectKeys.ConsumeStatus, 0)
+            => new EffectData(EffectKeys.ConsumeStatus, amount)
             {
                 Id = id,
                 TargetFaction = CardTargetFaction.Enemy,
-                Payload = new ConsumeStatusPayload(StatusKeys.Poison, amount, mode)
+                Payload = new ConsumeStatusPayload(StatusKeys.Poison, mode)
             };
 
         private static int ConsumedBy(System.Collections.Generic.IEnumerable<ResolutionEvent> events)

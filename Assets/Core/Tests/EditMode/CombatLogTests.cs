@@ -516,7 +516,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(enemy);
             var def = new CardDefinition("drain", "흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+                new EffectData(EffectKeys.ConsumeStatus, 3) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 0) }
             }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();
@@ -556,7 +556,7 @@ namespace FateWeaver.Tests
             state.Enemies.Add(new Enemy("goblin", 20));
             var def = new CardDefinition("empty_drain", "빈 흡수", Side.Player, 4, new[]
             {
-                new EffectData(EffectKeys.ConsumeStatus, 0) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 3, 0) }
+                new EffectData(EffectKeys.ConsumeStatus, 3) { TargetFaction = CardTargetFaction.Enemy, Payload = new ConsumeStatusPayload(StatusKeys.Poison, 0) }
             }) { EnemyTarget = CardTargetRange.FrontOne };
             state.Zone.Add(new ExecutionCardInstance(def) { OwnerId = CombatState.SoloPlayerId });
             var effects = new EffectRegistry();

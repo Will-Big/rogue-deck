@@ -30,7 +30,7 @@ namespace FateWeaver.Core.Effects
         {
             var status = enemy.Statuses.Get(payload.Key);
             var available = status == null ? 0 : status.Magnitude;
-            var consumed = ConsumptionRule.Take(available, payload.Amount, payload.Mode);
+            var consumed = ConsumptionRule.Take(available, ctx.EffectValue, payload.Mode);
             if (consumed <= 0)
             {
                 return 0;
@@ -59,9 +59,9 @@ namespace FateWeaver.Core.Effects
                 yield return "consume_status payload requires a status key.";
             }
 
-            if (payload.Amount < 1)
+            if (effect.EffectValue < 1)
             {
-                yield return "consume_status Amount must be at least 1.";
+                yield return "consume_status EffectValue must be at least 1.";
             }
         }
     }
