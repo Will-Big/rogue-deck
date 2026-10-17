@@ -4,7 +4,7 @@ using FateWeaver.Core.Events;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>효과 하나를 수행한 결과. 뒤 효과의 결과 참조(requires·scaleBy)가 효과 ID로 읽는다
+    /// <summary>효과 하나를 수행한 결과. 뒤 효과의 결과 참조(requirement·scaling)가 효과 ID로 읽는다
     /// (전투 실행 계약 스펙 §5). 수행하지 않은 효과(생략·요건 미달·대상 없음)는 Applied=false다.</summary>
     public sealed record EffectResult(bool Applied, int ConsumedAmount, int DamageDealt)
     {

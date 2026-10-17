@@ -50,9 +50,9 @@ namespace FateWeaver.Tests
         public void Empty_status_key_fails()
         {
             var errors = AuthoringValidator.Validate(
-                new[] { Execution(new ApplyStatusSpec { EffectValue = 1 }) },
+                new[] { Execution(new ApplyStatusSpec { EffectValue = 1, Payload = new ApplyStatusPayloadSpec() }) },
                 AuthoringContext.Default());
-            Assert.IsNotEmpty(errors);
+            Assert.That(errors, Has.Some.Contains("apply_status payload requires a status key."));
         }
 
         [Test]
@@ -75,12 +75,13 @@ namespace FateWeaver.Tests
         }
 
         [Test]
-        public void Unknown_intervention_kind_is_rejected_while_reading()
+        public void Unknown_intervention_key_is_rejected_while_reading()
         {
-            Assert.Throws<Newtonsoft.Json.JsonSerializationException>(
+            var ex = Assert.Throws<Newtonsoft.Json.JsonSerializationException>(
                 () => ContentJson.Read<CardSpec>(
                     "{\"id\":\"t\",\"name\":\"t\",\"side\":\"Player\",\"category\":\"Intervention\","
-                    + "\"intervention\":{\"kind\":\"no_such_action\"}}"));
+                    + "\"intervention\":{\"key\":\"no_such_action\"}}"));
+            StringAssert.Contains("Unknown intervention key 'no_such_action'", ex.Message);
         }
 
         [Test]
