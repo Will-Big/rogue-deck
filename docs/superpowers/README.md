@@ -1,6 +1,6 @@
 # Fate Weaver 설계·계획 문서 색인
 
-- 개정일: 2026-10-14
+- 개정일: 2026-10-17
 - 역할: 현재 기준 문서와 진행 중인 계획을 찾는 출발점
 
 새 작업을 시작할 때는 이 색인에서 해당 도메인의 기준 문서를 먼저 찾는다.
@@ -29,6 +29,7 @@
 | [전투 코어 설계](specs/2026-06-18-fate-weaver-core-design.md) | `current` | 순수 C# 코어 경계, 결정론, 이벤트 출력 | 새 규칙·효과·상태·시뮬레이션 구현 |
 | [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 한국어 진단·샌드박스 호환용 설명 레지스트리. 제품의 다국어 문장 생성은 현지화 설계가 대체한다 | 진단용 설명 확장; 제품 설명은 현지화 설계를 사용 |
 | [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | 다형 효과 스펙의 매핑·검증·확장 구조(JSON `kind` 판별자와 컨버터) | 새 효과·상태·개입 저작 타입 추가 |
+| [효과 JSON 페이로드 중첩](specs/2026-10-17-effect-json-payload-nesting-design.md) — [HTML 검토](specs/2026-10-17-effect-json-payload-nesting-design.html) | `active` | 효과 JSON 이름·구조를 `EffectData`·페이로드 레코드와 통일(cardFormat 3), 세기 숫자는 `EffectValue`·선택값은 페이로드 원칙, `consume_status` 개수 이동. 설계 승인 대기 | 구현 착수; 완료 시 열린 카드 저작 구조의 JSON 형식 서술을 대체 |
 | [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 카드 플레이 전 입력 대상 요구의 선언·질의·검증. 실행 효과의 자동 대상 선택은 전투 실행 계약이 우선한다 | 새 대상형 개입 액션·대상 종류 추가 |
 
 ### 전투 실행 재설계

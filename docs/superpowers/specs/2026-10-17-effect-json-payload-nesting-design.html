@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>효과 JSON 페이로드 중첩</title>
+<style>body{font:17px/1.7 system-ui,sans-serif;max-width:1050px;margin:40px auto;padding:0 24px;background:#f5f6fa;color:#202a3b}section{background:white;padding:24px;margin:20px 0;border-radius:12px}h1,h2{line-height:1.3}table{border-collapse:collapse;width:100%}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}svg{width:100%;height:auto}code{background:#edf1f8;padding:2px 5px}pre{background:#edf1f8;padding:12px;border-radius:8px;overflow-x:auto;font-size:14px;line-height:1.5}a{color:#225ac1}.badge{color:#885b00}.bad{color:#a32d2d}.ok{color:#0f6e56}</style>
+<h1>효과 JSON을 EffectData 모양으로 맞추고 페이로드를 중첩한다</h1>
+<p class="badge">2026-10-17 · 설계 승인 대기 · 도메인: 카드 저작</p>
+<p>효과 한 줄의 JSON 이름과 구조를 코어 <code>EffectData</code>·페이로드 레코드와 똑같이 만든다. 그 과정에서 <code>consume_status</code>의 개수를 페이로드에서 공통 칸 <code>EffectValue</code>로 옮긴다. <a href="2026-10-17-effect-json-payload-nesting-design.md">세션 인계용 상세</a></p>
+
+<section><h2>무엇을 만드나</h2>
+<p>저작자는 이제 사람이 아니라 AI 세션이다. 그래서 JSON 필드 이름을 사람이 읽기 좋은 이름(<code>value</code>, <code>count</code>, <code>amount</code>, <code>kind</code>)에서 코어 이름(<code>effectValue</code>, <code>key</code>)으로 통일하고, 효과 전용 값은 <code>payload</code> 객체로 묶는다. AI는 코어 레코드 정의만 읽고 JSON 모양을 알 수 있게 된다.</p>
+<p>원칙 두 줄이 이 설계의 전부다.</p>
+<ul>
+<li><b>P1.</b> 효과의 세기 숫자("얼마나")는 공통 칸 <code>EffectValue</code>에 둔다. 페이로드에는 그 효과 종류만 쓰는 선택값("무엇을, 어떤 식으로")만 둔다.</li>
+<li><b>P2.</b> 효과 JSON의 이름과 구조는 <code>EffectData</code>와 페이로드 레코드를 그대로 따른다. 예외를 두지 않는다.</li>
+</ul>
+<p>지금은 <code>consume_status</code>만 P1을 어긴다. 개수를 페이로드에 두어(<code>ConsumeStatusSpec.cs:28</code>), 조건 성공 수치와 <code>scaleBy</code>가 소비 개수에 닿지 않는다(<code>EffectExecutor.cs:178-186</code>, <code>ConsumeStatusHandler.cs:33</code>).</p></section>
+
+<section><h2>구조</h2><table><tr><th>객체</th><th>책임</th><th>모르는 것</th></tr>
+<tr><td>효과 JSON (cardFormat 3)</td><td>코어와 같은 이름으로 효과 한 줄을 저작한다</td><td>핸들러·실행 순서</td></tr>
+<tr><td>CardFormatMigration</td><td>옛 형식(1·2)을 로딩 경계에서 3으로 올린다</td><td>새 효과 종류(새 효과는 처음부터 3으로 저작)</td></tr>
+<tr><td>EffectSpecJsonConverter</td><td><code>key</code>로 효과 스펙 타입을 골라 채운다</td><td>필드의 의미</td></tr>
+<tr><td>효과 스펙 + 페이로드 스펙</td><td>자기 필드를 검증하고 코어 <code>EffectData</code>로 바꾼다</td><td>전투 상태</td></tr>
+<tr><td>EffectData + 코어 페이로드 레코드</td><td>세기 숫자와 종류 전용 선택값을 나눠 담는다</td><td>JSON 이름</td></tr>
+<tr><td>EffectExecutor</td><td><code>EffectValue</code>에만 조건 교체·<code>scaling</code> 가산을 적용한다</td><td>페이로드 내용</td></tr>
+<tr><td>효과 핸들러</td><td><code>EffectValue</code>와 자기 페이로드를 읽어 실행한다</td><td>다른 효과의 페이로드</td></tr></table>
+<p>의존이 한 객체로 몰리지 않는다. 페이로드 스펙은 코어 페이로드 레코드마다 하나씩 둔다(거울 관계).</p></section>
+
+<section><h2>의존 방향</h2>
+<svg viewBox="0 0 980 330" role="img" aria-label="JSON에서 핸들러까지 효과 한 줄이 흐르는 길"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#43638b"/></marker></defs>
+<g fill="#eef3fc" stroke="#8298ba"><rect x="15" y="40" width="175" height="70" rx="8"/><rect x="270" y="40" width="175" height="70" rx="8"/><rect x="525" y="40" width="175" height="70" rx="8"/><rect x="780" y="40" width="175" height="70" rx="8"/><rect x="780" y="230" width="175" height="70" rx="8"/><rect x="525" y="230" width="175" height="70" rx="8"/><rect x="270" y="230" width="175" height="70" rx="8"/></g>
+<g text-anchor="middle" fill="#202a3b" font-size="16"><text x="102" y="70">효과 JSON (v3)</text><text x="357" y="70">로딩 경계</text><text x="612" y="70">스펙 컨버터</text><text x="867" y="70">효과 스펙</text><text x="867" y="260">EffectData</text><text x="612" y="260">EffectExecutor</text><text x="357" y="260">효과 핸들러</text></g>
+<g text-anchor="middle" fill="#385478" font-size="13"><text x="102" y="94">key·effectValue·payload</text><text x="357" y="94">cardFormat 1·2 → 3</text><text x="612" y="94">"key"로 스펙 생성</text><text x="867" y="94">+ 페이로드 스펙</text><text x="867" y="284">EffectValue + Payload</text><text x="612" y="284">EffectValue만 바꿈</text><text x="357" y="284">값·페이로드 읽음</text></g>
+<g stroke="#43638b" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M190 75H268"/><path d="M445 75H523"/><path d="M700 75H778"/><path d="M867 110V228"/><path d="M780 265H702"/><path d="M525 265H447"/></g>
+<g fill="#385478" font-size="13"><text x="857" y="165" text-anchor="end">Build(): 숫자 → EffectValue,</text><text x="857" y="183" text-anchor="end">선택값 → Payload</text><text x="560" y="205">조건 성공 교체 · scaling 가산</text><text x="300" y="205">ctx.EffectValue + Payload</text></g></svg>
+<p>숫자가 <code>EffectValue</code>를 지나야 조건 교체와 <code>scaling</code>이 적용된다. 페이로드는 실행기가 열지 않고 핸들러까지 그대로 전달된다.</p></section>
+
+<section><h2>확장 축</h2>
+<p><b>바뀌는 것:</b> 새 효과를 추가할 때 그 효과의 스펙과 (필요하면) 페이로드 스펙·레코드를 더한다. JSON 모양은 레코드에서 자동으로 정해진다.</p>
+<p><b>고정되는 것:</b> 효과 한 줄의 공통 필드 이름(<code>key</code>, <code>id</code>, <code>targetFaction</code>, <code>effectValue</code>, <code>successEffectValue</code>, <code>skipOnBasic</code>, <code>requirement</code>, <code>scaling</code>, <code>payload</code>)과 "세기 숫자는 <code>effectValue</code>" 원칙.</p>
+<p><b>범위 밖:</b> 카드 수준 필드(<code>targets</code>, <code>intervention</code>, <code>startCondition</code>)와 조작 카드·조건의 <code>kind</code>. 이들은 <code>EffectData</code>가 아니다.</p></section>
+
+<section><h2>대안과 기각 이유</h2>
+<svg viewBox="0 0 980 250" role="img" aria-label="평평한 JSON은 key가 충돌하고 중첩 JSON은 충돌하지 않는다">
+<g fill="#fbeaea" stroke="#c98a8a"><rect x="10" y="10" width="470" height="230" rx="8"/></g><g fill="#e6f4ee" stroke="#7fb8a2"><rect x="500" y="10" width="470" height="230" rx="8"/></g>
+<g font-size="16" fill="#202a3b"><text x="28" y="42">기각: 이름만 바꾸고 평평하게 둔다</text><text x="518" y="42">채택: 페이로드를 중첩한다</text></g>
+<g font-size="14" font-family="ui-monospace,monospace" fill="#202a3b"><text x="28" y="85">{ "key": "apply_status",</text><text x="28" y="110">  "effectValue": 1,</text><text x="28" y="135">  "key": "poison" }</text><text x="518" y="85">{ "key": "apply_status",</text><text x="518" y="110">  "effectValue": 1,</text><text x="518" y="135">  "payload": { "key": "poison" } }</text></g>
+<g font-size="14"><text x="28" y="180" fill="#a32d2d">"key"가 한 객체에 두 번 → 하나가 사라진다</text><text x="28" y="205" fill="#a32d2d">피하려면 "status" 예외를 남겨야 한다 (P2 위반)</text><text x="518" y="180" fill="#0f6e56">EffectData.Key와 Payload.Key가 다른 층</text><text x="518" y="205" fill="#0f6e56">숫자가 payload 안에 있으면 눈에 띈다 (P1 확인)</text></g></svg>
+<p><b>기각: 코어 페이로드 레코드로 JSON을 바로 읽는다.</b> 클래스는 줄지만 코어 레코드가 JSON 형식과 검증을 떠안는다. 열린 카드 저작 설계 §4.1이 정한 "스펙이 자기 파라미터를 검증하고 코어로 변환한다" 구조와 어긋난다. 그래서 거울 관계인 페이로드 스펙을 둔다.</p>
+<p><b>기각: <code>EffectValue</code>를 기반 클래스 <code>EffectSpec</code>에 둔다.</b> 숫자가 없는 효과(<code>trigger_status</code>)에도 필드가 생겨, 지금 <code>MissingMemberHandling.Error</code>(<code>ContentJson.cs:38</code>)가 하는 거부가 사라진다. 숫자가 있는 스펙 6개가 각자 선언한다.</p></section>
+
+<section><h2>이 선택으로 나중에 어려워지는 것</h2><ul>
+<li>콘텐츠 35장과 인라인 JSON을 담은 테스트를 한 번에 새 형식으로 바꿔야 한다. 테스트 수정 후보는 25개 파일이다.</li>
+<li>마이그레이션 단계가 하나 늘어(v1→v2→v3) 로딩 경계 코드가 커진다. v2 JSON도 계속 읽히므로, 오래된 v2 예시가 테스트에 남아 AI가 옛 형식을 참고할 수 있다.</li>
+<li>페이로드 스펙과 코어 페이로드 레코드가 쌍으로 늘어난다. 한쪽만 고치면 P2가 깨진다.</li>
+<li>숫자가 없는 효과에 <code>successEffectValue</code>·<code>scaling</code>을 적으면 여전히 조용히 무시된다(기반 클래스 필드라 거부되지 않음). 이 작업은 고치지 않고 후속 과제로 남긴다.</li>
+<li>사용자 결정으로 새 테스트를 쓰지 않는다. 소비 개수에 성공 수치·<code>scaling</code>이 적용되는 새 동작은 테스트 없이 들어간다(AGENTS.md 규칙 12와 긴장).</li>
+<li>카드 수준·조작 카드에는 <code>kind</code>가 남아, 효과(<code>key</code>)와 판별자 이름이 다르다.</li></ul></section>
+
+<section><h2>실행 예시</h2>
+<p>응축 파열(<code>condensed_burst</code>), 적의 독이 2개인 상황.</p>
+<pre>{ "key": "consume_status", "id": "e0", "targetFaction": "Enemy", "effectValue": 3,
+  "payload": { "key": "poison", "mode": "UpTo" } },
+{ "key": "damage", "id": "e1", "targetFaction": "Enemy", "effectValue": 2,
+  "scaling": { "sourceEffectId": "e0", "perConsumed": 2 } }</pre>
+<table><tr><th>단계</th><th>객체</th><th>값</th></tr>
+<tr><td>1</td><td>스펙 컨버터</td><td><code>"key": "consume_status"</code> → <code>ConsumeStatusSpec</code>, <code>payload</code> → <code>ConsumeStatusPayloadSpec</code></td></tr>
+<tr><td>2</td><td><code>ConsumeStatusSpec.Build()</code></td><td><code>EffectData(consume_status, EffectValue=3)</code>, <code>Payload=ConsumeStatusPayload(poison, UpTo)</code></td></tr>
+<tr><td>3</td><td><code>EffectExecutor</code></td><td>조건 없음 → <code>ctx.EffectValue = 3</code></td></tr>
+<tr><td>4</td><td><code>ConsumeStatusHandler</code></td><td><code>Take(available=2, 3, UpTo)</code> → 2개 소비, <code>ConsumedAmount = 2</code></td></tr>
+<tr><td>5</td><td><code>EffectExecutor</code> (e1)</td><td>2 + 2 × 2 = <b>6</b></td></tr>
+<tr><td>6</td><td><code>DamageHandler</code></td><td>피해 6</td></tr></table>
+<p>지금(v2)과 결과가 같다. 다른 점은, 이 카드에 시작 조건과 <code>"successEffectValue": 5</code>를 붙이면 조건 성공 시 실제로 5개까지 소비한다는 것이다. 지금은 그 값이 조용히 버려진다.</p></section>
+
+<section><h2>검증과 승인 범위</h2>
+<p><code>Tools/verify.sh</code> 전체 통과(부팅 로드가 전 카드를 검증)와 카드 그래프 도구의 <code>unittest</code> 통과로 확인한다. Unity 레이어는 효과 스펙을 참조하지 않는다. 구현은 전용 워크트리에서 하고, master 머지는 별도 승인 대상이다.</p></section>
+</html>
