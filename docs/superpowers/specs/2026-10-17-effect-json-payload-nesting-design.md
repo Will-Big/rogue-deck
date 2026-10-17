@@ -6,7 +6,7 @@
 
 ### 상태와 범위
 
-- 작성일: 2026-10-17 · 상태: `active` (2026-10-17 설계 승인. 구현 계획: [`../plans/2026-10-17-effect-json-payload-nesting.md`](../plans/2026-10-17-effect-json-payload-nesting.md). 구현이 끝나면 `current`로 바꾼다)
+- 작성일: 2026-10-17 · 상태: `current` (2026-10-17 구현 완료. 구현 계획은 보관됨)
 - 주 도메인: `card-authoring`
 - 대체 관계:
   - [열린 카드 저작 구조](2026-07-19-open-card-authoring-design.md)의 효과·조작 JSON 형식(`kind` 판별자,

@@ -28,8 +28,8 @@
 |---|---|---|---|
 | [전투 코어 설계](specs/2026-06-18-fate-weaver-core-design.md) | `current` | 순수 C# 코어 경계, 결정론, 이벤트 출력 | 새 규칙·효과·상태·시뮬레이션 구현 |
 | [카드 설명 레지스트리](specs/2026-07-16-description-registry-design.md) | `current` | 한국어 진단·샌드박스 호환용 설명 레지스트리. 제품의 다국어 문장 생성은 현지화 설계가 대체한다 | 진단용 설명 확장; 제품 설명은 현지화 설계를 사용 |
-| [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | 다형 효과 스펙의 매핑·검증·확장 구조(JSON `kind` 판별자와 컨버터) | 새 효과·상태·개입 저작 타입 추가 |
-| [효과 JSON 페이로드 중첩](specs/2026-10-17-effect-json-payload-nesting-design.md) — [HTML 검토](specs/2026-10-17-effect-json-payload-nesting-design.html) | `active` | 효과·조작 JSON 이름·구조를 코어 레코드와 통일하고 페이로드를 중첩, 카드 형식 버전·구형 변환 폐지, 세기 숫자는 `EffectValue`·선택값은 페이로드 원칙, `consume_status` 개수 이동. 2026-10-17 설계 승인, 구현 대기 | 구현 착수; 완료 시 열린 카드 저작 구조의 JSON 형식 서술과 전투 실행 계약의 스키마 버전 결정을 대체 |
+| [열린 카드 저작 구조](specs/2026-07-19-open-card-authoring-design.md) | `current` | 다형 효과 스펙의 매핑·검증·확장 구조(JSON 형식은 효과 JSON 페이로드 중첩 설계) | 새 효과·상태·개입 저작 타입 추가 |
+| [효과 JSON 페이로드 중첩](specs/2026-10-17-effect-json-payload-nesting-design.md) — [HTML 검토](specs/2026-10-17-effect-json-payload-nesting-design.html) | `current` | 효과·조작 JSON 이름·구조를 코어 레코드와 통일하고 페이로드를 중첩(`key`·`effectValue`·`payload`), 카드 형식 버전·구형 변환 폐지, 세기 숫자는 `EffectValue`·선택값은 페이로드 원칙, `consume_status` 개수 이동. 2026-10-17 구현 완료. 구현 계획은 보관됨. 열린 카드 저작 구조의 JSON 형식 서술과 전투 실행 계약의 스키마 버전 결정을 대체한다 | 새 효과·조작 저작 타입 추가, 카드 JSON 형식 변경 |
 | [대상 선택 메타데이터](specs/2026-07-28-p0c-targeting-metadata-design.md) | `current` | 카드 플레이 전 입력 대상 요구의 선언·질의·검증. 실행 효과의 자동 대상 선택은 전투 실행 계약이 우선한다 | 새 대상형 개입 액션·대상 종류 추가 |
 
 ### 전투 실행 재설계
@@ -103,7 +103,6 @@
 | [카드·상태 변경 — 주 목표와 단계별 계획](plans/2026-10-07-card-status-mutation-roadmap.md) — [HTML 계획표](plans/2026-10-07-card-status-mutation-roadmap.html) | `active` | 상태 수치 통일 → 중앙 규칙 변경·설명 → 카드 변경. 미래 단계는 개요만 유지 |
 | [단계 1.1 — 상태 수치의 저장 위치와 해석 책임](plans/2026-10-08-status-stacks-step-1.md) — [HTML 설계도](plans/2026-10-08-status-stacks-step-1.html) | `active` | 현재 설계 검토 단위. 단일 Stacks와 중앙 규칙의 책임 분배·구조 후보 |
 | [확장성·하드코딩 후속 리팩터링 백로그](plans/2026-07-16-architecture-refactor-backlog.md) | `active` | 남은 범위: P1-B 프리팹화, P1-C 튜닝 데이터화, P2 표현 경계, §12~§14 점검 추가 항목, §15 유지 기간별 상태 수치 분리. 항목별 현황은 그 문서 §0 표 |
-| [효과·조작 JSON 페이로드 중첩 구현](plans/2026-10-17-effect-json-payload-nesting.md) — [HTML 계획](plans/2026-10-17-effect-json-payload-nesting.html) | `active` | [효과 JSON 페이로드 중첩 설계](specs/2026-10-17-effect-json-payload-nesting-design.md)의 구현 5태스크: consume_status 개수 이동 → 형식 버전 제거 → 효과 중첩 → 조작 중첩 → 도구·문서. 계획 검토 대기 |
 | [후속 작업 상세](plans/2026-10-06-follow-up-queue.md) | `active` | 아래 「후속 작업 대기열」 표의 항목별 본문·근거·결정 기록(F1~F15). 다른 문서에 상세가 있는 항목은 표가 직접 가리킨다 |
 
 ## 남은 작업 흐름: 카드 콘텐츠

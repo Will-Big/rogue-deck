@@ -3,6 +3,9 @@
 사람 검수용 [HTML 개요](2026-09-18-combat-execution-contract-design.html).
 상태: current — 2026-09-18 사용자 승인, 같은 날 구현 완료·master 머지(`9dbbdca`). 구현 중 사용자
 결정은 §11에 있다(D1·D2·D7·D8·D10·D11).
+**2026-10-17 후속:** 카드 스키마 버전과 로딩 경계 구형 변환(아래 「4. 콘텐츠와 직렬화 계약」의 스키마 버전 서술)은
+[효과 JSON 페이로드 중첩 설계](2026-10-17-effect-json-payload-nesting-design.md) P3이 폐지했다. 카드 JSON은 형식 버전 없이
+항상 최신 형식이다. 효과 JSON의 필드 이름(`kind`, `count`, `requires`, `scaleBy` 등)도 그 설계가 대체했다.
 
 ## 상세
 

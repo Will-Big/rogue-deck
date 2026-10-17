@@ -18,7 +18,7 @@ GRAPH_PATH = Path("graphify-out/graph.json")
 CARD_GRAPH_PATH = Path("graphify-out/card-graph.json")
 
 ORIGIN = "card_extractor"
-KNOWN_EFFECT_FIELDS = {"kind", "value", "selector", "status", "count", "target", "condition", "maxAmount", "damageBonusPerConsumed"}
+KNOWN_EFFECT_FIELDS = {"key", "id", "targetFaction", "effectValue", "successEffectValue", "skipOnBasic", "requirement", "scaling", "payload"}
 STATUS_EDGE_BY_KIND = {
     "apply_status": "applies_status",
     "consume_status": "consumes_status",
@@ -119,22 +119,19 @@ def build(content_root, effect_keys, effect_owners, status_owners, ast_graph, wa
             unknown = set(eff) - KNOWN_EFFECT_FIELDS
             if unknown:
                 warn(f"{rel}: 미인식 효과 필드 {sorted(unknown)} — 그래프에 반영되지 않는다")
-            kind = eff.get("kind")
+            kind = eff.get("key")
             if kind is None:
-                warn(f"{rel}: kind 없는 효과")
+                warn(f"{rel}: key 없는 효과")
                 continue
             if known_kinds and kind not in known_kinds:
-                warn(f"{rel}: EffectKeys에 없는 kind '{kind}'")
+                warn(f"{rel}: EffectKeys에 없는 key '{kind}'")
             used_kinds.add(kind)
-            cond = eff.get("condition")
-            if isinstance(cond, dict) and "status" in cond:
-                warn(f"{rel}: condition이 상태를 참조한다 — 그래프에 엣지로 반영되지 않는다")
             links.append(edge(f"card:{cid}", f"effect_kind:{kind}", "uses_effect", rel))
             status_rel = STATUS_EDGE_BY_KIND.get(kind)
             if status_rel:
-                skey = eff.get("status")
+                skey = (eff.get("payload") or {}).get("key")
                 if skey is None:
-                    warn(f"{rel}: {kind} 효과에 status 필드가 없다")
+                    warn(f"{rel}: {kind} 효과에 payload.key가 없다")
                 elif skey not in status_ids:
                     warn(f"{rel}: 존재하지 않는 상태 '{skey}' 참조")
                 else:
