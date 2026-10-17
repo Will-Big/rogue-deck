@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "fixture_selected_block",
   "name": "[검증] 선택 방어",
   "side": "Player",
@@ -11,11 +10,13 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 4
+      "effectValue": 4,
+      "payload": {
+        "key": "block"
+      }
     }
   ],
   "tags": []

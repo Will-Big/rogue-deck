@@ -1,14 +1,15 @@
 {
-  "cardFormat": 2,
   "id": "delay",
   "name": "유예",
   "side": "Player",
   "category": "Intervention",
   "energyCost": 1,
   "intervention": {
-    "kind": "change_execution_order",
-    "delta": 1,
-    "targetSide": "Enemy"
+    "key": "change_execution_order",
+    "payload": {
+      "delta": 1,
+      "targetSide": "Enemy"
+    }
   },
   "grade": "Common",
   "tags": [

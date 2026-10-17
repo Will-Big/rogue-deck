@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
 using FateWeaver.Core.Status;
+using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
@@ -10,31 +11,39 @@ namespace FateWeaver.Core.Authoring
     /// 로딩에서 거부한다(ValidateTarget).</summary>
     public sealed class ApplyStatusSpec : EffectSpec
     {
-        public StatusKeyRef Status;
-
         /// <summary>이 카드가 거는 양. 뜻은 상태가 정한다 — 수명이 Permanent·ThisTurn이면 세기,
         /// Turns·UntilConsumed면 지속.</summary>
-        public int Count;
+        [JsonProperty(Order = -18)]
+        public int EffectValue;
+
+        [JsonProperty(Order = 60)]
+        public ApplyStatusPayloadSpec Payload;
 
         public override EffectKey Key => EffectKeys.ApplyStatus;
 
         public override bool IsTargeted => true;
 
         protected override EffectData Build()
-            => new EffectData(Key, Count) { Payload = new ApplyStatusPayload(Status.ToKey()) };
+            => new EffectData(Key, EffectValue) { Payload = new ApplyStatusPayload(Payload.Key.ToKey()) };
 
         /// <summary>저작 콘텐츠 존재 여부는 검사하지 않는다. StatusContentLoader가 "등록된 모든
         /// 상태에 저작이 있다"를 요구하고 부팅이 상태를 카드보다 먼저 읽으므로, 여기 도달한
         /// 시점에는 HasStatus가 곧 저작 존재다 — 가드를 두면 같은 불변식을 두 곳에서 지키게 된다.</summary>
         public override IEnumerable<string> Validate(AuthoringContext context)
         {
-            if (Status.IsEmpty)
+            if (Payload == null)
             {
-                yield return "apply_status spec requires a status key.";
+                yield return "apply_status requires a payload.";
+                yield break;
             }
-            else if (!context.HasStatus(Status.ToKey()))
+
+            if (Payload.Key.IsEmpty)
             {
-                yield return "Unknown status key '" + Status.Id + "'.";
+                yield return "apply_status payload requires a status key.";
+            }
+            else if (!context.HasStatus(Payload.Key.ToKey()))
+            {
+                yield return "Unknown status key '" + Payload.Key.Id + "'.";
             }
         }
 
@@ -55,5 +64,11 @@ namespace FateWeaver.Core.Authoring
                 yield return "apply_status on an enemy card supports only Self for now.";
             }
         }
+    }
+
+    /// <summary>ApplyStatusPayload의 저작 거울. 필드 이름은 코어 레코드를 따른다(효과 JSON 설계 P2).</summary>
+    public sealed class ApplyStatusPayloadSpec
+    {
+        public StatusKeyRef Key;
     }
 }

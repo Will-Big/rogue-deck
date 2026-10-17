@@ -44,9 +44,15 @@ Assets/StreamingAssets/Content/<종류>/*.json
 카드·콘텐츠의 추가와 수정은 AI 세션에서 `Assets/StreamingAssets/Content/`의 JSON을 직접 편집한다.
 인스펙터 카드 저작이나 별도 카드 편집 도구를 만들거나 사용하지 않는다.
 
-1. 기존 JSON과 해당 코어 스펙·로더를 읽어 필드·`kind`·참조 id를 확인한다.
+1. 기존 JSON과 해당 코어 스펙·로더를 읽어 필드·`key`·참조 id를 확인한다.
 2. 요청한 카드·상태·풀·덱·캐릭터·적·편성 JSON을 직접 수정한다.
 3. `Tools/verify.sh`로 로더·직렬화·헤드리스 회귀를 검증한다. 밸런스 변경은 규칙 12의 Compare도 확인한다.
+
+효과·조작 JSON의 필드 이름과 구조는 코어 레코드를 그대로 따른다 — 효과 한 줄은 `EffectData`, 조작은
+`InterventionActionData`, `payload` 객체는 그 종류의 코어 페이로드 레코드의 속성 이름을 camelCase로 쓴다.
+판별자는 `key`이고, 세기 숫자는 `effectValue`, 종류 전용 선택값만 `payload`에 둔다. 카드 JSON은 형식
+버전을 갖지 않는다: 형식을 바꾸면 그 커밋에서 모든 카드를 함께 고친다. 시작 조건의 `kind`는 예외다
+(닫힌 조건 이름). 근거: [효과 JSON 페이로드 중첩 설계](../superpowers/specs/2026-10-17-effect-json-payload-nesting-design.md).
 
 초안과 검수 메모는 [`docs/card-design/`](../card-design/)에 보관한다. 메모를 런타임 원본으로 쓰지 않는다.
 

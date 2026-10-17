@@ -3,21 +3,21 @@ using System.Collections.Generic;
 
 namespace FateWeaver.Core.Combat
 {
-    /// <summary>Mutable combat state. FateEnergyPerTurn is a variable (NOT fixed 3).
-    /// Party and Enemies are two independent side formations; index 0 is each side's front.</summary>
+    /// <summary>가변 전투 상태. FateEnergyPerTurn은 변수다(3 고정이 아니다).
+    /// Party와 Enemies는 서로 독립된 두 진영의 대형이며, 각 진영의 인덱스 0이 맨 앞이다.</summary>
     public sealed class CombatState
     {
-        /// <summary>Id of the single party member that solo (non-party) combats use. Also the OwnerId
-        /// stamped on solo deck cards, so deck ownership and party membership agree.</summary>
+        /// <summary>솔로(비파티) 전투가 쓰는 유일한 파티원의 id. 솔로 덱 카드에 찍히는 OwnerId이기도
+        /// 해서, 덱 소유와 파티 구성원이 서로 맞는다.</summary>
         public const string SoloPlayerId = "player";
         private const string SoloPlayerName = "Player";
 
         private Random _rng;
 
-        /// <summary>Independent party formation; index 0 is the party's front.</summary>
+        /// <summary>독립된 파티 대형. 인덱스 0이 파티의 맨 앞이다.</summary>
         public List<PartyMember> Party { get; } = new();
 
-        /// <summary>Independent enemy formation; index 0 is the enemy side's front.</summary>
+        /// <summary>독립된 적 대형. 인덱스 0이 적 진영의 맨 앞이다.</summary>
         public List<Enemy> Enemies { get; } = new();
 
         public FutureZone Zone { get; } = new();
@@ -62,8 +62,9 @@ namespace FateWeaver.Core.Combat
 
         public Status.StatusRuleSet StatusRules => StatusContent.Rules;
 
-        /// <summary>Seeded RNG shared by all combat rule logic (AGENTS.md rule 7: no ad-hoc `new Random()`
-        /// elsewhere). Lazily created from RngSeed so RngSeed can still be assigned via object initializer.</summary>
+        /// <summary>모든 전투 규칙 로직이 함께 쓰는 시드 RNG(AGENTS.md 규칙 7: 다른 곳에서 즉석
+        /// `new Random()` 금지). RngSeed를 객체 이니셜라이저로 대입할 수 있도록, 처음 읽을 때
+        /// RngSeed로부터 지연 생성한다.</summary>
         public Random Rng
         {
             get
@@ -77,7 +78,7 @@ namespace FateWeaver.Core.Combat
             }
         }
 
-        /// <summary>Adds the solo-mode party member. Party mode adds its own members instead.</summary>
+        /// <summary>솔로 모드의 파티원을 추가한다. 파티 모드는 대신 자기 구성원을 직접 추가한다.</summary>
         public PartyMember AddSoloPlayer(int hp)
         {
             var member = new PartyMember(SoloPlayerId, SoloPlayerName, hp);

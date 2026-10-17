@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "early_onset",
   "name": "조기 발병",
   "side": "Player",
@@ -11,17 +10,21 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     },
     {
-      "kind": "trigger_status",
+      "key": "trigger_status",
       "id": "e1",
       "targetFaction": "Enemy",
-      "status": "poison"
+      "payload": {
+        "key": "poison"
+      }
     }
   ],
   "grade": "Common",

@@ -9,7 +9,7 @@ namespace FateWeaver.Core.Authoring
     public enum ConditionKind { None, FirstToTrigger, WithinNth, BeforeNextEnemyDamageCard, PrevExecutedIsPlayerDamageCard, NextIsEnemyDamageCard, PrevExecutedIsEnemyDamageCard, NoPrecedingPlayerCard, NoFollowingEnemyCard, NoFollowingPlayerCard }
 
     /// <summary>카드 시작 조건(전투 실행 계약 스펙 §2·§4). 카드가 차례를 맞을 때 한 번 평가한다.
-    /// Closed condition combinator (백로그 §10): the kind enum + central switch stay by design.
+    /// 닫힌 조건 조합기(백로그 §10): 종류 enum과 중앙 switch는 설계상 그대로 둔다.
     /// 앞 효과의 결과를 읽는 요건은 여기가 아니라 효과의 requires다.</summary>
     public sealed class StartConditionSpec
     {
@@ -67,12 +67,12 @@ namespace FateWeaver.Core.Authoring
         public int PerConsumed;
     }
 
-    /// <summary>One authored effect. Each concrete spec owns its parameters (real types), its mapping
-    /// to core EffectData and its validation — adding a new effect touches no central enum/switch
-    /// (AGENTS.md rule 9). Registered explicitly in EffectSpecCatalog.
+    /// <summary>저작된 효과 하나. 구체 스펙마다 자기 매개변수(실제 타입), 코어 EffectData로의 변환,
+    /// 검증을 직접 갖는다 — 새 효과를 추가해도 중앙 enum·switch를 건드리지 않는다
+    /// (AGENTS.md 규칙 9). EffectSpecCatalog에 명시적으로 등록한다.
     ///
     /// 공통 필드(전투 실행 계약 스펙 §4): 카드 안에서 유일한 id, 대상 효과의 진영(카드의 위치 규칙 중 어느
-    /// 축을 쓰는가), 카드 시작 조건에 따른 성공 수치·생략, 앞 효과 결과 참조(requires·scaleBy).
+    /// 축을 쓰는가), 카드 시작 조건에 따른 성공 수치·생략, 앞 효과 결과 참조(requirement·scaling).
     /// 기반 필드의 Order는 CardSpec과 같은 이유로 명시한다 — 파생 필드(무순서)보다 id·진영이 앞에,
     /// 조건·참조가 뒤에 오게 고정한다.</summary>
     public abstract class EffectSpec
@@ -90,10 +90,10 @@ namespace FateWeaver.Core.Authoring
         public bool SkipOnBasic;
 
         [JsonProperty(Order = 52)]
-        public EffectRequirementSpec Requires;
+        public EffectRequirementSpec Requirement;
 
         [JsonProperty(Order = 53)]
-        public EffectScalingSpec ScaleBy;
+        public EffectScalingSpec Scaling;
 
         [JsonIgnore]
         public abstract EffectKey Key { get; }
@@ -102,7 +102,7 @@ namespace FateWeaver.Core.Authoring
         [JsonIgnore]
         public virtual bool IsTargeted => false;
 
-        /// <summary>이 효과가 실제 소비량을 결과로 내는가. requires·scaleBy는 이런 효과만 가리킬 수 있다.</summary>
+        /// <summary>이 효과가 실제 소비량을 결과로 내는가. requirement·scaling은 이런 효과만 가리킬 수 있다.</summary>
         [JsonIgnore]
         public virtual bool ProducesConsumption => false;
 
@@ -115,12 +115,12 @@ namespace FateWeaver.Core.Authoring
                 TargetFaction = IsTargeted ? TargetFaction : null,
                 SuccessEffectValue = SuccessEffectValue,
                 SkipOnBasic = SkipOnBasic,
-                Requirement = Requires == null
+                Requirement = Requirement == null
                     ? null
-                    : new EffectResultRequirement(Requires.SourceEffectId, Requires.MinimumConsumed),
-                Scaling = ScaleBy == null
+                    : new EffectResultRequirement(Requirement.SourceEffectId, Requirement.MinimumConsumed),
+                Scaling = Scaling == null
                     ? null
-                    : new EffectResultScaling(ScaleBy.SourceEffectId, ScaleBy.PerConsumed)
+                    : new EffectResultScaling(Scaling.SourceEffectId, Scaling.PerConsumed)
             };
 
         protected abstract EffectData Build();

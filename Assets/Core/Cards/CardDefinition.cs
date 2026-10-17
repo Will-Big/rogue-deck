@@ -6,7 +6,7 @@ using FateWeaver.Core.Status;
 
 namespace FateWeaver.Core.Cards
 {
-    /// <summary>One effect entry on a card: which handler + its scalar effect value (M1).</summary>
+    /// <summary>카드에 실린 효과 한 줄: 어느 핸들러가 처리하는가 + 그 효과의 스칼라 수치(M1).</summary>
     public sealed record EffectData(EffectKey Key, int EffectValue)
     {
         /// <summary>카드 안에서 유일한 효과 ID. 뒤 효과의 결과 참조가 이것으로 가리킨다. 저작 콘텐츠는
@@ -26,7 +26,7 @@ namespace FateWeaver.Core.Cards
         /// <summary>앞 효과의 실제 소비량에 비례해 이 효과의 수치를 더한다(null이면 가산 없음).</summary>
         public EffectResultScaling Scaling { get; init; }
 
-        /// <summary>Effect-kind-specific parameters (null when the scalar is enough).</summary>
+        /// <summary>효과 종류별 매개변수(스칼라 수치만으로 충분하면 null).</summary>
         public IEffectPayload Payload { get; init; }
 
         /// <summary>이 효과가 대상을 고르는 진영(절대 진영: Ally=파티, Enemy=적). 위치는 카드의 그 진영 축이
@@ -48,7 +48,7 @@ namespace FateWeaver.Core.Cards
             };
     }
 
-    /// <summary>Immutable card template.</summary>
+    /// <summary>불변 카드 템플릿.</summary>
     public sealed record CardDefinition(
         string Id,
         string Name,
@@ -99,16 +99,16 @@ namespace FateWeaver.Core.Cards
             return false;
         }
 
-        /// <summary>Energy cost to play this card.</summary>
+        /// <summary>이 카드를 내는 데 드는 운명력 비용.</summary>
         public int EnergyCost { get; init; }
 
-        /// <summary>Execution (effects on the zone) or intervention (zone control).</summary>
+        /// <summary>실행(실행선에서 효과를 낸다) 또는 조작(실행선을 제어한다).</summary>
         public CardCategory Category { get; init; }
 
-        /// <summary>For intervention cards: the action resolved when played (null for execution cards).</summary>
+        /// <summary>조작 카드 전용: 낼 때 해석되는 액션(실행 카드는 null).</summary>
         public InterventionActionData InterventionAction { get; init; }
 
-        /// <summary>When true, the card enters the future zone locked (intervention reordering rejected).</summary>
+        /// <summary>true면 카드가 잠긴 채로 실행선에 들어온다(조작 카드의 재배열을 거부한다).</summary>
         public bool StartsLocked { get; init; }
     }
 }

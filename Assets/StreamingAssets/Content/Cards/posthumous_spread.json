@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "posthumous_spread",
   "name": "사후 전염",
   "side": "Player",
@@ -11,24 +10,28 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 1
+      "effectValue": 1
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e1",
       "targetFaction": "Enemy",
-      "status": "poison",
-      "count": 1
+      "effectValue": 1,
+      "payload": {
+        "key": "poison"
+      }
     },
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e2",
       "targetFaction": "Enemy",
-      "status": "contagion",
-      "count": 2
+      "effectValue": 2,
+      "payload": {
+        "key": "contagion"
+      }
     }
   ],
   "grade": "Common",

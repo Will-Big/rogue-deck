@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "fixture_move_forward",
   "name": "[검증] 대형 이동",
   "side": "Player",
@@ -11,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "move_formation",
+      "key": "move_formation",
       "id": "e0",
       "targetFaction": "Ally",
-      "value": -1
+      "effectValue": -1
     }
   ],
   "tags": []

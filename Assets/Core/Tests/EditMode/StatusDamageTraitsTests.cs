@@ -132,7 +132,6 @@ namespace FateWeaver.Tests
         // --- 카드 피해의 속성 -------------------------------------------------------------------
 
         private const string PiercingStrikeJson = @"{
-  ""cardFormat"": 2,
   ""id"": ""piercing_fixture"",
   ""name"": ""관통 검증"",
   ""side"": ""Player"",
@@ -141,8 +140,8 @@ namespace FateWeaver.Tests
   ""baseExecutionOrder"": 5,
   ""targets"": { ""enemy"": ""FrontOne"" },
   ""effects"": [
-    { ""kind"": ""damage"", ""id"": ""e0"", ""targetFaction"": ""Enemy"", ""value"": 4,
-      ""traits"": [ ""Piercing"", ""IgnoresMultipliers"" ] }
+    { ""key"": ""damage"", ""id"": ""e0"", ""targetFaction"": ""Enemy"", ""effectValue"": 4,
+      ""payload"": { ""traits"": [ ""Piercing"", ""IgnoresMultipliers"" ] } }
   ]
 }";
 
@@ -161,7 +160,7 @@ namespace FateWeaver.Tests
         {
             var def = CardSpecMapper.ToDefinition(FateWeaver.Core.Authoring.Json.ContentJson.Read<CardSpec>(
                 PiercingStrikeJson.Replace(@",
-      ""traits"": [ ""Piercing"", ""IgnoresMultipliers"" ]", "")));
+      ""payload"": { ""traits"": [ ""Piercing"", ""IgnoresMultipliers"" ] }", "")));
 
             Assert.IsNull(def.Effects[0].Payload, "속성이 없으면 페이로드를 두지 않는다 — 보통 피해");
         }
@@ -194,9 +193,13 @@ namespace FateWeaver.Tests
             StringAssert.Contains("\"traits\"", json);
             CollectionAssert.AreEqual(
                 new[] { DamageTrait.Piercing, DamageTrait.IgnoresMultipliers },
-                ((DamageSpec)((ExecutionCardSpec)FateWeaver.Core.Authoring.Json.ContentJson.Read<CardSpec>(json)).Effects[0]).Traits);
+                ((DamageSpec)((ExecutionCardSpec)FateWeaver.Core.Authoring.Json.ContentJson.Read<CardSpec>(json)).Effects[0]).Payload.Traits);
 
-            var twice = new DamageSpec { Id = "e0", Value = 1, Traits = new[] { DamageTrait.Piercing, DamageTrait.Piercing } };
+            var twice = new DamageSpec
+            {
+                Id = "e0", EffectValue = 1,
+                Payload = new DamagePayloadSpec { Traits = new[] { DamageTrait.Piercing, DamageTrait.Piercing } }
+            };
             CollectionAssert.IsNotEmpty(twice.Validate(AuthoringContext.Default()));
         }
 

@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "heavy_swing",
   "name": "내려찍기",
   "side": "Player",
@@ -11,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 7
+      "effectValue": 7
     }
   ],
   "grade": "Common",

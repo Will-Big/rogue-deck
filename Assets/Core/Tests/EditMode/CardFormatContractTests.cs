@@ -8,14 +8,13 @@ using NUnit.Framework;
 
 namespace FateWeaver.Tests
 {
-    /// <summary>카드 JSON 형식 2의 로딩 계약(전투 실행 계약 스펙 §4, 검증 V21)과 구형(형식 1) 변환 규칙
-    /// (계획 T2a 변환 규칙 표). 잘못된 카드는 조용히 생략되거나 전투 중 취소되지 않고, 파일·카드·효과 경로가
-    /// 담긴 로딩 오류가 된다.</summary>
+    /// <summary>카드 JSON의 로딩 계약(전투 실행 계약 스펙 §4, 검증 V21). 잘못된 카드는 조용히 생략되거나
+    /// 전투 중 취소되지 않고, 파일·카드·효과 경로가 담긴 로딩 오류가 된다. 카드 JSON은 형식 버전이 없다
+    /// (효과 JSON 설계 P3).</summary>
     public class CardFormatContractTests
     {
         /// <summary>계획 T2a의 fixture. 게임 카드가 아니다.</summary>
         private const string PaymentFixture = @"{
-  ""cardFormat"": 2,
   ""id"": ""payment_fixture"",
   ""name"": ""소비 보상 검증"",
   ""side"": ""Player"",
@@ -24,10 +23,10 @@ namespace FateWeaver.Tests
   ""baseExecutionOrder"": 5,
   ""targets"": { ""enemy"": ""FrontOne"" },
   ""effects"": [
-    { ""kind"": ""consume_status"", ""id"": ""pay"", ""targetFaction"": ""Enemy"",
-      ""status"": ""poison"", ""amount"": 1, ""mode"": ""Exact"" },
-    { ""kind"": ""grant_next_turn_fate"", ""id"": ""reward"", ""value"": 1,
-      ""requires"": { ""sourceEffectId"": ""pay"", ""minimumConsumed"": 1 } }
+    { ""key"": ""consume_status"", ""id"": ""pay"", ""targetFaction"": ""Enemy"", ""effectValue"": 1,
+      ""payload"": { ""key"": ""poison"", ""mode"": ""Exact"" } },
+    { ""key"": ""grant_next_turn_fate"", ""id"": ""reward"", ""effectValue"": 1,
+      ""requirement"": { ""sourceEffectId"": ""pay"", ""minimumConsumed"": 1 } }
   ]
 }";
 
@@ -69,14 +68,14 @@ namespace FateWeaver.Tests
         [Test]
         public void Rejects_a_reference_to_a_missing_effect()
             => AssertRejected(
-                Mutate(card => Effect(card, 1)["requires"]["sourceEffectId"] = "missing"),
-                "effects[1] (id 'reward'): requires refers to 'missing', which is not an earlier effect");
+                Mutate(card => Effect(card, 1)["requirement"]["sourceEffectId"] = "missing"),
+                "effects[1] (id 'reward'): requirement refers to 'missing', which is not an earlier effect");
 
         [Test]
         public void Rejects_a_self_reference()
             => AssertRejected(
-                Mutate(card => Effect(card, 1)["requires"]["sourceEffectId"] = "reward"),
-                "effects[1] (id 'reward'): requires refers to itself");
+                Mutate(card => Effect(card, 1)["requirement"]["sourceEffectId"] = "reward"),
+                "effects[1] (id 'reward'): requirement refers to itself");
 
         [Test]
         public void Rejects_a_reference_to_an_effect_that_consumes_nothing()
@@ -84,10 +83,10 @@ namespace FateWeaver.Tests
                 Mutate(card =>
                 {
                     ((JArray)card["effects"]).Insert(0, JObject.Parse(
-                        @"{ ""kind"": ""damage"", ""id"": ""hit"", ""targetFaction"": ""Enemy"", ""value"": 1 }"));
-                    Effect(card, 2)["requires"]["sourceEffectId"] = "hit";
+                        @"{ ""key"": ""damage"", ""id"": ""hit"", ""targetFaction"": ""Enemy"", ""effectValue"": 1 }"));
+                    Effect(card, 2)["requirement"]["sourceEffectId"] = "hit";
                 }),
-                "requires refers to 'hit' (damage), which produces no consumed amount");
+                "requirement refers to 'hit' (damage), which produces no consumed amount");
 
         [Test]
         public void Rejects_a_reference_to_a_later_effect()
@@ -99,7 +98,7 @@ namespace FateWeaver.Tests
                     effects.RemoveAt(1);
                     effects.Insert(0, reward);
                 }),
-                "effects[0] (id 'reward'): requires refers to 'pay', which is not an earlier effect");
+                "effects[0] (id 'reward'): requirement refers to 'pay', which is not an earlier effect");
 
         [Test]
         public void Rejects_a_duplicate_effect_id()
@@ -130,114 +129,5 @@ namespace FateWeaver.Tests
             => AssertRejected(
                 Mutate(card => card["targets"]["ally"] = "Self"),
                 "targets.ally is declared but no effect targets Ally");
-
-        [Test]
-        public void Rejects_an_unsupported_card_format()
-        {
-            var result = Load(Mutate(card => card["cardFormat"] = 3));
-
-            Assert.IsFalse(result.Succeeded);
-            Assert.That(result.Errors, Has.Some.Contains("fixture.json"));
-            Assert.That(result.Errors, Has.Some.Contains("Unsupported card format '3'"));
-        }
-
-        // --- 구형(형식 1) 변환 ---------------------------------------------------------
-
-        private const string LegacyBurst = @"{
-  ""id"": ""legacy_burst"", ""name"": ""구형 파열"", ""side"": ""Player"", ""category"": ""Execution"",
-  ""energyCost"": 2, ""baseExecutionOrder"": 6,
-  ""effects"": [
-    { ""kind"": ""consume_status"", ""status"": ""poison"", ""maxAmount"": 3, ""damageBonusPerConsumed"": 2, ""selector"": ""FrontOne"" },
-    { ""kind"": ""damage"", ""value"": 2, ""selector"": ""FrontOne"" },
-    { ""kind"": ""apply_status"", ""status"": ""block"", ""count"": 4,
-      ""condition"": { ""kind"": ""ConsumedStatusAtLeast"", ""n"": 1, ""successEffectValue"": 5, ""skipOnBasic"": true } }
-  ]
-}";
-
-        [Test]
-        public void Legacy_card_upgrades_by_rule()
-        {
-            var entry = JObject.Parse(LegacyBurst);
-
-            CardFormatMigration.Upgrade(entry);
-
-            Assert.AreEqual(2, (int)entry["cardFormat"]);
-            Assert.AreEqual("FrontOne", (string)entry["targets"]["enemy"]);
-            Assert.AreEqual("Self", (string)entry["targets"]["ally"]);
-            var effects = (JArray)entry["effects"];
-            CollectionAssert.AreEqual(new[] { "e0", "e1", "e2" }, effects.Select(e => (string)e["id"]).ToArray());
-            Assert.AreEqual(3, (int)effects[0]["amount"]);
-            Assert.AreEqual("UpTo", (string)effects[0]["mode"]);
-            Assert.IsNull(effects[0]["maxAmount"]);
-            Assert.IsNull(effects[0]["damageBonusPerConsumed"]);
-            Assert.IsNull(effects[0]["selector"]);
-            Assert.AreEqual("e0", (string)effects[1]["scaleBy"]["sourceEffectId"]);
-            Assert.AreEqual(2, (int)effects[1]["scaleBy"]["perConsumed"]);
-            Assert.AreEqual("Ally", (string)effects[2]["targetFaction"]);
-            Assert.AreEqual("e0", (string)effects[2]["requires"]["sourceEffectId"]);
-            Assert.AreEqual(5, (int)effects[2]["count"]);
-            Assert.IsNull(entry["startCondition"]);
-        }
-
-        [Test]
-        public void Legacy_card_loads_to_the_same_definition_as_its_upgraded_form()
-        {
-            var upgraded = JObject.Parse(LegacyBurst);
-            CardFormatMigration.Upgrade(upgraded);
-
-            var fromLegacy = Load(LegacyBurst, "legacy.json");
-            var fromUpgraded = Load(upgraded.ToString(), "upgraded.json");
-
-            Assert.IsTrue(fromLegacy.Succeeded, string.Join("\n", fromLegacy.Errors));
-            Assert.IsTrue(fromUpgraded.Succeeded, string.Join("\n", fromUpgraded.Errors));
-            CollectionAssert.AreEqual(
-                fromUpgraded.Catalog.Get("legacy_burst").Effects,
-                fromLegacy.Catalog.Get("legacy_burst").Effects);
-        }
-
-        [Test]
-        public void Legacy_card_with_different_conditions_is_rejected_not_merged()
-        {
-            var result = Load(@"{
-  ""id"": ""two_conditions"", ""name"": ""두 조건"", ""side"": ""Player"", ""category"": ""Execution"",
-  ""effects"": [
-    { ""kind"": ""damage"", ""value"": 1, ""condition"": { ""kind"": ""FirstToTrigger"", ""successEffectValue"": 3 } },
-    { ""kind"": ""damage"", ""value"": 1, ""condition"": { ""kind"": ""WithinNth"", ""n"": 2, ""successEffectValue"": 3 } }
-  ]
-}", "legacy.json");
-
-            Assert.IsFalse(result.Succeeded);
-            Assert.That(result.Errors, Has.Some.Contains("legacy.json"));
-            Assert.That(result.Errors, Has.Some.Contains("card 'two_conditions' effects[1]"));
-            Assert.That(result.Errors, Has.Some.Contains("different conditions"));
-        }
-
-        [Test]
-        public void Legacy_explicit_party_member_target_is_rejected()
-        {
-            var result = Load(@"{
-  ""id"": ""pick_member"", ""name"": ""지목"", ""side"": ""Player"", ""category"": ""Execution"",
-  ""effects"": [ { ""kind"": ""apply_status"", ""status"": ""block"", ""count"": 2, ""target"": ""PartyMember"" } ]
-}", "legacy.json");
-
-            Assert.IsFalse(result.Succeeded);
-            Assert.That(result.Errors, Has.Some.Contains("apply_status target 'PartyMember' has no position equivalent"));
-        }
-
-        [Test]
-        public void Legacy_enemy_card_keeps_its_own_self_and_attacks_the_party()
-        {
-            var entry = JObject.Parse(@"{
-  ""id"": ""guard_jab"", ""name"": ""guard_jab"", ""side"": ""Enemy"", ""category"": ""Execution"",
-  ""effects"": [ { ""kind"": ""damage"", ""value"": 3 }, { ""kind"": ""apply_status"", ""status"": ""block"", ""count"": 2 } ]
-}");
-
-            CardFormatMigration.Upgrade(entry);
-
-            Assert.AreEqual("FrontOne", (string)entry["targets"]["ally"]);
-            Assert.AreEqual("Self", (string)entry["targets"]["enemy"]);
-            Assert.AreEqual("Ally", (string)entry["effects"][0]["targetFaction"]);
-            Assert.AreEqual("Enemy", (string)entry["effects"][1]["targetFaction"]);
-        }
     }
 }

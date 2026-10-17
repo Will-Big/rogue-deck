@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "sly_jab",
   "name": "약삭빠른 찌르기",
   "side": "Enemy",
@@ -13,10 +12,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Ally",
-      "value": 3,
+      "effectValue": 3,
       "successEffectValue": 6
     }
   ]

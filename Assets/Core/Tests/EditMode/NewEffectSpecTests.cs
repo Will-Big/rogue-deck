@@ -17,16 +17,15 @@ namespace FateWeaver.Tests
             {
                 Id = "pay",
                 TargetFaction = CardTargetFaction.Enemy,
-                Status = StatusKeyRef.Of(StatusKeys.Poison),
-                Amount = 3,
-                Mode = ConsumptionMode.UpTo
+                EffectValue = 3,
+                Payload = new ConsumeStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Poison), Mode = ConsumptionMode.UpTo }
             };
             var effect = spec.ToEffectData();
 
             Assert.AreEqual(EffectKeys.ConsumeStatus, effect.Key);
             var payload = (ConsumeStatusPayload)effect.Payload;
             Assert.AreEqual(StatusKeys.Poison, payload.Key);
-            Assert.AreEqual(3, payload.Amount);
+            Assert.AreEqual(3, effect.EffectValue);
             Assert.AreEqual(ConsumptionMode.UpTo, payload.Mode);
             Assert.AreEqual(CardTargetFaction.Enemy, effect.TargetFaction);
             Assert.IsEmpty(spec.Validate(AuthoringContext.Default()).ToList());
@@ -47,8 +46,8 @@ namespace FateWeaver.Tests
             var spec = new GrantNextTurnFateSpec
             {
                 Id = "reward",
-                Value = 1,
-                Requires = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
+                EffectValue = 1,
+                Requirement = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
             };
 
             var effect = spec.ToEffectData();

@@ -9,6 +9,8 @@
 - **2026-09-18 후속:** [전투 실행 계약](2026-09-18-combat-execution-contract-design.md) 구현으로 효과별 `TargetSelector`·`StatusApplyTarget`은 런타임과 저작에서
   모두 사라졌다. 위치는 카드의 아군·적 축(`CardDefinition.AllyTarget`·`EnemyTarget`)과 효과의 진영(`EffectData.TargetFaction`)
   하나로 표현한다. 아래 해당 서술은 작성 당시 기준이다.
+- **2026-10-17 후속:** 효과·조작 JSON의 판별자(`kind` → `key`), 효과 숫자 필드 이름, 평평한 페이로드 필드는
+  [효과 JSON 페이로드 중첩 설계](2026-10-17-effect-json-payload-nesting-design.md)가 대체했다. 아래 해당 서술은 작성 당시 기준이다.
 
 ## 1. 목적
 

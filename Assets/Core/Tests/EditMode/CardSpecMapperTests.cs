@@ -50,7 +50,7 @@ namespace FateWeaver.Tests
         public void Maps_flat_damage_action_from_the_enemy_axis()
         {
             var def = CardSpecMapper.ToDefinition(Execution(
-                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 3 },
+                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 3 },
                 Enemy(CardTargetRange.FrontOne)));
 
             Assert.AreEqual(CardCategory.Execution, def.Category);
@@ -69,7 +69,7 @@ namespace FateWeaver.Tests
         public void Start_condition_moves_to_the_card_and_success_value_stays_on_the_effect()
         {
             var def = CardSpecMapper.ToDefinition(Execution(
-                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 2, SuccessEffectValue = 8 },
+                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 2, SuccessEffectValue = 8 },
                 Enemy(CardTargetRange.FrontOne),
                 new StartConditionSpec { Kind = ConditionKind.FirstToTrigger }));
 
@@ -84,8 +84,8 @@ namespace FateWeaver.Tests
             var def = CardSpecMapper.ToDefinition(Execution(
                 new ApplyStatusSpec
                 {
-                    Id = "cover", TargetFaction = CardTargetFaction.Ally, Count = 2, SuccessEffectValue = 7,
-                    Status = StatusKeyRef.Of(StatusKeys.Block)
+                    Id = "cover", TargetFaction = CardTargetFaction.Ally, EffectValue = 2, SuccessEffectValue = 7,
+                    Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Block) }
                 },
                 Ally(CardTargetRange.Self),
                 new StartConditionSpec { Kind = ConditionKind.NextIsEnemyDamageCard }));
@@ -107,7 +107,7 @@ namespace FateWeaver.Tests
             {
                 Id = "pull_forward", Name = "앞당김", Side = Side.Player,
                 Category = CardCategory.Intervention, EnergyCost = 1,
-                Intervention = new ChangeExecutionOrderSpec { Delta = -2 }
+                Intervention = new ChangeExecutionOrderSpec { Payload = new ChangeExecutionOrderPayloadSpec { Delta = -2 } }
             });
 
             Assert.AreEqual(CardCategory.Intervention, def.Category);
@@ -127,7 +127,7 @@ namespace FateWeaver.Tests
             Assert.AreEqual(
                 Key(CardTargetFaction.Enemy, range),
                 TargetOfSingle(Execution(
-                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 4 }, Enemy(range))));
+                    new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 4 }, Enemy(range))));
         }
 
         [Test]
@@ -136,7 +136,7 @@ namespace FateWeaver.Tests
             var spec = Execution(
                 new ApplyStatusSpec
                 {
-                    Id = "slow", TargetFaction = CardTargetFaction.Enemy, Count = 2, Status = StatusKeyRef.Of(StatusKeys.Slow)
+                    Id = "slow", TargetFaction = CardTargetFaction.Enemy, EffectValue = 2, Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Slow) }
                 },
                 Enemy(CardTargetRange.BackOne));
 
@@ -150,7 +150,7 @@ namespace FateWeaver.Tests
             var spec = Execution(
                 new ApplyStatusSpec
                 {
-                    Id = "wall", TargetFaction = CardTargetFaction.Ally, Count = 4, Status = StatusKeyRef.Of(StatusKeys.Block)
+                    Id = "wall", TargetFaction = CardTargetFaction.Ally, EffectValue = 4, Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Block) }
                 },
                 Ally(CardTargetRange.All));
 
@@ -163,7 +163,7 @@ namespace FateWeaver.Tests
             var spec = Execution(
                 new ApplyStatusSpec
                 {
-                    Id = "cover", TargetFaction = CardTargetFaction.Ally, Count = 4, Status = StatusKeyRef.Of(StatusKeys.Block)
+                    Id = "cover", TargetFaction = CardTargetFaction.Ally, EffectValue = 4, Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Block) }
                 },
                 Ally(CardTargetRange.FrontOne));
 
@@ -176,7 +176,7 @@ namespace FateWeaver.Tests
             var spec = Execution(
                 new ApplyStatusSpec
                 {
-                    Id = "guard", TargetFaction = CardTargetFaction.Enemy, Count = 3, Status = StatusKeyRef.Of(StatusKeys.Block)
+                    Id = "guard", TargetFaction = CardTargetFaction.Enemy, EffectValue = 3, Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Block) }
                 },
                 Enemy(CardTargetRange.Self),
                 side: Side.Enemy);
@@ -188,7 +188,7 @@ namespace FateWeaver.Tests
         public void Enemy_card_damage_uses_the_ally_axis()
         {
             var spec = Execution(
-                new DamageSpec { Id = "jab", TargetFaction = CardTargetFaction.Ally, Value = 4 },
+                new DamageSpec { Id = "jab", TargetFaction = CardTargetFaction.Ally, EffectValue = 4 },
                 Ally(CardTargetRange.FrontOne),
                 side: Side.Enemy);
 
@@ -199,7 +199,7 @@ namespace FateWeaver.Tests
         public void Maps_move_formation_effect_key()
         {
             var effect = Single(Execution(
-                new MoveFormationSpec { Id = "step", TargetFaction = CardTargetFaction.Ally, Value = -1 },
+                new MoveFormationSpec { Id = "step", TargetFaction = CardTargetFaction.Ally, EffectValue = -1 },
                 Ally(CardTargetRange.Self)));
 
             Assert.AreEqual(EffectKeys.MoveFormation, effect.Key);
@@ -219,23 +219,24 @@ namespace FateWeaver.Tests
                     new ConsumeStatusSpec
                     {
                         Id = "pay", TargetFaction = CardTargetFaction.Enemy,
-                        Status = StatusKeyRef.Of(StatusKeys.Poison), Amount = 3, Mode = ConsumptionMode.Exact
+                        EffectValue = 3,
+                        Payload = new ConsumeStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Poison), Mode = ConsumptionMode.Exact }
                     },
                     new DamageSpec
                     {
-                        Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 2,
-                        ScaleBy = new EffectScalingSpec { SourceEffectId = "pay", PerConsumed = 2 }
+                        Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 2,
+                        Scaling = new EffectScalingSpec { SourceEffectId = "pay", PerConsumed = 2 }
                     },
                     new GrantNextTurnFateSpec
                     {
-                        Id = "reward", Value = 1,
-                        Requires = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
+                        Id = "reward", EffectValue = 1,
+                        Requirement = new EffectRequirementSpec { SourceEffectId = "pay", MinimumConsumed = 1 }
                     }
                 }
             });
 
             var consume = (ConsumeStatusPayload)def.Effects[0].Payload;
-            Assert.AreEqual(3, consume.Amount);
+            Assert.AreEqual(3, def.Effects[0].EffectValue);
             Assert.AreEqual(ConsumptionMode.Exact, consume.Mode);
             Assert.AreEqual(new EffectResultScaling("pay", 2), def.Effects[1].Scaling);
             Assert.AreEqual(new EffectResultRequirement("pay", 1), def.Effects[2].Requirement);
@@ -257,7 +258,7 @@ namespace FateWeaver.Tests
         public void Maps_no_following_enemy_card_condition()
         {
             var def = CardSpecMapper.ToDefinition(Execution(
-                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, Value = 2, SuccessEffectValue = 7 },
+                new DamageSpec { Id = "hit", TargetFaction = CardTargetFaction.Enemy, EffectValue = 2, SuccessEffectValue = 7 },
                 Enemy(CardTargetRange.FrontOne),
                 new StartConditionSpec { Kind = ConditionKind.NoFollowingEnemyCard }));
 

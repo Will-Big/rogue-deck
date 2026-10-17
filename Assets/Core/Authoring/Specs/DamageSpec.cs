@@ -1,37 +1,46 @@
 using System.Collections.Generic;
 using FateWeaver.Core.Cards;
 using FateWeaver.Core.Effects;
+using Newtonsoft.Json;
 
 namespace FateWeaver.Core.Authoring
 {
-    /// <summary>상대 진영의 카드 위치 규칙이 고른 대상에게 고정 피해를 준다. Traits는 이 피해의 속성들이다
-    /// (관통·배율 무시, 여러 개 가능 — 계획 D10). 생략하면 보통 피해다.</summary>
+    /// <summary>상대 진영의 카드 위치 규칙이 고른 대상에게 고정 피해를 준다. Payload.Traits는 이 피해의
+    /// 속성들이다(관통·배율 무시, 여러 개 가능 — 계획 D10). 생략하면 보통 피해다.</summary>
     public sealed class DamageSpec : EffectSpec
     {
-        public int Value;
+        [JsonProperty(Order = -18)]
+        public int EffectValue;
 
-        public DamageTrait[] Traits;
+        [JsonProperty(Order = 60)]
+        public DamagePayloadSpec Payload;
 
         public override EffectKey Key => EffectKeys.Damage;
 
         public override bool IsTargeted => true;
 
-        /// <summary>빈 목록도 생략한다 — 편집 도구와 같은 규칙.</summary>
-        public bool ShouldSerializeTraits() => Traits != null && Traits.Length > 0;
+        /// <summary>속성이 없으면 payload 자체를 쓰지 않는다 — 편집 도구와 같은 규칙.</summary>
+        public bool ShouldSerializePayload() => Payload?.Traits != null && Payload.Traits.Length > 0;
 
         protected override EffectData Build()
         {
-            var traits = DamageTraits.Of(Traits);
-            return new EffectData(Key, Value)
+            var traits = DamageTraits.Of(Payload?.Traits);
+            return new EffectData(Key, EffectValue)
             {
                 Payload = traits.Equals(DamageTraits.Normal) ? null : new DamagePayload(traits)
             };
         }
 
         public override IEnumerable<string> Validate(AuthoringContext context)
-            => DamageTraitRules.Validate(Traits, "damage traits");
+            => DamageTraitRules.Validate(Payload?.Traits, "damage traits");
 
         public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
             => RequirePositional(target, OpposingFaction(cardSide));
+    }
+
+    /// <summary>DamagePayload의 저작 거울. 필드 이름은 코어 레코드를 따른다(효과 JSON 설계 P2).</summary>
+    public sealed class DamagePayloadSpec
+    {
+        public DamageTrait[] Traits;
     }
 }

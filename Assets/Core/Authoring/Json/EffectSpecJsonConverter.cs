@@ -6,32 +6,33 @@ using Newtonsoft.Json.Linq;
 namespace FateWeaver.Core.Authoring.Json
 {
     /// <summary>EffectSpec의 다형 (역)직렬화. 판별자는 스펙이 이미 갖고 있는 EffectKey.Id이고
-    /// 타입 표는 EffectSpecCatalog에서 만든다 — 리플렉션 스캔 없음(AGENTS.md 규칙 9).</summary>
+    /// 타입 표는 EffectSpecCatalog에서 만든다 — 리플렉션 스캔 없음(AGENTS.md 규칙 9).
+    /// JSON 이름은 key다(효과 JSON 설계 P2).</summary>
     public sealed class EffectSpecJsonConverter : JsonConverter<EffectSpec>
     {
-        public const string KindProperty = "kind";
+        public const string KeyProperty = "key";
 
-        private static readonly Dictionary<string, Func<EffectSpec>> FactoryByKind = BuildFactories();
-        private static readonly Dictionary<Type, string> KindByType = BuildKinds();
+        private static readonly Dictionary<string, Func<EffectSpec>> FactoryByKey = BuildFactories();
+        private static readonly Dictionary<Type, string> KeyByType = BuildKeys();
 
         public override EffectSpec ReadJson(
             JsonReader reader, Type objectType, EffectSpec existingValue,
             bool hasExistingValue, JsonSerializer serializer)
         {
             var entry = JObject.Load(reader);
-            var kind = (string)entry[KindProperty];
-            if (string.IsNullOrEmpty(kind))
+            var key = (string)entry[KeyProperty];
+            if (string.IsNullOrEmpty(key))
             {
                 throw new JsonSerializationException(
-                    "Effect entry requires a '" + KindProperty + "' property.");
+                    "Effect entry requires a '" + KeyProperty + "' property.");
             }
 
-            if (!FactoryByKind.TryGetValue(kind, out var create))
+            if (!FactoryByKey.TryGetValue(key, out var create))
             {
-                throw new JsonSerializationException("Unknown effect kind '" + kind + "'.");
+                throw new JsonSerializationException("Unknown effect key '" + key + "'.");
             }
 
-            entry.Remove(KindProperty);
+            entry.Remove(KeyProperty);
             var spec = create();
             using (var subReader = entry.CreateReader())
             {
@@ -43,7 +44,7 @@ namespace FateWeaver.Core.Authoring.Json
 
         public override void WriteJson(JsonWriter writer, EffectSpec value, JsonSerializer serializer)
         {
-            if (!KindByType.TryGetValue(value.GetType(), out var kind))
+            if (!KeyByType.TryGetValue(value.GetType(), out var key))
             {
                 throw new JsonSerializationException(
                     "Effect spec type '" + value.GetType().Name
@@ -51,7 +52,7 @@ namespace FateWeaver.Core.Authoring.Json
             }
 
             var entry = JObject.FromObject(value, ContentJson.Plain);
-            entry.AddFirst(new JProperty(KindProperty, kind));
+            entry.AddFirst(new JProperty(KeyProperty, key));
             entry.WriteTo(writer);
         }
 
@@ -60,20 +61,20 @@ namespace FateWeaver.Core.Authoring.Json
             var table = new Dictionary<string, Func<EffectSpec>>();
             foreach (var info in EffectSpecCatalog.All())
             {
-                var kind = info.Create().Key.Id;
-                if (table.ContainsKey(kind))
+                var key = info.Create().Key.Id;
+                if (table.ContainsKey(key))
                 {
                     throw new InvalidOperationException(
-                        "Duplicate effect spec kind '" + kind + "' in EffectSpecCatalog.");
+                        "Duplicate effect spec key '" + key + "' in EffectSpecCatalog.");
                 }
 
-                table.Add(kind, info.Create);
+                table.Add(key, info.Create);
             }
 
             return table;
         }
 
-        private static Dictionary<Type, string> BuildKinds()
+        private static Dictionary<Type, string> BuildKeys()
         {
             var table = new Dictionary<Type, string>();
             foreach (var info in EffectSpecCatalog.All())

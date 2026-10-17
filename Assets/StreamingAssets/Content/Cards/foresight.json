@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "foresight",
   "name": "예견",
   "side": "Player",
@@ -14,12 +13,14 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 2,
-      "successEffectValue": 6
+      "effectValue": 2,
+      "successEffectValue": 6,
+      "payload": {
+        "key": "block"
+      }
     }
   ],
   "grade": "Common",

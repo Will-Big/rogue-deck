@@ -2,8 +2,8 @@ using System;
 
 namespace FateWeaver.Core.Effects
 {
-    /// <summary>Typed wrapper over a string id (open set, type-safe).
-    /// Plain readonly struct (NOT record struct) to stay within Unity 6's C# 9.</summary>
+    /// <summary>문자열 id를 감싼 타입(열린 집합이면서 타입 안전).
+    /// Unity 6의 C# 9 안에 머물기 위해 record struct가 아닌 일반 readonly struct로 둔다.</summary>
     public readonly struct EffectKey : IEquatable<EffectKey>
     {
         public string Id { get; }
@@ -29,8 +29,8 @@ namespace FateWeaver.Core.Effects
         public static readonly EffectKey ApplyStatus = new EffectKey("apply_status");
         public static readonly EffectKey MoveFormation = new EffectKey("move_formation");
         public static readonly EffectKey ConsumeStatus = new EffectKey("consume_status");
-        public static readonly EffectKey TriggerStatus = new EffectKey("trigger_status");       // Task 8
-        public static readonly EffectKey GrantNextTurnFate = new EffectKey("grant_next_turn_fate"); // Task 9
+        public static readonly EffectKey TriggerStatus = new EffectKey("trigger_status");       // 작업 8
+        public static readonly EffectKey GrantNextTurnFate = new EffectKey("grant_next_turn_fate"); // 작업 9
 
         /// <summary>반응 전용: 행위자(반응 보유자)의 상태를 대상에게 옮긴다(전염). 카드로 저작하지 않는다.</summary>
         public static readonly EffectKey TransferStatus = new EffectKey("transfer_status");

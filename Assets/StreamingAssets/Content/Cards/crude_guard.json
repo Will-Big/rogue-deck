@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "crude_guard",
   "name": "조잡한 방어",
   "side": "Enemy",
@@ -10,11 +9,13 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Enemy",
-      "status": "block",
-      "count": 3
+      "effectValue": 3,
+      "payload": {
+        "key": "block"
+      }
     }
   ]
 }

@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "quick_cover",
   "name": "빠른 엄호",
   "side": "Player",
@@ -11,11 +10,13 @@
   },
   "effects": [
     {
-      "kind": "apply_status",
+      "key": "apply_status",
       "id": "e0",
       "targetFaction": "Ally",
-      "status": "block",
-      "count": 3
+      "effectValue": 3,
+      "payload": {
+        "key": "block"
+      }
     }
   ],
   "grade": "Common",

@@ -61,7 +61,7 @@ namespace FateWeaver.Simulation.Descriptions
         public EffectDescriptionRequest Request(EffectData effect, int value, DescriptionRequestContext context)
         {
             if (!(effect.Payload is ConsumeStatusPayload payload)) throw new ArgumentException("Consume-status payload required.");
-            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text(payload.Mode == ConsumptionMode.UpTo ? "effect.consume_status.up_to" : "effect.consume_status", ("status", DescriptionRequests.Name("status." + payload.Key.Id + ".name")), ("amount", payload.Amount)));
+            return new EffectDescriptionRequest(context.Card.TargetOf(effect), DescriptionRequests.Text(payload.Mode == ConsumptionMode.UpTo ? "effect.consume_status.up_to" : "effect.consume_status", ("status", DescriptionRequests.Name("status." + payload.Key.Id + ".name")), ("amount", value)));
         }
     }
 

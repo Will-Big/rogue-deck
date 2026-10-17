@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "vanguard_slash",
   "name": "선봉 베기",
   "side": "Player",
@@ -11,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 5
+      "effectValue": 5
     }
   ],
   "grade": "Common",

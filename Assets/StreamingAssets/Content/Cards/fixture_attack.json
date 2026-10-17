@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "fixture_attack",
   "name": "[검증] 공격",
   "side": "Player",
@@ -11,10 +10,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Enemy",
-      "value": 4
+      "effectValue": 4
     }
   ],
   "tags": []

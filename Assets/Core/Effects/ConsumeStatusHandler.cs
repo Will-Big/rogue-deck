@@ -30,7 +30,7 @@ namespace FateWeaver.Core.Effects
         {
             var status = enemy.Statuses.Get(payload.Key);
             var available = status == null ? 0 : status.Magnitude;
-            var consumed = ConsumptionRule.Take(available, payload.Amount, payload.Mode);
+            var consumed = ConsumptionRule.Take(available, ctx.EffectValue, payload.Mode);
             if (consumed <= 0)
             {
                 return 0;
@@ -59,9 +59,21 @@ namespace FateWeaver.Core.Effects
                 yield return "consume_status payload requires a status key.";
             }
 
-            if (payload.Amount < 1)
+            if (effect.EffectValue < 1)
             {
-                yield return "consume_status Amount must be at least 1.";
+                yield return "consume_status EffectValue must be at least 1.";
+            }
+
+            // 해석된 소비 개수(조건 성공 수치·scaling 가산 포함)가 1 미만이면 ConsumptionRule.Take가 던진다.
+            // 그 값을 만드는 저작값을 여기서 막아 전투 중 예외를 없앤다.
+            if (effect.SuccessEffectValue.HasValue && effect.SuccessEffectValue.Value < 1)
+            {
+                yield return "consume_status SuccessEffectValue must be at least 1.";
+            }
+
+            if (effect.Scaling != null && effect.Scaling.PerConsumed < 0)
+            {
+                yield return "consume_status Scaling.PerConsumed must not be negative.";
             }
         }
     }

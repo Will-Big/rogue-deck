@@ -159,8 +159,8 @@ namespace FateWeaver.Tests
             {
                 Id = "slow",
                 TargetFaction = CardTargetFaction.Enemy,
-                Status = StatusKeyRef.Of(StatusKeys.Slow),
-                Count = 2
+                Payload = new ApplyStatusPayloadSpec { Key = StatusKeyRef.Of(StatusKeys.Slow) },
+                EffectValue = 2
             } }
         };
 

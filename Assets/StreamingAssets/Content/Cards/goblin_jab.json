@@ -1,5 +1,4 @@
 {
-  "cardFormat": 2,
   "id": "goblin_jab",
   "name": "찌르기",
   "side": "Enemy",
@@ -10,10 +9,10 @@
   },
   "effects": [
     {
-      "kind": "damage",
+      "key": "damage",
       "id": "e0",
       "targetFaction": "Ally",
-      "value": 5
+      "effectValue": 5
     }
   ]
 }
