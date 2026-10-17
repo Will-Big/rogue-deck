@@ -118,7 +118,7 @@
 | `scaleBy` | `scaling` | 내부 필드(`sourceEffectId`, `perConsumed`) 그대로 |
 | `status` | `payload.key` | apply·consume·trigger |
 | `mode` | `payload.mode` | consume |
-| `traits` | `payload.traits` | damage. 비면 `payload` 자체를 쓰지 않는다 |
+| `traits` | `payload.traits` | damage. 속성이 없으면 `payload`를 생략한다(속성 없는 `payload`는 로딩에서 거부, 2026-10-17 후속) |
 | `id`, `targetFaction`, `successEffectValue`, `skipOnBasic` | 그대로 | 이미 같다 |
 
 효과별 `payload` (코어 레코드의 거울):
@@ -176,7 +176,9 @@
      (`ConsumeStatusSpec.cs:16-19`의 "항상 쓴다" 이유 주석을 옮긴다)
    - `TriggerStatusPayloadSpec { public StatusKeyRef Key; }`
    - `DamagePayloadSpec { public DamageTrait[] Traits; }` — `DamageSpec`은 `Payload`가 null이거나 속성이 비면
-     코어 페이로드를 만들지 않는다(현행 `:27`과 같음). `ShouldSerializePayload()`로 빈 페이로드를 쓰지 않는다.
+     코어 페이로드를 만들지 않는다(현행 `:27`과 같음). **2026-10-17 후속:** 속성 없는 `payload`(`{}`, 빈 `traits`)는
+     `Validate`가 "damage payload needs traits; omit payload for normal damage."로 거부한다. 보통 피해를 쓰는 형태를
+     "payload 생략" 하나로 고정해 왕복 바이트가 달라지지 않게 한다. 그래서 `ShouldSerializePayload()`는 두지 않는다.
 4. 효과 스펙 `Validate`: `Payload == null`이면 apply·consume·trigger는 "<key> requires a payload." 오류.
    `Status.IsEmpty`·`HasStatus` 검사는 `Payload.Key`로, `Amount < 1`은 `EffectValue < 1`로 옮긴다
    (`ConsumeStatusSpec.cs:41-44` → "consume_status effectValue must be at least 1."). damage는

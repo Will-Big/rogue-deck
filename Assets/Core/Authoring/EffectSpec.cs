@@ -10,7 +10,7 @@ namespace FateWeaver.Core.Authoring
 
     /// <summary>카드 시작 조건(전투 실행 계약 스펙 §2·§4). 카드가 차례를 맞을 때 한 번 평가한다.
     /// 닫힌 조건 조합기(백로그 §10): 종류 enum과 중앙 switch는 설계상 그대로 둔다.
-    /// 앞 효과의 결과를 읽는 요건은 여기가 아니라 효과의 requires다.</summary>
+    /// 앞 효과의 결과를 읽는 요건은 여기가 아니라 효과의 requirement다.</summary>
     public sealed class StartConditionSpec
     {
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]

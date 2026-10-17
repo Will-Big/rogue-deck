@@ -19,9 +19,6 @@ namespace FateWeaver.Core.Authoring
 
         public override bool IsTargeted => true;
 
-        /// <summary>속성이 없으면 payload 자체를 쓰지 않는다 — 편집 도구와 같은 규칙.</summary>
-        public bool ShouldSerializePayload() => Payload?.Traits != null && Payload.Traits.Length > 0;
-
         protected override EffectData Build()
         {
             var traits = DamageTraits.Of(Payload?.Traits);
@@ -31,8 +28,20 @@ namespace FateWeaver.Core.Authoring
             };
         }
 
+        /// <summary>보통 피해는 payload를 생략하는 한 가지 형태로만 쓴다. 속성 없는 payload를 허용하면
+        /// 같은 뜻을 두 모양으로 저작할 수 있고, 다시 쓸 때 원본과 바이트가 달라진다(효과 JSON 설계 P3).</summary>
         public override IEnumerable<string> Validate(AuthoringContext context)
-            => DamageTraitRules.Validate(Payload?.Traits, "damage traits");
+        {
+            if (Payload != null && (Payload.Traits == null || Payload.Traits.Length == 0))
+            {
+                yield return "damage payload needs traits; omit payload for normal damage.";
+            }
+
+            foreach (var error in DamageTraitRules.Validate(Payload?.Traits, "damage traits"))
+            {
+                yield return error;
+            }
+        }
 
         public override IEnumerable<string> ValidateTarget(Side cardSide, CardTargetKey target)
             => RequirePositional(target, OpposingFaction(cardSide));
