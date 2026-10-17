@@ -35,6 +35,18 @@ namespace FateWeaver.Core.Authoring
                 yield return "consume_status effectValue must be at least 1.";
             }
 
+            // 소비 개수는 해석 시 조건 성공 수치로 바뀌고 scaling이 더해진다. 그 결과가 1 미만이면
+            // ConsumptionRule.Take가 전투 중에 던지므로, 그런 값을 로딩에서 거부한다.
+            if (SuccessEffectValue.HasValue && SuccessEffectValue.Value < 1)
+            {
+                yield return "consume_status successEffectValue must be at least 1.";
+            }
+
+            if (Scaling != null && Scaling.PerConsumed < 0)
+            {
+                yield return "consume_status scaling.perConsumed must not be negative.";
+            }
+
             if (Payload == null)
             {
                 yield return "consume_status requires a payload.";
