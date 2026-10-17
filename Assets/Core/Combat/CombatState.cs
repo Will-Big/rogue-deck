@@ -64,7 +64,18 @@ namespace FateWeaver.Core.Combat
 
         /// <summary>Seeded RNG shared by all combat rule logic (AGENTS.md rule 7: no ad-hoc `new Random()`
         /// elsewhere). Lazily created from RngSeed so RngSeed can still be assigned via object initializer.</summary>
-        public Random Rng => _rng ??= new Random(RngSeed);
+        public Random Rng
+        {
+            get
+            {
+                if (_rng == null)
+                {
+                    _rng = new Random(RngSeed);
+                }
+
+                return _rng;
+            }
+        }
 
         /// <summary>Adds the solo-mode party member. Party mode adds its own members instead.</summary>
         public PartyMember AddSoloPlayer(int hp)
