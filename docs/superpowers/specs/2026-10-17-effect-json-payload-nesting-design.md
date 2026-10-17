@@ -6,7 +6,7 @@
 
 ### 상태와 범위
 
-- 작성일: 2026-10-17 · 상태: `active` (설계 승인 대기. 구현이 끝나면 `current`로 바꾼다)
+- 작성일: 2026-10-17 · 상태: `active` (2026-10-17 설계 승인. 구현 계획: [`../plans/2026-10-17-effect-json-payload-nesting.md`](../plans/2026-10-17-effect-json-payload-nesting.md). 구현이 끝나면 `current`로 바꾼다)
 - 주 도메인: `card-authoring`
 - 대체 관계:
   - [열린 카드 저작 구조](2026-07-19-open-card-authoring-design.md)의 효과·조작 JSON 형식(`kind` 판별자,
@@ -169,7 +169,7 @@
    `GrantNextDamageCardBonusSpec`, `MoveFormationSpec`)은 `Value`/`Count`/`Amount`를 지우고
    `[JsonProperty(Order = -18)] public int EffectValue;`를 선언한다. `Build()`는 `new EffectData(Key, EffectValue)`.
    필드 주석(예: `ApplyStatusSpec.cs:15-16`의 세기/지속 설명)은 새 필드로 옮긴다.
-3. 페이로드가 있는 효과 스펙은 재료 필드(`Status`, `Mode`, `Traits`)를 지우고 `[JsonProperty(Order = 40)] public
+3. 페이로드가 있는 효과 스펙은 재료 필드(`Status`, `Mode`, `Traits`)를 지우고 `[JsonProperty(Order = 60)] public
    XxxPayloadSpec Payload;`를 선언한다. 페이로드 스펙은 코어 레코드마다 하나, 그 스펙과 같은 파일에 둔다:
    - `ApplyStatusPayloadSpec { public StatusKeyRef Key; }`
    - `ConsumeStatusPayloadSpec { public StatusKeyRef Key; [JsonProperty(DefaultValueHandling = Include)] public ConsumptionMode Mode; }`

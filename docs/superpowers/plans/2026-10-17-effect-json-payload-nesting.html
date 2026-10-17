@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>효과 JSON 구현 계획</title>
+<style>body{font:17px/1.7 system-ui,sans-serif;max-width:1050px;margin:40px auto;padding:0 24px;background:#f5f6fa;color:#202a3b}section{background:white;padding:24px;margin:20px 0;border-radius:12px}h1,h2{line-height:1.3}table{border-collapse:collapse;width:100%}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}svg{width:100%;height:auto}code{background:#edf1f8;padding:2px 5px}pre{background:#edf1f8;padding:12px;border-radius:8px;overflow-x:auto;font-size:14px;line-height:1.5}a{color:#225ac1}.badge{color:#885b00}</style>
+<h1>효과·조작 JSON 페이로드 중첩 — 구현 계획</h1>
+<p class="badge">2026-10-17 · 계획 검토 대기 · 승인된 설계: <a href="../specs/2026-10-17-effect-json-payload-nesting-design.html">효과 JSON 페이로드 중첩</a></p>
+<p>승인된 설계를 다섯 태스크로 나눠 구현한다. 각 태스크는 끝에서 <code>Tools/verify.sh</code>가 통과해야 커밋한다. <a href="2026-10-17-effect-json-payload-nesting.md">세션 인계용 상세</a></p>
+
+<section><h2>무엇을 하나</h2>
+<p>순서는 "작고 닫힌 변경부터"다. 먼저 동작만 바꾸고(형식 그대로), 다음에 형식 버전을 없애고, 마지막에 이름·구조를 바꾼다. 그래서 어느 태스크에서 멈춰도 저장소는 통과하는 상태다.</p>
+<p><b>새 테스트는 쓰지 않는다</b>(사용자 결정). 기존 테스트는 고치고, 폐지된 기능(형식 버전·구형 변환)만 검증하던 테스트 7개는 지운다. 테스트가 잡지 않는 위험 5가지는 태스크 안의 수동 확인 단계로 본다.</p></section>
+
+<section><h2>태스크</h2><table><tr><th>태스크</th><th>바뀌는 것</th><th>JSON</th><th>끝난 뒤 상태</th></tr>
+<tr><td>1. consume_status 개수 이동</td><td>코어 페이로드에서 <code>Amount</code> 제거, 핸들러·검증·설명이 <code>EffectValue</code>를 읽음</td><td>그대로</td><td>소비 개수에 성공 수치·scaling이 적용됨</td></tr>
+<tr><td>2. 형식 버전 제거</td><td><code>CardFormatMigration</code>·<code>CardFormat</code>·형식 검사 삭제</td><td><code>cardFormat</code> 줄 삭제(35장)</td><td>카드는 형식 버전 없음</td></tr>
+<tr><td>3. 효과 이름·중첩</td><td>효과 스펙 7개, 페이로드 스펙 4개 신설, 컨버터 <code>key</code></td><td>효과 47줄 재작성(31장)</td><td>효과 JSON = EffectData 모양</td></tr>
+<tr><td>4. 조작 이름·중첩</td><td>조작 스펙 2개, 페이로드 스펙 2개 신설, 컨버터 <code>key</code></td><td>조작 4장 재작성</td><td>조작 JSON = InterventionActionData 모양</td></tr>
+<tr><td>5. 도구·문서</td><td>카드 그래프 추출기, 저작 규칙 문서, 대체된 설계 2개 머리말, 색인</td><td>—</td><td>설계 <code>current</code>, 계획 보관</td></tr></table></section>
+
+<section><h2>순서와 의존</h2>
+<svg viewBox="0 0 980 170" role="img" aria-label="다섯 태스크가 순서대로 이어진다"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="#43638b"/></marker></defs>
+<g fill="#eef3fc" stroke="#8298ba"><rect x="10" y="40" width="160" height="70" rx="8"/><rect x="212" y="40" width="160" height="70" rx="8"/><rect x="414" y="40" width="160" height="70" rx="8"/><rect x="616" y="40" width="160" height="70" rx="8"/><rect x="818" y="40" width="152" height="70" rx="8"/></g>
+<g text-anchor="middle" fill="#202a3b" font-size="16"><text x="90" y="70">1 개수 이동</text><text x="292" y="70">2 형식 제거</text><text x="494" y="70">3 효과 중첩</text><text x="696" y="70">4 조작 중첩</text><text x="894" y="70">5 도구·문서</text></g>
+<g text-anchor="middle" fill="#385478" font-size="13"><text x="90" y="94">코어만</text><text x="292" y="94">저작 + 35장</text><text x="494" y="94">저작 + 31장</text><text x="696" y="94">저작 + 4장</text><text x="894" y="94">Tools·docs</text></g>
+<g stroke="#43638b" stroke-width="2" fill="none" marker-end="url(#a)"><path d="M170 75H210"/><path d="M372 75H412"/><path d="M574 75H614"/><path d="M776 75H816"/></g>
+<g fill="#385478" font-size="13"><text x="10" y="145">3은 1의 2인자 ConsumeStatusPayload를 쓴다. 4는 3과 같은 변환 스크립트를 쓴다. 5는 새 형식이 확정된 뒤에만 의미가 있다.</text></g></svg></section>
+
+<section><h2>대안과 기각 이유</h2>
+<p><b>기각: 한 커밋에 전부 바꾼다.</b> 콘텐츠 35장과 테스트 25개 파일이 한꺼번에 바뀌면 실패 원인을 가리기 어렵다. 태스크 1·2는 형식 이름을 건드리지 않아 따로 검증된다.</p>
+<p><b>기각: 콘텐츠를 C# 직렬화기로 다시 쓴다.</b> 새 스펙은 옛 JSON을 읽지 못하므로(옛 이름은 거부) 직렬화기로 왕복할 수 없다. 일회성 파이썬 변환으로 다시 쓰고, 바이트 비교 테스트(<code>Repository_cards_round_trip_byte_identically</code>)로 직렬화기와 같은 모양인지 확인한다. 파이썬 <code>json.dumps(indent=2, ensure_ascii=False)</code>는 현재 35장과 바이트가 같다(2026-10-17 확인).</p></section>
+
+<section><h2>이 계획으로 나중에 어려워지는 것</h2><ul>
+<li>새 테스트가 없어서, 소비 개수에 성공 수치·scaling이 적용되는 새 동작과 Review Focus 5가지는 수동 확인 단계로만 확인된다. 다음 사람이 같은 확인을 반복하려면 계획을 다시 읽어야 한다.</li>
+<li>테스트 수정 범위가 컴파일 오류에 따라 정해진다(후보 25개 파일). 형식 없는 인라인 JSON이 예전에 구형 변환에 기대어 통과했다면, 태스크 2에서 그 JSON을 현재 형식으로 손으로 고쳐야 한다.</li>
+<li>카드 그래프 추출기의 효과 단위 <code>condition</code> 경고와 그 테스트 2개를 지운다(현재 형식에 없는 필드). 그래프에서 조건 정보는 계속 빠진다.</li></ul></section>
+
+<section><h2>실행 예시: 태스크 3에서 독성 환원 한 장</h2>
+<pre>지금                                              태스크 3 이후
+{ "kind": "consume_status", "id": "e0",           { "key": "consume_status", "id": "e0",
+  "targetFaction": "Enemy", "status": "poison",     "targetFaction": "Enemy", "effectValue": 1,
+  "amount": 1, "mode": "UpTo" }                     "payload": { "key": "poison", "mode": "UpTo" } }
+{ "kind": "apply_status", "id": "e2", ...         { "key": "apply_status", "id": "e2", ...
+  "status": "block", "count": 3,                    "effectValue": 3,
+  "requires": { "sourceEffectId": "e0", ... } }     "requirement": { "sourceEffectId": "e0", ... },
+                                                    "payload": { "key": "block" } }</pre>
+<p>로딩: 컨버터가 <code>"key"</code>로 <code>ConsumeStatusSpec</code>을 만들고 <code>payload</code>를 <code>ConsumeStatusPayloadSpec</code>에 채운다 → <code>Validate</code>(effectValue ≥ 1, 상태 키 존재) → <code>Build()</code>가 <code>EffectData(consume_status, 1)</code>과 <code>ConsumeStatusPayload(poison, UpTo)</code>를 만든다. 전투 결과는 지금과 같다.</p></section>
+
+<section><h2>검증과 승인 범위</h2>
+<p>각 태스크 끝에 <code>Tools/verify.sh</code> 전체 통과, 태스크 5에 카드 그래프 <code>unittest</code> 통과. 작업은 워크트리 <code>.claude/worktrees/korean-comments</code>에서 하고, master 머지는 별도 승인 대상이다.</p></section>
+</html>
